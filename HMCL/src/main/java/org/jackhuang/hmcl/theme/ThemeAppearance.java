@@ -28,9 +28,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /// Appearance values contributed by a theme or override.
 ///
@@ -70,15 +68,6 @@ public record ThemeAppearance(
     /// JSON member name for title-area transparency.
     static final String FIELD_TITLE_TRANSPARENT = "titleTransparent";
 
-    /// Field names accepted as appearance fields.
-    static final Set<String> FIELDS = Set.of(
-            FIELD_COLOR,
-            FIELD_BRIGHTNESS,
-            FIELD_COLOR_STYLE,
-            FIELD_CONTRAST,
-            FIELD_BACKGROUND,
-            FIELD_TITLE_TRANSPARENT);
-
     /// Creates an appearance patch.
     ///
     /// @param color the color seed source, or `null` when inherited
@@ -93,18 +82,13 @@ public record ThemeAppearance(
         }
     }
 
-    /// Parses appearance fields from a JSON object while ignoring known metadata fields.
+    /// Parses known appearance fields from a JSON object.
     ///
     /// @param object the JSON object containing appearance fields
-    /// @param ignoredFields non-appearance fields accepted in the same object
-    /// @param sourceName the source name used in parse error messages
     /// @return the parsed appearance patch
-    /// @throws JsonParseException if an unsupported or malformed appearance field is present
-    static ThemeAppearance fromJson(JsonObject object, Set<String> ignoredFields, String sourceName) throws JsonParseException {
+    /// @throws JsonParseException if a known appearance field is malformed
+    static ThemeAppearance fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
-        Objects.requireNonNull(ignoredFields);
-        Objects.requireNonNull(sourceName);
-        checkUnknownFields(object, ignoredFields, sourceName);
 
         return new ThemeAppearance(
                 readColor(object),
@@ -195,16 +179,6 @@ public record ThemeAppearance(
         Contrast resolvedContrast = contrast != null ? contrast : Contrast.DEFAULT;
 
         return new ResolvedTheme(resolvedColor, resolvedBrightness, resolvedColorStyle, resolvedContrast);
-    }
-
-    /// Checks that no unsupported fields are present.
-    private static void checkUnknownFields(JsonObject object, Set<String> ignoredFields, String sourceName) {
-        for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-            String key = entry.getKey();
-            if (!FIELDS.contains(key) && !ignoredFields.contains(key)) {
-                throw new JsonParseException("Unsupported theme " + sourceName + " field: " + key);
-            }
-        }
     }
 
     /// Reads the optional color field.

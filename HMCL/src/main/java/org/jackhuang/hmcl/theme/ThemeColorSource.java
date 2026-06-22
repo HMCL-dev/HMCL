@@ -25,9 +25,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /// Describes how a theme-pack appearance chooses its Monet seed color.
 ///
@@ -41,9 +39,6 @@ public record ThemeColorSource(Type type, @Nullable ThemeColor customColor, @Nul
 
     /// JSON member name for the fallback color.
     private static final String FIELD_FALLBACK = "fallback";
-
-    /// Fields accepted by the wallpaper color source object.
-    private static final Set<String> FIELDS = Set.of(FIELD_SOURCE, FIELD_FALLBACK);
 
     /// Supported color source types.
     public enum Type {
@@ -99,7 +94,6 @@ public record ThemeColorSource(Type type, @Nullable ThemeColor customColor, @Nul
             throw new JsonParseException("Theme color must be a string or object");
         }
 
-        checkUnknownFields(object);
         String source = readRequiredString(object, FIELD_SOURCE);
         String normalized = source.trim().replace('-', '_').toUpperCase(Locale.ROOT);
         return switch (normalized) {
@@ -132,15 +126,6 @@ public record ThemeColorSource(Type type, @Nullable ThemeColor customColor, @Nul
             case CUSTOM -> Objects.requireNonNull(customColor);
             case WALLPAPER -> Objects.requireNonNullElse(fallback, ThemeColor.DEFAULT);
         };
-    }
-
-    /// Checks that no unsupported fields are present.
-    private static void checkUnknownFields(JsonObject object) {
-        for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-            if (!FIELDS.contains(entry.getKey())) {
-                throw new JsonParseException("Unsupported theme color source field: " + entry.getKey());
-            }
-        }
     }
 
     /// Reads a required string field.

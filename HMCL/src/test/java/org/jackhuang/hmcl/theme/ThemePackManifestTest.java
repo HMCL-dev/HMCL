@@ -310,14 +310,55 @@ public final class ThemePackManifestTest {
                 """));
     }
 
-    /// Tests that unsupported override fields are rejected.
+    /// Tests that additional fields are ignored for forward compatibility.
     @Test
-    public void testRejectUnsupportedOverrideField() {
-        String json = MANIFEST.replace(
-                "\"color\": \"#6FA65A\"",
-                "\"color\": \"#6FA65A\", \"unknownAppearance\": true");
+    public void testIgnoreAdditionalFields() {
+        String json = """
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.additional-fields",
+                  "version": "1.0.0",
+                  "name": "Additional Fields",
+                  "futureManifestField": true,
+                  "theme": {
+                    "futureThemeField": "ignored",
+                    "color": {
+                      "source": "wallpaper",
+                      "fallback": "#4D7C3A",
+                      "futureColorField": "ignored"
+                    },
+                    "background": {
+                      "type": "image",
+                      "path": "assets/wallpapers/forest.webp",
+                      "futureBackgroundField": "ignored"
+                    },
+                    "overrides": [
+                      {
+                        "condition": {
+                          "brightness": "dark"
+                        },
+                        "futureOverrideField": "ignored",
+                        "color": "#6FA65A"
+                      }
+                    ]
+                  }
+                }
+                """;
 
-        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson(json));
+        ThemePackManifest manifest = ThemePackManifest.fromJson(json);
+        assertEquals("example.additional-fields", manifest.id());
+
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+
+        ThemeAppearance appearance = theme.resolve(
+                new ThemeResolveContext(Brightness.DARK, "auto", "windows", "x86_64", "en"));
+        ThemeBackground background = appearance.background();
+        assertNotNull(background);
+
+        assertNotNull(appearance.color());
+        assertEquals(ThemeColor.of("#6FA65A"), appearance.color().resolveFallback());
+        assertEquals("assets/wallpapers/forest.webp", background.path());
     }
 
     /// Tests that unknown condition keys are accepted but do not match the current context.

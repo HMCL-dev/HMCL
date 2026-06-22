@@ -25,9 +25,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /// Background settings contributed by a theme-pack appearance.
 ///
@@ -61,9 +59,6 @@ public record ThemeBackground(
 
     /// JSON member name for the background opacity.
     private static final String FIELD_OPACITY = "opacity";
-
-    /// Field names accepted by the background JSON object.
-    private static final Set<String> FIELDS = Set.of(FIELD_TYPE, FIELD_PATH, FIELD_URL, FIELD_PAINT, FIELD_OPACITY);
 
     /// Background source types supported by theme packs.
     public enum Type {
@@ -109,10 +104,9 @@ public record ThemeBackground(
     ///
     /// @param object the JSON object
     /// @return the parsed background patch
-    /// @throws JsonParseException if an unsupported or malformed field is present
+    /// @throws JsonParseException if a known field is malformed
     static ThemeBackground fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
-        checkUnknownFields(object);
 
         return new ThemeBackground(
                 readType(object),
@@ -184,15 +178,6 @@ public record ThemeBackground(
                 patch.url != null ? patch.url : url,
                 patch.paint != null ? patch.paint : paint,
                 patch.opacity != null ? patch.opacity : opacity);
-    }
-
-    /// Checks that no unsupported background fields are present.
-    private static void checkUnknownFields(JsonObject object) {
-        for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-            if (!FIELDS.contains(entry.getKey())) {
-                throw new JsonParseException("Unsupported theme background field: " + entry.getKey());
-            }
-        }
     }
 
     /// Reads the optional background type field.

@@ -31,9 +31,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /// Parsed metadata and themes from a theme-pack manifest.
 ///
@@ -76,17 +74,6 @@ public record ThemePackManifest(
 
     /// JSON member name for multiple theme declarations.
     private static final String FIELD_THEMES = "themes";
-
-    /// Manifest fields accepted by this parser.
-    private static final Set<String> FIELDS = Set.of(
-            JsonSchema.PROPERTY_SCHEMA,
-            FIELD_ID,
-            FIELD_VERSION,
-            FIELD_NAME,
-            FIELD_AUTHORS,
-            FIELD_DESCRIPTION,
-            FIELD_THEME,
-            FIELD_THEMES);
 
     /// Creates a theme-pack manifest.
     ///
@@ -133,7 +120,6 @@ public record ThemePackManifest(
     /// @throws JsonParseException if the manifest is malformed or unsupported
     public static ThemePackManifest fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
-        checkUnknownFields(object);
         checkSchema(object);
 
         return new ThemePackManifest(
@@ -202,15 +188,6 @@ public record ThemePackManifest(
     /// @return the formatted manifest JSON
     public String toJson() {
         return JsonUtils.GSON.toJson(toJsonObject());
-    }
-
-    /// Checks that no unsupported manifest fields are present.
-    private static void checkUnknownFields(JsonObject object) {
-        for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-            if (!FIELDS.contains(entry.getKey())) {
-                throw new JsonParseException("Unsupported theme-pack manifest field: " + entry.getKey());
-            }
-        }
     }
 
     /// Checks that the manifest declares the supported schema.

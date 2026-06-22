@@ -23,7 +23,6 @@ import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.Objects;
-import java.util.Set;
 
 /// A conditional appearance patch in a theme.
 ///
@@ -33,9 +32,6 @@ import java.util.Set;
 public record ThemeOverride(ThemeCondition condition, ThemeAppearance appearance) {
     /// JSON member name for an override condition.
     private static final String FIELD_CONDITION = "condition";
-
-    /// Non-appearance fields accepted by an override object.
-    private static final Set<String> IGNORED_FIELDS = Set.of(FIELD_CONDITION);
 
     /// Creates a conditional theme override.
     ///
@@ -63,7 +59,7 @@ public record ThemeOverride(ThemeCondition condition, ThemeAppearance appearance
         }
 
         ThemeCondition condition = ThemeCondition.fromJson(conditionObject);
-        ThemeAppearance appearance = ThemeAppearance.fromJson(object, IGNORED_FIELDS, "override");
+        ThemeAppearance appearance = ThemeAppearance.fromJson(object);
         if (appearance.isEmpty()) {
             throw new JsonParseException("Theme override does not define any appearance fields");
         }

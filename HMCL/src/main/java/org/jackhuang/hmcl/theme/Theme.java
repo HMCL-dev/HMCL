@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /// One selectable theme inside a theme pack.
 ///
@@ -65,14 +64,6 @@ public record Theme(
 
     /// JSON member name for conditional overrides.
     private static final String FIELD_OVERRIDES = "overrides";
-
-    /// Non-appearance fields accepted by a theme object.
-    private static final Set<String> IGNORED_FIELDS = Set.of(
-            FIELD_ID,
-            FIELD_NAME,
-            FIELD_DESCRIPTION,
-            FIELD_THUMBNAIL,
-            FIELD_OVERRIDES);
 
     /// Creates a theme.
     ///
@@ -116,7 +107,7 @@ public record Theme(
         if (name == null && requireIdentity) {
             throw new JsonParseException("Theme is missing required string field: " + FIELD_NAME);
         }
-        ThemeAppearance appearance = ThemeAppearance.fromJson(object, IGNORED_FIELDS, "definition");
+        ThemeAppearance appearance = ThemeAppearance.fromJson(object);
 
         return new Theme(
                 id,
