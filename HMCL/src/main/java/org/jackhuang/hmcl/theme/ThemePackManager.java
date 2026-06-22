@@ -26,6 +26,7 @@ import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -125,12 +126,14 @@ public final class ThemePackManager {
     /// @param type the launcher background source type
     /// @param imagePath the resolved local image file or directory, or `null` when not using a local image
     /// @param networkImageUrl the remote image URL, or `null` when not using a network image
+    /// @param networkImageCachePolicy whether the remote image cache policy is explicitly overridden, or `null` for default behavior
     /// @param paint the resolved background paint, or `null` when not using a paint background
     /// @param opacity the background opacity clamped to `[0, 1]`
     public record ResolvedBackground(
             BackgroundType type,
             @Nullable Path imagePath,
             @Nullable String networkImageUrl,
+            @Nullable NetworkBackgroundImageCachePolicy networkImageCachePolicy,
             @Nullable Paint paint,
             double opacity) {
         /// Creates a resolved launcher background.
@@ -138,6 +141,7 @@ public final class ThemePackManager {
         /// @param type the launcher background source type
         /// @param imagePath the resolved local image file or directory, or `null` when not using a local image
         /// @param networkImageUrl the remote image URL, or `null` when not using a network image
+        /// @param networkImageCachePolicy whether the remote image cache policy is explicitly overridden, or `null` for default behavior
         /// @param paint the resolved background paint, or `null` when not using a paint background
         /// @param opacity the background opacity clamped to `[0, 1]`
         public ResolvedBackground {
@@ -595,7 +599,13 @@ public final class ThemePackManager {
                     return resolved;
                 }
             }
-            return new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, currentBackgroundOpacity());
+            return new ResolvedBackground(
+                    BackgroundType.DEFAULT,
+                    null,
+                    null,
+                    null,
+                    null,
+                    currentBackgroundOpacity());
         }
 
         return resolveCustomBackground();
@@ -608,14 +618,32 @@ public final class ThemePackManager {
         BackgroundType type = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
         double opacity = currentBackgroundOpacity();
         return switch (type) {
-            case DEFAULT -> new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, opacity);
-            case BUILTIN -> new ResolvedBackground(BackgroundType.BUILTIN, null, null, null, opacity);
+            case DEFAULT -> new ResolvedBackground(
+                    BackgroundType.DEFAULT,
+                    null,
+                    null,
+                    null,
+                    null,
+                    opacity);
+            case BUILTIN -> new ResolvedBackground(
+                    BackgroundType.BUILTIN,
+                    null,
+                    null,
+                    null,
+                    null,
+                    opacity);
             case CUSTOM -> {
                 @Nullable String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
                 @Nullable Path imagePath = StringUtils.isBlank(customBackgroundImagePath)
                         ? null
                         : Path.of(customBackgroundImagePath).toAbsolutePath().normalize();
-                yield new ResolvedBackground(BackgroundType.CUSTOM, imagePath, null, null, opacity);
+                yield new ResolvedBackground(
+                        BackgroundType.CUSTOM,
+                        imagePath,
+                        null,
+                        null,
+                        null,
+                        opacity);
             }
             case NETWORK -> {
                 @Nullable String networkBackgroundImageUrl = settings().networkBackgroundImageUrlProperty().get();
@@ -623,6 +651,7 @@ public final class ThemePackManager {
                         BackgroundType.NETWORK,
                         null,
                         StringUtils.isBlank(networkBackgroundImageUrl) ? null : networkBackgroundImageUrl.trim(),
+                        settings().networkBackgroundImageCachePolicyProperty().get(),
                         null,
                         opacity);
             }
@@ -630,10 +659,12 @@ public final class ThemePackManager {
                     BackgroundType.PAINT,
                     null,
                     null,
+                    null,
                     settings().customBackgroundPaintProperty().get(),
                     opacity);
             case THEME_COLOR -> new ResolvedBackground(
                     BackgroundType.THEME_COLOR,
+                    null,
                     null,
                     null,
                     getThemeColorBackgroundPaint(),
@@ -700,6 +731,7 @@ public final class ThemePackManager {
                     resolveInstalledAsset(themePackFile, requireNonBlank(image.path(), "background.path")),
                     null,
                     null,
+                    null,
                     opacity);
         }
         if (source instanceof ThemeBackground.Network network) {
@@ -707,6 +739,7 @@ public final class ThemePackManager {
                     BackgroundType.NETWORK,
                     null,
                     requireNonBlank(network.url(), "background.url"),
+                    network.cache(),
                     null,
                     opacity);
         }
@@ -715,13 +748,20 @@ public final class ThemePackManager {
                     BackgroundType.PAINT,
                     null,
                     null,
+                    null,
                     parsePaint(requireNonBlank(paint.paint(), "background.paint")),
                     opacity);
         }
         if (source instanceof ThemeBackground.Patch patch) {
             return resolvePartialBackground(themePackFile, patch, opacity);
         }
-        return new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, opacity);
+        return new ResolvedBackground(
+                BackgroundType.DEFAULT,
+                null,
+                null,
+                null,
+                null,
+                opacity);
     }
 
     /// Resolves a concrete launcher color from a theme appearance.
@@ -769,6 +809,7 @@ public final class ThemePackManager {
                     resolveInstalledAsset(themePackFile, patch.path()),
                     null,
                     null,
+                    null,
                     opacity);
         }
         if (patch.url() != null) {
@@ -776,6 +817,7 @@ public final class ThemePackManager {
                     BackgroundType.NETWORK,
                     null,
                     patch.url(),
+                    patch.cache(),
                     null,
                     opacity);
         }
@@ -784,10 +826,17 @@ public final class ThemePackManager {
                     BackgroundType.PAINT,
                     null,
                     null,
+                    null,
                     parsePaint(patch.paint()),
                     opacity);
         }
-        return new ResolvedBackground(BackgroundType.DEFAULT, null, null, null, opacity);
+        return new ResolvedBackground(
+                BackgroundType.DEFAULT,
+                null,
+                null,
+                null,
+                null,
+                opacity);
     }
 
     /// Resolves one asset referenced by an installed theme.
@@ -963,7 +1012,9 @@ public final class ThemePackManager {
             case BUILTIN -> createCurrentBuiltinBackground(opacity);
             case CUSTOM -> createCurrentImageBackground(assets, background.imagePath(), opacity);
             case NETWORK -> new ThemeBackgroundSettings(
-                    new ThemeBackground.Network(requireNonBlank(background.networkImageUrl(), "networkBackgroundImageUrl")),
+                    new ThemeBackground.Network(
+                            requireNonBlank(background.networkImageUrl(), "networkBackgroundImageUrl"),
+                            background.networkImageCachePolicy()),
                     opacity);
             case PAINT, THEME_COLOR -> new ThemeBackgroundSettings(
                     new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),

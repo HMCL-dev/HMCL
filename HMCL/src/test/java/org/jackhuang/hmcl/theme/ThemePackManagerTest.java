@@ -24,6 +24,7 @@ import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -41,6 +43,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -308,6 +312,72 @@ public final class ThemePackManagerTest {
             assertEquals(true, appearance.titleBar().transparent());
             assertInstanceOf(ThemeBackground.Builtin.class, background.source());
             assertEquals(0.5, background.opacity());
+        }
+    }
+
+    /// Tests exporting a network background preserves the URL image cache policy.
+    @Test
+    public void testExportCurrentNetworkBackgroundCachePolicy() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
+            LauncherSettings settings = SettingsManager.settings();
+            settings.backgroundTypeProperty().set(BackgroundType.NETWORK);
+            settings.networkBackgroundImageUrlProperty().set("https://example.com/wallpaper.png");
+            settings.networkBackgroundImageCachePolicyProperty().set(NetworkBackgroundImageCachePolicy.DISABLED);
+
+            Path tempDir = createTestDirectory("export-network-background-cache");
+            Path output = tempDir.resolve("network-background-cache" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackManager.exportCurrent(
+                    output,
+                    "com.example.network-background-cache",
+                    "Network Background Cache",
+                    "Test Author");
+
+            ThemePackManifest manifest = ThemePackManager.load(output).manifest();
+            Theme theme = manifest.findTheme(null);
+            assertNotNull(theme);
+            ThemeBackgroundSettings background = theme.appearance().background();
+            assertNotNull(background);
+
+            ThemeBackground.Network network = assertInstanceOf(ThemeBackground.Network.class, background.source());
+            assertEquals("https://example.com/wallpaper.png", network.url());
+            assertEquals(NetworkBackgroundImageCachePolicy.DISABLED, network.cache());
+        }
+    }
+
+    /// Tests exporting a network background with the default URL image cache policy omits the cache field.
+    @Test
+    public void testExportCurrentNetworkBackgroundDefaultCachePolicyOmitsField() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
+            LauncherSettings settings = SettingsManager.settings();
+            settings.backgroundTypeProperty().set(BackgroundType.NETWORK);
+            settings.networkBackgroundImageUrlProperty().set("https://example.com/wallpaper.png");
+
+            Path tempDir = createTestDirectory("export-network-background-default-cache");
+            Path output = tempDir.resolve("network-background-default-cache" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackManager.exportCurrent(
+                    output,
+                    "com.example.network-background-default-cache",
+                    "Network Background Default Cache",
+                    "Test Author");
+
+            try (ZipFile zipFile = new ZipFile(output.toFile(), StandardCharsets.UTF_8)) {
+                ZipEntry manifestEntry = zipFile.getEntry(ThemePackExporter.MANIFEST_ENTRY);
+                assertNotNull(manifestEntry);
+                try (InputStream input = zipFile.getInputStream(manifestEntry)) {
+                    String manifestJson = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+                    assertFalse(manifestJson.contains("\"cache\""));
+                }
+            }
+
+            ThemePackManifest manifest = ThemePackManager.load(output).manifest();
+            Theme theme = manifest.findTheme(null);
+            assertNotNull(theme);
+            ThemeBackgroundSettings background = theme.appearance().background();
+            assertNotNull(background);
+
+            ThemeBackground.Network network = assertInstanceOf(ThemeBackground.Network.class, background.source());
+            assertEquals("https://example.com/wallpaper.png", network.url());
+            assertNull(network.cache());
         }
     }
 

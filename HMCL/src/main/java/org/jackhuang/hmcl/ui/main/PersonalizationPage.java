@@ -40,6 +40,7 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.FontManager;
+import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.setting.UserSettings;
 import org.jackhuang.hmcl.theme.Theme;
@@ -273,6 +274,7 @@ public class PersonalizationPage extends StackPane {
         settings().builtinBackgroundNameProperty().set(BackgroundType.BUILTIN_DEFAULT);
         settings().customBackgroundImagePathProperty().set(null);
         settings().networkBackgroundImageUrlProperty().set(null);
+        settings().networkBackgroundImageCachePolicyProperty().set(null);
         settings().customBackgroundPaintProperty().set(null);
         settings().backgroundOpacityProperty().set(1.0);
         settings().titleTransparentProperty().set(false);
@@ -288,6 +290,7 @@ public class PersonalizationPage extends StackPane {
         settings().builtinBackgroundNameProperty().addListener(listener);
         settings().customBackgroundImagePathProperty().addListener(listener);
         settings().networkBackgroundImageUrlProperty().addListener(listener);
+        settings().networkBackgroundImageCachePolicyProperty().addListener(listener);
         settings().customBackgroundPaintProperty().addListener(listener);
         settings().backgroundOpacityProperty().addListener(listener);
         settings().titleTransparentProperty().addListener(listener);
@@ -631,6 +634,26 @@ public class PersonalizationPage extends StackPane {
             builtinBackgroundPane.visibleProperty().bind(builtinBackgroundSelected);
             builtinBackgroundPane.managedProperty().bind(builtinBackgroundSelected);
 
+            var networkBackgroundCachePane = new LineSelectButton<Optional<NetworkBackgroundImageCachePolicy>>();
+            networkBackgroundCachePane.setTitle(i18n("launcher.background.network.cache"));
+            networkBackgroundCachePane.setNullSafeConverter(policy -> policy
+                    .map(value -> i18n("launcher.background.network.cache." + value.name().toLowerCase(Locale.ROOT)))
+                    .orElseGet(() -> i18n("launcher.background.network.cache.default")));
+            networkBackgroundCachePane.setItems(
+                    Optional.empty(),
+                    Optional.of(NetworkBackgroundImageCachePolicy.ENABLED),
+                    Optional.of(NetworkBackgroundImageCachePolicy.DISABLED));
+            networkBackgroundCachePane.setValue(Optional.ofNullable(
+                    settings().networkBackgroundImageCachePolicyProperty().get()));
+            networkBackgroundCachePane.valueProperty().addListener((observable, oldValue, newValue) ->
+                    settings().networkBackgroundImageCachePolicyProperty().set(newValue != null ? newValue.orElse(null) : null));
+            settings().networkBackgroundImageCachePolicyProperty().addListener((observable, oldValue, newValue) ->
+                    networkBackgroundCachePane.setValue(Optional.ofNullable(newValue)));
+            BooleanBinding networkBackgroundSelected =
+                    backgroundItem.selectedDataProperty().isEqualTo(BackgroundType.NETWORK);
+            networkBackgroundCachePane.visibleProperty().bind(networkBackgroundSelected);
+            networkBackgroundCachePane.managedProperty().bind(networkBackgroundSelected);
+
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         BackgroundType type = Lang.requireNonNullElse(
                                 backgroundItem.selectedDataProperty().get(),
@@ -688,7 +711,7 @@ public class PersonalizationPage extends StackPane {
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
 
-            backgroundSublist.getContent().setAll(backgroundItem, builtinBackgroundPane);
+            backgroundSublist.getContent().setAll(backgroundItem, builtinBackgroundPane, networkBackgroundCachePane);
             themeAppearanceList.getContent().addAll(backgroundSublist, opacityItem);
         }
 

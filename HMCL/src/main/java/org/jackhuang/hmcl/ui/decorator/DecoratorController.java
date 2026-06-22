@@ -39,6 +39,8 @@ import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.BackgroundType;
+import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
+import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.ThemePackManager;
@@ -101,6 +103,7 @@ public class DecoratorController {
         settings().builtinBackgroundNameProperty().addListener(weakListener);
         settings().customBackgroundImagePathProperty().addListener(weakListener);
         settings().networkBackgroundImageUrlProperty().addListener(weakListener);
+        settings().networkBackgroundImageCachePolicyProperty().addListener(weakListener);
         settings().customBackgroundPaintProperty().addListener(weakListener);
         settings().backgroundOpacityProperty().addListener(weakListener);
         Themes.colorSchemeProperty().addListener(weakListener);
@@ -222,7 +225,9 @@ public class DecoratorController {
                 String networkBackgroundImageUrl = settings().networkBackgroundImageUrlProperty().get();
                 if (networkBackgroundImageUrl != null) {
                     try {
-                        image = FXUtils.loadImage(WebURL.parseBrowserInput(networkBackgroundImageUrl));
+                        image = loadNetworkBackgroundImage(
+                                networkBackgroundImageUrl,
+                                settings().networkBackgroundImageCachePolicyProperty().get());
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -258,7 +263,9 @@ public class DecoratorController {
                 String networkBackgroundImageUrl = resolvedBackground.networkImageUrl();
                 if (networkBackgroundImageUrl != null) {
                     try {
-                        image = FXUtils.loadImage(WebURL.parseBrowserInput(networkBackgroundImageUrl));
+                        image = loadNetworkBackgroundImage(
+                                networkBackgroundImageUrl,
+                                resolvedBackground.networkImageCachePolicy());
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -278,6 +285,16 @@ public class DecoratorController {
             image = loadDefaultBackgroundImage();
         }
         return createBackgroundWithOpacity(image, resolvedBackground.opacity());
+    }
+
+    /// Loads one remote background image using the requested cache policy.
+    private Image loadNetworkBackgroundImage(
+            String url,
+            @Nullable NetworkBackgroundImageCachePolicy cachePolicy) throws Exception {
+        if (cachePolicy == NetworkBackgroundImageCachePolicy.DISABLED) {
+            return FXUtils.loadImage(WebURL.parseBrowserInput(url));
+        }
+        return FXUtils.loadImage(new CacheFileTask(url).run());
     }
 
     /// Creates a paint background with the requested opacity.

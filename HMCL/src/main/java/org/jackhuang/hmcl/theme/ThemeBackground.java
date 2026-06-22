@@ -21,11 +21,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Background source contributed by a theme-pack appearance.
 ///
@@ -46,6 +49,9 @@ public sealed interface ThemeBackground
 
     /// JSON member name for a serialized paint value.
     String FIELD_PAINT = "paint";
+
+    /// JSON member name for the remote image cache policy.
+    String FIELD_CACHE = "cache";
 
     /// Returns whether this background source contains no concrete fields.
     ///
@@ -92,6 +98,7 @@ public sealed interface ThemeBackground
         }
         if (patch instanceof Network patchNetwork) {
             @Nullable String url = patchNetwork.url;
+            @Nullable NetworkBackgroundImageCachePolicy cache = patchNetwork.cache;
             if (url == null) {
                 if (this instanceof Network network) {
                     url = network.url;
@@ -99,7 +106,14 @@ public sealed interface ThemeBackground
                     url = basePatch.url;
                 }
             }
-            return new Network(url);
+            if (cache == null) {
+                if (this instanceof Network network) {
+                    cache = network.cache;
+                } else if (this instanceof Patch basePatch) {
+                    cache = basePatch.cache;
+                }
+            }
+            return new Network(url, cache);
         }
         if (patch instanceof Paint patchPaint) {
             @Nullable String paint = patchPaint.paint;
@@ -127,15 +141,30 @@ public sealed interface ThemeBackground
         @Nullable String path = readString(object, FIELD_PATH);
         @Nullable String url = readString(object, FIELD_URL);
         @Nullable String paint = readString(object, FIELD_PAINT);
+        @Nullable NetworkBackgroundImageCachePolicy cache = null;
+        JsonElement cacheElement = object.get(FIELD_CACHE);
+        if (cacheElement != null) {
+            if (!(cacheElement instanceof JsonPrimitive primitive) || !primitive.isString()) {
+                LOG.warning("Ignored invalid theme background cache: expected a string, got " + cacheElement);
+            } else {
+                String cacheValue = primitive.getAsString();
+                switch (cacheValue.trim().replace('-', '_').toUpperCase(Locale.ROOT)) {
+                    case "ENABLED" -> cache = NetworkBackgroundImageCachePolicy.ENABLED;
+                    case "DISABLED" -> cache = NetworkBackgroundImageCachePolicy.DISABLED;
+                    default -> LOG.warning(
+                            "Ignored invalid theme background cache: unsupported cache policy `" + cacheValue + "`");
+                }
+            }
+        }
 
         if (type == null) {
-            return new Patch(path, url, paint);
+            return new Patch(path, url, paint, cache);
         }
 
         return switch (type.trim().replace('-', '_').toUpperCase(Locale.ROOT)) {
             case "BUILTIN" -> new Builtin();
             case "IMAGE" -> new Image(path);
-            case "NETWORK" -> new Network(url);
+            case "NETWORK" -> new Network(url, cache);
             case "PAINT" -> new Paint(paint);
             default -> throw new JsonParseException("Unsupported theme background type: " + type);
         };
@@ -220,11 +249,13 @@ public sealed interface ThemeBackground
     /// A source that uses a remote background image URL.
     ///
     /// @param url the remote image URL, or `null` when inherited
+    /// @param cache the remote image cache policy, or `null` when inherited
     @NotNullByDefault
-    record Network(@Nullable String url) implements ThemeBackground {
+    record Network(@Nullable String url, @Nullable NetworkBackgroundImageCachePolicy cache) implements ThemeBackground {
         /// Creates a network background source.
         ///
         /// @param url the remote image URL, or `null` when inherited
+        /// @param cache the remote image cache policy, or `null` when inherited
         public Network {
             if (url != null) {
                 url = requireNonBlank(url, FIELD_URL);
@@ -237,6 +268,12 @@ public sealed interface ThemeBackground
             addType(object, "network");
             if (url != null) {
                 object.addProperty(FIELD_URL, url);
+            }
+            if (cache != null) {
+                object.addProperty(FIELD_CACHE, switch (cache) {
+                    case ENABLED -> "enabled";
+                    case DISABLED -> "disabled";
+                });
             }
         }
 
@@ -282,16 +319,19 @@ public sealed interface ThemeBackground
     /// @param path the theme-pack relative image path, or `null` when inherited
     /// @param url the remote image URL, or `null` when inherited
     /// @param paint the serialized paint value, or `null` when inherited
+    /// @param cache the remote image cache policy, or `null` when inherited
     @NotNullByDefault
     record Patch(
             @Nullable String path,
             @Nullable String url,
-            @Nullable String paint) implements ThemeBackground {
+            @Nullable String paint,
+            @Nullable NetworkBackgroundImageCachePolicy cache) implements ThemeBackground {
         /// Creates a partial background source.
         ///
         /// @param path the theme-pack relative image path, or `null` when inherited
         /// @param url the remote image URL, or `null` when inherited
         /// @param paint the serialized paint value, or `null` when inherited
+        /// @param cache the remote image cache policy, or `null` when inherited
         public Patch {
             if (path != null) {
                 path = requireNonBlank(path, FIELD_PATH);
@@ -316,12 +356,18 @@ public sealed interface ThemeBackground
             if (paint != null) {
                 object.addProperty(FIELD_PAINT, paint);
             }
+            if (cache != null) {
+                object.addProperty(FIELD_CACHE, switch (cache) {
+                    case ENABLED -> "enabled";
+                    case DISABLED -> "disabled";
+                });
+            }
         }
 
         /// Returns whether this patch is empty.
         @Override
         public boolean isEmpty() {
-            return path == null && url == null && paint == null;
+            return path == null && url == null && paint == null && cache == null;
         }
 
         /// Applies this partial source over a base source.
@@ -336,7 +382,9 @@ public sealed interface ThemeBackground
                 return new Image(path != null ? path : background.path);
             }
             if (base instanceof Network background) {
-                return new Network(url != null ? url : background.url);
+                return new Network(
+                        url != null ? url : background.url,
+                        cache != null ? cache : background.cache);
             }
             if (base instanceof Paint background) {
                 return new Paint(paint != null ? paint : background.paint);
@@ -345,7 +393,8 @@ public sealed interface ThemeBackground
                 return new Patch(
                         path != null ? path : background.path,
                         url != null ? url : background.url,
-                        paint != null ? paint : background.paint);
+                        paint != null ? paint : background.paint,
+                        cache != null ? cache : background.cache);
             }
             throw new IllegalArgumentException("Unsupported theme background: " + base);
         }

@@ -366,6 +366,16 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return networkBackgroundImageUrl;
     }
 
+    /// Whether the remote network launcher background image may be cached locally.
+    @SerializedName("networkBackgroundImageCachePolicy")
+    private final ObjectProperty<@Nullable NetworkBackgroundImageCachePolicy> networkBackgroundImageCachePolicy =
+            new RawPreservingObjectProperty<>();
+
+    /// Returns the remote network launcher background image cache policy property.
+    public ObjectProperty<@Nullable NetworkBackgroundImageCachePolicy> networkBackgroundImageCachePolicyProperty() {
+        return networkBackgroundImageCachePolicy;
+    }
+
     /// The custom launcher background paint.
     @SerializedName("customBackgroundPaint")
     private final ObjectProperty<@Nullable Paint> customBackgroundPaint = new SimpleObjectProperty<>();

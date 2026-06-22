@@ -313,6 +313,12 @@
         "paint": {
           "$ref": "#/$defs/nonEmptyString"
         },
+        "cache": {
+          "enum": [
+            "enabled",
+            "disabled"
+          ]
+        },
         "opacity": {
           "type": "number",
           "minimum": 0,

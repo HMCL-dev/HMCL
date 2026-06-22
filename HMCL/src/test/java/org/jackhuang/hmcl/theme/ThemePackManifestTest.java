@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
+import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
@@ -208,6 +209,34 @@ public final class ThemePackManifestTest {
 
         assertInstanceOf(ThemeBackground.Builtin.class, background.source());
         assertEquals(0.75, background.opacity());
+    }
+
+    /// Tests that network background cache policies are parsed from theme packs.
+    @Test
+    public void testParseNetworkBackgroundCachePolicy() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.network-background-cache",
+                  "version": "1.0.0",
+                  "name": "Network Background Cache",
+                  "theme": {
+                    "background": {
+                      "type": "network",
+                      "url": "https://example.com/wallpaper.png",
+                      "cache": "disabled"
+                    }
+                  }
+                }
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+        ThemeBackgroundSettings background = theme.appearance().background();
+        assertNotNull(background);
+
+        ThemeBackground.Network network = assertInstanceOf(ThemeBackground.Network.class, background.source());
+        assertEquals("https://example.com/wallpaper.png", network.url());
+        assertEquals(NetworkBackgroundImageCachePolicy.DISABLED, network.cache());
     }
 
     /// Tests that unsupported background types fall back to the inherited/default background.
