@@ -46,9 +46,6 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
     /// Condition key for the effective light or dark mode.
     static final String KEY_BRIGHTNESS = "brightness";
 
-    /// Condition key for the configured brightness mode.
-    static final String KEY_BRIGHTNESS_MODE = "brightnessMode";
-
     /// Condition key for the current operating system.
     static final String KEY_OS = "os";
 
@@ -180,10 +177,6 @@ public record ThemeCondition(@Unmodifiable Map<String, @Unmodifiable Set<String>
             case KEY_BRIGHTNESS -> switch (normalized) {
                     case "light", "dark" -> normalized;
                     default -> throw new JsonParseException("Unsupported brightness condition value: " + value);
-                };
-            case KEY_BRIGHTNESS_MODE -> switch (normalized) {
-                    case "auto", "light", "dark" -> normalized;
-                    default -> throw new JsonParseException("Unsupported brightnessMode condition value: " + value);
                 };
             case KEY_OS -> normalizeOperatingSystemValue(normalized, value);
             case KEY_LANGUAGE -> normalized;

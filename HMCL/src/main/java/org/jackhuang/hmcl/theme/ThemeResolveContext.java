@@ -28,25 +28,21 @@ import java.util.Objects;
 /// Environment values used to resolve conditional theme-pack overrides.
 ///
 /// @param brightness the effective light or dark mode after resolving launcher and system settings
-/// @param brightnessMode the configured brightness mode, such as `auto`, `light`, or `dark`
 /// @param os the normalized operating system name used by theme conditions
 /// @param language the normalized UI language subtag used by theme conditions
 @NotNullByDefault
 public record ThemeResolveContext(
         Brightness brightness,
-        String brightnessMode,
         String os,
         String language) {
 
     /// Creates a theme resolution context.
     ///
     /// @param brightness the effective light or dark mode after resolving launcher and system settings
-    /// @param brightnessMode the configured brightness mode, such as `auto`, `light`, or `dark`
     /// @param os the normalized operating system name used by theme conditions
     /// @param language the normalized UI language subtag used by theme conditions
     public ThemeResolveContext {
         Objects.requireNonNull(brightness);
-        brightnessMode = normalizeToken(brightnessMode, "brightnessMode");
         os = normalizeToken(os, "os");
         language = normalizeToken(language, "language");
     }
@@ -54,12 +50,10 @@ public record ThemeResolveContext(
     /// Creates a context for the current process platform.
     ///
     /// @param brightness the effective light or dark mode after resolving launcher and system settings
-    /// @param brightnessMode the configured brightness mode, such as `auto`, `light`, or `dark`
     /// @return a context containing the current OS and default language
-    public static ThemeResolveContext current(Brightness brightness, String brightnessMode) {
+    public static ThemeResolveContext current(Brightness brightness) {
         return new ThemeResolveContext(
                 brightness,
-                brightnessMode,
                 normalizeOperatingSystem(OperatingSystem.CURRENT_OS),
                 Locale.getDefault().getLanguage());
     }
@@ -71,7 +65,6 @@ public record ThemeResolveContext(
     @Nullable String conditionValue(String key) {
         return switch (key) {
             case ThemeCondition.KEY_BRIGHTNESS -> brightness.name().toLowerCase(Locale.ROOT);
-            case ThemeCondition.KEY_BRIGHTNESS_MODE -> brightnessMode;
             case ThemeCondition.KEY_OS -> os;
             case ThemeCondition.KEY_LANGUAGE -> language;
             default -> null;

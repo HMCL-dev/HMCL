@@ -391,11 +391,7 @@ public final class ThemePackManager {
     ///
     /// @return the current resolution context
     public static ThemeResolveContext currentResolveContext() {
-        String brightnessMode = settings().themeBrightnessProperty().get();
-        if (StringUtils.isBlank(brightnessMode)) {
-            brightnessMode = "auto";
-        }
-        return ThemeResolveContext.current(Themes.getTheme().brightness(), brightnessMode);
+        return ThemeResolveContext.current(Themes.getTheme().brightness());
     }
 
     /// Applies background fields from a resolved theme appearance.

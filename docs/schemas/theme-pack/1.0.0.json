@@ -305,14 +305,8 @@
         "brightness": {
           "$ref": "#/$defs/brightnessCondition"
         },
-        "brightnessMode": {
-          "$ref": "#/$defs/brightnessModeCondition"
-        },
         "os": {
           "$ref": "#/$defs/osCondition"
-        },
-        "arch": {
-          "$ref": "#/$defs/archCondition"
         },
         "language": {
           "$ref": "#/$defs/languageCondition"
@@ -322,14 +316,8 @@
     "brightnessCondition": {
       "$ref": "#/$defs/stringOrStringArrayBrightness"
     },
-    "brightnessModeCondition": {
-      "$ref": "#/$defs/stringOrStringArrayBrightnessMode"
-    },
     "osCondition": {
       "$ref": "#/$defs/stringOrStringArrayOs"
-    },
-    "archCondition": {
-      "$ref": "#/$defs/stringOrStringArrayArch"
     },
     "languageCondition": {
       "$ref": "#/$defs/stringOrStringArrayNonEmpty"
@@ -349,21 +337,6 @@
         }
       ]
     },
-    "stringOrStringArrayBrightnessMode": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/brightnessModeConditionValue"
-        },
-        {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/brightnessModeConditionValue"
-          },
-          "uniqueItems": true
-        }
-      ]
-    },
     "stringOrStringArrayOs": {
       "oneOf": [
         {
@@ -374,21 +347,6 @@
           "minItems": 1,
           "items": {
             "$ref": "#/$defs/osConditionValue"
-          },
-          "uniqueItems": true
-        }
-      ]
-    },
-    "stringOrStringArrayArch": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/archConditionValue"
-        },
-        {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/archConditionValue"
           },
           "uniqueItems": true
         }
@@ -415,13 +373,6 @@
         "dark"
       ]
     },
-    "brightnessModeConditionValue": {
-      "enum": [
-        "auto",
-        "light",
-        "dark"
-      ]
-    },
     "osConditionValue": {
       "enum": [
         "win",
@@ -433,40 +384,6 @@
         "freebsd",
         "unknown",
         "universal"
-      ]
-    },
-    "archConditionValue": {
-      "enum": [
-        "amd64",
-        "x64",
-        "x86_32",
-        "x86",
-        "x86_64",
-        "ia32",
-        "ia64",
-        "sparc",
-        "sparcv9",
-        "arm",
-        "arm32",
-        "aarch64",
-        "arm64",
-        "mips",
-        "mips64",
-        "mipsel",
-        "mips64el",
-        "ppc",
-        "ppc64",
-        "ppcle",
-        "ppc64le",
-        "s390",
-        "s390x",
-        "riscv",
-        "riscv32",
-        "riscv64",
-        "loongarch32",
-        "loongarch64",
-        "loongarch64_ow",
-        "unknown"
       ]
     }
   }

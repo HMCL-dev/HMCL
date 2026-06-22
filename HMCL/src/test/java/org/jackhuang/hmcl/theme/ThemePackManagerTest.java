@@ -88,7 +88,7 @@ public final class ThemePackManagerTest {
                     installedThemePack.directory(),
                     installedThemePack.manifest(),
                     theme,
-                    new ThemeResolveContext(Brightness.LIGHT, "light", "linux", "en"));
+                    new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
 
             LauncherSettings settings = SettingsManager.settings();
             assertEquals(ThemeColor.of("#248C44"), settings.customThemeColorProperty().get());
