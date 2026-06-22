@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.theme;
 
 import com.google.gson.JsonObject;
+import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.setting.BackgroundType;
@@ -162,6 +163,53 @@ public final class ThemePackManagerTest {
         }
     }
 
+    /// Tests refreshing the selected theme when the brightness condition context changes.
+    @Test
+    public void testRefreshCurrentThemeForBrightnessCondition() throws Exception {
+        Path installedDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve("example.refresh");
+        deleteRecursively(installedDirectory);
+
+        try (SettingsScope ignored = new SettingsScope()) {
+            Path tempDir = createTestDirectory("refresh-brightness");
+            Path themePackFile = tempDir.resolve("refresh" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackExporter.export(createBrightnessConditionManifest(), List.of(), themePackFile);
+
+            ThemePackManager.InstalledThemePack installedThemePack = ThemePackManager.install(themePackFile);
+            Theme theme = installedThemePack.manifest().findTheme(null);
+            assertNotNull(theme);
+
+            ThemePackManager.apply(
+                    installedThemePack.directory(),
+                    installedThemePack.manifest(),
+                    theme,
+                    new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
+
+            LauncherSettings settings = SettingsManager.settings();
+            ThemeSelection selection = new ThemeSelection("example.refresh", null);
+            assertEquals(selection, settings.themeProperty().get());
+            assertEquals(ColorStyle.NEUTRAL, settings.themeColorStyleProperty().get());
+            assertFalse(settings.titleTransparentProperty().get());
+            assertEquals(0.5, settings.backgroundOpacityProperty().get());
+
+            settings.themeBrightnessProperty().set("dark");
+            ThemePackManager.refreshCurrentThemeForContext();
+
+            assertEquals(selection, settings.themeProperty().get());
+            assertEquals(ColorStyle.EXPRESSIVE, settings.themeColorStyleProperty().get());
+            assertTrue(settings.titleTransparentProperty().get());
+            assertEquals(BackgroundType.THEME, settings.backgroundTypeProperty().get());
+            assertEquals(0.25, settings.backgroundOpacityProperty().get());
+
+            ThemePackManager.ResolvedBackground background = ThemePackManager.resolveCurrentBackground(
+                    new ThemeResolveContext(Brightness.DARK, "linux", "en"));
+            assertEquals(BackgroundType.PAINT, background.type());
+            assertEquals(Color.BLACK, background.paint());
+        } finally {
+            deleteRecursively(installedDirectory);
+        }
+    }
+
     /// Tests exporting the current launcher appearance as a theme-pack file.
     @Test
     public void testExportCurrentThemePack() throws Exception {
@@ -272,6 +320,47 @@ public final class ThemePackManagerTest {
                       "path": "assets/wallpapers/wallpaper.png",
                       "opacity": 0.75
                     }
+                  }
+                }
+                """);
+    }
+
+    /// Creates a manifest with brightness-dependent appearance overrides.
+    ///
+    /// @return the parsed manifest
+    private static ThemePackManifest createBrightnessConditionManifest() {
+        return ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.refresh",
+                  "version": "1.0.0",
+                  "name": "Refresh Example",
+                  "authors": ["Example"],
+                  "theme": {
+                    "colorStyle": "neutral",
+                    "titleBar": {
+                      "transparent": false
+                    },
+                    "background": {
+                      "type": "paint",
+                      "paint": "#ffffff",
+                      "opacity": 0.5
+                    },
+                    "overrides": [
+                      {
+                        "condition": {
+                          "brightness": "dark"
+                        },
+                        "colorStyle": "expressive",
+                        "titleBar": {
+                          "transparent": true
+                        },
+                        "background": {
+                          "paint": "#000000",
+                          "opacity": 0.25
+                        }
+                      }
+                    ]
                   }
                 }
                 """);

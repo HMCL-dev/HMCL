@@ -48,6 +48,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Imports, applies, and exports launcher theme packs.
 @NotNullByDefault
@@ -57,6 +58,9 @@ public final class ThemePackManager {
 
     /// Default version used when exporting the current launcher appearance.
     private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
+
+    /// Whether a theme is currently being applied to launcher settings.
+    private static boolean applyingTheme = false;
 
     /// Prevents instantiation.
     private ThemePackManager() {
@@ -322,33 +326,86 @@ public final class ThemePackManager {
             ThemePackManifest manifest,
             Theme theme,
             ThemeResolveContext context) throws IOException {
+        apply(themePackDirectory, manifest, theme, context, false);
+    }
+
+    /// Reapplies the selected theme against the current condition context.
+    ///
+    /// The current brightness setting is preserved because it is the condition input that triggered the refresh.
+    public static void refreshCurrentThemeForContext() {
+        if (applyingTheme) {
+            return;
+        }
+
+        @Nullable ThemeSelection selection = settings().themeProperty().get();
+        if (selection == null) {
+            return;
+        }
+
+        try {
+            @Nullable InstalledThemePack themePack = findInstalled(selection);
+            if (themePack == null) {
+                return;
+            }
+
+            @Nullable Theme theme = themePack.manifest().findTheme(selection.themeId());
+            if (theme == null) {
+                return;
+            }
+
+            apply(themePack.directory(), themePack.manifest(), theme, currentResolveContext(), true);
+        } catch (IOException | RuntimeException e) {
+            LOG.warning("Failed to refresh selected theme", e);
+        }
+    }
+
+    /// Returns whether a theme is currently being applied to launcher settings.
+    ///
+    /// @return `true` while theme fields are being written into launcher settings
+    public static boolean isApplyingTheme() {
+        return applyingTheme;
+    }
+
+    /// Applies one theme from an installed theme-pack directory to current launcher settings.
+    private static void apply(
+            Path themePackDirectory,
+            ThemePackManifest manifest,
+            Theme theme,
+            ThemeResolveContext context,
+            boolean preserveBrightness) throws IOException {
         Objects.requireNonNull(themePackDirectory);
         Objects.requireNonNull(manifest);
         Objects.requireNonNull(theme);
         Objects.requireNonNull(context);
 
-        ThemeSelection selection = new ThemeSelection(manifest.id(), theme.id());
-        ThemeAppearance appearance = theme.resolve(context);
-        LauncherSettings currentSettings = settings();
+        boolean previousApplyingTheme = applyingTheme;
+        applyingTheme = true;
+        try {
+            ThemeSelection selection = new ThemeSelection(manifest.id(), theme.id());
+            ThemeAppearance appearance = theme.resolve(context);
+            LauncherSettings currentSettings = settings();
 
-        if (appearance.brightness() != null) {
-            currentSettings.themeBrightnessProperty().set(toLauncherBrightness(appearance.brightness()));
-        }
-        if (appearance.titleBar() != null && appearance.titleBar().transparent() != null) {
-            currentSettings.titleTransparentProperty().set(appearance.titleBar().transparent());
-        }
-        if (appearance.background() != null) {
-            applyBackground(selection, themePackDirectory.toAbsolutePath().normalize(), appearance.background());
-        }
-        if (appearance.colorStyle() != null) {
-            currentSettings.themeColorStyleProperty().set(appearance.colorStyle());
-        }
-        if (appearance.color() != null) {
-            currentSettings.themeColorTypeProperty().set(toThemeColorType(appearance.color()));
-            currentSettings.customThemeColorProperty().set(resolveThemeColor(themePackDirectory, appearance));
-        }
+            if (!preserveBrightness && appearance.brightness() != null) {
+                currentSettings.themeBrightnessProperty().set(toLauncherBrightness(appearance.brightness()));
+            }
+            if (appearance.titleBar() != null && appearance.titleBar().transparent() != null) {
+                currentSettings.titleTransparentProperty().set(appearance.titleBar().transparent());
+            }
+            if (appearance.background() != null) {
+                applyBackground(selection, themePackDirectory.toAbsolutePath().normalize(), appearance.background());
+            }
+            if (appearance.colorStyle() != null) {
+                currentSettings.themeColorStyleProperty().set(appearance.colorStyle());
+            }
+            if (appearance.color() != null) {
+                currentSettings.themeColorTypeProperty().set(toThemeColorType(appearance.color()));
+                currentSettings.customThemeColorProperty().set(resolveThemeColor(themePackDirectory, appearance));
+            }
 
-        currentSettings.themeProperty().set(selection);
+            currentSettings.themeProperty().set(selection);
+        } finally {
+            applyingTheme = previousApplyingTheme;
+        }
     }
 
     /// Exports the current launcher appearance to a theme-pack file.
@@ -426,7 +483,7 @@ public final class ThemePackManager {
     ///
     /// @return the current resolution context
     public static ThemeResolveContext currentResolveContext() {
-        return ThemeResolveContext.current(Themes.getTheme().brightness());
+        return ThemeResolveContext.current(Themes.getCurrentBrightness());
     }
 
     /// Resolves the background currently selected by launcher settings.

@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.ThemePackManager;
+import org.jackhuang.hmcl.theme.ThemeSelection;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -186,23 +187,66 @@ public class DecoratorController {
     }
 
     private Background getBackground() {
-        ThemePackManager.ResolvedBackground resolvedBackground;
-        try {
-            resolvedBackground = ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
-        } catch (IOException | RuntimeException e) {
-            LOG.warning("Couldn't resolve selected background", e);
-            resolvedBackground = ThemePackManager.resolveCustomBackground();
-        }
-
-        BackgroundType imageType = resolvedBackground.type();
+        BackgroundType imageType = settings().backgroundTypeProperty().get();
         if (imageType == null)
             imageType = BackgroundType.DEFAULT;
 
         Image image = null;
         switch (imageType) {
             case THEME:
+                try {
+                    @Nullable ThemeSelection backgroundTheme = settings().backgroundThemeProperty().get();
+                    if (backgroundTheme != null) {
+                        @Nullable ThemePackManager.ResolvedBackground resolvedBackground =
+                                ThemePackManager.resolveThemeBackground(backgroundTheme, ThemePackManager.currentResolveContext());
+                        if (resolvedBackground != null) {
+                            return getResolvedBackground(resolvedBackground);
+                        }
+                    }
+                } catch (IOException | RuntimeException e) {
+                    LOG.warning("Couldn't resolve selected theme background", e);
+                }
+                break;
+            case CUSTOM:
+                String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
+                if (customBackgroundImagePath != null)
+                    try {
+                        Path path = Path.of(customBackgroundImagePath);
+                        image = Files.isDirectory(path)
+                                ? randomImageIn(path)
+                                : tryLoadImage(path);
+                    } catch (Exception e) {
+                        LOG.warning("Couldn't load background image", e);
+                    }
+                break;
+            case NETWORK:
+                String networkBackgroundImageUrl = settings().networkBackgroundImageUrlProperty().get();
+                if (networkBackgroundImageUrl != null) {
+                    try {
+                        image = FXUtils.loadImage(WebURL.parseBrowserInput(networkBackgroundImageUrl));
+                    } catch (Exception e) {
+                        LOG.warning("Couldn't load background image", e);
+                    }
+                }
+                break;
+            case CLASSIC:
+                image = newBuiltinImage("/assets/img/background-classic.jpg");
+                break;
+            case PAINT:
+                return createPaintBackground(settings().customBackgroundPaintProperty().get(), settings().backgroundOpacityProperty().get());
             case DEFAULT:
                 break;
+        }
+        if (image == null) {
+            image = loadDefaultBackgroundImage();
+        }
+        return createBackgroundWithOpacity(image, settings().backgroundOpacityProperty().get());
+    }
+
+    /// Creates a launcher background from a concrete theme-pack background resolution result.
+    private Background getResolvedBackground(ThemePackManager.ResolvedBackground resolvedBackground) {
+        Image image = null;
+        switch (resolvedBackground.type()) {
             case CUSTOM:
                 Path imagePath = resolvedBackground.imagePath();
                 if (imagePath != null)
@@ -228,24 +272,31 @@ public class DecoratorController {
                 image = newBuiltinImage("/assets/img/background-classic.jpg");
                 break;
             case PAINT:
-                Paint paint = resolvedBackground.paint();
-                double opacity = MathUtils.clamp(resolvedBackground.opacity(), 0., 1.);
-                if (paint instanceof Color || paint == null) {
-                    Color color = (Color) paint;
-                    if (color == null)
-                        color = Color.WHITE; // Default to white if no color is set
-                    if (opacity < 1.)
-                        color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacity);
-                    return new Background(new BackgroundFill(color, CornerRadii.EMPTY, Insets.EMPTY));
-                } else {
-                    // TODO: Support opacity for non-color paints
-                    return new Background(new BackgroundFill(paint, CornerRadii.EMPTY, Insets.EMPTY));
-                }
+                return createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity());
+            case THEME:
+            case DEFAULT:
+                break;
         }
         if (image == null) {
             image = loadDefaultBackgroundImage();
         }
         return createBackgroundWithOpacity(image, resolvedBackground.opacity());
+    }
+
+    /// Creates a paint background with the requested opacity.
+    private Background createPaintBackground(Paint paint, double opacity) {
+        opacity = MathUtils.clamp(opacity, 0., 1.);
+        if (paint instanceof Color || paint == null) {
+            Color color = (Color) paint;
+            if (color == null)
+                color = Color.WHITE; // Default to white if no color is set
+            if (opacity < 1.)
+                color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacity);
+            return new Background(new BackgroundFill(color, CornerRadii.EMPTY, Insets.EMPTY));
+        } else {
+            // TODO: Support opacity for non-color paints
+            return new Background(new BackgroundFill(paint, CornerRadii.EMPTY, Insets.EMPTY));
+        }
     }
 
     private Background createBackgroundWithOpacity(Image image, double opacity) {

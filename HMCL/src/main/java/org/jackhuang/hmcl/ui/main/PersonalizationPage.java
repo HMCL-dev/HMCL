@@ -270,7 +270,6 @@ public class PersonalizationPage extends StackPane {
 
     /// Registers a listener for fields that are controlled by launcher themes.
     private static void installThemeCustomizationListener(InvalidationListener listener) {
-        settings().themeBrightnessProperty().addListener(listener);
         settings().customThemeColorProperty().addListener(listener);
         settings().themeColorTypeProperty().addListener(listener);
         settings().themeColorStyleProperty().addListener(listener);
@@ -661,7 +660,7 @@ public class PersonalizationPage extends StackPane {
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
         }
         installThemeCustomizationListener(ignored -> {
-            if (!applyingTheme && settings().themeProperty().get() != null) {
+            if (!applyingTheme && !ThemePackManager.isApplyingTheme() && settings().themeProperty().get() != null) {
                 settings().themeProperty().set(null);
             }
         });

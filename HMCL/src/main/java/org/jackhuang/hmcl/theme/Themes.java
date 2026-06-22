@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.theme;
 
 import com.sun.jna.Pointer;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
@@ -84,26 +85,6 @@ public final class Themes {
             bind(observables.toArray(new Observable[0]));
         }
 
-        /// Returns the effective brightness for the current launcher settings.
-        private Brightness getBrightness() {
-            @Nullable String themeBrightness = settings().themeBrightnessProperty().get();
-            if (themeBrightness == null)
-                return Brightness.DEFAULT;
-
-            return switch (themeBrightness.toLowerCase(Locale.ROOT).trim()) {
-                case "auto" -> {
-                    if (FXUtils.DARK_MODE != null) {
-                        yield FXUtils.DARK_MODE.get() ? Brightness.DARK : Brightness.LIGHT;
-                    } else {
-                        yield getDefaultBrightness();
-                    }
-                }
-                case "dark" -> Brightness.DARK;
-                case "light" -> Brightness.LIGHT;
-                default -> Brightness.DEFAULT;
-            };
-        }
-
         /// Returns the effective theme color for the current launcher settings.
         private ThemeColor getThemeColor() {
             ThemeColor fallback = Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
@@ -123,7 +104,7 @@ public final class Themes {
         private ThemeColor getBackgroundThemeColor(ThemeColor fallback) {
             try {
                 ThemePackManager.ResolvedBackground background =
-                        ThemePackManager.resolveCurrentBackground(ThemeResolveContext.current(getBrightness()));
+                        ThemePackManager.resolveCurrentBackground(ThemeResolveContext.current(getCurrentBrightness()));
                 return switch (background.type()) {
                     case CUSTOM -> getImageThemeColor(background.imagePath(), fallback);
                     case PAINT -> background.paint() instanceof Color color ? ThemeColor.of(color) : fallback;
@@ -153,7 +134,7 @@ public final class Themes {
         /// Computes the resolved launcher theme.
         @Override
         protected ResolvedTheme computeValue() {
-            return new ResolvedTheme(getThemeColor(), getBrightness(), getColorStyle(), Contrast.DEFAULT);
+            return new ResolvedTheme(getThemeColor(), getCurrentBrightness(), getColorStyle(), Contrast.DEFAULT);
         }
     };
 
@@ -174,10 +155,38 @@ public final class Themes {
         };
         colorScheme.set(theme.get().toColorScheme());
         theme.addListener(listener);
+
+        InvalidationListener themeContextListener = ignored -> ThemePackManager.refreshCurrentThemeForContext();
+        settings().themeBrightnessProperty().addListener(themeContextListener);
+        if (FXUtils.DARK_MODE != null) {
+            FXUtils.DARK_MODE.addListener(themeContextListener);
+        }
     }
 
     /// Cached system default brightness.
     private static @Nullable Brightness defaultBrightness;
+
+    /// Returns the effective brightness from launcher and system settings without resolving the full launcher theme.
+    ///
+    /// @return the effective launcher brightness
+    public static Brightness getCurrentBrightness() {
+        @Nullable String themeBrightness = settings().themeBrightnessProperty().get();
+        if (themeBrightness == null)
+            return Brightness.DEFAULT;
+
+        return switch (themeBrightness.toLowerCase(Locale.ROOT).trim()) {
+            case "auto" -> {
+                if (FXUtils.DARK_MODE != null) {
+                    yield FXUtils.DARK_MODE.get() ? Brightness.DARK : Brightness.LIGHT;
+                } else {
+                    yield getDefaultBrightness();
+                }
+            }
+            case "dark" -> Brightness.DARK;
+            case "light" -> Brightness.LIGHT;
+            default -> Brightness.DEFAULT;
+        };
+    }
 
     /// Detects and returns the system default brightness.
     private static Brightness getDefaultBrightness() {
