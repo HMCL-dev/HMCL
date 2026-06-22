@@ -3,7 +3,6 @@
   "$id": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
   "title": "HMCL Theme Pack",
   "type": "object",
-  "additionalProperties": false,
   "required": [
     "$schema",
     "id",
@@ -111,7 +110,6 @@
     },
     "author": {
       "type": "object",
-      "additionalProperties": false,
       "required": [
         "name"
       ],
@@ -123,7 +121,6 @@
     },
     "theme": {
       "type": "object",
-      "additionalProperties": false,
       "patternProperties": {
         "^description$": {
           "$ref": "#/$defs/localizedText"
@@ -167,7 +164,6 @@
     },
     "override": {
       "type": "object",
-      "additionalProperties": false,
       "required": [
         "condition"
       ],
@@ -246,7 +242,6 @@
         },
         {
           "type": "object",
-          "additionalProperties": false,
           "required": [
             "source"
           ],
@@ -298,7 +293,6 @@
     },
     "background": {
       "type": "object",
-      "additionalProperties": false,
       "patternProperties": {
         "^type$": {
           "enum": [

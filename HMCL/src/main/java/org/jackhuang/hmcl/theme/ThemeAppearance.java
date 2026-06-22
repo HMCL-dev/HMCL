@@ -89,17 +89,16 @@ public record ThemeAppearance(
     ///
     /// @param object the JSON object containing appearance fields
     /// @return the parsed appearance patch
-    /// @throws JsonParseException if a known appearance field is malformed
     static ThemeAppearance fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
 
         return new ThemeAppearance(
-                readColor(object),
-                readBrightness(object),
-                readColorStyle(object),
-                readContrast(object),
-                readBackground(object),
-                readTitleBar(object));
+                ThemePackManifest.readOptionalValue(FIELD_COLOR, () -> readColor(object)),
+                ThemePackManifest.readOptionalValue(FIELD_BRIGHTNESS, () -> readBrightness(object)),
+                ThemePackManifest.readOptionalValue(FIELD_COLOR_STYLE, () -> readColorStyle(object)),
+                ThemePackManifest.readOptionalValue(FIELD_CONTRAST, () -> readContrast(object)),
+                ThemePackManifest.readOptionalValue(FIELD_BACKGROUND, () -> readBackground(object)),
+                ThemePackManifest.readOptionalValue(FIELD_TITLE_BAR, () -> readTitleBar(object)));
     }
 
     /// Returns whether this appearance contains no concrete fields.

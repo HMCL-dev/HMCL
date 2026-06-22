@@ -50,11 +50,12 @@ public record ThemeBackgroundSettings(@Nullable ThemeBackground source, @Nullabl
     ///
     /// @param object the JSON object
     /// @return the parsed background settings
-    /// @throws JsonParseException if a known field is malformed
     static ThemeBackgroundSettings fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
 
-        return new ThemeBackgroundSettings(ThemeBackground.fromJson(object), readOpacity(object));
+        return new ThemeBackgroundSettings(
+                ThemePackManifest.readOptionalValue("background", () -> ThemeBackground.fromJson(object)),
+                ThemePackManifest.readOptionalValue("background." + FIELD_OPACITY, () -> readOpacity(object)));
     }
 
     /// Converts these settings to their JSON representation.

@@ -210,10 +210,10 @@ public final class ThemePackManifestTest {
         assertEquals(0.75, background.opacity());
     }
 
-    /// Tests that theme packs cannot reference the launcher's classic built-in background.
+    /// Tests that unsupported background types fall back to the inherited/default background.
     @Test
-    public void testRejectClassicBackground() {
-        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
+    public void testUnsupportedBackgroundTypeFallsBackToDefault() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
                 {
                   "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
                   "id": "example.classic-background",
@@ -225,13 +225,17 @@ public final class ThemePackManifestTest {
                     }
                   }
                 }
-                """));
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+
+        assertNull(theme.appearance().background());
     }
 
-    /// Tests that the removed adaptive theme brightness value is rejected.
+    /// Tests that unsupported brightness values fall back to the resolution context.
     @Test
-    public void testRejectAdaptiveBrightness() {
-        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
+    public void testUnsupportedBrightnessFallsBackToResolutionContext() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
                 {
                   "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
                   "id": "example.adaptive-brightness",
@@ -241,7 +245,13 @@ public final class ThemePackManifestTest {
                     "brightness": "adaptive"
                   }
                 }
-                """));
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+
+        ThemeResolveContext context = new ThemeResolveContext(Brightness.DARK, "linux", "en");
+        assertNull(theme.appearance().brightness());
+        assertEquals(Brightness.DARK, theme.toResolvedTheme(context).brightness());
     }
 
     /// Tests that an empty condition matches every resolution context.
@@ -524,10 +534,10 @@ public final class ThemePackManifestTest {
         assertEquals("assets/wallpapers/forest.webp", image.path());
     }
 
-    /// Tests that wallpaper color sources cannot declare a fallback color.
+    /// Tests that additional wallpaper color source fields are ignored.
     @Test
-    public void testWallpaperColorRejectsFallback() {
-        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
+    public void testWallpaperColorIgnoresFallbackField() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
                 {
                   "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
                   "id": "example.wallpaper-fallback",
@@ -540,7 +550,11 @@ public final class ThemePackManifestTest {
                     }
                   }
                 }
-                """));
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+
+        assertInstanceOf(ThemeColorSource.Wallpaper.class, theme.appearance().color());
     }
 
     /// Tests that unknown condition keys are accepted but do not match the current context.
@@ -573,6 +587,51 @@ public final class ThemePackManifestTest {
         assertNotNull(theme);
 
         assertEquals(Contrast.MEDIUM, theme.appearance().contrast());
+    }
+
+    /// Tests that malformed optional appearance fields are ignored instead of rejecting the manifest.
+    @Test
+    public void testInvalidOptionalAppearanceFieldsFallbackToDefaults() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.invalid-appearance",
+                  "version": "1.0.0",
+                  "name": "Invalid Appearance",
+                  "theme": {
+                    "color": "not-a-color",
+                    "brightness": "adaptive",
+                    "colorStyle": "unknown",
+                    "contrast": 2,
+                    "background": {
+                      "type": "paint",
+                      "paint": "#111111",
+                      "opacity": 2
+                    },
+                    "titleBar": {
+                      "transparent": "yes"
+                    }
+                  }
+                }
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+        ThemeAppearance appearance = theme.appearance();
+        ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "linux", "en");
+
+        assertNull(appearance.color());
+        assertNull(appearance.brightness());
+        assertNull(appearance.colorStyle());
+        assertNull(appearance.contrast());
+        assertNull(appearance.titleBar());
+        assertEquals(Brightness.LIGHT, appearance.toResolvedTheme(context).brightness());
+        assertEquals(ResolvedTheme.DEFAULT.colorStyle(), appearance.toResolvedTheme(context).colorStyle());
+        assertEquals(Contrast.DEFAULT, appearance.toResolvedTheme(context).contrast());
+
+        ThemeBackgroundSettings background = appearance.background();
+        assertNotNull(background);
+        assertInstanceOf(ThemeBackground.Paint.class, background.source());
+        assertNull(background.opacity());
     }
 
     /// Parses the forest theme from the shared manifest.

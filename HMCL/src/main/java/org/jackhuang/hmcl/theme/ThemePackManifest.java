@@ -36,7 +36,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Parsed metadata and themes from a theme-pack manifest.
 ///
@@ -80,6 +83,9 @@ public record ThemePackManifest(
     /// JSON member name for multiple theme declarations.
     private static final String FIELD_THEMES = "themes";
 
+    /// Fallback package version used when the manifest version field is malformed.
+    private static final String DEFAULT_VERSION = "1.0.0";
+
     /// Package ID format that can be used directly as an installed theme-pack file name.
     private static final Pattern PACKAGE_ID_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]*");
 
@@ -110,7 +116,7 @@ public record ThemePackManifest(
     ///
     /// @param json the manifest JSON
     /// @return the parsed manifest
-    /// @throws JsonParseException if the manifest is malformed or unsupported
+    /// @throws JsonParseException if the manifest structure or schema is unsupported
     public static ThemePackManifest fromJson(String json) throws JsonParseException {
         Objects.requireNonNull(json);
 
@@ -125,17 +131,23 @@ public record ThemePackManifest(
     ///
     /// @param object the manifest JSON object
     /// @return the parsed manifest
-    /// @throws JsonParseException if the manifest is malformed or unsupported
+    /// @throws JsonParseException if the manifest structure or schema is unsupported
     public static ThemePackManifest fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
         checkSchema(object);
 
+        String id = requireMemberString(object, FIELD_ID);
+        @Nullable String version = readOptionalValue(FIELD_VERSION, () -> requireMemberString(object, FIELD_VERSION));
+        @Nullable LocalizedText name = readOptionalValue(
+                FIELD_NAME,
+                () -> requireMemberLocalizedText(object, FIELD_NAME));
+
         return new ThemePackManifest(
-                requireMemberString(object, FIELD_ID),
-                requireMemberString(object, FIELD_VERSION),
-                requireMemberLocalizedText(object, FIELD_NAME),
+                id,
+                Objects.requireNonNullElse(version, DEFAULT_VERSION),
+                Objects.requireNonNullElse(name, LocalizedText.plain(id)),
                 readAuthors(object),
-                readLocalizedText(object, FIELD_DESCRIPTION),
+                readOptionalValue(FIELD_DESCRIPTION, () -> readLocalizedText(object, FIELD_DESCRIPTION)),
                 readThemes(object));
     }
 
@@ -231,22 +243,32 @@ public record ThemePackManifest(
         return result.status().name();
     }
 
-    /// Reads the required authors list.
+    /// Reads the authors list.
     private static List<ThemePackAuthor> readAuthors(JsonObject object) {
         JsonElement element = object.get(FIELD_AUTHORS);
         if (element == null) {
             return List.of();
         }
         if (!(element instanceof JsonArray array)) {
-            throw new JsonParseException("Theme-pack authors must be an array");
+            logInvalidField(FIELD_AUTHORS, new JsonParseException("Theme-pack authors must be an array"));
+            return List.of();
         }
 
         ArrayList<ThemePackAuthor> authors = new ArrayList<>(array.size());
+        int index = 0;
         for (JsonElement item : array) {
-            if (!(item instanceof JsonObject authorObject)) {
-                throw new JsonParseException("Theme-pack authors must contain only objects");
+            String field = FIELD_AUTHORS + "[" + index + "]";
+            if (item instanceof JsonObject authorObject) {
+                @Nullable ThemePackAuthor author = readOptionalValue(
+                        field,
+                        () -> new ThemePackAuthor(requireAuthorName(authorObject)));
+                if (author != null) {
+                    authors.add(author);
+                }
+            } else {
+                logInvalidField(field, new JsonParseException("Theme-pack authors must contain only objects"));
             }
-            authors.add(new ThemePackAuthor(requireAuthorName(authorObject)));
+            index++;
         }
         return authors;
     }
@@ -329,7 +351,7 @@ public record ThemePackManifest(
         if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
             throw new JsonParseException("Theme-pack manifest field must be a string: " + field);
         }
-        return primitive.getAsString();
+        return requireNonBlank(primitive.getAsString(), field);
     }
 
     /// Reads a required localized text member.
@@ -381,6 +403,34 @@ public record ThemePackManifest(
 
         JsonElement element = JsonUtils.GSON.toJsonTree(value, LocalizedText.class);
         return parseLocalizedText(element, field);
+    }
+
+    /// Reads one optional theme-pack value and logs malformed known fields instead of failing the whole manifest.
+    ///
+    /// @param field the field name to include in the warning message
+    /// @param reader the value reader
+    /// @return the parsed value, or `null` when the field is malformed
+    static <T> @Nullable T readOptionalValue(String field, Supplier<@Nullable T> reader) {
+        Objects.requireNonNull(field);
+        Objects.requireNonNull(reader);
+
+        try {
+            return reader.get();
+        } catch (JsonParseException | IllegalArgumentException e) {
+            logInvalidField(field, e);
+            return null;
+        }
+    }
+
+    /// Logs one malformed theme-pack field that is ignored during parsing.
+    ///
+    /// @param field the ignored field name
+    /// @param exception the parse problem
+    static void logInvalidField(String field, RuntimeException exception) {
+        Objects.requireNonNull(field);
+        Objects.requireNonNull(exception);
+
+        LOG.warning("Ignored invalid theme-pack field: " + field, exception);
     }
 
     /// Returns a non-blank string value.

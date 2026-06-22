@@ -65,9 +65,6 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
         String source = readRequiredSource(object);
         String normalized = source.trim().replace('-', '_').toUpperCase(Locale.ROOT);
         if ("WALLPAPER".equals(normalized)) {
-            if (object.has("fallback")) {
-                throw new JsonParseException("Theme wallpaper color source does not support fallback");
-            }
             return wallpaper();
         }
         throw new JsonParseException("Unsupported theme color source: " + source);

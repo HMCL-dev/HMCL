@@ -44,11 +44,11 @@ public record ThemeTitleBar(@Nullable Boolean transparent) {
     ///
     /// @param object the title-bar JSON object
     /// @return the parsed title-bar patch
-    /// @throws JsonParseException if a known title-bar field is malformed
     static ThemeTitleBar fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
 
-        return new ThemeTitleBar(readTransparent(object));
+        return new ThemeTitleBar(
+                ThemePackManifest.readOptionalValue("titleBar." + FIELD_TRANSPARENT, () -> readTransparent(object)));
     }
 
     /// Converts this title-bar patch to its JSON representation.
