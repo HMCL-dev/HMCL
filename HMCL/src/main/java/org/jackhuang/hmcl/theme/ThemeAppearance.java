@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Objects;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /// Appearance values contributed by a theme or override.
 ///
 /// All fields are optional so the same type can represent both a default appearance
@@ -93,12 +95,12 @@ public record ThemeAppearance(
         Objects.requireNonNull(object);
 
         return new ThemeAppearance(
-                ThemePackManifest.readOptionalValue(FIELD_COLOR, () -> readColor(object)),
-                ThemePackManifest.readOptionalValue(FIELD_BRIGHTNESS, () -> readBrightness(object)),
-                ThemePackManifest.readOptionalValue(FIELD_COLOR_STYLE, () -> readColorStyle(object)),
-                ThemePackManifest.readOptionalValue(FIELD_CONTRAST, () -> readContrast(object)),
-                ThemePackManifest.readOptionalValue(FIELD_BACKGROUND, () -> readBackground(object)),
-                ThemePackManifest.readOptionalValue(FIELD_TITLE_BAR, () -> readTitleBar(object)));
+                readColor(object),
+                readBrightness(object),
+                readColorStyle(object),
+                readContrast(object),
+                readBackground(object),
+                readTitleBar(object));
     }
 
     /// Returns whether this appearance contains no concrete fields.
@@ -189,38 +191,44 @@ public record ThemeAppearance(
         if (element == null) {
             return null;
         }
-        return ThemeColorSource.fromJson(element);
+        try {
+            return ThemeColorSource.fromJson(element);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme color: " + e.getMessage(), e);
+            return null;
+        }
     }
 
     /// Reads the optional controlled brightness field.
     private static @Nullable Brightness readBrightness(JsonObject object) {
-        @Nullable String value = readString(object, FIELD_BRIGHTNESS);
-        if (value == null) {
-            return null;
-        }
-
         try {
+            @Nullable String value = readString(object, FIELD_BRIGHTNESS);
+            if (value == null) {
+                return null;
+            }
             return parseBrightness(value);
-        } catch (IllegalArgumentException e) {
-            throw new JsonParseException("Invalid theme brightness: " + value, e);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme brightness: " + e.getMessage(), e);
+            return null;
         }
     }
 
     /// Reads the optional color style field.
     private static @Nullable ColorStyle readColorStyle(JsonObject object) {
-        @Nullable String value = readString(object, FIELD_COLOR_STYLE);
-        if (value == null) {
-            return null;
-        }
-
-        String normalized = value.trim().replace('-', '_').replace(' ', '_').toUpperCase(Locale.ROOT);
-        if ("DEFAULT".equals(normalized)) {
-            throw new JsonParseException("Theme colorStyle must be omitted to use the default value");
-        }
         try {
+            @Nullable String value = readString(object, FIELD_COLOR_STYLE);
+            if (value == null) {
+                return null;
+            }
+
+            String normalized = value.trim().replace('-', '_').replace(' ', '_').toUpperCase(Locale.ROOT);
+            if ("DEFAULT".equals(normalized)) {
+                throw new JsonParseException("Theme colorStyle must be omitted to use the default value");
+            }
             return ColorStyle.valueOf(normalized);
-        } catch (IllegalArgumentException e) {
-            throw new JsonParseException("Invalid theme color style: " + value, e);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme colorStyle: " + e.getMessage(), e);
+            return null;
         }
     }
 
@@ -231,31 +239,38 @@ public record ThemeAppearance(
             return null;
         }
         if (!(element instanceof JsonPrimitive primitive)) {
-            throw new JsonParseException("Theme contrast must be a string or number");
+            LOG.warning("Ignored invalid theme contrast: expected a string or number, got " + element);
+            return null;
         }
 
-        if (primitive.isNumber()) {
-            return readContrastValue(primitive.getAsDouble());
-        }
-        if (!primitive.isString()) {
-            throw new JsonParseException("Theme contrast must be a string or number");
-        }
-
-        String value = primitive.getAsString();
-        String normalized = value.trim().toLowerCase(Locale.ROOT);
-        return switch (normalized) {
-            case "low" -> Contrast.LOW;
-            case "standard" -> Contrast.DEFAULT;
-            case "medium" -> Contrast.MEDIUM;
-            case "high" -> Contrast.HIGH;
-            default -> {
-                try {
-                    yield readContrastValue(Double.parseDouble(normalized));
-                } catch (NumberFormatException e) {
-                    throw new JsonParseException("Invalid theme contrast: " + value, e);
-                }
+        try {
+            if (primitive.isNumber()) {
+                return readContrastValue(primitive.getAsDouble());
             }
-        };
+            if (!primitive.isString()) {
+                LOG.warning("Ignored invalid theme contrast: expected a string or number, got " + element);
+                return null;
+            }
+
+            String value = primitive.getAsString();
+            String normalized = value.trim().toLowerCase(Locale.ROOT);
+            return switch (normalized) {
+                case "low" -> Contrast.LOW;
+                case "standard" -> Contrast.DEFAULT;
+                case "medium" -> Contrast.MEDIUM;
+                case "high" -> Contrast.HIGH;
+                default -> {
+                    try {
+                        yield readContrastValue(Double.parseDouble(normalized));
+                    } catch (NumberFormatException e) {
+                        throw new JsonParseException("Invalid theme contrast: " + value, e);
+                    }
+                }
+            };
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme contrast: " + e.getMessage(), e);
+            return null;
+        }
     }
 
     /// Reads the optional background object.
@@ -265,9 +280,15 @@ public record ThemeAppearance(
             return null;
         }
         if (!(element instanceof JsonObject background)) {
-            throw new JsonParseException("Theme background must be an object");
+            LOG.warning("Ignored invalid theme background: expected an object, got " + element);
+            return null;
         }
-        return ThemeBackgroundSettings.fromJson(background);
+        try {
+            return ThemeBackgroundSettings.fromJson(background);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme background: " + e.getMessage(), e);
+            return null;
+        }
     }
 
     /// Reads the optional title-bar object.
@@ -277,9 +298,15 @@ public record ThemeAppearance(
             return null;
         }
         if (!(element instanceof JsonObject titleBar)) {
-            throw new JsonParseException("Theme titleBar must be an object");
+            LOG.warning("Ignored invalid theme titleBar: expected an object, got " + element);
+            return null;
         }
-        return ThemeTitleBar.fromJson(titleBar);
+        try {
+            return ThemeTitleBar.fromJson(titleBar);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme titleBar: " + e.getMessage(), e);
+            return null;
+        }
     }
 
     /// Reads an optional string field.

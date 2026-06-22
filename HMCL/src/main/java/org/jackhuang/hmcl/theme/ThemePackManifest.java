@@ -36,7 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -137,17 +136,35 @@ public record ThemePackManifest(
         checkSchema(object);
 
         String id = requireMemberString(object, FIELD_ID);
-        @Nullable String version = readOptionalValue(FIELD_VERSION, () -> requireMemberString(object, FIELD_VERSION));
-        @Nullable LocalizedText name = readOptionalValue(
-                FIELD_NAME,
-                () -> requireMemberLocalizedText(object, FIELD_NAME));
+        String version;
+        try {
+            version = requireMemberString(object, FIELD_VERSION);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Invalid theme-pack version, using " + DEFAULT_VERSION + ": " + e.getMessage(), e);
+            version = DEFAULT_VERSION;
+        }
+
+        LocalizedText name;
+        try {
+            name = requireMemberLocalizedText(object, FIELD_NAME);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Invalid theme-pack name, using package ID `" + id + "`: " + e.getMessage(), e);
+            name = LocalizedText.plain(id);
+        }
+
+        @Nullable LocalizedText description = null;
+        try {
+            description = readLocalizedText(object, FIELD_DESCRIPTION);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme-pack description: " + e.getMessage(), e);
+        }
 
         return new ThemePackManifest(
                 id,
-                Objects.requireNonNullElse(version, DEFAULT_VERSION),
-                Objects.requireNonNullElse(name, LocalizedText.plain(id)),
+                version,
+                name,
                 readAuthors(object),
-                readOptionalValue(FIELD_DESCRIPTION, () -> readLocalizedText(object, FIELD_DESCRIPTION)),
+                description,
                 readThemes(object));
     }
 
@@ -259,11 +276,10 @@ public record ThemePackManifest(
         for (JsonElement item : array) {
             String field = FIELD_AUTHORS + "[" + index + "]";
             if (item instanceof JsonObject authorObject) {
-                @Nullable ThemePackAuthor author = readOptionalValue(
-                        field,
-                        () -> new ThemePackAuthor(requireAuthorName(authorObject)));
-                if (author != null) {
-                    authors.add(author);
+                try {
+                    authors.add(new ThemePackAuthor(requireAuthorName(authorObject)));
+                } catch (JsonParseException | IllegalArgumentException e) {
+                    LOG.warning("Ignored invalid theme-pack author `" + field + "`: " + e.getMessage(), e);
                 }
             } else {
                 LOG.warning("Ignored invalid theme-pack author `" + field + "`: expected an object, got " + item);
@@ -403,23 +419,6 @@ public record ThemePackManifest(
 
         JsonElement element = JsonUtils.GSON.toJsonTree(value, LocalizedText.class);
         return parseLocalizedText(element, field);
-    }
-
-    /// Reads one optional theme-pack value and logs malformed known fields instead of failing the whole manifest.
-    ///
-    /// @param field the field name to include in the warning message
-    /// @param reader the value reader
-    /// @return the parsed value, or `null` when the field is malformed
-    static <T> @Nullable T readOptionalValue(String field, Supplier<@Nullable T> reader) {
-        Objects.requireNonNull(field);
-        Objects.requireNonNull(reader);
-
-        try {
-            return reader.get();
-        } catch (JsonParseException | IllegalArgumentException e) {
-            LOG.warning("Ignored invalid theme-pack field `" + field + "`: " + e.getMessage(), e);
-            return null;
-        }
     }
 
     /// Returns a non-blank string value.

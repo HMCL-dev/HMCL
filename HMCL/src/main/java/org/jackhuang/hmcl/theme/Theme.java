@@ -104,13 +104,11 @@ public record Theme(
     static Theme fromJson(JsonObject object, boolean requireIdentity) throws JsonParseException {
         Objects.requireNonNull(object);
 
-        @Nullable String id = ThemePackManifest.readOptionalValue(FIELD_ID, () -> readString(object, FIELD_ID));
+        @Nullable String id = readString(object, FIELD_ID);
         if (id == null && requireIdentity) {
             throw new JsonParseException("Theme is missing required string field: " + FIELD_ID);
         }
-        @Nullable LocalizedText name = ThemePackManifest.readOptionalValue(
-                FIELD_NAME,
-                () -> readLocalizedText(object, FIELD_NAME));
+        @Nullable LocalizedText name = readLocalizedText(object, FIELD_NAME);
         if (name == null && requireIdentity) {
             throw new JsonParseException("Theme is missing required localized text field: " + FIELD_NAME);
         }
@@ -119,10 +117,8 @@ public record Theme(
         return new Theme(
                 id,
                 name,
-                ThemePackManifest.readOptionalValue(
-                        FIELD_DESCRIPTION,
-                        () -> readLocalizedText(object, FIELD_DESCRIPTION)),
-                ThemePackManifest.readOptionalValue(FIELD_THUMBNAIL, () -> readString(object, FIELD_THUMBNAIL)),
+                readLocalizedText(object, FIELD_DESCRIPTION),
+                readString(object, FIELD_THUMBNAIL),
                 appearance,
                 readOverrides(object));
     }
@@ -210,11 +206,10 @@ public record Theme(
         for (JsonElement item : array) {
             String field = FIELD_OVERRIDES + "[" + index + "]";
             if (item instanceof JsonObject overrideObject) {
-                @Nullable ThemeOverride override = ThemePackManifest.readOptionalValue(
-                        field,
-                        () -> ThemeOverride.fromJson(overrideObject));
-                if (override != null) {
-                    overrides.add(override);
+                try {
+                    overrides.add(ThemeOverride.fromJson(overrideObject));
+                } catch (JsonParseException | IllegalArgumentException e) {
+                    LOG.warning("Ignored invalid theme override `" + field + "`: " + e.getMessage(), e);
                 }
             } else {
                 LOG.warning("Ignored invalid theme override `" + field + "`: expected an object, got " + item);
@@ -231,9 +226,15 @@ public record Theme(
             return null;
         }
         if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
-            throw new JsonParseException("Theme field must be a string: " + field);
+            LOG.warning("Ignored invalid theme field `" + field + "`: expected a string, got " + element);
+            return null;
         }
-        return requireNonBlank(primitive.getAsString(), field);
+        try {
+            return requireNonBlank(primitive.getAsString(), field);
+        } catch (IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme field `" + field + "`: " + e.getMessage(), e);
+            return null;
+        }
     }
 
     /// Reads an optional localized text member.
@@ -242,7 +243,12 @@ public record Theme(
         if (element == null) {
             return null;
         }
-        return ThemePackManifest.parseLocalizedText(element, field);
+        try {
+            return ThemePackManifest.parseLocalizedText(element, field);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme field `" + field + "`: " + e.getMessage(), e);
+            return null;
+        }
     }
 
     /// Returns a non-blank string value.

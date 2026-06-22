@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /// Background settings contributed by a theme-pack appearance.
 ///
 /// @param source the background source, or `null` when inherited
@@ -53,9 +55,14 @@ public record ThemeBackgroundSettings(@Nullable ThemeBackground source, @Nullabl
     static ThemeBackgroundSettings fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
 
-        return new ThemeBackgroundSettings(
-                ThemePackManifest.readOptionalValue("background", () -> ThemeBackground.fromJson(object)),
-                ThemePackManifest.readOptionalValue("background." + FIELD_OPACITY, () -> readOpacity(object)));
+        @Nullable ThemeBackground source = null;
+        try {
+            source = ThemeBackground.fromJson(object);
+        } catch (JsonParseException | IllegalArgumentException e) {
+            LOG.warning("Ignored invalid theme background source: " + e.getMessage(), e);
+        }
+
+        return new ThemeBackgroundSettings(source, readOpacity(object));
     }
 
     /// Converts these settings to their JSON representation.
@@ -97,14 +104,22 @@ public record ThemeBackgroundSettings(@Nullable ThemeBackground source, @Nullabl
             return null;
         }
         if (!(element instanceof JsonPrimitive primitive) || !primitive.isNumber()) {
-            throw new JsonParseException("Theme background opacity must be a number");
+            LOG.warning("Ignored invalid theme background opacity: expected a number, got " + element);
+            return null;
         }
 
-        double opacity = primitive.getAsDouble();
-        if (opacity < 0.0 || opacity > 1.0 || !Double.isFinite(opacity)) {
-            throw new JsonParseException("Theme background opacity must be between 0 and 1: " + opacity);
+        try {
+            double opacity = primitive.getAsDouble();
+            if (opacity < 0.0 || opacity > 1.0 || !Double.isFinite(opacity)) {
+                LOG.warning("Ignored invalid theme background opacity: expected a number between 0 and 1, got "
+                        + opacity);
+                return null;
+            }
+            return opacity;
+        } catch (NumberFormatException e) {
+            LOG.warning("Ignored invalid theme background opacity: " + e.getMessage(), e);
+            return null;
         }
-        return opacity;
     }
 
     /// Validates an opacity value.

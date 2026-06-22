@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /// Title-bar settings contributed by a theme-pack appearance.
 ///
 /// @param transparent whether the launcher title bar should be transparent, or `null` when inherited
@@ -47,8 +49,7 @@ public record ThemeTitleBar(@Nullable Boolean transparent) {
     static ThemeTitleBar fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
 
-        return new ThemeTitleBar(
-                ThemePackManifest.readOptionalValue("titleBar." + FIELD_TRANSPARENT, () -> readTransparent(object)));
+        return new ThemeTitleBar(readTransparent(object));
     }
 
     /// Converts this title-bar patch to its JSON representation.
@@ -86,7 +87,8 @@ public record ThemeTitleBar(@Nullable Boolean transparent) {
             return null;
         }
         if (!(element instanceof JsonPrimitive primitive) || !primitive.isBoolean()) {
-            throw new JsonParseException("Theme titleBar.transparent must be a boolean");
+            LOG.warning("Ignored invalid theme titleBar.transparent: expected a boolean, got " + element);
+            return null;
         }
         return primitive.getAsBoolean();
     }
