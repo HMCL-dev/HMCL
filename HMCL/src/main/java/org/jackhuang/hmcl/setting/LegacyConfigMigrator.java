@@ -227,6 +227,7 @@ public final class LegacyConfigMigrator {
             renameMember(jsonObject, "backgroundImage", "customBackgroundImagePath");
             renameMember(jsonObject, "bgurl", "networkBackgroundImageUrl");
             renameMember(jsonObject, "backgroundImageUrl", "networkBackgroundImageUrl");
+            jsonObject.addProperty("networkBackgroundImageCachePolicy", NetworkBackgroundImageCachePolicy.DISABLED.name());
             renameMember(jsonObject, "bgpaint", "customBackgroundPaint");
             renameMember(jsonObject, "backgroundPaint", "customBackgroundPaint");
             migrateBackgroundOpacity(jsonObject);
