@@ -55,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -374,7 +373,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                 Pair.pair(RemoteMod.DependencyType.BROKEN, "mods.dependency.broken")
         ));
 
+        public final RemoteMod addon;
+
         DependencyModItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version) {
+            this.addon = addon;
+
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -594,7 +597,17 @@ public class DownloadPage extends Control implements DecoratorPage {
                 }
 
                 return Task.allOf(queue).thenSupplyAsync(() ->
-                        dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList())
+                        dependencies.values().stream().flatMap(nodes -> nodes.stream()
+                                .sorted((n1, n2) -> {
+                                    if (!(n1 instanceof DependencyModItem)) return -1;
+                                    if (!(n2 instanceof DependencyModItem)) return 1;
+                                    RemoteMod a1 = ((DependencyModItem) n1).addon, a2 = ((DependencyModItem) n2).addon;
+                                    boolean b1 = a1 == RemoteMod.BROKEN, b2 = a2 == RemoteMod.BROKEN;
+                                    if (b1 && b2) return 0;
+                                    if (b1) return 1;
+                                    if (b2) return -1;
+                                    return a1.getSlug().compareTo(a2.getSlug());
+                                })).toList()
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 spinnerPane.setLoading(false);
