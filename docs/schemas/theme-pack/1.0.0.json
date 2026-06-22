@@ -277,8 +277,7 @@
       "patternProperties": {
         "^type$": {
           "enum": [
-            "default",
-            "classic",
+            "builtin",
             "image",
             "network",
             "paint"

@@ -31,6 +31,7 @@ import java.util.zip.ZipFile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -70,7 +71,8 @@ public final class ThemePackExporterTest {
             ThemeBackground background = theme.appearance().background();
             assertNotNull(background);
             assertEquals("user.current-theme", parsed.id());
-            assertEquals("assets/wallpapers/wallpaper.txt", background.path());
+            ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background);
+            assertEquals("assets/wallpapers/wallpaper.txt", image.path());
 
             String exportedWallpaper = readEntry(zipFile, wallpaperEntry);
             assertEquals("wallpaper", exportedWallpaper);

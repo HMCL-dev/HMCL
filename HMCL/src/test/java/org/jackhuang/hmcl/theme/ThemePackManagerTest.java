@@ -43,8 +43,10 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Tests for applying and exporting launcher theme packs.
@@ -221,7 +223,7 @@ public final class ThemePackManagerTest {
             settings.themeColorStyleProperty().set(ColorStyle.MONOCHROME);
             settings.themeBrightnessProperty().set("dark");
             settings.titleTransparentProperty().set(true);
-            settings.backgroundTypeProperty().set(BackgroundType.CLASSIC);
+            settings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
             settings.backgroundOpacityProperty().set(0.5);
 
             Path tempDir = createTestDirectory("export-current");
@@ -246,8 +248,24 @@ public final class ThemePackManagerTest {
             assertEquals(ColorStyle.MONOCHROME, appearance.colorStyle());
             assertNotNull(appearance.titleBar());
             assertEquals(true, appearance.titleBar().transparent());
-            assertEquals(ThemeBackground.Type.CLASSIC, background.effectiveType());
+            assertInstanceOf(ThemeBackground.Builtin.class, background);
             assertEquals(0.5, background.opacity());
+        }
+    }
+
+    /// Tests that the classic launcher background cannot be exported as a theme-pack background.
+    @Test
+    public void testExportCurrentThemePackRejectsClassicBackground() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
+            LauncherSettings settings = SettingsManager.settings();
+            settings.backgroundTypeProperty().set(BackgroundType.CLASSIC);
+
+            Path tempDir = createTestDirectory("export-classic");
+            Path output = tempDir.resolve("classic" + ThemePackExporter.FILE_EXTENSION);
+            IOException exception = assertThrows(IOException.class,
+                    () -> ThemePackManager.exportCurrent(output, "com.example.classic", "Classic", "Test Author"));
+
+            assertTrue(exception.getMessage().contains("classic built-in background"));
         }
     }
 

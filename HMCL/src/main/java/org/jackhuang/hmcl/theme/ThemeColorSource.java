@@ -28,56 +28,28 @@ import java.util.Locale;
 import java.util.Objects;
 
 /// Describes how a theme-pack appearance chooses its Monet seed color.
-///
-/// @param type the color source type
-/// @param customColor the custom color for [Type#CUSTOM], or `null` otherwise
-/// @param fallback the fallback color for [Type#WALLPAPER], or `null` to use the launcher default
 @NotNullByDefault
-public record ThemeColorSource(Type type, @Nullable ThemeColor customColor, @Nullable ThemeColor fallback) {
+public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeColorSource.Wallpaper {
     /// JSON member name for the source type.
-    private static final String FIELD_SOURCE = "source";
+    String FIELD_SOURCE = "source";
 
     /// JSON member name for the fallback color.
-    private static final String FIELD_FALLBACK = "fallback";
-
-    /// Supported color source types.
-    public enum Type {
-        /// Uses a custom manifest color.
-        CUSTOM,
-
-        /// Extract the seed color from the effective wallpaper image.
-        WALLPAPER
-    }
-
-    /// Creates a color source.
-    ///
-    /// @param type the color source type
-    /// @param customColor the custom color for [Type#CUSTOM], or `null` otherwise
-    /// @param fallback the fallback color for [Type#WALLPAPER], or `null` to use the launcher default
-    public ThemeColorSource {
-        Objects.requireNonNull(type);
-        if (type == Type.CUSTOM) {
-            Objects.requireNonNull(customColor);
-            fallback = null;
-        } else {
-            customColor = null;
-        }
-    }
+    String FIELD_FALLBACK = "fallback";
 
     /// Creates a custom color source.
     ///
     /// @param color the custom color
     /// @return the custom color source
-    public static ThemeColorSource custom(ThemeColor color) {
-        return new ThemeColorSource(Type.CUSTOM, color, null);
+    static ThemeColorSource custom(ThemeColor color) {
+        return new Custom(color);
     }
 
     /// Creates a wallpaper color source.
     ///
     /// @param fallback the fallback color, or `null` to use the launcher default
     /// @return the wallpaper color source
-    public static ThemeColorSource wallpaper(@Nullable ThemeColor fallback) {
-        return new ThemeColorSource(Type.WALLPAPER, null, fallback);
+    static ThemeColorSource wallpaper(@Nullable ThemeColor fallback) {
+        return new Wallpaper(fallback);
     }
 
     /// Parses a color source from a manifest JSON value.
@@ -94,53 +66,37 @@ public record ThemeColorSource(Type type, @Nullable ThemeColor customColor, @Nul
             throw new JsonParseException("Theme color must be a string or object");
         }
 
-        String source = readRequiredString(object, FIELD_SOURCE);
+        String source = readRequiredSource(object);
         String normalized = source.trim().replace('-', '_').toUpperCase(Locale.ROOT);
-        return switch (normalized) {
-            case "WALLPAPER" -> wallpaper(readColor(object, FIELD_FALLBACK));
-            default -> throw new JsonParseException("Unsupported theme color source: " + source);
-        };
+        if ("WALLPAPER".equals(normalized)) {
+            return wallpaper(readFallbackColor(object));
+        }
+        throw new JsonParseException("Unsupported theme color source: " + source);
     }
 
     /// Converts this color source to its JSON representation.
     ///
     /// @return the color source JSON value
-    public JsonElement toJsonElement() {
-        if (type == Type.CUSTOM) {
-            return new JsonPrimitive(Objects.requireNonNull(customColor).name());
-        }
-
-        JsonObject object = new JsonObject();
-        object.addProperty(FIELD_SOURCE, "wallpaper");
-        if (fallback != null) {
-            object.addProperty(FIELD_FALLBACK, fallback.name());
-        }
-        return object;
-    }
+    JsonElement toJsonElement();
 
     /// Returns the best available color without accessing wallpaper pixels.
     ///
     /// @return the custom color, fallback color, or launcher default color
-    public ThemeColor resolveFallback() {
-        return switch (type) {
-            case CUSTOM -> Objects.requireNonNull(customColor);
-            case WALLPAPER -> Objects.requireNonNullElse(fallback, ThemeColor.DEFAULT);
-        };
-    }
+    ThemeColor resolveFallback();
 
-    /// Reads a required string field.
-    private static String readRequiredString(JsonObject object, String field) {
-        @Nullable String value = readString(object, field);
+    /// Reads the required source field.
+    private static String readRequiredSource(JsonObject object) {
+        @Nullable String value = readString(object, FIELD_SOURCE);
         if (value == null) {
-            throw new JsonParseException("Theme color source is missing required field: " + field);
+            throw new JsonParseException("Theme color source is missing required field: " + FIELD_SOURCE);
         }
         return value;
     }
 
-    /// Reads an optional color field.
-    private static @Nullable ThemeColor readColor(JsonObject object, String field) {
-        @Nullable String value = readString(object, field);
-        return value != null ? parseColor(value, field) : null;
+    /// Reads the optional fallback color field.
+    private static @Nullable ThemeColor readFallbackColor(JsonObject object) {
+        @Nullable String value = readString(object, FIELD_FALLBACK);
+        return value != null ? parseColor(value, FIELD_FALLBACK) : null;
     }
 
     /// Reads an optional string field.
@@ -162,5 +118,59 @@ public record ThemeColorSource(Type type, @Nullable ThemeColor customColor, @Nul
             throw new JsonParseException("Invalid theme color " + field + ": " + value);
         }
         return color;
+    }
+
+    /// A fixed color seed supplied by the manifest.
+    ///
+    /// @param color the custom seed color
+    @NotNullByDefault
+    record Custom(ThemeColor color) implements ThemeColorSource {
+        /// Creates a custom color source.
+        ///
+        /// @param color the custom seed color
+        public Custom {
+            Objects.requireNonNull(color);
+        }
+
+        /// Converts this color source to its JSON representation.
+        @Override
+        public JsonElement toJsonElement() {
+            return new JsonPrimitive(color.name());
+        }
+
+        /// Returns the custom seed color.
+        @Override
+        public ThemeColor resolveFallback() {
+            return color;
+        }
+    }
+
+    /// A dynamic seed color extracted from the effective wallpaper.
+    ///
+    /// @param fallback the fallback color, or `null` to use the launcher default
+    @NotNullByDefault
+    record Wallpaper(@Nullable ThemeColor fallback) implements ThemeColorSource {
+        /// Creates a wallpaper color source.
+        ///
+        /// @param fallback the fallback color, or `null` to use the launcher default
+        public Wallpaper {
+        }
+
+        /// Converts this color source to its JSON representation.
+        @Override
+        public JsonElement toJsonElement() {
+            JsonObject object = new JsonObject();
+            object.addProperty(FIELD_SOURCE, "wallpaper");
+            if (fallback != null) {
+                object.addProperty(FIELD_FALLBACK, fallback.name());
+            }
+            return object;
+        }
+
+        /// Returns the fallback color used before wallpaper pixels are available.
+        @Override
+        public ThemeColor resolveFallback() {
+            return Objects.requireNonNullElse(fallback, ThemeColor.DEFAULT);
+        }
     }
 }

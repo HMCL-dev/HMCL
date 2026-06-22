@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -100,8 +101,8 @@ public final class ThemePackManifestTest {
         assertEquals(Brightness.DARK, resolvedTheme.brightness());
         assertEquals(ColorStyle.FIDELITY, resolvedTheme.colorStyle());
         assertEquals(Contrast.HIGH, resolvedTheme.contrast());
-        assertEquals(ThemeBackground.Type.IMAGE, background.effectiveType());
-        assertEquals("assets/wallpapers/forest-dark.webp", background.path());
+        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background);
+        assertEquals("assets/wallpapers/forest-dark.webp", image.path());
         assertEquals(0.9, background.opacity());
     }
 
@@ -129,11 +130,12 @@ public final class ThemePackManifestTest {
         assertNotNull(background);
 
         assertNotNull(appearance.color());
-        assertEquals(ThemeColorSource.Type.CUSTOM, appearance.color().type());
+        assertInstanceOf(ThemeColorSource.Custom.class, appearance.color());
         assertEquals(ThemeColor.of("#4D7C3A"), appearance.color().resolveFallback());
         assertEquals(ColorStyle.FIDELITY, appearance.colorStyle());
         assertEquals(Contrast.DEFAULT, appearance.contrast());
-        assertEquals("assets/wallpapers/forest.webp", background.path());
+        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background);
+        assertEquals("assets/wallpapers/forest.webp", image.path());
         assertEquals(0.8, background.opacity());
     }
 
@@ -173,6 +175,50 @@ public final class ThemePackManifestTest {
 
         assertNull(appearance.brightness());
         assertEquals(Brightness.LIGHT, resolvedTheme.brightness());
+    }
+
+    /// Tests that the built-in background type represents the launcher default wallpaper.
+    @Test
+    public void testParseBuiltinBackground() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.builtin-background",
+                  "version": "1.0.0",
+                  "name": "Builtin Background",
+                  "theme": {
+                    "background": {
+                      "type": "builtin",
+                      "opacity": 0.75
+                    }
+                  }
+                }
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+        ThemeBackground background = theme.appearance().background();
+        assertNotNull(background);
+
+        assertInstanceOf(ThemeBackground.Builtin.class, background);
+        assertEquals(0.75, background.opacity());
+    }
+
+    /// Tests that theme packs cannot reference the launcher's classic built-in background.
+    @Test
+    public void testRejectClassicBackground() {
+        assertThrows(JsonParseException.class, () -> ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.classic-background",
+                  "version": "1.0.0",
+                  "name": "Classic Background",
+                  "theme": {
+                    "background": {
+                      "type": "classic"
+                    }
+                  }
+                }
+                """));
     }
 
     /// Tests that the removed adaptive theme brightness value is rejected.
@@ -411,7 +457,8 @@ public final class ThemePackManifestTest {
 
         assertNotNull(appearance.color());
         assertEquals(ThemeColor.of("#6FA65A"), appearance.color().resolveFallback());
-        assertEquals("assets/wallpapers/forest.webp", background.path());
+        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background);
+        assertEquals("assets/wallpapers/forest.webp", image.path());
     }
 
     /// Tests that unknown condition keys are accepted but do not match the current context.
@@ -431,7 +478,8 @@ public final class ThemePackManifestTest {
         assertNotNull(appearance.color());
         assertEquals(ThemeColor.of("#4D7C3A"), appearance.color().resolveFallback());
         assertEquals(Contrast.DEFAULT, appearance.contrast());
-        assertEquals("assets/wallpapers/forest.webp", background.path());
+        ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background);
+        assertEquals("assets/wallpapers/forest.webp", image.path());
     }
 
     /// Tests that numeric contrast values are parsed as MonetFX contrast levels.
