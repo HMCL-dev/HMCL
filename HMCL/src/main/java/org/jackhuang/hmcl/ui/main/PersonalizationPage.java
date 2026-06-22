@@ -295,13 +295,13 @@ public class PersonalizationPage extends StackPane {
 
     /// A selectable launcher theme or the local custom appearance.
     ///
-    /// @param title the label shown by the selector
-    /// @param description the optional secondary text shown in the selector popup
-    /// @param customAppearance whether this item represents the local custom appearance
+    /// @param title             the label shown by the selector
+    /// @param description       the optional secondary text shown in the selector popup
+    /// @param customAppearance  whether this item represents the local custom appearance
     /// @param defaultAppearance whether this item represents the built-in default appearance
-    /// @param themePack the installed theme pack, or `null` for non-pack choices
-    /// @param theme the installed theme, or `null` for non-pack choices
-    /// @param selection the stored selection reference, or `null` for the local custom appearance
+    /// @param themePack         the installed theme pack, or `null` for non-pack choices
+    /// @param theme             the installed theme, or `null` for non-pack choices
+    /// @param selection         the stored selection reference, or `null` for the local custom appearance
     private record ThemeChoice(
             String title,
             @Nullable String description,
@@ -579,16 +579,19 @@ public class PersonalizationPage extends StackPane {
             colorStylePane.setTitle(i18n("settings.launcher.theme_color_style"));
             colorStylePane.setNullSafeConverter(style ->
                     i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT)));
+            colorStylePane.setDescriptionConverter(style ->
+                    i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT) + ".desc"));
             colorStylePane.setItems(
                     ColorStyle.FIDELITY,
                     ColorStyle.TONAL_SPOT,
-                    ColorStyle.FRUIT_SALAD,
-                    ColorStyle.RAINBOW,
-                    ColorStyle.NEUTRAL,
                     ColorStyle.VIBRANT,
                     ColorStyle.EXPRESSIVE,
-                    ColorStyle.CONTENT,
-                    ColorStyle.MONOCHROME
+
+                    ColorStyle.NEUTRAL,
+                    ColorStyle.MONOCHROME,
+
+                    ColorStyle.FRUIT_SALAD,
+                    ColorStyle.RAINBOW
             );
             colorStylePane.valueProperty().bindBidirectional(settings().themeColorStyleProperty());
 
@@ -834,7 +837,7 @@ public class PersonalizationPage extends StackPane {
                     }
                     UserSettings userSettings = userSettings();
                     userSettings.fontAntiAliasingProperty().set(value.map(it -> it.name().toLowerCase(Locale.ROOT))
-                                            .orElse(null));
+                            .orElse(null));
                 });
 
                 fontPane.getContent().add(fontAntiAliasingPane);
