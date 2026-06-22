@@ -189,7 +189,8 @@ public final class ThemePackManagerTest {
             assertEquals(ThemeColorSource.wallpaper(themeColor), appearance.color());
             assertEquals(ColorStyle.MONOCHROME, appearance.colorStyle());
             assertEquals(ThemeBrightness.DARK, appearance.brightness());
-            assertEquals(true, appearance.titleTransparent());
+            assertNotNull(appearance.titleBar());
+            assertEquals(true, appearance.titleBar().transparent());
             assertEquals(ThemeBackground.Type.CLASSIC, background.effectiveType());
             assertEquals(0.5, background.opacity());
         }
@@ -271,7 +272,9 @@ public final class ThemePackManagerTest {
                     },
                     "brightness": "dark",
                     "colorStyle": "expressive",
-                    "titleTransparent": true,
+                    "titleBar": {
+                      "transparent": true
+                    },
                     "background": {
                       "type": "image",
                       "path": "assets/wallpapers/wallpaper.png",

@@ -124,8 +124,8 @@
         "background": {
           "$ref": "#/$defs/background"
         },
-        "titleTransparent": {
-          "type": "boolean"
+        "titleBar": {
+          "$ref": "#/$defs/titleBar"
         },
         "overrides": {
           "type": "array",
@@ -169,7 +169,7 @@
         },
         {
           "required": [
-            "titleTransparent"
+            "titleBar"
           ]
         }
       ],
@@ -192,7 +192,15 @@
         "background": {
           "$ref": "#/$defs/background"
         },
-        "titleTransparent": {
+        "titleBar": {
+          "$ref": "#/$defs/titleBar"
+        }
+      }
+    },
+    "titleBar": {
+      "type": "object",
+      "properties": {
+        "transparent": {
           "type": "boolean"
         }
       }

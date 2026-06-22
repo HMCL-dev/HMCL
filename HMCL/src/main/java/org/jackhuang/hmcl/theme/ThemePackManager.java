@@ -299,8 +299,8 @@ public final class ThemePackManager {
         if (appearance.brightness() != null) {
             currentSettings.themeBrightnessProperty().set(toLauncherBrightness(appearance.brightness()));
         }
-        if (appearance.titleTransparent() != null) {
-            currentSettings.titleTransparentProperty().set(appearance.titleTransparent());
+        if (appearance.titleBar() != null && appearance.titleBar().transparent() != null) {
+            currentSettings.titleTransparentProperty().set(appearance.titleBar().transparent());
         }
         if (appearance.background() != null) {
             applyBackground(manifest, themePackDirectory.toAbsolutePath().normalize(), appearance.background());
@@ -347,7 +347,7 @@ public final class ThemePackManager {
                 currentColorStyle(),
                 Contrast.DEFAULT,
                 createCurrentBackground(assets),
-                settings().titleTransparentProperty().get());
+                new ThemeTitleBar(settings().titleTransparentProperty().get()));
         Theme theme = new Theme(
                 null,
                 null,

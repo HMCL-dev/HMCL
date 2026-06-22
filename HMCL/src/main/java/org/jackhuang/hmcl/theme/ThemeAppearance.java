@@ -40,7 +40,7 @@ import java.util.Objects;
 /// @param colorStyle the MonetFX color style, or `null` when inherited
 /// @param contrast the MonetFX contrast level, or `null` when inherited
 /// @param background the background settings, or `null` when inherited
-/// @param titleTransparent whether the title area should be transparent, or `null` when inherited
+/// @param titleBar the title-bar settings, or `null` when inherited
 @NotNullByDefault
 public record ThemeAppearance(
         @Nullable ThemeColorSource color,
@@ -48,7 +48,7 @@ public record ThemeAppearance(
         @Nullable ColorStyle colorStyle,
         @Nullable Contrast contrast,
         @Nullable ThemeBackground background,
-        @Nullable Boolean titleTransparent) {
+        @Nullable ThemeTitleBar titleBar) {
 
     /// JSON member name for the color seed.
     static final String FIELD_COLOR = "color";
@@ -65,8 +65,8 @@ public record ThemeAppearance(
     /// JSON member name for background settings.
     static final String FIELD_BACKGROUND = "background";
 
-    /// JSON member name for title-area transparency.
-    static final String FIELD_TITLE_TRANSPARENT = "titleTransparent";
+    /// JSON member name for title-bar settings.
+    static final String FIELD_TITLE_BAR = "titleBar";
 
     /// Creates an appearance patch.
     ///
@@ -75,10 +75,13 @@ public record ThemeAppearance(
     /// @param colorStyle the MonetFX color style, or `null` when inherited
     /// @param contrast the MonetFX contrast level, or `null` when inherited
     /// @param background the background settings, or `null` when inherited
-    /// @param titleTransparent whether the title area should be transparent, or `null` when inherited
+    /// @param titleBar the title-bar settings, or `null` when inherited
     public ThemeAppearance {
         if (background != null && background.isEmpty()) {
             background = null;
+        }
+        if (titleBar != null && titleBar.isEmpty()) {
+            titleBar = null;
         }
     }
 
@@ -96,7 +99,7 @@ public record ThemeAppearance(
                 readColorStyle(object),
                 readContrast(object),
                 readBackground(object),
-                readTitleTransparent(object));
+                readTitleBar(object));
     }
 
     /// Returns whether this appearance contains no concrete fields.
@@ -108,7 +111,7 @@ public record ThemeAppearance(
                 && colorStyle == null
                 && contrast == null
                 && background == null
-                && titleTransparent == null;
+                && titleBar == null;
     }
 
     /// Adds this appearance patch's concrete fields to a JSON object.
@@ -132,8 +135,8 @@ public record ThemeAppearance(
         if (background != null) {
             object.add(FIELD_BACKGROUND, background.toJsonObject());
         }
-        if (titleTransparent != null) {
-            object.addProperty(FIELD_TITLE_TRANSPARENT, titleTransparent);
+        if (titleBar != null) {
+            object.add(FIELD_TITLE_BAR, titleBar.toJsonObject());
         }
     }
 
@@ -161,7 +164,9 @@ public record ThemeAppearance(
                 background != null && patch.background != null
                         ? background.merge(patch.background)
                         : patch.background != null ? patch.background : background,
-                patch.titleTransparent != null ? patch.titleTransparent : titleTransparent);
+                titleBar != null && patch.titleBar != null
+                        ? titleBar.merge(patch.titleBar)
+                        : patch.titleBar != null ? patch.titleBar : titleBar);
     }
 
     /// Converts this appearance to concrete launcher theme values.
@@ -265,16 +270,16 @@ public record ThemeAppearance(
         return ThemeBackground.fromJson(background);
     }
 
-    /// Reads the optional title-transparent field.
-    private static @Nullable Boolean readTitleTransparent(JsonObject object) {
-        JsonElement element = object.get(FIELD_TITLE_TRANSPARENT);
+    /// Reads the optional title-bar object.
+    private static @Nullable ThemeTitleBar readTitleBar(JsonObject object) {
+        JsonElement element = object.get(FIELD_TITLE_BAR);
         if (element == null) {
             return null;
         }
-        if (!(element instanceof JsonPrimitive primitive) || !primitive.isBoolean()) {
-            throw new JsonParseException("Theme titleTransparent must be a boolean");
+        if (!(element instanceof JsonObject titleBar)) {
+            throw new JsonParseException("Theme titleBar must be an object");
         }
-        return primitive.getAsBoolean();
+        return ThemeTitleBar.fromJson(titleBar);
     }
 
     /// Reads an optional string field.
