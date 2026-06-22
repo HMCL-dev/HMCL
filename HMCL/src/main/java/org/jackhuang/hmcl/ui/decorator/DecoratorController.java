@@ -20,30 +20,12 @@ package org.jackhuang.hmcl.ui.decorator;
 import com.jfoenix.controls.JFXSnackbar;
 import com.jfoenix.controls.JFXSnackbarLayout;
 import javafx.animation.Interpolator;
-import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.glavo.monetfx.ColorRole;
-import org.glavo.url.WebURL;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
-import org.jackhuang.hmcl.setting.BackgroundType;
-import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
-import org.jackhuang.hmcl.task.CacheFileTask;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
@@ -56,24 +38,11 @@ import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Random;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DecoratorController {
     private final Decorator decorator;
@@ -94,19 +63,7 @@ public class DecoratorController {
 
         setupAuthlibInjectorDnD();
 
-        // Setup background
-        decorator.setContentBackground(getBackground());
-        changeBackgroundListener = o -> updateBackground();
-        WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
-        settings().themeProperty().addListener(weakListener);
-        settings().backgroundTypeProperty().addListener(weakListener);
-        settings().builtinBackgroundNameProperty().addListener(weakListener);
-        settings().customBackgroundImagePathProperty().addListener(weakListener);
-        settings().networkBackgroundImageUrlProperty().addListener(weakListener);
-        settings().networkBackgroundImageCachePolicyProperty().addListener(weakListener);
-        settings().customBackgroundPaintProperty().addListener(weakListener);
-        settings().backgroundOpacityProperty().addListener(weakListener);
-        Themes.colorSchemeProperty().addListener(weakListener);
+        decorator.contentBackgroundProperty().bind(Themes.backgroundProperty());
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -168,262 +125,6 @@ public class DecoratorController {
 
     public Decorator getDecorator() {
         return decorator;
-    }
-
-    // ==== Background ====
-
-    //FXThread
-    private int changeBackgroundCount = 0;
-
-    @SuppressWarnings("FieldCanBeLocal") // Strong reference
-    private final InvalidationListener changeBackgroundListener;
-
-    private void updateBackground() {
-        final int currentCount = ++this.changeBackgroundCount;
-        Task.supplyAsync(Schedulers.io(), this::getBackground)
-                .setName("Update background")
-                .whenComplete(Schedulers.javafx(), (background, exception) -> {
-                    if (exception == null) {
-                        if (this.changeBackgroundCount == currentCount)
-                            decorator.setContentBackground(background);
-                    } else {
-                        LOG.warning("Failed to update background", exception);
-                    }
-                }).start();
-    }
-
-    private Background getBackground() {
-        BackgroundType imageType = settings().backgroundTypeProperty().get();
-        if (imageType == null)
-            imageType = BackgroundType.DEFAULT;
-
-        Image image = null;
-        switch (imageType) {
-            case DEFAULT:
-                try {
-                    return getResolvedBackground(ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext()));
-                } catch (IOException | RuntimeException e) {
-                    LOG.warning("Couldn't resolve default background", e);
-                }
-                break;
-            case BUILTIN:
-                image = loadBuiltinBackgroundImage(settings().builtinBackgroundNameProperty().get());
-                break;
-            case CUSTOM:
-                String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
-                if (customBackgroundImagePath != null)
-                    try {
-                        Path path = Path.of(customBackgroundImagePath);
-                        image = Files.isDirectory(path)
-                                ? randomImageIn(path)
-                                : tryLoadImage(path);
-                    } catch (Exception e) {
-                        LOG.warning("Couldn't load background image", e);
-                    }
-                break;
-            case NETWORK:
-                String networkBackgroundImageUrl = settings().networkBackgroundImageUrlProperty().get();
-                if (networkBackgroundImageUrl != null) {
-                    try {
-                        image = loadNetworkBackgroundImage(
-                                networkBackgroundImageUrl,
-                                settings().networkBackgroundImageCachePolicyProperty().get());
-                    } catch (Exception e) {
-                        LOG.warning("Couldn't load background image", e);
-                    }
-                }
-                break;
-            case PAINT:
-                return createPaintBackground(settings().customBackgroundPaintProperty().get(), settings().backgroundOpacityProperty().get());
-            case THEME_COLOR:
-                return createThemeColorBackground(settings().backgroundOpacityProperty().get());
-        }
-        if (image == null) {
-            image = loadDefaultBackgroundImage();
-        }
-        return createBackgroundWithOpacity(image, settings().backgroundOpacityProperty().get());
-    }
-
-    /// Creates a launcher background from a concrete theme-pack background resolution result.
-    private Background getResolvedBackground(ThemePackManager.ResolvedBackground resolvedBackground) {
-        Image image = null;
-        switch (resolvedBackground.type()) {
-            case CUSTOM:
-                Path imagePath = resolvedBackground.imagePath();
-                if (imagePath != null)
-                    try {
-                        image = Files.isDirectory(imagePath)
-                                ? randomImageIn(imagePath)
-                                : tryLoadImage(imagePath);
-                    } catch (Exception e) {
-                        LOG.warning("Couldn't load background image", e);
-                    }
-                break;
-            case NETWORK:
-                String networkBackgroundImageUrl = resolvedBackground.networkImageUrl();
-                if (networkBackgroundImageUrl != null) {
-                    try {
-                        image = loadNetworkBackgroundImage(
-                                networkBackgroundImageUrl,
-                                resolvedBackground.networkImageCachePolicy());
-                    } catch (Exception e) {
-                        LOG.warning("Couldn't load background image", e);
-                    }
-                }
-                break;
-            case BUILTIN:
-                image = loadBuiltinBackgroundImage(settings().builtinBackgroundNameProperty().get());
-                break;
-            case PAINT:
-                return createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity());
-            case THEME_COLOR:
-                return createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity());
-            case DEFAULT:
-                break;
-        }
-        if (image == null) {
-            image = loadDefaultBackgroundImage();
-        }
-        return createBackgroundWithOpacity(image, resolvedBackground.opacity());
-    }
-
-    /// Loads one remote background image using the requested cache policy.
-    private Image loadNetworkBackgroundImage(
-            String url,
-            @Nullable NetworkBackgroundImageCachePolicy cachePolicy) throws Exception {
-        if (cachePolicy == NetworkBackgroundImageCachePolicy.DISABLED) {
-            return FXUtils.loadImage(WebURL.parseBrowserInput(url));
-        }
-        return FXUtils.loadImage(new CacheFileTask(url).run());
-    }
-
-    /// Creates a paint background with the requested opacity.
-    private Background createPaintBackground(Paint paint, double opacity) {
-        opacity = MathUtils.clamp(opacity, 0., 1.);
-        if (paint instanceof Color || paint == null) {
-            Color color = (Color) paint;
-            if (color == null)
-                color = Color.WHITE; // Default to white if no color is set
-            if (opacity < 1.)
-                color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacity);
-            return new Background(new BackgroundFill(color, CornerRadii.EMPTY, Insets.EMPTY));
-        } else {
-            // TODO: Support opacity for non-color paints
-            return new Background(new BackgroundFill(paint, CornerRadii.EMPTY, Insets.EMPTY));
-        }
-    }
-
-    /// Creates a background using the current theme color scheme surface container.
-    private Background createThemeColorBackground(double opacity) {
-        return createPaintBackground(Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER), opacity);
-    }
-
-    private Background createBackgroundWithOpacity(Image image, double opacity) {
-        if (opacity <= 0) {
-            return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
-        } else if (opacity >= 1. || image.getPixelReader() == null) {
-            return new Background(new BackgroundImage(
-                    image,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundPosition.DEFAULT,
-                    new BackgroundSize(800, 480, false, false, true, true)
-            ));
-        } else {
-            WritableImage tempImage = new WritableImage((int) image.getWidth(), (int) image.getHeight());
-            PixelReader pixelReader = image.getPixelReader();
-            PixelWriter pixelWriter = tempImage.getPixelWriter();
-            for (int y = 0; y < image.getHeight(); y++) {
-                for (int x = 0; x < image.getWidth(); x++) {
-                    Color color = pixelReader.getColor(x, y);
-                    Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity);
-                    pixelWriter.setColor(x, y, newColor);
-                }
-            }
-
-            return new Background(new BackgroundImage(
-                    tempImage,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundPosition.DEFAULT,
-                    new BackgroundSize(800, 480, false, false, true, true)
-            ));
-        }
-    }
-
-    /**
-     * Load background image from bg/, background.png, background.jpg, background.gif
-     */
-    private Image loadDefaultBackgroundImage() {
-        Image image = randomImageIn(Metadata.HMCL_LOCAL_HOME.resolve("background"));
-        if (image != null)
-            return image;
-
-        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            image = tryLoadImage(Metadata.HMCL_LOCAL_HOME.resolve("background." + extension));
-            if (image != null)
-                return image;
-        }
-
-        image = randomImageIn(Metadata.CURRENT_DIRECTORY.resolve("bg"));
-        if (image != null)
-            return image;
-
-        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            image = tryLoadImage(Metadata.CURRENT_DIRECTORY.resolve("background." + extension));
-            if (image != null)
-                return image;
-        }
-
-        return newBuiltinImage("/assets/img/background.jpg");
-    }
-
-    /// Loads one named built-in launcher background.
-    private Image loadBuiltinBackgroundImage(String name) {
-        if (BackgroundType.BUILTIN_CLASSIC.equals(name)) {
-            return newBuiltinImage("/assets/img/background-classic.jpg");
-        }
-        return newBuiltinImage("/assets/img/background.jpg");
-    }
-
-    private @Nullable Image randomImageIn(Path imageDir) {
-        if (!Files.isDirectory(imageDir)) {
-            return null;
-        }
-
-        ArrayList<Path> candidates;
-        try (Stream<Path> stream = Files.list(imageDir)) {
-            candidates = stream
-                    .filter(it -> FXUtils.IMAGE_EXTENSIONS.contains(getExtension(it).toLowerCase(Locale.ROOT)))
-                    .filter(Files::isReadable)
-                    .collect(Collectors.toCollection(ArrayList::new));
-        } catch (IOException e) {
-            LOG.warning("Failed to list files in " + imageDir, e);
-            return null;
-        }
-
-        Random rnd = new Random();
-        while (!candidates.isEmpty()) {
-            int selected = rnd.nextInt(candidates.size());
-            Image loaded = tryLoadImage(candidates.get(selected));
-            if (loaded != null)
-                return loaded;
-            else
-                candidates.remove(selected);
-        }
-        return null;
-    }
-
-    private @Nullable Image tryLoadImage(Path path) {
-        if (!Files.isReadable(path))
-            return null;
-
-        try {
-            return FXUtils.loadImage(path);
-        } catch (Exception e) {
-            LOG.warning("Couldn't load background image", e);
-            return null;
-        }
     }
 
     // ==== Navigation ====
