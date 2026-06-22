@@ -26,7 +26,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -569,7 +568,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             spinnerPane.setLoading(true);
             Task.composeAsync(() -> {
                 // TODO: Massive tasks may cause OOM.
-                EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
+                EnumMap<RemoteMod.DependencyType, Pair<Label, List<DependencyModItem>>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
                 List<Task<?>> queue = new ArrayList<>(version.getDependencies().size());
                 for (RemoteMod.Dependency dependency : version.getDependencies()) {
                     if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
@@ -577,11 +576,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     if (!dependencies.containsKey(dependency.getType())) {
-                        List<Node> list = new ArrayList<>();
                         Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
-                        list.add(title);
-                        dependencies.put(dependency.getType(), list);
+                        List<DependencyModItem> list = new ArrayList<>();
+                        dependencies.put(dependency.getType(), Pair.pair(title, list));
                     }
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
@@ -591,23 +589,22 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     return;
                                 }
                                 DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dep, selfPage.version);
-                                dependencies.get(dependency.getType()).add(dependencyModItem);
+                                dependencies.get(dependency.getType()).value().add(dependencyModItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
                 return Task.allOf(queue).thenSupplyAsync(() ->
-                        dependencies.values().stream().flatMap(nodes -> nodes.stream()
-                                .sorted((n1, n2) -> {
-                                    if (!(n1 instanceof DependencyModItem)) return -1;
-                                    if (!(n2 instanceof DependencyModItem)) return 1;
-                                    RemoteMod a1 = ((DependencyModItem) n1).addon, a2 = ((DependencyModItem) n2).addon;
+                        dependencies.values().stream().flatMap(nodes ->
+                                Stream.concat(Stream.of(nodes.key()), nodes.value().stream().sorted((n1, n2) -> {
+                                    if (n1 == n2) return 0;
+                                    RemoteMod a1 = n1.addon, a2 = n2.addon;
                                     boolean b1 = a1 == RemoteMod.BROKEN, b2 = a2 == RemoteMod.BROKEN;
                                     if (b1 && b2) return 0;
                                     if (b1) return 1;
                                     if (b2) return -1;
                                     return a1.getSlug().compareTo(a2.getSlug());
-                                })).toList()
+                                }))).toList()
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 spinnerPane.setLoading(false);
