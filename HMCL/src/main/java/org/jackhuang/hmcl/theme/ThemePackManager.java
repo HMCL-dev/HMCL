@@ -69,7 +69,7 @@ public final class ThemePackManager {
     private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
 
     /// Resource directory of the built-in default theme pack.
-    private static final String BUILTIN_THEME_PACK_RESOURCE_ROOT = "/assets/themes/hmcl";
+    private static final String BUILTIN_THEME_PACK_RESOURCE_ROOT = "/assets/themes/hmcl.builtin";
 
     /// Resource path of the built-in default theme-pack manifest.
     private static final String BUILTIN_THEME_PACK_MANIFEST_RESOURCE =
