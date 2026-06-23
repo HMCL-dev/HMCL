@@ -51,6 +51,7 @@
     "customThemeColor": true,
     "themeColorType": {
       "enum": [
+        "DEFAULT",
         "CUSTOM",
         "BACKGROUND"
       ]

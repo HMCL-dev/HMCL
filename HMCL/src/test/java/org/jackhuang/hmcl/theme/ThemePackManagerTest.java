@@ -469,6 +469,69 @@ public final class ThemePackManagerTest {
         }
     }
 
+    /// Tests that an explicit default background in an override resets the base background source.
+    @Test
+    public void testDefaultBackgroundOverrideResetsBaseBackground() throws Exception {
+        Path installedFile = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve("example.default-reset" + ThemePackExporter.FILE_EXTENSION);
+        Path installedCacheDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve(".cache")
+                .resolve("example.default-reset");
+        deleteRecursively(installedFile);
+        deleteRecursively(installedCacheDirectory);
+
+        try (SettingsScope ignored = new SettingsScope()) {
+            ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                    {
+                      "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                      "id": "example.default-reset",
+                      "version": "1.0.0",
+                      "name": "Default Reset",
+                      "theme": {
+                        "background": {
+                          "type": "paint",
+                          "paint": "#112233"
+                        },
+                        "overrides": [
+                          {
+                            "condition": {
+                              "brightness": "dark"
+                            },
+                            "background": {
+                              "type": "default"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                    """);
+            Theme theme = manifest.findTheme(null);
+            assertNotNull(theme);
+
+            Path tempDir = createTestDirectory("default-background-reset");
+            Path themePackFile = tempDir.resolve("default-reset" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackExporter.export(manifest, List.of(), themePackFile);
+            ThemePackManager.install(themePackFile);
+
+            ThemeReference reference = new ThemeReference("example.default-reset", null);
+            ThemePackManager.ResolvedBackground lightBackground = ThemePackManager.resolveThemeBackground(
+                    reference,
+                    new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
+            assertNotNull(lightBackground);
+            assertEquals(BackgroundType.PAINT, lightBackground.type());
+            assertEquals(Color.web("#112233"), lightBackground.paint());
+
+            ThemePackManager.ResolvedBackground darkBackground = ThemePackManager.resolveThemeBackground(
+                    reference,
+                    new ThemeResolveContext(Brightness.DARK, "linux", "en"));
+            assertNotNull(darkBackground);
+            assertEquals(BackgroundType.DEFAULT, darkBackground.type());
+        } finally {
+            deleteRecursively(installedFile);
+            deleteRecursively(installedCacheDirectory);
+        }
+    }
+
     /// Tests exporting the current launcher appearance as a theme-pack file.
     @Test
     public void testExportCurrentThemePack() throws Exception {

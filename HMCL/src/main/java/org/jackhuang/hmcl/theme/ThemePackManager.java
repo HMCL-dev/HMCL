@@ -578,11 +578,10 @@ public final class ThemePackManager {
     /// Returns the current launcher brightness as an explicit theme-pack directive, or `null` for auto mode.
     private static @Nullable Brightness currentControlledBrightness() throws IOException {
         String brightness = settings().themeBrightnessProperty().get();
-        if (StringUtils.isBlank(brightness)) {
+        if (StringUtils.isBlank(brightness) || "default".equalsIgnoreCase(brightness.trim())) {
             return resolveCurrentThemeBrightness(currentResolveContext());
         }
         return switch (brightness.trim().toLowerCase(Locale.ROOT)) {
-            case "default" -> resolveCurrentThemeBrightness(currentResolveContext());
             case "light" -> Brightness.LIGHT;
             case "dark" -> Brightness.DARK;
             default -> null;
@@ -665,7 +664,7 @@ public final class ThemePackManager {
     /// @param fallback the value used when the selected theme does not define one
     /// @return the effective title-bar transparency from the selected theme or fallback
     /// @throws IOException if the selected theme pack cannot be read
-    static boolean resolveCurrentTitleBarTransparent(ThemeResolveContext context, boolean fallback) throws IOException {
+    public static boolean resolveCurrentTitleBarTransparent(ThemeResolveContext context, boolean fallback) throws IOException {
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
         if (appearance == null || appearance.titleBar() == null || appearance.titleBar().transparent() == null) {
             return fallback;
@@ -749,10 +748,8 @@ public final class ThemePackManager {
     public static ResolvedBackground resolveCurrentBackgroundFallback(ThemeResolveContext context) throws IOException {
         Objects.requireNonNull(context);
 
-        BackgroundType fallbackType = Objects.requireNonNullElse(
-                settings().backgroundFallbackTypeProperty().get(),
-                BackgroundType.DEFAULT);
-        if (fallbackType == BackgroundType.DEFAULT) {
+        @Nullable BackgroundType fallbackType = settings().backgroundFallbackTypeProperty().get();
+        if (fallbackType == null || fallbackType == BackgroundType.DEFAULT) {
             ThemeReference reference = settings().getThemeOrDefault();
             @Nullable InstalledThemePack themePack = findInstalled(reference);
             @Nullable ThemeBackgroundSettings background = null;
@@ -935,6 +932,15 @@ public final class ThemePackManager {
             double fallbackOpacity) throws IOException {
         double opacity = Objects.requireNonNullElse(background.opacity(), fallbackOpacity);
         @Nullable ThemeBackground source = background.source();
+        if (source instanceof ThemeBackground.Default) {
+            return new ResolvedBackground(
+                    BackgroundType.DEFAULT,
+                    null,
+                    null,
+                    null,
+                    null,
+                    opacity);
+        }
         if (source instanceof ThemeBackground.Builtin builtin) {
             return new ResolvedBackground(
                     BackgroundType.BUILTIN,
@@ -1387,7 +1393,7 @@ public final class ThemePackManager {
         Double opacity = background.opacity();
         ThemeBackgroundSettings backgroundSettings = switch (background.type()) {
             case DEFAULT -> new ThemeBackgroundSettings(
-                    new ThemeBackground.Builtin(BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID),
+                    new ThemeBackground.Default(),
                     opacity);
             case BUILTIN -> createCurrentBuiltinBackground(opacity);
             case CUSTOM -> createCurrentImageBackground(assets, background.imagePath(), opacity);

@@ -218,6 +218,39 @@ public final class ThemePackManifestTest {
         assertEquals(0.75, background.opacity());
     }
 
+    /// Tests that explicit default backgrounds are parsed and serialized.
+    @Test
+    public void testParseDefaultBackground() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.default-background",
+                  "version": "1.0.0",
+                  "name": "Default Background",
+                  "theme": {
+                    "background": {
+                      "type": "default",
+                      "fallback": {
+                        "type": "default"
+                      }
+                    }
+                  }
+                }
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+        ThemeBackgroundSettings background = theme.appearance().background();
+        assertNotNull(background);
+
+        assertInstanceOf(ThemeBackground.Default.class, background.source());
+        assertInstanceOf(ThemeBackground.Default.class, background.fallback());
+        assertEquals("default", background.toJsonObject().get("type").getAsString());
+        assertEquals("default", background.toJsonObject()
+                .getAsJsonObject("fallback")
+                .get("type")
+                .getAsString());
+    }
+
     /// Tests that network background cache policies are parsed from theme packs.
     @Test
     public void testParseNetworkBackgroundCachePolicy() {

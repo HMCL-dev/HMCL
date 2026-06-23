@@ -397,12 +397,14 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     }
 
     /// The fallback source used when the selected launcher background cannot be loaded.
+    ///
+    /// [BackgroundType#DEFAULT] follows the selected theme fallback first, then falls back to HMCL's built-in wallpaper.
     @SerializedName("backgroundFallbackType")
-    private final ObjectProperty<BackgroundType> backgroundFallbackType =
+    private final ObjectProperty<@Nullable BackgroundType> backgroundFallbackType =
             new RawPreservingObjectProperty<>(BackgroundType.DEFAULT);
 
     /// Returns the launcher background fallback source type property.
-    public ObjectProperty<BackgroundType> backgroundFallbackTypeProperty() {
+    public ObjectProperty<@Nullable BackgroundType> backgroundFallbackTypeProperty() {
         return backgroundFallbackType;
     }
 

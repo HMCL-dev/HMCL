@@ -35,7 +35,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// parameters such as opacity are stored by [ThemeBackgroundSettings].
 @NotNullByDefault
 public sealed interface ThemeBackground
-        permits ThemeBackground.Builtin, ThemeBackground.Image,
+        permits ThemeBackground.Default, ThemeBackground.Builtin, ThemeBackground.Image,
         ThemeBackground.Network, ThemeBackground.Paint,
         ThemeBackground.ThemeColor, ThemeBackground.Patch {
     /// JSON member name for the background type.
@@ -84,6 +84,9 @@ public sealed interface ThemeBackground
 
         if (patch instanceof Patch partialPatch) {
             return partialPatch.applyOver(this);
+        }
+        if (patch instanceof Default) {
+            return patch;
         }
         if (patch instanceof Builtin) {
             return patch;
@@ -169,6 +172,7 @@ public sealed interface ThemeBackground
         }
 
         return switch (type.trim().replace('-', '_').toUpperCase(Locale.ROOT)) {
+            case "DEFAULT" -> new Default();
             case "BUILTIN" -> new Builtin(id);
             case "IMAGE" -> new Image(path);
             case "NETWORK" -> new Network(url, cache);
@@ -202,6 +206,22 @@ public sealed interface ThemeBackground
             throw new IllegalArgumentException("Theme background field is blank: " + field);
         }
         return trimmed;
+    }
+
+    /// A source that delegates to HMCL's launcher default background resolution.
+    @NotNullByDefault
+    record Default() implements ThemeBackground {
+        /// Adds this source to a JSON object.
+        @Override
+        public void addToJsonObject(JsonObject object) {
+            addType(object, "default");
+        }
+
+        /// Returns whether this source is empty.
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
     }
 
     /// A source that uses a launcher built-in wallpaper.
@@ -414,6 +434,9 @@ public sealed interface ThemeBackground
         /// @param base the base source
         /// @return the merged source
         private ThemeBackground applyOver(ThemeBackground base) {
+            if (base instanceof Default) {
+                return this;
+            }
             if (base instanceof Builtin) {
                 return base;
             }

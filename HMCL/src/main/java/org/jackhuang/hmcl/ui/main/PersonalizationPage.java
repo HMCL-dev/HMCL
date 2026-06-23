@@ -34,6 +34,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
+import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.setting.BackgroundType;
@@ -111,6 +112,34 @@ public class PersonalizationPage extends StackPane {
 
         int percent = (val - prevTickValue) > (nextTickValue - val) ? nextTickValue : prevTickValue;
         return percent / 100.;
+    }
+
+    /// Returns the localization suffix for a brightness value.
+    private static String toBrightnessName(Brightness brightness) {
+        return brightness == Brightness.DARK ? "dark" : "light";
+    }
+
+    /// Returns whether the stored brightness delegates to the selected theme.
+    private static boolean isDefaultThemeBrightness(@Nullable String brightness) {
+        return StringUtils.isBlank(brightness) || "default".equalsIgnoreCase(brightness.trim());
+    }
+
+    /// Returns the currently effective background loading policy.
+    private static BackgroundLoadPolicy getEffectiveBackgroundLoadPolicy() {
+        try {
+            return ThemePackManager.resolveCurrentBackgroundLoadPolicy(ThemePackManager.currentResolveContext());
+        } catch (IOException | RuntimeException e) {
+            return BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
+        }
+    }
+
+    /// Returns whether the title bar is currently effectively transparent.
+    private static boolean isEffectiveTitleTransparent() {
+        try {
+            return ThemePackManager.resolveCurrentTitleBarTransparent(ThemePackManager.currentResolveContext(), false);
+        } catch (IOException | RuntimeException e) {
+            return false;
+        }
     }
 
     /// Loads all theme choices shown by the theme selector.
@@ -584,8 +613,9 @@ public class PersonalizationPage extends StackPane {
         {
             var brightnessPane = new LineSelectButton<String>();
             brightnessPane.setTitle(i18n("settings.launcher.brightness"));
-            brightnessPane.setNullSafeConverter(name -> i18n("settings.launcher.brightness." + name));
-            brightnessPane.setItems("default", "auto", "light", "dark");
+            brightnessPane.setConverter(name -> i18n("settings.launcher.brightness."
+                    + (isDefaultThemeBrightness(name) ? toBrightnessName(Themes.getCurrentBrightness()) : name)));
+            brightnessPane.setItems("auto", "light", "dark");
             brightnessPane.valueProperty().bindBidirectional(settings().themeBrightnessProperty());
 
             themeAppearanceList.getContent().add(brightnessPane);
@@ -638,14 +668,12 @@ public class PersonalizationPage extends StackPane {
         {
             var colorStylePane = new LineSelectButton<ColorStyle>();
             colorStylePane.setTitle(i18n("settings.launcher.theme_color_style"));
-            colorStylePane.setConverter(style -> style == null
-                    ? i18n("settings.launcher.theme_color_style.default")
-                    : i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT)));
+            colorStylePane.setConverter(style -> i18n("settings.launcher.theme_color_style."
+                    + Objects.requireNonNullElse(style, Themes.getTheme().colorStyle()).name().toLowerCase(Locale.ROOT)));
             colorStylePane.setDescriptionConverter(style -> style == null
                     ? ""
                     : i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT) + ".desc"));
-            colorStylePane.setItems(Arrays.asList(
-                    null,
+            colorStylePane.setItems(
                     ColorStyle.FIDELITY,
                     ColorStyle.TONAL_SPOT,
                     ColorStyle.VIBRANT,
@@ -656,7 +684,7 @@ public class PersonalizationPage extends StackPane {
 
                     ColorStyle.FRUIT_SALAD,
                     ColorStyle.RAINBOW
-            ));
+            );
             colorStylePane.valueProperty().bindBidirectional(settings().themeColorStyleProperty());
 
             themeAppearanceList.getContent().add(colorStylePane);
@@ -734,23 +762,42 @@ public class PersonalizationPage extends StackPane {
             backgroundFallbackSublist.setHasSubtitle(true);
 
             MultiFileItem<BackgroundType> backgroundFallbackItem = new MultiFileItem<>();
-            backgroundFallbackItem.setFallbackData(BackgroundType.DEFAULT);
+            backgroundFallbackItem.setFallbackData(BackgroundType.BUILTIN);
             backgroundFallbackItem.loadChildren(Arrays.asList(
-                    new MultiFileItem.Option<>(i18n("launcher.background.fallback.default"), BackgroundType.DEFAULT),
                     new MultiFileItem.Option<>(i18n("launcher.background.fallback.builtin"), BackgroundType.BUILTIN),
                     new MultiFileItem.Option<>(i18n("launcher.background.fallback.theme_color"), BackgroundType.THEME_COLOR),
                     new MultiFileItem.PaintOption<>(i18n("launcher.background.fallback.paint"), BackgroundType.PAINT)
                             .bindBidirectional(settings().backgroundFallbackPaintProperty())
             ));
-            backgroundFallbackItem.selectedDataProperty().bindBidirectional(settings().backgroundFallbackTypeProperty());
+            boolean[] updatingBackgroundFallback = {false};
+            @Nullable BackgroundType configuredFallbackType = settings().backgroundFallbackTypeProperty().get();
+            backgroundFallbackItem.setSelectedData(
+                    configuredFallbackType == null || configuredFallbackType == BackgroundType.DEFAULT
+                            ? BackgroundType.BUILTIN
+                            : configuredFallbackType);
+            backgroundFallbackItem.selectedDataProperty().addListener((observable, oldValue, newValue) -> {
+                if (!updatingBackgroundFallback[0]) {
+                    settings().backgroundFallbackTypeProperty().set(newValue);
+                }
+            });
+            settings().backgroundFallbackTypeProperty().addListener((observable, oldValue, newValue) -> {
+                updatingBackgroundFallback[0] = true;
+                try {
+                    backgroundFallbackItem.setSelectedData(
+                            newValue == null || newValue == BackgroundType.DEFAULT
+                                    ? BackgroundType.BUILTIN
+                                    : newValue);
+                } finally {
+                    updatingBackgroundFallback[0] = false;
+                }
+            });
             backgroundFallbackSublist.getContent().setAll(backgroundFallbackItem);
             backgroundFallbackSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         BackgroundType type = Lang.requireNonNullElse(
                                 backgroundFallbackItem.selectedDataProperty().get(),
-                                BackgroundType.DEFAULT);
+                                BackgroundType.BUILTIN);
 
                         return switch (type) {
-                            case DEFAULT -> i18n("launcher.background.fallback.default");
                             case PAINT -> {
                                 @Nullable Paint backgroundFallbackPaint =
                                         settings().backgroundFallbackPaintProperty().get();
@@ -767,13 +814,12 @@ public class PersonalizationPage extends StackPane {
 
             var backgroundLoadPolicyPane = new LineSelectButton<BackgroundLoadPolicy>();
             backgroundLoadPolicyPane.setTitle(i18n("launcher.background.load_policy"));
-            backgroundLoadPolicyPane.setConverter(policy -> policy == null
-                    ? i18n("launcher.background.load_policy.default")
-                    : i18n("launcher.background.load_policy." + policy.name().toLowerCase(Locale.ROOT)));
-            backgroundLoadPolicyPane.setItems(Arrays.asList(
-                    null,
+            backgroundLoadPolicyPane.setConverter(policy -> i18n("launcher.background.load_policy."
+                    + Objects.requireNonNullElse(policy, getEffectiveBackgroundLoadPolicy())
+                    .name().toLowerCase(Locale.ROOT)));
+            backgroundLoadPolicyPane.setItems(
                     BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
-                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING));
+                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING);
             backgroundLoadPolicyPane.valueProperty().bindBidirectional(settings().backgroundLoadPolicyProperty());
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
@@ -805,7 +851,6 @@ public class PersonalizationPage extends StackPane {
                     settings().networkBackgroundImageUrlProperty(),
                     settings().customBackgroundPaintProperty()));
 
-            LineToggleButton opacityDefaultButton = new LineToggleButton();
             HBox opacityItem = new HBox(8);
             {
                 opacityItem.setAlignment(Pos.CENTER);
@@ -829,31 +874,13 @@ public class PersonalizationPage extends StackPane {
                 textOpacity.textProperty().bind(valueBinding);
                 slider.setValueFactory(s -> valueBinding);
 
-                opacityDefaultButton.setTitle(i18n("settings.launcher.background.settings.opacity.default"));
-                opacityDefaultButton.setSelected(configuredOpacity == null);
-                slider.disableProperty().bind(opacityDefaultButton.selectedProperty());
-
-                opacityDefaultButton.selectedProperty().addListener((observable, oldValue, selected) -> {
-                    if (selected) {
-                        settings().backgroundOpacityProperty().set(null);
-                    } else {
-                        settings().backgroundOpacityProperty().set(snapOpacity(slider.getValue()));
-                    }
-                });
                 settings().backgroundOpacityProperty().addListener((observable, oldValue, newValue) -> {
-                    boolean useDefault = newValue == null;
-                    if (opacityDefaultButton.isSelected() != useDefault) {
-                        opacityDefaultButton.setSelected(useDefault);
-                    }
                     if (newValue != null) {
                         slider.setValue(newValue * 100);
                     }
                 });
-                slider.valueProperty().addListener((observable, oldValue, newValue) -> {
-                    if (!opacityDefaultButton.isSelected()) {
-                        settings().backgroundOpacityProperty().set(snapOpacity(newValue.doubleValue()));
-                    }
-                });
+                slider.valueProperty().addListener((observable, oldValue, newValue) ->
+                        settings().backgroundOpacityProperty().set(snapOpacity(newValue.doubleValue())));
 
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
@@ -861,7 +888,6 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.getContent().setAll(backgroundItem);
             themeAppearanceList.getContent().addAll(
                     backgroundSublist,
-                    opacityDefaultButton,
                     opacityItem);
             backgroundLoadingList.getContent().setAll(
                     networkBackgroundCacheButton,
@@ -873,10 +899,11 @@ public class PersonalizationPage extends StackPane {
         {
             var titleTransparentPane = new LineSelectButton<Boolean>();
             titleTransparentPane.setTitle(i18n("settings.launcher.title_transparent"));
-            titleTransparentPane.setConverter(value -> value == null
-                    ? i18n("settings.launcher.title_transparent.default")
-                    : i18n("settings.launcher.title_transparent." + (value ? "enabled" : "disabled")));
-            titleTransparentPane.setItems(Arrays.asList(null, Boolean.TRUE, Boolean.FALSE));
+            titleTransparentPane.setConverter(value -> {
+                boolean transparent = Objects.requireNonNullElse(value, isEffectiveTitleTransparent());
+                return i18n("settings.launcher.title_transparent." + (transparent ? "enabled" : "disabled"));
+            });
+            titleTransparentPane.setItems(Boolean.TRUE, Boolean.FALSE);
             titleTransparentPane.valueProperty().bindBidirectional(settings().titleTransparentProperty());
             themeAppearanceList.getContent().add(titleTransparentPane);
         }

@@ -64,6 +64,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.MacOSNativeUtils;
 import org.jackhuang.hmcl.ui.WindowsNativeUtils;
 import org.jackhuang.hmcl.util.MathUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OSVersion;
@@ -319,21 +320,18 @@ public final class Themes {
     /// @return the effective launcher brightness
     public static Brightness getCurrentBrightness() {
         @Nullable String themeBrightness = settings().themeBrightnessProperty().get();
-        if (themeBrightness == null) {
-            themeBrightness = "default";
+        if (StringUtils.isBlank(themeBrightness) || "default".equalsIgnoreCase(themeBrightness.trim())) {
+            Brightness contextBrightness = getThemeConditionBrightness();
+            try {
+                return ThemePackManager.resolveCurrentThemeBrightness(
+                        ThemeResolveContext.current(contextBrightness),
+                        contextBrightness);
+            } catch (IOException | RuntimeException e) {
+                return contextBrightness;
+            }
         }
 
         return switch (themeBrightness.toLowerCase(Locale.ROOT).trim()) {
-            case "default" -> {
-                Brightness contextBrightness = getThemeConditionBrightness();
-                try {
-                    yield ThemePackManager.resolveCurrentThemeBrightness(
-                            ThemeResolveContext.current(contextBrightness),
-                            contextBrightness);
-                } catch (IOException | RuntimeException e) {
-                    yield contextBrightness;
-                }
-            }
             case "auto" -> getAutomaticBrightness();
             case "dark" -> Brightness.DARK;
             case "light" -> Brightness.LIGHT;

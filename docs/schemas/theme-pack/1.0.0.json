@@ -296,6 +296,7 @@
       "patternProperties": {
         "^type$": {
           "enum": [
+            "default",
             "builtin",
             "image",
             "network",
@@ -344,6 +345,7 @@
       "patternProperties": {
         "^type$": {
           "enum": [
+            "default",
             "builtin",
             "paint",
             "theme_color"
