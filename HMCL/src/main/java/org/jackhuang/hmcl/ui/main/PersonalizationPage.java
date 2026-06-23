@@ -44,12 +44,18 @@ import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.setting.UserSettings;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.Theme;
+import org.jackhuang.hmcl.theme.ThemeAppearance;
+import org.jackhuang.hmcl.theme.ThemeBackgroundSettings;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
 import org.jackhuang.hmcl.theme.ThemePackManifest;
 import org.jackhuang.hmcl.theme.ThemePackManager;
+import org.jackhuang.hmcl.theme.ThemeResolveContext;
 import org.jackhuang.hmcl.theme.ThemeSelection;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -58,6 +64,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -75,6 +82,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
@@ -367,7 +375,9 @@ public class PersonalizationPage extends StackPane {
         ///
         /// @return `true` if a selection was applied, otherwise `false`
         /// @throws IOException if an installed theme cannot be applied
-        private boolean apply() throws IOException {
+        private boolean apply(ThemeResolveContext context) throws IOException {
+            Objects.requireNonNull(context);
+
             if (customAppearance) {
                 settings().themeProperty().set(null);
                 return true;
@@ -380,13 +390,119 @@ public class PersonalizationPage extends StackPane {
                 return false;
             }
 
-            ThemePackManager.apply(themePack, theme);
+            ThemePackManager.apply(themePack.file(), themePack.manifest(), theme, context);
             return true;
+        }
+
+        /// Resolves the network background to preload before applying this choice.
+        ///
+        /// @param context the theme condition context used for both preload and apply
+        /// @return the resolved network background, or `null` when no preload is required
+        private @Nullable ThemePackManager.ResolvedBackground resolveNetworkBackgroundToPreload(
+                ThemeResolveContext context) throws IOException {
+            Objects.requireNonNull(context);
+
+            if (themePack == null || theme == null || selection == null) {
+                return null;
+            }
+
+            ThemeAppearance appearance = theme.resolve(context);
+            @Nullable ThemeBackgroundSettings background = appearance.background();
+            if (background == null) {
+                return null;
+            }
+
+            BackgroundLoadPolicy loadPolicy = Objects.requireNonNullElse(
+                    background.loadPolicy(),
+                    Objects.requireNonNullElse(
+                            settings().backgroundLoadPolicyProperty().get(),
+                            BackgroundLoadPolicy.WAIT_FOR_BACKGROUND));
+            if (loadPolicy != BackgroundLoadPolicy.WAIT_FOR_BACKGROUND) {
+                return null;
+            }
+
+            @Nullable ThemePackManager.ResolvedBackground resolvedBackground =
+                    ThemePackManager.resolveThemeBackground(selection, context);
+            return resolvedBackground != null && resolvedBackground.type() == BackgroundType.NETWORK
+                    ? resolvedBackground
+                    : null;
         }
 
         /// Returns a display name for apply-result messages.
         private String applyDisplayName() {
             return theme != null && themePack != null ? getThemeDisplayName(themePack.manifest(), theme) : title;
+        }
+    }
+
+    /// Applies a selected theme choice, preloading its network background first when required by the load policy.
+    ///
+    /// @param choice the selected theme choice
+    /// @param refreshSelectedTheme refreshes the selector after the apply attempt
+    private static void applyThemeChoice(ThemeChoice choice, Runnable refreshSelectedTheme) {
+        Objects.requireNonNull(choice);
+        Objects.requireNonNull(refreshSelectedTheme);
+
+        ThemeResolveContext context = ThemePackManager.currentResolveContext();
+        @Nullable ThemePackManager.ResolvedBackground backgroundToPreload;
+        try {
+            backgroundToPreload = choice.resolveNetworkBackgroundToPreload(context);
+        } catch (IOException | RuntimeException e) {
+            showThemePackError(i18n("theme_pack.apply.failed"), e);
+            refreshSelectedTheme.run();
+            return;
+        }
+
+        if (backgroundToPreload == null) {
+            applyThemeChoiceNow(choice, context, refreshSelectedTheme, null);
+            return;
+        }
+
+        Task<Themes.LoadedBackground> task = Task.supplyAsync(
+                i18n("theme_pack.apply.prepare_background"),
+                Schedulers.io(),
+                () -> Themes.loadResolvedBackground(backgroundToPreload));
+        Controllers.taskDialog(task.whenComplete(Schedulers.javafx(), (loadedBackground, exception) -> {
+                    if (exception != null) {
+                        if (exception instanceof CancellationException) {
+                            Controllers.showToast(i18n("message.cancelled"));
+                        } else {
+                            showThemePackError(i18n("theme_pack.apply.failed"), exception);
+                        }
+                        refreshSelectedTheme.run();
+                        return;
+                    }
+
+                    applyThemeChoiceNow(choice, context, refreshSelectedTheme, loadedBackground);
+                }),
+                i18n("theme_pack.apply.preparing"),
+                TaskCancellationAction.NORMAL);
+    }
+
+    /// Applies a theme choice on the JavaFX thread.
+    ///
+    /// @param choice the selected theme choice
+    /// @param context the theme condition context
+    /// @param refreshSelectedTheme refreshes the selector after the apply attempt
+    /// @param loadedBackground the preloaded background, or `null` when not available
+    private static void applyThemeChoiceNow(
+            ThemeChoice choice,
+            ThemeResolveContext context,
+            Runnable refreshSelectedTheme,
+            @Nullable Themes.LoadedBackground loadedBackground) {
+        try {
+            applyingTheme = true;
+            boolean applied = choice.apply(context);
+            if (applied && loadedBackground != null) {
+                Themes.applyLoadedBackground(loadedBackground);
+            }
+            if (applied && !choice.customAppearance()) {
+                Controllers.showToast(i18n("theme_pack.apply.success", choice.applyDisplayName()));
+            }
+        } catch (IOException | RuntimeException e) {
+            showThemePackError(i18n("theme_pack.apply.failed"), e);
+        } finally {
+            applyingTheme = false;
+            refreshSelectedTheme.run();
         }
     }
 
@@ -491,18 +607,7 @@ public class PersonalizationPage extends StackPane {
                     return;
                 }
 
-                try {
-                    applyingTheme = true;
-                    boolean applied = choice.apply();
-                    if (applied && !choice.customAppearance()) {
-                        Controllers.showToast(i18n("theme_pack.apply.success", choice.applyDisplayName()));
-                    }
-                } catch (IOException | RuntimeException e) {
-                    showThemePackError(i18n("theme_pack.apply.failed"), e);
-                } finally {
-                    applyingTheme = false;
-                    refreshSelectedTheme.run();
-                }
+                applyThemeChoice(choice, refreshSelectedTheme);
             });
             FXUtils.onChange(settings().themeProperty(), ignored -> reloadThemeChoices.run());
             reloadThemeChoices.run();

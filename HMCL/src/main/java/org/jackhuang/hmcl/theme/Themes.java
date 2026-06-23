@@ -234,7 +234,7 @@ public final class Themes {
     /// @param themeColorBackground whether the background should be rebuilt from the current theme color scheme
     /// @param wallpaperThemeColor the color extracted from the actual wallpaper image, or `null` when unavailable
     /// @param fallbackBackground whether this background is the configured fallback background
-    private record LoadedBackground(
+    public record LoadedBackground(
             Background background,
             @Nullable Image image,
             @Nullable Paint paint,
@@ -251,7 +251,7 @@ public final class Themes {
         /// @param themeColorBackground whether the background should be rebuilt from the current theme color scheme
         /// @param wallpaperThemeColor the color extracted from the actual wallpaper image, or `null` when unavailable
         /// @param fallbackBackground whether this background is the configured fallback background
-        private LoadedBackground {
+        public LoadedBackground {
             Objects.requireNonNull(background);
         }
     }
@@ -461,6 +461,14 @@ public final class Themes {
         wallpaperThemeColor.set(newLoadedBackground.wallpaperThemeColor());
     }
 
+    /// Applies a preloaded background and ignores older pending background refreshes.
+    ///
+    /// @param newLoadedBackground the preloaded background
+    public static void applyLoadedBackground(LoadedBackground newLoadedBackground) {
+        Objects.requireNonNull(newLoadedBackground);
+        applyLoadedBackground(newLoadedBackground, ++backgroundUpdateCount);
+    }
+
     /// Loads the current JavaFX launcher background.
     private static LoadedBackground loadBackground() {
         @Nullable LoadedBackground loaded = tryLoadBackground();
@@ -594,6 +602,15 @@ public final class Themes {
             return null;
         }
         return createImageBackground(image, resolvedBackground.opacity());
+    }
+
+    /// Loads a resolved theme-pack background without changing the current launcher background.
+    ///
+    /// @param resolvedBackground the resolved background to load
+    /// @return the loaded background, or `null` if it cannot be loaded
+    public static @Nullable LoadedBackground loadResolvedBackground(ThemePackManager.ResolvedBackground resolvedBackground) {
+        Objects.requireNonNull(resolvedBackground);
+        return tryCreateResolvedBackground(resolvedBackground);
     }
 
     /// Loads the deterministic fallback background configured by launcher settings.
