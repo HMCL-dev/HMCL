@@ -52,7 +52,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -64,6 +67,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class LogWindow extends Stage {
+    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     private static final Log4jLevel[] LEVELS = {Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
 
@@ -162,6 +166,8 @@ public final class LogWindow extends Stage {
         private final BooleanProperty autoScroll = new SimpleBooleanProperty();
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
+        private final JFXButton btnAlwaysOnTop = FXUtils.newToggleButton4(SVG.KEEP, 20);
+        private final Stage stage = LogWindow.this;
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
         private final StackPane stackPane = new StackPane();
 
@@ -176,6 +182,12 @@ public final class LogWindow extends Stage {
                 buttonText[i] = new SimpleStringProperty();
                 showLevel[i] = new SimpleBooleanProperty(true);
             }
+
+            btnAlwaysOnTop.setOnAction(e -> stage.setAlwaysOnTop(!stage.isAlwaysOnTop()));
+            btnAlwaysOnTop.getStyleClass().add("always-on-top-button");
+            stage.alwaysOnTopProperty().addListener((observable, oldValue, newValue) -> {
+                btnAlwaysOnTop.pseudoClassStateChanged(SELECTED, newValue);
+            });
 
             cboLines.getItems().setAll(500, 2000, 5000, 10000);
             cboLines.setValue(Log.getLogLines());
@@ -280,7 +292,9 @@ public final class LogWindow extends Stage {
                     hBox.setAlignment(Pos.CENTER_LEFT);
 
                     Label label = new Label(i18n("logwindow.show_lines"));
-                    hBox.getChildren().setAll(label, control.cboLines);
+
+                    FXUtils.installFastTooltip(control.btnAlwaysOnTop, i18n("logwindow.always_on_top"));
+                    hBox.getChildren().setAll(control.btnAlwaysOnTop, label, control.cboLines);
 
                     borderPane.setLeft(hBox);
                 }
