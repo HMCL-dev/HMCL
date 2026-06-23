@@ -1375,15 +1375,15 @@ public class PersonalizationPage extends StackPane {
                     settings().networkBackgroundImageUrlProperty(),
                     settings().customBackgroundPaintProperty()));
 
-            ComponentSublist opacitySublist = new ComponentSublist();
+            LinePane opacityPane = new LinePane();
             {
-                opacitySublist.setTitle(i18n("settings.launcher.background.settings.opacity"));
-                opacitySublist.setHasSubtitle(true);
+                opacityPane.setTitle(i18n("settings.launcher.background.settings.opacity"));
 
                 HBox sliderBox = new HBox(8);
                 sliderBox.setAlignment(Pos.CENTER);
 
                 JFXSlider slider = new JFXSlider(0, 100, settings().backgroundOpacityProperty().get() * 100);
+                slider.setPrefWidth(220);
                 slider.setShowTickMarks(true);
                 slider.setMajorTickUnit(10);
                 slider.setMinorTickCount(1);
@@ -1401,7 +1401,7 @@ public class PersonalizationPage extends StackPane {
                 sliderBox.getChildren().setAll(slider, textOpacity);
 
                 JFXButton inheritButton = createThemeAppearanceOverrideButton();
-                opacitySublist.setTitleRight(inheritButton);
+                opacityPane.setTitleTrailing(inheritButton);
                 Holder<Boolean> updatingOpacity = new Holder<>(false);
                 InvalidationListener refreshOpacity = ignored -> {
                     if (updatingOpacity.value) {
@@ -1448,7 +1448,7 @@ public class PersonalizationPage extends StackPane {
                     event.consume();
                 });
 
-                opacitySublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
+                opacityPane.subtitleProperty().bind(Bindings.createStringBinding(() -> {
                             boolean overridden = isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
                             double opacity = overridden
                                     ? settings().backgroundOpacityProperty().get()
@@ -1460,14 +1460,14 @@ public class PersonalizationPage extends StackPane {
                         settings().getThemeAppearanceOverrides(),
                         settings().themeProperty(),
                         settings().themeBrightnessProperty()));
-                opacitySublist.getContent().setAll(sliderBox);
+                opacityPane.setRight(sliderBox);
                 refreshOpacity.invalidated(null);
             }
 
             backgroundSublist.getContent().setAll(backgroundItem);
             themeAppearanceList.getContent().addAll(
                     backgroundSublist,
-                    opacitySublist);
+                    opacityPane);
             backgroundLoadingList.getContent().setAll(
                     networkBackgroundCacheButton,
                     backgroundFallbackSublist,
