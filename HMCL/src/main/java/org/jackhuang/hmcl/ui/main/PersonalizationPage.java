@@ -31,6 +31,7 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
@@ -305,12 +306,12 @@ public class PersonalizationPage extends StackPane {
 
     /// A selectable launcher theme or the local custom appearance.
     ///
-    /// @param title             the label shown by the selector
-    /// @param description       the optional secondary text shown in the selector popup
-    /// @param customAppearance  whether this item represents the local custom appearance
-    /// @param themePack         the installed theme pack, or `null` for non-pack choices
-    /// @param theme             the installed theme, or `null` for non-pack choices
-    /// @param selection         the stored selection reference, or `null` for the local custom appearance
+    /// @param title            the label shown by the selector
+    /// @param description      the optional secondary text shown in the selector popup
+    /// @param customAppearance whether this item represents the local custom appearance
+    /// @param themePack        the installed theme pack, or `null` for non-pack choices
+    /// @param theme            the installed theme, or `null` for non-pack choices
+    /// @param selection        the stored selection reference, or `null` for the local custom appearance
     private record ThemeChoice(
             String title,
             @Nullable String description,
@@ -414,7 +415,7 @@ public class PersonalizationPage extends StackPane {
 
     /// Applies a selected theme choice, preloading its network background first when required by the load policy.
     ///
-    /// @param choice the selected theme choice
+    /// @param choice               the selected theme choice
     /// @param refreshSelectedTheme refreshes the selector after the apply attempt
     private static void applyThemeChoice(ThemeChoice choice, Runnable refreshSelectedTheme) {
         Objects.requireNonNull(choice);
@@ -458,10 +459,10 @@ public class PersonalizationPage extends StackPane {
 
     /// Applies a theme choice on the JavaFX thread.
     ///
-    /// @param choice the selected theme choice
-    /// @param context the theme condition context
+    /// @param choice               the selected theme choice
+    /// @param context              the theme condition context
     /// @param refreshSelectedTheme refreshes the selector after the apply attempt
-    /// @param loadedBackground the preloaded background, or `null` when not available
+    /// @param loadedBackground     the preloaded background, or `null` when not available
     private static void applyThemeChoiceNow(
             ThemeChoice choice,
             ThemeResolveContext context,
@@ -780,12 +781,9 @@ public class PersonalizationPage extends StackPane {
                                 BackgroundType.DEFAULT);
 
                         return switch (type) {
-                            case DEFAULT -> {
-                                @Nullable ThemeSelection selectedTheme = settings().themeProperty().get();
-                                yield selectedTheme != null
-                                        ? getMissingThemeChoiceDescription(selectedTheme)
-                                        : i18n("launcher.background.default");
-                            }
+                            case DEFAULT -> settings().themeProperty().get() == null
+                                    ? i18n("launcher.background.default")
+                                    : i18n("launcher.background.theme");
                             case THEME_COLOR -> i18n("launcher.background.theme_color");
                             case BUILTIN -> getBuiltinBackgroundName(settings().builtinBackgroundNameProperty().get());
                             case CUSTOM -> settings().customBackgroundImagePathProperty().get();
