@@ -1,16 +1,16 @@
 {
   "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
-  "id": "hmcl.builtin.default",
+  "id": "hmcl.builtin",
   "version": "1.0.0",
   "name": {
-    "default": "Default",
-    "zh-Hans": "默认",
-    "zh-Hant": "預設"
+    "default": "HMCL",
+    "zh-Hans": "HMCL",
+    "zh-Hant": "HMCL"
   },
   "description": {
-    "default": "Built-in launcher default appearance",
-    "zh-Hans": "启动器内置默认外观",
-    "zh-Hant": "啟動器內建預設外觀"
+    "default": "Built-in launcher themes",
+    "zh-Hans": "启动器内置主题",
+    "zh-Hant": "啟動器內建主題"
   },
   "authors": [
     {

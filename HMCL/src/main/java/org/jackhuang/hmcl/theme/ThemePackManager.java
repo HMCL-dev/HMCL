@@ -69,7 +69,7 @@ public final class ThemePackManager {
     private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
 
     /// Resource directory of the built-in default theme pack.
-    private static final String BUILTIN_THEME_PACK_RESOURCE_ROOT = "/assets/theme-packs/default";
+    private static final String BUILTIN_THEME_PACK_RESOURCE_ROOT = "/assets/themes/hmcl";
 
     /// Resource path of the built-in default theme-pack manifest.
     private static final String BUILTIN_THEME_PACK_MANIFEST_RESOURCE =
@@ -77,7 +77,7 @@ public final class ThemePackManager {
 
     /// Built-in default theme reference.
     public static final ThemeReference BUILTIN_DEFAULT_THEME_REFERENCE =
-            new ThemeReference("hmcl.builtin.default", "DEFAULT");
+            new ThemeReference("hmcl.builtin", "DEFAULT");
 
     /// Built-in default theme pack.
     private static final InstalledThemePack BUILTIN_THEME_PACK = loadBuiltinThemePack();

@@ -94,7 +94,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class Themes {
     /// Resource path for the launcher's default built-in background.
     private static final String BUILTIN_DEFAULT_BACKGROUND_RESOURCE =
-            "/assets/theme-packs/default/assets/background/background.jpg";
+            "/assets/themes/hmcl/assets/background/background.jpg";
 
     /// The seed color extracted from the last loaded wallpaper image.
     private static final ReadOnlyObjectWrapper<@Nullable ThemeColor> wallpaperThemeColor = new ReadOnlyObjectWrapper<>();
