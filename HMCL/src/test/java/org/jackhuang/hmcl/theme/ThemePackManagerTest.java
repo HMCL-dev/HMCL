@@ -542,6 +542,62 @@ public final class ThemePackManagerTest {
         }
     }
 
+    /// Tests resolving a target theme background without applying existing launcher overrides.
+    @Test
+    public void testResolveTargetThemeBackgroundIgnoresLauncherOverrides() throws Exception {
+        Path installedFile = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve("example.target-background" + ThemePackExporter.FILE_EXTENSION);
+        Path installedCacheDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve(".cache")
+                .resolve("example.target-background");
+        deleteRecursively(installedFile);
+        deleteRecursively(installedCacheDirectory);
+
+        try (SettingsScope ignored = new SettingsScope()) {
+            ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                    {
+                      "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                      "id": "example.target-background",
+                      "version": "1.0.0",
+                      "name": "Target Background",
+                      "theme": {
+                        "background": {
+                          "type": "paint",
+                          "paint": "#112233",
+                          "opacity": 0.75
+                        }
+                      }
+                    }
+                    """);
+            Theme theme = manifest.findTheme(null);
+            assertNotNull(theme);
+
+            Path tempDir = createTestDirectory("target-background");
+            Path themePackFile = tempDir.resolve("target-background" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackExporter.export(manifest, List.of(), themePackFile);
+
+            ThemePackManager.InstalledThemePack installedThemePack = ThemePackManager.install(themePackFile);
+            LauncherSettings settings = SettingsManager.settings();
+            settings.backgroundOpacityProperty().set(0.35);
+            overrideThemeAppearance(settings, LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
+
+            ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "linux", "en");
+            ThemeReference reference = new ThemeReference("example.target-background", null);
+            ThemePackManager.ResolvedBackground selectedBackground =
+                    ThemePackManager.resolveThemeBackground(reference, context);
+            assertNotNull(selectedBackground);
+            assertEquals(0.35, selectedBackground.opacity());
+
+            ThemePackManager.ResolvedBackground targetBackground =
+                    ThemePackManager.resolveThemeBackground(installedThemePack.file(), theme, context);
+            assertNotNull(targetBackground);
+            assertEquals(0.75, targetBackground.opacity());
+        } finally {
+            deleteRecursively(installedFile);
+            deleteRecursively(installedCacheDirectory);
+        }
+    }
+
     /// Tests exporting the current launcher appearance as a theme-pack file.
     @Test
     public void testExportCurrentThemePack() throws Exception {

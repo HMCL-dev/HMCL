@@ -735,7 +735,7 @@ public class PersonalizationPage extends StackPane {
                 ThemeResolveContext context) throws IOException {
             Objects.requireNonNull(context);
 
-            if (themePack == null || theme == null || reference == null) {
+            if (themePack == null || theme == null) {
                 return null;
             }
 
@@ -747,15 +747,13 @@ public class PersonalizationPage extends StackPane {
 
             BackgroundLoadPolicy loadPolicy = Objects.requireNonNullElse(
                     background.loadPolicy(),
-                    Objects.requireNonNullElse(
-                            settings().backgroundLoadPolicyProperty().get(),
-                            BackgroundLoadPolicy.WAIT_FOR_BACKGROUND));
+                    BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
             if (loadPolicy != BackgroundLoadPolicy.WAIT_FOR_BACKGROUND) {
                 return null;
             }
 
             @Nullable ThemePackManager.ResolvedBackground resolvedBackground =
-                    ThemePackManager.resolveThemeBackground(reference, context);
+                    ThemePackManager.resolveThemeBackground(themePack.file(), theme, context);
             return resolvedBackground != null && resolvedBackground.type() == BackgroundType.NETWORK
                     ? resolvedBackground
                     : null;

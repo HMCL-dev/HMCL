@@ -492,8 +492,8 @@ public final class ThemePackManager {
 
         ThemeReference reference = new ThemeReference(manifest.id(), theme.id());
         LauncherSettings currentSettings = settings();
-        currentSettings.themeProperty().set(reference);
         currentSettings.getThemeAppearanceOverrides().clear();
+        currentSettings.themeProperty().set(reference);
     }
 
     /// Exports the current launcher appearance to a theme-pack file.
@@ -952,12 +952,10 @@ public final class ThemePackManager {
             return null;
         }
 
-        ThemeAppearance appearance = theme.resolve(context);
-        @Nullable ThemeBackgroundSettings background = appearance.background();
-        if (background == null) {
+        @Nullable ResolvedBackground resolved = resolveThemeBackground(themePack.file(), theme, context);
+        if (resolved == null) {
             return null;
         }
-        ResolvedBackground resolved = resolveBackground(themePack.file(), background, 1.0);
         if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
             resolved = resolved.withOpacity(currentBackgroundOpacity());
         }
@@ -966,6 +964,29 @@ public final class ThemePackManager {
             resolved = resolved.withNetworkImageCachePolicy(currentNetworkBackgroundImageCachePolicy());
         }
         return resolved;
+    }
+
+    /// Resolves the background contributed by one theme without applying launcher appearance overrides.
+    ///
+    /// @param themePackFile the installed theme-pack file
+    /// @param theme the theme to resolve
+    /// @param context the condition resolution context
+    /// @return the resolved background, or `null` when the theme does not define one
+    /// @throws IOException if the theme background cannot be resolved
+    public static @Nullable ResolvedBackground resolveThemeBackground(
+            Path themePackFile,
+            Theme theme,
+            ThemeResolveContext context) throws IOException {
+        Objects.requireNonNull(themePackFile);
+        Objects.requireNonNull(theme);
+        Objects.requireNonNull(context);
+
+        ThemeAppearance appearance = theme.resolve(context);
+        @Nullable ThemeBackgroundSettings background = appearance.background();
+        if (background == null) {
+            return null;
+        }
+        return resolveBackground(themePackFile, background, 1.0);
     }
 
     /// Resolves a concrete launcher background from a theme-pack background object.
