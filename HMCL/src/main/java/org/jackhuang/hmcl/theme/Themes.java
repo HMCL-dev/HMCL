@@ -430,14 +430,12 @@ public final class Themes {
     /// Loads the initial JavaFX launcher background synchronously before the UI uses it.
     private static void loadInitialBackground() {
         final int currentCount = ++backgroundUpdateCount;
-        wallpaperThemeColor.set(null);
         applyLoadedBackground(loadBackground(), currentCount);
     }
 
     /// Refreshes the current JavaFX launcher background asynchronously.
     public static void refreshBackground() {
         final int currentCount = ++backgroundUpdateCount;
-        wallpaperThemeColor.set(null);
         if (getBackgroundLoadPolicy() == BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING) {
             applyLoadedBackground(loadFallbackBackground(), currentCount);
         }
