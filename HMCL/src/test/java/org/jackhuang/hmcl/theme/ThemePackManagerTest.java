@@ -279,14 +279,15 @@ public final class ThemePackManagerTest {
         }
     }
 
-    /// Tests the built-in default theme pack declares selectable default and classic themes.
+    /// Tests the built-in default and classic theme packs declare the expected themes.
     @Test
-    public void testBuiltInThemePackDeclaresDefaultAndClassicThemes() throws Exception {
+    public void testBuiltInThemePacksDeclareExpectedThemes() throws Exception {
         try (SettingsScope ignored = new SettingsScope()) {
-            ThemePackManager.InstalledThemePack themePack = ThemePackManager.builtinThemePack();
-            assertEquals(2, themePack.manifest().themes().size());
+            ThemePackManager.InstalledThemePack defaultThemePack = ThemePackManager.builtinThemePack();
+            assertEquals("hmcl.default", defaultThemePack.manifest().id());
+            assertEquals(1, defaultThemePack.manifest().themes().size());
 
-            Theme defaultTheme = themePack.manifest().findTheme("DEFAULT");
+            Theme defaultTheme = defaultThemePack.manifest().findTheme(null);
             assertNotNull(defaultTheme);
             ThemeBackgroundSettings defaultBackground = defaultTheme.appearance().background();
             assertNotNull(defaultBackground);
@@ -294,7 +295,15 @@ public final class ThemePackManagerTest {
                     assertInstanceOf(ThemeBackground.Builtin.class, defaultBackground.source());
             assertEquals(BackgroundType.BUILTIN_WALLPAPER_2021_08_26_ID, defaultBuiltinBackground.id());
 
-            Theme classicTheme = themePack.manifest().findTheme("CLASSIC");
+            ThemePackManager.InstalledThemePack classicThemePack = ThemePackManager.findInstalled(
+                    new ThemeReference("hmcl.classic", "2016-02-25"));
+            assertNotNull(classicThemePack);
+            assertTrue(classicThemePack.builtin());
+            assertEquals(3, classicThemePack.manifest().themes().size());
+            assertNotNull(classicThemePack.manifest().findTheme("2021-08-26"));
+            assertNotNull(classicThemePack.manifest().findTheme("2015-06-22"));
+
+            Theme classicTheme = classicThemePack.manifest().findTheme("2016-02-25");
             assertNotNull(classicTheme);
             ThemeBackgroundSettings classicBackground = classicTheme.appearance().background();
             assertNotNull(classicBackground);
@@ -302,7 +311,7 @@ public final class ThemePackManagerTest {
                     assertInstanceOf(ThemeBackground.Builtin.class, classicBackground.source());
             assertEquals(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID, classicBuiltinBackground.id());
 
-            ThemeReference classicReference = new ThemeReference(themePack.manifest().id(), "CLASSIC");
+            ThemeReference classicReference = new ThemeReference(classicThemePack.manifest().id(), "2016-02-25");
             ThemePackManager.ResolvedBackground resolvedBackground = ThemePackManager.resolveThemeBackground(
                     classicReference,
                     new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
@@ -310,7 +319,7 @@ public final class ThemePackManagerTest {
             assertEquals(BackgroundType.BUILTIN, resolvedBackground.type());
             assertEquals(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID, resolvedBackground.builtinBackgroundId());
 
-            ThemePackManager.apply(themePack, classicTheme);
+            ThemePackManager.apply(classicThemePack, classicTheme);
             LauncherSettings settings = SettingsManager.settings();
             assertEquals(classicReference, settings.themeProperty().get());
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());

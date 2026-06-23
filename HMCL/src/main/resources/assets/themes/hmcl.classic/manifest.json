@@ -1,0 +1,76 @@
+{
+  "$schema" : "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+  "id" : "hmcl.classic",
+  "version" : "1.0.0",
+  "name" : {
+    "default" : "HMCL Classic",
+    "zh-Hans" : "HMCL 经典主题",
+    "zh-Hant" : "HMCL 經典主題"
+  },
+  "description" : {
+    "default" : "Classic HMCL launcher themes",
+    "zh-Hans" : "HMCL 启动器经典主题",
+    "zh-Hant" : "HMCL 啟動器經典主題"
+  },
+  "authors" : [
+    {
+      "name" : "HMCL"
+    }
+  ],
+  "themes" : [
+    {
+      "id" : "2021-08-26",
+      "name" : "HMCL 3.15",
+      "color" : "#5C6BC0",
+      "brightness" : "light",
+      "colorStyle" : "fidelity",
+      "background" : {
+        "type" : "builtin",
+        "id" : "2021-08-26",
+        "opacity" : 1.0,
+        "fallback" : {
+          "type" : "builtin"
+        },
+        "loadPolicy" : "wait_for_background"
+      },
+      "titleBar" : {
+        "transparent" : false
+      }
+    },
+    {
+      "id" : "2016-02-25",
+      "name" : "HMCL 3.3",
+      "color" : "#5C6BC0",
+      "brightness" : "light",
+      "colorStyle" : "fidelity",
+      "background" : {
+        "type" : "builtin",
+        "id" : "2016-02-25",
+        "opacity" : 1.0,
+        "fallback" : {
+          "type" : "builtin"
+        },
+        "loadPolicy" : "wait_for_background"
+      },
+      "titleBar" : {
+        "transparent" : true
+      }
+    },
+    {
+      "id" : "2015-06-22",
+      "name" : {
+        "default" : "HMCL 2.3"
+      },
+      "color" : "#E67E22",
+      "brightness" : "light",
+      "colorStyle" : "fidelity",
+      "background" : {
+        "type" : "builtin",
+        "id" : "2015-06-22"
+      },
+      "titleBar" : {
+        "transparent" : false
+      }
+    }
+  ]
+}

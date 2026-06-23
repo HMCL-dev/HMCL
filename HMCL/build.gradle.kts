@@ -1,4 +1,3 @@
-import groovy.json.JsonSlurper
 import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
 import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
@@ -34,31 +33,6 @@ val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
 val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
-
-fun findBuiltinThemePackIds(): List<String> {
-    val themesDirectory = file("src/main/resources/assets/themes").toPath()
-    if (!Files.isDirectory(themesDirectory)) {
-        return emptyList()
-    }
-
-    return Files.list(themesDirectory).use { themePackDirectories ->
-        themePackDirectories
-            .filter { Files.isDirectory(it) }
-            .filter { Files.isRegularFile(it.resolve("manifest.json")) }
-            .map { themePackDirectory ->
-                val directoryName = themePackDirectory.fileName.toString()
-                val manifest = JsonSlurper().parse(themePackDirectory.resolve("manifest.json").toFile())
-                val manifestId = (manifest as? Map<*, *>)?.get("id") as? String
-                    ?: throw GradleException("Built-in theme pack manifest does not declare an id: $themePackDirectory")
-                if (manifestId != directoryName) {
-                    throw GradleException("Built-in theme pack directory name '$directoryName' does not match manifest id '$manifestId'")
-                }
-                manifestId
-            }
-            .sorted()
-            .toList()
-    }
-}
 
 val buildNumber = System.getenv("BUILD_NUMBER")?.toInt()
 if (buildNumber != null) {
@@ -189,7 +163,6 @@ val hmclProperties = buildList {
     add("hmcl.curseforge.apikey" to curseForgeApiKey)
     add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
     add("hmcl.lwjgl-unsafe-agent.version" to libs.lwjgl.unsafe.agent.get().version!!)
-    add("hmcl.builtin.themePacks" to findBuiltinThemePackIds().joinToString(","))
 }
 
 val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")

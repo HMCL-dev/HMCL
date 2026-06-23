@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+  "id": "hmcl.default",
+  "version": "1.0.0",
+  "name": {
+    "default": "HMCL Default",
+    "zh-Hans": "HMCL 默认主题",
+    "zh-Hant": "HMCL 預設主題"
+  },
+  "description": {
+    "default": "HMCL Default",
+    "zh-Hans": "HMCL 默认主题",
+    "zh-Hant": "HMCL 預設主題"
+  },
+  "authors": [
+    {
+      "name": "HMCL"
+    }
+  ],
+  "theme": {
+    "color": "#5C6BC0",
+    "brightness": "light",
+    "colorStyle": "fidelity",
+    "background": {
+      "type": "builtin",
+      "id": "2021-08-26",
+      "opacity": 1.0,
+      "fallback": {
+        "type": "builtin"
+      },
+      "loadPolicy": "wait_for_background"
+    },
+    "titleBar": {
+      "transparent": false
+    }
+  }
+}

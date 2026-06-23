@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -76,15 +75,15 @@ public final class ThemePackManager {
     /// Resource directory that stores launcher-bundled theme packs.
     private static final String BUILTIN_THEME_PACKS_RESOURCE_ROOT = "/assets/themes";
 
-    /// Property containing launcher-bundled theme-pack IDs.
-    private static final String BUILTIN_THEME_PACKS_PROPERTY = "hmcl.builtin.themePacks";
-
-    /// Fallback built-in theme-pack ID used when running without generated launcher properties.
-    private static final String FALLBACK_BUILTIN_THEME_PACK_ID = "hmcl.builtin";
+    /// IDs of launcher-bundled theme packs in display order.
+    private static final @Unmodifiable List<String> BUILTIN_THEME_PACK_IDS = List.of(
+            "hmcl.default",
+            "hmcl.classic"
+    );
 
     /// Built-in default theme reference.
     public static final ThemeReference BUILTIN_DEFAULT_THEME_REFERENCE =
-            new ThemeReference("hmcl.builtin", "DEFAULT");
+            new ThemeReference("hmcl.default", null);
 
     /// Built-in theme packs bundled with the launcher.
     private static final @Unmodifiable List<InstalledThemePack> BUILTIN_THEME_PACKS = loadBuiltinThemePacks();
@@ -261,23 +260,17 @@ public final class ThemePackManager {
 
     /// Loads built-in theme pack manifests from launcher resources.
     private static @Unmodifiable List<InstalledThemePack> loadBuiltinThemePacks() {
-        String themePackIds = JarUtils.getAttribute(BUILTIN_THEME_PACKS_PROPERTY, FALLBACK_BUILTIN_THEME_PACK_ID);
         ArrayList<InstalledThemePack> themePacks = new ArrayList<>();
-        for (String id : themePackIds.split(",")) {
-            String trimmedId = id.trim();
-            if (trimmedId.isEmpty()) {
-                continue;
-            }
-
+        for (String id : BUILTIN_THEME_PACK_IDS) {
             try (InputStream input = ThemePackManager.class.getResourceAsStream(
-                    builtinThemePackResourceRoot(trimmedId) + "/" + ThemePackExporter.MANIFEST_ENTRY)) {
+                    builtinThemePackResourceRoot(id) + "/" + ThemePackExporter.MANIFEST_ENTRY)) {
                 if (input == null) {
-                    throw new IOException("Missing built-in theme-pack manifest: " + trimmedId);
+                    throw new IOException("Missing built-in theme-pack manifest: " + id);
                 }
                 String manifestJson = new String(input.readAllBytes(), StandardCharsets.UTF_8);
                 ThemePackManifest manifest = ThemePackManifest.fromJson(manifestJson);
-                if (!manifest.id().equals(trimmedId)) {
-                    throw new IOException("Built-in theme-pack id does not match resource directory: " + trimmedId);
+                if (!manifest.id().equals(id)) {
+                    throw new IOException("Built-in theme-pack id does not match resource directory: " + id);
                 }
                 themePacks.add(new InstalledThemePack(
                         builtinThemePackFile(manifest.id()),
