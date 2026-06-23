@@ -3,9 +3,9 @@
   "id": "hmcl.default",
   "version": "1.0.0",
   "name": {
-    "default": "HMCL Default",
-    "zh-Hans": "HMCL 默认主题",
-    "zh-Hant": "HMCL 預設主題"
+    "default": "Default",
+    "zh-Hans": "默认主题",
+    "zh-Hant": "預設主題"
   },
   "description": {
     "default": "HMCL Default",

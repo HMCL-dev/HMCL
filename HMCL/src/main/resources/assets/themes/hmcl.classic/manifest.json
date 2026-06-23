@@ -3,9 +3,9 @@
   "id" : "hmcl.classic",
   "version" : "1.0.0",
   "name" : {
-    "default" : "HMCL Classic",
-    "zh-Hans" : "HMCL 经典主题",
-    "zh-Hant" : "HMCL 經典主題"
+    "default" : "Classic",
+    "zh-Hans" : "经典主题",
+    "zh-Hant" : "經典主題"
   },
   "description" : {
     "default" : "Classic HMCL launcher themes",
