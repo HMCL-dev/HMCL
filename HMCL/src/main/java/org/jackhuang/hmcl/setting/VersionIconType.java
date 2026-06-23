@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public enum VersionIconType {

@@ -24,7 +24,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
