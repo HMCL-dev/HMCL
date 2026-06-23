@@ -41,9 +41,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.scene.text.Text;
-import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.schematic.Schematic;
 import org.jackhuang.hmcl.schematic.SchematicType;
@@ -102,7 +102,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
     private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
     private final ObjectProperty<LitematicaFetchResult> fetchResult = new SimpleObjectProperty<>(this, "fetchResult", LitematicaFetchResult.EMPTY);
-    private final ObjectBinding<RemoteMod> downloadTarget = Bindings.createObjectBinding(
+    private final ObjectBinding<RemoteAddon> downloadTarget = Bindings.createObjectBinding(
             () -> {
                 var result = fetchResult.get();
                 if (result == null) return null;
@@ -213,17 +213,17 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             var modLoaders = modManager.getLibraryAnalyzer().getModLoaders(); // We don't care about kilt or connector
             boolean shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGE))
                     && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
-            RemoteMod litematica = oldRes.litematica(), forgematica = oldRes.forgematica();
+            RemoteAddon litematica = oldRes.litematica(), forgematica = oldRes.forgematica();
             if (litematica == null) {
                 try {
-                    litematica = ModrinthRemoteModRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "litematica");
+                    litematica = ModrinthRemoteAddonRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "litematica");
                 } catch (IOException e) {
                     LOG.warning("Failed to fetch litematica", e);
                 }
             }
             if (forgematica == null) {
                 try {
-                    forgematica = ModrinthRemoteModRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "forgematica");
+                    forgematica = ModrinthRemoteAddonRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "forgematica");
                 } catch (IOException e) {
                     LOG.warning("Failed to fetch forgematica", e);
                 }
@@ -867,7 +867,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         }
     }
 
-    private record LitematicaFetchResult(@Nullable RemoteMod litematica, @Nullable RemoteMod forgematica, boolean useForge) {
+    private record LitematicaFetchResult(@Nullable RemoteAddon litematica, @Nullable RemoteAddon forgematica, boolean useForge) {
         public static final LitematicaFetchResult EMPTY = new LitematicaFetchResult(null, null, false);
     }
 
