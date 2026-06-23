@@ -1009,7 +1009,8 @@ public class PersonalizationPage extends StackPane {
         {
             LineSelectButton<String> brightnessPane = new LineSelectButton<>();
             brightnessPane.setTitle(i18n("settings.launcher.brightness"));
-            brightnessPane.setConverter(name -> i18n("settings.launcher.brightness." + name));
+            brightnessPane.setConverter(name -> i18n("settings.launcher.brightness."
+                    + Objects.requireNonNullElse(name, "auto")));
             brightnessPane.setItems(Arrays.asList("auto", "light", "dark"));
             bindThemeAppearanceLineSelectButton(
                     brightnessPane,
@@ -1076,10 +1077,11 @@ public class PersonalizationPage extends StackPane {
         {
             LineSelectButton<ColorStyle> colorStylePane = new LineSelectButton<>();
             colorStylePane.setTitle(i18n("settings.launcher.theme_color_style"));
-            colorStylePane.setConverter(style ->
-                    i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT)));
-            colorStylePane.setDescriptionConverter(style ->
-                    i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT) + ".desc"));
+            colorStylePane.setConverter(style -> i18n("settings.launcher.theme_color_style."
+                    + Objects.requireNonNullElse(style, ColorStyle.FIDELITY).name().toLowerCase(Locale.ROOT)));
+            colorStylePane.setDescriptionConverter(style -> i18n("settings.launcher.theme_color_style."
+                    + Objects.requireNonNullElse(style, ColorStyle.FIDELITY).name().toLowerCase(Locale.ROOT)
+                    + ".desc"));
             colorStylePane.setItems(Arrays.asList(
                     ColorStyle.FIDELITY,
                     ColorStyle.TONAL_SPOT,
@@ -1290,8 +1292,10 @@ public class PersonalizationPage extends StackPane {
 
             LineSelectButton<BackgroundLoadPolicy> backgroundLoadPolicyPane = new LineSelectButton<>();
             backgroundLoadPolicyPane.setTitle(i18n("launcher.background.load_policy"));
-            backgroundLoadPolicyPane.setConverter(policy ->
-                    i18n("launcher.background.load_policy." + policy.name().toLowerCase(Locale.ROOT)));
+            backgroundLoadPolicyPane.setConverter(policy -> i18n("launcher.background.load_policy."
+                    + Objects.requireNonNullElse(policy, BackgroundLoadPolicy.WAIT_FOR_BACKGROUND)
+                    .name()
+                    .toLowerCase(Locale.ROOT)));
             backgroundLoadPolicyPane.setItems(Arrays.asList(
                     BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
                     BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING));
@@ -1435,8 +1439,8 @@ public class PersonalizationPage extends StackPane {
         {
             LineSelectButton<Boolean> titleTransparentPane = new LineSelectButton<>();
             titleTransparentPane.setTitle(i18n("settings.launcher.title_transparent"));
-            titleTransparentPane.setConverter(value ->
-                    i18n("settings.launcher.title_transparent." + (value ? "enabled" : "disabled")));
+            titleTransparentPane.setConverter(value -> i18n("settings.launcher.title_transparent."
+                    + (Boolean.TRUE.equals(value) ? "enabled" : "disabled")));
             titleTransparentPane.setItems(Arrays.asList(Boolean.TRUE, Boolean.FALSE));
             bindThemeAppearanceLineSelectButton(
                     titleTransparentPane,
