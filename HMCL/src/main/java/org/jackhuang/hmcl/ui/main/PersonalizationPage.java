@@ -687,8 +687,8 @@ public class PersonalizationPage extends StackPane {
             backgroundLoadPolicyPane.setNullSafeConverter(policy ->
                     i18n("launcher.background.load_policy." + policy.name().toLowerCase(Locale.ROOT)));
             backgroundLoadPolicyPane.setItems(
-                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING,
-                    BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
+                    BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
+                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING);
             backgroundLoadPolicyPane.valueProperty().bindBidirectional(settings().backgroundLoadPolicyProperty());
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {

@@ -144,21 +144,25 @@ public final class LauncherSettingsMigrationTest {
     @Test
     public void serializesBackgroundLoadingControls() {
         LauncherSettings launcherSettings = new LauncherSettings();
+        assertEquals(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND, launcherSettings.backgroundLoadPolicyProperty().get());
+
         launcherSettings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
         launcherSettings.backgroundFallbackPaintProperty().set(Color.web("#123456"));
-        launcherSettings.backgroundLoadPolicyProperty().set(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
+        launcherSettings.backgroundLoadPolicyProperty().set(BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING);
         JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
         assertEquals(BackgroundType.PAINT.name(), serialized.get("backgroundFallbackType").getAsString());
         assertEquals("#123456", serialized.get("backgroundFallbackPaint").getAsString());
         assertEquals(
-                BackgroundLoadPolicy.WAIT_FOR_BACKGROUND.name(),
+                BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING.name(),
                 serialized.get("backgroundLoadPolicy").getAsString());
 
         LauncherSettings deserialized = Objects.requireNonNull(LauncherSettings.fromJson(serialized));
         assertEquals(BackgroundType.PAINT, deserialized.backgroundFallbackTypeProperty().get());
         assertEquals(Color.web("#123456"), deserialized.backgroundFallbackPaintProperty().get());
-        assertEquals(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND, deserialized.backgroundLoadPolicyProperty().get());
+        assertEquals(
+                BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING,
+                deserialized.backgroundLoadPolicyProperty().get());
     }
 
     /// Tests migrating the legacy theme color field into the custom theme color field.

@@ -424,7 +424,7 @@ public final class Themes {
     private static BackgroundLoadPolicy getBackgroundLoadPolicy() {
         return Objects.requireNonNullElse(
                 settings().backgroundLoadPolicyProperty().get(),
-                BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING);
+                BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
     }
 
     /// Loads the initial JavaFX launcher background synchronously before the UI uses it.

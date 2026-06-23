@@ -1062,7 +1062,7 @@ public final class ThemePackManager {
                 createCurrentBackgroundFallback(),
                 Objects.requireNonNullElse(
                         settings().backgroundLoadPolicyProperty().get(),
-                        BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING));
+                        BackgroundLoadPolicy.WAIT_FOR_BACKGROUND));
     }
 
     /// Creates the fallback background model for the current launcher settings.
