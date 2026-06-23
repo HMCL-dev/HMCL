@@ -140,8 +140,8 @@ public final class Themes {
 
     /// Returns the effective theme color for the current launcher settings.
     static ThemeColor resolveCurrentThemeColor() {
-        ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT);
-        ThemeColor fallback = themeColorType == ThemeColorType.DEFAULT
+        @Nullable ThemeColorType themeColorType = settings().themeColorTypeProperty().get();
+        ThemeColor fallback = themeColorType == null
                 ? ThemeColor.DEFAULT
                 : Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
         BackgroundType backgroundType = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
@@ -151,13 +151,12 @@ public final class Themes {
     /// Resolves a Monet seed color from configured theme color and background sources.
     static ThemeColor resolveThemeColor(
             ThemeColor fallback,
-            ThemeColorType themeColorType,
+            @Nullable ThemeColorType themeColorType,
             BackgroundType backgroundType) {
         Objects.requireNonNull(fallback);
-        Objects.requireNonNull(themeColorType);
         Objects.requireNonNull(backgroundType);
 
-        if (themeColorType == ThemeColorType.DEFAULT) {
+        if (themeColorType == null) {
             try {
                 return ThemePackManager.resolveCurrentThemeColor(
                         ThemeResolveContext.current(getCurrentBrightness()),
@@ -711,10 +710,8 @@ public final class Themes {
 
     /// Returns the fallback seed color used while extracting wallpaper colors.
     private static ThemeColor getWallpaperThemeColorFallback() {
-        ThemeColorType themeColorType = Objects.requireNonNullElse(
-                settings().themeColorTypeProperty().get(),
-                ThemeColorType.DEFAULT);
-        return themeColorType == ThemeColorType.DEFAULT
+        @Nullable ThemeColorType themeColorType = settings().themeColorTypeProperty().get();
+        return themeColorType == null
                 ? ThemeColor.DEFAULT
                 : Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
     }

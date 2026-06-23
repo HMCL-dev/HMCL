@@ -482,7 +482,7 @@ public final class ThemePackManager {
         LauncherSettings currentSettings = settings();
         currentSettings.themeProperty().set(reference);
         currentSettings.themeBrightnessProperty().set(null);
-        currentSettings.themeColorTypeProperty().set(ThemeColorType.DEFAULT);
+        currentSettings.themeColorTypeProperty().set(null);
         currentSettings.themeColorStyleProperty().set(null);
         currentSettings.titleTransparentProperty().set(null);
         currentSettings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
@@ -544,9 +544,9 @@ public final class ThemePackManager {
 
     /// Returns the current launcher theme color source as a theme-pack directive.
     private static ThemeColorSource currentThemeColorSource() throws IOException {
-        ThemeColorType themeColorType = Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT);
+        @Nullable ThemeColorType themeColorType = settings().themeColorTypeProperty().get();
         BackgroundType backgroundType = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
-        if (themeColorType == ThemeColorType.DEFAULT) {
+        if (themeColorType == null) {
             @Nullable ThemeColorSource colorSource = resolveCurrentThemeColorSource(currentResolveContext());
             if (colorSource != null) {
                 if (colorSource instanceof ThemeColorSource.Wallpaper && backgroundType == BackgroundType.THEME_COLOR) {
@@ -632,7 +632,7 @@ public final class ThemePackManager {
     /// @param context the condition resolution context
     /// @return the selected theme brightness directive, or `null` when unavailable
     /// @throws IOException if the selected theme pack cannot be read
-    static @Nullable Brightness resolveCurrentThemeBrightness(ThemeResolveContext context) throws IOException {
+    public static @Nullable Brightness resolveCurrentThemeBrightness(ThemeResolveContext context) throws IOException {
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
         return appearance != null ? appearance.brightness() : null;
     }
@@ -654,8 +654,17 @@ public final class ThemePackManager {
     /// @return the effective color style from the selected theme or fallback
     /// @throws IOException if the selected theme pack cannot be read
     static ColorStyle resolveCurrentThemeColorStyle(ThemeResolveContext context, ColorStyle fallback) throws IOException {
+        return Objects.requireNonNullElse(resolveCurrentThemeColorStyle(context), fallback);
+    }
+
+    /// Resolves the selected theme color style directive.
+    ///
+    /// @param context the condition resolution context
+    /// @return the selected theme color style directive, or `null` when unavailable
+    /// @throws IOException if the selected theme pack cannot be read
+    public static @Nullable ColorStyle resolveCurrentThemeColorStyle(ThemeResolveContext context) throws IOException {
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
-        return appearance != null && appearance.colorStyle() != null ? appearance.colorStyle() : fallback;
+        return appearance != null ? appearance.colorStyle() : null;
     }
 
     /// Resolves the selected theme title-bar transparency or returns the given fallback.
@@ -665,11 +674,17 @@ public final class ThemePackManager {
     /// @return the effective title-bar transparency from the selected theme or fallback
     /// @throws IOException if the selected theme pack cannot be read
     public static boolean resolveCurrentTitleBarTransparent(ThemeResolveContext context, boolean fallback) throws IOException {
+        return Objects.requireNonNullElse(resolveCurrentTitleBarTransparent(context), fallback);
+    }
+
+    /// Resolves the selected theme title-bar transparency directive.
+    ///
+    /// @param context the condition resolution context
+    /// @return the selected theme title-bar transparency directive, or `null` when unavailable
+    /// @throws IOException if the selected theme pack cannot be read
+    public static @Nullable Boolean resolveCurrentTitleBarTransparent(ThemeResolveContext context) throws IOException {
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
-        if (appearance == null || appearance.titleBar() == null || appearance.titleBar().transparent() == null) {
-            return fallback;
-        }
-        return appearance.titleBar().transparent();
+        return appearance != null && appearance.titleBar() != null ? appearance.titleBar().transparent() : null;
     }
 
     /// Resolves the current selected theme color source without extracting any wallpaper pixels.
@@ -677,11 +692,21 @@ public final class ThemePackManager {
     /// @param context the condition resolution context
     /// @return the selected theme color source, or `null` when unavailable
     /// @throws IOException if the selected theme pack manifest cannot be read
-    private static @Nullable ThemeColorSource resolveCurrentThemeColorSource(ThemeResolveContext context) throws IOException {
+    public static @Nullable ThemeColorSource resolveCurrentThemeColorSource(ThemeResolveContext context) throws IOException {
         Objects.requireNonNull(context);
 
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
         return appearance != null ? appearance.color() : null;
+    }
+
+    /// Resolves the selected theme background settings directive.
+    ///
+    /// @param context the condition resolution context
+    /// @return the selected theme background settings directive, or `null` when unavailable
+    /// @throws IOException if the selected theme pack cannot be read
+    public static @Nullable ThemeBackgroundSettings resolveCurrentThemeBackgroundSettings(ThemeResolveContext context) throws IOException {
+        @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
+        return appearance != null ? appearance.background() : null;
     }
 
     /// Resolves the selected theme appearance for a condition context.

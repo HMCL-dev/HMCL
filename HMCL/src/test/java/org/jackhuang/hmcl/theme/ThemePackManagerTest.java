@@ -107,13 +107,12 @@ public final class ThemePackManagerTest {
 
             LauncherSettings settings = SettingsManager.settings();
             assertEquals(ThemeColor.DEFAULT, settings.customThemeColorProperty().get());
-            assertEquals(ThemeColorType.DEFAULT, settings.themeColorTypeProperty().get());
+            assertNull(settings.themeColorTypeProperty().get());
             assertNull(settings.themeColorStyleProperty().get());
             assertNull(settings.themeBrightnessProperty().get());
             assertEquals(new ThemeReference("example.ui", null), settings.themeProperty().get());
-            JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
-                    .getAsJsonObject()
-                    .getAsJsonObject("theme");
+            JsonObject settingsJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings).getAsJsonObject();
+            JsonObject themeJson = settingsJson.getAsJsonObject("theme");
             assertEquals("example.ui", themeJson.get("packId").getAsString());
             assertFalse(themeJson.has("themeId"));
             assertNull(settings.titleTransparentProperty().get());
@@ -125,6 +124,13 @@ public final class ThemePackManagerTest {
             assertNull(settings.customBackgroundImagePathProperty().get());
             assertNull(settings.networkBackgroundImageUrlProperty().get());
             assertNull(settings.customBackgroundPaintProperty().get());
+            assertFalse(settingsJson.has("themeBrightness"));
+            assertFalse(settingsJson.has("themeColorType"));
+            assertFalse(settingsJson.has("themeColorStyle"));
+            assertFalse(settingsJson.has("titleTransparent"));
+            assertFalse(settingsJson.has("backgroundOpacity"));
+            assertFalse(settingsJson.has("backgroundFallbackType"));
+            assertFalse(settingsJson.has("backgroundLoadPolicy"));
 
             ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "linux", "en");
             assertEquals(ColorStyle.EXPRESSIVE, ThemePackManager.resolveCurrentThemeColorStyle(
@@ -713,7 +719,7 @@ public final class ThemePackManagerTest {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
             settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
-            settings.themeColorTypeProperty().set(ThemeColorType.DEFAULT);
+            settings.themeColorTypeProperty().set(null);
 
             Path tempDir = createTestDirectory("export-default-theme-color");
             Path output = tempDir.resolve("default-theme-color" + ThemePackExporter.FILE_EXTENSION);
@@ -846,7 +852,7 @@ public final class ThemePackManagerTest {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
             settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
-            settings.themeColorTypeProperty().set(ThemeColorType.DEFAULT);
+            settings.themeColorTypeProperty().set(null);
             settings.themeProperty().set(null);
 
             assertEquals(Objects.requireNonNull(ThemeColor.of("#5C6BC0")), Themes.resolveCurrentThemeColor());
