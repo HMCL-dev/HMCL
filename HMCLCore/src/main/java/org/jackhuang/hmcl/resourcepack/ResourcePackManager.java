@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
@@ -211,6 +212,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private final Path resourcePackDirectory;
     private final Path optionsFile;
+    private final Locale locale;
 
     private @Nullable GameVersionNumber minecraftVersion;
     private @Nullable PackMcMeta.PackVersion requiredVersion;
@@ -219,9 +221,18 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     private boolean loaded = false;
 
     public ResourcePackManager(GameRepository repository, String id) {
+        this(repository, id, LocaleUtils.SYSTEM_DEFAULT);
+    }
+
+    public ResourcePackManager(GameRepository repository, String id, Locale locale) {
         super(repository, id);
         this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
         this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
+        this.locale = locale;
+    }
+
+    Locale getLocale() {
+        return locale;
     }
 
     @NotNull

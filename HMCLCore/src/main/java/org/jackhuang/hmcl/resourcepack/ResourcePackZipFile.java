@@ -47,7 +47,8 @@ final class ResourcePackZipFile extends ResourcePackFile {
 
         try (var zipFileTree = CompressingUtils.openZipTree(path)) {
             try {
-                metaTemp = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
+                metaTemp = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"))
+                        .withDescription(ResourcePackDescriptionResolver.resolveFromZip(zipFileTree, manager.getLocale()));
             } catch (Exception e) {
                 LOG.warning("Failed to parse resource pack meta", e);
             }
@@ -104,4 +105,3 @@ final class ResourcePackZipFile extends ResourcePackFile {
         return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), false);
     }
 }
-

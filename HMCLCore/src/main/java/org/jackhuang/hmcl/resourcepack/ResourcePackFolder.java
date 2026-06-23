@@ -40,7 +40,8 @@ final class ResourcePackFolder extends ResourcePackFile {
 
         PackMcMeta meta = null;
         try {
-            meta = PackMcMeta.fromNonNullJsonFile(path.resolve("pack.mcmeta"));
+            meta = PackMcMeta.fromNonNullJsonFile(path.resolve("pack.mcmeta"))
+                    .withDescription(ResourcePackDescriptionResolver.resolveFromFolder(path, manager.getLocale()));
         } catch (Exception e) {
             LOG.warning("Failed to parse resource pack meta", e);
         }

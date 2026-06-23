@@ -58,6 +58,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -109,7 +110,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     public void loadVersion(Profile profile, String version) {
         this.profile = profile;
         this.instanceId = version;
-        this.resourcePackManager = new ResourcePackManager(profile.getRepository(), version);
+        this.resourcePackManager = new ResourcePackManager(profile.getRepository(), version, I18n.getLocale().getLocale());
         this.resourcePackDirectory = this.resourcePackManager.getDirectory();
 
         refresh();
