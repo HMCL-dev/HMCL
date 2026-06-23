@@ -629,6 +629,16 @@ public final class Themes {
                     paint instanceof Color color ? ThemeColor.of(color) : null,
                     true);
         }
+        if (fallbackType == BackgroundType.THEME_COLOR) {
+            return new LoadedBackground(
+                    createThemeColorBackground(opacity),
+                    null,
+                    null,
+                    true,
+                    true,
+                    null,
+                    true);
+        }
 
         Image image = loadBuiltinBackgroundImage(BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID);
         return new LoadedBackground(

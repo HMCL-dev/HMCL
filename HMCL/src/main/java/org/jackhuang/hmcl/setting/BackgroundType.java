@@ -54,9 +54,9 @@ public enum BackgroundType {
 
     /// IDs of launcher built-in wallpapers that can be selected by users and theme packs.
     public static final @Unmodifiable List<String> BUILTIN_WALLPAPER_IDS = List.of(
-            BUILTIN_WALLPAPER_2015_06_22_ID,
+            BUILTIN_WALLPAPER_2021_08_26_ID,
             BUILTIN_WALLPAPER_2016_02_25_ID,
-            BUILTIN_WALLPAPER_2021_08_26_ID
+            BUILTIN_WALLPAPER_2015_06_22_ID
     );
 
     /// ID used when a built-in wallpaper reference is missing or unsupported.

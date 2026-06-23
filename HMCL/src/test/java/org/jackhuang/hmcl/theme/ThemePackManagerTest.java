@@ -426,6 +426,63 @@ public final class ThemePackManagerTest {
         }
     }
 
+    /// Tests exporting the theme-color background fallback option.
+    @Test
+    public void testExportCurrentThemeColorBackgroundFallback() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
+            LauncherSettings settings = SettingsManager.settings();
+            settings.backgroundTypeProperty().set(BackgroundType.BUILTIN);
+            settings.backgroundFallbackTypeProperty().set(BackgroundType.THEME_COLOR);
+
+            Path tempDir = createTestDirectory("export-theme-color-fallback");
+            Path output = tempDir.resolve("theme-color-fallback" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackManager.exportCurrent(output, "com.example.theme-color-fallback", "Theme Color Fallback", "Test Author");
+
+            ThemePackManifest manifest = ThemePackManager.load(output).manifest();
+            Theme theme = manifest.findTheme(null);
+            assertNotNull(theme);
+
+            ThemeBackgroundSettings background = theme.appearance().background();
+            assertNotNull(background);
+            assertInstanceOf(ThemeBackground.ThemeColor.class, background.fallback());
+        }
+    }
+
+    /// Tests applying the theme-color background fallback option.
+    @Test
+    public void testApplyThemeColorBackgroundFallback() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
+            ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                    {
+                      "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                      "id": "example.theme-color-fallback",
+                      "version": "1.0.0",
+                      "name": "Theme Color Fallback",
+                      "theme": {
+                        "background": {
+                          "type": "builtin",
+                          "id": "2021-08-26",
+                          "fallback": {
+                            "type": "theme_color"
+                          }
+                        }
+                      }
+                    }
+                    """);
+            Theme theme = manifest.findTheme(null);
+            assertNotNull(theme);
+
+            Path tempDir = createTestDirectory("apply-theme-color-fallback");
+            ThemePackManager.apply(
+                    tempDir.resolve("theme-color-fallback" + ThemePackExporter.FILE_EXTENSION),
+                    manifest,
+                    theme,
+                    new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
+
+            assertEquals(BackgroundType.THEME_COLOR, SettingsManager.settings().backgroundFallbackTypeProperty().get());
+        }
+    }
+
     /// Tests exporting a network background preserves the URL image cache policy.
     @Test
     public void testExportCurrentNetworkBackgroundCachePolicy() throws Exception {

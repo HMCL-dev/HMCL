@@ -278,6 +278,34 @@ public final class ThemePackManifestTest {
         assertEquals(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND, background.loadPolicy());
     }
 
+    /// Tests that a theme-color background fallback is parsed from theme packs.
+    @Test
+    public void testParseThemeColorBackgroundFallback() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.theme-color-fallback",
+                  "version": "1.0.0",
+                  "name": "Theme Color Fallback",
+                  "theme": {
+                    "background": {
+                      "type": "network",
+                      "url": "https://example.com/wallpaper.png",
+                      "fallback": {
+                        "type": "theme_color"
+                      }
+                    }
+                  }
+                }
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+        ThemeBackgroundSettings background = theme.appearance().background();
+        assertNotNull(background);
+
+        assertInstanceOf(ThemeBackground.ThemeColor.class, background.fallback());
+    }
+
     /// Tests that unsupported background types fall back to the inherited/default background.
     @Test
     public void testUnsupportedBackgroundTypeFallsBackToDefault() {

@@ -36,7 +36,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public sealed interface ThemeBackground
         permits ThemeBackground.Builtin, ThemeBackground.Image,
-        ThemeBackground.Network, ThemeBackground.Paint, ThemeBackground.Patch {
+        ThemeBackground.Network, ThemeBackground.Paint,
+        ThemeBackground.ThemeColor, ThemeBackground.Patch {
     /// JSON member name for the background type.
     String FIELD_TYPE = "type";
 
@@ -85,6 +86,9 @@ public sealed interface ThemeBackground
             return partialPatch.applyOver(this);
         }
         if (patch instanceof Builtin) {
+            return patch;
+        }
+        if (patch instanceof ThemeColor) {
             return patch;
         }
         if (patch instanceof Image patchImage) {
@@ -169,6 +173,7 @@ public sealed interface ThemeBackground
             case "IMAGE" -> new Image(path);
             case "NETWORK" -> new Network(url, cache);
             case "PAINT" -> new Paint(paint);
+            case "THEME_COLOR" -> new ThemeColor();
             default -> throw new JsonParseException("Unsupported theme background type: " + type);
         };
     }
@@ -332,6 +337,22 @@ public sealed interface ThemeBackground
         }
     }
 
+    /// A source that follows the current launcher theme color.
+    @NotNullByDefault
+    record ThemeColor() implements ThemeBackground {
+        /// Adds this source to a JSON object.
+        @Override
+        public void addToJsonObject(JsonObject object) {
+            addType(object, "theme_color");
+        }
+
+        /// Returns whether this source is empty.
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+    }
+
     /// A partial background source without an explicit source type.
     ///
     /// @param path the theme-pack relative image path, or `null` when inherited
@@ -394,6 +415,9 @@ public sealed interface ThemeBackground
         /// @return the merged source
         private ThemeBackground applyOver(ThemeBackground base) {
             if (base instanceof Builtin) {
+                return base;
+            }
+            if (base instanceof ThemeColor) {
                 return base;
             }
             if (base instanceof Image background) {

@@ -755,6 +755,7 @@ public class PersonalizationPage extends StackPane {
             backgroundFallbackItem.setFallbackData(BackgroundType.BUILTIN);
             backgroundFallbackItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("launcher.background.fallback.builtin"), BackgroundType.BUILTIN),
+                    new MultiFileItem.Option<>(i18n("launcher.background.fallback.theme_color"), BackgroundType.THEME_COLOR),
                     new MultiFileItem.PaintOption<>(i18n("launcher.background.fallback.paint"), BackgroundType.PAINT)
                             .bindBidirectional(settings().backgroundFallbackPaintProperty())
             ));
@@ -773,6 +774,7 @@ public class PersonalizationPage extends StackPane {
                                         ? backgroundFallbackPaint.toString()
                                         : i18n("launcher.background.fallback.paint");
                             }
+                            case THEME_COLOR -> i18n("launcher.background.fallback.theme_color");
                             default -> i18n("launcher.background.fallback.builtin");
                         };
                     },

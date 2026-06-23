@@ -868,6 +868,10 @@ public final class ThemePackManager {
             currentSettings.backgroundFallbackTypeProperty().set(BackgroundType.BUILTIN);
             return;
         }
+        if (fallback instanceof ThemeBackground.ThemeColor) {
+            currentSettings.backgroundFallbackTypeProperty().set(BackgroundType.THEME_COLOR);
+            return;
+        }
         try {
             if (fallback instanceof ThemeBackground.Paint paint) {
                 currentSettings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
@@ -921,6 +925,15 @@ public final class ThemePackManager {
                     requireNonBlank(network.url(), "background.url"),
                     network.cache(),
                     null,
+                    opacity);
+        }
+        if (source instanceof ThemeBackground.ThemeColor) {
+            return new ResolvedBackground(
+                    BackgroundType.THEME_COLOR,
+                    null,
+                    null,
+                    null,
+                    getThemeColorBackgroundPaint(),
                     opacity);
         }
         if (source instanceof ThemeBackground.Paint paint) {
@@ -1371,7 +1384,8 @@ public final class ThemePackManager {
             case BUILTIN, DEFAULT -> new ThemeBackground.Builtin(BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID);
             case PAINT -> new ThemeBackground.Paint(
                     Objects.requireNonNullElse(settings().backgroundFallbackPaintProperty().get(), Color.WHITE).toString());
-            case CUSTOM, NETWORK, THEME_COLOR -> throw new IOException(
+            case THEME_COLOR -> new ThemeBackground.ThemeColor();
+            case CUSTOM, NETWORK -> throw new IOException(
                     "Theme packs cannot use background fallback type: " + fallbackType);
         };
     }

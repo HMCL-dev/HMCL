@@ -299,7 +299,8 @@
             "builtin",
             "image",
             "network",
-            "paint"
+            "paint",
+            "theme_color"
           ]
         }
       },
@@ -344,7 +345,8 @@
         "^type$": {
           "enum": [
             "builtin",
-            "paint"
+            "paint",
+            "theme_color"
           ]
         }
       },
