@@ -523,6 +523,7 @@ public class PersonalizationPage extends StackPane {
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.theme")), themeList);
 
         ComponentList themeAppearanceList = new ComponentList();
+        ComponentList backgroundLoadingList = new ComponentList();
 
         {
             var brightnessPane = new LineSelectButton<String>();
@@ -749,11 +750,13 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.getContent().setAll(backgroundItem, builtinBackgroundPane);
             themeAppearanceList.getContent().addAll(
                     backgroundSublist,
+                    opacityItem);
+            backgroundLoadingList.getContent().setAll(
+                    backgroundLoadPolicyPane,
                     networkBackgroundCachePane,
                     backgroundFallbackPane,
-                    backgroundFallbackPaintItem,
-                    backgroundLoadPolicyPane,
-                    opacityItem);
+                    backgroundFallbackPaintItem
+            );
         }
 
         {
@@ -767,7 +770,11 @@ public class PersonalizationPage extends StackPane {
                 settings().themeProperty().set(null);
             }
         });
-        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeAppearanceList);
+        content.getChildren().addAll(
+                ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")),
+                themeAppearanceList,
+                ComponentList.createComponentListTitle(i18n("launcher.background.loading")),
+                backgroundLoadingList);
 
         {
             ComponentList appearanceList = new ComponentList();
