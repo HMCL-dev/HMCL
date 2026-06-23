@@ -68,6 +68,17 @@ public final class ThemePackManager {
     /// Default version used when exporting the current launcher appearance.
     private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
 
+    /// Resource path of the built-in default theme-pack manifest.
+    private static final String BUILTIN_THEME_PACK_MANIFEST_RESOURCE =
+            "/assets/theme-packs/default/manifest.json";
+
+    /// Built-in default theme selection.
+    public static final ThemeSelection BUILTIN_DEFAULT_THEME_SELECTION =
+            new ThemeSelection("hmcl.builtin.default", null);
+
+    /// Built-in default theme pack.
+    private static final InstalledThemePack BUILTIN_THEME_PACK = loadBuiltinThemePack();
+
     /// Whether a theme is currently being applied to launcher settings.
     private static boolean applyingTheme = false;
 
@@ -90,15 +101,25 @@ public final class ThemePackManager {
         }
     }
 
-    /// A theme pack installed under the launcher's local theme-pack directory.
+    /// A theme pack available to the launcher.
     ///
-    /// @param file the installed theme-pack file
+    /// @param file the installed theme-pack file, or a synthetic path for built-in packages
     /// @param manifest the parsed manifest
-    public record InstalledThemePack(Path file, ThemePackManifest manifest) {
-        /// Creates an installed theme-pack descriptor.
+    /// @param builtin whether this package is bundled with the launcher and cannot be modified by the user
+    public record InstalledThemePack(Path file, ThemePackManifest manifest, boolean builtin) {
+        /// Creates an installed user theme-pack descriptor.
         ///
         /// @param file the installed theme-pack file
         /// @param manifest the parsed manifest
+        public InstalledThemePack(Path file, ThemePackManifest manifest) {
+            this(file, manifest, false);
+        }
+
+        /// Creates an available theme-pack descriptor.
+        ///
+        /// @param file the installed theme-pack file, or a synthetic path for built-in packages
+        /// @param manifest the parsed manifest
+        /// @param builtin whether this package is bundled with the launcher and cannot be modified by the user
         public InstalledThemePack {
             file = Objects.requireNonNull(file).toAbsolutePath().normalize();
             Objects.requireNonNull(manifest);
@@ -177,6 +198,30 @@ public final class ThemePackManager {
         }
     }
 
+    /// Returns the built-in default theme pack.
+    ///
+    /// @return the built-in default theme pack
+    public static InstalledThemePack builtinThemePack() {
+        return BUILTIN_THEME_PACK;
+    }
+
+    /// Loads the built-in default theme pack manifest from launcher resources.
+    private static InstalledThemePack loadBuiltinThemePack() {
+        try (InputStream input = ThemePackManager.class.getResourceAsStream(BUILTIN_THEME_PACK_MANIFEST_RESOURCE)) {
+            if (input == null) {
+                throw new IOException("Missing built-in theme-pack manifest: " + BUILTIN_THEME_PACK_MANIFEST_RESOURCE);
+            }
+            String manifestJson = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            ThemePackManifest manifest = ThemePackManifest.fromJson(manifestJson);
+            return new InstalledThemePack(
+                    THEME_PACKS_DIRECTORY.resolve(manifest.id() + ThemePackExporter.FILE_EXTENSION),
+                    manifest,
+                    true);
+        } catch (IOException | JsonParseException | IllegalArgumentException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
     /// Loads a manifest from an installed theme-pack file.
     ///
     /// @param file the installed theme-pack file
@@ -195,6 +240,10 @@ public final class ThemePackManager {
     public static @Nullable InstalledThemePack findInstalled(ThemeSelection selection) throws IOException {
         Objects.requireNonNull(selection);
 
+        if (BUILTIN_THEME_PACK.manifest().id().equals(selection.packId())) {
+            return BUILTIN_THEME_PACK;
+        }
+
         Path file = installedThemePackFile(selection.packId());
         if (!Files.isRegularFile(file)) {
             return null;
@@ -207,27 +256,29 @@ public final class ThemePackManager {
     /// @return installed theme packs sorted by display name and package ID
     /// @throws IOException if installed theme-pack files cannot be listed
     public static @Unmodifiable List<InstalledThemePack> listInstalled() throws IOException {
-        if (!Files.isDirectory(THEME_PACKS_DIRECTORY)) {
-            return List.of();
-        }
-
         ArrayList<InstalledThemePack> result = new ArrayList<>();
-        try (Stream<Path> themePackFiles = Files.list(THEME_PACKS_DIRECTORY)) {
-            for (Path themePackFile : themePackFiles
-                    .filter(Files::isRegularFile)
-                    .filter(ThemePackManager::isInstalledThemePackFile)
-                    .toList()) {
-                try {
-                    result.add(loadInstalled(themePackFile));
-                } catch (IOException | RuntimeException e) {
-                    LOG.warning("Failed to load installed theme pack: " + themePackFile, e);
+        result.add(BUILTIN_THEME_PACK);
+
+        if (Files.isDirectory(THEME_PACKS_DIRECTORY)) {
+            ArrayList<InstalledThemePack> installedThemePacks = new ArrayList<>();
+            try (Stream<Path> themePackFiles = Files.list(THEME_PACKS_DIRECTORY)) {
+                for (Path themePackFile : themePackFiles
+                        .filter(Files::isRegularFile)
+                        .filter(ThemePackManager::isInstalledThemePackFile)
+                        .toList()) {
+                    try {
+                        installedThemePacks.add(loadInstalled(themePackFile));
+                    } catch (IOException | RuntimeException e) {
+                        LOG.warning("Failed to load installed theme pack: " + themePackFile, e);
+                    }
                 }
             }
-        }
 
-        result.sort(Comparator
-                .comparing((InstalledThemePack themePack) -> themePack.manifest().displayName(), String.CASE_INSENSITIVE_ORDER)
-                .thenComparing(themePack -> themePack.manifest().id(), String.CASE_INSENSITIVE_ORDER));
+            installedThemePacks.sort(Comparator
+                    .comparing((InstalledThemePack themePack) -> themePack.manifest().displayName(), String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(themePack -> themePack.manifest().id(), String.CASE_INSENSITIVE_ORDER));
+            result.addAll(installedThemePacks);
+        }
         return List.copyOf(result);
     }
 
@@ -241,6 +292,10 @@ public final class ThemePackManager {
     public static InstalledThemePack install(Path file) throws IOException {
         LoadedThemePack loadedThemePack = load(file);
         validateThemePackFile(loadedThemePack.file());
+        if (BUILTIN_THEME_PACK.manifest().id().equals(loadedThemePack.manifest().id())) {
+            throw new IOException("Cannot install a theme pack with the built-in package ID: "
+                    + loadedThemePack.manifest().id());
+        }
 
         Path targetFile = installedThemePackFile(loadedThemePack.manifest());
         Path temporaryFile = FileUtils.tmpSaveFile(targetFile);
@@ -270,6 +325,10 @@ public final class ThemePackManager {
     /// @throws IOException if the installed package cannot be removed
     public static void uninstall(InstalledThemePack themePack) throws IOException {
         Objects.requireNonNull(themePack);
+
+        if (themePack.builtin()) {
+            throw new IOException("Cannot delete a built-in theme pack: " + themePack.manifest().id());
+        }
 
         Path rootDirectory = THEME_PACKS_DIRECTORY.toAbsolutePath().normalize();
         Path targetFile = themePack.file().toAbsolutePath().normalize();

@@ -489,7 +489,7 @@ public final class Themes {
                 }
                 return null;
             case BUILTIN:
-                image = loadBuiltinBackgroundImage(settings().builtinBackgroundNameProperty().get());
+                image = loadBuiltinBackgroundImage(BackgroundType.BUILTIN_DEFAULT);
                 break;
             case CUSTOM:
                 @Nullable String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();

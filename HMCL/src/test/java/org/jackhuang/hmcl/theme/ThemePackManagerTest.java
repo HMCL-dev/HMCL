@@ -215,6 +215,13 @@ public final class ThemePackManagerTest {
             Files.writeString(brokenFile, "{", StandardCharsets.UTF_8);
 
             List<ThemePackManager.InstalledThemePack> installedThemePacks = ThemePackManager.listInstalled();
+            assertFalse(installedThemePacks.isEmpty());
+            ThemePackManager.InstalledThemePack builtInThemePack = installedThemePacks.get(0);
+            assertTrue(builtInThemePack.builtin());
+            assertEquals(
+                    ThemePackManager.BUILTIN_DEFAULT_THEME_SELECTION.packId(),
+                    builtInThemePack.manifest().id());
+            assertThrows(IOException.class, () -> ThemePackManager.uninstall(builtInThemePack));
             assertTrue(installedThemePacks.stream()
                     .anyMatch(themePack -> "example.list-valid".equals(themePack.manifest().id())));
         } finally {

@@ -92,10 +92,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Configures launcher appearance, background, and launcher font settings.
 @NotNullByDefault
 public class PersonalizationPage extends StackPane {
-    /// Internal selection reference for the built-in default theme.
-    private static final ThemeSelection DEFAULT_THEME_SELECTION =
-            new ThemeSelection("hmcl.builtin.default", null);
-
     /// Time format used by default exported theme names.
     private static final DateTimeFormatter EXPORTED_THEME_NAME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ROOT);
@@ -122,7 +118,6 @@ public class PersonalizationPage extends StackPane {
     /// Loads all theme choices shown by the theme selector.
     private static List<ThemeChoice> loadThemeChoices() {
         ArrayList<ThemeChoice> choices = new ArrayList<>();
-        choices.add(ThemeChoice.defaultTheme());
 
         try {
             for (ThemePackManager.InstalledThemePack themePack : ThemePackManager.listInstalled()) {
@@ -273,23 +268,6 @@ public class PersonalizationPage extends StackPane {
                 MessageType.ERROR);
     }
 
-    /// Applies the built-in default launcher theme.
-    private static void applyDefaultTheme() {
-        settings().themeBrightnessProperty().set("light");
-        settings().customThemeColorProperty().set(ThemeColor.DEFAULT);
-        settings().themeColorTypeProperty().set(ThemeColorType.DEFAULT);
-        settings().themeColorStyleProperty().set(ColorStyle.FIDELITY);
-        settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
-        settings().builtinBackgroundNameProperty().set(BackgroundType.BUILTIN_DEFAULT);
-        settings().customBackgroundImagePathProperty().set(null);
-        settings().networkBackgroundImageUrlProperty().set(null);
-        settings().networkBackgroundImageCachePolicyProperty().set(NetworkBackgroundImageCachePolicy.ENABLED);
-        settings().customBackgroundPaintProperty().set(null);
-        settings().backgroundOpacityProperty().set(1.0);
-        settings().titleTransparentProperty().set(false);
-        settings().themeProperty().set(DEFAULT_THEME_SELECTION);
-    }
-
     /// Registers a listener for fields that are controlled by launcher themes.
     private static void installThemeCustomizationListener(InvalidationListener listener) {
         settings().customThemeColorProperty().addListener(listener);
@@ -310,7 +288,6 @@ public class PersonalizationPage extends StackPane {
     /// @param title             the label shown by the selector
     /// @param description       the optional secondary text shown in the selector popup
     /// @param customAppearance  whether this item represents the local custom appearance
-    /// @param defaultAppearance whether this item represents the built-in default appearance
     /// @param themePack         the installed theme pack, or `null` for non-pack choices
     /// @param theme             the installed theme, or `null` for non-pack choices
     /// @param selection         the stored selection reference, or `null` for the local custom appearance
@@ -318,7 +295,6 @@ public class PersonalizationPage extends StackPane {
             String title,
             @Nullable String description,
             boolean customAppearance,
-            boolean defaultAppearance,
             @Nullable ThemePackManager.InstalledThemePack themePack,
             @Nullable Theme theme,
             @Nullable ThemeSelection selection) {
@@ -329,19 +305,7 @@ public class PersonalizationPage extends StackPane {
 
         /// Creates the local custom appearance choice.
         private static ThemeChoice custom() {
-            return new ThemeChoice(i18n("theme_pack.current.custom"), null, true, false, null, null, null);
-        }
-
-        /// Creates the built-in default theme choice.
-        private static ThemeChoice defaultTheme() {
-            return new ThemeChoice(
-                    i18n("theme_pack.default"),
-                    i18n("theme_pack.default.description"),
-                    false,
-                    true,
-                    null,
-                    null,
-                    DEFAULT_THEME_SELECTION);
+            return new ThemeChoice(i18n("theme_pack.current.custom"), null, true, null, null, null);
         }
 
         /// Creates a choice for an installed theme-pack theme.
@@ -353,7 +317,6 @@ public class PersonalizationPage extends StackPane {
                     getThemeChoiceTitle(themePack, theme),
                     getThemeChoiceDescription(themePack, theme),
                     false,
-                    false,
                     themePack,
                     theme,
                     selection);
@@ -364,7 +327,6 @@ public class PersonalizationPage extends StackPane {
             return new ThemeChoice(
                     i18n("theme_pack.current.missing"),
                     getMissingThemeChoiceDescription(selection),
-                    false,
                     false,
                     null,
                     null,
@@ -380,10 +342,6 @@ public class PersonalizationPage extends StackPane {
 
             if (customAppearance) {
                 settings().themeProperty().set(null);
-                return true;
-            }
-            if (defaultAppearance) {
-                applyDefaultTheme();
                 return true;
             }
             if (themePack == null || theme == null) {
@@ -577,7 +535,7 @@ public class PersonalizationPage extends StackPane {
 
         ComponentList themeList = new ComponentList();
         {
-            Holder<List<ThemeChoice>> themeChoices = new Holder<>(List.of(ThemeChoice.defaultTheme()));
+            Holder<List<ThemeChoice>> themeChoices = new Holder<>(List.of());
             var themeSelectButton = new LineSelectButton<ThemeChoice>();
             themeSelectButton.setTitle(i18n("theme_pack.current.title"));
             themeSelectButton.setNullSafeConverter(ThemeChoice::title);
@@ -804,7 +762,7 @@ public class PersonalizationPage extends StackPane {
                         return switch (type) {
                             case DEFAULT -> {
                                 @Nullable ThemeSelection selectedTheme = settings().themeProperty().get();
-                                yield selectedTheme != null && !DEFAULT_THEME_SELECTION.equals(selectedTheme)
+                                yield selectedTheme != null
                                         ? getMissingThemeChoiceDescription(selectedTheme)
                                         : i18n("launcher.background.default");
                             }

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+  "id": "hmcl.builtin.default",
+  "version": "1.0.0",
+  "name": {
+    "default": "Default",
+    "zh-Hans": "默认",
+    "zh-Hant": "預設"
+  },
+  "description": {
+    "default": "Built-in launcher default appearance.",
+    "zh-Hans": "启动器内置默认外观。",
+    "zh-Hant": "啟動器內建預設外觀。"
+  },
+  "authors": [
+    {
+      "name": "HMCL"
+    }
+  ],
+  "theme": {
+    "color": "#5C6BC0",
+    "brightness": "light",
+    "colorStyle": "fidelity",
+    "background": {
+      "type": "builtin",
+      "opacity": 1.0,
+      "fallback": {
+        "type": "builtin"
+      },
+      "loadPolicy": "wait_for_background"
+    },
+    "titleBar": {
+      "transparent": false
+    }
+  }
+}

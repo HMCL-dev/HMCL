@@ -191,11 +191,17 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     /// Shows the installed package file in the platform file manager.
     private static void revealThemePack(ThemePackManager.InstalledThemePack themePack) {
+        if (themePack.builtin()) {
+            return;
+        }
         FXUtils.showFileInExplorer(themePack.file());
     }
 
     /// Asks for confirmation and deletes an installed theme pack.
     private void deleteThemePack(ThemePackManager.InstalledThemePack themePack) {
+        if (themePack.builtin()) {
+            return;
+        }
         Controllers.confirm(
                 i18n("theme_pack.delete.confirm", themePack.manifest().displayName()),
                 i18n("theme_pack.delete"),
@@ -535,10 +541,17 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             ThemePackManifest manifest = themePack.manifest();
             content.setTitle(manifest.displayName());
             content.setSubtitle(getThemePackSubtitle(manifest));
+            if (themePack.builtin()) {
+                content.addTag(i18n("theme_pack.builtin"));
+            }
             content.addTag(i18n("theme_pack.version", manifest.version()));
             content.addTag(i18n("theme_pack.themes", manifest.themes().size()));
 
-            right.getChildren().setAll(revealButton, deleteButton);
+            if (themePack.builtin()) {
+                right.getChildren().clear();
+            } else {
+                right.getChildren().setAll(revealButton, deleteButton);
+            }
         }
     }
 }
