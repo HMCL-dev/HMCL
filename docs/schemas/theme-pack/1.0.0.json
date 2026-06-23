@@ -248,6 +248,7 @@
           "properties": {
             "source": {
               "enum": [
+                "default",
                 "wallpaper"
               ]
             }

@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NotNullByDefault;
 /// Selects the source used to choose the launcher Monet theme color seed.
 @NotNullByDefault
 public enum ThemeColorType {
+    /// Uses the built-in launcher default theme color.
+    DEFAULT,
+
     /// Uses the custom launcher theme color selected by the user.
     CUSTOM,
 

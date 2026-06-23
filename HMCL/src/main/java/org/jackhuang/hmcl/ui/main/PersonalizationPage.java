@@ -360,9 +360,15 @@ public class PersonalizationPage extends StackPane {
     private static ThemeColorType getEffectiveThemeColorType() {
         try {
             @Nullable ThemeColorSource source = ThemePackManager.resolveCurrentThemeColorSource(ThemePackManager.currentResolveContext());
-            return source instanceof ThemeColorSource.Wallpaper ? ThemeColorType.BACKGROUND : ThemeColorType.CUSTOM;
+            if (source instanceof ThemeColorSource.Wallpaper) {
+                return ThemeColorType.BACKGROUND;
+            }
+            if (source instanceof ThemeColorSource.Custom) {
+                return ThemeColorType.CUSTOM;
+            }
+            return ThemeColorType.DEFAULT;
         } catch (IOException | RuntimeException e) {
-            return ThemeColorType.CUSTOM;
+            return ThemeColorType.DEFAULT;
         }
     }
 
@@ -984,7 +990,7 @@ public class PersonalizationPage extends StackPane {
                         }
                         ThemeColorType type = Objects.requireNonNullElse(
                                 settings().themeColorTypeProperty().get(),
-                                ThemeColorType.CUSTOM);
+                                ThemeColorType.DEFAULT);
                         return i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT));
                     },
                     settings().themeColorTypeProperty(),
@@ -996,6 +1002,10 @@ public class PersonalizationPage extends StackPane {
             picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
             ThemeColor.bindBidirectional(picker, settings().customThemeColorProperty());
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
+
+            var defaultColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
+                    i18n("settings.launcher.theme_color_type.default"),
+                    ThemeColorType.DEFAULT);
 
             var customColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
                     i18n("settings.launcher.theme_color_type.custom"),
@@ -1012,8 +1022,8 @@ public class PersonalizationPage extends StackPane {
                     ThemeColorType.BACKGROUND);
 
             RadioChoiceList<ThemeColorType> themeColorChoiceList = new RadioChoiceList<>();
-            themeColorChoiceList.setFallbackValue(ThemeColorType.CUSTOM);
-            themeColorChoiceList.setChoices(Arrays.asList(customColorChoice, backgroundColorChoice));
+            themeColorChoiceList.setFallbackValue(ThemeColorType.DEFAULT);
+            themeColorChoiceList.setChoices(Arrays.asList(defaultColorChoice, customColorChoice, backgroundColorChoice));
             bindThemeAppearanceChoiceList(
                     themeColorSublist,
                     themeColorChoiceList,

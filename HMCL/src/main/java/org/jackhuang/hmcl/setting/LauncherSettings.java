@@ -327,7 +327,7 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The source used to choose the launcher Monet theme color seed.
     @SerializedName("themeColorType")
-    private final ObjectProperty<ThemeColorType> themeColorType = new RawPreservingObjectProperty<>(ThemeColorType.CUSTOM);
+    private final ObjectProperty<ThemeColorType> themeColorType = new RawPreservingObjectProperty<>(ThemeColorType.DEFAULT);
 
     /// Returns the launcher theme color source type property.
     public ObjectProperty<ThemeColorType> themeColorTypeProperty() {

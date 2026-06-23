@@ -189,7 +189,9 @@ public final class LauncherSettingsMigrationTest {
             assertFalse(serialized.has("theme"));
             assertFalse(serialized.has("themeColor"));
             assertEquals(ThemeColor.of("#336699"), launcherSettings.customThemeColorProperty().get());
+            assertEquals(ThemeColorType.CUSTOM, launcherSettings.themeColorTypeProperty().get());
             assertEquals("#336699", serialized.get("customThemeColor").getAsString());
+            assertEquals(ThemeColorType.CUSTOM.name(), serialized.get("themeColorType").getAsString());
         }
     }
 

@@ -686,6 +686,31 @@ public final class ThemePackManifestTest {
         assertInstanceOf(ThemeColorSource.Wallpaper.class, theme.appearance().color());
     }
 
+    /// Tests that the default theme color source is parsed and serialized.
+    @Test
+    public void testParseDefaultThemeColorSource() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.default-color",
+                  "version": "1.0.0",
+                  "name": "Default Color",
+                  "theme": {
+                    "color": {
+                      "source": "default"
+                    }
+                  }
+                }
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+
+        ThemeColorSource.Default color = assertInstanceOf(ThemeColorSource.Default.class, theme.appearance().color());
+        assertEquals(
+                "default",
+                color.toJsonElement().getAsJsonObject().get("source").getAsString());
+    }
+
     /// Tests that unknown condition keys are accepted but do not match the current context.
     @Test
     public void testUnknownConditionKeyDoesNotMatchCurrentContext() {

@@ -29,7 +29,7 @@ import java.util.Objects;
 
 /// Describes how a theme-pack appearance chooses its Monet seed color.
 @NotNullByDefault
-public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeColorSource.Wallpaper {
+public sealed interface ThemeColorSource permits ThemeColorSource.Default, ThemeColorSource.Custom, ThemeColorSource.Wallpaper {
     /// JSON member name for the source type.
     String FIELD_SOURCE = "source";
 
@@ -39,6 +39,13 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
     /// @return the custom color source
     static ThemeColorSource custom(ThemeColor color) {
         return new Custom(color);
+    }
+
+    /// Creates a default color source.
+    ///
+    /// @return the default color source
+    static ThemeColorSource defaultColor() {
+        return new Default();
     }
 
     /// Creates a wallpaper color source.
@@ -56,7 +63,11 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
     static ThemeColorSource fromJson(JsonElement element) throws JsonParseException {
         Objects.requireNonNull(element);
         if (element instanceof JsonPrimitive primitive && primitive.isString()) {
-            return custom(parseColor(primitive.getAsString(), "color"));
+            String value = primitive.getAsString();
+            if ("default".equals(value.trim().replace('-', '_').toLowerCase(Locale.ROOT))) {
+                return defaultColor();
+            }
+            return custom(parseColor(value, "color"));
         }
         if (!(element instanceof JsonObject object)) {
             throw new JsonParseException("Theme color must be a string or object");
@@ -64,6 +75,9 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
 
         String source = readRequiredSource(object);
         String normalized = source.trim().replace('-', '_').toUpperCase(Locale.ROOT);
+        if ("DEFAULT".equals(normalized)) {
+            return defaultColor();
+        }
         if ("WALLPAPER".equals(normalized)) {
             return wallpaper();
         }
@@ -108,6 +122,28 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
             throw new JsonParseException("Invalid theme color " + field + ": " + value);
         }
         return color;
+    }
+
+    /// The launcher default color seed.
+    @NotNullByDefault
+    record Default() implements ThemeColorSource {
+        /// Creates a default color source.
+        public Default {
+        }
+
+        /// Converts this color source to its JSON representation.
+        @Override
+        public JsonElement toJsonElement() {
+            JsonObject object = new JsonObject();
+            object.addProperty(FIELD_SOURCE, "default");
+            return object;
+        }
+
+        /// Returns the launcher default seed color.
+        @Override
+        public ThemeColor resolveFallback() {
+            return ThemeColor.DEFAULT;
+        }
     }
 
     /// A fixed color seed supplied by the manifest.

@@ -113,7 +113,7 @@ public final class ThemePackManagerTest {
             assertEquals("example.ui", themeJson.get("packId").getAsString());
             assertFalse(themeJson.has("themeId"));
             assertTrue(settings.getThemeAppearanceOverrides().isEmpty());
-            assertEquals(ThemeColorType.CUSTOM, settings.themeColorTypeProperty().get());
+            assertEquals(ThemeColorType.DEFAULT, settings.themeColorTypeProperty().get());
             assertEquals(ColorStyle.FIDELITY, settings.themeColorStyleProperty().get());
             assertEquals("auto", settings.themeBrightnessProperty().get());
             assertFalse(settings.titleTransparentProperty().get());
@@ -793,9 +793,9 @@ public final class ThemePackManagerTest {
         }
     }
 
-    /// Tests exporting the default theme color uses the selected theme seed.
+    /// Tests exporting the default theme color uses an explicit default color source.
     @Test
-    public void testExportDefaultThemeColorUsesSelectedThemeSeed() throws Exception {
+    public void testExportDefaultThemeColorUsesDefaultSource() throws Exception {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
             settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
@@ -807,7 +807,7 @@ public final class ThemePackManagerTest {
             ThemePackManifest manifest = ThemePackManager.load(output).manifest();
             Theme theme = manifest.findTheme(null);
             assertNotNull(theme);
-            assertEquals(ThemeColorSource.custom(ThemeColor.DEFAULT), theme.appearance().color());
+            assertEquals(ThemeColorSource.defaultColor(), theme.appearance().color());
         }
     }
 
@@ -835,7 +835,7 @@ public final class ThemePackManagerTest {
             assertNotNull(theme);
 
             ThemeAppearance appearance = theme.appearance();
-            assertEquals(ThemeColorSource.custom(ThemeColor.DEFAULT), appearance.color());
+            assertEquals(ThemeColorSource.defaultColor(), appearance.color());
             ThemeBackgroundSettings background = appearance.background();
             assertNotNull(background);
             assertInstanceOf(ThemeBackground.Paint.class, background.source());
@@ -945,6 +945,8 @@ public final class ThemePackManagerTest {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
             settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
+            settings.themeColorTypeProperty().set(ThemeColorType.DEFAULT);
+            overrideThemeAppearance(settings, LauncherSettings.THEME_APPEARANCE_COLOR);
             settings.themeProperty().set(null);
 
             assertEquals(ThemeColor.DEFAULT, Themes.resolveCurrentThemeColor());

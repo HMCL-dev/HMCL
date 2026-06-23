@@ -222,6 +222,7 @@ public final class LegacyConfigMigrator {
             renameMember(jsonObject, "commonpath", "commonDirectory");
             migrateLegacyLanguage(jsonObject);
             if (renameMember(jsonObject, "theme", "customThemeColor")) {
+                jsonObject.addProperty("themeColorType", ThemeColorType.CUSTOM.name());
                 addThemeAppearanceOverride(jsonObject, LauncherSettings.THEME_APPEARANCE_COLOR);
             }
             renameMember(jsonObject, "fontFamily", "logFontFamily");

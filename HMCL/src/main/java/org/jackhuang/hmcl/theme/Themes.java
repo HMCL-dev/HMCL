@@ -156,7 +156,7 @@ public final class Themes {
         return resolveThemeColor(
                 fallback,
                 isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
-                        ? Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM)
+                        ? Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT)
                         : null,
                 backgroundType);
     }
@@ -179,17 +179,20 @@ public final class Themes {
                 return fallback;
             }
         }
-        if (themeColorType != ThemeColorType.BACKGROUND) {
-            return fallback;
-        }
-        if (backgroundType == BackgroundType.THEME_COLOR) {
-            return ThemeColor.DEFAULT;
-        }
-        @Nullable ThemeColor loadedWallpaperColor = wallpaperThemeColor.get();
-        if (loadedWallpaperColor != null) {
-            return loadedWallpaperColor;
-        }
-        return getBackgroundThemeColor(fallback);
+        return switch (themeColorType) {
+            case DEFAULT -> ThemeColor.DEFAULT;
+            case CUSTOM -> fallback;
+            case BACKGROUND -> {
+                if (backgroundType == BackgroundType.THEME_COLOR) {
+                    yield ThemeColor.DEFAULT;
+                }
+                @Nullable ThemeColor loadedWallpaperColor = wallpaperThemeColor.get();
+                if (loadedWallpaperColor != null) {
+                    yield loadedWallpaperColor;
+                }
+                yield getBackgroundThemeColor(fallback);
+            }
+        };
     }
 
     /// Returns a Monet seed color extracted from the current background when possible.

@@ -554,19 +554,22 @@ public final class ThemePackManager {
             @Nullable ThemeColorSource colorSource = resolveCurrentThemeColorSource(currentResolveContext());
             if (colorSource != null) {
                 if (colorSource instanceof ThemeColorSource.Wallpaper && backgroundType == BackgroundType.THEME_COLOR) {
-                    return ThemeColorSource.custom(ThemeColor.DEFAULT);
+                    return ThemeColorSource.defaultColor();
                 }
                 return colorSource;
             }
-            return ThemeColorSource.custom(ThemeColor.DEFAULT);
+            return ThemeColorSource.defaultColor();
         }
 
         ThemeColorType themeColorType = Objects.requireNonNullElse(
                 settings().themeColorTypeProperty().get(),
-                ThemeColorType.CUSTOM);
+                ThemeColorType.DEFAULT);
+        if (themeColorType == ThemeColorType.DEFAULT) {
+            return ThemeColorSource.defaultColor();
+        }
         if (themeColorType == ThemeColorType.BACKGROUND) {
             if (backgroundType == BackgroundType.THEME_COLOR) {
-                return ThemeColorSource.custom(ThemeColor.DEFAULT);
+                return ThemeColorSource.defaultColor();
             }
             return ThemeColorSource.wallpaper();
         }
@@ -1066,7 +1069,7 @@ public final class ThemePackManager {
     /// Resolves a concrete launcher color from a theme appearance.
     private static ThemeColor resolveThemeColor(Path themePackFile, ThemeAppearance appearance) throws IOException {
         ThemeColorSource color = Objects.requireNonNull(appearance.color());
-        if (color instanceof ThemeColorSource.Custom) {
+        if (color instanceof ThemeColorSource.Custom || color instanceof ThemeColorSource.Default) {
             return color.resolveFallback();
         }
 
