@@ -375,6 +375,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         public final RemoteAddon addon;
 
         DependencyAddonItem(DownloadListPage page, RemoteAddon addon, Profile.ProfileVersion version) {
+            this.addon = addon;
+
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -576,7 +578,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     if (!dependencies.containsKey(dependency.getType())) {
                         Label title = new Label(i18n(DependencyAddonItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
-                        List<DependencyModItem> list = new ArrayList<>();
+                        List<DependencyAddonItem> list = new ArrayList<>();
                         dependencies.put(dependency.getType(), Pair.pair(title, list));
                     }
 
@@ -596,7 +598,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         dependencies.values().stream().flatMap(nodes ->
                                 Stream.concat(
                                         Stream.of(nodes.key()),
-                                        nodes.value().stream().sorted(Comparator.comparing(item -> item.addon.getSlug())))
+                                        nodes.value().stream().sorted(Comparator.comparing(item -> item.addon.slug())))
                         ).toList()
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
