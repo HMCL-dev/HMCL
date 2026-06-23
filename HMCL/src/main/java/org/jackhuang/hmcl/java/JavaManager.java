@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.java;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonWriter;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -33,10 +36,14 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -269,7 +276,7 @@ public final class JavaManager {
         }
     }
 
-    // FXThread
+    @FXThread
     public static void addJava(JavaRuntime java) throws InterruptedException {
         Map<Path, JavaRuntime> oldMap = getAllJavaMap();
         if (!oldMap.containsKey(java.getBinary())) {
@@ -280,12 +287,12 @@ public final class JavaManager {
         }
     }
 
-    // FXThread
+    @FXThread
     public static void removeJava(JavaRuntime java) throws InterruptedException {
         removeJava(java.getBinary());
     }
 
-    // FXThread
+    @FXThread
     public static void removeJava(Path realPath) throws InterruptedException {
         Map<Path, JavaRuntime> oldMap = getAllJavaMap();
         if (oldMap.containsKey(realPath)) {

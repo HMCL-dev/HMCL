@@ -62,6 +62,7 @@ import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
@@ -140,7 +141,7 @@ public final class Controllers {
         return stage;
     }
 
-    // FXThread
+    @FXThread
     public static VersionPage getVersionPage() {
         if (versionPage == null) {
             versionPage = new VersionPage();
@@ -156,17 +157,17 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static GameListPage getGameListPage() {
         return gameListPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static RootPage getRootPage() {
         return rootPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static LauncherSettingsPage getSettingsPage() {
         if (settingsPage == null) {
             settingsPage = new LauncherSettingsPage();
@@ -182,12 +183,12 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static AccountListPage getAccountListPage() {
         return accountListPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static DownloadPage getDownloadPage() {
         if (downloadPage == null) {
             downloadPage = new DownloadPage();
@@ -203,12 +204,12 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static Node getTerracottaPage() {
         return terracottaPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static DecoratorController getDecorator() {
         return decorator;
     }
@@ -380,6 +381,12 @@ public final class Controllers {
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
         decorator = new DecoratorController(stage, getRootPage());
+        getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
+        getRootPage().getMainPage().showUpdateDialogProperty().bind(
+                decorator.backableProperty().not()
+                        .and(getRootPage().getMainPage().showUpdateProperty())
+                        .and(settings().disableAutoShowUpdateDialogProperty().not())
+        );
 
         if (settings().commonDirectoryTypeProperty().get() == EnumCommonDirectory.CUSTOM &&
                 !FileUtils.canCreateDirectory(settings().getResolvedCommonDirectory())) {
@@ -637,6 +644,11 @@ public final class Controllers {
                 cancel.run();
         });
         timeline.play();
+    }
+
+    public static void dialogLater(Region content) {
+        if (decorator != null)
+            decorator.showDialogLater(content);
     }
 
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
