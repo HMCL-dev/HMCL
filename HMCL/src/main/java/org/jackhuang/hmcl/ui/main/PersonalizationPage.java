@@ -636,20 +636,20 @@ public class PersonalizationPage extends StackPane {
             builtinBackgroundPane.visibleProperty().bind(builtinBackgroundSelected);
             builtinBackgroundPane.managedProperty().bind(builtinBackgroundSelected);
 
-            var networkBackgroundCachePane = new LineSelectButton<NetworkBackgroundImageCachePolicy>();
-            networkBackgroundCachePane.setTitle(i18n("launcher.background.network.cache"));
-            networkBackgroundCachePane.setNullSafeConverter(policy ->
-                    i18n("launcher.background.network.cache." + policy.name().toLowerCase(Locale.ROOT)));
-            networkBackgroundCachePane.setItems(
-                    NetworkBackgroundImageCachePolicy.ENABLED,
-                    NetworkBackgroundImageCachePolicy.DISABLED);
-            networkBackgroundCachePane.valueProperty()
-                    .bindBidirectional(settings().networkBackgroundImageCachePolicyProperty());
-            BooleanBinding networkBackgroundSelected =
-                    backgroundItem.selectedDataProperty().isEqualTo(BackgroundType.NETWORK);
-            networkBackgroundCachePane.visibleProperty().bind(networkBackgroundSelected);
-            networkBackgroundCachePane.managedProperty().bind(networkBackgroundSelected);
-
+            LineToggleButton networkBackgroundCacheButton = new LineToggleButton();
+            networkBackgroundCacheButton.setTitle(i18n("launcher.background.network.cache"));
+            networkBackgroundCacheButton.setSelected(settings().networkBackgroundImageCachePolicyProperty().get()
+                    != NetworkBackgroundImageCachePolicy.DISABLED);
+            networkBackgroundCacheButton.selectedProperty().addListener((observable, oldValue, selected) ->
+                    settings().networkBackgroundImageCachePolicyProperty().set(selected
+                            ? NetworkBackgroundImageCachePolicy.ENABLED
+                            : NetworkBackgroundImageCachePolicy.DISABLED));
+            settings().networkBackgroundImageCachePolicyProperty().addListener((observable, oldValue, policy) -> {
+                boolean selected = policy != NetworkBackgroundImageCachePolicy.DISABLED;
+                if (networkBackgroundCacheButton.isSelected() != selected) {
+                    networkBackgroundCacheButton.setSelected(selected);
+                }
+            });
             ComponentSublist backgroundFallbackSublist = new ComponentSublist();
             backgroundFallbackSublist.setTitle(i18n("launcher.background.fallback"));
             backgroundFallbackSublist.setHasSubtitle(true);
@@ -753,7 +753,7 @@ public class PersonalizationPage extends StackPane {
                     backgroundSublist,
                     opacityItem);
             backgroundLoadingList.getContent().setAll(
-                    networkBackgroundCachePane,
+                    networkBackgroundCacheButton,
                     backgroundFallbackSublist,
                     backgroundLoadPolicyPane
             );
