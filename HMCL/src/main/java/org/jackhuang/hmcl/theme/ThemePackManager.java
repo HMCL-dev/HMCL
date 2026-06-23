@@ -60,7 +60,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public final class ThemePackManager {
     /// Directory where imported theme packs are stored for the launcher UI.
-    public static final Path THEME_PACKS_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("theme-packs");
+    public static final Path THEME_PACKS_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("themes");
 
     /// Directory containing files extracted from installed theme packs on demand.
     private static final String CACHE_DIRECTORY = ".cache";
@@ -68,9 +68,12 @@ public final class ThemePackManager {
     /// Default version used when exporting the current launcher appearance.
     private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
 
+    /// Resource directory of the built-in default theme pack.
+    private static final String BUILTIN_THEME_PACK_RESOURCE_ROOT = "/assets/theme-packs/default";
+
     /// Resource path of the built-in default theme-pack manifest.
     private static final String BUILTIN_THEME_PACK_MANIFEST_RESOURCE =
-            "/assets/theme-packs/default/manifest.json";
+            BUILTIN_THEME_PACK_RESOURCE_ROOT + "/" + ThemePackExporter.MANIFEST_ENTRY;
 
     /// Built-in default theme selection.
     public static final ThemeSelection BUILTIN_DEFAULT_THEME_SELECTION =
@@ -173,26 +176,38 @@ public final class ThemePackManager {
         }
     }
 
-    /// Loads and parses a theme-pack file.
+    /// Loads and parses a theme-pack file or unpacked theme-pack directory.
     ///
-    /// @param file the theme-pack file
+    /// @param file the theme-pack file or directory
     /// @return the loaded theme pack
     /// @throws IOException if the file cannot be read or the manifest is invalid
     public static LoadedThemePack load(Path file) throws IOException {
         Objects.requireNonNull(file);
 
         Path normalizedFile = file.toAbsolutePath().normalize();
-        try (ZipFile zipFile = new ZipFile(normalizedFile.toFile(), StandardCharsets.UTF_8)) {
-            ZipEntry manifestEntry = zipFile.getEntry(ThemePackExporter.MANIFEST_ENTRY);
-            if (manifestEntry == null || manifestEntry.isDirectory()) {
-                throw new IOException("Theme pack does not contain " + ThemePackExporter.MANIFEST_ENTRY);
+        try {
+            if (Files.isDirectory(normalizedFile)) {
+                Path manifestFile = normalizedFile.resolve(ThemePackExporter.MANIFEST_ENTRY);
+                if (!Files.isRegularFile(manifestFile)) {
+                    throw new IOException("Theme pack directory does not contain " + ThemePackExporter.MANIFEST_ENTRY);
+                }
+
+                String manifestJson = Files.readString(manifestFile, StandardCharsets.UTF_8);
+                return new LoadedThemePack(normalizedFile, ThemePackManifest.fromJson(manifestJson));
             }
 
-            String manifestJson;
-            try (InputStream input = zipFile.getInputStream(manifestEntry)) {
-                manifestJson = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            try (ZipFile zipFile = new ZipFile(normalizedFile.toFile(), StandardCharsets.UTF_8)) {
+                ZipEntry manifestEntry = zipFile.getEntry(ThemePackExporter.MANIFEST_ENTRY);
+                if (manifestEntry == null || manifestEntry.isDirectory()) {
+                    throw new IOException("Theme pack does not contain " + ThemePackExporter.MANIFEST_ENTRY);
+                }
+
+                String manifestJson;
+                try (InputStream input = zipFile.getInputStream(manifestEntry)) {
+                    manifestJson = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+                }
+                return new LoadedThemePack(normalizedFile, ThemePackManifest.fromJson(manifestJson));
             }
-            return new LoadedThemePack(normalizedFile, ThemePackManifest.fromJson(manifestJson));
         } catch (JsonParseException | IllegalArgumentException e) {
             throw new IOException("Invalid theme-pack manifest", e);
         }
@@ -246,7 +261,7 @@ public final class ThemePackManager {
 
         Path file = installedThemePackFile(selection.packId());
         if (!Files.isRegularFile(file)) {
-            return null;
+            return findInstalledDirectory(selection.packId());
         }
         return loadInstalled(file);
     }
@@ -263,8 +278,7 @@ public final class ThemePackManager {
             ArrayList<InstalledThemePack> installedThemePacks = new ArrayList<>();
             try (Stream<Path> themePackFiles = Files.list(THEME_PACKS_DIRECTORY)) {
                 for (Path themePackFile : themePackFiles
-                        .filter(Files::isRegularFile)
-                        .filter(ThemePackManager::isInstalledThemePackFile)
+                        .filter(ThemePackManager::isInstalledThemePackPath)
                         .toList()) {
                     try {
                         installedThemePacks.add(loadInstalled(themePackFile));
@@ -934,6 +948,19 @@ public final class ThemePackManager {
     static Path resolveInstalledAsset(Path themePackFile, String entryName) throws IOException {
         String normalizedEntryName = ThemePackAsset.normalizeEntryName(entryName);
         Path installedFile = themePackFile.toAbsolutePath().normalize();
+        if (installedFile.equals(BUILTIN_THEME_PACK.file())) {
+            return resolveBuiltinAsset(normalizedEntryName);
+        }
+        if (Files.isDirectory(installedFile)) {
+            Path assetFile = installedFile.resolve(normalizedEntryName).normalize();
+            if (!assetFile.startsWith(installedFile)) {
+                throw new IOException("Theme-pack asset escapes the installed directory: " + normalizedEntryName);
+            }
+            if (!Files.isRegularFile(assetFile)) {
+                throw new IOException("Installed theme-pack asset is missing: " + normalizedEntryName);
+            }
+            return assetFile;
+        }
         if (!Files.isRegularFile(installedFile)) {
             throw new IOException("Installed theme-pack file is missing: " + installedFile);
         }
@@ -945,6 +972,19 @@ public final class ThemePackManager {
                 throw new IOException("Installed theme-pack asset is missing: " + normalizedEntryName);
             }
             copyZipEntryToCache(zipFile, entry, cacheFile);
+        }
+        return cacheFile;
+    }
+
+    /// Resolves one asset stored in the bundled default theme pack.
+    private static Path resolveBuiltinAsset(String entryName) throws IOException {
+        Path cacheFile = cachedInstalledAssetFile(BUILTIN_THEME_PACK.file(), entryName);
+        String resourcePath = BUILTIN_THEME_PACK_RESOURCE_ROOT + "/" + entryName;
+        try (InputStream input = ThemePackManager.class.getResourceAsStream(resourcePath)) {
+            if (input == null) {
+                throw new IOException("Built-in theme-pack asset is missing: " + entryName);
+            }
+            copyInputStreamToCache(input, cacheFile);
         }
         return cacheFile;
     }
@@ -991,10 +1031,17 @@ public final class ThemePackManager {
 
     /// Copies one zip entry into the installed-asset cache.
     private static void copyZipEntryToCache(ZipFile zipFile, ZipEntry entry, Path cacheFile) throws IOException {
+        try (InputStream input = zipFile.getInputStream(entry)) {
+            copyInputStreamToCache(input, cacheFile);
+        }
+    }
+
+    /// Copies one input stream into the installed-asset cache.
+    private static void copyInputStreamToCache(InputStream input, Path cacheFile) throws IOException {
         Files.createDirectories(Objects.requireNonNull(cacheFile.getParent()));
         Path temporaryFile = FileUtils.tmpSaveFile(cacheFile);
         deleteIfExists(temporaryFile);
-        try (InputStream input = zipFile.getInputStream(entry)) {
+        try {
             Files.copy(input, temporaryFile, StandardCopyOption.REPLACE_EXISTING);
             moveReplacing(temporaryFile, cacheFile);
         } catch (IOException | RuntimeException e) {
@@ -1012,6 +1059,44 @@ public final class ThemePackManager {
         String fileName = path.getFileName().toString();
         return !fileName.startsWith(".")
                 && fileName.endsWith(ThemePackExporter.FILE_EXTENSION);
+    }
+
+    /// Returns whether a path is an unpacked installed theme-pack directory candidate.
+    private static boolean isInstalledThemePackDirectory(Path path) {
+        String fileName = path.getFileName().toString();
+        return !fileName.startsWith(".")
+                && Files.isDirectory(path)
+                && Files.isRegularFile(path.resolve(ThemePackExporter.MANIFEST_ENTRY));
+    }
+
+    /// Returns whether a path is an installed theme-pack candidate.
+    private static boolean isInstalledThemePackPath(Path path) {
+        return Files.isRegularFile(path)
+                ? isInstalledThemePackFile(path)
+                : isInstalledThemePackDirectory(path);
+    }
+
+    /// Finds an installed unpacked theme-pack directory by package ID.
+    private static @Nullable InstalledThemePack findInstalledDirectory(String packId) throws IOException {
+        if (!Files.isDirectory(THEME_PACKS_DIRECTORY)) {
+            return null;
+        }
+
+        try (Stream<Path> themePackDirectories = Files.list(THEME_PACKS_DIRECTORY)) {
+            for (Path themePackDirectory : themePackDirectories
+                    .filter(ThemePackManager::isInstalledThemePackDirectory)
+                    .toList()) {
+                try {
+                    InstalledThemePack themePack = loadInstalled(themePackDirectory);
+                    if (themePack.manifest().id().equals(packId)) {
+                        return themePack;
+                    }
+                } catch (IOException | RuntimeException e) {
+                    LOG.warning("Failed to load installed theme-pack directory: " + themePackDirectory, e);
+                }
+            }
+        }
+        return null;
     }
 
     /// Validates all zip entries in a theme-pack file.

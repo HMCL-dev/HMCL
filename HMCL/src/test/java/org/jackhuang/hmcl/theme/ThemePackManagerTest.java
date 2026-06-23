@@ -231,6 +231,81 @@ public final class ThemePackManagerTest {
         }
     }
 
+    /// Tests listing and resolving assets from an unpacked theme-pack directory.
+    @Test
+    public void testListInstalledLoadsUnpackedThemePackDirectory() throws Exception {
+        Path installedDirectory = ThemePackManager.THEME_PACKS_DIRECTORY.resolve("folder-dev");
+        deleteRecursively(installedDirectory);
+
+        try {
+            Path wallpaper = installedDirectory.resolve("assets/wallpapers/wallpaper.png");
+            Files.createDirectories(Objects.requireNonNull(wallpaper.getParent()));
+            writeSolidImage(wallpaper, 0xFF336699);
+            Files.writeString(installedDirectory.resolve(ThemePackExporter.MANIFEST_ENTRY), """
+                    {
+                      "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                      "id": "example.folder-dev",
+                      "version": "1.0.0",
+                      "name": "Folder Dev",
+                      "authors": [
+                        {
+                          "name": "Example"
+                        }
+                      ],
+                      "theme": {
+                        "background": {
+                          "type": "image",
+                          "path": "assets/wallpapers/wallpaper.png"
+                        }
+                      }
+                    }
+                    """, StandardCharsets.UTF_8);
+
+            List<ThemePackManager.InstalledThemePack> installedThemePacks = ThemePackManager.listInstalled();
+            assertTrue(installedThemePacks.stream()
+                    .anyMatch(themePack -> "example.folder-dev".equals(themePack.manifest().id())));
+
+            ThemePackManager.InstalledThemePack installedThemePack = ThemePackManager.findInstalled(
+                    new ThemeSelection("example.folder-dev", null));
+            assertNotNull(installedThemePack);
+            assertEquals(installedDirectory.toAbsolutePath().normalize(), installedThemePack.file());
+            assertEquals(
+                    wallpaper.toAbsolutePath().normalize(),
+                    ThemePackManager.resolveInstalledAsset(
+                            installedThemePack.file(),
+                            "assets/wallpapers/wallpaper.png"));
+        } finally {
+            deleteRecursively(installedDirectory);
+        }
+    }
+
+    /// Tests resolving the default built-in theme background from bundled theme-pack assets.
+    @Test
+    public void testBuiltInDefaultThemeResolvesBundledWallpaperAsset() throws Exception {
+        Path cacheDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
+                .resolve(".cache")
+                .resolve(ThemePackManager.BUILTIN_DEFAULT_THEME_SELECTION.packId());
+        deleteRecursively(cacheDirectory);
+
+        try {
+            ThemePackManager.InstalledThemePack themePack = ThemePackManager.builtinThemePack();
+            Theme theme = themePack.manifest().findTheme(null);
+            assertNotNull(theme);
+            ThemeBackgroundSettings background = theme.appearance().background();
+            assertNotNull(background);
+            ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background.source());
+            assertEquals("assets/background/background.jpg", image.path());
+            String path = image.path();
+            assertNotNull(path);
+
+            Path asset = ThemePackManager.resolveInstalledAsset(themePack.file(), path);
+            assertTrue(Files.isRegularFile(asset));
+            assertTrue(asset.startsWith(cacheDirectory.toAbsolutePath().normalize()));
+        } finally {
+            deleteRecursively(cacheDirectory);
+        }
+    }
+
     /// Tests refreshing the selected theme when the brightness condition context changes.
     @Test
     public void testRefreshCurrentThemeForBrightnessCondition() throws Exception {
