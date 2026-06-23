@@ -25,9 +25,9 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -200,15 +200,15 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
-                                Controllers.dialog(i18n("mods.check_updates.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                             } else if (result.isEmpty()) {
-                                Controllers.dialog(i18n("mods.check_updates.empty"));
+                                Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
                                 Controllers.navigateForward(new AddonUpdatesPage<>(modManager, result));
                             }
                         })
                         .withStagesHints("update.checking"),
-                i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
+                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
         if (profile.getRepository().isModpack(instanceId)) {
             Controllers.confirm(
