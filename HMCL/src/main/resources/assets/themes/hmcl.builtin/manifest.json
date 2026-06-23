@@ -30,7 +30,7 @@
       "colorStyle": "fidelity",
       "background": {
         "type": "builtin",
-        "id": "hmcl.builtin.wallpaper.2021-08-26",
+        "id": "2021-08-26",
         "opacity": 1.0,
         "fallback": {
           "type": "builtin"
@@ -53,7 +53,7 @@
       "colorStyle": "fidelity",
       "background": {
         "type": "builtin",
-        "id": "hmcl.builtin.wallpaper.2016-02-25",
+        "id": "2016-02-25",
         "opacity": 1.0,
         "fallback": {
           "type": "builtin"
@@ -62,6 +62,23 @@
       },
       "titleBar": {
         "transparent": true
+      }
+    },
+    {
+      "id": "OLD",
+      "name": {
+        "default": "Old",
+        "zh": "怀旧"
+      },
+      "color": "#E67E22",
+      "brightness": "light",
+      "colorStyle": "fidelity",
+      "background": {
+        "type": "builtin",
+        "id": "2015-06-22"
+      },
+      "titleBar": {
+        "transparent": false
       }
     }
   ]

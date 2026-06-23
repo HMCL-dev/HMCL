@@ -92,10 +92,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Provides the current launcher MonetFX theme and derived color bindings.
 @NotNullByDefault
 public final class Themes {
-    /// Resource path for the launcher's default built-in wallpaper.
-    private static final String BUILTIN_DEFAULT_WALLPAPER_RESOURCE =
-            "/assets/img/wallpapers/2021-08-26.jpg";
-
     /// The seed color extracted from the last loaded wallpaper image.
     private static final ReadOnlyObjectWrapper<@Nullable ThemeColor> wallpaperThemeColor = new ReadOnlyObjectWrapper<>();
 
@@ -634,7 +630,7 @@ public final class Themes {
                     true);
         }
 
-        Image image = loadBuiltinBackgroundImage(BackgroundType.BUILTIN_DEFAULT_ID);
+        Image image = loadBuiltinBackgroundImage(BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID);
         return new LoadedBackground(
                 createBackgroundWithOpacity(image, opacity),
                 image,
@@ -829,15 +825,15 @@ public final class Themes {
             }
         }
 
-        return newBuiltinImage(BUILTIN_DEFAULT_WALLPAPER_RESOURCE);
+        return loadBuiltinBackgroundImage(BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID);
     }
 
     /// Loads one built-in launcher wallpaper by ID.
     private static Image loadBuiltinBackgroundImage(@Nullable String id) {
-        if (BackgroundType.BUILTIN_CLASSIC_ID.equals(id)) {
-            return newBuiltinImage("/assets/img/wallpapers/2016-02-25.jpg");
-        }
-        return newBuiltinImage(BUILTIN_DEFAULT_WALLPAPER_RESOURCE);
+        String wallpaperId = BackgroundType.BUILTIN_WALLPAPER_IDS.contains(id)
+                ? id
+                : BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID;
+        return newBuiltinImage("/assets/img/wallpapers/" + wallpaperId + ".jpg");
     }
 
     /// Loads a random readable image from a directory.

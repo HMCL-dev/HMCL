@@ -201,17 +201,17 @@ public sealed interface ThemeBackground
 
     /// A source that uses a launcher built-in wallpaper.
     ///
-    /// @param id the built-in wallpaper ID, or `null` for the current default built-in wallpaper
+    /// @param id the built-in wallpaper ID, or `null` for the fallback built-in wallpaper
     @NotNullByDefault
     record Builtin(@Nullable String id) implements ThemeBackground {
-        /// Creates a source that uses the current default built-in wallpaper.
+        /// Creates a source that uses the fallback built-in wallpaper.
         public Builtin() {
             this(null);
         }
 
         /// Creates a built-in wallpaper source.
         ///
-        /// @param id the built-in wallpaper ID, or `null` for the current default built-in wallpaper
+        /// @param id the built-in wallpaper ID, or `null` for the fallback built-in wallpaper
         public Builtin {
             if (id != null) {
                 id = requireNonBlank(id, FIELD_ID);

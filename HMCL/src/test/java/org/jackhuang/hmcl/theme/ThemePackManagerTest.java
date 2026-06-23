@@ -292,7 +292,7 @@ public final class ThemePackManagerTest {
             assertNotNull(defaultBackground);
             ThemeBackground.Builtin defaultBuiltinBackground =
                     assertInstanceOf(ThemeBackground.Builtin.class, defaultBackground.source());
-            assertEquals(BackgroundType.BUILTIN_DEFAULT_ID, defaultBuiltinBackground.id());
+            assertEquals(BackgroundType.BUILTIN_WALLPAPER_2021_08_26_ID, defaultBuiltinBackground.id());
 
             Theme classicTheme = themePack.manifest().findTheme("CLASSIC");
             assertNotNull(classicTheme);
@@ -300,7 +300,7 @@ public final class ThemePackManagerTest {
             assertNotNull(classicBackground);
             ThemeBackground.Builtin classicBuiltinBackground =
                     assertInstanceOf(ThemeBackground.Builtin.class, classicBackground.source());
-            assertEquals(BackgroundType.BUILTIN_CLASSIC_ID, classicBuiltinBackground.id());
+            assertEquals(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID, classicBuiltinBackground.id());
 
             ThemeReference classicReference = new ThemeReference(themePack.manifest().id(), "CLASSIC");
             ThemePackManager.ResolvedBackground resolvedBackground = ThemePackManager.resolveThemeBackground(
@@ -308,13 +308,13 @@ public final class ThemePackManagerTest {
                     new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
             assertNotNull(resolvedBackground);
             assertEquals(BackgroundType.BUILTIN, resolvedBackground.type());
-            assertEquals(BackgroundType.BUILTIN_CLASSIC_ID, resolvedBackground.builtinBackgroundId());
+            assertEquals(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID, resolvedBackground.builtinBackgroundId());
 
             ThemePackManager.apply(themePack, classicTheme);
             LauncherSettings settings = SettingsManager.settings();
             assertEquals(classicReference, settings.themeProperty().get());
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
-            assertEquals(BackgroundType.BUILTIN_CLASSIC_ID, settings.builtinBackgroundIdProperty().get());
+            assertEquals(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID, settings.builtinBackgroundIdProperty().get());
         }
     }
 
@@ -528,20 +528,26 @@ public final class ThemePackManagerTest {
         }
     }
 
-    /// Tests that non-default built-in launcher wallpapers cannot be exported as theme-pack backgrounds.
+    /// Tests exporting the selected built-in launcher wallpaper ID.
     @Test
-    public void testExportCurrentThemePackRejectsNonDefaultBuiltinBackground() throws Exception {
+    public void testExportCurrentThemePackWritesSelectedBuiltinBackground() throws Exception {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
             settings.backgroundTypeProperty().set(BackgroundType.BUILTIN);
-            settings.builtinBackgroundIdProperty().set(BackgroundType.BUILTIN_CLASSIC_ID);
+            settings.builtinBackgroundIdProperty().set(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID);
 
-            Path tempDir = createTestDirectory("export-classic");
-            Path output = tempDir.resolve("classic" + ThemePackExporter.FILE_EXTENSION);
-            IOException exception = assertThrows(IOException.class,
-                    () -> ThemePackManager.exportCurrent(output, "com.example.classic", "Classic", "Test Author"));
+            Path tempDir = createTestDirectory("export-builtin-wallpaper");
+            Path output = tempDir.resolve("builtin-wallpaper" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackManager.exportCurrent(output, "com.example.builtin-wallpaper", "Builtin Wallpaper", "Test Author");
 
-            assertTrue(exception.getMessage().contains("built-in wallpaper: " + BackgroundType.BUILTIN_CLASSIC_ID));
+            ThemePackManifest manifest = ThemePackManager.load(output).manifest();
+            Theme theme = manifest.findTheme(null);
+            assertNotNull(theme);
+
+            ThemeBackgroundSettings background = theme.appearance().background();
+            assertNotNull(background);
+            ThemeBackground.Builtin builtin = assertInstanceOf(ThemeBackground.Builtin.class, background.source());
+            assertEquals(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID, builtin.id());
         }
     }
 

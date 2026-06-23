@@ -202,7 +202,7 @@ public final class ThemePackManifestTest {
                   "theme": {
                     "background": {
                       "type": "builtin",
-                      "id": "hmcl.builtin.wallpaper.2021-08-26",
+                      "id": "2021-08-26",
                       "opacity": 0.75
                     }
                   }
@@ -214,7 +214,7 @@ public final class ThemePackManifestTest {
         assertNotNull(background);
 
         ThemeBackground.Builtin builtin = assertInstanceOf(ThemeBackground.Builtin.class, background.source());
-        assertEquals(BackgroundType.BUILTIN_DEFAULT_ID, builtin.id());
+        assertEquals(BackgroundType.BUILTIN_WALLPAPER_2021_08_26_ID, builtin.id());
         assertEquals(0.75, background.opacity());
     }
 

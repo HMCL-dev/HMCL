@@ -818,13 +818,13 @@ public final class LegacyConfigMigrator {
         if (ordinal != null && ordinal >= 0 && ordinal < LEGACY_BACKGROUND_IMAGE_TYPES.length) {
             json.addProperty("backgroundType", LEGACY_BACKGROUND_IMAGE_TYPES[ordinal]);
             if (ordinal == 2) {
-                json.addProperty("builtinBackgroundId", BackgroundType.BUILTIN_CLASSIC_ID);
+                json.addProperty("builtinBackgroundId", BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID);
             }
         }
 
         if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "CLASSIC")) {
             json.addProperty("backgroundType", BackgroundType.BUILTIN.name());
-            json.addProperty("builtinBackgroundId", BackgroundType.BUILTIN_CLASSIC_ID);
+            json.addProperty("builtinBackgroundId", BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID);
         }
 
         if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "TRANSLUCENT")) {

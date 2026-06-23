@@ -22,7 +22,6 @@ import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -30,6 +29,7 @@ import javafx.scene.Node;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -213,13 +213,6 @@ public class PersonalizationPage extends StackPane {
             return reference.packId();
         }
         return reference.packId() + " - " + reference.themeId();
-    }
-
-    /// Returns the display name for one built-in wallpaper ID.
-    private static String getBuiltinBackgroundDisplayName(String id) {
-        return BackgroundType.BUILTIN_CLASSIC_ID.equals(id)
-                ? i18n("launcher.background.builtin.classic")
-                : i18n("launcher.background.builtin.default");
     }
 
     /// Returns the file chooser filter for HMCL theme-pack files.
@@ -693,10 +686,39 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.setTitle(i18n("launcher.background"));
             backgroundSublist.setHasSubtitle(true);
 
+            JFXComboBox<String> builtinBackgroundComboBox = new JFXComboBox<>();
+            builtinBackgroundComboBox.getItems().setAll(BackgroundType.BUILTIN_WALLPAPER_IDS);
+            builtinBackgroundComboBox.valueProperty().bindBidirectional(settings().builtinBackgroundIdProperty());
+            FXUtils.setLimitWidth(builtinBackgroundComboBox, 160);
+
+            MultiFileItem.Option<BackgroundType> builtinBackgroundOption =
+                    new MultiFileItem.Option<>(i18n("launcher.background.builtin"), BackgroundType.BUILTIN) {
+                        @Override
+                        protected Node createItem(ToggleGroup group) {
+                            BorderPane pane = new BorderPane();
+                            pane.setPadding(new Insets(3));
+                            FXUtils.setLimitHeight(pane, 30);
+
+                            left.setText(title);
+                            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                            left.setToggleGroup(group);
+                            left.setUserData(data);
+                            if (StringUtils.isNotBlank(tooltip)) {
+                                FXUtils.installFastTooltip(left, tooltip);
+                            }
+                            pane.setLeft(left);
+
+                            builtinBackgroundComboBox.disableProperty().bind(left.selectedProperty().not());
+                            BorderPane.setAlignment(builtinBackgroundComboBox, Pos.CENTER_RIGHT);
+                            pane.setRight(builtinBackgroundComboBox);
+                            return pane;
+                        }
+                    };
+
             backgroundItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("launcher.background.default"), BackgroundType.DEFAULT)
                             .setTooltip(i18n("launcher.background.default.tooltip")),
-                    new MultiFileItem.Option<>(i18n("launcher.background.builtin"), BackgroundType.BUILTIN),
+                    builtinBackgroundOption,
                     new MultiFileItem.Option<>(i18n("launcher.background.theme_color"), BackgroundType.THEME_COLOR),
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), BackgroundType.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
@@ -710,15 +732,6 @@ public class PersonalizationPage extends StackPane {
                             .bindBidirectional(settings().customBackgroundPaintProperty())
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(settings().backgroundTypeProperty());
-
-            var builtinBackgroundPane = new LineSelectButton<String>();
-            builtinBackgroundPane.setTitle(i18n("launcher.background.builtin"));
-            builtinBackgroundPane.setNullSafeConverter(PersonalizationPage::getBuiltinBackgroundDisplayName);
-            builtinBackgroundPane.setItems(BackgroundType.BUILTIN_DEFAULT_ID, BackgroundType.BUILTIN_CLASSIC_ID);
-            builtinBackgroundPane.valueProperty().bindBidirectional(settings().builtinBackgroundIdProperty());
-            BooleanBinding builtinBackgroundSelected = backgroundItem.selectedDataProperty().isEqualTo(BackgroundType.BUILTIN);
-            builtinBackgroundPane.visibleProperty().bind(builtinBackgroundSelected);
-            builtinBackgroundPane.managedProperty().bind(builtinBackgroundSelected);
 
             LineToggleButton networkBackgroundCacheButton = new LineToggleButton();
             networkBackgroundCacheButton.setTitle(i18n("launcher.background.network.cache"));
@@ -785,7 +798,12 @@ public class PersonalizationPage extends StackPane {
                                     ? i18n("launcher.background.default")
                                     : i18n("launcher.background.theme");
                             case THEME_COLOR -> i18n("launcher.background.theme_color");
-                            case BUILTIN -> getBuiltinBackgroundDisplayName(settings().builtinBackgroundIdProperty().get());
+                            case BUILTIN -> {
+                                String id = settings().builtinBackgroundIdProperty().get();
+                                yield BackgroundType.BUILTIN_WALLPAPER_IDS.contains(id)
+                                        ? id
+                                        : BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID;
+                            }
                             case CUSTOM -> settings().customBackgroundImagePathProperty().get();
                             case NETWORK -> settings().networkBackgroundImageUrlProperty().get();
                             case PAINT -> {
@@ -829,7 +847,7 @@ public class PersonalizationPage extends StackPane {
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
 
-            backgroundSublist.getContent().setAll(backgroundItem, builtinBackgroundPane);
+            backgroundSublist.getContent().setAll(backgroundItem);
             themeAppearanceList.getContent().addAll(
                     backgroundSublist,
                     opacityItem);
