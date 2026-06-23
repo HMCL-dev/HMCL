@@ -17,20 +17,51 @@
       "name": "HMCL"
     }
   ],
-  "theme": {
-    "color": "#5C6BC0",
-    "brightness": "light",
-    "colorStyle": "fidelity",
-    "background": {
-      "type": "builtin",
-      "opacity": 1.0,
-      "fallback": {
-        "type": "builtin"
+  "themes": [
+    {
+      "id": "DEFAULT",
+      "name": {
+        "default": "Default",
+        "zh-Hans": "默认",
+        "zh-Hant": "預設"
       },
-      "loadPolicy": "wait_for_background"
+      "color": "#5C6BC0",
+      "brightness": "light",
+      "colorStyle": "fidelity",
+      "background": {
+        "type": "builtin",
+        "opacity": 1.0,
+        "fallback": {
+          "type": "builtin"
+        },
+        "loadPolicy": "wait_for_background"
+      },
+      "titleBar": {
+        "transparent": false
+      }
     },
-    "titleBar": {
-      "transparent": false
+    {
+      "id": "CLASSIC",
+      "name": {
+        "default": "Classic",
+        "zh-Hans": "经典",
+        "zh-Hant": "經典"
+      },
+      "color": "#5C6BC0",
+      "brightness": "light",
+      "colorStyle": "fidelity",
+      "background": {
+        "type": "builtin",
+        "name": "classic",
+        "opacity": 1.0,
+        "fallback": {
+          "type": "builtin"
+        },
+        "loadPolicy": "wait_for_background"
+      },
+      "titleBar": {
+        "transparent": true
+      }
     }
-  }
+  ]
 }

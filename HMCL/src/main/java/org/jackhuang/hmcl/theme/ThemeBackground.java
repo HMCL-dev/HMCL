@@ -40,6 +40,9 @@ public sealed interface ThemeBackground
     /// JSON member name for the background type.
     String FIELD_TYPE = "type";
 
+    /// JSON member name for the built-in background name.
+    String FIELD_NAME = "name";
+
     /// JSON member name for the local theme-pack image path.
     String FIELD_PATH = "path";
 
@@ -137,6 +140,7 @@ public sealed interface ThemeBackground
         Objects.requireNonNull(object);
 
         @Nullable String type = readString(object, FIELD_TYPE);
+        @Nullable String name = readString(object, FIELD_NAME);
         @Nullable String path = readString(object, FIELD_PATH);
         @Nullable String url = readString(object, FIELD_URL);
         @Nullable String paint = readString(object, FIELD_PAINT);
@@ -161,7 +165,7 @@ public sealed interface ThemeBackground
         }
 
         return switch (type.trim().replace('-', '_').toUpperCase(Locale.ROOT)) {
-            case "BUILTIN" -> new Builtin();
+            case "BUILTIN" -> new Builtin(name);
             case "IMAGE" -> new Image(path);
             case "NETWORK" -> new Network(url, cache);
             case "PAINT" -> new Paint(paint);
@@ -195,17 +199,32 @@ public sealed interface ThemeBackground
         return trimmed;
     }
 
-    /// A source that uses the launcher's built-in default background.
+    /// A source that uses a launcher built-in background.
+    ///
+    /// @param name the built-in background name, or `null` for the default built-in background
     @NotNullByDefault
-    record Builtin() implements ThemeBackground {
+    record Builtin(@Nullable String name) implements ThemeBackground {
+        /// Creates a source that uses the default built-in background.
+        public Builtin() {
+            this(null);
+        }
+
         /// Creates a built-in background source.
+        ///
+        /// @param name the built-in background name, or `null` for the default built-in background
         public Builtin {
+            if (name != null) {
+                name = requireNonBlank(name, FIELD_NAME);
+            }
         }
 
         /// Adds this source to a JSON object.
         @Override
         public void addToJsonObject(JsonObject object) {
             addType(object, "builtin");
+            if (name != null) {
+                object.addProperty(FIELD_NAME, name);
+            }
         }
 
         /// Returns whether this source is empty.

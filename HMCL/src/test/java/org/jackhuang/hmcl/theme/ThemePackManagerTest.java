@@ -279,30 +279,42 @@ public final class ThemePackManagerTest {
         }
     }
 
-    /// Tests resolving the default built-in theme background from bundled theme-pack assets.
+    /// Tests the built-in default theme pack declares selectable default and classic themes.
     @Test
-    public void testBuiltInDefaultThemeResolvesBundledWallpaperAsset() throws Exception {
-        Path cacheDirectory = ThemePackManager.THEME_PACKS_DIRECTORY
-                .resolve(".cache")
-                .resolve(ThemePackManager.BUILTIN_DEFAULT_THEME_SELECTION.packId());
-        deleteRecursively(cacheDirectory);
-
-        try {
+    public void testBuiltInThemePackDeclaresDefaultAndClassicThemes() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
             ThemePackManager.InstalledThemePack themePack = ThemePackManager.builtinThemePack();
-            Theme theme = themePack.manifest().findTheme(null);
-            assertNotNull(theme);
-            ThemeBackgroundSettings background = theme.appearance().background();
-            assertNotNull(background);
-            ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background.source());
-            assertEquals("assets/background/background.jpg", image.path());
-            String path = image.path();
-            assertNotNull(path);
+            assertEquals(2, themePack.manifest().themes().size());
 
-            Path asset = ThemePackManager.resolveInstalledAsset(themePack.file(), path);
-            assertTrue(Files.isRegularFile(asset));
-            assertTrue(asset.startsWith(cacheDirectory.toAbsolutePath().normalize()));
-        } finally {
-            deleteRecursively(cacheDirectory);
+            Theme defaultTheme = themePack.manifest().findTheme("DEFAULT");
+            assertNotNull(defaultTheme);
+            ThemeBackgroundSettings defaultBackground = defaultTheme.appearance().background();
+            assertNotNull(defaultBackground);
+            ThemeBackground.Builtin defaultBuiltinBackground =
+                    assertInstanceOf(ThemeBackground.Builtin.class, defaultBackground.source());
+            assertNull(defaultBuiltinBackground.name());
+
+            Theme classicTheme = themePack.manifest().findTheme("CLASSIC");
+            assertNotNull(classicTheme);
+            ThemeBackgroundSettings classicBackground = classicTheme.appearance().background();
+            assertNotNull(classicBackground);
+            ThemeBackground.Builtin classicBuiltinBackground =
+                    assertInstanceOf(ThemeBackground.Builtin.class, classicBackground.source());
+            assertEquals(BackgroundType.BUILTIN_CLASSIC, classicBuiltinBackground.name());
+
+            ThemeSelection classicSelection = new ThemeSelection(themePack.manifest().id(), "CLASSIC");
+            ThemePackManager.ResolvedBackground resolvedBackground = ThemePackManager.resolveThemeBackground(
+                    classicSelection,
+                    new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
+            assertNotNull(resolvedBackground);
+            assertEquals(BackgroundType.BUILTIN, resolvedBackground.type());
+            assertEquals(BackgroundType.BUILTIN_CLASSIC, resolvedBackground.builtinBackgroundName());
+
+            ThemePackManager.apply(themePack, classicTheme);
+            LauncherSettings settings = SettingsManager.settings();
+            assertEquals(classicSelection, settings.themeProperty().get());
+            assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
+            assertEquals(BackgroundType.BUILTIN_CLASSIC, settings.builtinBackgroundNameProperty().get());
         }
     }
 

@@ -575,7 +575,7 @@ public final class Themes {
                 }
                 break;
             case BUILTIN:
-                image = loadBuiltinBackgroundImage(settings().builtinBackgroundNameProperty().get());
+                image = loadBuiltinBackgroundImage(resolvedBackground.builtinBackgroundName());
                 break;
             case PAINT:
                 @Nullable Paint paint = resolvedBackground.paint();
