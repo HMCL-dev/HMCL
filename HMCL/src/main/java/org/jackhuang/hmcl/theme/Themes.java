@@ -92,8 +92,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Provides the current launcher MonetFX theme and derived color bindings.
 @NotNullByDefault
 public final class Themes {
-    /// Resource path for the launcher's default built-in background.
-    private static final String BUILTIN_DEFAULT_BACKGROUND_RESOURCE =
+    /// Resource path for the launcher's default built-in wallpaper.
+    private static final String BUILTIN_DEFAULT_WALLPAPER_RESOURCE =
             "/assets/img/wallpapers/2021-08-26.jpg";
 
     /// The seed color extracted from the last loaded wallpaper image.
@@ -280,7 +280,7 @@ public final class Themes {
         };
         settings().themeProperty().addListener(backgroundListener);
         settings().backgroundTypeProperty().addListener(backgroundListener);
-        settings().builtinBackgroundNameProperty().addListener(backgroundListener);
+        settings().builtinBackgroundIdProperty().addListener(backgroundListener);
         settings().customBackgroundImagePathProperty().addListener(backgroundListener);
         settings().networkBackgroundImageUrlProperty().addListener(backgroundListener);
         settings().networkBackgroundImageCachePolicyProperty().addListener(backgroundListener);
@@ -493,7 +493,7 @@ public final class Themes {
                 }
                 return null;
             case BUILTIN:
-                image = loadBuiltinBackgroundImage(BackgroundType.BUILTIN_DEFAULT);
+                image = loadBuiltinBackgroundImage(settings().builtinBackgroundIdProperty().get());
                 break;
             case CUSTOM:
                 @Nullable String customBackgroundImagePath = settings().customBackgroundImagePathProperty().get();
@@ -575,7 +575,7 @@ public final class Themes {
                 }
                 break;
             case BUILTIN:
-                image = loadBuiltinBackgroundImage(resolvedBackground.builtinBackgroundName());
+                image = loadBuiltinBackgroundImage(resolvedBackground.builtinBackgroundId());
                 break;
             case PAINT:
                 @Nullable Paint paint = resolvedBackground.paint();
@@ -634,7 +634,7 @@ public final class Themes {
                     true);
         }
 
-        Image image = loadBuiltinBackgroundImage(BackgroundType.BUILTIN_DEFAULT);
+        Image image = loadBuiltinBackgroundImage(BackgroundType.BUILTIN_DEFAULT_ID);
         return new LoadedBackground(
                 createBackgroundWithOpacity(image, opacity),
                 image,
@@ -829,15 +829,15 @@ public final class Themes {
             }
         }
 
-        return newBuiltinImage(BUILTIN_DEFAULT_BACKGROUND_RESOURCE);
+        return newBuiltinImage(BUILTIN_DEFAULT_WALLPAPER_RESOURCE);
     }
 
-    /// Loads one named built-in launcher background.
-    private static Image loadBuiltinBackgroundImage(@Nullable String name) {
-        if (BackgroundType.BUILTIN_CLASSIC.equals(name)) {
+    /// Loads one built-in launcher wallpaper by ID.
+    private static Image loadBuiltinBackgroundImage(@Nullable String id) {
+        if (BackgroundType.BUILTIN_CLASSIC_ID.equals(id)) {
             return newBuiltinImage("/assets/img/wallpapers/2016-02-25.jpg");
         }
-        return newBuiltinImage(BUILTIN_DEFAULT_BACKGROUND_RESOURCE);
+        return newBuiltinImage(BUILTIN_DEFAULT_WALLPAPER_RESOURCE);
     }
 
     /// Loads a random readable image from a directory.

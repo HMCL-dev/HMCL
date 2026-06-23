@@ -30,6 +30,7 @@
       "colorStyle": "fidelity",
       "background": {
         "type": "builtin",
+        "id": "hmcl.builtin.wallpaper.2021-08-26",
         "opacity": 1.0,
         "fallback": {
           "type": "builtin"
@@ -52,7 +53,7 @@
       "colorStyle": "fidelity",
       "background": {
         "type": "builtin",
-        "name": "classic",
+        "id": "hmcl.builtin.wallpaper.2016-02-25",
         "opacity": 1.0,
         "fallback": {
           "type": "builtin"

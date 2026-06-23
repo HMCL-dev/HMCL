@@ -94,7 +94,7 @@
         "THEME_COLOR"
       ]
     },
-    "builtinBackgroundName": {
+    "builtinBackgroundId": {
       "type": "string"
     },
     "customBackgroundImagePath": {

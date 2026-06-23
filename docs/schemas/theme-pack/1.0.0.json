@@ -304,6 +304,9 @@
         }
       },
       "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
         "path": {
           "$ref": "#/$defs/assetPath"
         },
@@ -346,6 +349,9 @@
         }
       },
       "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
         "paint": {
           "$ref": "#/$defs/nonEmptyString"
         }

@@ -25,7 +25,7 @@ public enum BackgroundType {
     /// Uses the selected theme background when available, otherwise the built-in default background.
     DEFAULT,
 
-    /// Uses one named built-in background selected by launcher settings.
+    /// Uses one built-in wallpaper selected by launcher settings.
     BUILTIN,
 
     /// Uses a user-selected local image file or a random image from a selected directory.
@@ -40,9 +40,9 @@ public enum BackgroundType {
     /// Uses the current theme color scheme surface container as a flat background.
     THEME_COLOR;
 
-    /// Name of the built-in default background.
-    public static final String BUILTIN_DEFAULT = "default";
+    /// ID of the built-in wallpaper used as the current default background.
+    public static final String BUILTIN_DEFAULT_ID = "hmcl.builtin.wallpaper.2021-08-26";
 
-    /// Name of the built-in classic background.
-    public static final String BUILTIN_CLASSIC = "classic";
+    /// ID of the built-in wallpaper used by the classic theme.
+    public static final String BUILTIN_CLASSIC_ID = "hmcl.builtin.wallpaper.2016-02-25";
 }

@@ -154,7 +154,7 @@ public final class ThemePackManager {
     /// A concrete launcher background resolved from either custom settings or a selected theme.
     ///
     /// @param type the launcher background source type
-    /// @param builtinBackgroundName the selected built-in background name, or `null` when not using a built-in background
+    /// @param builtinBackgroundId the selected built-in wallpaper ID, or `null` when not using a built-in wallpaper
     /// @param imagePath the resolved local image file or directory, or `null` when not using a local image
     /// @param networkImageUrl the remote image URL, or `null` when not using a network image
     /// @param networkImageCachePolicy whether the remote image cache policy is explicitly overridden, or `null` for default behavior
@@ -162,13 +162,13 @@ public final class ThemePackManager {
     /// @param opacity the background opacity clamped to `[0, 1]`
     public record ResolvedBackground(
             BackgroundType type,
-            @Nullable String builtinBackgroundName,
+            @Nullable String builtinBackgroundId,
             @Nullable Path imagePath,
             @Nullable String networkImageUrl,
             @Nullable NetworkBackgroundImageCachePolicy networkImageCachePolicy,
             @Nullable Paint paint,
             double opacity) {
-        /// Creates a resolved launcher background without a built-in background name.
+        /// Creates a resolved launcher background without a built-in wallpaper ID.
         ///
         /// @param type the launcher background source type
         /// @param imagePath the resolved local image file or directory, or `null` when not using a local image
@@ -189,7 +189,7 @@ public final class ThemePackManager {
         /// Creates a resolved launcher background.
         ///
         /// @param type the launcher background source type
-        /// @param builtinBackgroundName the selected built-in background name, or `null` when not using a built-in background
+        /// @param builtinBackgroundId the selected built-in wallpaper ID, or `null` when not using a built-in wallpaper
         /// @param imagePath the resolved local image file or directory, or `null` when not using a local image
         /// @param networkImageUrl the remote image URL, or `null` when not using a network image
         /// @param networkImageCachePolicy whether the remote image cache policy is explicitly overridden, or `null` for default behavior
@@ -197,10 +197,10 @@ public final class ThemePackManager {
         /// @param opacity the background opacity clamped to `[0, 1]`
         public ResolvedBackground {
             Objects.requireNonNull(type);
-            if (builtinBackgroundName != null) {
-                builtinBackgroundName = builtinBackgroundName.trim();
-                if (builtinBackgroundName.isEmpty()) {
-                    throw new IllegalArgumentException("Resolved background built-in name is blank");
+            if (builtinBackgroundId != null) {
+                builtinBackgroundId = builtinBackgroundId.trim();
+                if (builtinBackgroundId.isEmpty()) {
+                    throw new IllegalArgumentException("Resolved background built-in wallpaper ID is blank");
                 }
             }
             if (!Double.isFinite(opacity)) {
@@ -764,7 +764,7 @@ public final class ThemePackManager {
                     opacity);
             case BUILTIN -> new ResolvedBackground(
                     BackgroundType.BUILTIN,
-                    currentBuiltinBackgroundName(),
+                    currentBuiltinBackgroundId(),
                     null,
                     null,
                     null,
@@ -857,8 +857,8 @@ public final class ThemePackManager {
         if (opacity != null) {
             currentSettings.backgroundOpacityProperty().set(opacity);
         }
-        if (resolvedBackground.type() == BackgroundType.BUILTIN && resolvedBackground.builtinBackgroundName() != null) {
-            currentSettings.builtinBackgroundNameProperty().set(resolvedBackground.builtinBackgroundName());
+        if (resolvedBackground.type() == BackgroundType.BUILTIN && resolvedBackground.builtinBackgroundId() != null) {
+            currentSettings.builtinBackgroundIdProperty().set(resolvedBackground.builtinBackgroundId());
         }
         if (background.fallback() != null) {
             applyBackgroundFallback(background.fallback());
@@ -908,7 +908,7 @@ public final class ThemePackManager {
         if (source instanceof ThemeBackground.Builtin builtin) {
             return new ResolvedBackground(
                     BackgroundType.BUILTIN,
-                    resolveBuiltinBackgroundName(packId, builtin.name()),
+                    resolveBuiltinBackgroundId(packId, builtin.id()),
                     null,
                     null,
                     null,
@@ -1347,7 +1347,7 @@ public final class ThemePackManager {
         ResolvedBackground background = resolveCurrentBackground(currentResolveContext());
         Double opacity = background.opacity();
         ThemeBackgroundSettings backgroundSettings = switch (background.type()) {
-            case DEFAULT -> new ThemeBackgroundSettings(new ThemeBackground.Builtin(), opacity);
+            case DEFAULT -> new ThemeBackgroundSettings(new ThemeBackground.Builtin(BackgroundType.BUILTIN_DEFAULT_ID), opacity);
             case BUILTIN -> createCurrentBuiltinBackground(opacity);
             case CUSTOM -> createCurrentImageBackground(assets, background.imagePath(), opacity);
             case NETWORK -> new ThemeBackgroundSettings(
@@ -1376,7 +1376,7 @@ public final class ThemePackManager {
                 settings().backgroundFallbackTypeProperty().get(),
                 BackgroundType.BUILTIN);
         return switch (fallbackType) {
-            case BUILTIN, DEFAULT -> new ThemeBackground.Builtin();
+            case BUILTIN, DEFAULT -> new ThemeBackground.Builtin(BackgroundType.BUILTIN_DEFAULT_ID);
             case PAINT -> new ThemeBackground.Paint(
                     Objects.requireNonNullElse(settings().backgroundFallbackPaintProperty().get(), Color.WHITE).toString());
             case CUSTOM, NETWORK, THEME_COLOR -> throw new IOException(
@@ -1389,13 +1389,13 @@ public final class ThemePackManager {
         return Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER);
     }
 
-    /// Creates the background model for the currently selected built-in background.
+    /// Creates the background model for the currently selected built-in wallpaper.
     private static ThemeBackgroundSettings createCurrentBuiltinBackground(Double opacity) throws IOException {
-        String builtinBackgroundName = currentBuiltinBackgroundName();
-        if (BackgroundType.BUILTIN_DEFAULT.equals(builtinBackgroundName)) {
-            return new ThemeBackgroundSettings(new ThemeBackground.Builtin(), opacity);
+        String builtinBackgroundId = currentBuiltinBackgroundId();
+        if (BackgroundType.BUILTIN_DEFAULT_ID.equals(builtinBackgroundId)) {
+            return new ThemeBackgroundSettings(new ThemeBackground.Builtin(builtinBackgroundId), opacity);
         }
-        throw new IOException("Theme packs cannot reference built-in background: " + builtinBackgroundName);
+        throw new IOException("Theme packs cannot reference built-in wallpaper: " + builtinBackgroundId);
     }
 
     /// Creates the image background model for the current launcher settings.
@@ -1428,27 +1428,27 @@ public final class ThemePackManager {
         return Math.max(0.0, Math.min(1.0, opacity));
     }
 
-    /// Returns the currently selected built-in background name.
-    private static String currentBuiltinBackgroundName() {
-        String name = settings().builtinBackgroundNameProperty().get();
-        return BackgroundType.BUILTIN_CLASSIC.equals(name)
-                ? BackgroundType.BUILTIN_CLASSIC
-                : BackgroundType.BUILTIN_DEFAULT;
+    /// Returns the currently selected built-in wallpaper ID.
+    private static String currentBuiltinBackgroundId() {
+        String id = settings().builtinBackgroundIdProperty().get();
+        return BackgroundType.BUILTIN_CLASSIC_ID.equals(id)
+                ? BackgroundType.BUILTIN_CLASSIC_ID
+                : BackgroundType.BUILTIN_DEFAULT_ID;
     }
 
-    /// Resolves a theme-pack built-in background name.
-    private static String resolveBuiltinBackgroundName(String packId, @Nullable String name) throws IOException {
-        String normalizedName = StringUtils.isBlank(name)
-                ? BackgroundType.BUILTIN_DEFAULT
-                : name.trim().toLowerCase(Locale.ROOT);
-        if (BackgroundType.BUILTIN_DEFAULT.equals(normalizedName)) {
-            return BackgroundType.BUILTIN_DEFAULT;
+    /// Resolves a theme-pack built-in wallpaper ID.
+    private static String resolveBuiltinBackgroundId(String packId, @Nullable String id) throws IOException {
+        String normalizedId = StringUtils.isBlank(id)
+                ? BackgroundType.BUILTIN_DEFAULT_ID
+                : id.trim().toLowerCase(Locale.ROOT);
+        if (BackgroundType.BUILTIN_DEFAULT_ID.equals(normalizedId)) {
+            return BackgroundType.BUILTIN_DEFAULT_ID;
         }
-        if (BackgroundType.BUILTIN_CLASSIC.equals(normalizedName)
+        if (BackgroundType.BUILTIN_CLASSIC_ID.equals(normalizedId)
                 && findBuiltinThemePack(packId) != null) {
-            return BackgroundType.BUILTIN_CLASSIC;
+            return BackgroundType.BUILTIN_CLASSIC_ID;
         }
-        throw new IOException("Theme packs cannot reference built-in background: " + normalizedName);
+        throw new IOException("Theme packs cannot reference built-in wallpaper: " + normalizedId);
     }
 
     /// Parses a serialized JavaFX paint value.

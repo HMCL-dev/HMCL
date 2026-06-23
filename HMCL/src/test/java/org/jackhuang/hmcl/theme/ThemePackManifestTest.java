@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
+import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
@@ -189,7 +190,7 @@ public final class ThemePackManifestTest {
         assertEquals(Brightness.LIGHT, resolvedTheme.brightness());
     }
 
-    /// Tests that the built-in background type represents the launcher default wallpaper.
+    /// Tests that the built-in background type can reference a launcher built-in wallpaper.
     @Test
     public void testParseBuiltinBackground() {
         ThemePackManifest manifest = ThemePackManifest.fromJson("""
@@ -201,6 +202,7 @@ public final class ThemePackManifestTest {
                   "theme": {
                     "background": {
                       "type": "builtin",
+                      "id": "hmcl.builtin.wallpaper.2021-08-26",
                       "opacity": 0.75
                     }
                   }
@@ -211,7 +213,8 @@ public final class ThemePackManifestTest {
         ThemeBackgroundSettings background = theme.appearance().background();
         assertNotNull(background);
 
-        assertInstanceOf(ThemeBackground.Builtin.class, background.source());
+        ThemeBackground.Builtin builtin = assertInstanceOf(ThemeBackground.Builtin.class, background.source());
+        assertEquals(BackgroundType.BUILTIN_DEFAULT_ID, builtin.id());
         assertEquals(0.75, background.opacity());
     }
 
