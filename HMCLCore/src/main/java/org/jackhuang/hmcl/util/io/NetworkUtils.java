@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.glavo.url.WebURL;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -165,8 +165,8 @@ public final class NetworkUtils {
     }
 
     private static final Map<String, String> API_KEYS = Map.of(
-            "api.curseforge.com", CurseForgeRemoteModRepository.API_KEY,
-            "edge.forgecdn.net", CurseForgeRemoteModRepository.API_KEY
+            "api.curseforge.com", CurseForgeRemoteAddonRepository.API_KEY,
+            "edge.forgecdn.net", CurseForgeRemoteAddonRepository.API_KEY
     );
 
     public static java.net.http.HttpRequest.Builder newRequestBuilder(URI uri) {

@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +56,7 @@ public enum ModTranslations {
         }
     };
 
-    public static ModTranslations getTranslationsByRepositoryType(RemoteModRepository.Type type) {
+    public static ModTranslations getTranslationsByRepositoryType(RemoteAddonRepository.Type type) {
         return switch (type) {
             case MOD -> MOD;
             case MODPACK -> MODPACK;
