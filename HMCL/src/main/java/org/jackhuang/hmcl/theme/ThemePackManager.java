@@ -1366,6 +1366,9 @@ public final class ThemePackManager {
                     new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),
                     opacity);
         };
+        if (background.type() != BackgroundType.NETWORK) {
+            return backgroundSettings;
+        }
         return new ThemeBackgroundSettings(
                 backgroundSettings.source(),
                 backgroundSettings.opacity(),

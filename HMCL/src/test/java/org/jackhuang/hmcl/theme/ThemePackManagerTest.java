@@ -420,18 +420,18 @@ public final class ThemePackManagerTest {
             assertEquals(true, appearance.titleBar().transparent());
             assertInstanceOf(ThemeBackground.Builtin.class, background.source());
             assertEquals(0.5, background.opacity());
-            ThemeBackground.Paint fallback = assertInstanceOf(ThemeBackground.Paint.class, background.fallback());
-            assertEquals("0x112233ff", fallback.paint());
-            assertEquals(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND, background.loadPolicy());
+            assertNull(background.fallback());
+            assertNull(background.loadPolicy());
         }
     }
 
-    /// Tests exporting the theme-color background fallback option.
+    /// Tests exporting the theme-color background fallback option for a network background.
     @Test
     public void testExportCurrentThemeColorBackgroundFallback() throws Exception {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
-            settings.backgroundTypeProperty().set(BackgroundType.BUILTIN);
+            settings.backgroundTypeProperty().set(BackgroundType.NETWORK);
+            settings.networkBackgroundImageUrlProperty().set("https://example.com/wallpaper.png");
             settings.backgroundFallbackTypeProperty().set(BackgroundType.THEME_COLOR);
 
             Path tempDir = createTestDirectory("export-theme-color-fallback");
@@ -445,6 +445,7 @@ public final class ThemePackManagerTest {
             ThemeBackgroundSettings background = theme.appearance().background();
             assertNotNull(background);
             assertInstanceOf(ThemeBackground.ThemeColor.class, background.fallback());
+            assertEquals(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND, background.loadPolicy());
         }
     }
 
@@ -591,6 +592,37 @@ public final class ThemePackManagerTest {
             ThemeBackgroundSettings background = appearance.background();
             assertNotNull(background);
             assertInstanceOf(ThemeBackground.Paint.class, background.source());
+            assertNull(background.fallback());
+            assertNull(background.loadPolicy());
+        }
+    }
+
+    /// Tests exporting a local background file omits loading controls.
+    @Test
+    public void testExportCurrentLocalBackgroundOmitsLoadingControls() throws Exception {
+        try (SettingsScope ignored = new SettingsScope()) {
+            Path tempDir = createTestDirectory("export-local-background");
+            Path wallpaper = tempDir.resolve("wallpaper.png");
+            writeSolidImage(wallpaper, 0xFF336699);
+
+            LauncherSettings settings = SettingsManager.settings();
+            settings.backgroundTypeProperty().set(BackgroundType.CUSTOM);
+            settings.customBackgroundImagePathProperty().set(wallpaper.toString());
+            settings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
+            settings.backgroundLoadPolicyProperty().set(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
+
+            Path output = tempDir.resolve("local-background" + ThemePackExporter.FILE_EXTENSION);
+            ThemePackManager.exportCurrent(output, "com.example.local-background", "Local Background", "Test Author");
+
+            ThemePackManifest manifest = ThemePackManager.load(output).manifest();
+            Theme theme = manifest.findTheme(null);
+            assertNotNull(theme);
+
+            ThemeBackgroundSettings background = theme.appearance().background();
+            assertNotNull(background);
+            assertInstanceOf(ThemeBackground.Image.class, background.source());
+            assertNull(background.fallback());
+            assertNull(background.loadPolicy());
         }
     }
 
@@ -614,6 +646,8 @@ public final class ThemePackManagerTest {
             assertNotNull(background);
             ThemeBackground.Builtin builtin = assertInstanceOf(ThemeBackground.Builtin.class, background.source());
             assertEquals(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID, builtin.id());
+            assertNull(background.fallback());
+            assertNull(background.loadPolicy());
         }
     }
 
