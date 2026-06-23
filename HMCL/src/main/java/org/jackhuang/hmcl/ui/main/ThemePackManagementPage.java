@@ -47,6 +47,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.Theme;
+import org.jackhuang.hmcl.theme.ThemePackAuthor;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemePackManifest;
@@ -73,6 +74,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -156,7 +158,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                     || containsIgnoreCase(manifest.id(), query)
                     || containsIgnoreCase(manifest.version(), query)
                     || containsIgnoreCase(manifest.displayDescription(), query)
-                    || manifest.authors().stream().anyMatch(author -> containsIgnoreCase(author.displayName(), query));
+                    || manifest.authors().stream().anyMatch(author -> containsIgnoreCase(author.displayName(), query))
+                    || manifest.themes().stream()
+                            .flatMap(theme -> theme.authors().stream())
+                            .anyMatch(author -> containsIgnoreCase(author.displayName(), query));
         };
     }
 
@@ -252,15 +257,33 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         TwoLineListItem item = new TwoLineListItem();
         item.setTitle(getThemeDisplayName(manifest, theme));
         item.setSubtitle(getThemeDescription(theme));
-        addThemeTags(item, theme);
+        addThemeTags(item, manifest, theme);
         return item;
     }
 
     /// Adds metadata tags for one theme.
-    private static void addThemeTags(TwoLineListItem item, Theme theme) {
+    private static void addThemeTags(TwoLineListItem item, ThemePackManifest manifest, Theme theme) {
         if (theme.id() != null) {
             item.addTag(i18n("theme_pack.theme.id", theme.id()));
         }
+        String authors = getThemeAuthorDisplayNames(manifest, theme);
+        if (!StringUtils.isBlank(authors)) {
+            item.addTag(i18n("archive.author") + ": " + authors);
+        }
+    }
+
+    /// Returns the display names for authors credited on one theme.
+    private static String getThemeAuthorDisplayNames(ThemePackManifest manifest, Theme theme) {
+        List<ThemePackAuthor> authors = theme.authors().isEmpty() ? manifest.authors() : theme.authors();
+        return getAuthorDisplayNames(authors);
+    }
+
+    /// Returns comma-separated author display names.
+    private static String getAuthorDisplayNames(List<ThemePackAuthor> authors) {
+        return authors.stream()
+                .map(author -> author.displayName())
+                .filter(author -> !StringUtils.isBlank(author))
+                .collect(Collectors.joining(", "));
     }
 
     /// Returns whether a nullable value contains the lower-cased query.
@@ -308,7 +331,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             title.setSubtitle(manifest.id());
             title.addTag(i18n("theme_pack.version", manifest.version()));
             title.addTag(i18n("theme_pack.themes", manifest.themes().size()));
-            String authors = getAuthorDisplayNames(manifest);
+            String authors = getAuthorDisplayNames(manifest.authors());
             if (!StringUtils.isBlank(authors)) {
                 title.addTag(i18n("archive.author") + ": " + authors);
             }
@@ -338,13 +361,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             return body;
         }
 
-        /// Returns comma-separated author display names.
-        private static String getAuthorDisplayNames(ThemePackManifest manifest) {
-            return manifest.authors().stream()
-                    .map(author -> author.displayName())
-                    .filter(author -> !StringUtils.isBlank(author))
-                    .collect(java.util.stream.Collectors.joining(", "));
-        }
     }
 
     /// Skin for the theme-pack management list page.

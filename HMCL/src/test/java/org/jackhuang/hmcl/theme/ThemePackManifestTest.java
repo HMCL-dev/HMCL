@@ -52,6 +52,11 @@ public final class ThemePackManifestTest {
               "theme": {
                 "id": "forest",
                 "name": "Forest",
+                "authors": [
+                  {
+                    "name": "Forest Artist"
+                  }
+                ],
                 "thumbnail": "assets/thumbnails/forest.png",
                 "color": "#4D7C3A",
                 "colorStyle": "fidelity",
@@ -703,6 +708,7 @@ public final class ThemePackManifestTest {
         assertEquals("Example", manifest.authors().get(0).displayName());
         Theme theme = manifest.findTheme("forest");
         assertNotNull(theme);
+        assertEquals("Forest Artist", theme.authors().get(0).displayName());
         return theme;
     }
 }

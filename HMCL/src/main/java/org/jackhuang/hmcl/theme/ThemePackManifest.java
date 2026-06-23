@@ -163,7 +163,7 @@ public record ThemePackManifest(
                 id,
                 version,
                 name,
-                readAuthors(object),
+                readAuthors(object, "theme-pack"),
                 description,
                 readThemes(object));
     }
@@ -211,13 +211,7 @@ public record ThemePackManifest(
         object.addProperty(FIELD_VERSION, version);
         object.add(FIELD_NAME, JsonUtils.GSON.toJsonTree(name, LocalizedText.class));
 
-        if (!authors.isEmpty()) {
-            JsonArray array = new JsonArray();
-            for (ThemePackAuthor author : authors) {
-                array.add(author.toJsonObject());
-            }
-            object.add(FIELD_AUTHORS, array);
-        }
+        addAuthors(object, authors);
         if (description != null) {
             object.add(FIELD_DESCRIPTION, JsonUtils.GSON.toJsonTree(description, LocalizedText.class));
         }
@@ -260,29 +254,42 @@ public record ThemePackManifest(
         return result.status().name();
     }
 
-    /// Reads the authors list.
-    private static List<ThemePackAuthor> readAuthors(JsonObject object) {
+    /// Adds author metadata to a JSON object when the author list is not empty.
+    static void addAuthors(JsonObject object, List<ThemePackAuthor> authors) {
+        if (authors.isEmpty()) {
+            return;
+        }
+
+        JsonArray array = new JsonArray();
+        for (ThemePackAuthor author : authors) {
+            array.add(author.toJsonObject());
+        }
+        object.add(FIELD_AUTHORS, array);
+    }
+
+    /// Reads the authors list from a JSON object.
+    static List<ThemePackAuthor> readAuthors(JsonObject object, String ownerName) {
         JsonElement element = object.get(FIELD_AUTHORS);
         if (element == null) {
             return List.of();
         }
         if (!(element instanceof JsonArray array)) {
-            LOG.warning("Ignored invalid theme-pack authors: expected an array, got " + element);
+            LOG.warning("Ignored invalid " + ownerName + " authors: expected an array, got " + element);
             return List.of();
         }
 
         ArrayList<ThemePackAuthor> authors = new ArrayList<>(array.size());
         int index = 0;
         for (JsonElement item : array) {
-            String field = FIELD_AUTHORS + "[" + index + "]";
+            String field = ownerName + " " + FIELD_AUTHORS + "[" + index + "]";
             if (item instanceof JsonObject authorObject) {
                 try {
                     authors.add(new ThemePackAuthor(requireAuthorName(authorObject)));
                 } catch (JsonParseException | IllegalArgumentException e) {
-                    LOG.warning("Ignored invalid theme-pack author `" + field + "`: " + e.getMessage(), e);
+                    LOG.warning("Ignored invalid " + ownerName + " author `" + field + "`: " + e.getMessage(), e);
                 }
             } else {
-                LOG.warning("Ignored invalid theme-pack author `" + field + "`: expected an object, got " + item);
+                LOG.warning("Ignored invalid " + ownerName + " author `" + field + "`: expected an object, got " + item);
             }
             index++;
         }

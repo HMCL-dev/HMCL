@@ -546,6 +546,7 @@ public final class ThemePackManager {
         Theme theme = new Theme(
                 null,
                 null,
+                List.of(),
                 null,
                 null,
                 appearance,

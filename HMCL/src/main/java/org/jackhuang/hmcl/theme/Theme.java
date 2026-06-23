@@ -42,6 +42,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 ///
 /// @param id the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
 /// @param name the localized display name, or `null` for an unnamed single-theme pack
+/// @param authors authors of this specific theme
 /// @param description the optional localized description
 /// @param thumbnail the optional theme-pack relative thumbnail path
 /// @param appearance the default appearance fields
@@ -50,6 +51,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public record Theme(
         @Nullable String id,
         @Nullable LocalizedText name,
+        @Unmodifiable List<ThemePackAuthor> authors,
         @Nullable LocalizedText description,
         @Nullable String thumbnail,
         ThemeAppearance appearance,
@@ -74,6 +76,7 @@ public record Theme(
     ///
     /// @param id the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
     /// @param name the localized display name, or `null` for an unnamed single-theme pack
+    /// @param authors authors of this specific theme
     /// @param description the optional localized description
     /// @param thumbnail the optional theme-pack relative thumbnail path
     /// @param appearance the default appearance fields
@@ -85,6 +88,7 @@ public record Theme(
         if (name != null) {
             name = ThemePackManifest.requireLocalizedText(name, FIELD_NAME);
         }
+        authors = List.copyOf(authors);
         if (description != null) {
             description = ThemePackManifest.requireLocalizedText(description, FIELD_DESCRIPTION);
         }
@@ -117,6 +121,7 @@ public record Theme(
         return new Theme(
                 id,
                 name,
+                ThemePackManifest.readAuthors(object, "theme"),
                 readLocalizedText(object, FIELD_DESCRIPTION),
                 readString(object, FIELD_THUMBNAIL),
                 appearance,
@@ -164,6 +169,7 @@ public record Theme(
         if (name != null) {
             object.add(FIELD_NAME, JsonUtils.GSON.toJsonTree(name, LocalizedText.class));
         }
+        ThemePackManifest.addAuthors(object, authors);
         if (description != null) {
             object.add(FIELD_DESCRIPTION, JsonUtils.GSON.toJsonTree(description, LocalizedText.class));
         }

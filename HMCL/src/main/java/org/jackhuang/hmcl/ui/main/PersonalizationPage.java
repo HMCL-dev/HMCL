@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.theme.ThemeAppearance;
 import org.jackhuang.hmcl.theme.ThemeBackgroundSettings;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
+import org.jackhuang.hmcl.theme.ThemePackAuthor;
 import org.jackhuang.hmcl.theme.ThemePackManifest;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemeResolveContext;
@@ -83,6 +84,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
@@ -174,11 +176,29 @@ public class PersonalizationPage extends StackPane {
         if (!StringUtils.isBlank(themeDescription)) {
             return themeDescription;
         }
+        String authors = getThemeAuthorDisplayNames(themePack.manifest(), theme);
+        if (!StringUtils.isBlank(authors)) {
+            return i18n("archive.author") + ": " + authors;
+        }
         @Nullable String packDescription = themePack.manifest().displayDescription();
         if (!StringUtils.isBlank(packDescription)) {
             return packDescription;
         }
         return themePack.manifest().id();
+    }
+
+    /// Returns the display names for authors credited on one theme.
+    private static String getThemeAuthorDisplayNames(ThemePackManifest manifest, Theme theme) {
+        List<ThemePackAuthor> authors = theme.authors().isEmpty() ? manifest.authors() : theme.authors();
+        return getAuthorDisplayNames(authors);
+    }
+
+    /// Returns comma-separated author display names.
+    private static String getAuthorDisplayNames(List<ThemePackAuthor> authors) {
+        return authors.stream()
+                .map(ThemePackAuthor::displayName)
+                .filter(author -> !StringUtils.isBlank(author))
+                .collect(Collectors.joining(", "));
     }
 
     /// Returns the effective display name for a theme.
