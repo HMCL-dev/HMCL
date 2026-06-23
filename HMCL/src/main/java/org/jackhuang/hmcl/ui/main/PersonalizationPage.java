@@ -176,14 +176,14 @@ public class PersonalizationPage extends StackPane {
 
     /// Updates the icon and pseudo class of a theme appearance override button.
     private static void updateThemeAppearanceOverrideButton(JFXButton button, boolean inherited) {
-        button.setGraphic((inherited ? SVG.PUBLIC : SVG.TUNE).createIcon(INHERIT_BUTTON_ICON_SIZE));
+        button.setGraphic((inherited ? SVG.STYLE : SVG.EDIT).createIcon(INHERIT_BUTTON_ICON_SIZE));
         button.pseudoClassStateChanged(PSEUDO_OVERRIDDEN, !inherited);
 
         Object tooltip = button.getProperties().get(INHERIT_BUTTON_TOOLTIP_KEY);
         if (tooltip instanceof Tooltip inheritTooltip) {
             inheritTooltip.setText(i18n(inherited
-                    ? "settings.game.inherit_global"
-                    : "settings.game.override_global"));
+                    ? "theme_pack.appearance.follow_theme.tooltip"
+                    : "theme_pack.appearance.custom.tooltip"));
         }
     }
 
