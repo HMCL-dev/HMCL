@@ -650,36 +650,37 @@ public class PersonalizationPage extends StackPane {
             networkBackgroundCachePane.visibleProperty().bind(networkBackgroundSelected);
             networkBackgroundCachePane.managedProperty().bind(networkBackgroundSelected);
 
-            var backgroundFallbackPane = new LineSelectButton<BackgroundType>();
-            backgroundFallbackPane.setTitle(i18n("launcher.background.fallback"));
-            backgroundFallbackPane.setNullSafeConverter(type -> i18n("launcher.background.fallback." + switch (type) {
-                case PAINT -> "paint";
-                default -> "builtin";
-            }));
-            backgroundFallbackPane.setItems(
-                    BackgroundType.BUILTIN,
-                    BackgroundType.PAINT);
-            backgroundFallbackPane.valueProperty().bindBidirectional(settings().backgroundFallbackTypeProperty());
+            ComponentSublist backgroundFallbackSublist = new ComponentSublist();
+            backgroundFallbackSublist.setTitle(i18n("launcher.background.fallback"));
+            backgroundFallbackSublist.setHasSubtitle(true);
 
-            HBox backgroundFallbackPaintItem = new HBox(8);
-            {
-                backgroundFallbackPaintItem.setAlignment(Pos.CENTER);
+            MultiFileItem<BackgroundType> backgroundFallbackItem = new MultiFileItem<>();
+            backgroundFallbackItem.setFallbackData(BackgroundType.BUILTIN);
+            backgroundFallbackItem.loadChildren(Arrays.asList(
+                    new MultiFileItem.Option<>(i18n("launcher.background.fallback.builtin"), BackgroundType.BUILTIN),
+                    new MultiFileItem.PaintOption<>(i18n("launcher.background.fallback.paint"), BackgroundType.PAINT)
+                            .bindBidirectional(settings().backgroundFallbackPaintProperty())
+            ));
+            backgroundFallbackItem.selectedDataProperty().bindBidirectional(settings().backgroundFallbackTypeProperty());
+            backgroundFallbackSublist.getContent().setAll(backgroundFallbackItem);
+            backgroundFallbackSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
+                        BackgroundType type = Lang.requireNonNullElse(
+                                backgroundFallbackItem.selectedDataProperty().get(),
+                                BackgroundType.BUILTIN);
 
-                Label label = new Label(i18n("launcher.background.fallback.paint.value"));
-
-                ColorPicker picker = new JFXColorPicker();
-                FXUtils.bindPaint(picker, settings().backgroundFallbackPaintProperty());
-                Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
-
-                Region spacer = new Region();
-                HBox.setHgrow(spacer, Priority.ALWAYS);
-                backgroundFallbackPaintItem.getChildren().setAll(label, spacer, picker);
-
-                BooleanBinding paintFallbackSelected = settings().backgroundFallbackTypeProperty()
-                        .isEqualTo(BackgroundType.PAINT);
-                backgroundFallbackPaintItem.visibleProperty().bind(paintFallbackSelected);
-                backgroundFallbackPaintItem.managedProperty().bind(paintFallbackSelected);
-            }
+                        return switch (type) {
+                            case PAINT -> {
+                                @Nullable Paint backgroundFallbackPaint =
+                                        settings().backgroundFallbackPaintProperty().get();
+                                yield backgroundFallbackPaint != null
+                                        ? backgroundFallbackPaint.toString()
+                                        : i18n("launcher.background.fallback.paint");
+                            }
+                            default -> i18n("launcher.background.fallback.builtin");
+                        };
+                    },
+                    backgroundFallbackItem.selectedDataProperty(),
+                    settings().backgroundFallbackPaintProperty()));
 
             var backgroundLoadPolicyPane = new LineSelectButton<BackgroundLoadPolicy>();
             backgroundLoadPolicyPane.setTitle(i18n("launcher.background.load_policy"));
@@ -752,10 +753,9 @@ public class PersonalizationPage extends StackPane {
                     backgroundSublist,
                     opacityItem);
             backgroundLoadingList.getContent().setAll(
-                    backgroundLoadPolicyPane,
                     networkBackgroundCachePane,
-                    backgroundFallbackPane,
-                    backgroundFallbackPaintItem
+                    backgroundFallbackSublist,
+                    backgroundLoadPolicyPane
             );
         }
 
