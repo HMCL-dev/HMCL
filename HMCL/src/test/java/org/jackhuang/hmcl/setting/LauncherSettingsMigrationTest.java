@@ -146,7 +146,7 @@ public final class LauncherSettingsMigrationTest {
     @Test
     public void serializesBackgroundLoadingControls() {
         LauncherSettings launcherSettings = new LauncherSettings();
-        assertEquals(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND, launcherSettings.backgroundLoadPolicyProperty().get());
+        assertNull(launcherSettings.backgroundLoadPolicyProperty().get());
 
         launcherSettings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
         launcherSettings.backgroundFallbackPaintProperty().set(Color.web("#123456"));

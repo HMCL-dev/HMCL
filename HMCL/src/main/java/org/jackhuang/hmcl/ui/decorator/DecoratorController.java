@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 
 public class DecoratorController {
@@ -50,7 +49,7 @@ public class DecoratorController {
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
-        decorator.titleTransparentProperty().bind(settings().titleTransparentProperty());
+        decorator.titleTransparentProperty().bind(Themes.titleTransparentProperty());
 
         navigator = new Navigator();
         navigator.setOnNavigated(this::onNavigated);

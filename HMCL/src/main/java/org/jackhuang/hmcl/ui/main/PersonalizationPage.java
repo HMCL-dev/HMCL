@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
@@ -31,7 +30,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
@@ -99,9 +97,6 @@ public class PersonalizationPage extends StackPane {
     private static final DateTimeFormatter EXPORTED_THEME_NAME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ROOT);
 
-    /// Whether launcher theme fields are currently being changed by applying a theme.
-    private static boolean applyingTheme = false;
-
     /// Snaps a percent value to the nearest 5% opacity tick.
     private static double snapOpacity(double val) {
         if (val <= 0) {
@@ -132,8 +127,8 @@ public class PersonalizationPage extends StackPane {
             LOG.warning("Failed to load installed theme packs", e);
         }
 
-        @Nullable ThemeReference reference = settings().themeProperty().get();
-        if (reference != null && findThemeChoice(choices, reference) == null) {
+        ThemeReference reference = settings().getThemeOrDefault();
+        if (findThemeChoice(choices, reference) == null) {
             choices.add(ThemeChoice.missing(reference));
         }
 
@@ -142,15 +137,13 @@ public class PersonalizationPage extends StackPane {
 
     /// Returns the choice that matches the current launcher theme reference.
     private static ThemeChoice getSelectedThemeChoice(List<ThemeChoice> choices) {
-        @Nullable ThemeReference reference = settings().themeProperty().get();
-        if (reference != null) {
-            @Nullable ThemeChoice choice = findThemeChoice(choices, reference);
-            if (choice != null) {
-                return choice;
-            }
+        ThemeReference reference = settings().getThemeOrDefault();
+        @Nullable ThemeChoice choice = findThemeChoice(choices, reference);
+        if (choice != null) {
+            return choice;
         }
 
-        return reference != null ? ThemeChoice.missing(reference) : ThemeChoice.custom();
+        return ThemeChoice.missing(reference);
     }
 
     /// Finds a selectable theme choice by theme reference.
@@ -282,44 +275,22 @@ public class PersonalizationPage extends StackPane {
                 MessageType.ERROR);
     }
 
-    /// Registers a listener for fields that are controlled by launcher themes.
-    private static void installThemeCustomizationListener(InvalidationListener listener) {
-        settings().customThemeColorProperty().addListener(listener);
-        settings().themeColorTypeProperty().addListener(listener);
-        settings().themeColorStyleProperty().addListener(listener);
-        settings().backgroundTypeProperty().addListener(listener);
-        settings().builtinBackgroundIdProperty().addListener(listener);
-        settings().customBackgroundImagePathProperty().addListener(listener);
-        settings().networkBackgroundImageUrlProperty().addListener(listener);
-        settings().networkBackgroundImageCachePolicyProperty().addListener(listener);
-        settings().customBackgroundPaintProperty().addListener(listener);
-        settings().backgroundOpacityProperty().addListener(listener);
-        settings().titleTransparentProperty().addListener(listener);
-    }
-
-    /// A selectable launcher theme or the local custom appearance.
+    /// A selectable launcher theme.
     ///
     /// @param title            the label shown by the selector
     /// @param description      the optional secondary text shown in the selector popup
-    /// @param customAppearance whether this item represents the local custom appearance
     /// @param themePack        the installed theme pack, or `null` for non-pack choices
     /// @param theme            the installed theme, or `null` for non-pack choices
-    /// @param reference        the stored theme reference, or `null` for the local custom appearance
+    /// @param reference        the stored theme reference, or `null` for unresolved placeholder choices
     private record ThemeChoice(
             String title,
             @Nullable String description,
-            boolean customAppearance,
             @Nullable ThemePackManager.InstalledThemePack themePack,
             @Nullable Theme theme,
             @Nullable ThemeReference reference) {
         /// Creates a theme selector choice.
         private ThemeChoice {
             Objects.requireNonNull(title);
-        }
-
-        /// Creates the local custom appearance choice.
-        private static ThemeChoice custom() {
-            return new ThemeChoice(i18n("theme_pack.current.custom"), null, true, null, null, null);
         }
 
         /// Creates a choice for an installed theme-pack theme.
@@ -330,7 +301,6 @@ public class PersonalizationPage extends StackPane {
             return new ThemeChoice(
                     getThemeChoiceTitle(themePack, theme),
                     getThemeChoiceDescription(themePack, theme),
-                    false,
                     themePack,
                     theme,
                     reference);
@@ -341,7 +311,6 @@ public class PersonalizationPage extends StackPane {
             return new ThemeChoice(
                     i18n("theme_pack.current.missing"),
                     getMissingThemeChoiceDescription(reference),
-                    false,
                     null,
                     null,
                     reference);
@@ -354,10 +323,6 @@ public class PersonalizationPage extends StackPane {
         private boolean apply(ThemeResolveContext context) throws IOException {
             Objects.requireNonNull(context);
 
-            if (customAppearance) {
-                settings().themeProperty().set(null);
-                return true;
-            }
             if (themePack == null || theme == null) {
                 return false;
             }
@@ -462,18 +427,16 @@ public class PersonalizationPage extends StackPane {
             Runnable refreshSelectedTheme,
             @Nullable Themes.LoadedBackground loadedBackground) {
         try {
-            applyingTheme = true;
             boolean applied = choice.apply(context);
             if (applied && loadedBackground != null) {
                 Themes.applyLoadedBackground(loadedBackground);
             }
-            if (applied && !choice.customAppearance()) {
+            if (applied) {
                 Controllers.showToast(i18n("theme_pack.apply.success", choice.applyDisplayName()));
             }
         } catch (IOException | RuntimeException e) {
             showThemePackError(i18n("theme_pack.apply.failed"), e);
         } finally {
-            applyingTheme = false;
             refreshSelectedTheme.run();
         }
     }
@@ -585,6 +548,22 @@ public class PersonalizationPage extends StackPane {
             reloadThemeChoices.run();
             themeList.getContent().add(themeSelectButton);
 
+            LineButton resetThemeOverridesButton = new LineButton();
+            resetThemeOverridesButton.setTitle(i18n("theme_pack.appearance.reset"));
+            resetThemeOverridesButton.setSubtitle(i18n("theme_pack.appearance.reset.subtitle"));
+            resetThemeOverridesButton.setTrailingIcon(SVG.RESTORE);
+            resetThemeOverridesButton.setOnAction(event -> {
+                settings().themeBrightnessProperty().set("default");
+                settings().themeColorTypeProperty().set(ThemeColorType.DEFAULT);
+                settings().themeColorStyleProperty().set(null);
+                settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
+                settings().backgroundOpacityProperty().set(null);
+                settings().backgroundFallbackTypeProperty().set(BackgroundType.DEFAULT);
+                settings().backgroundLoadPolicyProperty().set(null);
+                settings().titleTransparentProperty().set(null);
+            });
+            themeList.getContent().add(resetThemeOverridesButton);
+
             LineButton manageThemeButton = LineButton.createNavigationButton();
             manageThemeButton.setTitle(i18n("theme_pack.manage"));
             manageThemeButton.setOnAction(event -> Controllers.navigateForward(new ThemePackManagementPage(reloadThemeChoices)));
@@ -606,7 +585,7 @@ public class PersonalizationPage extends StackPane {
             var brightnessPane = new LineSelectButton<String>();
             brightnessPane.setTitle(i18n("settings.launcher.brightness"));
             brightnessPane.setNullSafeConverter(name -> i18n("settings.launcher.brightness." + name));
-            brightnessPane.setItems("auto", "light", "dark");
+            brightnessPane.setItems("default", "auto", "light", "dark");
             brightnessPane.valueProperty().bindBidirectional(settings().themeBrightnessProperty());
 
             themeAppearanceList.getContent().add(brightnessPane);
@@ -659,11 +638,14 @@ public class PersonalizationPage extends StackPane {
         {
             var colorStylePane = new LineSelectButton<ColorStyle>();
             colorStylePane.setTitle(i18n("settings.launcher.theme_color_style"));
-            colorStylePane.setNullSafeConverter(style ->
-                    i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT)));
-            colorStylePane.setDescriptionConverter(style ->
-                    i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT) + ".desc"));
-            colorStylePane.setItems(
+            colorStylePane.setConverter(style -> style == null
+                    ? i18n("settings.launcher.theme_color_style.default")
+                    : i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT)));
+            colorStylePane.setDescriptionConverter(style -> style == null
+                    ? ""
+                    : i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT) + ".desc"));
+            colorStylePane.setItems(Arrays.asList(
+                    null,
                     ColorStyle.FIDELITY,
                     ColorStyle.TONAL_SPOT,
                     ColorStyle.VIBRANT,
@@ -674,7 +656,7 @@ public class PersonalizationPage extends StackPane {
 
                     ColorStyle.FRUIT_SALAD,
                     ColorStyle.RAINBOW
-            );
+            ));
             colorStylePane.valueProperty().bindBidirectional(settings().themeColorStyleProperty());
 
             themeAppearanceList.getContent().add(colorStylePane);
@@ -752,8 +734,9 @@ public class PersonalizationPage extends StackPane {
             backgroundFallbackSublist.setHasSubtitle(true);
 
             MultiFileItem<BackgroundType> backgroundFallbackItem = new MultiFileItem<>();
-            backgroundFallbackItem.setFallbackData(BackgroundType.BUILTIN);
+            backgroundFallbackItem.setFallbackData(BackgroundType.DEFAULT);
             backgroundFallbackItem.loadChildren(Arrays.asList(
+                    new MultiFileItem.Option<>(i18n("launcher.background.fallback.default"), BackgroundType.DEFAULT),
                     new MultiFileItem.Option<>(i18n("launcher.background.fallback.builtin"), BackgroundType.BUILTIN),
                     new MultiFileItem.Option<>(i18n("launcher.background.fallback.theme_color"), BackgroundType.THEME_COLOR),
                     new MultiFileItem.PaintOption<>(i18n("launcher.background.fallback.paint"), BackgroundType.PAINT)
@@ -764,9 +747,10 @@ public class PersonalizationPage extends StackPane {
             backgroundFallbackSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         BackgroundType type = Lang.requireNonNullElse(
                                 backgroundFallbackItem.selectedDataProperty().get(),
-                                BackgroundType.BUILTIN);
+                                BackgroundType.DEFAULT);
 
                         return switch (type) {
+                            case DEFAULT -> i18n("launcher.background.fallback.default");
                             case PAINT -> {
                                 @Nullable Paint backgroundFallbackPaint =
                                         settings().backgroundFallbackPaintProperty().get();
@@ -783,11 +767,13 @@ public class PersonalizationPage extends StackPane {
 
             var backgroundLoadPolicyPane = new LineSelectButton<BackgroundLoadPolicy>();
             backgroundLoadPolicyPane.setTitle(i18n("launcher.background.load_policy"));
-            backgroundLoadPolicyPane.setNullSafeConverter(policy ->
-                    i18n("launcher.background.load_policy." + policy.name().toLowerCase(Locale.ROOT)));
-            backgroundLoadPolicyPane.setItems(
+            backgroundLoadPolicyPane.setConverter(policy -> policy == null
+                    ? i18n("launcher.background.load_policy.default")
+                    : i18n("launcher.background.load_policy." + policy.name().toLowerCase(Locale.ROOT)));
+            backgroundLoadPolicyPane.setItems(Arrays.asList(
+                    null,
                     BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
-                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING);
+                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING));
             backgroundLoadPolicyPane.valueProperty().bindBidirectional(settings().backgroundLoadPolicyProperty());
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
@@ -796,9 +782,7 @@ public class PersonalizationPage extends StackPane {
                                 BackgroundType.DEFAULT);
 
                         return switch (type) {
-                            case DEFAULT -> settings().themeProperty().get() == null
-                                    ? i18n("launcher.background.default")
-                                    : i18n("launcher.background.theme");
+                            case DEFAULT -> i18n("launcher.background.theme");
                             case THEME_COLOR -> i18n("launcher.background.theme_color");
                             case BUILTIN -> {
                                 String id = settings().builtinBackgroundIdProperty().get();
@@ -821,13 +805,15 @@ public class PersonalizationPage extends StackPane {
                     settings().networkBackgroundImageUrlProperty(),
                     settings().customBackgroundPaintProperty()));
 
+            LineToggleButton opacityDefaultButton = new LineToggleButton();
             HBox opacityItem = new HBox(8);
             {
                 opacityItem.setAlignment(Pos.CENTER);
 
                 Label label = new Label(i18n("settings.launcher.background.settings.opacity"));
 
-                JFXSlider slider = new JFXSlider(0, 100, settings().backgroundOpacityProperty().get() * 100);
+                @Nullable Double configuredOpacity = settings().backgroundOpacityProperty().get();
+                JFXSlider slider = new JFXSlider(0, 100, Objects.requireNonNullElse(configuredOpacity, 1.0) * 100);
                 slider.setShowTickMarks(true);
                 slider.setMajorTickUnit(10);
                 slider.setMinorTickCount(1);
@@ -843,8 +829,31 @@ public class PersonalizationPage extends StackPane {
                 textOpacity.textProperty().bind(valueBinding);
                 slider.setValueFactory(s -> valueBinding);
 
-                slider.valueProperty().addListener((observable, oldValue, newValue) ->
-                        settings().backgroundOpacityProperty().set(snapOpacity(newValue.doubleValue())));
+                opacityDefaultButton.setTitle(i18n("settings.launcher.background.settings.opacity.default"));
+                opacityDefaultButton.setSelected(configuredOpacity == null);
+                slider.disableProperty().bind(opacityDefaultButton.selectedProperty());
+
+                opacityDefaultButton.selectedProperty().addListener((observable, oldValue, selected) -> {
+                    if (selected) {
+                        settings().backgroundOpacityProperty().set(null);
+                    } else {
+                        settings().backgroundOpacityProperty().set(snapOpacity(slider.getValue()));
+                    }
+                });
+                settings().backgroundOpacityProperty().addListener((observable, oldValue, newValue) -> {
+                    boolean useDefault = newValue == null;
+                    if (opacityDefaultButton.isSelected() != useDefault) {
+                        opacityDefaultButton.setSelected(useDefault);
+                    }
+                    if (newValue != null) {
+                        slider.setValue(newValue * 100);
+                    }
+                });
+                slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+                    if (!opacityDefaultButton.isSelected()) {
+                        settings().backgroundOpacityProperty().set(snapOpacity(newValue.doubleValue()));
+                    }
+                });
 
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
@@ -852,6 +861,7 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.getContent().setAll(backgroundItem);
             themeAppearanceList.getContent().addAll(
                     backgroundSublist,
+                    opacityDefaultButton,
                     opacityItem);
             backgroundLoadingList.getContent().setAll(
                     networkBackgroundCacheButton,
@@ -861,16 +871,15 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            LineToggleButton titleTransparentButton = new LineToggleButton();
-            themeAppearanceList.getContent().add(titleTransparentButton);
-            titleTransparentButton.selectedProperty().bindBidirectional(settings().titleTransparentProperty());
-            titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
+            var titleTransparentPane = new LineSelectButton<Boolean>();
+            titleTransparentPane.setTitle(i18n("settings.launcher.title_transparent"));
+            titleTransparentPane.setConverter(value -> value == null
+                    ? i18n("settings.launcher.title_transparent.default")
+                    : i18n("settings.launcher.title_transparent." + (value ? "enabled" : "disabled")));
+            titleTransparentPane.setItems(Arrays.asList(null, Boolean.TRUE, Boolean.FALSE));
+            titleTransparentPane.valueProperty().bindBidirectional(settings().titleTransparentProperty());
+            themeAppearanceList.getContent().add(titleTransparentPane);
         }
-        installThemeCustomizationListener(ignored -> {
-            if (!applyingTheme && !ThemePackManager.isApplyingTheme() && settings().themeProperty().get() != null) {
-                settings().themeProperty().set(null);
-            }
-        });
         content.getChildren().addAll(
                 ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")),
                 themeAppearanceList,
