@@ -127,7 +127,7 @@ public record ThemeAppearance(
         if (brightness != null) {
             object.addProperty(FIELD_BRIGHTNESS, toJsonBrightness(brightness));
         }
-        if (colorStyle != null && !"DEFAULT".equals(colorStyle.name())) {
+        if (colorStyle != null) {
             object.addProperty(FIELD_COLOR_STYLE, colorStyle.name().toLowerCase(Locale.ROOT));
         }
         if (contrast != null && !contrast.equals(Contrast.DEFAULT)) {
@@ -223,7 +223,7 @@ public record ThemeAppearance(
 
             String normalized = value.trim().replace('-', '_').replace(' ', '_').toUpperCase(Locale.ROOT);
             if ("DEFAULT".equals(normalized)) {
-                throw new JsonParseException("Theme colorStyle must be omitted to use the default value");
+                return ColorStyle.DEFAULT;
             }
             return ColorStyle.valueOf(normalized);
         } catch (JsonParseException | IllegalArgumentException e) {

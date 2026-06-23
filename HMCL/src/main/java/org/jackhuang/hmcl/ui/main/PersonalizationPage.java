@@ -582,12 +582,12 @@ public class PersonalizationPage extends StackPane {
             resetThemeOverridesButton.setSubtitle(i18n("theme_pack.appearance.reset.subtitle"));
             resetThemeOverridesButton.setTrailingIcon(SVG.RESTORE);
             resetThemeOverridesButton.setOnAction(event -> {
-                settings().themeBrightnessProperty().set("default");
+                settings().themeBrightnessProperty().set(null);
                 settings().themeColorTypeProperty().set(ThemeColorType.DEFAULT);
                 settings().themeColorStyleProperty().set(null);
                 settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
                 settings().backgroundOpacityProperty().set(null);
-                settings().backgroundFallbackTypeProperty().set(BackgroundType.DEFAULT);
+                settings().backgroundFallbackTypeProperty().set(null);
                 settings().backgroundLoadPolicyProperty().set(null);
                 settings().titleTransparentProperty().set(null);
             });
@@ -668,8 +668,12 @@ public class PersonalizationPage extends StackPane {
         {
             var colorStylePane = new LineSelectButton<ColorStyle>();
             colorStylePane.setTitle(i18n("settings.launcher.theme_color_style"));
-            colorStylePane.setConverter(style -> i18n("settings.launcher.theme_color_style."
-                    + Objects.requireNonNullElse(style, Themes.getTheme().colorStyle()).name().toLowerCase(Locale.ROOT)));
+            colorStylePane.setConverter(style -> {
+                ColorStyle effectiveStyle = style == null
+                        ? Themes.getTheme().colorStyle()
+                        : style;
+                return i18n("settings.launcher.theme_color_style." + effectiveStyle.name().toLowerCase(Locale.ROOT));
+            });
             colorStylePane.setDescriptionConverter(style -> style == null
                     ? ""
                     : i18n("settings.launcher.theme_color_style." + style.name().toLowerCase(Locale.ROOT) + ".desc"));

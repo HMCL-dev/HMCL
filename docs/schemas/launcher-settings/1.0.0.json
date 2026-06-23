@@ -66,8 +66,7 @@
         "EXPRESSIVE",
         "CONTENT",
         "RAINBOW",
-        "FRUIT_SALAD",
-        "DEFAULT"
+        "FRUIT_SALAD"
       ]
     },
     "logFontFamily": {
@@ -113,7 +112,6 @@
     "customBackgroundPaint": true,
     "backgroundFallbackType": {
       "enum": [
-        "DEFAULT",
         "BUILTIN",
         "CUSTOM",
         "NETWORK",

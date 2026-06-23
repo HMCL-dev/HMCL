@@ -256,9 +256,9 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return Objects.requireNonNullElse(theme.get(), DEFAULT_THEME_REFERENCE);
     }
 
-    /// The configured theme brightness identifier, or `default` to follow the selected theme.
+    /// The configured theme brightness identifier, or `null` to follow the selected theme.
     @SerializedName("themeBrightness")
-    private final StringProperty themeBrightness = new SimpleStringProperty("default");
+    private final StringProperty themeBrightness = new SimpleStringProperty();
 
     /// Returns the theme brightness property.
     public StringProperty themeBrightnessProperty() {
@@ -396,12 +396,10 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return customBackgroundPaint;
     }
 
-    /// The fallback source used when the selected launcher background cannot be loaded.
-    ///
-    /// [BackgroundType#DEFAULT] follows the selected theme fallback first, then falls back to HMCL's built-in wallpaper.
+    /// The fallback source used when the selected launcher background cannot be loaded, or `null` to follow the selected theme.
     @SerializedName("backgroundFallbackType")
     private final ObjectProperty<@Nullable BackgroundType> backgroundFallbackType =
-            new RawPreservingObjectProperty<>(BackgroundType.DEFAULT);
+            new RawPreservingObjectProperty<>();
 
     /// Returns the launcher background fallback source type property.
     public ObjectProperty<@Nullable BackgroundType> backgroundFallbackTypeProperty() {

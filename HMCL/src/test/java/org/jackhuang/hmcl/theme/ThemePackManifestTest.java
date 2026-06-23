@@ -718,6 +718,28 @@ public final class ThemePackManifestTest {
         assertEquals(Contrast.MEDIUM, theme.appearance().contrast());
     }
 
+    /// Tests that the MonetFX default color style alias is parsed as tonal spot.
+    @Test
+    public void testParseDefaultColorStyleAlias() {
+        ThemePackManifest manifest = ThemePackManifest.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.default-color-style",
+                  "version": "1.0.0",
+                  "name": "Default Color Style",
+                  "theme": {
+                    "colorStyle": "default"
+                  }
+                }
+                """);
+        Theme theme = manifest.findTheme(null);
+        assertNotNull(theme);
+
+        ThemeAppearance appearance = theme.appearance();
+        assertEquals(ColorStyle.TONAL_SPOT, appearance.colorStyle());
+        assertEquals("tonal_spot", appearance.toJsonObject().get("colorStyle").getAsString());
+    }
+
     /// Tests that malformed optional appearance fields are ignored instead of rejecting the manifest.
     @Test
     public void testInvalidOptionalAppearanceFieldsFallbackToDefaults() {

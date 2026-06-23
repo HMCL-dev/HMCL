@@ -481,13 +481,13 @@ public final class ThemePackManager {
         ThemeReference reference = new ThemeReference(manifest.id(), theme.id());
         LauncherSettings currentSettings = settings();
         currentSettings.themeProperty().set(reference);
-        currentSettings.themeBrightnessProperty().set("default");
+        currentSettings.themeBrightnessProperty().set(null);
         currentSettings.themeColorTypeProperty().set(ThemeColorType.DEFAULT);
         currentSettings.themeColorStyleProperty().set(null);
         currentSettings.titleTransparentProperty().set(null);
         currentSettings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
         currentSettings.backgroundOpacityProperty().set(null);
-        currentSettings.backgroundFallbackTypeProperty().set(BackgroundType.DEFAULT);
+        currentSettings.backgroundFallbackTypeProperty().set(null);
         currentSettings.backgroundLoadPolicyProperty().set(null);
     }
 

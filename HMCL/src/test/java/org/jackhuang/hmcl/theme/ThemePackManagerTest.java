@@ -109,7 +109,7 @@ public final class ThemePackManagerTest {
             assertEquals(ThemeColor.DEFAULT, settings.customThemeColorProperty().get());
             assertEquals(ThemeColorType.DEFAULT, settings.themeColorTypeProperty().get());
             assertNull(settings.themeColorStyleProperty().get());
-            assertEquals("default", settings.themeBrightnessProperty().get());
+            assertNull(settings.themeBrightnessProperty().get());
             assertEquals(new ThemeReference("example.ui", null), settings.themeProperty().get());
             JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
                     .getAsJsonObject()
@@ -119,7 +119,7 @@ public final class ThemePackManagerTest {
             assertNull(settings.titleTransparentProperty().get());
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
             assertNull(settings.backgroundOpacityProperty().get());
-            assertEquals(BackgroundType.DEFAULT, settings.backgroundFallbackTypeProperty().get());
+            assertNull(settings.backgroundFallbackTypeProperty().get());
             assertEquals(Color.WHITE, settings.backgroundFallbackPaintProperty().get());
             assertNull(settings.backgroundLoadPolicyProperty().get());
             assertNull(settings.customBackgroundImagePathProperty().get());
@@ -343,7 +343,7 @@ public final class ThemePackManagerTest {
 
             ThemePackManager.apply(classicThemePack, classicTheme);
             assertEquals(classicReference, settings.themeProperty().get());
-            assertEquals("default", settings.themeBrightnessProperty().get());
+            assertNull(settings.themeBrightnessProperty().get());
             assertNull(settings.themeColorStyleProperty().get());
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
             ThemePackManager.ResolvedBackground selectedClassicBackground = ThemePackManager.resolveCurrentBackground(
@@ -633,7 +633,7 @@ public final class ThemePackManagerTest {
 
             ThemePackManager.apply(installedThemePack, theme);
 
-            assertEquals(BackgroundType.DEFAULT, SettingsManager.settings().backgroundFallbackTypeProperty().get());
+            assertNull(SettingsManager.settings().backgroundFallbackTypeProperty().get());
             assertEquals(
                     BackgroundType.THEME_COLOR,
                     ThemePackManager.resolveCurrentBackgroundFallback(
