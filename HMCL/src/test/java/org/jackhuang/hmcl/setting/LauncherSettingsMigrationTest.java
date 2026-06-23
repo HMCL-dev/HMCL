@@ -25,7 +25,6 @@ import javafx.scene.paint.Color;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
-import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -219,11 +218,11 @@ public final class LauncherSettingsMigrationTest {
             assertFalse(serialized.has("backgroundPaint"));
             assertEquals("/pictures/background.png", launcherSettings.customBackgroundImagePathProperty().get());
             assertEquals("https://example.com/background.png", launcherSettings.networkBackgroundImageUrlProperty().get());
-            assertEquals(NetworkBackgroundImageCachePolicy.DISABLED,
+            assertEquals(NetworkBackgroundImageCachePolicyType.DISABLED,
                     launcherSettings.networkBackgroundImageCachePolicyProperty().get());
             assertEquals("/pictures/background.png", serialized.get("customBackgroundImagePath").getAsString());
             assertEquals("https://example.com/background.png", serialized.get("networkBackgroundImageUrl").getAsString());
-            assertEquals(NetworkBackgroundImageCachePolicy.DISABLED.name(),
+            assertEquals(NetworkBackgroundImageCachePolicyType.DISABLED.name(),
                     serialized.get("networkBackgroundImageCachePolicy").getAsString());
             assertEquals("#336699", serialized.get("customBackgroundPaint").getAsString());
         }

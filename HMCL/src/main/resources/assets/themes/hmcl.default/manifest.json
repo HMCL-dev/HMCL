@@ -18,19 +18,5 @@
     }
   ],
   "theme": {
-    "color": "#5C6BC0",
-    "colorStyle": "fidelity",
-    "background": {
-      "type": "builtin",
-      "id": "2021-08-26",
-      "opacity": 1.0,
-      "fallback": {
-        "type": "builtin"
-      },
-      "loadPolicy": "wait_for_background"
-    },
-    "titleBar": {
-      "transparent": false
-    }
   }
 }

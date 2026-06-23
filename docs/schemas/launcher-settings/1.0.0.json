@@ -104,6 +104,7 @@
     },
     "networkBackgroundImageCachePolicy": {
       "enum": [
+        "DEFAULT",
         "ENABLED",
         "DISABLED"
       ]

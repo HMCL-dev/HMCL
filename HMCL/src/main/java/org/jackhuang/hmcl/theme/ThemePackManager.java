@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundOpacityType;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicyType;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -207,6 +208,18 @@ public final class ThemePackManager {
 
         /// Returns a copy with a different opacity.
         public ResolvedBackground withOpacity(double opacity) {
+            return new ResolvedBackground(
+                    type,
+                    builtinBackgroundId,
+                    imagePath,
+                    networkImageUrl,
+                    networkImageCachePolicy,
+                    paint,
+                    opacity);
+        }
+
+        /// Returns a copy with a different network image cache policy.
+        public ResolvedBackground withNetworkImageCachePolicy(@Nullable NetworkBackgroundImageCachePolicy networkImageCachePolicy) {
             return new ResolvedBackground(
                     type,
                     builtinBackgroundId,
@@ -487,6 +500,7 @@ public final class ThemePackManager {
         currentSettings.themeColorStyleProperty().set(null);
         currentSettings.titleTransparentProperty().set(null);
         currentSettings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
+        currentSettings.networkBackgroundImageCachePolicyProperty().set(NetworkBackgroundImageCachePolicyType.DEFAULT);
         currentSettings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.DEFAULT);
         currentSettings.backgroundFallbackTypeProperty().set(null);
         currentSettings.backgroundLoadPolicyProperty().set(null);
@@ -898,7 +912,7 @@ public final class ThemePackManager {
                         BackgroundType.NETWORK,
                         null,
                         StringUtils.isBlank(networkBackgroundImageUrl) ? null : networkBackgroundImageUrl.trim(),
-                        settings().networkBackgroundImageCachePolicyProperty().get(),
+                        currentNetworkBackgroundImageCachePolicy(),
                         null,
                         opacity);
             }
@@ -947,9 +961,15 @@ public final class ThemePackManager {
             return null;
         }
         ResolvedBackground resolved = resolveBackground(themePack.file(), background, 1.0);
-        return settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM
-                ? resolved.withOpacity(currentBackgroundOpacity())
-                : resolved;
+        if (settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM) {
+            resolved = resolved.withOpacity(currentBackgroundOpacity());
+        }
+        NetworkBackgroundImageCachePolicyType cachePolicyType = currentNetworkBackgroundImageCachePolicyType();
+        if (resolved.type() == BackgroundType.NETWORK
+                && cachePolicyType != NetworkBackgroundImageCachePolicyType.DEFAULT) {
+            resolved = resolved.withNetworkImageCachePolicy(currentNetworkBackgroundImageCachePolicy());
+        }
+        return resolved;
     }
 
     /// Resolves a concrete launcher background from a theme-pack background object.
@@ -1529,6 +1549,22 @@ public final class ThemePackManager {
         return settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM
                 ? currentBackgroundOpacity()
                 : 1.0;
+    }
+
+    /// Returns the custom network background cache policy, or `null` for the default cache behavior.
+    private static @Nullable NetworkBackgroundImageCachePolicy currentNetworkBackgroundImageCachePolicy() {
+        return switch (currentNetworkBackgroundImageCachePolicyType()) {
+            case ENABLED -> NetworkBackgroundImageCachePolicy.ENABLED;
+            case DISABLED -> NetworkBackgroundImageCachePolicy.DISABLED;
+            case DEFAULT -> null;
+        };
+    }
+
+    /// Returns the configured network background cache policy type.
+    private static NetworkBackgroundImageCachePolicyType currentNetworkBackgroundImageCachePolicyType() {
+        return Objects.requireNonNullElse(
+                settings().networkBackgroundImageCachePolicyProperty().get(),
+                NetworkBackgroundImageCachePolicyType.DEFAULT);
     }
 
     /// Returns the currently selected built-in wallpaper ID.

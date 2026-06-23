@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
-import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -228,7 +227,7 @@ public final class LegacyConfigMigrator {
             renameMember(jsonObject, "backgroundImage", "customBackgroundImagePath");
             renameMember(jsonObject, "bgurl", "networkBackgroundImageUrl");
             renameMember(jsonObject, "backgroundImageUrl", "networkBackgroundImageUrl");
-            jsonObject.addProperty("networkBackgroundImageCachePolicy", NetworkBackgroundImageCachePolicy.DISABLED.name());
+            jsonObject.addProperty("networkBackgroundImageCachePolicy", NetworkBackgroundImageCachePolicyType.DISABLED.name());
             renameMember(jsonObject, "bgpaint", "customBackgroundPaint");
             renameMember(jsonObject, "backgroundPaint", "customBackgroundPaint");
             migrateBackgroundOpacity(jsonObject);

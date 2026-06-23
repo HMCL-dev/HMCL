@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
-import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemeReference;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -377,13 +376,13 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return networkBackgroundImageUrl;
     }
 
-    /// Whether the remote network launcher background image may be cached locally.
+    /// The URL image cache policy for network launcher backgrounds.
     @SerializedName("networkBackgroundImageCachePolicy")
-    private final ObjectProperty<NetworkBackgroundImageCachePolicy> networkBackgroundImageCachePolicy =
-            new RawPreservingObjectProperty<>(NetworkBackgroundImageCachePolicy.ENABLED);
+    private final ObjectProperty<NetworkBackgroundImageCachePolicyType> networkBackgroundImageCachePolicy =
+            new RawPreservingObjectProperty<>(NetworkBackgroundImageCachePolicyType.DEFAULT);
 
-    /// Returns the remote network launcher background image cache policy property.
-    public ObjectProperty<NetworkBackgroundImageCachePolicy> networkBackgroundImageCachePolicyProperty() {
+    /// Returns the URL image cache policy for network launcher backgrounds.
+    public ObjectProperty<NetworkBackgroundImageCachePolicyType> networkBackgroundImageCachePolicyProperty() {
         return networkBackgroundImageCachePolicy;
     }
 

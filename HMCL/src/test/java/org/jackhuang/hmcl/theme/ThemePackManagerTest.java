@@ -25,6 +25,7 @@ import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.setting.BackgroundOpacityType;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicyType;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -322,11 +323,7 @@ public final class ThemePackManagerTest {
             Theme defaultTheme = defaultThemePack.manifest().findTheme(null);
             assertNotNull(defaultTheme);
             assertNull(defaultTheme.appearance().brightness());
-            ThemeBackgroundSettings defaultBackground = defaultTheme.appearance().background();
-            assertNotNull(defaultBackground);
-            ThemeBackground.Builtin defaultBuiltinBackground =
-                    assertInstanceOf(ThemeBackground.Builtin.class, defaultBackground.source());
-            assertEquals(BackgroundType.BUILTIN_WALLPAPER_2021_08_26_ID, defaultBuiltinBackground.id());
+            assertNull(defaultTheme.appearance().background());
 
             LauncherSettings settings = SettingsManager.settings();
             ThemePackManager.apply(defaultThemePack, defaultTheme);
@@ -590,7 +587,7 @@ public final class ThemePackManagerTest {
             assertEquals(ColorStyle.MONOCHROME, appearance.colorStyle());
             assertNotNull(appearance.titleBar());
             assertEquals(true, appearance.titleBar().transparent());
-            assertInstanceOf(ThemeBackground.Builtin.class, background.source());
+            assertInstanceOf(ThemeBackground.Default.class, background.source());
             assertEquals(0.5, background.opacity());
             assertNull(background.fallback());
             assertNull(background.loadPolicy());
@@ -667,7 +664,7 @@ public final class ThemePackManagerTest {
             LauncherSettings settings = SettingsManager.settings();
             settings.backgroundTypeProperty().set(BackgroundType.NETWORK);
             settings.networkBackgroundImageUrlProperty().set("https://example.com/wallpaper.png");
-            settings.networkBackgroundImageCachePolicyProperty().set(NetworkBackgroundImageCachePolicy.DISABLED);
+            settings.networkBackgroundImageCachePolicyProperty().set(NetworkBackgroundImageCachePolicyType.DISABLED);
 
             Path tempDir = createTestDirectory("export-network-background-cache");
             Path output = tempDir.resolve("network-background-cache" + ThemePackExporter.FILE_EXTENSION);
@@ -741,9 +738,7 @@ public final class ThemePackManagerTest {
             ThemePackManifest manifest = ThemePackManager.load(output).manifest();
             Theme theme = manifest.findTheme(null);
             assertNotNull(theme);
-            assertEquals(
-                    ThemeColorSource.custom(Objects.requireNonNull(ThemeColor.of("#5C6BC0"))),
-                    theme.appearance().color());
+            assertEquals(ThemeColorSource.custom(ThemeColor.DEFAULT), theme.appearance().color());
         }
     }
 
@@ -870,7 +865,7 @@ public final class ThemePackManagerTest {
             settings.themeColorTypeProperty().set(null);
             settings.themeProperty().set(null);
 
-            assertEquals(Objects.requireNonNull(ThemeColor.of("#5C6BC0")), Themes.resolveCurrentThemeColor());
+            assertEquals(ThemeColor.DEFAULT, Themes.resolveCurrentThemeColor());
         }
     }
 

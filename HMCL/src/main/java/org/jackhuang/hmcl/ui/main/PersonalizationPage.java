@@ -41,15 +41,16 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.setting.BackgroundOpacityType;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.FontManager;
+import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicyType;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.setting.UserSettings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
-import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeAppearance;
+import org.jackhuang.hmcl.theme.ThemeBackground;
 import org.jackhuang.hmcl.theme.ThemeBackgroundSettings;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
@@ -198,6 +199,10 @@ public class PersonalizationPage extends StackPane {
 
     /// Returns whether the selected theme supplies a background opacity directive.
     private static boolean hasThemeBackgroundOpacity() {
+        if (settings().backgroundTypeProperty().get() != BackgroundType.DEFAULT) {
+            return false;
+        }
+
         @Nullable ThemeBackgroundSettings background = getThemeBackgroundSettings();
         return background != null && background.opacity() != null;
     }
@@ -212,6 +217,27 @@ public class PersonalizationPage extends StackPane {
     private static boolean hasThemeBackgroundLoadPolicy() {
         @Nullable ThemeBackgroundSettings background = getThemeBackgroundSettings();
         return background != null && background.loadPolicy() != null;
+    }
+
+    /// Returns whether the selected theme supplies a network background cache directive.
+    private static boolean hasThemeNetworkBackgroundCachePolicy() {
+        if (settings().backgroundTypeProperty().get() != BackgroundType.DEFAULT) {
+            return false;
+        }
+
+        @Nullable ThemeBackgroundSettings background = getThemeBackgroundSettings();
+        if (background == null || background.source() == null) {
+            return false;
+        }
+
+        ThemeBackground source = background.source();
+        if (source instanceof ThemeBackground.Network network) {
+            return network.cache() != null;
+        }
+        if (source instanceof ThemeBackground.Patch patch) {
+            return patch.cache() != null;
+        }
+        return false;
     }
 
     /// Returns whether the selected theme supplies a title-bar transparency directive.
@@ -850,20 +876,41 @@ public class PersonalizationPage extends StackPane {
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(settings().backgroundTypeProperty());
 
-            LineToggleButton networkBackgroundCacheButton = new LineToggleButton();
-            networkBackgroundCacheButton.setTitle(i18n("launcher.background.network.cache"));
-            networkBackgroundCacheButton.setSelected(settings().networkBackgroundImageCachePolicyProperty().get()
-                    != NetworkBackgroundImageCachePolicy.DISABLED);
-            networkBackgroundCacheButton.selectedProperty().addListener((observable, oldValue, selected) ->
-                    settings().networkBackgroundImageCachePolicyProperty().set(selected
-                            ? NetworkBackgroundImageCachePolicy.ENABLED
-                            : NetworkBackgroundImageCachePolicy.DISABLED));
-            settings().networkBackgroundImageCachePolicyProperty().addListener((observable, oldValue, policy) -> {
-                boolean selected = policy != NetworkBackgroundImageCachePolicy.DISABLED;
-                if (networkBackgroundCacheButton.isSelected() != selected) {
-                    networkBackgroundCacheButton.setSelected(selected);
-                }
-            });
+            ComponentSublist networkBackgroundCacheSublist = new ComponentSublist();
+            networkBackgroundCacheSublist.setTitle(i18n("launcher.background.network.cache"));
+            networkBackgroundCacheSublist.setHasSubtitle(true);
+
+            var defaultNetworkCacheChoice = new RadioChoiceList.Choice<>(
+                    i18n("message.default"),
+                    NetworkBackgroundImageCachePolicyType.DEFAULT);
+            var enabledNetworkCacheChoice = new RadioChoiceList.Choice<>(
+                    i18n("launcher.background.network.cache.enabled"),
+                    NetworkBackgroundImageCachePolicyType.ENABLED);
+            var disabledNetworkCacheChoice = new RadioChoiceList.Choice<>(
+                    i18n("launcher.background.network.cache.disabled"),
+                    NetworkBackgroundImageCachePolicyType.DISABLED);
+            RadioChoiceList<NetworkBackgroundImageCachePolicyType> networkBackgroundCacheChoiceList = new RadioChoiceList<>();
+            networkBackgroundCacheChoiceList.setFallbackValue(NetworkBackgroundImageCachePolicyType.DEFAULT);
+            networkBackgroundCacheChoiceList.setChoices(Arrays.asList(
+                    defaultNetworkCacheChoice,
+                    enabledNetworkCacheChoice,
+                    disabledNetworkCacheChoice));
+            networkBackgroundCacheChoiceList.selectedValueProperty().bindBidirectional(
+                    settings().networkBackgroundImageCachePolicyProperty());
+            networkBackgroundCacheSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
+                        NetworkBackgroundImageCachePolicyType type =
+                                Objects.requireNonNullElse(
+                                        settings().networkBackgroundImageCachePolicyProperty().get(),
+                                        NetworkBackgroundImageCachePolicyType.DEFAULT);
+                        if (type == NetworkBackgroundImageCachePolicyType.DEFAULT) {
+                            return getDefaultAppearanceValue(hasThemeNetworkBackgroundCachePolicy());
+                        }
+                        return i18n("launcher.background.network.cache." + type.name().toLowerCase(Locale.ROOT));
+                    },
+                    settings().networkBackgroundImageCachePolicyProperty(),
+                    settings().themeProperty(),
+                    settings().themeBrightnessProperty()));
+            networkBackgroundCacheSublist.getContent().setAll(networkBackgroundCacheChoiceList);
             ComponentSublist backgroundFallbackSublist = new ComponentSublist();
             backgroundFallbackSublist.setTitle(i18n("launcher.background.fallback"));
             backgroundFallbackSublist.setHasSubtitle(true);
@@ -977,12 +1024,7 @@ public class PersonalizationPage extends StackPane {
                         BackgroundOpacityType.DEFAULT);
                 var customOpacityChoice = new RadioChoiceList.Choice<>(
                         i18n("settings.custom"),
-                        BackgroundOpacityType.CUSTOM) {
-                    @Override
-                    protected Node createRightNode() {
-                        return sliderBox;
-                    }
-                };
+                        BackgroundOpacityType.CUSTOM);
 
                 RadioChoiceList<BackgroundOpacityType> opacityChoiceList = new RadioChoiceList<>();
                 opacityChoiceList.setFallbackValue(BackgroundOpacityType.DEFAULT);
@@ -1001,6 +1043,9 @@ public class PersonalizationPage extends StackPane {
                         settings().backgroundOpacityProperty().set(opacity);
                     }
                 });
+                sliderBox.disableProperty().bind(Bindings.createBooleanBinding(
+                        () -> settings().backgroundOpacityTypeProperty().get() != BackgroundOpacityType.CUSTOM,
+                        settings().backgroundOpacityTypeProperty()));
 
                 opacitySublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                             BackgroundOpacityType opacityType = settings().backgroundOpacityTypeProperty().get();
@@ -1013,7 +1058,7 @@ public class PersonalizationPage extends StackPane {
                         settings().backgroundOpacityProperty(),
                         settings().themeProperty(),
                         settings().themeBrightnessProperty()));
-                opacitySublist.getContent().setAll(opacityChoiceList);
+                opacitySublist.getContent().setAll(opacityChoiceList, sliderBox);
             }
 
             backgroundSublist.getContent().setAll(backgroundItem);
@@ -1021,7 +1066,7 @@ public class PersonalizationPage extends StackPane {
                     backgroundSublist,
                     opacitySublist);
             backgroundLoadingList.getContent().setAll(
-                    networkBackgroundCacheButton,
+                    networkBackgroundCacheSublist,
                     backgroundFallbackSublist,
                     backgroundLoadPolicyPane
             );
