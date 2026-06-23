@@ -56,6 +56,7 @@ import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
+import org.jackhuang.hmcl.setting.BackgroundOpacityType;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -285,6 +286,7 @@ public final class Themes {
         settings().networkBackgroundImageUrlProperty().addListener(backgroundListener);
         settings().networkBackgroundImageCachePolicyProperty().addListener(backgroundListener);
         settings().customBackgroundPaintProperty().addListener(backgroundListener);
+        settings().backgroundOpacityTypeProperty().addListener(ignored -> refreshBackgroundOpacity());
         settings().backgroundOpacityProperty().addListener(ignored -> refreshBackgroundOpacity());
         settings().backgroundFallbackTypeProperty().addListener(ignored -> refreshFallbackBackground());
         settings().backgroundFallbackPaintProperty().addListener(ignored -> refreshFallbackBackground());
@@ -691,8 +693,8 @@ public final class Themes {
                     ? ThemePackManager.resolveCurrentBackgroundFallback(ThemePackManager.currentResolveContext()).opacity()
                     : ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext()).opacity();
         } catch (IOException | RuntimeException e) {
-            @Nullable Double configured = settings().backgroundOpacityProperty().get();
-            return configured != null && Double.isFinite(configured)
+            double configured = settings().backgroundOpacityProperty().get();
+            return settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM && Double.isFinite(configured)
                     ? MathUtils.clamp(configured, 0., 1.)
                     : 1.0;
         }

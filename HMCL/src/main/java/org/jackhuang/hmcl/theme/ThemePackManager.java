@@ -24,6 +24,7 @@ import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.BackgroundOpacityType;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.ThemeColorType;
@@ -486,7 +487,7 @@ public final class ThemePackManager {
         currentSettings.themeColorStyleProperty().set(null);
         currentSettings.titleTransparentProperty().set(null);
         currentSettings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
-        currentSettings.backgroundOpacityProperty().set(null);
+        currentSettings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.DEFAULT);
         currentSettings.backgroundFallbackTypeProperty().set(null);
         currentSettings.backgroundLoadPolicyProperty().set(null);
     }
@@ -759,7 +760,7 @@ public final class ThemePackManager {
                     null,
                     null,
                     null,
-                    currentBackgroundOpacity());
+                    currentBackgroundOpacityOrDefault());
         }
 
         return resolveCustomBackground();
@@ -784,7 +785,7 @@ public final class ThemePackManager {
                     background = theme.resolve(context).background();
                 }
             }
-            double opacity = settings().backgroundOpacityProperty().get() != null
+            double opacity = settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM
                     ? currentBackgroundOpacity()
                     : background != null && background.opacity() != null ? background.opacity() : 1.0;
             if (themePack != null && background != null && background.fallback() != null) {
@@ -803,7 +804,7 @@ public final class ThemePackManager {
                     opacity);
         }
 
-        double opacity = currentBackgroundOpacity();
+        double opacity = currentBackgroundOpacityOrDefault();
         return switch (fallbackType) {
             case BUILTIN -> new ResolvedBackground(
                     BackgroundType.BUILTIN,
@@ -861,7 +862,7 @@ public final class ThemePackManager {
     /// @return the custom launcher background settings
     public static ResolvedBackground resolveCustomBackground() {
         BackgroundType type = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
-        double opacity = currentBackgroundOpacity();
+        double opacity = currentBackgroundOpacityOrDefault();
         return switch (type) {
             case DEFAULT -> new ResolvedBackground(
                     BackgroundType.DEFAULT,
@@ -946,8 +947,9 @@ public final class ThemePackManager {
             return null;
         }
         ResolvedBackground resolved = resolveBackground(themePack.file(), background, 1.0);
-        @Nullable Double opacity = settings().backgroundOpacityProperty().get();
-        return opacity != null ? resolved.withOpacity(currentBackgroundOpacity()) : resolved;
+        return settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM
+                ? resolved.withOpacity(currentBackgroundOpacity())
+                : resolved;
     }
 
     /// Resolves a concrete launcher background from a theme-pack background object.
@@ -1515,12 +1517,18 @@ public final class ThemePackManager {
 
     /// Returns the current launcher background opacity.
     private static double currentBackgroundOpacity() {
-        @Nullable Double configured = settings().backgroundOpacityProperty().get();
-        double opacity = configured != null ? configured : 1.0;
+        double opacity = settings().backgroundOpacityProperty().get();
         if (!Double.isFinite(opacity)) {
             return 1.0;
         }
         return Math.max(0.0, Math.min(1.0, opacity));
+    }
+
+    /// Returns the effective custom launcher background opacity, or the built-in default when not overridden.
+    private static double currentBackgroundOpacityOrDefault() {
+        return settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM
+                ? currentBackgroundOpacity()
+                : 1.0;
     }
 
     /// Returns the currently selected built-in wallpaper ID.

@@ -425,12 +425,22 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return backgroundLoadPolicy;
     }
 
-    /// The launcher background opacity, or `null` to follow the selected theme.
-    @SerializedName("backgroundOpacity")
-    private final ObjectProperty<@Nullable Double> backgroundOpacity = new SimpleObjectProperty<>();
+    /// How the launcher resolves background opacity.
+    @SerializedName("backgroundOpacityType")
+    private final ObjectProperty<BackgroundOpacityType> backgroundOpacityType =
+            new RawPreservingObjectProperty<>(BackgroundOpacityType.DEFAULT);
 
-    /// Returns the launcher background opacity property.
-    public ObjectProperty<@Nullable Double> backgroundOpacityProperty() {
+    /// Returns the launcher background opacity resolution type property.
+    public ObjectProperty<BackgroundOpacityType> backgroundOpacityTypeProperty() {
+        return backgroundOpacityType;
+    }
+
+    /// The custom launcher background opacity value.
+    @SerializedName("backgroundOpacity")
+    private final DoubleProperty backgroundOpacity = new SimpleDoubleProperty(1.0);
+
+    /// Returns the custom launcher background opacity value property.
+    public DoubleProperty backgroundOpacityProperty() {
         return backgroundOpacity;
     }
 

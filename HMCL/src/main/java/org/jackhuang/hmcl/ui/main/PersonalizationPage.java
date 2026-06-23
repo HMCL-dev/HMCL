@@ -38,6 +38,7 @@ import javafx.stage.FileChooser;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
+import org.jackhuang.hmcl.setting.BackgroundOpacityType;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -954,8 +955,7 @@ public class PersonalizationPage extends StackPane {
                 HBox sliderBox = new HBox(8);
                 sliderBox.setAlignment(Pos.CENTER);
 
-                @Nullable Double configuredOpacity = settings().backgroundOpacityProperty().get();
-                JFXSlider slider = new JFXSlider(0, 100, Objects.requireNonNullElse(configuredOpacity, getEffectiveBackgroundOpacity()) * 100);
+                JFXSlider slider = new JFXSlider(0, 100, settings().backgroundOpacityProperty().get() * 100);
                 slider.setShowTickMarks(true);
                 slider.setMajorTickUnit(10);
                 slider.setMinorTickCount(1);
@@ -972,58 +972,44 @@ public class PersonalizationPage extends StackPane {
                 slider.setValueFactory(s -> valueBinding);
                 sliderBox.getChildren().setAll(slider, textOpacity);
 
-                var defaultOpacityChoice = new RadioChoiceList.Choice<@Nullable Boolean>(i18n("message.default"), null);
-                var customOpacityChoice = new RadioChoiceList.Choice<@Nullable Boolean>(i18n("settings.custom"), Boolean.TRUE) {
+                var defaultOpacityChoice = new RadioChoiceList.Choice<>(
+                        i18n("message.default"),
+                        BackgroundOpacityType.DEFAULT);
+                var customOpacityChoice = new RadioChoiceList.Choice<>(
+                        i18n("settings.custom"),
+                        BackgroundOpacityType.CUSTOM) {
                     @Override
                     protected Node createRightNode() {
                         return sliderBox;
                     }
                 };
 
-                RadioChoiceList<@Nullable Boolean> opacityChoiceList = new RadioChoiceList<>();
-                opacityChoiceList.setFallbackValue(null);
+                RadioChoiceList<BackgroundOpacityType> opacityChoiceList = new RadioChoiceList<>();
+                opacityChoiceList.setFallbackValue(BackgroundOpacityType.DEFAULT);
                 opacityChoiceList.setChoices(Arrays.asList(defaultOpacityChoice, customOpacityChoice));
-
-                boolean[] updatingOpacityChoice = {false};
-                opacityChoiceList.setSelectedValue(settings().backgroundOpacityProperty().get() != null
-                        ? Boolean.TRUE
-                        : null);
-                opacityChoiceList.selectedValueProperty().addListener((observable, oldValue, custom) -> {
-                    if (!updatingOpacityChoice[0]) {
-                        settings().backgroundOpacityProperty().set(Boolean.TRUE.equals(custom)
-                                ? snapOpacity(slider.getValue())
-                                : null);
+                opacityChoiceList.selectedValueProperty().bindBidirectional(settings().backgroundOpacityTypeProperty());
+                opacityChoiceList.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
+                    if (newValue == BackgroundOpacityType.CUSTOM) {
+                        settings().backgroundOpacityProperty().set(snapOpacity(slider.getValue()));
                     }
                 });
-                settings().backgroundOpacityProperty().addListener((observable, oldValue, newValue) -> {
-                    updatingOpacityChoice[0] = true;
-                    try {
-                        opacityChoiceList.setSelectedValue(newValue != null ? Boolean.TRUE : null);
-                        slider.setValue(Objects.requireNonNullElse(newValue, getEffectiveBackgroundOpacity()) * 100);
-                    } finally {
-                        updatingOpacityChoice[0] = false;
-                    }
-                });
+                settings().backgroundOpacityProperty().addListener((observable, oldValue, newValue) ->
+                        slider.setValue(newValue.doubleValue() * 100));
                 slider.valueProperty().addListener((observable, oldValue, newValue) -> {
-                    if (Boolean.TRUE.equals(opacityChoiceList.getSelectedValue())) {
-                        settings().backgroundOpacityProperty().set(snapOpacity(newValue.doubleValue()));
+                    double opacity = snapOpacity(newValue.doubleValue());
+                    if (Double.compare(settings().backgroundOpacityProperty().get(), opacity) != 0) {
+                        settings().backgroundOpacityProperty().set(opacity);
                     }
                 });
-                InvalidationListener updateInheritedOpacity = ignored -> {
-                    if (settings().backgroundOpacityProperty().get() == null) {
-                        slider.setValue(getEffectiveBackgroundOpacity() * 100);
-                    }
-                };
-                settings().themeProperty().addListener(updateInheritedOpacity);
-                settings().themeBrightnessProperty().addListener(updateInheritedOpacity);
-                settings().backgroundTypeProperty().addListener(updateInheritedOpacity);
 
                 opacitySublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
-                            @Nullable Double opacity = settings().backgroundOpacityProperty().get();
-                            return opacity == null
+                            BackgroundOpacityType opacityType = settings().backgroundOpacityTypeProperty().get();
+                            double opacity = settings().backgroundOpacityProperty().get();
+                            return opacityType != BackgroundOpacityType.CUSTOM
                                     ? getDefaultAppearanceValue(hasThemeBackgroundOpacity())
                                     : ((int) (opacity * 100)) + "%";
                         },
+                        settings().backgroundOpacityTypeProperty(),
                         settings().backgroundOpacityProperty(),
                         settings().themeProperty(),
                         settings().themeBrightnessProperty()));

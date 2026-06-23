@@ -125,6 +125,12 @@
         "SHOW_FALLBACK_WHILE_LOADING"
       ]
     },
+    "backgroundOpacityType": {
+      "enum": [
+        "DEFAULT",
+        "CUSTOM"
+      ]
+    },
     "backgroundOpacity": {
       "type": "number",
       "minimum": 0,

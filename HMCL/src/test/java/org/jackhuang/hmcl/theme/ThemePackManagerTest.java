@@ -22,6 +22,7 @@ import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
+import org.jackhuang.hmcl.setting.BackgroundOpacityType;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -117,7 +118,7 @@ public final class ThemePackManagerTest {
             assertFalse(themeJson.has("themeId"));
             assertNull(settings.titleTransparentProperty().get());
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
-            assertNull(settings.backgroundOpacityProperty().get());
+            assertEquals(BackgroundOpacityType.DEFAULT, settings.backgroundOpacityTypeProperty().get());
             assertNull(settings.backgroundFallbackTypeProperty().get());
             assertEquals(Color.WHITE, settings.backgroundFallbackPaintProperty().get());
             assertNull(settings.backgroundLoadPolicyProperty().get());
@@ -128,6 +129,7 @@ public final class ThemePackManagerTest {
             assertFalse(settingsJson.has("themeColorType"));
             assertFalse(settingsJson.has("themeColorStyle"));
             assertFalse(settingsJson.has("titleTransparent"));
+            assertFalse(settingsJson.has("backgroundOpacityType"));
             assertFalse(settingsJson.has("backgroundOpacity"));
             assertFalse(settingsJson.has("backgroundFallbackType"));
             assertFalse(settingsJson.has("backgroundLoadPolicy"));
@@ -151,6 +153,16 @@ public final class ThemePackManagerTest {
             assertEquals(BackgroundType.CUSTOM, resolvedBackground.type());
             assertEquals(cachedWallpaper, resolvedBackground.imagePath());
             assertEquals(0.75, resolvedBackground.opacity());
+
+            settings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.CUSTOM);
+            settings.backgroundOpacityProperty().set(0.35);
+            ThemePackManager.apply(
+                    installedThemePack.file(),
+                    installedThemePack.manifest(),
+                    theme,
+                    context);
+            assertEquals(BackgroundOpacityType.DEFAULT, settings.backgroundOpacityTypeProperty().get());
+            assertEquals(0.35, settings.backgroundOpacityProperty().get());
 
             settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
             assertEquals(ThemeColor.of("#248C44"), Themes.resolveCurrentThemeColor());
@@ -390,7 +402,7 @@ public final class ThemePackManagerTest {
             assertEquals(reference, settings.themeProperty().get());
             assertNull(settings.themeColorStyleProperty().get());
             assertNull(settings.titleTransparentProperty().get());
-            assertNull(settings.backgroundOpacityProperty().get());
+            assertEquals(BackgroundOpacityType.DEFAULT, settings.backgroundOpacityTypeProperty().get());
             assertEquals(
                     ColorStyle.NEUTRAL,
                     ThemePackManager.resolveCurrentThemeColorStyle(
@@ -417,7 +429,7 @@ public final class ThemePackManagerTest {
                     new ThemeResolveContext(Brightness.DARK, "linux", "en"),
                     false));
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
-            assertNull(settings.backgroundOpacityProperty().get());
+            assertEquals(BackgroundOpacityType.DEFAULT, settings.backgroundOpacityTypeProperty().get());
 
             ThemePackManager.ResolvedBackground background = ThemePackManager.resolveCurrentBackground(
                     new ThemeResolveContext(Brightness.DARK, "linux", "en"));
@@ -550,6 +562,7 @@ public final class ThemePackManagerTest {
             settings.themeBrightnessProperty().set("dark");
             settings.titleTransparentProperty().set(true);
             settings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
+            settings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.CUSTOM);
             settings.backgroundOpacityProperty().set(0.5);
             settings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
             settings.backgroundFallbackPaintProperty().set(Color.web("#112233"));
@@ -742,6 +755,7 @@ public final class ThemePackManagerTest {
             settings.customThemeColorProperty().set(ThemeColor.of("#663399"));
             settings.themeColorTypeProperty().set(ThemeColorType.BACKGROUND);
             settings.backgroundTypeProperty().set(BackgroundType.THEME_COLOR);
+            settings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.CUSTOM);
             settings.backgroundOpacityProperty().set(1.0);
 
             Path tempDir = createTestDirectory("export-theme-color-background");
@@ -824,6 +838,7 @@ public final class ThemePackManagerTest {
             settings.customThemeColorProperty().set(ThemeColor.of("#663399"));
             settings.themeColorTypeProperty().set(ThemeColorType.CUSTOM);
             settings.backgroundTypeProperty().set(BackgroundType.THEME_COLOR);
+            settings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.CUSTOM);
             settings.backgroundOpacityProperty().set(0.6);
 
             ThemePackManager.ResolvedBackground background = ThemePackManager.resolveCurrentBackground(

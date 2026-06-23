@@ -792,6 +792,7 @@ public final class LegacyConfigMigrator {
 
         double opacity = opacityPercent / 100.;
         json.addProperty("backgroundOpacity", Math.max(0., Math.min(opacity, 1.)));
+        json.addProperty("backgroundOpacityType", BackgroundOpacityType.CUSTOM.name());
     }
 
     /// Migrates the legacy `localization` field into the current `language` field.
@@ -831,6 +832,7 @@ public final class LegacyConfigMigrator {
             json.addProperty("backgroundType", BackgroundType.PAINT.name());
             json.addProperty("customBackgroundPaint", "#ffffff");
             json.addProperty("backgroundOpacity", 0.5);
+            json.addProperty("backgroundOpacityType", BackgroundOpacityType.CUSTOM.name());
             json.remove("bgpaint");
         }
     }
