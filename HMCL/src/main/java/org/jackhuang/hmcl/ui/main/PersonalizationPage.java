@@ -94,6 +94,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -297,6 +298,68 @@ public class PersonalizationPage extends StackPane {
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             if (!isThemeAppearanceOverridden(setting)) {
                 directProperty.setValue(effectiveValueSupplier.get());
+                setThemeAppearanceOverridden(setting, true);
+            } else {
+                setThemeAppearanceOverridden(setting, false);
+            }
+            refresh.invalidated(null);
+            event.consume();
+        });
+        refresh.invalidated(null);
+    }
+
+    /// Installs an inheritance button on a binary toggle button.
+    private static <T> void bindThemeAppearanceToggleButton(
+            LineToggleButton button,
+            String setting,
+            Property<T> directProperty,
+            Supplier<T> effectiveValueSupplier,
+            T selectedValue,
+            T unselectedValue,
+            Supplier<Boolean> hasThemeValueSupplier,
+            Function<T, String> valueConverter) {
+        JFXButton inheritButton = createThemeAppearanceOverrideButton();
+        button.setTitleTrailing(inheritButton);
+
+        Holder<Boolean> updating = new Holder<>(false);
+        InvalidationListener refresh = ignored -> {
+            if (updating.value) {
+                return;
+            }
+            updating.value = true;
+            try {
+                boolean overridden = isThemeAppearanceOverridden(setting);
+                T value = overridden ? directProperty.getValue() : effectiveValueSupplier.get();
+                button.setSelected(Objects.equals(value, selectedValue));
+                button.setSubtitle(overridden
+                        ? valueConverter.apply(value)
+                        : getInheritedAppearanceValue(hasThemeValueSupplier.get(), valueConverter.apply(value)));
+                updateThemeAppearanceOverrideButton(inheritButton, !overridden);
+            } finally {
+                updating.value = false;
+            }
+        };
+
+        button.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (updating.value) {
+                return;
+            }
+            updating.value = true;
+            try {
+                directProperty.setValue(Boolean.TRUE.equals(newValue) ? selectedValue : unselectedValue);
+                setThemeAppearanceOverridden(setting, true);
+                updateThemeAppearanceOverrideButton(inheritButton, false);
+            } finally {
+                updating.value = false;
+            }
+            refresh.invalidated(null);
+        });
+        directProperty.addListener(refresh);
+        addThemeAppearanceRefreshListener(refresh);
+
+        inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            if (!isThemeAppearanceOverridden(setting)) {
+                directProperty.setValue(button.isSelected() ? selectedValue : unselectedValue);
                 setThemeAppearanceOverridden(setting, true);
             } else {
                 setThemeAppearanceOverridden(setting, false);
@@ -1188,45 +1251,21 @@ public class PersonalizationPage extends StackPane {
             });
             refreshBackgroundOverride.invalidated(null);
 
-            ComponentSublist networkBackgroundCacheSublist = new ComponentSublist();
-            networkBackgroundCacheSublist.setTitle(i18n("launcher.background.network.cache"));
-            networkBackgroundCacheSublist.setHasSubtitle(true);
-
-            var enabledNetworkCacheChoice = new RadioChoiceList.Choice<>(
-                    i18n("launcher.background.network.cache.enabled"),
-                    NetworkBackgroundImageCachePolicy.ENABLED);
-            var disabledNetworkCacheChoice = new RadioChoiceList.Choice<>(
-                    i18n("launcher.background.network.cache.disabled"),
-                    NetworkBackgroundImageCachePolicy.DISABLED);
-            RadioChoiceList<NetworkBackgroundImageCachePolicy> networkBackgroundCacheChoiceList = new RadioChoiceList<>();
-            networkBackgroundCacheChoiceList.setFallbackValue(NetworkBackgroundImageCachePolicy.ENABLED);
-            networkBackgroundCacheChoiceList.setChoices(Arrays.asList(
-                    enabledNetworkCacheChoice,
-                    disabledNetworkCacheChoice));
-            bindThemeAppearanceChoiceList(
-                    networkBackgroundCacheSublist,
-                    networkBackgroundCacheChoiceList,
+            LineToggleButton networkBackgroundCacheButton = new LineToggleButton();
+            networkBackgroundCacheButton.setTitle(i18n("launcher.background.network.cache"));
+            bindThemeAppearanceToggleButton(
+                    networkBackgroundCacheButton,
                     LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY,
                     settings().networkBackgroundImageCachePolicyProperty(),
-                    PersonalizationPage::getEffectiveNetworkBackgroundImageCachePolicy);
-            networkBackgroundCacheSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
-                        NetworkBackgroundImageCachePolicy policy = isThemeAppearanceOverridden(
-                                LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY)
-                                ? Objects.requireNonNullElse(
-                                        settings().networkBackgroundImageCachePolicyProperty().get(),
-                                        NetworkBackgroundImageCachePolicy.ENABLED)
-                                : getEffectiveNetworkBackgroundImageCachePolicy();
-                        String value = i18n("launcher.background.network.cache." + policy.name().toLowerCase(Locale.ROOT));
-                        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY)) {
-                            return getInheritedAppearanceValue(hasThemeNetworkBackgroundCachePolicy(), value);
-                        }
-                        return value;
-                    },
-                    settings().networkBackgroundImageCachePolicyProperty(),
-                    settings().getThemeAppearanceOverrides(),
-                    settings().themeProperty(),
-                    settings().themeBrightnessProperty()));
-            networkBackgroundCacheSublist.getContent().setAll(networkBackgroundCacheChoiceList);
+                    PersonalizationPage::getEffectiveNetworkBackgroundImageCachePolicy,
+                    NetworkBackgroundImageCachePolicy.ENABLED,
+                    NetworkBackgroundImageCachePolicy.DISABLED,
+                    PersonalizationPage::hasThemeNetworkBackgroundCachePolicy,
+                    policy -> i18n("launcher.background.network.cache."
+                            + Objects.requireNonNullElse(policy, NetworkBackgroundImageCachePolicy.ENABLED)
+                            .name()
+                            .toLowerCase(Locale.ROOT)));
+
             ComponentSublist backgroundFallbackSublist = new ComponentSublist();
             backgroundFallbackSublist.setTitle(i18n("launcher.background.fallback"));
             backgroundFallbackSublist.setHasSubtitle(true);
@@ -1290,20 +1329,20 @@ public class PersonalizationPage extends StackPane {
                     settings().themeBrightnessProperty(),
                     settings().backgroundFallbackPaintProperty()));
 
-            LineSelectButton<BackgroundLoadPolicy> backgroundLoadPolicyPane = new LineSelectButton<>();
-            backgroundLoadPolicyPane.setTitle(i18n("launcher.background.load_policy"));
-            backgroundLoadPolicyPane.setConverter(policy -> i18n("launcher.background.load_policy."
-                    + Objects.requireNonNullElse(policy, BackgroundLoadPolicy.WAIT_FOR_BACKGROUND)
-                    .name()
-                    .toLowerCase(Locale.ROOT)));
-            backgroundLoadPolicyPane.setItems(Arrays.asList(
-                    BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
-                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING));
-            bindThemeAppearanceLineSelectButton(
-                    backgroundLoadPolicyPane,
+            LineToggleButton backgroundLoadPolicyButton = new LineToggleButton();
+            backgroundLoadPolicyButton.setTitle(i18n("launcher.background.load_policy.show_fallback_while_loading"));
+            bindThemeAppearanceToggleButton(
+                    backgroundLoadPolicyButton,
                     LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY,
                     settings().backgroundLoadPolicyProperty(),
-                    PersonalizationPage::getEffectiveBackgroundLoadPolicy);
+                    PersonalizationPage::getEffectiveBackgroundLoadPolicy,
+                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING,
+                    BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
+                    PersonalizationPage::hasThemeBackgroundLoadPolicy,
+                    policy -> i18n("launcher.background.load_policy."
+                            + Objects.requireNonNullElse(policy, BackgroundLoadPolicy.WAIT_FOR_BACKGROUND)
+                            .name()
+                            .toLowerCase(Locale.ROOT)));
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
@@ -1430,24 +1469,26 @@ public class PersonalizationPage extends StackPane {
                     backgroundSublist,
                     opacitySublist);
             backgroundLoadingList.getContent().setAll(
-                    networkBackgroundCacheSublist,
+                    networkBackgroundCacheButton,
                     backgroundFallbackSublist,
-                    backgroundLoadPolicyPane
+                    backgroundLoadPolicyButton
             );
         }
 
         {
-            LineSelectButton<Boolean> titleTransparentPane = new LineSelectButton<>();
-            titleTransparentPane.setTitle(i18n("settings.launcher.title_transparent"));
-            titleTransparentPane.setConverter(value -> i18n("settings.launcher.title_transparent."
-                    + (Boolean.TRUE.equals(value) ? "enabled" : "disabled")));
-            titleTransparentPane.setItems(Arrays.asList(Boolean.TRUE, Boolean.FALSE));
-            bindThemeAppearanceLineSelectButton(
-                    titleTransparentPane,
+            LineToggleButton titleTransparentButton = new LineToggleButton();
+            titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
+            bindThemeAppearanceToggleButton(
+                    titleTransparentButton,
                     LauncherSettings.THEME_APPEARANCE_TITLE_TRANSPARENT,
                     settings().titleTransparentProperty(),
-                    PersonalizationPage::isEffectiveTitleTransparent);
-            themeAppearanceList.getContent().add(titleTransparentPane);
+                    PersonalizationPage::isEffectiveTitleTransparent,
+                    Boolean.TRUE,
+                    Boolean.FALSE,
+                    PersonalizationPage::hasThemeTitleTransparent,
+                    value -> i18n("settings.launcher.title_transparent."
+                            + (Boolean.TRUE.equals(value) ? "enabled" : "disabled")));
+            themeAppearanceList.getContent().add(titleTransparentButton);
         }
         content.getChildren().addAll(
                 ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")),
