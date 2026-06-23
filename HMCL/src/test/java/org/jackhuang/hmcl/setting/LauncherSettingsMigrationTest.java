@@ -24,6 +24,8 @@ import com.google.gson.JsonParser;
 import javafx.scene.paint.Color;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AccountID;
+import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
+import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;

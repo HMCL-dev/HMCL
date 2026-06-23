@@ -21,8 +21,6 @@ import com.google.gson.JsonParseException;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
-import org.jackhuang.hmcl.setting.BackgroundLoadPolicy;
-import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicy;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
