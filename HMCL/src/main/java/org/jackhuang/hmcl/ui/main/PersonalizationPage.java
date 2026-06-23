@@ -56,7 +56,6 @@ import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeAppearance;
-import org.jackhuang.hmcl.theme.ThemeBackground;
 import org.jackhuang.hmcl.theme.ThemeBackgroundSettings;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemeColorSource;
@@ -151,16 +150,6 @@ public class PersonalizationPage extends StackPane {
     /// Updates whether the launcher overrides one theme appearance setting.
     private static void setThemeAppearanceOverridden(String setting, boolean overridden) {
         settings().setThemeAppearanceOverridden(setting, overridden);
-    }
-
-    /// Returns the label for an appearance setting that follows the selected theme.
-    private static String getDefaultAppearanceValue(boolean inherited) {
-        return inherited ? i18n("theme_pack.appearance.inherited") : i18n("message.default");
-    }
-
-    /// Returns a display label that includes the effective inherited value.
-    private static String getInheritedAppearanceValue(boolean inherited, String value) {
-        return getDefaultAppearanceValue(inherited) + ": " + value;
     }
 
     /// Creates a compact button that toggles inherited or overridden state.
@@ -316,7 +305,6 @@ public class PersonalizationPage extends StackPane {
             Supplier<T> effectiveValueSupplier,
             T selectedValue,
             T unselectedValue,
-            Supplier<Boolean> hasThemeValueSupplier,
             Function<T, String> valueConverter) {
         JFXButton inheritButton = createThemeAppearanceOverrideButton();
         button.setTitleTrailing(inheritButton);
@@ -331,9 +319,7 @@ public class PersonalizationPage extends StackPane {
                 boolean overridden = isThemeAppearanceOverridden(setting);
                 T value = overridden ? directProperty.getValue() : effectiveValueSupplier.get();
                 button.setSelected(Objects.equals(value, selectedValue));
-                button.setSubtitle(overridden
-                        ? valueConverter.apply(value)
-                        : getInheritedAppearanceValue(hasThemeValueSupplier.get(), valueConverter.apply(value)));
+                button.setSubtitle(valueConverter.apply(value));
                 updateThemeAppearanceOverrideButton(inheritButton, !overridden);
             } finally {
                 updating.value = false;
@@ -370,15 +356,6 @@ public class PersonalizationPage extends StackPane {
         refresh.invalidated(null);
     }
 
-    /// Returns whether the selected theme supplies a theme color directive.
-    private static boolean hasThemeColorSource() {
-        try {
-            return ThemePackManager.resolveCurrentThemeColorSource(ThemePackManager.currentResolveContext()) != null;
-        } catch (IOException | RuntimeException e) {
-            return false;
-        }
-    }
-
     /// Returns the effective theme color source type selection.
     private static ThemeColorType getEffectiveThemeColorType() {
         try {
@@ -395,15 +372,6 @@ public class PersonalizationPage extends StackPane {
         return i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT));
     }
 
-    /// Returns whether the selected theme supplies a brightness directive.
-    private static boolean hasThemeBrightness() {
-        try {
-            return ThemePackManager.resolveCurrentThemeBrightness(ThemePackManager.currentResolveContext()) != null;
-        } catch (IOException | RuntimeException e) {
-            return false;
-        }
-    }
-
     /// Returns the effective brightness selection name.
     private static String getEffectiveThemeBrightnessName() {
         try {
@@ -411,15 +379,6 @@ public class PersonalizationPage extends StackPane {
             return brightness != null ? toBrightnessName(brightness) : "auto";
         } catch (IOException | RuntimeException e) {
             return "auto";
-        }
-    }
-
-    /// Returns whether the selected theme supplies a color style directive.
-    private static boolean hasThemeColorStyle() {
-        try {
-            return ThemePackManager.resolveCurrentThemeColorStyle(ThemePackManager.currentResolveContext()) != null;
-        } catch (IOException | RuntimeException e) {
-            return false;
         }
     }
 
@@ -432,64 +391,6 @@ public class PersonalizationPage extends StackPane {
         } catch (IOException | RuntimeException e) {
             return ColorStyle.FIDELITY;
         }
-    }
-
-    /// Returns the selected theme background settings, or `null` when unavailable.
-    private static @Nullable ThemeBackgroundSettings getThemeBackgroundSettings() {
-        try {
-            return ThemePackManager.resolveCurrentThemeBackgroundSettings(ThemePackManager.currentResolveContext());
-        } catch (IOException | RuntimeException e) {
-            return null;
-        }
-    }
-
-    /// Returns whether the selected theme supplies a background directive.
-    private static boolean hasThemeBackground() {
-        @Nullable ThemeBackgroundSettings background = getThemeBackgroundSettings();
-        return background != null && background.source() != null;
-    }
-
-    /// Returns whether the selected theme supplies a background opacity directive.
-    private static boolean hasThemeBackgroundOpacity() {
-        if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
-            return false;
-        }
-
-        @Nullable ThemeBackgroundSettings background = getThemeBackgroundSettings();
-        return background != null && background.opacity() != null;
-    }
-
-    /// Returns whether the selected theme supplies a background fallback directive.
-    private static boolean hasThemeBackgroundFallback() {
-        @Nullable ThemeBackgroundSettings background = getThemeBackgroundSettings();
-        return background != null && background.fallback() != null;
-    }
-
-    /// Returns whether the selected theme supplies a background load policy directive.
-    private static boolean hasThemeBackgroundLoadPolicy() {
-        @Nullable ThemeBackgroundSettings background = getThemeBackgroundSettings();
-        return background != null && background.loadPolicy() != null;
-    }
-
-    /// Returns whether the selected theme supplies a network background cache directive.
-    private static boolean hasThemeNetworkBackgroundCachePolicy() {
-        if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
-            return false;
-        }
-
-        @Nullable ThemeBackgroundSettings background = getThemeBackgroundSettings();
-        if (background == null || background.source() == null) {
-            return false;
-        }
-
-        ThemeBackground source = background.source();
-        if (source instanceof ThemeBackground.Network network) {
-            return network.cache() != null;
-        }
-        if (source instanceof ThemeBackground.Patch patch) {
-            return patch.cache() != null;
-        }
-        return false;
     }
 
     /// Returns the effective network image cache policy selection.
@@ -505,15 +406,6 @@ public class PersonalizationPage extends StackPane {
         } catch (IOException | RuntimeException ignored) {
         }
         return NetworkBackgroundImageCachePolicy.ENABLED;
-    }
-
-    /// Returns whether the selected theme supplies a title-bar transparency directive.
-    private static boolean hasThemeTitleTransparent() {
-        try {
-            return ThemePackManager.resolveCurrentTitleBarTransparent(ThemePackManager.currentResolveContext()) != null;
-        } catch (IOException | RuntimeException e) {
-            return false;
-        }
     }
 
     /// Returns the currently effective background opacity.
@@ -1090,9 +982,7 @@ public class PersonalizationPage extends StackPane {
             themeColorSublist.setHasSubtitle(true);
             themeColorSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)) {
-                            return getInheritedAppearanceValue(
-                                    hasThemeColorSource(),
-                                    getEffectiveThemeColorDescription());
+                            return getEffectiveThemeColorDescription();
                         }
                         ThemeColorType type = Objects.requireNonNullElse(
                                 settings().themeColorTypeProperty().get(),
@@ -1260,7 +1150,6 @@ public class PersonalizationPage extends StackPane {
                     PersonalizationPage::getEffectiveNetworkBackgroundImageCachePolicy,
                     NetworkBackgroundImageCachePolicy.ENABLED,
                     NetworkBackgroundImageCachePolicy.DISABLED,
-                    PersonalizationPage::hasThemeNetworkBackgroundCachePolicy,
                     policy -> i18n("launcher.background.network.cache."
                             + Objects.requireNonNullElse(policy, NetworkBackgroundImageCachePolicy.ENABLED)
                             .name()
@@ -1308,9 +1197,7 @@ public class PersonalizationPage extends StackPane {
             backgroundFallbackSublist.getContent().setAll(backgroundFallbackItem);
             backgroundFallbackSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
-                            return getInheritedAppearanceValue(
-                                    hasThemeBackgroundFallback(),
-                                    getEffectiveBackgroundFallbackDescription());
+                            return getEffectiveBackgroundFallbackDescription();
                         }
 
                         BackgroundType type = backgroundFallbackItem.selectedDataProperty().get();
@@ -1338,7 +1225,6 @@ public class PersonalizationPage extends StackPane {
                     PersonalizationPage::getEffectiveBackgroundLoadPolicy,
                     BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING,
                     BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
-                    PersonalizationPage::hasThemeBackgroundLoadPolicy,
                     policy -> i18n("launcher.background.load_policy."
                             + Objects.requireNonNullElse(policy, BackgroundLoadPolicy.WAIT_FOR_BACKGROUND)
                             .name()
@@ -1346,7 +1232,7 @@ public class PersonalizationPage extends StackPane {
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
-                            return getInheritedAppearanceValue(hasThemeBackground(), getEffectiveBackgroundDescription());
+                            return getEffectiveBackgroundDescription();
                         }
                         BackgroundType type = backgroundItem.selectedDataProperty().get();
                         return switch (type) {
@@ -1454,7 +1340,7 @@ public class PersonalizationPage extends StackPane {
                                     ? settings().backgroundOpacityProperty().get()
                                     : getEffectiveBackgroundOpacity();
                             String value = ((int) (opacity * 100)) + "%";
-                            return overridden ? value : getInheritedAppearanceValue(hasThemeBackgroundOpacity(), value);
+                            return value;
                         },
                         settings().backgroundOpacityProperty(),
                         settings().getThemeAppearanceOverrides(),
@@ -1485,7 +1371,6 @@ public class PersonalizationPage extends StackPane {
                     PersonalizationPage::isEffectiveTitleTransparent,
                     Boolean.TRUE,
                     Boolean.FALSE,
-                    PersonalizationPage::hasThemeTitleTransparent,
                     value -> i18n("settings.launcher.title_transparent."
                             + (Boolean.TRUE.equals(value) ? "enabled" : "disabled")));
             themeAppearanceList.getContent().add(titleTransparentButton);
