@@ -19,14 +19,14 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
-import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for detached game directory migration.
@@ -227,14 +228,14 @@ public final class GameDirectoriesTest {
             assertEquals(List.of(localProfile), gameDirectories);
             assertThrows(UnsupportedOperationException.class, () -> gameDirectories.add(addedProfile));
             assertSame(localProfile, Profiles.getSelectedProfile());
-            assertEquals(localProfile.getId(), SettingsManager.settings().selectedGameDirectoryProperty().get());
+            assertEquals(localProfile.getId(), settings().selectedGameDirectoryProperty().get());
             assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
             assertEquals(List.of(localProfile), localDirectories.getGameDirectories());
 
             Profiles.removeProfile(localProfile);
             assertEquals(List.of(userProfile), Profiles.getProfiles());
             assertSame(userProfile, Profiles.getSelectedProfile());
-            assertEquals(userProfile.getId(), SettingsManager.settings().selectedGameDirectoryProperty().get());
+            assertEquals(userProfile.getId(), settings().selectedGameDirectoryProperty().get());
             assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
             assertTrue(localDirectories.getGameDirectories().isEmpty());
 
@@ -245,7 +246,7 @@ public final class GameDirectoriesTest {
 
             Profiles.setSelectedProfile(addedProfile);
             assertSame(addedProfile, Profiles.getSelectedProfile());
-            assertEquals(addedProfile.getId(), SettingsManager.settings().selectedGameDirectoryProperty().get());
+            assertEquals(addedProfile.getId(), settings().selectedGameDirectoryProperty().get());
         }
     }
 
@@ -374,7 +375,7 @@ public final class GameDirectoriesTest {
             assertNotNull(selected);
             assertSame(selected, Profiles.getSelectedProfile());
             assertTrue(Profiles.getProfiles().contains(selected));
-            assertEquals(selected.getId(), SettingsManager.settings().selectedGameDirectoryProperty().get());
+            assertEquals(selected.getId(), settings().selectedGameDirectoryProperty().get());
         }
     }
 

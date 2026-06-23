@@ -58,9 +58,9 @@ public final class FabricAPIInstallTask extends Task<Version> {
     @Override
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
-                remote.getVersion().getFile().getUrl(),
-                dependencyManager.getGameRepository().getModsDirectory(version.getId()).resolve("fabric-api-" + remote.getVersion().getVersion() + ".jar"),
-                remote.getVersion().getFile().getIntegrityCheck())
+                remote.getVersion().file().url(),
+                dependencyManager.getGameRepository().getModsDirectory(version.getId()).resolve("fabric-api-" + remote.getVersion().version() + ".jar"),
+                remote.getVersion().file().getIntegrityCheck())
         );
     }
 }
