@@ -305,7 +305,7 @@ public class PersonalizationPage extends StackPane {
             Supplier<T> effectiveValueSupplier,
             T selectedValue,
             T unselectedValue,
-            Function<T, String> valueConverter) {
+            @Nullable Function<T, String> valueConverter) {
         JFXButton inheritButton = createThemeAppearanceOverrideButton();
         button.setTitleTrailing(inheritButton);
 
@@ -319,7 +319,7 @@ public class PersonalizationPage extends StackPane {
                 boolean overridden = isThemeAppearanceOverridden(setting);
                 T value = overridden ? directProperty.getValue() : effectiveValueSupplier.get();
                 button.setSelected(Objects.equals(value, selectedValue));
-                button.setSubtitle(valueConverter.apply(value));
+                button.setSubtitle(valueConverter != null ? valueConverter.apply(value) : null);
                 updateThemeAppearanceOverrideButton(inheritButton, !overridden);
             } finally {
                 updating.value = false;
@@ -1334,18 +1334,6 @@ public class PersonalizationPage extends StackPane {
                     event.consume();
                 });
 
-                opacityPane.subtitleProperty().bind(Bindings.createStringBinding(() -> {
-                            boolean overridden = isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
-                            double opacity = overridden
-                                    ? settings().backgroundOpacityProperty().get()
-                                    : getEffectiveBackgroundOpacity();
-                            String value = ((int) (opacity * 100)) + "%";
-                            return value;
-                        },
-                        settings().backgroundOpacityProperty(),
-                        settings().getThemeAppearanceOverrides(),
-                        settings().themeProperty(),
-                        settings().themeBrightnessProperty()));
                 opacityPane.setRight(sliderBox);
                 refreshOpacity.invalidated(null);
             }
@@ -1371,8 +1359,7 @@ public class PersonalizationPage extends StackPane {
                     PersonalizationPage::isEffectiveTitleTransparent,
                     Boolean.TRUE,
                     Boolean.FALSE,
-                    value -> i18n("settings.launcher.title_transparent."
-                            + (Boolean.TRUE.equals(value) ? "enabled" : "disabled")));
+                    null);
             themeAppearanceList.getContent().add(titleTransparentButton);
         }
         content.getChildren().addAll(
