@@ -509,7 +509,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(addonItem);
 
-            JFXHyperlink changelogButton = new JFXHyperlink(i18n("mods.changelog"));
+            JFXHyperlink changelogButton = new JFXHyperlink(i18n("addon.changelog"));
             changelogButton.setOnAction(__ -> Controllers.dialog(new AddonChangelog(version, selfPage.repository, selfPage.page.getDownloadProvider())));
 
             JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
@@ -620,7 +620,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }).start();
         }
 
-        private void loadVersionPageUrl(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink button) {
+        private void loadVersionPageUrl(RemoteAddon.Version version, RemoteAddonRepository repo, JFXHyperlink button) {
             Task.supplyAsync(() -> repo.getVersionPageUrl(version))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception == null && StringUtils.isNotBlank(result)) {
@@ -636,8 +636,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonChangelog extends JFXDialogLayout {
 
-        public AddonChangelog(RemoteMod.Version version, RemoteModRepository repo, DownloadProvider provider) {
-            setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + version.getName())));
+        public AddonChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider) {
+            setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + version.name())));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
@@ -669,13 +669,13 @@ public class DownloadPage extends Control implements DecoratorPage {
             onEscPressed(this, closeButton::fire);
         }
 
-        private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, DownloadProvider provider, SpinnerPane spinnerPane, ScrollPane scrollPane) {
+        private void loadChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() ->
-                    StringUtils.convertToHtml(repo.getAddonChangelog(provider, version.getModid(), version.getVersionId()))
+                    StringUtils.convertToHtml(repo.getAddonChangelog(provider, version.modid(), version.versionId()))
             ).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    String changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");
+                    String changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
                     FXUtils.smoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);

@@ -153,7 +153,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     }
 
     @Override
-    public String getVersionPageUrl(RemoteMod.Version version) throws IOException {
+    public String getVersionPageUrl(RemoteAddon.Version version) throws IOException {
         return getBackedRemoteModRepository().getVersionPageUrl(version);
     }
 }

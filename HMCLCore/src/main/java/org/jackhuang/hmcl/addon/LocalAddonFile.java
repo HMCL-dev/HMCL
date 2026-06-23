@@ -60,8 +60,8 @@ public abstract class LocalAddonFile {
 
     @NotNullByDefault
     public record AddonUpdate(
-            RemoteMod.Source source,
-            RemoteModRepository.Type repoType,
+            RemoteAddon.Source source,
+            RemoteAddonRepository.Type repoType,
             LocalAddonFile localAddonFile,
             RemoteAddon.Version currentVersion,
             RemoteAddon.Version targetVersion,

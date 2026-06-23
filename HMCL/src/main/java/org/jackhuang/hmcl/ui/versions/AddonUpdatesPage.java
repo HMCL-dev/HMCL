@@ -99,7 +99,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("addon.check_update.source"));
         setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceProperty);
 
-        TableColumn<AddonUpdateObject, String> changelogColumn = new TableColumn<>(i18n("mods.changelog"));
+        TableColumn<AddonUpdateObject, String> changelogColumn = new TableColumn<>(i18n("addon.changelog"));
         {
             var oldCellFactory = changelogColumn.getCellFactory();
             changelogColumn.setCellFactory(param -> {
@@ -302,9 +302,9 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
     private static final class AddonChangelog extends JFXDialogLayout {
 
         public AddonChangelog(AddonUpdateObject object) {
-            RemoteMod.Version targetVersion = object.data.targetVersion();
+            RemoteAddon.Version targetVersion = object.data.targetVersion();
 
-            this.setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + targetVersion.getName())));
+            this.setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + targetVersion.name())));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
@@ -342,17 +342,17 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         private void loadChangelog(AddonUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
-            RemoteModRepository repo = object.data.source().getRepoForType(object.data.repoType());
+            RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
             Task.supplyAsync(() -> {
                 if (object.changelog != null) {
                     return object.changelog;
                 }
-                RemoteMod.Version version = object.data.targetVersion();
+                RemoteAddon.Version version = object.data.targetVersion();
                 if (repo == null) return null;
-                return StringUtils.convertToHtml(repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.getModid(), version.getVersionId()));
+                return StringUtils.convertToHtml(repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.modid(), version.versionId()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    object.changelog = StringUtils.isNotBlank(result) ? result : i18n("mods.changelog.empty");
+                    object.changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo == null ? "" : repo.getBaseUrl()));
                     FXUtils.smoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
@@ -365,7 +365,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
             Task.supplyAsync(() -> {
-                RemoteModRepository repo = object.data.source().getRepoForType(object.data.repoType());
+                RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
                 return repo == null ? null : repo.getVersionPageUrl(object.data.targetVersion());
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null && StringUtils.isNotBlank(result)) {

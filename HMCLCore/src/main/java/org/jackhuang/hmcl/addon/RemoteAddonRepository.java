@@ -106,7 +106,7 @@ public interface RemoteAddonRepository {
 
     String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException;
 
-    String getVersionPageUrl(RemoteMod.Version version) throws IOException;
+    String getVersionPageUrl(RemoteAddon.Version version) throws IOException;
 
     Stream<Category> getCategories() throws IOException;
 
