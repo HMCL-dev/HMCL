@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
+import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemeReference;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -72,6 +73,33 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// Default launcher theme used when no stored theme reference is available.
     public static final ThemeReference DEFAULT_THEME_REFERENCE = new ThemeReference("hmcl.default", null);
+
+    /// Theme appearance override key for theme brightness.
+    public static final String THEME_APPEARANCE_BRIGHTNESS = "themeBrightness";
+
+    /// Theme appearance override key for theme color seed.
+    public static final String THEME_APPEARANCE_COLOR = "themeColor";
+
+    /// Theme appearance override key for theme color style.
+    public static final String THEME_APPEARANCE_COLOR_STYLE = "themeColorStyle";
+
+    /// Theme appearance override key for title area transparency.
+    public static final String THEME_APPEARANCE_TITLE_TRANSPARENT = "titleTransparent";
+
+    /// Theme appearance override key for the primary background source.
+    public static final String THEME_APPEARANCE_BACKGROUND = "background";
+
+    /// Theme appearance override key for URL background image cache policy.
+    public static final String THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY = "networkBackgroundImageCachePolicy";
+
+    /// Theme appearance override key for background fallback source.
+    public static final String THEME_APPEARANCE_BACKGROUND_FALLBACK = "backgroundFallback";
+
+    /// Theme appearance override key for background loading policy.
+    public static final String THEME_APPEARANCE_BACKGROUND_LOAD_POLICY = "backgroundLoadPolicy";
+
+    /// Theme appearance override key for background opacity.
+    public static final String THEME_APPEARANCE_BACKGROUND_OPACITY = "backgroundOpacity";
 
     /// Gson instance used for launcher settings and related settings objects that depend on JavaFX properties.
     public static final Gson SETTINGS_GSON = new GsonBuilder()
@@ -255,9 +283,33 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return Objects.requireNonNullElse(theme.get(), DEFAULT_THEME_REFERENCE);
     }
 
-    /// The configured theme brightness identifier, or `null` to follow the selected theme.
+    /// Theme appearance setting keys overridden by the launcher.
+    @SerializedName("themeAppearanceOverrides")
+    private final ObservableSet<String> themeAppearanceOverrides = FXCollections.observableSet();
+
+    /// Returns the theme appearance setting keys overridden by the launcher.
+    public ObservableSet<String> getThemeAppearanceOverrides() {
+        return themeAppearanceOverrides;
+    }
+
+    /// Returns whether a theme appearance setting is overridden by the launcher.
+    public boolean isThemeAppearanceOverridden(String setting) {
+        return themeAppearanceOverrides.contains(Objects.requireNonNull(setting));
+    }
+
+    /// Updates whether a theme appearance setting is overridden by the launcher.
+    public void setThemeAppearanceOverridden(String setting, boolean overridden) {
+        Objects.requireNonNull(setting);
+        if (overridden) {
+            themeAppearanceOverrides.add(setting);
+        } else {
+            themeAppearanceOverrides.remove(setting);
+        }
+    }
+
+    /// The configured theme brightness identifier.
     @SerializedName("themeBrightness")
-    private final StringProperty themeBrightness = new SimpleStringProperty();
+    private final StringProperty themeBrightness = new SimpleStringProperty("auto");
 
     /// Returns the theme brightness property.
     public StringProperty themeBrightnessProperty() {
@@ -273,21 +325,21 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return customThemeColor;
     }
 
-    /// The source used to choose the launcher Monet theme color seed, or `null` to follow the selected theme.
+    /// The source used to choose the launcher Monet theme color seed.
     @SerializedName("themeColorType")
-    private final ObjectProperty<@Nullable ThemeColorType> themeColorType = new RawPreservingObjectProperty<>();
+    private final ObjectProperty<ThemeColorType> themeColorType = new RawPreservingObjectProperty<>(ThemeColorType.CUSTOM);
 
     /// Returns the launcher theme color source type property.
-    public ObjectProperty<@Nullable ThemeColorType> themeColorTypeProperty() {
+    public ObjectProperty<ThemeColorType> themeColorTypeProperty() {
         return themeColorType;
     }
 
-    /// The MonetFX color style used to generate the launcher color scheme, or `null` to follow the selected theme.
+    /// The MonetFX color style used to generate the launcher color scheme.
     @SerializedName("themeColorStyle")
-    private final ObjectProperty<@Nullable ColorStyle> themeColorStyle = new RawPreservingObjectProperty<>();
+    private final ObjectProperty<ColorStyle> themeColorStyle = new RawPreservingObjectProperty<>(ColorStyle.FIDELITY);
 
     /// Returns the launcher theme color style property.
-    public ObjectProperty<@Nullable ColorStyle> themeColorStyleProperty() {
+    public ObjectProperty<ColorStyle> themeColorStyleProperty() {
         return themeColorStyle;
     }
 
@@ -331,12 +383,12 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return animationDisabled;
     }
 
-    /// Whether the launcher title area is transparent, or `null` to follow the selected theme.
+    /// Whether the launcher title area is transparent.
     @SerializedName("titleTransparent")
-    private final ObjectProperty<@Nullable Boolean> titleTransparent = new SimpleObjectProperty<>();
+    private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
 
     /// Returns the transparent title area property.
-    public ObjectProperty<@Nullable Boolean> titleTransparentProperty() {
+    public BooleanProperty titleTransparentProperty() {
         return titleTransparent;
     }
 
@@ -378,11 +430,11 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The URL image cache policy for network launcher backgrounds.
     @SerializedName("networkBackgroundImageCachePolicy")
-    private final ObjectProperty<NetworkBackgroundImageCachePolicyType> networkBackgroundImageCachePolicy =
-            new RawPreservingObjectProperty<>(NetworkBackgroundImageCachePolicyType.DEFAULT);
+    private final ObjectProperty<NetworkBackgroundImageCachePolicy> networkBackgroundImageCachePolicy =
+            new RawPreservingObjectProperty<>(NetworkBackgroundImageCachePolicy.ENABLED);
 
     /// Returns the URL image cache policy for network launcher backgrounds.
-    public ObjectProperty<NetworkBackgroundImageCachePolicyType> networkBackgroundImageCachePolicyProperty() {
+    public ObjectProperty<NetworkBackgroundImageCachePolicy> networkBackgroundImageCachePolicyProperty() {
         return networkBackgroundImageCachePolicy;
     }
 
@@ -395,46 +447,36 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return customBackgroundPaint;
     }
 
-    /// The fallback source used when the selected launcher background cannot be loaded, or `null` to follow the selected theme.
+    /// The fallback source used when the selected launcher background cannot be loaded.
     @SerializedName("backgroundFallbackType")
-    private final ObjectProperty<@Nullable BackgroundType> backgroundFallbackType =
-            new RawPreservingObjectProperty<>();
+    private final ObjectProperty<BackgroundType> backgroundFallbackType =
+            new RawPreservingObjectProperty<>(BackgroundType.BUILTIN);
 
     /// Returns the launcher background fallback source type property.
-    public ObjectProperty<@Nullable BackgroundType> backgroundFallbackTypeProperty() {
+    public ObjectProperty<BackgroundType> backgroundFallbackTypeProperty() {
         return backgroundFallbackType;
     }
 
     /// The fallback paint used when the selected launcher background cannot be loaded.
     @SerializedName("backgroundFallbackPaint")
-    private final ObjectProperty<@Nullable Paint> backgroundFallbackPaint = new SimpleObjectProperty<>(Color.WHITE);
+    private final ObjectProperty<Paint> backgroundFallbackPaint = new SimpleObjectProperty<>(Color.WHITE);
 
     /// Returns the launcher background fallback paint property.
-    public ObjectProperty<@Nullable Paint> backgroundFallbackPaintProperty() {
+    public ObjectProperty<Paint> backgroundFallbackPaintProperty() {
         return backgroundFallbackPaint;
     }
 
-    /// How the launcher displays its window while the selected background is loading, or `null` to follow the selected theme.
+    /// How the launcher displays its window while the selected background is loading.
     @SerializedName("backgroundLoadPolicy")
-    private final ObjectProperty<@Nullable BackgroundLoadPolicy> backgroundLoadPolicy =
-            new RawPreservingObjectProperty<>();
+    private final ObjectProperty<BackgroundLoadPolicy> backgroundLoadPolicy =
+            new RawPreservingObjectProperty<>(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
 
     /// Returns the launcher background loading policy property.
-    public ObjectProperty<@Nullable BackgroundLoadPolicy> backgroundLoadPolicyProperty() {
+    public ObjectProperty<BackgroundLoadPolicy> backgroundLoadPolicyProperty() {
         return backgroundLoadPolicy;
     }
 
-    /// How the launcher resolves background opacity.
-    @SerializedName("backgroundOpacityType")
-    private final ObjectProperty<BackgroundOpacityType> backgroundOpacityType =
-            new RawPreservingObjectProperty<>(BackgroundOpacityType.DEFAULT);
-
-    /// Returns the launcher background opacity resolution type property.
-    public ObjectProperty<BackgroundOpacityType> backgroundOpacityTypeProperty() {
-        return backgroundOpacityType;
-    }
-
-    /// The custom launcher background opacity value.
+    /// The launcher background opacity value.
     @SerializedName("backgroundOpacity")
     private final DoubleProperty backgroundOpacity = new SimpleDoubleProperty(1.0);
 

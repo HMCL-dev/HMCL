@@ -24,10 +24,8 @@ import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.setting.BackgroundOpacityType;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicyType;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -495,15 +493,7 @@ public final class ThemePackManager {
         ThemeReference reference = new ThemeReference(manifest.id(), theme.id());
         LauncherSettings currentSettings = settings();
         currentSettings.themeProperty().set(reference);
-        currentSettings.themeBrightnessProperty().set(null);
-        currentSettings.themeColorTypeProperty().set(null);
-        currentSettings.themeColorStyleProperty().set(null);
-        currentSettings.titleTransparentProperty().set(null);
-        currentSettings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
-        currentSettings.networkBackgroundImageCachePolicyProperty().set(NetworkBackgroundImageCachePolicyType.DEFAULT);
-        currentSettings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.DEFAULT);
-        currentSettings.backgroundFallbackTypeProperty().set(null);
-        currentSettings.backgroundLoadPolicyProperty().set(null);
+        currentSettings.getThemeAppearanceOverrides().clear();
     }
 
     /// Exports the current launcher appearance to a theme-pack file.
@@ -559,9 +549,8 @@ public final class ThemePackManager {
 
     /// Returns the current launcher theme color source as a theme-pack directive.
     private static ThemeColorSource currentThemeColorSource() throws IOException {
-        @Nullable ThemeColorType themeColorType = settings().themeColorTypeProperty().get();
-        BackgroundType backgroundType = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
-        if (themeColorType == null) {
+        BackgroundType backgroundType = resolveCurrentBackground(currentResolveContext()).type();
+        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)) {
             @Nullable ThemeColorSource colorSource = resolveCurrentThemeColorSource(currentResolveContext());
             if (colorSource != null) {
                 if (colorSource instanceof ThemeColorSource.Wallpaper && backgroundType == BackgroundType.THEME_COLOR) {
@@ -571,6 +560,10 @@ public final class ThemePackManager {
             }
             return ThemeColorSource.custom(ThemeColor.DEFAULT);
         }
+
+        ThemeColorType themeColorType = Objects.requireNonNullElse(
+                settings().themeColorTypeProperty().get(),
+                ThemeColorType.CUSTOM);
         if (themeColorType == ThemeColorType.BACKGROUND) {
             if (backgroundType == BackgroundType.THEME_COLOR) {
                 return ThemeColorSource.custom(ThemeColor.DEFAULT);
@@ -584,17 +577,20 @@ public final class ThemePackManager {
 
     /// Returns the current launcher color style as a theme-pack directive.
     private static ColorStyle currentColorStyle() throws IOException {
-        @Nullable ColorStyle configured = settings().themeColorStyleProperty().get();
-        return configured != null
-                ? configured
+        return isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR_STYLE)
+                ? Objects.requireNonNullElse(settings().themeColorStyleProperty().get(), ResolvedTheme.DEFAULT.colorStyle())
                 : resolveCurrentThemeColorStyle(currentResolveContext(), ResolvedTheme.DEFAULT.colorStyle());
     }
 
     /// Returns the current launcher brightness as an explicit theme-pack directive, or `null` for auto mode.
     private static @Nullable Brightness currentControlledBrightness() throws IOException {
-        String brightness = settings().themeBrightnessProperty().get();
-        if (StringUtils.isBlank(brightness) || "default".equalsIgnoreCase(brightness.trim())) {
+        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS)) {
             return resolveCurrentThemeBrightness(currentResolveContext());
+        }
+
+        String brightness = settings().themeBrightnessProperty().get();
+        if (StringUtils.isBlank(brightness)) {
+            return null;
         }
         return switch (brightness.trim().toLowerCase(Locale.ROOT)) {
             case "light" -> Brightness.LIGHT;
@@ -605,9 +601,8 @@ public final class ThemePackManager {
 
     /// Returns whether the current title bar should be transparent.
     private static boolean currentTitleBarTransparent() throws IOException {
-        @Nullable Boolean configured = settings().titleTransparentProperty().get();
-        return configured != null
-                ? configured
+        return isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_TRANSPARENT)
+                ? settings().titleTransparentProperty().get()
                 : resolveCurrentTitleBarTransparent(currentResolveContext(), false);
     }
 
@@ -752,8 +747,8 @@ public final class ThemePackManager {
 
     /// Resolves the background currently selected by launcher settings.
     ///
-    /// When [LauncherSettings#backgroundTypeProperty()] is [BackgroundType#DEFAULT], this resolves the selected
-    /// launcher theme background first. Other background types are resolved from the launcher custom background fields.
+    /// When the launcher background setting is inherited, this resolves the selected launcher theme background first.
+    /// Otherwise it resolves the direct launcher background fields.
     ///
     /// @param context the condition resolution context
     /// @return the currently effective launcher background
@@ -761,8 +756,7 @@ public final class ThemePackManager {
     public static ResolvedBackground resolveCurrentBackground(ThemeResolveContext context) throws IOException {
         Objects.requireNonNull(context);
 
-        BackgroundType type = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
-        if (type == BackgroundType.DEFAULT) {
+        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
             ThemeReference reference = settings().getThemeOrDefault();
             @Nullable ResolvedBackground resolved = resolveThemeBackground(reference, context);
             if (resolved != null) {
@@ -788,8 +782,7 @@ public final class ThemePackManager {
     public static ResolvedBackground resolveCurrentBackgroundFallback(ThemeResolveContext context) throws IOException {
         Objects.requireNonNull(context);
 
-        @Nullable BackgroundType fallbackType = settings().backgroundFallbackTypeProperty().get();
-        if (fallbackType == null || fallbackType == BackgroundType.DEFAULT) {
+        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
             ThemeReference reference = settings().getThemeOrDefault();
             @Nullable InstalledThemePack themePack = findInstalled(reference);
             @Nullable ThemeBackgroundSettings background = null;
@@ -799,7 +792,7 @@ public final class ThemePackManager {
                     background = theme.resolve(context).background();
                 }
             }
-            double opacity = settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM
+            double opacity = isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)
                     ? currentBackgroundOpacity()
                     : background != null && background.opacity() != null ? background.opacity() : 1.0;
             if (themePack != null && background != null && background.fallback() != null) {
@@ -818,6 +811,9 @@ public final class ThemePackManager {
                     opacity);
         }
 
+        BackgroundType fallbackType = Objects.requireNonNullElse(
+                settings().backgroundFallbackTypeProperty().get(),
+                BackgroundType.BUILTIN);
         double opacity = currentBackgroundOpacityOrDefault();
         return switch (fallbackType) {
             case BUILTIN -> new ResolvedBackground(
@@ -859,9 +855,10 @@ public final class ThemePackManager {
     /// @return the effective background loading policy
     /// @throws IOException if the selected theme pack cannot be read
     public static BackgroundLoadPolicy resolveCurrentBackgroundLoadPolicy(ThemeResolveContext context) throws IOException {
-        @Nullable BackgroundLoadPolicy configured = settings().backgroundLoadPolicyProperty().get();
-        if (configured != null) {
-            return configured;
+        if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY)) {
+            return Objects.requireNonNullElse(
+                    settings().backgroundLoadPolicyProperty().get(),
+                    BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
         }
 
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
@@ -961,12 +958,11 @@ public final class ThemePackManager {
             return null;
         }
         ResolvedBackground resolved = resolveBackground(themePack.file(), background, 1.0);
-        if (settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM) {
+        if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
             resolved = resolved.withOpacity(currentBackgroundOpacity());
         }
-        NetworkBackgroundImageCachePolicyType cachePolicyType = currentNetworkBackgroundImageCachePolicyType();
         if (resolved.type() == BackgroundType.NETWORK
-                && cachePolicyType != NetworkBackgroundImageCachePolicyType.DEFAULT) {
+                && isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY)) {
             resolved = resolved.withNetworkImageCachePolicy(currentNetworkBackgroundImageCachePolicy());
         }
         return resolved;
@@ -1546,25 +1542,21 @@ public final class ThemePackManager {
 
     /// Returns the effective custom launcher background opacity, or the built-in default when not overridden.
     private static double currentBackgroundOpacityOrDefault() {
-        return settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM
+        return isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)
                 ? currentBackgroundOpacity()
                 : 1.0;
     }
 
-    /// Returns the custom network background cache policy, or `null` for the default cache behavior.
-    private static @Nullable NetworkBackgroundImageCachePolicy currentNetworkBackgroundImageCachePolicy() {
-        return switch (currentNetworkBackgroundImageCachePolicyType()) {
-            case ENABLED -> NetworkBackgroundImageCachePolicy.ENABLED;
-            case DISABLED -> NetworkBackgroundImageCachePolicy.DISABLED;
-            case DEFAULT -> null;
-        };
-    }
-
-    /// Returns the configured network background cache policy type.
-    private static NetworkBackgroundImageCachePolicyType currentNetworkBackgroundImageCachePolicyType() {
+    /// Returns the direct network background cache policy.
+    private static NetworkBackgroundImageCachePolicy currentNetworkBackgroundImageCachePolicy() {
         return Objects.requireNonNullElse(
                 settings().networkBackgroundImageCachePolicyProperty().get(),
-                NetworkBackgroundImageCachePolicyType.DEFAULT);
+                NetworkBackgroundImageCachePolicy.ENABLED);
+    }
+
+    /// Returns whether the launcher overrides one theme appearance setting.
+    private static boolean isThemeAppearanceOverridden(String setting) {
+        return settings().isThemeAppearanceOverridden(setting);
     }
 
     /// Returns the currently selected built-in wallpaper ID.

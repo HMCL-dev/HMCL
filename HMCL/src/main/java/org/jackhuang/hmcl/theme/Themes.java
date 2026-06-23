@@ -56,7 +56,7 @@ import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
-import org.jackhuang.hmcl.setting.BackgroundOpacityType;
+import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -103,6 +103,7 @@ public final class Themes {
             List<Observable> observables = new ArrayList<>();
 
             observables.add(settings().themeProperty());
+            observables.add(settings().getThemeAppearanceOverrides());
             observables.add(settings().themeBrightnessProperty());
             observables.add(settings().customThemeColorProperty());
             observables.add(settings().themeColorTypeProperty());
@@ -119,9 +120,10 @@ public final class Themes {
 
         /// Returns the configured MonetFX color style.
         private ColorStyle getColorStyle() {
-            @Nullable ColorStyle configured = settings().themeColorStyleProperty().get();
-            if (configured != null) {
-                return configured;
+            if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR_STYLE)) {
+                return Objects.requireNonNullElse(
+                        settings().themeColorStyleProperty().get(),
+                        ResolvedTheme.DEFAULT.colorStyle());
             }
             try {
                 return ThemePackManager.resolveCurrentThemeColorStyle(
@@ -141,12 +143,22 @@ public final class Themes {
 
     /// Returns the effective theme color for the current launcher settings.
     static ThemeColor resolveCurrentThemeColor() {
-        @Nullable ThemeColorType themeColorType = settings().themeColorTypeProperty().get();
-        ThemeColor fallback = themeColorType == null
-                ? ThemeColor.DEFAULT
-                : Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
-        BackgroundType backgroundType = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
-        return resolveThemeColor(fallback, themeColorType, backgroundType);
+        ThemeColor fallback = isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
+                ? Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT)
+                : ThemeColor.DEFAULT;
+        BackgroundType backgroundType;
+        try {
+            backgroundType = ThemePackManager.resolveCurrentBackground(
+                    ThemeResolveContext.current(getCurrentBrightness())).type();
+        } catch (IOException | RuntimeException e) {
+            backgroundType = BackgroundType.DEFAULT;
+        }
+        return resolveThemeColor(
+                fallback,
+                isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
+                        ? Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.CUSTOM)
+                        : null,
+                backgroundType);
     }
 
     /// Resolves a Monet seed color from configured theme color and background sources.
@@ -280,13 +292,13 @@ public final class Themes {
             }
         };
         settings().themeProperty().addListener(backgroundListener);
+        settings().getThemeAppearanceOverrides().addListener(backgroundListener);
         settings().backgroundTypeProperty().addListener(backgroundListener);
         settings().builtinBackgroundIdProperty().addListener(backgroundListener);
         settings().customBackgroundImagePathProperty().addListener(backgroundListener);
         settings().networkBackgroundImageUrlProperty().addListener(backgroundListener);
         settings().networkBackgroundImageCachePolicyProperty().addListener(backgroundListener);
         settings().customBackgroundPaintProperty().addListener(backgroundListener);
-        settings().backgroundOpacityTypeProperty().addListener(ignored -> refreshBackgroundOpacity());
         settings().backgroundOpacityProperty().addListener(ignored -> refreshBackgroundOpacity());
         settings().backgroundFallbackTypeProperty().addListener(ignored -> refreshFallbackBackground());
         settings().backgroundFallbackPaintProperty().addListener(ignored -> refreshFallbackBackground());
@@ -304,12 +316,12 @@ public final class Themes {
     ///
     /// @return the brightness used by theme condition matching
     public static Brightness getThemeConditionBrightness() {
-        @Nullable String themeBrightness = settings().themeBrightnessProperty().get();
-        if (themeBrightness == null) {
+        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS)) {
             return getAutomaticBrightness();
         }
 
-        return switch (themeBrightness.toLowerCase(Locale.ROOT).trim()) {
+        String themeBrightness = settings().themeBrightnessProperty().get();
+        return switch (Objects.toString(themeBrightness, "").toLowerCase(Locale.ROOT).trim()) {
             case "light" -> Brightness.LIGHT;
             case "dark" -> Brightness.DARK;
             default -> getAutomaticBrightness();
@@ -320,8 +332,7 @@ public final class Themes {
     ///
     /// @return the effective launcher brightness
     public static Brightness getCurrentBrightness() {
-        @Nullable String themeBrightness = settings().themeBrightnessProperty().get();
-        if (StringUtils.isBlank(themeBrightness) || "default".equalsIgnoreCase(themeBrightness.trim())) {
+        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS)) {
             Brightness contextBrightness = getThemeConditionBrightness();
             try {
                 return ThemePackManager.resolveCurrentThemeBrightness(
@@ -332,12 +343,18 @@ public final class Themes {
             }
         }
 
-        return switch (themeBrightness.toLowerCase(Locale.ROOT).trim()) {
+        String themeBrightness = settings().themeBrightnessProperty().get();
+        return switch (Objects.toString(themeBrightness, "").toLowerCase(Locale.ROOT).trim()) {
             case "auto" -> getAutomaticBrightness();
             case "dark" -> Brightness.DARK;
             case "light" -> Brightness.LIGHT;
             default -> getAutomaticBrightness();
         };
+    }
+
+    /// Returns whether the launcher overrides one theme appearance setting.
+    private static boolean isThemeAppearanceOverridden(String setting) {
+        return settings().isThemeAppearanceOverridden(setting);
     }
 
     /// Returns the brightness requested by the current system or platform settings.
@@ -694,7 +711,7 @@ public final class Themes {
                     : ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext()).opacity();
         } catch (IOException | RuntimeException e) {
             double configured = settings().backgroundOpacityProperty().get();
-            return settings().backgroundOpacityTypeProperty().get() == BackgroundOpacityType.CUSTOM && Double.isFinite(configured)
+            return isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY) && Double.isFinite(configured)
                     ? MathUtils.clamp(configured, 0., 1.)
                     : 1.0;
         }
@@ -712,8 +729,7 @@ public final class Themes {
 
     /// Returns the fallback seed color used while extracting wallpaper colors.
     private static ThemeColor getWallpaperThemeColorFallback() {
-        @Nullable ThemeColorType themeColorType = settings().themeColorTypeProperty().get();
-        return themeColorType == null
+        return !isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
                 ? ThemeColor.DEFAULT
                 : Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
     }
@@ -868,9 +884,8 @@ public final class Themes {
     /// Whether the title area should be transparent after applying launcher and theme settings.
     private static final BooleanBinding titleTransparent = Bindings.createBooleanBinding(
             () -> {
-                @Nullable Boolean configured = settings().titleTransparentProperty().get();
-                if (configured != null) {
-                    return configured;
+                if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_TRANSPARENT)) {
+                    return settings().titleTransparentProperty().get();
                 }
                 try {
                     return ThemePackManager.resolveCurrentTitleBarTransparent(
@@ -881,6 +896,7 @@ public final class Themes {
                 }
             },
             settings().titleTransparentProperty(),
+            settings().getThemeAppearanceOverrides(),
             settings().themeProperty(),
             settings().themeBrightnessProperty(),
             FXUtils.DARK_MODE != null ? FXUtils.DARK_MODE : settings().themeBrightnessProperty()

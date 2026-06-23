@@ -22,10 +22,8 @@ import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
-import org.jackhuang.hmcl.setting.BackgroundOpacityType;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.NetworkBackgroundImageCachePolicyType;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -109,31 +107,24 @@ public final class ThemePackManagerTest {
 
             LauncherSettings settings = SettingsManager.settings();
             assertEquals(ThemeColor.DEFAULT, settings.customThemeColorProperty().get());
-            assertNull(settings.themeColorTypeProperty().get());
-            assertNull(settings.themeColorStyleProperty().get());
-            assertNull(settings.themeBrightnessProperty().get());
             assertEquals(new ThemeReference("example.ui", null), settings.themeProperty().get());
             JsonObject settingsJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings).getAsJsonObject();
             JsonObject themeJson = settingsJson.getAsJsonObject("theme");
             assertEquals("example.ui", themeJson.get("packId").getAsString());
             assertFalse(themeJson.has("themeId"));
-            assertNull(settings.titleTransparentProperty().get());
+            assertTrue(settings.getThemeAppearanceOverrides().isEmpty());
+            assertEquals(ThemeColorType.CUSTOM, settings.themeColorTypeProperty().get());
+            assertEquals(ColorStyle.FIDELITY, settings.themeColorStyleProperty().get());
+            assertEquals("auto", settings.themeBrightnessProperty().get());
+            assertFalse(settings.titleTransparentProperty().get());
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
-            assertEquals(BackgroundOpacityType.DEFAULT, settings.backgroundOpacityTypeProperty().get());
-            assertNull(settings.backgroundFallbackTypeProperty().get());
+            assertEquals(1.0, settings.backgroundOpacityProperty().get());
+            assertEquals(BackgroundType.BUILTIN, settings.backgroundFallbackTypeProperty().get());
             assertEquals(Color.WHITE, settings.backgroundFallbackPaintProperty().get());
-            assertNull(settings.backgroundLoadPolicyProperty().get());
+            assertEquals(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND, settings.backgroundLoadPolicyProperty().get());
             assertNull(settings.customBackgroundImagePathProperty().get());
             assertNull(settings.networkBackgroundImageUrlProperty().get());
             assertNull(settings.customBackgroundPaintProperty().get());
-            assertFalse(settingsJson.has("themeBrightness"));
-            assertFalse(settingsJson.has("themeColorType"));
-            assertFalse(settingsJson.has("themeColorStyle"));
-            assertFalse(settingsJson.has("titleTransparent"));
-            assertFalse(settingsJson.has("backgroundOpacityType"));
-            assertFalse(settingsJson.has("backgroundOpacity"));
-            assertFalse(settingsJson.has("backgroundFallbackType"));
-            assertFalse(settingsJson.has("backgroundLoadPolicy"));
 
             ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "linux", "en");
             assertEquals(ColorStyle.EXPRESSIVE, ThemePackManager.resolveCurrentThemeColorStyle(
@@ -155,14 +146,14 @@ public final class ThemePackManagerTest {
             assertEquals(cachedWallpaper, resolvedBackground.imagePath());
             assertEquals(0.75, resolvedBackground.opacity());
 
-            settings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.CUSTOM);
+            settings.setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY, true);
             settings.backgroundOpacityProperty().set(0.35);
             ThemePackManager.apply(
                     installedThemePack.file(),
                     installedThemePack.manifest(),
                     theme,
                     context);
-            assertEquals(BackgroundOpacityType.DEFAULT, settings.backgroundOpacityTypeProperty().get());
+            assertFalse(settings.isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY));
             assertEquals(0.35, settings.backgroundOpacityProperty().get());
 
             settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
@@ -358,8 +349,9 @@ public final class ThemePackManagerTest {
 
             ThemePackManager.apply(classicThemePack, classicTheme);
             assertEquals(classicReference, settings.themeProperty().get());
-            assertNull(settings.themeBrightnessProperty().get());
-            assertNull(settings.themeColorStyleProperty().get());
+            assertTrue(settings.getThemeAppearanceOverrides().isEmpty());
+            assertEquals("dark", settings.themeBrightnessProperty().get());
+            assertEquals(ColorStyle.FIDELITY, settings.themeColorStyleProperty().get());
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
             ThemePackManager.ResolvedBackground selectedClassicBackground = ThemePackManager.resolveCurrentBackground(
                     new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
@@ -397,9 +389,10 @@ public final class ThemePackManagerTest {
             LauncherSettings settings = SettingsManager.settings();
             ThemeReference reference = new ThemeReference("example.refresh", null);
             assertEquals(reference, settings.themeProperty().get());
-            assertNull(settings.themeColorStyleProperty().get());
-            assertNull(settings.titleTransparentProperty().get());
-            assertEquals(BackgroundOpacityType.DEFAULT, settings.backgroundOpacityTypeProperty().get());
+            assertTrue(settings.getThemeAppearanceOverrides().isEmpty());
+            assertEquals(ColorStyle.FIDELITY, settings.themeColorStyleProperty().get());
+            assertFalse(settings.titleTransparentProperty().get());
+            assertEquals(1.0, settings.backgroundOpacityProperty().get());
             assertEquals(
                     ColorStyle.NEUTRAL,
                     ThemePackManager.resolveCurrentThemeColorStyle(
@@ -416,7 +409,7 @@ public final class ThemePackManagerTest {
             settings.themeBrightnessProperty().set("dark");
 
             assertEquals(reference, settings.themeProperty().get());
-            assertNull(settings.themeColorStyleProperty().get());
+            assertEquals(ColorStyle.FIDELITY, settings.themeColorStyleProperty().get());
             assertEquals(
                     ColorStyle.EXPRESSIVE,
                     ThemePackManager.resolveCurrentThemeColorStyle(
@@ -426,7 +419,7 @@ public final class ThemePackManagerTest {
                     new ThemeResolveContext(Brightness.DARK, "linux", "en"),
                     false));
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
-            assertEquals(BackgroundOpacityType.DEFAULT, settings.backgroundOpacityTypeProperty().get());
+            assertFalse(settings.isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY));
 
             ThemePackManager.ResolvedBackground background = ThemePackManager.resolveCurrentBackground(
                     new ThemeResolveContext(Brightness.DARK, "linux", "en"));
@@ -467,7 +460,9 @@ public final class ThemePackManagerTest {
             LauncherSettings settings = SettingsManager.settings();
             ThemeReference reference = new ThemeReference("example.refresh", null);
             settings.themeColorStyleProperty().set(ColorStyle.MONOCHROME);
+            overrideThemeAppearance(settings, LauncherSettings.THEME_APPEARANCE_COLOR_STYLE);
             settings.themeBrightnessProperty().set("dark");
+            overrideThemeAppearance(settings, LauncherSettings.THEME_APPEARANCE_BRIGHTNESS);
 
             assertEquals(reference, settings.themeProperty().get());
             assertEquals(ColorStyle.MONOCHROME, settings.themeColorStyleProperty().get());
@@ -559,11 +554,20 @@ public final class ThemePackManagerTest {
             settings.themeBrightnessProperty().set("dark");
             settings.titleTransparentProperty().set(true);
             settings.backgroundTypeProperty().set(BackgroundType.DEFAULT);
-            settings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.CUSTOM);
             settings.backgroundOpacityProperty().set(0.5);
             settings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
             settings.backgroundFallbackPaintProperty().set(Color.web("#112233"));
             settings.backgroundLoadPolicyProperty().set(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
+            overrideThemeAppearance(
+                    settings,
+                    LauncherSettings.THEME_APPEARANCE_COLOR,
+                    LauncherSettings.THEME_APPEARANCE_COLOR_STYLE,
+                    LauncherSettings.THEME_APPEARANCE_BRIGHTNESS,
+                    LauncherSettings.THEME_APPEARANCE_TITLE_TRANSPARENT,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY);
 
             Path tempDir = createTestDirectory("export-current");
             Path output = tempDir.resolve("current" + ThemePackExporter.FILE_EXTENSION);
@@ -602,6 +606,10 @@ public final class ThemePackManagerTest {
             settings.backgroundTypeProperty().set(BackgroundType.NETWORK);
             settings.networkBackgroundImageUrlProperty().set("https://example.com/wallpaper.png");
             settings.backgroundFallbackTypeProperty().set(BackgroundType.THEME_COLOR);
+            overrideThemeAppearance(
+                    settings,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK);
 
             Path tempDir = createTestDirectory("export-theme-color-fallback");
             Path output = tempDir.resolve("theme-color-fallback" + ThemePackExporter.FILE_EXTENSION);
@@ -649,7 +657,8 @@ public final class ThemePackManagerTest {
 
             ThemePackManager.apply(installedThemePack, theme);
 
-            assertNull(SettingsManager.settings().backgroundFallbackTypeProperty().get());
+            assertFalse(SettingsManager.settings().isThemeAppearanceOverridden(
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
             assertEquals(
                     BackgroundType.THEME_COLOR,
                     ThemePackManager.resolveCurrentBackgroundFallback(
@@ -664,7 +673,11 @@ public final class ThemePackManagerTest {
             LauncherSettings settings = SettingsManager.settings();
             settings.backgroundTypeProperty().set(BackgroundType.NETWORK);
             settings.networkBackgroundImageUrlProperty().set("https://example.com/wallpaper.png");
-            settings.networkBackgroundImageCachePolicyProperty().set(NetworkBackgroundImageCachePolicyType.DISABLED);
+            settings.networkBackgroundImageCachePolicyProperty().set(NetworkBackgroundImageCachePolicy.DISABLED);
+            overrideThemeAppearance(
+                    settings,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND,
+                    LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY);
 
             Path tempDir = createTestDirectory("export-network-background-cache");
             Path output = tempDir.resolve("network-background-cache" + ThemePackExporter.FILE_EXTENSION);
@@ -693,6 +706,7 @@ public final class ThemePackManagerTest {
             LauncherSettings settings = SettingsManager.settings();
             settings.backgroundTypeProperty().set(BackgroundType.NETWORK);
             settings.networkBackgroundImageUrlProperty().set("https://example.com/wallpaper.png");
+            overrideThemeAppearance(settings, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
 
             Path tempDir = createTestDirectory("export-network-background-default-cache");
             Path output = tempDir.resolve("network-background-default-cache" + ThemePackExporter.FILE_EXTENSION);
@@ -729,7 +743,6 @@ public final class ThemePackManagerTest {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
             settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
-            settings.themeColorTypeProperty().set(null);
 
             Path tempDir = createTestDirectory("export-default-theme-color");
             Path output = tempDir.resolve("default-theme-color" + ThemePackExporter.FILE_EXTENSION);
@@ -750,8 +763,12 @@ public final class ThemePackManagerTest {
             settings.customThemeColorProperty().set(ThemeColor.of("#663399"));
             settings.themeColorTypeProperty().set(ThemeColorType.BACKGROUND);
             settings.backgroundTypeProperty().set(BackgroundType.THEME_COLOR);
-            settings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.CUSTOM);
             settings.backgroundOpacityProperty().set(1.0);
+            overrideThemeAppearance(
+                    settings,
+                    LauncherSettings.THEME_APPEARANCE_COLOR,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
 
             Path tempDir = createTestDirectory("export-theme-color-background");
             Path output = tempDir.resolve("theme-color-background" + ThemePackExporter.FILE_EXTENSION);
@@ -784,6 +801,11 @@ public final class ThemePackManagerTest {
             settings.customBackgroundImagePathProperty().set(wallpaper.toString());
             settings.backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
             settings.backgroundLoadPolicyProperty().set(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
+            overrideThemeAppearance(
+                    settings,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY);
 
             Path output = tempDir.resolve("local-background" + ThemePackExporter.FILE_EXTENSION);
             ThemePackManager.exportCurrent(output, "com.example.local-background", "Local Background", "Test Author");
@@ -807,6 +829,7 @@ public final class ThemePackManagerTest {
             LauncherSettings settings = SettingsManager.settings();
             settings.backgroundTypeProperty().set(BackgroundType.BUILTIN);
             settings.builtinBackgroundIdProperty().set(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID);
+            overrideThemeAppearance(settings, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
 
             Path tempDir = createTestDirectory("export-builtin-wallpaper");
             Path output = tempDir.resolve("builtin-wallpaper" + ThemePackExporter.FILE_EXTENSION);
@@ -833,8 +856,12 @@ public final class ThemePackManagerTest {
             settings.customThemeColorProperty().set(ThemeColor.of("#663399"));
             settings.themeColorTypeProperty().set(ThemeColorType.CUSTOM);
             settings.backgroundTypeProperty().set(BackgroundType.THEME_COLOR);
-            settings.backgroundOpacityTypeProperty().set(BackgroundOpacityType.CUSTOM);
             settings.backgroundOpacityProperty().set(0.6);
+            overrideThemeAppearance(
+                    settings,
+                    LauncherSettings.THEME_APPEARANCE_COLOR,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND,
+                    LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
 
             ThemePackManager.ResolvedBackground background = ThemePackManager.resolveCurrentBackground(
                     new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
@@ -862,7 +889,6 @@ public final class ThemePackManagerTest {
         try (SettingsScope ignored = new SettingsScope()) {
             LauncherSettings settings = SettingsManager.settings();
             settings.customThemeColorProperty().set(Objects.requireNonNull(ThemeColor.of("#663399")));
-            settings.themeColorTypeProperty().set(null);
             settings.themeProperty().set(null);
 
             assertEquals(ThemeColor.DEFAULT, Themes.resolveCurrentThemeColor());
@@ -879,6 +905,16 @@ public final class ThemePackManagerTest {
                 .normalize();
         Files.createDirectories(directory);
         return directory;
+    }
+
+    /// Marks launcher appearance settings as direct user overrides.
+    ///
+    /// @param settings the launcher settings to mutate
+    /// @param keys the appearance setting keys to mark as overridden
+    private static void overrideThemeAppearance(LauncherSettings settings, String... keys) {
+        for (String key : keys) {
+            settings.setThemeAppearanceOverridden(key, true);
+        }
     }
 
     /// Writes a small solid-color PNG image.
