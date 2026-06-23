@@ -1414,7 +1414,7 @@ public final class ThemePackManager {
             throw new IOException("Theme background image does not exist: " + source);
         }
 
-        String entryName = "assets/background/" + sanitizePathSegment(source.getFileName().toString());
+        String entryName = "assets/wallpapers/" + sanitizePathSegment(source.getFileName().toString());
         assets.add(new ThemePackAsset(source, entryName));
         return new ThemeBackgroundSettings(new ThemeBackground.Image(entryName), opacity);
     }

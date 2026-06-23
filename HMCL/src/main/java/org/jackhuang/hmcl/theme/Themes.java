@@ -94,7 +94,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class Themes {
     /// Resource path for the launcher's default built-in background.
     private static final String BUILTIN_DEFAULT_BACKGROUND_RESOURCE =
-            "/assets/themes/hmcl.builtin/assets/background/background.jpg";
+            "/assets/img/wallpapers/2021-08-26.jpg";
 
     /// The seed color extracted from the last loaded wallpaper image.
     private static final ReadOnlyObjectWrapper<@Nullable ThemeColor> wallpaperThemeColor = new ReadOnlyObjectWrapper<>();
@@ -835,7 +835,7 @@ public final class Themes {
     /// Loads one named built-in launcher background.
     private static Image loadBuiltinBackgroundImage(@Nullable String name) {
         if (BackgroundType.BUILTIN_CLASSIC.equals(name)) {
-            return newBuiltinImage("/assets/img/background-classic.jpg");
+            return newBuiltinImage("/assets/img/wallpapers/2016-02-25.jpg");
         }
         return newBuiltinImage(BUILTIN_DEFAULT_BACKGROUND_RESOURCE);
     }
