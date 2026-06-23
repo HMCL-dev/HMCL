@@ -38,7 +38,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.ThemeColor;
-import org.jackhuang.hmcl.theme.ThemeSelection;
+import org.jackhuang.hmcl.theme.ThemeReference;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
@@ -241,10 +241,10 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The installed theme selected by the launcher, or `null` when no installed theme is active.
     @SerializedName("theme")
-    private final ObjectProperty<@Nullable ThemeSelection> theme = new SimpleObjectProperty<>();
+    private final ObjectProperty<@Nullable ThemeReference> theme = new SimpleObjectProperty<>();
 
     /// Returns the selected installed theme property.
-    public ObjectProperty<@Nullable ThemeSelection> themeProperty() {
+    public ObjectProperty<@Nullable ThemeReference> themeProperty() {
         return theme;
     }
 

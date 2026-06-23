@@ -75,9 +75,9 @@ public final class ThemePackManager {
     private static final String BUILTIN_THEME_PACK_MANIFEST_RESOURCE =
             BUILTIN_THEME_PACK_RESOURCE_ROOT + "/" + ThemePackExporter.MANIFEST_ENTRY;
 
-    /// Built-in default theme selection.
-    public static final ThemeSelection BUILTIN_DEFAULT_THEME_SELECTION =
-            new ThemeSelection("hmcl.builtin.default", "DEFAULT");
+    /// Built-in default theme reference.
+    public static final ThemeReference BUILTIN_DEFAULT_THEME_REFERENCE =
+            new ThemeReference("hmcl.builtin.default", "DEFAULT");
 
     /// Built-in default theme pack.
     private static final InstalledThemePack BUILTIN_THEME_PACK = loadBuiltinThemePack();
@@ -274,21 +274,21 @@ public final class ThemePackManager {
         return new InstalledThemePack(loadedThemePack.file(), loadedThemePack.manifest());
     }
 
-    /// Loads the installed theme pack referenced by a theme selection.
+    /// Loads the installed theme pack referenced by a theme reference.
     ///
-    /// @param selection the selected installed theme
+    /// @param reference the referenced installed theme
     /// @return the installed theme pack, or `null` if the selected package file does not exist
     /// @throws IOException if the installed manifest cannot be read or parsed
-    public static @Nullable InstalledThemePack findInstalled(ThemeSelection selection) throws IOException {
-        Objects.requireNonNull(selection);
+    public static @Nullable InstalledThemePack findInstalled(ThemeReference reference) throws IOException {
+        Objects.requireNonNull(reference);
 
-        if (BUILTIN_THEME_PACK.manifest().id().equals(selection.packId())) {
+        if (BUILTIN_THEME_PACK.manifest().id().equals(reference.packId())) {
             return BUILTIN_THEME_PACK;
         }
 
-        Path file = installedThemePackFile(selection.packId());
+        Path file = installedThemePackFile(reference.packId());
         if (!Files.isRegularFile(file)) {
-            return findInstalledDirectory(selection.packId());
+            return findInstalledDirectory(reference.packId());
         }
         return loadInstalled(file);
     }
@@ -360,7 +360,7 @@ public final class ThemePackManager {
 
     /// Removes an installed theme pack from the launcher's local theme-pack directory.
     ///
-    /// If the removed package is currently selected, the stored theme selection is cleared.
+    /// If the removed package is currently selected, the stored theme reference is cleared.
     ///
     /// @param themePack the installed theme pack to remove
     /// @throws IOException if the installed package cannot be removed
@@ -380,10 +380,10 @@ public final class ThemePackManager {
         deleteIfExists(targetFile);
         deleteIfExists(installedThemePackCacheDirectory(themePack.manifest().id()));
 
-        @Nullable ThemeSelection selection = settings().themeProperty().get();
+        @Nullable ThemeReference reference = settings().themeProperty().get();
         ThemePackManifest manifest = themePack.manifest();
-        if (selection != null
-                && selection.packId().equals(manifest.id())) {
+        if (reference != null
+                && reference.packId().equals(manifest.id())) {
             settings().themeProperty().set(null);
         }
     }
@@ -441,18 +441,18 @@ public final class ThemePackManager {
             return;
         }
 
-        @Nullable ThemeSelection selection = settings().themeProperty().get();
-        if (selection == null) {
+        @Nullable ThemeReference reference = settings().themeProperty().get();
+        if (reference == null) {
             return;
         }
 
         try {
-            @Nullable InstalledThemePack themePack = findInstalled(selection);
+            @Nullable InstalledThemePack themePack = findInstalled(reference);
             if (themePack == null) {
                 return;
             }
 
-            @Nullable Theme theme = themePack.manifest().findTheme(selection.themeId());
+            @Nullable Theme theme = themePack.manifest().findTheme(reference.themeId());
             if (theme == null) {
                 return;
             }
@@ -484,7 +484,7 @@ public final class ThemePackManager {
         boolean previousApplyingTheme = applyingTheme;
         applyingTheme = true;
         try {
-            ThemeSelection selection = new ThemeSelection(manifest.id(), theme.id());
+            ThemeReference reference = new ThemeReference(manifest.id(), theme.id());
             ThemeAppearance appearance = theme.resolve(context);
             LauncherSettings currentSettings = settings();
 
@@ -495,7 +495,7 @@ public final class ThemePackManager {
                 currentSettings.titleTransparentProperty().set(appearance.titleBar().transparent());
             }
             if (appearance.background() != null) {
-                applyBackground(selection, themePackFile.toAbsolutePath().normalize(), appearance.background());
+                applyBackground(reference, themePackFile.toAbsolutePath().normalize(), appearance.background());
             }
             if (appearance.colorStyle() != null) {
                 currentSettings.themeColorStyleProperty().set(appearance.colorStyle());
@@ -505,7 +505,7 @@ public final class ThemePackManager {
                 currentSettings.customThemeColorProperty().set(resolveThemeColor(themePackFile, appearance));
             }
 
-            currentSettings.themeProperty().set(selection);
+            currentSettings.themeProperty().set(reference);
         } finally {
             applyingTheme = previousApplyingTheme;
         }
@@ -620,17 +620,17 @@ public final class ThemePackManager {
         Objects.requireNonNull(fallback);
         Objects.requireNonNull(backgroundType);
 
-        @Nullable ThemeSelection selection = settings().themeProperty().get();
-        if (selection == null) {
+        @Nullable ThemeReference reference = settings().themeProperty().get();
+        if (reference == null) {
             return fallback;
         }
 
-        @Nullable InstalledThemePack themePack = findInstalled(selection);
+        @Nullable InstalledThemePack themePack = findInstalled(reference);
         if (themePack == null) {
             return fallback;
         }
 
-        @Nullable Theme theme = themePack.manifest().findTheme(selection.themeId());
+        @Nullable Theme theme = themePack.manifest().findTheme(reference.themeId());
         if (theme == null) {
             return fallback;
         }
@@ -654,17 +654,17 @@ public final class ThemePackManager {
     private static @Nullable ThemeColorSource resolveCurrentThemeColorSource(ThemeResolveContext context) throws IOException {
         Objects.requireNonNull(context);
 
-        @Nullable ThemeSelection selection = settings().themeProperty().get();
-        if (selection == null) {
+        @Nullable ThemeReference reference = settings().themeProperty().get();
+        if (reference == null) {
             return null;
         }
 
-        @Nullable InstalledThemePack themePack = findInstalled(selection);
+        @Nullable InstalledThemePack themePack = findInstalled(reference);
         if (themePack == null) {
             return null;
         }
 
-        @Nullable Theme theme = themePack.manifest().findTheme(selection.themeId());
+        @Nullable Theme theme = themePack.manifest().findTheme(reference.themeId());
         if (theme == null) {
             return null;
         }
@@ -692,9 +692,9 @@ public final class ThemePackManager {
 
         BackgroundType type = Objects.requireNonNullElse(settings().backgroundTypeProperty().get(), BackgroundType.DEFAULT);
         if (type == BackgroundType.DEFAULT) {
-            @Nullable ThemeSelection selection = settings().themeProperty().get();
-            if (selection != null) {
-                @Nullable ResolvedBackground resolved = resolveThemeBackground(selection, context);
+            @Nullable ThemeReference reference = settings().themeProperty().get();
+            if (reference != null) {
+                @Nullable ResolvedBackground resolved = resolveThemeBackground(reference, context);
                 if (resolved != null) {
                     return resolved;
                 }
@@ -775,22 +775,22 @@ public final class ThemePackManager {
 
     /// Resolves the background contributed by a selected installed theme.
     ///
-    /// @param selection the selected theme reference
+    /// @param reference the selected theme reference
     /// @param context the condition resolution context
     /// @return the resolved background, or `null` when the theme or background is not available
     /// @throws IOException if the installed theme pack exists but its background cannot be resolved
     public static @Nullable ResolvedBackground resolveThemeBackground(
-            ThemeSelection selection,
+            ThemeReference reference,
             ThemeResolveContext context) throws IOException {
-        Objects.requireNonNull(selection);
+        Objects.requireNonNull(reference);
         Objects.requireNonNull(context);
 
-        @Nullable InstalledThemePack themePack = findInstalled(selection);
+        @Nullable InstalledThemePack themePack = findInstalled(reference);
         if (themePack == null) {
             return null;
         }
 
-        @Nullable Theme theme = themePack.manifest().findTheme(selection.themeId());
+        @Nullable Theme theme = themePack.manifest().findTheme(reference.themeId());
         if (theme == null) {
             return null;
         }
@@ -805,10 +805,10 @@ public final class ThemePackManager {
 
     /// Applies background fields from a resolved theme appearance.
     private static void applyBackground(
-            ThemeSelection selection,
+            ThemeReference reference,
             Path themePackFile,
             ThemeBackgroundSettings background) throws IOException {
-        Objects.requireNonNull(selection);
+        Objects.requireNonNull(reference);
 
         ResolvedBackground resolvedBackground = resolveBackground(themePackFile, background, currentBackgroundOpacity());
         LauncherSettings currentSettings = settings();

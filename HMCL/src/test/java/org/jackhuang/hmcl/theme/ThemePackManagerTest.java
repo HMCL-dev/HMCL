@@ -110,7 +110,7 @@ public final class ThemePackManagerTest {
             assertEquals(ThemeColorType.DEFAULT, settings.themeColorTypeProperty().get());
             assertEquals(ColorStyle.EXPRESSIVE, settings.themeColorStyleProperty().get());
             assertEquals("dark", settings.themeBrightnessProperty().get());
-            assertEquals(new ThemeSelection("example.ui", null), settings.themeProperty().get());
+            assertEquals(new ThemeReference("example.ui", null), settings.themeProperty().get());
             JsonObject themeJson = LauncherSettings.SETTINGS_GSON.toJsonTree(settings)
                     .getAsJsonObject()
                     .getAsJsonObject("theme");
@@ -219,7 +219,7 @@ public final class ThemePackManagerTest {
             ThemePackManager.InstalledThemePack builtInThemePack = installedThemePacks.get(0);
             assertTrue(builtInThemePack.builtin());
             assertEquals(
-                    ThemePackManager.BUILTIN_DEFAULT_THEME_SELECTION.packId(),
+                    ThemePackManager.BUILTIN_DEFAULT_THEME_REFERENCE.packId(),
                     builtInThemePack.manifest().id());
             assertThrows(IOException.class, () -> ThemePackManager.uninstall(builtInThemePack));
             assertTrue(installedThemePacks.stream()
@@ -266,7 +266,7 @@ public final class ThemePackManagerTest {
                     .anyMatch(themePack -> "example.folder-dev".equals(themePack.manifest().id())));
 
             ThemePackManager.InstalledThemePack installedThemePack = ThemePackManager.findInstalled(
-                    new ThemeSelection("example.folder-dev", null));
+                    new ThemeReference("example.folder-dev", null));
             assertNotNull(installedThemePack);
             assertEquals(installedDirectory.toAbsolutePath().normalize(), installedThemePack.file());
             assertEquals(
@@ -302,9 +302,9 @@ public final class ThemePackManagerTest {
                     assertInstanceOf(ThemeBackground.Builtin.class, classicBackground.source());
             assertEquals(BackgroundType.BUILTIN_CLASSIC, classicBuiltinBackground.name());
 
-            ThemeSelection classicSelection = new ThemeSelection(themePack.manifest().id(), "CLASSIC");
+            ThemeReference classicReference = new ThemeReference(themePack.manifest().id(), "CLASSIC");
             ThemePackManager.ResolvedBackground resolvedBackground = ThemePackManager.resolveThemeBackground(
-                    classicSelection,
+                    classicReference,
                     new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
             assertNotNull(resolvedBackground);
             assertEquals(BackgroundType.BUILTIN, resolvedBackground.type());
@@ -312,7 +312,7 @@ public final class ThemePackManagerTest {
 
             ThemePackManager.apply(themePack, classicTheme);
             LauncherSettings settings = SettingsManager.settings();
-            assertEquals(classicSelection, settings.themeProperty().get());
+            assertEquals(classicReference, settings.themeProperty().get());
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());
             assertEquals(BackgroundType.BUILTIN_CLASSIC, settings.builtinBackgroundNameProperty().get());
         }
@@ -345,8 +345,8 @@ public final class ThemePackManagerTest {
                     new ThemeResolveContext(Brightness.LIGHT, "linux", "en"));
 
             LauncherSettings settings = SettingsManager.settings();
-            ThemeSelection selection = new ThemeSelection("example.refresh", null);
-            assertEquals(selection, settings.themeProperty().get());
+            ThemeReference reference = new ThemeReference("example.refresh", null);
+            assertEquals(reference, settings.themeProperty().get());
             assertEquals(ColorStyle.NEUTRAL, settings.themeColorStyleProperty().get());
             assertFalse(settings.titleTransparentProperty().get());
             assertEquals(0.5, settings.backgroundOpacityProperty().get());
@@ -354,7 +354,7 @@ public final class ThemePackManagerTest {
             settings.themeBrightnessProperty().set("dark");
             ThemePackManager.refreshCurrentThemeForContext();
 
-            assertEquals(selection, settings.themeProperty().get());
+            assertEquals(reference, settings.themeProperty().get());
             assertEquals(ColorStyle.EXPRESSIVE, settings.themeColorStyleProperty().get());
             assertTrue(settings.titleTransparentProperty().get());
             assertEquals(BackgroundType.DEFAULT, settings.backgroundTypeProperty().get());

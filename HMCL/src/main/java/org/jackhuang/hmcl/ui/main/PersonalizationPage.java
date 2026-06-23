@@ -56,7 +56,7 @@ import org.jackhuang.hmcl.theme.ThemePackAuthor;
 import org.jackhuang.hmcl.theme.ThemePackManifest;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemeResolveContext;
-import org.jackhuang.hmcl.theme.ThemeSelection;
+import org.jackhuang.hmcl.theme.ThemeReference;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -132,31 +132,31 @@ public class PersonalizationPage extends StackPane {
             LOG.warning("Failed to load installed theme packs", e);
         }
 
-        @Nullable ThemeSelection selection = settings().themeProperty().get();
-        if (selection != null && findThemeChoice(choices, selection) == null) {
-            choices.add(ThemeChoice.missing(selection));
+        @Nullable ThemeReference reference = settings().themeProperty().get();
+        if (reference != null && findThemeChoice(choices, reference) == null) {
+            choices.add(ThemeChoice.missing(reference));
         }
 
         return choices;
     }
 
-    /// Returns the choice that matches the current launcher theme selection.
+    /// Returns the choice that matches the current launcher theme reference.
     private static ThemeChoice getSelectedThemeChoice(List<ThemeChoice> choices) {
-        @Nullable ThemeSelection selection = settings().themeProperty().get();
-        if (selection != null) {
-            @Nullable ThemeChoice choice = findThemeChoice(choices, selection);
+        @Nullable ThemeReference reference = settings().themeProperty().get();
+        if (reference != null) {
+            @Nullable ThemeChoice choice = findThemeChoice(choices, reference);
             if (choice != null) {
                 return choice;
             }
         }
 
-        return selection != null ? ThemeChoice.missing(selection) : ThemeChoice.custom();
+        return reference != null ? ThemeChoice.missing(reference) : ThemeChoice.custom();
     }
 
-    /// Finds a selectable theme choice by selection reference.
-    private static @Nullable ThemeChoice findThemeChoice(List<ThemeChoice> choices, ThemeSelection selection) {
+    /// Finds a selectable theme choice by theme reference.
+    private static @Nullable ThemeChoice findThemeChoice(List<ThemeChoice> choices, ThemeReference reference) {
         for (ThemeChoice choice : choices) {
-            if (Objects.equals(choice.selection(), selection)) {
+            if (Objects.equals(choice.reference(), reference)) {
                 return choice;
             }
         }
@@ -207,12 +207,12 @@ public class PersonalizationPage extends StackPane {
         return Objects.requireNonNullElse(theme.displayName(), manifest.displayName());
     }
 
-    /// Returns a subtitle for a missing theme selection.
-    private static String getMissingThemeChoiceDescription(ThemeSelection selection) {
-        if (selection.themeId() == null) {
-            return selection.packId();
+    /// Returns a subtitle for a missing theme reference.
+    private static String getMissingThemeChoiceDescription(ThemeReference reference) {
+        if (reference.themeId() == null) {
+            return reference.packId();
         }
-        return selection.packId() + " - " + selection.themeId();
+        return reference.packId() + " - " + reference.themeId();
     }
 
     /// Returns the display name for one built-in background.
@@ -311,14 +311,14 @@ public class PersonalizationPage extends StackPane {
     /// @param customAppearance whether this item represents the local custom appearance
     /// @param themePack        the installed theme pack, or `null` for non-pack choices
     /// @param theme            the installed theme, or `null` for non-pack choices
-    /// @param selection        the stored selection reference, or `null` for the local custom appearance
+    /// @param reference        the stored theme reference, or `null` for the local custom appearance
     private record ThemeChoice(
             String title,
             @Nullable String description,
             boolean customAppearance,
             @Nullable ThemePackManager.InstalledThemePack themePack,
             @Nullable Theme theme,
-            @Nullable ThemeSelection selection) {
+            @Nullable ThemeReference reference) {
         /// Creates a theme selector choice.
         private ThemeChoice {
             Objects.requireNonNull(title);
@@ -331,7 +331,7 @@ public class PersonalizationPage extends StackPane {
 
         /// Creates a choice for an installed theme-pack theme.
         private static ThemeChoice installed(ThemePackManager.InstalledThemePack themePack, Theme theme) {
-            ThemeSelection selection = new ThemeSelection(
+            ThemeReference reference = new ThemeReference(
                     themePack.manifest().id(),
                     theme.id());
             return new ThemeChoice(
@@ -340,18 +340,18 @@ public class PersonalizationPage extends StackPane {
                     false,
                     themePack,
                     theme,
-                    selection);
+                    reference);
         }
 
-        /// Creates the placeholder shown when the stored theme selection cannot be resolved.
-        private static ThemeChoice missing(ThemeSelection selection) {
+        /// Creates the placeholder shown when the stored theme reference cannot be resolved.
+        private static ThemeChoice missing(ThemeReference reference) {
             return new ThemeChoice(
                     i18n("theme_pack.current.missing"),
-                    getMissingThemeChoiceDescription(selection),
+                    getMissingThemeChoiceDescription(reference),
                     false,
                     null,
                     null,
-                    selection);
+                    reference);
         }
 
         /// Applies this choice to launcher settings.
@@ -381,7 +381,7 @@ public class PersonalizationPage extends StackPane {
                 ThemeResolveContext context) throws IOException {
             Objects.requireNonNull(context);
 
-            if (themePack == null || theme == null || selection == null) {
+            if (themePack == null || theme == null || reference == null) {
                 return null;
             }
 
@@ -401,7 +401,7 @@ public class PersonalizationPage extends StackPane {
             }
 
             @Nullable ThemePackManager.ResolvedBackground resolvedBackground =
-                    ThemePackManager.resolveThemeBackground(selection, context);
+                    ThemePackManager.resolveThemeBackground(reference, context);
             return resolvedBackground != null && resolvedBackground.type() == BackgroundType.NETWORK
                     ? resolvedBackground
                     : null;

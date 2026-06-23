@@ -23,20 +23,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/// Identifies one installed theme selected by the launcher.
+/// Identifies one theme declared by an installed theme pack.
 ///
 /// @param packId the theme-pack identifier
 /// @param themeId the selected theme identifier inside the pack, or `null` for an unnamed single-theme pack
 @NotNullByDefault
-public record ThemeSelection(
+public record ThemeReference(
         @SerializedName("packId") String packId,
         @SerializedName("themeId") @Nullable String themeId) {
 
-    /// Creates a theme selection reference.
+    /// Creates a theme reference.
     ///
     /// @param packId the theme-pack identifier
     /// @param themeId the selected theme identifier inside the pack, or `null` for an unnamed single-theme pack
-    public ThemeSelection {
+    public ThemeReference {
         packId = requireNonBlank(packId, "packId");
         if (themeId != null) {
             themeId = requireNonBlank(themeId, "themeId");
@@ -47,7 +47,7 @@ public record ThemeSelection(
     private static String requireNonBlank(String value, String name) {
         String trimmed = Objects.requireNonNull(value).trim();
         if (trimmed.isEmpty()) {
-            throw new IllegalArgumentException("Theme selection field is blank: " + name);
+            throw new IllegalArgumentException("Theme reference field is blank: " + name);
         }
         return trimmed;
     }
