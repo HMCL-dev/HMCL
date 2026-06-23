@@ -103,10 +103,7 @@ public abstract class YggdrasilAccount extends ClassicAccount {
 
     @Override
     public synchronized AuthInfo logIn() throws AuthenticationException {
-        if (!authenticated || !session.hasProfileName()) {
-            if (session.hasProfileName() && service.validate(session.getAccessToken(), session.getClientToken())) {
-                authenticated = true;
-            } else {
+        if (!authenticated || !session.hasProfileName() || !service.validate(session.getAccessToken(), session.getClientToken())) {
                 YggdrasilSession acquiredSession;
                 try {
                     acquiredSession = service.refresh(session.getAccessToken(), session.getClientToken(), null);
@@ -130,8 +127,6 @@ public abstract class YggdrasilAccount extends ClassicAccount {
                 authenticated = true;
                 invalidate();
             }
-        }
-
         return session.toAuthInfo();
     }
 
