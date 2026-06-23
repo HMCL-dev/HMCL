@@ -27,7 +27,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.addon.modpack.ModAdviser;
+import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;

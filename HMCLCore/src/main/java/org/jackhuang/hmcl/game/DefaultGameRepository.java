@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.game.tlauncher.TLauncherVersion;
 import org.jackhuang.hmcl.addon.mod.ModManager;
-import org.jackhuang.hmcl.addon.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
