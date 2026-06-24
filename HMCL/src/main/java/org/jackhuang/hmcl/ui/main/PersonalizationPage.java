@@ -137,21 +137,6 @@ public class PersonalizationPage extends StackPane {
         return percent / 100.;
     }
 
-    /// Returns the localization suffix for a brightness value.
-    private static String toBrightnessName(Brightness brightness) {
-        return brightness == Brightness.DARK ? "dark" : "light";
-    }
-
-    /// Returns whether the launcher overrides one theme appearance setting.
-    private static boolean isThemeAppearanceOverridden(String setting) {
-        return settings().isThemeAppearanceOverridden(setting);
-    }
-
-    /// Updates whether the launcher overrides one theme appearance setting.
-    private static void setThemeAppearanceOverridden(String setting, boolean overridden) {
-        settings().setThemeAppearanceOverridden(setting, overridden);
-    }
-
     /// Creates a compact button that toggles inherited or overridden state.
     private static JFXButton createThemeAppearanceOverrideButton() {
         var button = new JFXButton();
@@ -204,7 +189,7 @@ public class PersonalizationPage extends StackPane {
             }
             updating.value = true;
             try {
-                boolean overridden = isThemeAppearanceOverridden(setting);
+                boolean overridden = settings().isThemeAppearanceOverridden(setting);
                 button.setValue(overridden ? directProperty.getValue() : effectiveValueSupplier.get());
                 updateThemeAppearanceOverrideButton(inheritButton, !overridden);
             } finally {
@@ -219,7 +204,7 @@ public class PersonalizationPage extends StackPane {
             updating.value = true;
             try {
                 directProperty.setValue(newValue);
-                setThemeAppearanceOverridden(setting, true);
+                settings().setThemeAppearanceOverridden(setting, true);
                 updateThemeAppearanceOverrideButton(inheritButton, false);
             } finally {
                 updating.value = false;
@@ -229,11 +214,11 @@ public class PersonalizationPage extends StackPane {
         addThemeAppearanceRefreshListener(refresh);
 
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            if (!isThemeAppearanceOverridden(setting)) {
+            if (!settings().isThemeAppearanceOverridden(setting)) {
                 directProperty.setValue(effectiveValueSupplier.get());
-                setThemeAppearanceOverridden(setting, true);
+                settings().setThemeAppearanceOverridden(setting, true);
             } else {
-                setThemeAppearanceOverridden(setting, false);
+                settings().setThemeAppearanceOverridden(setting, false);
             }
             refresh.invalidated(null);
             event.consume();
@@ -258,7 +243,7 @@ public class PersonalizationPage extends StackPane {
             }
             updating.value = true;
             try {
-                boolean overridden = isThemeAppearanceOverridden(setting);
+                boolean overridden = settings().isThemeAppearanceOverridden(setting);
                 choiceList.selectedValueProperty().set(overridden
                         ? directProperty.getValue()
                         : effectiveValueSupplier.get());
@@ -275,7 +260,7 @@ public class PersonalizationPage extends StackPane {
             updating.value = true;
             try {
                 directProperty.setValue(newValue);
-                setThemeAppearanceOverridden(setting, true);
+                settings().setThemeAppearanceOverridden(setting, true);
                 updateThemeAppearanceOverrideButton(inheritButton, false);
             } finally {
                 updating.value = false;
@@ -285,11 +270,11 @@ public class PersonalizationPage extends StackPane {
         addThemeAppearanceRefreshListener(refresh);
 
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            if (!isThemeAppearanceOverridden(setting)) {
+            if (!settings().isThemeAppearanceOverridden(setting)) {
                 directProperty.setValue(effectiveValueSupplier.get());
-                setThemeAppearanceOverridden(setting, true);
+                settings().setThemeAppearanceOverridden(setting, true);
             } else {
-                setThemeAppearanceOverridden(setting, false);
+                settings().setThemeAppearanceOverridden(setting, false);
             }
             refresh.invalidated(null);
             event.consume();
@@ -316,7 +301,7 @@ public class PersonalizationPage extends StackPane {
             }
             updating.value = true;
             try {
-                boolean overridden = isThemeAppearanceOverridden(setting);
+                boolean overridden = settings().isThemeAppearanceOverridden(setting);
                 T value = overridden ? directProperty.getValue() : effectiveValueSupplier.get();
                 button.setSelected(Objects.equals(value, selectedValue));
                 button.setSubtitle(valueConverter != null ? valueConverter.apply(value) : null);
@@ -333,7 +318,7 @@ public class PersonalizationPage extends StackPane {
             updating.value = true;
             try {
                 directProperty.setValue(Boolean.TRUE.equals(newValue) ? selectedValue : unselectedValue);
-                setThemeAppearanceOverridden(setting, true);
+                settings().setThemeAppearanceOverridden(setting, true);
                 updateThemeAppearanceOverrideButton(inheritButton, false);
             } finally {
                 updating.value = false;
@@ -344,175 +329,16 @@ public class PersonalizationPage extends StackPane {
         addThemeAppearanceRefreshListener(refresh);
 
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            if (!isThemeAppearanceOverridden(setting)) {
+            if (!settings().isThemeAppearanceOverridden(setting)) {
                 directProperty.setValue(button.isSelected() ? selectedValue : unselectedValue);
-                setThemeAppearanceOverridden(setting, true);
+                settings().setThemeAppearanceOverridden(setting, true);
             } else {
-                setThemeAppearanceOverridden(setting, false);
+                settings().setThemeAppearanceOverridden(setting, false);
             }
             refresh.invalidated(null);
             event.consume();
         });
         refresh.invalidated(null);
-    }
-
-    /// Returns the effective theme color source type selection.
-    private static ThemeColorType getEffectiveThemeColorType() {
-        try {
-            @Nullable ThemeColorSource source = ThemePackManager.resolveCurrentThemeColorSource(ThemePackManager.currentResolveContext());
-            if (source instanceof ThemeColorSource.Wallpaper) {
-                return ThemeColorType.BACKGROUND;
-            }
-            if (source instanceof ThemeColorSource.Custom) {
-                return ThemeColorType.CUSTOM;
-            }
-            return ThemeColorType.DEFAULT;
-        } catch (IOException | RuntimeException e) {
-            return ThemeColorType.DEFAULT;
-        }
-    }
-
-    /// Returns the effective theme color source description.
-    private static String getEffectiveThemeColorDescription() {
-        ThemeColorType type = getEffectiveThemeColorType();
-        return i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT));
-    }
-
-    /// Returns the effective brightness selection name.
-    private static String getEffectiveThemeBrightnessName() {
-        try {
-            @Nullable Brightness brightness = ThemePackManager.resolveCurrentThemeBrightness(ThemePackManager.currentResolveContext());
-            return brightness != null ? toBrightnessName(brightness) : "auto";
-        } catch (IOException | RuntimeException e) {
-            return "auto";
-        }
-    }
-
-    /// Returns the effective color style selection.
-    private static ColorStyle getEffectiveThemeColorStyle() {
-        try {
-            return Objects.requireNonNullElse(
-                    ThemePackManager.resolveCurrentThemeColorStyle(ThemePackManager.currentResolveContext()),
-                    ColorStyle.FIDELITY);
-        } catch (IOException | RuntimeException e) {
-            return ColorStyle.FIDELITY;
-        }
-    }
-
-    /// Returns the effective network image cache policy selection.
-    private static NetworkBackgroundImageCachePolicy getEffectiveNetworkBackgroundImageCachePolicy() {
-        try {
-            ThemePackManager.ResolvedBackground background =
-                    ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
-            if (background.type() == BackgroundType.NETWORK) {
-                return Objects.requireNonNullElse(
-                        background.networkImageCachePolicy(),
-                        NetworkBackgroundImageCachePolicy.ENABLED);
-            }
-        } catch (IOException | RuntimeException ignored) {
-        }
-        return NetworkBackgroundImageCachePolicy.ENABLED;
-    }
-
-    /// Returns the currently effective background opacity.
-    private static double getEffectiveBackgroundOpacity() {
-        try {
-            return ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext()).opacity();
-        } catch (IOException | RuntimeException e) {
-            return 1.0;
-        }
-    }
-
-    /// Returns a summary for the currently effective primary background.
-    private static String getEffectiveBackgroundDescription() {
-        try {
-            ThemePackManager.ResolvedBackground background =
-                    ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
-            return switch (background.type()) {
-                case DEFAULT -> i18n("message.default");
-                case BUILTIN -> Objects.requireNonNullElse(
-                        background.builtinBackgroundId(),
-                        BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID);
-                case CUSTOM -> background.imagePath() != null
-                        ? background.imagePath().toString()
-                        : i18n("settings.custom");
-                case NETWORK -> Objects.toString(background.networkImageUrl(), i18n("launcher.background.network"));
-                case PAINT -> background.paint() != null
-                        ? background.paint().toString()
-                        : i18n("launcher.background.paint");
-                case THEME_COLOR -> i18n("launcher.background.theme_color");
-            };
-        } catch (IOException | RuntimeException e) {
-            return i18n("message.default");
-        }
-    }
-
-    /// Returns a summary for the currently effective fallback background.
-    private static String getEffectiveBackgroundFallbackDescription() {
-        try {
-            ThemePackManager.ResolvedBackground background =
-                    ThemePackManager.resolveCurrentBackgroundFallback(ThemePackManager.currentResolveContext());
-            return switch (background.type()) {
-                case PAINT -> background.paint() != null
-                        ? background.paint().toString()
-                        : i18n("launcher.background.fallback.paint");
-                case THEME_COLOR -> i18n("launcher.background.fallback.theme_color");
-                default -> i18n("launcher.background.fallback.builtin");
-            };
-        } catch (IOException | RuntimeException e) {
-            return i18n("launcher.background.fallback.builtin");
-        }
-    }
-
-    /// Copies a resolved primary background into the direct launcher background settings.
-    private static void applyResolvedPrimaryBackground(ThemePackManager.ResolvedBackground background) {
-        settings().backgroundTypeProperty().set(background.type());
-        switch (background.type()) {
-            case BUILTIN -> settings().builtinBackgroundIdProperty().set(Objects.requireNonNullElse(
-                    background.builtinBackgroundId(),
-                    BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID));
-            case CUSTOM -> settings().customBackgroundImagePathProperty().set(
-                    background.imagePath() != null ? background.imagePath().toString() : null);
-            case NETWORK -> {
-                settings().networkBackgroundImageUrlProperty().set(background.networkImageUrl());
-                settings().networkBackgroundImageCachePolicyProperty().set(Objects.requireNonNullElse(
-                        background.networkImageCachePolicy(),
-                        NetworkBackgroundImageCachePolicy.ENABLED));
-            }
-            case PAINT -> settings().customBackgroundPaintProperty().set(background.paint());
-            case DEFAULT, THEME_COLOR -> {
-            }
-        }
-    }
-
-    /// Copies a resolved fallback background into the direct launcher fallback settings.
-    private static void applyResolvedFallbackBackground(ThemePackManager.ResolvedBackground background) {
-        switch (background.type()) {
-            case PAINT -> {
-                settings().backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
-                settings().backgroundFallbackPaintProperty().set(Objects.requireNonNullElse(background.paint(), Color.WHITE));
-            }
-            case THEME_COLOR -> settings().backgroundFallbackTypeProperty().set(BackgroundType.THEME_COLOR);
-            default -> settings().backgroundFallbackTypeProperty().set(BackgroundType.BUILTIN);
-        }
-    }
-
-    /// Returns the currently effective background loading policy.
-    private static BackgroundLoadPolicy getEffectiveBackgroundLoadPolicy() {
-        try {
-            return ThemePackManager.resolveCurrentBackgroundLoadPolicy(ThemePackManager.currentResolveContext());
-        } catch (IOException | RuntimeException e) {
-            return BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
-        }
-    }
-
-    /// Returns whether the title bar is currently effectively transparent.
-    private static boolean isEffectiveTitleTransparent() {
-        try {
-            return ThemePackManager.resolveCurrentTitleBarTransparent(ThemePackManager.currentResolveContext(), false);
-        } catch (IOException | RuntimeException e) {
-            return false;
-        }
     }
 
     /// Loads all theme choices shown by the theme selector.
@@ -558,75 +384,6 @@ public class PersonalizationPage extends StackPane {
         return null;
     }
 
-    /// Returns a concise title for a theme choice from an installed theme pack.
-    private static String getThemeChoiceTitle(ThemePackManager.InstalledThemePack themePack, Theme theme) {
-        if (themePack.manifest().themes().size() == 1) {
-            return themePack.manifest().displayName();
-        }
-        return themePack.manifest().displayName() + " - " + getThemeDisplayName(themePack.manifest(), theme);
-    }
-
-    /// Returns a subtitle for a theme choice from an installed theme pack.
-    private static String getThemeChoiceDescription(ThemePackManager.InstalledThemePack themePack, Theme theme) {
-        @Nullable String themeDescription = theme.displayDescription();
-        if (!StringUtils.isBlank(themeDescription)) {
-            return themeDescription;
-        }
-        String authors = getThemeAuthorDisplayNames(themePack.manifest(), theme);
-        if (!StringUtils.isBlank(authors)) {
-            return i18n("archive.author") + ": " + authors;
-        }
-        @Nullable String packDescription = themePack.manifest().displayDescription();
-        if (!StringUtils.isBlank(packDescription)) {
-            return packDescription;
-        }
-        return themePack.manifest().id();
-    }
-
-    /// Returns the display names for authors credited on one theme.
-    private static String getThemeAuthorDisplayNames(ThemePackManifest manifest, Theme theme) {
-        List<ThemePackAuthor> authors = theme.authors().isEmpty() ? manifest.authors() : theme.authors();
-        return getAuthorDisplayNames(authors);
-    }
-
-    /// Returns comma-separated author display names.
-    private static String getAuthorDisplayNames(List<ThemePackAuthor> authors) {
-        return authors.stream()
-                .map(ThemePackAuthor::displayName)
-                .filter(author -> !StringUtils.isBlank(author))
-                .collect(Collectors.joining(", "));
-    }
-
-    /// Returns the effective display name for a theme.
-    private static String getThemeDisplayName(ThemePackManifest manifest, Theme theme) {
-        return Objects.requireNonNullElse(theme.displayName(), manifest.displayName());
-    }
-
-    /// Returns a subtitle for a missing theme reference.
-    private static String getMissingThemeChoiceDescription(ThemeReference reference) {
-        if (reference.themeId() == null) {
-            return reference.packId();
-        }
-        return reference.packId() + " - " + reference.themeId();
-    }
-
-    /// Returns the file chooser filter for HMCL theme-pack files.
-    private static FileChooser.ExtensionFilter getThemePackExtensionFilter() {
-        return new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION);
-    }
-
-    /// Returns a trimmed prompt value or falls back to the provided default value when blank.
-    private static String getPromptValueOrDefault(PromptDialogPane.Builder.StringQuestion question, String defaultValue) {
-        String value = question.getValue();
-        return StringUtils.isBlank(value) ? defaultValue : value.trim();
-    }
-
-    /// Returns a safe theme-pack file name derived from the package name.
-    private static String getThemePackFileName(String packName) {
-        String fileName = sanitizeThemePackFileName(packName) + ThemePackExporter.FILE_EXTENSION;
-        return FileUtils.isNameValid(fileName) ? fileName : "theme-pack" + ThemePackExporter.FILE_EXTENSION;
-    }
-
     /// Sanitizes a package name for use as a file name without changing the package metadata.
     private static String sanitizeThemePackFileName(String value) {
         StringBuilder builder = new StringBuilder(value.length());
@@ -660,15 +417,6 @@ public class PersonalizationPage extends StackPane {
                 || codePoint == 0xffff;
     }
 
-    /// Ensures the selected output file uses the theme-pack extension.
-    private static Path ensureThemePackExtension(Path output) {
-        String fileName = output.getFileName().toString();
-        if (fileName.toLowerCase(Locale.ROOT).endsWith(ThemePackExporter.FILE_EXTENSION)) {
-            return output;
-        }
-        return output.resolveSibling(fileName + ThemePackExporter.FILE_EXTENSION);
-    }
-
     /// Shows a theme-pack operation error dialog.
     private static void showThemePackError(String title, Exception exception) {
         Controllers.dialog(
@@ -697,12 +445,36 @@ public class PersonalizationPage extends StackPane {
 
         /// Creates a choice for an installed theme-pack theme.
         private static ThemeChoice installed(ThemePackManager.InstalledThemePack themePack, Theme theme) {
+            ThemePackManifest manifest = themePack.manifest();
+            String themeName = Objects.requireNonNullElse(theme.displayName(), manifest.displayName());
+            String title = manifest.themes().size() == 1
+                    ? manifest.displayName()
+                    : manifest.displayName() + " - " + themeName;
+
+            @Nullable String description = theme.displayDescription();
+            if (StringUtils.isBlank(description)) {
+                List<ThemePackAuthor> authors = theme.authors().isEmpty() ? manifest.authors() : theme.authors();
+                String authorNames = authors.stream()
+                        .map(ThemePackAuthor::displayName)
+                        .filter(author -> !StringUtils.isBlank(author))
+                        .collect(Collectors.joining(", "));
+                if (!StringUtils.isBlank(authorNames)) {
+                    description = i18n("archive.author") + ": " + authorNames;
+                }
+            }
+            if (StringUtils.isBlank(description)) {
+                description = manifest.displayDescription();
+            }
+            if (StringUtils.isBlank(description)) {
+                description = manifest.id();
+            }
+
             ThemeReference reference = new ThemeReference(
-                    themePack.manifest().id(),
+                    manifest.id(),
                     theme.id());
             return new ThemeChoice(
-                    getThemeChoiceTitle(themePack, theme),
-                    getThemeChoiceDescription(themePack, theme),
+                    title,
+                    description,
                     themePack,
                     theme,
                     reference);
@@ -712,7 +484,9 @@ public class PersonalizationPage extends StackPane {
         private static ThemeChoice missing(ThemeReference reference) {
             return new ThemeChoice(
                     i18n("theme_pack.current.missing"),
-                    getMissingThemeChoiceDescription(reference),
+                    reference.themeId() == null
+                            ? reference.packId()
+                            : reference.packId() + " - " + reference.themeId(),
                     null,
                     null,
                     reference);
@@ -767,7 +541,9 @@ public class PersonalizationPage extends StackPane {
 
         /// Returns a display name for apply-result messages.
         private String applyDisplayName() {
-            return theme != null && themePack != null ? getThemeDisplayName(themePack.manifest(), theme) : title;
+            return theme != null && themePack != null
+                    ? Objects.requireNonNullElse(theme.displayName(), themePack.manifest().displayName())
+                    : title;
         }
     }
 
@@ -867,24 +643,31 @@ public class PersonalizationPage extends StackPane {
                 .addQuestion(packIdQuestion)
                 .addQuestion(packNameQuestion)
                 .addQuestion(authorNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
-                getPromptValueOrDefault(packIdQuestion, defaultPackId),
-                getPromptValueOrDefault(packNameQuestion, defaultPackName),
-                getPromptValueOrDefault(authorNameQuestion, defaultAuthorName)));
+                StringUtils.isBlank(packIdQuestion.getValue()) ? defaultPackId : packIdQuestion.getValue().trim(),
+                StringUtils.isBlank(packNameQuestion.getValue()) ? defaultPackName : packNameQuestion.getValue().trim(),
+                StringUtils.isBlank(authorNameQuestion.getValue()) ? defaultAuthorName : authorNameQuestion.getValue().trim()));
     }
 
     /// Saves current launcher appearance as a theme-pack file with the given package metadata.
     private void exportCurrentThemePack(String packId, String packName, String authorName) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("theme_pack.export.title"));
-        chooser.setInitialFileName(getThemePackFileName(packName));
-        chooser.getExtensionFilters().setAll(getThemePackExtensionFilter());
+        String initialFileName = sanitizeThemePackFileName(packName) + ThemePackExporter.FILE_EXTENSION;
+        chooser.setInitialFileName(FileUtils.isNameValid(initialFileName)
+                ? initialFileName
+                : "theme-pack" + ThemePackExporter.FILE_EXTENSION);
+        chooser.getExtensionFilters().setAll(
+                new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
 
         @Nullable Path output = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
         if (output == null) {
             return;
         }
 
-        output = ensureThemePackExtension(output);
+        String fileName = output.getFileName().toString();
+        if (!fileName.toLowerCase(Locale.ROOT).endsWith(ThemePackExporter.FILE_EXTENSION)) {
+            output = output.resolveSibling(fileName + ThemePackExporter.FILE_EXTENSION);
+        }
         try {
             ThemePackManager.exportCurrent(
                     output,
@@ -975,7 +758,17 @@ public class PersonalizationPage extends StackPane {
                     brightnessPane,
                     LauncherSettings.THEME_APPEARANCE_BRIGHTNESS,
                     settings().themeBrightnessProperty(),
-                    PersonalizationPage::getEffectiveThemeBrightnessName);
+                    () -> {
+                        try {
+                            @Nullable Brightness brightness = ThemePackManager.resolveCurrentThemeBrightness(
+                                    ThemePackManager.currentResolveContext());
+                            return brightness == null
+                                    ? "auto"
+                                    : brightness == Brightness.DARK ? "dark" : "light";
+                        } catch (IOException | RuntimeException e) {
+                            return "auto";
+                        }
+                    });
 
             themeAppearanceList.getContent().add(brightnessPane);
         }
@@ -984,13 +777,25 @@ public class PersonalizationPage extends StackPane {
             ComponentSublist themeColorSublist = new ComponentSublist();
             themeColorSublist.setTitle(i18n("settings.launcher.theme_color"));
             themeColorSublist.setHasSubtitle(true);
+            Supplier<ThemeColorType> effectiveThemeColorType = () -> {
+                try {
+                    @Nullable ThemeColorSource source = ThemePackManager.resolveCurrentThemeColorSource(
+                            ThemePackManager.currentResolveContext());
+                    if (source instanceof ThemeColorSource.Wallpaper) {
+                        return ThemeColorType.BACKGROUND;
+                    }
+                    if (source instanceof ThemeColorSource.Custom) {
+                        return ThemeColorType.CUSTOM;
+                    }
+                    return ThemeColorType.DEFAULT;
+                } catch (IOException | RuntimeException e) {
+                    return ThemeColorType.DEFAULT;
+                }
+            };
             themeColorSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
-                        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)) {
-                            return getEffectiveThemeColorDescription();
-                        }
-                        ThemeColorType type = Objects.requireNonNullElse(
-                                settings().themeColorTypeProperty().get(),
-                                ThemeColorType.DEFAULT);
+                        ThemeColorType type = settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
+                                ? Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT)
+                                : effectiveThemeColorType.get();
                         return i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT));
                     },
                     settings().themeColorTypeProperty(),
@@ -1029,7 +834,7 @@ public class PersonalizationPage extends StackPane {
                     themeColorChoiceList,
                     LauncherSettings.THEME_APPEARANCE_COLOR,
                     settings().themeColorTypeProperty(),
-                    PersonalizationPage::getEffectiveThemeColorType);
+                    effectiveThemeColorType);
 
             themeColorSublist.getContent().setAll(themeColorChoiceList);
             themeAppearanceList.getContent().add(themeColorSublist);
@@ -1059,7 +864,15 @@ public class PersonalizationPage extends StackPane {
                     colorStylePane,
                     LauncherSettings.THEME_APPEARANCE_COLOR_STYLE,
                     settings().themeColorStyleProperty(),
-                    PersonalizationPage::getEffectiveThemeColorStyle);
+                    () -> {
+                        try {
+                            return Objects.requireNonNullElse(
+                                    ThemePackManager.resolveCurrentThemeColorStyle(ThemePackManager.currentResolveContext()),
+                                    ColorStyle.FIDELITY);
+                        } catch (IOException | RuntimeException e) {
+                            return ColorStyle.FIDELITY;
+                        }
+                    });
 
             themeAppearanceList.getContent().add(colorStylePane);
         }
@@ -1120,29 +933,46 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.setTitleRight(backgroundOverrideButton);
             InvalidationListener refreshBackgroundOverride = ignored -> updateThemeAppearanceOverrideButton(
                     backgroundOverrideButton,
-                    !isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
+                    !settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
             addThemeAppearanceRefreshListener(refreshBackgroundOverride);
             backgroundItem.selectedDataProperty().addListener((observable, oldValue, newValue) ->
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
             settings().builtinBackgroundIdProperty().addListener(ignored ->
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
             settings().customBackgroundImagePathProperty().addListener(ignored ->
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
             settings().networkBackgroundImageUrlProperty().addListener(ignored ->
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
             settings().customBackgroundPaintProperty().addListener(ignored ->
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
             backgroundOverrideButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
+                if (!settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
                     try {
-                        applyResolvedPrimaryBackground(ThemePackManager.resolveCurrentBackground(
-                                ThemePackManager.currentResolveContext()));
+                        ThemePackManager.ResolvedBackground background =
+                                ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
+                        settings().backgroundTypeProperty().set(background.type());
+                        switch (background.type()) {
+                            case BUILTIN -> settings().builtinBackgroundIdProperty().set(Objects.requireNonNullElse(
+                                    background.builtinBackgroundId(),
+                                    BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID));
+                            case CUSTOM -> settings().customBackgroundImagePathProperty().set(
+                                    background.imagePath() != null ? background.imagePath().toString() : null);
+                            case NETWORK -> {
+                                settings().networkBackgroundImageUrlProperty().set(background.networkImageUrl());
+                                settings().networkBackgroundImageCachePolicyProperty().set(Objects.requireNonNullElse(
+                                        background.networkImageCachePolicy(),
+                                        NetworkBackgroundImageCachePolicy.ENABLED));
+                            }
+                            case PAINT -> settings().customBackgroundPaintProperty().set(background.paint());
+                            case DEFAULT, THEME_COLOR -> {
+                            }
+                        }
                     } catch (IOException | RuntimeException e) {
                         settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
                     }
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true);
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true);
                 } else {
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, false);
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, false);
                 }
                 refreshBackgroundOverride.invalidated(null);
                 event.consume();
@@ -1155,7 +985,19 @@ public class PersonalizationPage extends StackPane {
                     networkBackgroundCacheButton,
                     LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY,
                     settings().networkBackgroundImageCachePolicyProperty(),
-                    PersonalizationPage::getEffectiveNetworkBackgroundImageCachePolicy,
+                    () -> {
+                        try {
+                            ThemePackManager.ResolvedBackground background =
+                                    ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
+                            if (background.type() == BackgroundType.NETWORK) {
+                                return Objects.requireNonNullElse(
+                                        background.networkImageCachePolicy(),
+                                        NetworkBackgroundImageCachePolicy.ENABLED);
+                            }
+                        } catch (IOException | RuntimeException ignored) {
+                        }
+                        return NetworkBackgroundImageCachePolicy.ENABLED;
+                    },
                     NetworkBackgroundImageCachePolicy.ENABLED,
                     NetworkBackgroundImageCachePolicy.DISABLED,
                     policy -> i18n("launcher.background.network.cache."
@@ -1180,23 +1022,33 @@ public class PersonalizationPage extends StackPane {
             backgroundFallbackSublist.setTitleRight(backgroundFallbackOverrideButton);
             InvalidationListener refreshBackgroundFallbackOverride = ignored -> updateThemeAppearanceOverrideButton(
                     backgroundFallbackOverrideButton,
-                    !isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
+                    !settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
             addThemeAppearanceRefreshListener(refreshBackgroundFallbackOverride);
             backgroundFallbackItem.selectedDataProperty().addListener((observable, oldValue, newValue) ->
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true));
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true));
             settings().backgroundFallbackPaintProperty().addListener(ignored ->
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true));
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true));
             backgroundFallbackOverrideButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
+                if (!settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
                     try {
-                        applyResolvedFallbackBackground(ThemePackManager.resolveCurrentBackgroundFallback(
-                                ThemePackManager.currentResolveContext()));
+                        ThemePackManager.ResolvedBackground background =
+                                ThemePackManager.resolveCurrentBackgroundFallback(ThemePackManager.currentResolveContext());
+                        switch (background.type()) {
+                            case PAINT -> {
+                                settings().backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
+                                settings().backgroundFallbackPaintProperty().set(Objects.requireNonNullElse(
+                                        background.paint(),
+                                        Color.WHITE));
+                            }
+                            case THEME_COLOR -> settings().backgroundFallbackTypeProperty().set(BackgroundType.THEME_COLOR);
+                            default -> settings().backgroundFallbackTypeProperty().set(BackgroundType.BUILTIN);
+                        }
                     } catch (IOException | RuntimeException e) {
                         settings().backgroundFallbackTypeProperty().set(BackgroundType.BUILTIN);
                     }
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true);
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true);
                 } else {
-                    setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, false);
+                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, false);
                 }
                 refreshBackgroundFallbackOverride.invalidated(null);
                 event.consume();
@@ -1204,19 +1056,31 @@ public class PersonalizationPage extends StackPane {
             refreshBackgroundFallbackOverride.invalidated(null);
             backgroundFallbackSublist.getContent().setAll(backgroundFallbackItem);
             backgroundFallbackSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
-                        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
-                            return getEffectiveBackgroundFallbackDescription();
+                        if (settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
+                            BackgroundType type = backgroundFallbackItem.selectedDataProperty().get();
+                            return switch (type) {
+                                case PAINT -> {
+                                    Paint backgroundFallbackPaint = settings().backgroundFallbackPaintProperty().get();
+                                    yield backgroundFallbackPaint.toString();
+                                }
+                                case THEME_COLOR -> i18n("launcher.background.fallback.theme_color");
+                                default -> i18n("launcher.background.fallback.builtin");
+                            };
                         }
 
-                        BackgroundType type = backgroundFallbackItem.selectedDataProperty().get();
-                        return switch (type) {
-                            case PAINT -> {
-                                Paint backgroundFallbackPaint = settings().backgroundFallbackPaintProperty().get();
-                                yield backgroundFallbackPaint.toString();
-                            }
-                            case THEME_COLOR -> i18n("launcher.background.fallback.theme_color");
-                            default -> i18n("launcher.background.fallback.builtin");
-                        };
+                        try {
+                            ThemePackManager.ResolvedBackground background =
+                                    ThemePackManager.resolveCurrentBackgroundFallback(ThemePackManager.currentResolveContext());
+                            return switch (background.type()) {
+                                case PAINT -> background.paint() != null
+                                        ? background.paint().toString()
+                                        : i18n("launcher.background.fallback.paint");
+                                case THEME_COLOR -> i18n("launcher.background.fallback.theme_color");
+                                default -> i18n("launcher.background.fallback.builtin");
+                            };
+                        } catch (IOException | RuntimeException e) {
+                            return i18n("launcher.background.fallback.builtin");
+                        }
                     },
                     backgroundFallbackItem.selectedDataProperty(),
                     settings().getThemeAppearanceOverrides(),
@@ -1230,7 +1094,14 @@ public class PersonalizationPage extends StackPane {
                     backgroundLoadPolicyButton,
                     LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY,
                     settings().backgroundLoadPolicyProperty(),
-                    PersonalizationPage::getEffectiveBackgroundLoadPolicy,
+                    () -> {
+                        try {
+                            return ThemePackManager.resolveCurrentBackgroundLoadPolicy(
+                                    ThemePackManager.currentResolveContext());
+                        } catch (IOException | RuntimeException e) {
+                            return BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
+                        }
+                    },
                     BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING,
                     BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
                     policy -> i18n("launcher.background.load_policy."
@@ -1239,26 +1110,46 @@ public class PersonalizationPage extends StackPane {
                             .toLowerCase(Locale.ROOT)));
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
-                        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
-                            return getEffectiveBackgroundDescription();
+                        if (settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
+                            BackgroundType type = backgroundItem.selectedDataProperty().get();
+                            return switch (type) {
+                                case DEFAULT -> i18n("message.default");
+                                case THEME_COLOR -> i18n("launcher.background.theme_color");
+                                case BUILTIN -> {
+                                    String id = settings().builtinBackgroundIdProperty().get();
+                                    yield BackgroundType.BUILTIN_WALLPAPER_IDS.contains(id)
+                                            ? id
+                                            : BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID;
+                                }
+                                case CUSTOM -> settings().customBackgroundImagePathProperty().get();
+                                case NETWORK -> settings().networkBackgroundImageUrlProperty().get();
+                                case PAINT -> {
+                                    @Nullable Paint customBackgroundPaint = settings().customBackgroundPaintProperty().get();
+                                    yield customBackgroundPaint != null ? customBackgroundPaint.toString() : i18n("launcher.background.paint");
+                                }
+                            };
                         }
-                        BackgroundType type = backgroundItem.selectedDataProperty().get();
-                        return switch (type) {
-                            case DEFAULT -> i18n("message.default");
-                            case THEME_COLOR -> i18n("launcher.background.theme_color");
-                            case BUILTIN -> {
-                                String id = settings().builtinBackgroundIdProperty().get();
-                                yield BackgroundType.BUILTIN_WALLPAPER_IDS.contains(id)
-                                        ? id
-                                        : BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID;
-                            }
-                            case CUSTOM -> settings().customBackgroundImagePathProperty().get();
-                            case NETWORK -> settings().networkBackgroundImageUrlProperty().get();
-                            case PAINT -> {
-                                @Nullable Paint customBackgroundPaint = settings().customBackgroundPaintProperty().get();
-                                yield customBackgroundPaint != null ? customBackgroundPaint.toString() : i18n("launcher.background.paint");
-                            }
-                        };
+
+                        try {
+                            ThemePackManager.ResolvedBackground background =
+                                    ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
+                            return switch (background.type()) {
+                                case DEFAULT -> i18n("message.default");
+                                case BUILTIN -> Objects.requireNonNullElse(
+                                        background.builtinBackgroundId(),
+                                        BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID);
+                                case CUSTOM -> background.imagePath() != null
+                                        ? background.imagePath().toString()
+                                        : i18n("settings.custom");
+                                case NETWORK -> Objects.toString(background.networkImageUrl(), i18n("launcher.background.network"));
+                                case PAINT -> background.paint() != null
+                                        ? background.paint().toString()
+                                        : i18n("launcher.background.paint");
+                                case THEME_COLOR -> i18n("launcher.background.theme_color");
+                            };
+                        } catch (IOException | RuntimeException e) {
+                            return i18n("message.default");
+                        }
                     },
                     backgroundItem.selectedDataProperty(),
                     settings().getThemeAppearanceOverrides(),
@@ -1272,6 +1163,14 @@ public class PersonalizationPage extends StackPane {
             LinePane opacityPane = new LinePane();
             {
                 opacityPane.setTitle(i18n("settings.launcher.background.settings.opacity"));
+                Supplier<Double> effectiveBackgroundOpacity = () -> {
+                    try {
+                        return ThemePackManager.resolveCurrentBackground(
+                                ThemePackManager.currentResolveContext()).opacity();
+                    } catch (IOException | RuntimeException e) {
+                        return 1.0;
+                    }
+                };
 
                 HBox sliderBox = new HBox(8);
                 sliderBox.setAlignment(Pos.CENTER);
@@ -1303,10 +1202,10 @@ public class PersonalizationPage extends StackPane {
                     }
                     updatingOpacity.value = true;
                     try {
-                        boolean overridden = isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
+                        boolean overridden = settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
                         double opacity = overridden
                                 ? settings().backgroundOpacityProperty().get()
-                                : getEffectiveBackgroundOpacity();
+                                : effectiveBackgroundOpacity.get();
                         slider.setValue(Math.round(Math.max(0., Math.min(opacity, 1.)) * 100.));
                         updateThemeAppearanceOverrideButton(inheritButton, !overridden);
                     } finally {
@@ -1322,7 +1221,7 @@ public class PersonalizationPage extends StackPane {
                     double opacity = snapOpacity(newValue.doubleValue());
                     updatingOpacity.value = true;
                     try {
-                        setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY, true);
+                        settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY, true);
                         updateThemeAppearanceOverrideButton(inheritButton, false);
                     } finally {
                         updatingOpacity.value = false;
@@ -1332,11 +1231,11 @@ public class PersonalizationPage extends StackPane {
                     }
                 });
                 inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                    if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
-                        settings().backgroundOpacityProperty().set(getEffectiveBackgroundOpacity());
-                        setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY, true);
+                    if (!settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
+                        settings().backgroundOpacityProperty().set(effectiveBackgroundOpacity.get());
+                        settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY, true);
                     } else {
-                        setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY, false);
+                        settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY, false);
                     }
                     refreshOpacity.invalidated(null);
                     event.consume();
@@ -1364,7 +1263,15 @@ public class PersonalizationPage extends StackPane {
                     titleTransparentButton,
                     LauncherSettings.THEME_APPEARANCE_TITLE_TRANSPARENT,
                     settings().titleTransparentProperty(),
-                    PersonalizationPage::isEffectiveTitleTransparent,
+                    () -> {
+                        try {
+                            return ThemePackManager.resolveCurrentTitleBarTransparent(
+                                    ThemePackManager.currentResolveContext(),
+                                    false);
+                        } catch (IOException | RuntimeException e) {
+                            return false;
+                        }
+                    },
                     Boolean.TRUE,
                     Boolean.FALSE,
                     null);

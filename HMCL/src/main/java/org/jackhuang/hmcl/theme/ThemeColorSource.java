@@ -33,19 +33,15 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Default, Theme
     /// JSON member name for the source type.
     String FIELD_SOURCE = "source";
 
+    /// The launcher default color source.
+    ThemeColorSource DEFAULT = new Default();
+
     /// Creates a custom color source.
     ///
     /// @param color the custom color
     /// @return the custom color source
     static ThemeColorSource custom(ThemeColor color) {
         return new Custom(color);
-    }
-
-    /// Creates a default color source.
-    ///
-    /// @return the default color source
-    static ThemeColorSource defaultColor() {
-        return new Default();
     }
 
     /// Creates a wallpaper color source.
@@ -65,18 +61,29 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Default, Theme
         if (element instanceof JsonPrimitive primitive && primitive.isString()) {
             String value = primitive.getAsString();
             if ("default".equals(value.trim().replace('-', '_').toLowerCase(Locale.ROOT))) {
-                return defaultColor();
+                return DEFAULT;
             }
-            return custom(parseColor(value, "color"));
+            @Nullable ThemeColor color = ThemeColor.of(value);
+            if (color == null) {
+                throw new JsonParseException("Invalid theme color: " + value);
+            }
+            return custom(color);
         }
         if (!(element instanceof JsonObject object)) {
             throw new JsonParseException("Theme color must be a string or object");
         }
 
-        String source = readRequiredSource(object);
+        JsonElement sourceElement = object.get(FIELD_SOURCE);
+        if (sourceElement == null) {
+            throw new JsonParseException("Theme color source is missing required field: " + FIELD_SOURCE);
+        }
+        if (!(sourceElement instanceof JsonPrimitive sourcePrimitive) || !sourcePrimitive.isString()) {
+            throw new JsonParseException("Theme color source field must be a string: " + FIELD_SOURCE);
+        }
+        String source = sourcePrimitive.getAsString();
         String normalized = source.trim().replace('-', '_').toUpperCase(Locale.ROOT);
         if ("DEFAULT".equals(normalized)) {
-            return defaultColor();
+            return DEFAULT;
         }
         if ("WALLPAPER".equals(normalized)) {
             return wallpaper();
@@ -93,36 +100,6 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Default, Theme
     ///
     /// @return the custom color or launcher default color
     ThemeColor resolveFallback();
-
-    /// Reads the required source field.
-    private static String readRequiredSource(JsonObject object) {
-        @Nullable String value = readString(object, FIELD_SOURCE);
-        if (value == null) {
-            throw new JsonParseException("Theme color source is missing required field: " + FIELD_SOURCE);
-        }
-        return value;
-    }
-
-    /// Reads an optional string field.
-    private static @Nullable String readString(JsonObject object, String field) {
-        JsonElement element = object.get(field);
-        if (element == null) {
-            return null;
-        }
-        if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
-            throw new JsonParseException("Theme color source field must be a string: " + field);
-        }
-        return primitive.getAsString();
-    }
-
-    /// Parses a theme color value.
-    private static ThemeColor parseColor(String value, String field) {
-        @Nullable ThemeColor color = ThemeColor.of(value);
-        if (color == null) {
-            throw new JsonParseException("Invalid theme color " + field + ": " + value);
-        }
-        return color;
-    }
 
     /// The launcher default color seed.
     @NotNullByDefault

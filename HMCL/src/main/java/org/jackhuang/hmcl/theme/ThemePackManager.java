@@ -554,22 +554,22 @@ public final class ThemePackManager {
             @Nullable ThemeColorSource colorSource = resolveCurrentThemeColorSource(currentResolveContext());
             if (colorSource != null) {
                 if (colorSource instanceof ThemeColorSource.Wallpaper && backgroundType == BackgroundType.THEME_COLOR) {
-                    return ThemeColorSource.defaultColor();
+                    return ThemeColorSource.DEFAULT;
                 }
                 return colorSource;
             }
-            return ThemeColorSource.defaultColor();
+            return ThemeColorSource.DEFAULT;
         }
 
         ThemeColorType themeColorType = Objects.requireNonNullElse(
                 settings().themeColorTypeProperty().get(),
                 ThemeColorType.DEFAULT);
         if (themeColorType == ThemeColorType.DEFAULT) {
-            return ThemeColorSource.defaultColor();
+            return ThemeColorSource.DEFAULT;
         }
         if (themeColorType == ThemeColorType.BACKGROUND) {
             if (backgroundType == BackgroundType.THEME_COLOR) {
-                return ThemeColorSource.defaultColor();
+                return ThemeColorSource.DEFAULT;
             }
             return ThemeColorSource.wallpaper();
         }

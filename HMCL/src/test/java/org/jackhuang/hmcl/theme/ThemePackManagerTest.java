@@ -807,7 +807,7 @@ public final class ThemePackManagerTest {
             ThemePackManifest manifest = ThemePackManager.load(output).manifest();
             Theme theme = manifest.findTheme(null);
             assertNotNull(theme);
-            assertEquals(ThemeColorSource.defaultColor(), theme.appearance().color());
+            assertEquals(ThemeColorSource.DEFAULT, theme.appearance().color());
         }
     }
 
@@ -835,7 +835,7 @@ public final class ThemePackManagerTest {
             assertNotNull(theme);
 
             ThemeAppearance appearance = theme.appearance();
-            assertEquals(ThemeColorSource.defaultColor(), appearance.color());
+            assertEquals(ThemeColorSource.DEFAULT, appearance.color());
             ThemeBackgroundSettings background = appearance.background();
             assertNotNull(background);
             assertInstanceOf(ThemeBackground.Paint.class, background.source());
