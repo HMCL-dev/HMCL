@@ -328,7 +328,6 @@ public abstract class FetchTask<T> extends Task<T> {
                     }
 
                     do {
-                        ensureInitialized();
                         connection = NetworkUtils.createHttpConnection(currentURI);
                         boolean keepConnection = false;
                         try {
@@ -495,13 +494,6 @@ public abstract class FetchTask<T> extends Task<T> {
         }
 
         throw toDownloadException(uri, null, exceptions);
-    }
-
-    /// Ensures HTTP connections are opened after proxy configuration is initialized.
-    private static void ensureInitialized() {
-        if (!initialized) {
-            throw new AssertionError("FetchTask accessed before ProxyManager initialization.");
-        }
     }
 
     /// Releases resources associated with an HTTP URL connection.
