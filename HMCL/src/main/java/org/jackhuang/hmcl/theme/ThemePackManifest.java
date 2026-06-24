@@ -87,30 +87,6 @@ public record ThemePackManifest(
         checkThemeIdentities(themes);
     }
 
-    /// Parses a theme-pack manifest from a JSON string.
-    ///
-    /// @param json the manifest JSON
-    /// @return the parsed manifest
-    /// @throws JsonParseException if the manifest structure or schema is unsupported
-    public static ThemePackManifest fromJson(String json) throws JsonParseException {
-        Objects.requireNonNull(json);
-
-        JsonElement element = JsonParser.parseString(json);
-        if (!(element instanceof JsonObject object)) {
-            throw new JsonParseException("Theme-pack manifest must be a JSON object");
-        }
-        return fromJson(object);
-    }
-
-    /// Parses a theme-pack manifest from a JSON object.
-    ///
-    /// @param object the manifest JSON object
-    /// @return the parsed manifest
-    /// @throws JsonParseException if the manifest structure or schema is unsupported
-    public static ThemePackManifest fromJson(JsonObject object) throws JsonParseException {
-        return JsonUtils.GSON.fromJson(object, ThemePackManifest.class);
-    }
-
     public boolean isSimpleThemePack() {
         if (themes.size() == 1) {
             Theme theme = themes.get(0);
