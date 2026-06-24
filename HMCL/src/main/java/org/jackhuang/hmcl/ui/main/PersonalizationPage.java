@@ -607,9 +607,6 @@ public class PersonalizationPage extends StackPane {
             if (applied && loadedBackground != null) {
                 Themes.applyLoadedBackground(loadedBackground);
             }
-            if (applied) {
-                Controllers.showToast(i18n("theme_pack.apply.success", choice.applyDisplayName()));
-            }
         } catch (IOException | RuntimeException e) {
             showThemePackError(i18n("theme_pack.apply.failed"), e);
         } finally {
