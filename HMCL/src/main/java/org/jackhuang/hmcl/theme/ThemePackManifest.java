@@ -17,13 +17,10 @@
  */
 package org.jackhuang.hmcl.theme;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -31,6 +28,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,13 +40,15 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Parsed metadata and themes from a theme-pack manifest.
 ///
-/// @param id the stable package identifier
-/// @param version the package version string
-/// @param name the localized display name
-/// @param authors the package authors
+/// @param id          the stable package identifier
+/// @param version     the package version string
+/// @param name        the localized display name
+/// @param authors     the package authors
 /// @param description the optional localized package description
-/// @param themes selectable themes declared by the package
+/// @param themes      selectable themes declared by the package
 @NotNullByDefault
+@JsonSerializable
+@JsonAdapter(ThemePackManifest.Adapter.class)
 public record ThemePackManifest(
         String id,
         String version,
@@ -61,48 +61,24 @@ public record ThemePackManifest(
     public static final JsonSchema CURRENT_SCHEMA =
             new JsonSchema("theme-pack", new JsonSchema.Version(1, 0, 0));
 
-    /// JSON member name for the package ID.
-    private static final String FIELD_ID = "id";
-
-    /// JSON member name for the package version.
-    private static final String FIELD_VERSION = "version";
-
-    /// JSON member name for the display name.
-    private static final String FIELD_NAME = "name";
-
-    /// JSON member name for package authors.
-    private static final String FIELD_AUTHORS = "authors";
-
-    /// JSON member name for the package description.
-    private static final String FIELD_DESCRIPTION = "description";
-
-    /// JSON member name for a single theme declaration.
-    private static final String FIELD_THEME = "theme";
-
-    /// JSON member name for multiple theme declarations.
-    private static final String FIELD_THEMES = "themes";
-
-    /// Fallback package version used when the manifest version field is malformed.
-    private static final String DEFAULT_VERSION = "1.0.0";
-
     /// Package ID format that can be used directly as an installed theme-pack file name.
-    private static final Pattern PACKAGE_ID_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]*");
+    private static final Pattern PACKAGE_ID_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]+");
 
     /// Creates a theme-pack manifest.
     ///
-    /// @param id the stable package identifier
-    /// @param version the package version string
-    /// @param name the localized display name
-    /// @param authors the package authors
+    /// @param id          the stable package identifier
+    /// @param version     the package version string
+    /// @param name        the localized display name
+    /// @param authors     the package authors
     /// @param description the optional localized package description
-    /// @param themes selectable themes declared by the package
+    /// @param themes      selectable themes declared by the package
     public ThemePackManifest {
         id = requirePackageId(id);
-        version = requireNonBlank(version, FIELD_VERSION);
-        name = requireLocalizedText(name, FIELD_NAME);
+        version = requireNonBlank(version, "version");
+        name = requireLocalizedText(name, "name");
         authors = List.copyOf(authors);
         if (description != null) {
-            description = requireLocalizedText(description, FIELD_DESCRIPTION);
+            description = requireLocalizedText(description, "description");
         }
         themes = List.copyOf(themes);
         if (themes.isEmpty()) {
@@ -132,40 +108,16 @@ public record ThemePackManifest(
     /// @return the parsed manifest
     /// @throws JsonParseException if the manifest structure or schema is unsupported
     public static ThemePackManifest fromJson(JsonObject object) throws JsonParseException {
-        Objects.requireNonNull(object);
-        checkSchema(object);
+        return JsonUtils.GSON.fromJson(object, ThemePackManifest.class);
+    }
 
-        String id = requireMemberString(object, FIELD_ID);
-        String version;
-        try {
-            version = requireMemberString(object, FIELD_VERSION);
-        } catch (JsonParseException | IllegalArgumentException e) {
-            LOG.warning("Invalid theme-pack version, using " + DEFAULT_VERSION + ": " + e.getMessage(), e);
-            version = DEFAULT_VERSION;
+    public boolean isSimpleThemePack() {
+        if (themes.size() == 1) {
+            Theme theme = themes.get(0);
+            return theme.id() == null && theme.name() == null;
+        } else {
+            return false;
         }
-
-        LocalizedText name;
-        try {
-            name = requireMemberLocalizedText(object, FIELD_NAME);
-        } catch (JsonParseException | IllegalArgumentException e) {
-            LOG.warning("Invalid theme-pack name, using package ID `" + id + "`: " + e.getMessage(), e);
-            name = LocalizedText.plain(id);
-        }
-
-        @Nullable LocalizedText description = null;
-        try {
-            description = readLocalizedText(object, FIELD_DESCRIPTION);
-        } catch (JsonParseException | IllegalArgumentException e) {
-            LOG.warning("Ignored invalid theme-pack description: " + e.getMessage(), e);
-        }
-
-        return new ThemePackManifest(
-                id,
-                version,
-                name,
-                readAuthors(object, "theme-pack"),
-                description,
-                readThemes(object));
     }
 
     /// Returns the package display name in the current locale.
@@ -201,75 +153,9 @@ public record ThemePackManifest(
         return null;
     }
 
-    /// Converts this manifest to its JSON object representation.
-    ///
-    /// @return the JSON object representing this manifest
-    public JsonObject toJsonObject() {
-        JsonObject object = new JsonObject();
-        object.addProperty(JsonSchema.PROPERTY_SCHEMA, CURRENT_SCHEMA.url());
-        object.addProperty(FIELD_ID, id);
-        object.addProperty(FIELD_VERSION, version);
-        object.add(FIELD_NAME, JsonUtils.GSON.toJsonTree(name, LocalizedText.class));
-
-        addAuthors(object, authors);
-        if (description != null) {
-            object.add(FIELD_DESCRIPTION, JsonUtils.GSON.toJsonTree(description, LocalizedText.class));
-        }
-
-        if (themes.size() == 1) {
-            object.add(FIELD_THEME, themes.get(0).toJsonObject());
-        } else {
-            JsonArray themeArray = new JsonArray();
-            for (Theme theme : themes) {
-                themeArray.add(theme.toJsonObject());
-            }
-            object.add(FIELD_THEMES, themeArray);
-        }
-        return object;
-    }
-
-    /// Serializes this manifest to formatted JSON.
-    ///
-    /// @return the formatted manifest JSON
-    public String toJson() {
-        return JsonUtils.GSON.toJson(toJsonObject());
-    }
-
-    /// Checks that the manifest declares the supported schema.
-    private static void checkSchema(JsonObject object) {
-        JsonSchema.CompatibilityResult result = JsonSchema.check(object, CURRENT_SCHEMA);
-        if (!result.readable()) {
-            throw new JsonParseException("Unsupported theme-pack schema: " + schemaDescription(result));
-        }
-    }
-
-    /// Returns a compact schema description for parse errors.
-    private static String schemaDescription(JsonSchema.CompatibilityResult result) {
-        if (result.actual() != null) {
-            return result.actual().url();
-        }
-        if (result.invalidValue() != null) {
-            return result.invalidValue();
-        }
-        return result.status().name();
-    }
-
-    /// Adds author metadata to a JSON object when the author list is not empty.
-    static void addAuthors(JsonObject object, List<ThemePackAuthor> authors) {
-        if (authors.isEmpty()) {
-            return;
-        }
-
-        JsonArray array = new JsonArray();
-        for (ThemePackAuthor author : authors) {
-            array.add(author.toJsonObject());
-        }
-        object.add(FIELD_AUTHORS, array);
-    }
-
     /// Reads the authors list from a JSON object.
     static List<ThemePackAuthor> readAuthors(JsonObject object, String ownerName) {
-        JsonElement element = object.get(FIELD_AUTHORS);
+        JsonElement element = object.get("authors");
         if (element == null) {
             return List.of();
         }
@@ -281,7 +167,7 @@ public record ThemePackManifest(
         ArrayList<ThemePackAuthor> authors = new ArrayList<>(array.size());
         int index = 0;
         for (JsonElement item : array) {
-            String field = ownerName + " " + FIELD_AUTHORS + "[" + index + "]";
+            String field = ownerName + " " + "authors" + "[" + index + "]";
             if (item instanceof JsonObject authorObject) {
                 try {
                     authors.add(new ThemePackAuthor(requireAuthorName(authorObject)));
@@ -298,31 +184,31 @@ public record ThemePackManifest(
 
     /// Reads an author display name.
     private static LocalizedText requireAuthorName(JsonObject object) {
-        JsonElement element = object.get(ThemePackAuthor.FIELD_NAME);
+        JsonElement element = object.get("name");
         if (element == null) {
             throw new JsonParseException("Theme-pack author is missing required localized text field: "
-                    + ThemePackAuthor.FIELD_NAME);
+                    + "name");
         }
-        return parseLocalizedText(element, ThemePackAuthor.FIELD_NAME);
+        return parseLocalizedText(element, "name");
     }
 
     /// Reads the required theme declaration.
     private static List<Theme> readThemes(JsonObject object) {
-        boolean hasSingleTheme = object.has(FIELD_THEME);
-        boolean hasMultipleThemes = object.has(FIELD_THEMES);
+        boolean hasSingleTheme = object.has("theme");
+        boolean hasMultipleThemes = object.has("themes");
         if (hasSingleTheme == hasMultipleThemes) {
             throw new JsonParseException("Theme-pack manifest must declare exactly one of theme or themes");
         }
 
         if (hasSingleTheme) {
-            JsonElement element = object.get(FIELD_THEME);
+            JsonElement element = object.get("theme");
             if (!(element instanceof JsonObject themeObject)) {
                 throw new JsonParseException("Theme-pack theme must be an object");
             }
             return List.of(Theme.fromJson(themeObject, false));
         }
 
-        JsonElement element = object.get(FIELD_THEMES);
+        JsonElement element = object.get("themes");
         if (!(element instanceof JsonArray array)) {
             throw new JsonParseException("Theme-pack manifest is missing themes array");
         }
@@ -357,10 +243,10 @@ public record ThemePackManifest(
     }
 
     /// Reads a required string member.
-    private static String requireMemberString(JsonObject object, String field) {
-        @Nullable String value = readString(object, field);
+    private static String requireMemberString(JsonObject object, String fieldName) {
+        @Nullable String value = readString(object, fieldName);
         if (value == null) {
-            throw new JsonParseException("Theme-pack manifest is missing required string field: " + field);
+            throw new JsonParseException("Theme-pack manifest is missing " + fieldName);
         }
         return value;
     }
@@ -375,24 +261,6 @@ public record ThemePackManifest(
             throw new JsonParseException("Theme-pack manifest field must be a string: " + field);
         }
         return requireNonBlank(primitive.getAsString(), field);
-    }
-
-    /// Reads a required localized text member.
-    private static LocalizedText requireMemberLocalizedText(JsonObject object, String field) {
-        @Nullable LocalizedText value = readLocalizedText(object, field);
-        if (value == null) {
-            throw new JsonParseException("Theme-pack manifest is missing required localized text field: " + field);
-        }
-        return value;
-    }
-
-    /// Reads an optional localized text member.
-    private static @Nullable LocalizedText readLocalizedText(JsonObject object, String field) {
-        JsonElement element = object.get(field);
-        if (element == null) {
-            return null;
-        }
-        return parseLocalizedText(element, field);
     }
 
     /// Parses a localized text value.
@@ -439,10 +307,77 @@ public record ThemePackManifest(
 
     /// Returns a package ID that can be used directly as an installed theme-pack file name.
     static String requirePackageId(String value) {
-        String id = requireNonBlank(value, FIELD_ID);
+        String id = requireNonBlank(value, "id");
         if (!PACKAGE_ID_PATTERN.matcher(id).matches()) {
             throw new IllegalArgumentException("Theme-pack manifest ID cannot be used as a file name: " + value);
         }
         return id;
+    }
+
+    static final class Adapter implements JsonSerializer<@Nullable ThemePackManifest>,
+            JsonDeserializer<@Nullable ThemePackManifest> {
+
+        @Override
+        public @Nullable ThemePackManifest deserialize(
+                @Nullable JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (json == null || json instanceof JsonNull) {
+                return null;
+            }
+
+            if (!(json instanceof JsonObject object)) {
+                throw new JsonParseException("Theme-pack manifest is not a JsonObject");
+            }
+
+            if (!JsonSchema.check(object, CURRENT_SCHEMA).readable()) {
+                throw new JsonParseException("Unsupported theme-pack schema: " + object.get(JsonSchema.PROPERTY_SCHEMA));
+            }
+
+            String id = requireMemberString(object, "id");
+            String version = requireMemberString(object, "version");
+
+            LocalizedText name = context.deserialize(object.get("name"), LocalizedText.class);
+            if (name == null) {
+                throw new JsonParseException("Theme-pack manifest is missing name");
+            }
+
+            @Nullable LocalizedText description = context.deserialize(object.get("description"), LocalizedText.class);
+
+            return new ThemePackManifest(
+                    id,
+                    version,
+                    name,
+                    readAuthors(object, "theme-pack"),
+                    description,
+                    readThemes(object));
+        }
+
+        @Override
+        public JsonElement serialize(@Nullable ThemePackManifest src, Type typeOfSrc, JsonSerializationContext context) {
+            if (src == null) {
+                return JsonNull.INSTANCE;
+            }
+
+            JsonObject object = new JsonObject();
+            object.addProperty(JsonSchema.PROPERTY_SCHEMA, CURRENT_SCHEMA.url());
+            object.addProperty("id", src.id);
+            object.addProperty("version", src.version);
+            object.add("name", src.name.toJsonElement());
+            object.add("authors", ThemePackAuthor.toJson(src.authors));
+
+            if (src.description != null) {
+                object.add("description", src.description.toJsonElement());
+            }
+
+            if (src.isSimpleThemePack()) {
+                object.add("theme", src.themes.get(0).toJsonObject());
+            } else {
+                JsonArray themeArray = new JsonArray();
+                for (Theme theme : src.themes) {
+                    themeArray.add(theme.toJsonObject());
+                }
+                object.add("themes", themeArray);
+            }
+            return object;
+        }
     }
 }

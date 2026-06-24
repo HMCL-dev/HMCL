@@ -57,21 +57,6 @@ public record Theme(
         ThemeAppearance appearance,
         @Unmodifiable List<ThemeOverride> overrides) {
 
-    /// JSON member name for the theme ID.
-    private static final String FIELD_ID = "id";
-
-    /// JSON member name for the display name.
-    private static final String FIELD_NAME = "name";
-
-    /// JSON member name for the optional description.
-    private static final String FIELD_DESCRIPTION = "description";
-
-    /// JSON member name for the optional thumbnail path.
-    private static final String FIELD_THUMBNAIL = "thumbnail";
-
-    /// JSON member name for conditional overrides.
-    private static final String FIELD_OVERRIDES = "overrides";
-
     /// Creates a theme.
     ///
     /// @param id the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
@@ -83,17 +68,17 @@ public record Theme(
     /// @param overrides conditional appearance patches applied in declaration order
     public Theme {
         if (id != null) {
-            id = requireNonBlank(id, FIELD_ID);
+            id = requireNonBlank(id, "id");
         }
         if (name != null) {
-            name = ThemePackManifest.requireLocalizedText(name, FIELD_NAME);
+            name = ThemePackManifest.requireLocalizedText(name, "name");
         }
         authors = List.copyOf(authors);
         if (description != null) {
-            description = ThemePackManifest.requireLocalizedText(description, FIELD_DESCRIPTION);
+            description = ThemePackManifest.requireLocalizedText(description, "description");
         }
         if (thumbnail != null) {
-            thumbnail = requireNonBlank(thumbnail, FIELD_THUMBNAIL);
+            thumbnail = requireNonBlank(thumbnail, "thumbnail");
         }
         Objects.requireNonNull(appearance);
         overrides = List.copyOf(overrides);
@@ -108,13 +93,13 @@ public record Theme(
     static Theme fromJson(JsonObject object, boolean requireIdentity) throws JsonParseException {
         Objects.requireNonNull(object);
 
-        @Nullable String id = readString(object, FIELD_ID);
+        @Nullable String id = readString(object, "id");
         if (id == null && requireIdentity) {
-            throw new JsonParseException("Theme is missing required string field: " + FIELD_ID);
+            throw new JsonParseException("Theme is missing the id");
         }
-        @Nullable LocalizedText name = readLocalizedText(object, FIELD_NAME);
+        @Nullable LocalizedText name = readLocalizedText(object, "name");
         if (name == null && requireIdentity) {
-            throw new JsonParseException("Theme is missing required localized text field: " + FIELD_NAME);
+            throw new JsonParseException("Theme is missing required localized text field: " + "name");
         }
         ThemeAppearance appearance = ThemeAppearance.fromJson(object);
 
@@ -122,8 +107,8 @@ public record Theme(
                 id,
                 name,
                 ThemePackManifest.readAuthors(object, "theme"),
-                readLocalizedText(object, FIELD_DESCRIPTION),
-                readString(object, FIELD_THUMBNAIL),
+                readLocalizedText(object, "description"),
+                readString(object, "thumbnail"),
                 appearance,
                 readOverrides(object));
     }
@@ -164,17 +149,17 @@ public record Theme(
     public JsonObject toJsonObject() {
         JsonObject object = new JsonObject();
         if (id != null) {
-            object.addProperty(FIELD_ID, id);
+            object.addProperty("id", id);
         }
         if (name != null) {
-            object.add(FIELD_NAME, JsonUtils.GSON.toJsonTree(name, LocalizedText.class));
+            object.add("name", JsonUtils.GSON.toJsonTree(name, LocalizedText.class));
         }
-        ThemePackManifest.addAuthors(object, authors);
+        object.add("authors", ThemePackAuthor.toJson(authors));
         if (description != null) {
-            object.add(FIELD_DESCRIPTION, JsonUtils.GSON.toJsonTree(description, LocalizedText.class));
+            object.add("description", JsonUtils.GSON.toJsonTree(description, LocalizedText.class));
         }
         if (thumbnail != null) {
-            object.addProperty(FIELD_THUMBNAIL, thumbnail);
+            object.addProperty("thumbnail", thumbnail);
         }
         appearance.addToJsonObject(object);
 
@@ -183,22 +168,14 @@ public record Theme(
             for (ThemeOverride override : overrides) {
                 array.add(override.toJsonObject());
             }
-            object.add(FIELD_OVERRIDES, array);
+            object.add("overrides", array);
         }
         return object;
     }
 
-    /// Resolves this theme and converts it to concrete launcher theme values.
-    ///
-    /// @param context the resolution context
-    /// @return the concrete theme used by MonetFX
-    public ResolvedTheme toResolvedTheme(ThemeResolveContext context) {
-        return resolve(context).toResolvedTheme(context);
-    }
-
     /// Reads all valid conditional override objects.
     private static List<ThemeOverride> readOverrides(JsonObject object) {
-        JsonElement element = object.get(FIELD_OVERRIDES);
+        JsonElement element = object.get("overrides");
         if (element == null) {
             return List.of();
         }
@@ -210,7 +187,7 @@ public record Theme(
         ArrayList<ThemeOverride> overrides = new ArrayList<>(array.size());
         int index = 0;
         for (JsonElement item : array) {
-            String field = FIELD_OVERRIDES + "[" + index + "]";
+            String field = "overrides" + "[" + index + "]";
             if (item instanceof JsonObject overrideObject) {
                 try {
                     overrides.add(ThemeOverride.fromJson(overrideObject));

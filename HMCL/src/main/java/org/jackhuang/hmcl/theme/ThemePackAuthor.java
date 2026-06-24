@@ -17,34 +17,52 @@
  */
 package org.jackhuang.hmcl.theme;
 
-import com.google.gson.JsonObject;
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Objects;
 
 /// Author metadata declared by a theme pack.
 ///
 /// @param name the localized author display name
 @NotNullByDefault
+@JsonSerializable
+@JsonAdapter(ThemePackAuthor.Adapter.class)
 public record ThemePackAuthor(LocalizedText name) {
-    /// JSON member name for the author display name.
-    static final String FIELD_NAME = "name";
+
+    static JsonArray toJson(List<ThemePackAuthor> authors) {
+        JsonArray array = new JsonArray();
+        for (ThemePackAuthor author : authors) {
+            array.add(author.toJsonObject());
+        }
+        return array;
+    }
 
     /// Creates theme-pack author metadata.
     ///
     /// @param name the localized author display name
     public ThemePackAuthor {
-        name = ThemePackManifest.requireLocalizedText(name, FIELD_NAME);
+        if (name.mayBeEmpty()) {
+            throw new IllegalArgumentException("The author name cannot be empty");
+        }
     }
 
     /// Returns the author display name in the current locale.
     ///
     /// @return the localized author display name
     public String displayName() {
-        return Objects.requireNonNullElse(name.getText(I18n.getLocale().getCandidateLocales()), "");
+        return name.getText(I18n.getLocale().getCandidateLocales());
     }
 
     /// Converts this author to its JSON representation.
@@ -52,7 +70,44 @@ public record ThemePackAuthor(LocalizedText name) {
     /// @return the JSON object representing this author
     public JsonObject toJsonObject() {
         JsonObject object = new JsonObject();
-        object.add(FIELD_NAME, JsonUtils.GSON.toJsonTree(name, LocalizedText.class));
+        object.add("name", name.toJsonElement());
         return object;
+    }
+
+    static final class Adapter implements JsonSerializer<@Nullable ThemePackAuthor>, JsonDeserializer<@Nullable ThemePackAuthor> {
+        @Override
+        public @Nullable ThemePackAuthor deserialize(@Nullable JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (json == null || json instanceof JsonNull)
+                return null;
+
+            if (json instanceof JsonObject jsonObject) {
+                JsonElement nameJson = jsonObject.get("name");
+                if (nameJson == null) {
+                    throw new JsonParseException("Missing author name: " + json);
+                }
+
+                LocalizedText name = LocalizedText.parseJson(nameJson);
+                if (name == null) {
+                    throw new JsonParseException("The author name is null");
+                }
+
+                try {
+                    return new ThemePackAuthor(name);
+                } catch (IllegalArgumentException e) {
+                    throw new JsonParseException(e);
+                }
+            }
+
+            if (json instanceof JsonPrimitive jsonPrimitive) {
+                return new ThemePackAuthor(LocalizedText.plain(jsonPrimitive.getAsString()));
+            }
+
+            throw new JsonParseException("Unexpected json element type: " + json.getClass());
+        }
+
+        @Override
+        public JsonElement serialize(@Nullable ThemePackAuthor src, Type typeOfSrc, JsonSerializationContext context) {
+            return src != null ? src.toJsonObject() : JsonNull.INSTANCE;
+        }
     }
 }

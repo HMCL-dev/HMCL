@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.theme;
 import com.google.gson.JsonParseException;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
@@ -27,7 +28,9 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.ThemeColorType;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -72,9 +75,6 @@ public final class ThemePackManager {
     /// Default version used when exporting the current launcher appearance.
     private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
 
-    /// Resource directory that stores launcher-bundled theme packs.
-    private static final String BUILTIN_THEME_PACKS_RESOURCE_ROOT = "/assets/themes";
-
     /// IDs of launcher-bundled theme packs in display order.
     private static final @Unmodifiable List<String> BUILTIN_THEME_PACK_IDS = List.of(
             "hmcl.default",
@@ -93,12 +93,12 @@ public final class ThemePackManager {
 
     /// A theme pack loaded from a zip-compatible theme-pack file.
     ///
-    /// @param file the source theme-pack file
+    /// @param file     the source theme-pack file
     /// @param manifest the parsed manifest
     public record LoadedThemePack(Path file, ThemePackManifest manifest) {
         /// Creates a loaded theme-pack descriptor.
         ///
-        /// @param file the source theme-pack file
+        /// @param file     the source theme-pack file
         /// @param manifest the parsed manifest
         public LoadedThemePack {
             file = Objects.requireNonNull(file).toAbsolutePath().normalize();
@@ -108,13 +108,13 @@ public final class ThemePackManager {
 
     /// A theme pack available to the launcher.
     ///
-    /// @param file the installed theme-pack file, or a synthetic path for built-in packages
+    /// @param file     the installed theme-pack file, or a synthetic path for built-in packages
     /// @param manifest the parsed manifest
-    /// @param builtin whether this package is bundled with the launcher resources
+    /// @param builtin  whether this package is bundled with the launcher resources
     public record InstalledThemePack(Path file, ThemePackManifest manifest, boolean builtin) {
         /// Creates an installed user theme-pack descriptor.
         ///
-        /// @param file the installed theme-pack file
+        /// @param file     the installed theme-pack file
         /// @param manifest the parsed manifest
         public InstalledThemePack(Path file, ThemePackManifest manifest) {
             this(file, manifest, false);
@@ -122,9 +122,9 @@ public final class ThemePackManager {
 
         /// Creates an available theme-pack descriptor.
         ///
-        /// @param file the installed theme-pack file, or a synthetic path for built-in packages
+        /// @param file     the installed theme-pack file, or a synthetic path for built-in packages
         /// @param manifest the parsed manifest
-        /// @param builtin whether this package is bundled with the launcher resources
+        /// @param builtin  whether this package is bundled with the launcher resources
         public InstalledThemePack {
             file = Objects.requireNonNull(file).toAbsolutePath().normalize();
             Objects.requireNonNull(manifest);
@@ -134,12 +134,12 @@ public final class ThemePackManager {
     /// A theme pack assembled from launcher settings and ready to export.
     ///
     /// @param manifest the manifest to write
-    /// @param assets the asset files to include
+    /// @param assets   the asset files to include
     public record ExportedThemePack(ThemePackManifest manifest, @Unmodifiable List<ThemePackAsset> assets) {
         /// Creates an exportable theme-pack descriptor.
         ///
         /// @param manifest the manifest to write
-        /// @param assets the asset files to include
+        /// @param assets   the asset files to include
         public ExportedThemePack {
             Objects.requireNonNull(manifest);
             assets = List.copyOf(assets);
@@ -148,13 +148,13 @@ public final class ThemePackManager {
 
     /// A concrete launcher background resolved from either custom settings or a selected theme.
     ///
-    /// @param type the launcher background source type
-    /// @param builtinBackgroundId the selected built-in wallpaper ID, or `null` when not using a built-in wallpaper
-    /// @param imagePath the resolved local image file or directory, or `null` when not using a local image
-    /// @param networkImageUrl the remote image URL, or `null` when not using a network image
+    /// @param type                    the launcher background source type
+    /// @param builtinBackgroundId     the selected built-in wallpaper ID, or `null` when not using a built-in wallpaper
+    /// @param imagePath               the resolved local image file or directory, or `null` when not using a local image
+    /// @param networkImageUrl         the remote image URL, or `null` when not using a network image
     /// @param networkImageCachePolicy whether the remote image cache policy is explicitly overridden, or `null` for default behavior
-    /// @param paint the resolved background paint, or `null` when not using a paint background
-    /// @param opacity the background opacity clamped to `[0, 1]`
+    /// @param paint                   the resolved background paint, or `null` when not using a paint background
+    /// @param opacity                 the background opacity clamped to `[0, 1]`
     public record ResolvedBackground(
             BackgroundType type,
             @Nullable String builtinBackgroundId,
@@ -165,12 +165,12 @@ public final class ThemePackManager {
             double opacity) {
         /// Creates a resolved launcher background without a built-in wallpaper ID.
         ///
-        /// @param type the launcher background source type
-        /// @param imagePath the resolved local image file or directory, or `null` when not using a local image
-        /// @param networkImageUrl the remote image URL, or `null` when not using a network image
+        /// @param type                    the launcher background source type
+        /// @param imagePath               the resolved local image file or directory, or `null` when not using a local image
+        /// @param networkImageUrl         the remote image URL, or `null` when not using a network image
         /// @param networkImageCachePolicy whether the remote image cache policy is explicitly overridden, or `null` for default behavior
-        /// @param paint the resolved background paint, or `null` when not using a paint background
-        /// @param opacity the background opacity clamped to `[0, 1]`
+        /// @param paint                   the resolved background paint, or `null` when not using a paint background
+        /// @param opacity                 the background opacity clamped to `[0, 1]`
         public ResolvedBackground(
                 BackgroundType type,
                 @Nullable Path imagePath,
@@ -183,13 +183,13 @@ public final class ThemePackManager {
 
         /// Creates a resolved launcher background.
         ///
-        /// @param type the launcher background source type
-        /// @param builtinBackgroundId the selected built-in wallpaper ID, or `null` when not using a built-in wallpaper
-        /// @param imagePath the resolved local image file or directory, or `null` when not using a local image
-        /// @param networkImageUrl the remote image URL, or `null` when not using a network image
+        /// @param type                    the launcher background source type
+        /// @param builtinBackgroundId     the selected built-in wallpaper ID, or `null` when not using a built-in wallpaper
+        /// @param imagePath               the resolved local image file or directory, or `null` when not using a local image
+        /// @param networkImageUrl         the remote image URL, or `null` when not using a network image
         /// @param networkImageCachePolicy whether the remote image cache policy is explicitly overridden, or `null` for default behavior
-        /// @param paint the resolved background paint, or `null` when not using a paint background
-        /// @param opacity the background opacity clamped to `[0, 1]`
+        /// @param paint                   the resolved background paint, or `null` when not using a paint background
+        /// @param opacity                 the background opacity clamped to `[0, 1]`
         public ResolvedBackground {
             Objects.requireNonNull(type);
             if (builtinBackgroundId != null) {
@@ -198,10 +198,9 @@ public final class ThemePackManager {
                     throw new IllegalArgumentException("Resolved background built-in wallpaper ID is blank");
                 }
             }
-            if (!Double.isFinite(opacity)) {
-                opacity = 1.0;
-            }
-            opacity = Math.max(0.0, Math.min(1.0, opacity));
+            opacity = Double.isFinite(opacity)
+                    ? MathUtils.clamp(opacity, 0.0, 1.0)
+                    : 1.0;
         }
 
         /// Returns a copy with a different opacity.
@@ -245,50 +244,45 @@ public final class ThemePackManager {
                     throw new IOException("Theme pack directory does not contain " + ThemePackExporter.MANIFEST_ENTRY);
                 }
 
-                String manifestJson = Files.readString(manifestFile, StandardCharsets.UTF_8);
-                return new LoadedThemePack(normalizedFile, ThemePackManifest.fromJson(manifestJson));
+                ThemePackManifest manifest = JsonUtils.fromJsonFile(manifestFile, ThemePackManifest.class);
+                if (manifest == null) {
+                    throw new JsonParseException("Manifest is null");
+                }
+                return new LoadedThemePack(normalizedFile, manifest);
             }
 
-            try (ZipFile zipFile = new ZipFile(normalizedFile.toFile(), StandardCharsets.UTF_8)) {
-                ZipEntry manifestEntry = zipFile.getEntry(ThemePackExporter.MANIFEST_ENTRY);
+            try (var reader = new ZipArchiveReader(normalizedFile)) {
+                var manifestEntry = reader.getEntry(ThemePackExporter.MANIFEST_ENTRY);
                 if (manifestEntry == null || manifestEntry.isDirectory()) {
                     throw new IOException("Theme pack does not contain " + ThemePackExporter.MANIFEST_ENTRY);
                 }
 
-                String manifestJson;
-                try (InputStream input = zipFile.getInputStream(manifestEntry)) {
-                    manifestJson = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+                ThemePackManifest manifest;
+                try (var inputStream = reader.getInputStream(manifestEntry)) {
+                    manifest = JsonUtils.fromNonNullJsonFully(inputStream, ThemePackManifest.class);
                 }
-                return new LoadedThemePack(normalizedFile, ThemePackManifest.fromJson(manifestJson));
+                return new LoadedThemePack(normalizedFile, manifest);
             }
         } catch (JsonParseException | IllegalArgumentException e) {
             throw new IOException("Invalid theme-pack manifest", e);
         }
     }
 
-    /// Returns the built-in default theme pack.
-    ///
-    /// @return the built-in default theme pack
-    public static InstalledThemePack builtinThemePack() {
-        @Nullable InstalledThemePack themePack = findBuiltinThemePack(BUILTIN_DEFAULT_THEME_REFERENCE.packId());
-        if (themePack == null) {
-            throw new IllegalStateException("Missing built-in default theme pack: "
-                    + BUILTIN_DEFAULT_THEME_REFERENCE.packId());
-        }
-        return themePack;
-    }
-
     /// Loads built-in theme pack manifests from launcher resources.
     private static @Unmodifiable List<InstalledThemePack> loadBuiltinThemePacks() {
         ArrayList<InstalledThemePack> themePacks = new ArrayList<>();
         for (String id : BUILTIN_THEME_PACK_IDS) {
-            try (InputStream input = ThemePackManager.class.getResourceAsStream(
-                    builtinThemePackResourceRoot(id) + "/" + ThemePackExporter.MANIFEST_ENTRY)) {
-                if (input == null) {
-                    throw new IOException("Missing built-in theme-pack manifest: " + id);
+            try {
+                ThemePackManifest manifest;
+
+                try (InputStream input = ThemePackManager.class.getResourceAsStream(
+                        "/assets/themes/" + id + "/" + ThemePackExporter.MANIFEST_ENTRY)) {
+                    if (input == null) {
+                        throw new IOException("Missing built-in theme-pack manifest: " + id);
+                    }
+
+                    manifest = JsonUtils.fromNonNullJsonFully(input, ThemePackManifest.class);
                 }
-                String manifestJson = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-                ThemePackManifest manifest = ThemePackManifest.fromJson(manifestJson);
                 if (!manifest.id().equals(id)) {
                     throw new IOException("Built-in theme-pack id does not match resource directory: " + id);
                 }
@@ -440,7 +434,7 @@ public final class ThemePackManager {
     /// Applies one theme from a loaded theme pack to current launcher settings.
     ///
     /// @param themePack the loaded theme pack
-    /// @param theme the theme to apply
+    /// @param theme     the theme to apply
     /// @throws IOException if the pack cannot be installed, referenced assets cannot be read, or settings cannot be applied
     public static void apply(LoadedThemePack themePack, Theme theme) throws IOException {
         Objects.requireNonNull(themePack);
@@ -457,7 +451,7 @@ public final class ThemePackManager {
     /// Applies one theme from an installed theme pack to current launcher settings.
     ///
     /// @param themePack the installed theme pack
-    /// @param theme the theme to apply
+    /// @param theme     the theme to apply
     /// @throws IOException if referenced assets cannot be read or settings cannot be applied
     public static void apply(InstalledThemePack themePack, Theme theme) throws IOException {
         Objects.requireNonNull(themePack);
@@ -469,9 +463,9 @@ public final class ThemePackManager {
     /// Applies one theme from an installed theme-pack file to current launcher settings.
     ///
     /// @param themePackFile the installed theme-pack file
-    /// @param manifest the parsed manifest
-    /// @param theme the theme to apply
-    /// @param context the condition resolution context
+    /// @param manifest      the parsed manifest
+    /// @param theme         the theme to apply
+    /// @param context       the condition resolution context
     /// @throws IOException if referenced assets cannot be read or settings cannot be applied
     public static void apply(
             Path themePackFile,
@@ -499,8 +493,8 @@ public final class ThemePackManager {
     /// Exports the current launcher appearance to a theme-pack file.
     ///
     /// @param outputFile the target theme-pack file
-    /// @param packId the exported package identifier
-    /// @param packName the exported package display name
+    /// @param packId     the exported package identifier
+    /// @param packName   the exported package display name
     /// @param authorName the exported package author name
     /// @throws IOException if the current appearance cannot be exported
     public static void exportCurrent(Path outputFile, String packId, String packName, String authorName) throws IOException {
@@ -512,8 +506,8 @@ public final class ThemePackManager {
 
     /// Creates an exportable theme pack from the current launcher appearance.
     ///
-    /// @param packId the exported package identifier
-    /// @param packName the exported package display name
+    /// @param packId     the exported package identifier
+    /// @param packName   the exported package display name
     /// @param authorName the exported package author name
     /// @return the exportable theme-pack descriptor
     /// @throws IOException if the current appearance cannot be represented as a theme pack
@@ -611,8 +605,8 @@ public final class ThemePackManager {
 
     /// Resolves the current selected theme color source into a concrete launcher theme color.
     ///
-    /// @param context the condition resolution context
-    /// @param fallback the color used when no selected theme color source is available
+    /// @param context        the condition resolution context
+    /// @param fallback       the color used when no selected theme color source is available
     /// @param backgroundType the current launcher background type
     /// @return the resolved theme color
     /// @throws IOException if the selected theme pack exists but its referenced color assets cannot be read
@@ -652,7 +646,7 @@ public final class ThemePackManager {
 
     /// Resolves the selected theme brightness or returns the given fallback.
     ///
-    /// @param context the condition resolution context
+    /// @param context  the condition resolution context
     /// @param fallback the brightness used when the selected theme does not control brightness
     /// @return the effective brightness from the selected theme or fallback
     /// @throws IOException if the selected theme pack cannot be read
@@ -662,7 +656,7 @@ public final class ThemePackManager {
 
     /// Resolves the selected theme color style or returns the given fallback.
     ///
-    /// @param context the condition resolution context
+    /// @param context  the condition resolution context
     /// @param fallback the color style used when the selected theme does not define one
     /// @return the effective color style from the selected theme or fallback
     /// @throws IOException if the selected theme pack cannot be read
@@ -682,7 +676,7 @@ public final class ThemePackManager {
 
     /// Resolves the selected theme title-bar transparency or returns the given fallback.
     ///
-    /// @param context the condition resolution context
+    /// @param context  the condition resolution context
     /// @param fallback the value used when the selected theme does not define one
     /// @return the effective title-bar transparency from the selected theme or fallback
     /// @throws IOException if the selected theme pack cannot be read
@@ -936,7 +930,7 @@ public final class ThemePackManager {
     /// Resolves the background contributed by a selected installed theme.
     ///
     /// @param reference the selected theme reference
-    /// @param context the condition resolution context
+    /// @param context   the condition resolution context
     /// @return the resolved background, or `null` when the theme or background is not available
     /// @throws IOException if the installed theme pack exists but its background cannot be resolved
     public static @Nullable ResolvedBackground resolveThemeBackground(
@@ -972,8 +966,8 @@ public final class ThemePackManager {
     /// Resolves the background contributed by one theme without applying launcher appearance overrides.
     ///
     /// @param themePackFile the installed theme-pack file
-    /// @param theme the theme to resolve
-    /// @param context the condition resolution context
+    /// @param theme         the theme to resolve
+    /// @param context       the condition resolution context
     /// @return the resolved background, or `null` when the theme does not define one
     /// @throws IOException if the theme background cannot be resolved
     public static @Nullable ResolvedBackground resolveThemeBackground(
@@ -1177,7 +1171,8 @@ public final class ThemePackManager {
     /// Resolves one asset stored in a bundled theme pack.
     private static Path resolveBuiltinAsset(InstalledThemePack themePack, String entryName) throws IOException {
         Path cacheFile = cachedInstalledAssetFile(themePack.file(), entryName);
-        String resourcePath = builtinThemePackResourceRoot(themePack.manifest().id()) + "/" + entryName;
+        String id = requirePackageId(themePack.manifest().id());
+        String resourcePath = "/assets/themes/" + id + "/" + entryName;
         try (InputStream input = ThemePackManager.class.getResourceAsStream(resourcePath)) {
             if (input == null) {
                 throw new IOException("Built-in theme-pack asset is missing: " + entryName);
@@ -1215,12 +1210,6 @@ public final class ThemePackManager {
                 .resolve(id + ThemePackExporter.FILE_EXTENSION)
                 .toAbsolutePath()
                 .normalize();
-    }
-
-    /// Returns the resource directory for one bundled theme pack.
-    private static String builtinThemePackResourceRoot(String packId) {
-        String id = requirePackageId(packId);
-        return BUILTIN_THEME_PACKS_RESOURCE_ROOT + "/" + id;
     }
 
     /// Returns the cache directory used for assets extracted from one installed theme pack.

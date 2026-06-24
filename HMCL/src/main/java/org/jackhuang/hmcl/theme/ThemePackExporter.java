@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.theme;
 
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -47,10 +48,10 @@ public final class ThemePackExporter {
 
     /// Exports a theme pack to a zip-compatible file.
     ///
-    /// @param manifest the manifest to write
-    /// @param assets asset files to copy into the zip
+    /// @param manifest   the manifest to write
+    /// @param assets     asset files to copy into the zip
     /// @param outputFile the target theme-pack file
-    /// @throws IOException if a source file cannot be read or the zip cannot be written
+    /// @throws IOException              if a source file cannot be read or the zip cannot be written
     /// @throws IllegalArgumentException if an asset entry is duplicated or unsafe
     public static void export(
             ThemePackManifest manifest,
@@ -72,7 +73,7 @@ public final class ThemePackExporter {
         try {
             Files.deleteIfExists(temporaryFile);
             try (Zipper zipper = new Zipper(temporaryFile)) {
-                zipper.putTextFile(manifest.toJson(), MANIFEST_ENTRY);
+                zipper.putTextFile(JsonUtils.GSON.toJson(manifest), MANIFEST_ENTRY);
                 for (ThemePackAsset asset : assets) {
                     zipper.putFile(asset.source(), asset.entryName());
                 }

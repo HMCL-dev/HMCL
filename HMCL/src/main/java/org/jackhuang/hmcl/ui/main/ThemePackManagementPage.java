@@ -100,12 +100,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     private final Runnable onThemePacksChanged;
 
     /// Creates the theme-pack management page and loads installed packages.
-    public ThemePackManagementPage() {
-        this(() -> {
-        });
-    }
-
-    /// Creates the theme-pack management page and loads installed packages.
     ///
     /// @param onThemePacksChanged callback invoked after importing or deleting a theme pack
     public ThemePackManagementPage(Runnable onThemePacksChanged) {
@@ -186,7 +180,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             themePack = ThemePackManager.install(file);
             refreshThemePacks();
         } catch (IOException | RuntimeException e) {
-            showThemePackError(i18n("theme_pack.import.failed"), e);
+            String title = i18n("theme_pack.import.failed");
+            Controllers.dialog(
+                    title + "\n\n" + StringUtils.getStackTrace(e),
+                    i18n("message.error"),
+                    MessageType.ERROR);
             return;
         }
 
@@ -223,7 +221,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             onThemePacksChanged.run();
             Controllers.showToast(i18n("theme_pack.delete.success", themePack.manifest().displayName()));
         } catch (IOException | RuntimeException e) {
-            showThemePackError(i18n("theme_pack.delete.failed"), e);
+            Controllers.dialog(
+                    i18n("theme_pack.delete.failed") + "\n\n" + StringUtils.getStackTrace(e),
+                    i18n("message.error"),
+                    MessageType.ERROR);
         }
     }
 
@@ -281,7 +282,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     /// Returns comma-separated author display names.
     private static String getAuthorDisplayNames(List<ThemePackAuthor> authors) {
         return authors.stream()
-                .map(author -> author.displayName())
+                .map(ThemePackAuthor::displayName)
                 .filter(author -> !StringUtils.isBlank(author))
                 .collect(Collectors.joining(", "));
     }
@@ -289,14 +290,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     /// Returns whether a nullable value contains the lower-cased query.
     private static boolean containsIgnoreCase(@Nullable String value, String query) {
         return value != null && value.toLowerCase(Locale.ROOT).contains(query);
-    }
-
-    /// Shows a theme-pack operation error dialog.
-    private static void showThemePackError(String title, Exception exception) {
-        Controllers.dialog(
-                title + "\n\n" + StringUtils.getStackTrace(exception),
-                i18n("message.error"),
-                MessageType.ERROR);
     }
 
     /// Dialog showing all themes declared by one installed theme pack.
