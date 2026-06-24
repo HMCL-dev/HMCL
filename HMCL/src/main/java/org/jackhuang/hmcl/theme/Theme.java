@@ -90,19 +90,56 @@ public record Theme(
         if (id == null && requireIdentity) {
             throw new JsonParseException("Theme is missing the id");
         }
-        @Nullable LocalizedText name = LocalizedText.parseJson(object.get("name"));
+        @Nullable LocalizedText name = LocalizedText.fromJson(object.get("name"));
         if (name == null && requireIdentity) {
             throw new JsonParseException("Theme is missing required localized text field: " + "name");
         }
+
+        List<ThemePackAuthor> authors;
+        try {
+            authors = ThemePackAuthor.parseAuthors(object.get("authors"));
+        } catch (Exception e) {
+            LOG.warning("Failed to parse authors", e);
+            authors = List.of();
+        }
+
+        LocalizedText description;
+
+        try {
+            description = LocalizedText.fromJson(object.get("description"));
+        } catch (Exception e) {
+            LOG.warning("Failed to parse description", e);
+            description = null;
+        }
+
         ThemeAppearance appearance = ThemeAppearance.fromJson(object);
-        return new Theme(
-                id,
-                name,
-                ThemePackManifest.readAuthors(object, "theme"),
-                LocalizedText.parseJson(object.get("description")),
+
+        JsonElement overridesJson = object.get("overrides");
+        List<ThemeOverride> overrides;
+
+        if (overridesJson == null || overridesJson.isJsonNull()) {
+            overrides = List.of();
+        } else if (overridesJson instanceof JsonArray array) {
+            overrides = new ArrayList<>(array.size());
+
+            for (JsonElement overrideJson : array) {
+                try {
+                    ThemeOverride override = ThemeOverride.fromJson(overrideJson);
+                    if (override != null)
+                        overrides.add(override);
+                } catch (Exception e) {
+                    LOG.warning("Invalid theme override", e);
+                }
+            }
+
+        } else {
+            LOG.warning("Invalid theme overrides: expected an array, got " + overridesJson);
+            overrides = List.of();
+        }
+
+        return new Theme(id, name, authors, description,
                 JsonUtils.getString(object, "thumbnail"),
-                appearance,
-                readOverrides(object));
+                appearance, overrides);
     }
 
     /// Returns the theme display name in the current locale.
@@ -163,35 +200,6 @@ public record Theme(
             object.add("overrides", array);
         }
         return object;
-    }
-
-    /// Reads all valid conditional override objects.
-    private static List<ThemeOverride> readOverrides(JsonObject object) {
-        JsonElement element = object.get("overrides");
-        if (element == null) {
-            return List.of();
-        }
-        if (!(element instanceof JsonArray array)) {
-            LOG.warning("Ignored invalid theme overrides: expected an array, got " + element);
-            return List.of();
-        }
-
-        ArrayList<ThemeOverride> overrides = new ArrayList<>(array.size());
-        int index = 0;
-        for (JsonElement item : array) {
-            String field = "overrides" + "[" + index + "]";
-            if (item instanceof JsonObject overrideObject) {
-                try {
-                    overrides.add(ThemeOverride.fromJson(overrideObject));
-                } catch (JsonParseException | IllegalArgumentException e) {
-                    LOG.warning("Ignored invalid theme override `" + field + "`: " + e.getMessage(), e);
-                }
-            } else {
-                LOG.warning("Ignored invalid theme override `" + field + "`: expected an object, got " + item);
-            }
-            index++;
-        }
-        return overrides;
     }
 
 }

@@ -21,12 +21,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 /// A conditional appearance patch in a theme.
 ///
-/// @param condition the condition required for this override to apply
+/// @param condition  the condition required for this override to apply
 /// @param appearance the appearance fields applied when the condition matches
 @NotNullByDefault
 public record ThemeOverride(ThemeCondition condition, ThemeAppearance appearance) {
@@ -35,7 +36,7 @@ public record ThemeOverride(ThemeCondition condition, ThemeAppearance appearance
 
     /// Creates a conditional theme override.
     ///
-    /// @param condition the condition required for this override to apply
+    /// @param condition  the condition required for this override to apply
     /// @param appearance the appearance fields applied when the condition matches
     public ThemeOverride {
         Objects.requireNonNull(condition);
@@ -47,11 +48,16 @@ public record ThemeOverride(ThemeCondition condition, ThemeAppearance appearance
 
     /// Parses a theme override from JSON.
     ///
-    /// @param object the override object
+    /// @param element the override object
     /// @return the parsed override
     /// @throws JsonParseException if the override is malformed
-    static ThemeOverride fromJson(JsonObject object) throws JsonParseException {
-        Objects.requireNonNull(object);
+    static @Nullable ThemeOverride fromJson(@Nullable JsonElement element) throws JsonParseException {
+        if (element == null || element.isJsonNull())
+            return null;
+
+        if (!(element instanceof JsonObject object)) {
+            throw new JsonParseException("Invalid theme override");
+        }
 
         JsonElement conditionElement = object.get(FIELD_CONDITION);
         if (!(conditionElement instanceof JsonObject conditionObject)) {

@@ -19,19 +19,18 @@ package org.jackhuang.hmcl.theme;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Author metadata declared by a theme pack.
 ///
@@ -41,12 +40,67 @@ import java.util.Objects;
 @JsonAdapter(ThemePackAuthor.Adapter.class)
 public record ThemePackAuthor(LocalizedText name) {
 
+    static @Unmodifiable List<ThemePackAuthor> parseAuthors(@Nullable JsonElement element) throws JsonParseException {
+        if (element == null || element.isJsonNull()) {
+            return List.of();
+        }
+
+        ArrayList<ThemePackAuthor> temp = new ArrayList<>();
+
+        if (element instanceof JsonArray jsonArray) {
+            for (JsonElement authorJson : jsonArray) {
+                try {
+                    ThemePackAuthor author = fromJson(jsonArray);
+                    if (author != null) {
+                        temp.add(author);
+                    }
+
+                } catch (JsonParseException e) {
+                    LOG.warning("Invalid author: " + authorJson);
+                }
+            }
+
+            return List.copyOf(temp);
+        }
+
+        throw new JsonParseException("Unexpected json element: " + element);
+    }
+
     static JsonArray toJson(List<ThemePackAuthor> authors) {
         JsonArray array = new JsonArray();
         for (ThemePackAuthor author : authors) {
             array.add(author.toJsonObject());
         }
         return array;
+    }
+
+    public static @Nullable ThemePackAuthor fromJson(@Nullable JsonElement json) throws JsonParseException {
+        if (json == null || json instanceof JsonNull)
+            return null;
+
+        if (json instanceof JsonObject jsonObject) {
+            JsonElement nameJson = jsonObject.get("name");
+            if (nameJson == null) {
+                throw new JsonParseException("Missing author name: " + json);
+            }
+
+            LocalizedText name = LocalizedText.fromJson(nameJson);
+            if (name == null) {
+                throw new JsonParseException("The author name is null");
+            }
+
+            try {
+                return new ThemePackAuthor(name);
+            } catch (IllegalArgumentException e) {
+                throw new JsonParseException(e);
+            }
+        }
+
+        if (json instanceof JsonPrimitive jsonPrimitive) {
+            return new ThemePackAuthor(LocalizedText.plain(jsonPrimitive.getAsString()));
+        }
+
+        throw new JsonParseException("Unexpected json element type: " + json.getClass());
     }
 
     /// Creates theme-pack author metadata.
@@ -77,32 +131,7 @@ public record ThemePackAuthor(LocalizedText name) {
     static final class Adapter implements JsonSerializer<@Nullable ThemePackAuthor>, JsonDeserializer<@Nullable ThemePackAuthor> {
         @Override
         public @Nullable ThemePackAuthor deserialize(@Nullable JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (json == null || json instanceof JsonNull)
-                return null;
-
-            if (json instanceof JsonObject jsonObject) {
-                JsonElement nameJson = jsonObject.get("name");
-                if (nameJson == null) {
-                    throw new JsonParseException("Missing author name: " + json);
-                }
-
-                LocalizedText name = LocalizedText.parseJson(nameJson);
-                if (name == null) {
-                    throw new JsonParseException("The author name is null");
-                }
-
-                try {
-                    return new ThemePackAuthor(name);
-                } catch (IllegalArgumentException e) {
-                    throw new JsonParseException(e);
-                }
-            }
-
-            if (json instanceof JsonPrimitive jsonPrimitive) {
-                return new ThemePackAuthor(LocalizedText.plain(jsonPrimitive.getAsString()));
-            }
-
-            throw new JsonParseException("Unexpected json element type: " + json.getClass());
+            return ThemePackAuthor.fromJson(json);
         }
 
         @Override

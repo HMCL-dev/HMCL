@@ -42,7 +42,7 @@ import java.util.*;
 @JsonSerializable
 public final class LocalizedText {
 
-    public static @Nullable LocalizedText parseJson(@Nullable JsonElement element) throws JsonParseException {
+    public static @Nullable LocalizedText fromJson(@Nullable JsonElement element) throws JsonParseException {
         if (element == null || element instanceof JsonNull)
             return null;
 
