@@ -21,7 +21,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -40,13 +39,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// The theme object's top-level appearance fields provide default values. Each
 /// matching override is applied in array order to produce the resolved appearance.
 ///
-/// @param id the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
-/// @param name the localized display name, or `null` for an unnamed single-theme pack
-/// @param authors authors of this specific theme
+/// @param id          the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
+/// @param name        the localized display name, or `null` for an unnamed single-theme pack
+/// @param authors     authors of this specific theme
 /// @param description the optional localized description
-/// @param thumbnail the optional theme-pack relative thumbnail path
-/// @param appearance the default appearance fields
-/// @param overrides conditional appearance patches applied in declaration order
+/// @param thumbnail   the optional theme-pack relative thumbnail path
+/// @param appearance  the default appearance fields
+/// @param overrides   conditional appearance patches applied in declaration order
 @NotNullByDefault
 public record Theme(
         @Nullable String id,
@@ -59,56 +58,49 @@ public record Theme(
 
     /// Creates a theme.
     ///
-    /// @param id the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
-    /// @param name the localized display name, or `null` for an unnamed single-theme pack
-    /// @param authors authors of this specific theme
+    /// @param id          the stable theme identifier inside its pack, or `null` for an unnamed single-theme pack
+    /// @param name        the localized display name, or `null` for an unnamed single-theme pack
+    /// @param authors     authors of this specific theme
     /// @param description the optional localized description
-    /// @param thumbnail the optional theme-pack relative thumbnail path
-    /// @param appearance the default appearance fields
-    /// @param overrides conditional appearance patches applied in declaration order
+    /// @param thumbnail   the optional theme-pack relative thumbnail path
+    /// @param appearance  the default appearance fields
+    /// @param overrides   conditional appearance patches applied in declaration order
     public Theme {
-        if (id != null) {
-            id = requireNonBlank(id, "id");
+        if (id != null && id.isBlank()) {
+            throw new IllegalArgumentException("Theme field is blank: " + "id");
         }
-        if (name != null) {
-            name = ThemePackManifest.requireLocalizedText(name, "name");
+        if (name != null && name.mayBeEmpty()) {
+            throw new IllegalArgumentException("Theme name is empty: " + name);
         }
         authors = List.copyOf(authors);
-        if (description != null) {
-            description = ThemePackManifest.requireLocalizedText(description, "description");
-        }
-        if (thumbnail != null) {
-            thumbnail = requireNonBlank(thumbnail, "thumbnail");
-        }
         Objects.requireNonNull(appearance);
         overrides = List.copyOf(overrides);
     }
 
     /// Parses a theme from JSON.
     ///
-    /// @param object the theme JSON object
+    /// @param object          the theme JSON object
     /// @param requireIdentity whether the theme must declare an explicit ID and name
     /// @return the parsed theme
     /// @throws JsonParseException if required identity fields are missing or malformed
     static Theme fromJson(JsonObject object, boolean requireIdentity) throws JsonParseException {
         Objects.requireNonNull(object);
 
-        @Nullable String id = readString(object, "id");
+        @Nullable String id = JsonUtils.getString(object, "id");
         if (id == null && requireIdentity) {
             throw new JsonParseException("Theme is missing the id");
         }
-        @Nullable LocalizedText name = readLocalizedText(object, "name");
+        @Nullable LocalizedText name = LocalizedText.parseJson(object.get("name"));
         if (name == null && requireIdentity) {
             throw new JsonParseException("Theme is missing required localized text field: " + "name");
         }
         ThemeAppearance appearance = ThemeAppearance.fromJson(object);
-
         return new Theme(
                 id,
                 name,
                 ThemePackManifest.readAuthors(object, "theme"),
-                readLocalizedText(object, "description"),
-                readString(object, "thumbnail"),
+                LocalizedText.parseJson(object.get("description")),
+                JsonUtils.getString(object, "thumbnail"),
                 appearance,
                 readOverrides(object));
     }
@@ -202,44 +194,4 @@ public record Theme(
         return overrides;
     }
 
-    /// Reads an optional string member.
-    private static @Nullable String readString(JsonObject object, String field) {
-        JsonElement element = object.get(field);
-        if (element == null) {
-            return null;
-        }
-        if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
-            LOG.warning("Ignored invalid theme field `" + field + "`: expected a string, got " + element);
-            return null;
-        }
-        try {
-            return requireNonBlank(primitive.getAsString(), field);
-        } catch (IllegalArgumentException e) {
-            LOG.warning("Ignored invalid theme field `" + field + "`: " + e.getMessage(), e);
-            return null;
-        }
-    }
-
-    /// Reads an optional localized text member.
-    private static @Nullable LocalizedText readLocalizedText(JsonObject object, String field) {
-        JsonElement element = object.get(field);
-        if (element == null) {
-            return null;
-        }
-        try {
-            return ThemePackManifest.parseLocalizedText(element, field);
-        } catch (JsonParseException | IllegalArgumentException e) {
-            LOG.warning("Ignored invalid theme field `" + field + "`: " + e.getMessage(), e);
-            return null;
-        }
-    }
-
-    /// Returns a non-blank string value.
-    private static String requireNonBlank(String value, String field) {
-        String trimmed = value.trim();
-        if (trimmed.isEmpty()) {
-            throw new IllegalArgumentException("Theme field is blank: " + field);
-        }
-        return trimmed;
-    }
 }
