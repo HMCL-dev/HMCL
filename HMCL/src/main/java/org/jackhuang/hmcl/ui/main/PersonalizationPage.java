@@ -849,10 +849,8 @@ public class PersonalizationPage extends StackPane {
                     ColorStyle.FIDELITY,
                     ColorStyle.TONAL_SPOT,
                     ColorStyle.VIBRANT,
-                    ColorStyle.EXPRESSIVE,
 
                     ColorStyle.NEUTRAL,
-                    ColorStyle.MONOCHROME,
 
                     ColorStyle.FRUIT_SALAD,
                     ColorStyle.RAINBOW
