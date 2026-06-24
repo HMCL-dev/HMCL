@@ -317,14 +317,14 @@ public abstract class FetchTask<T> extends Task<T> {
                     URI currentURI = uri;
 
                     LinkedHashMap<String, String> headers = new LinkedHashMap<>();
-                    headers.put("Accept-Encoding", "gzip");
+                    headers.put("accept-encoding", "gzip");
 
                     boolean resumeRequested = resumeContext != null && resumeContext.hasPartialContent();
                     if (useCachedResult && checkETag && !resumeRequested)
                         headers.putAll(repository.injectConnection(uri));
                     if (resumeRequested) {
-                        headers.put("Range", "bytes=" + resumeContext.countUncompressed + "-");
-                        headers.put("If-Range", resumeContext.ifRange());
+                        headers.put("range", "bytes=" + resumeContext.countUncompressed + "-");
+                        headers.put("if-range", resumeContext.ifRange());
                     }
 
                     do {
