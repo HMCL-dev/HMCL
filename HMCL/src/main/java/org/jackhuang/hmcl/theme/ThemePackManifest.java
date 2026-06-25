@@ -36,8 +36,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 /// Parsed metadata and themes from a theme-pack manifest.
 ///
 /// @param id          the stable package identifier
@@ -127,45 +125,6 @@ public record ThemePackManifest(
             }
         }
         return null;
-    }
-
-    /// Reads the authors list from a JSON object.
-    static List<ThemePackAuthor> readAuthors(JsonObject object, String ownerName) {
-        JsonElement element = object.get("authors");
-        if (element == null) {
-            return List.of();
-        }
-        if (!(element instanceof JsonArray array)) {
-            LOG.warning("Ignored invalid " + ownerName + " authors: expected an array, got " + element);
-            return List.of();
-        }
-
-        ArrayList<ThemePackAuthor> authors = new ArrayList<>(array.size());
-        int index = 0;
-        for (JsonElement item : array) {
-            String field = ownerName + " " + "authors" + "[" + index + "]";
-            if (item instanceof JsonObject authorObject) {
-                try {
-                    authors.add(new ThemePackAuthor(requireAuthorName(authorObject)));
-                } catch (JsonParseException | IllegalArgumentException e) {
-                    LOG.warning("Ignored invalid " + ownerName + " author `" + field + "`: " + e.getMessage(), e);
-                }
-            } else {
-                LOG.warning("Ignored invalid " + ownerName + " author `" + field + "`: expected an object, got " + item);
-            }
-            index++;
-        }
-        return authors;
-    }
-
-    /// Reads an author display name.
-    private static LocalizedText requireAuthorName(JsonObject object) {
-        JsonElement element = object.get("name");
-        if (element == null) {
-            throw new JsonParseException("Theme-pack author is missing required localized text field: "
-                    + "name");
-        }
-        return parseLocalizedText(element, "name");
     }
 
     /// Reads the required theme declaration.
@@ -322,7 +281,7 @@ public record ThemePackManifest(
                     id,
                     version,
                     name,
-                    readAuthors(object, "theme-pack"),
+                    ThemePackAuthor.parseAuthors(object.get("authors")),
                     description,
                     readThemes(object));
         }

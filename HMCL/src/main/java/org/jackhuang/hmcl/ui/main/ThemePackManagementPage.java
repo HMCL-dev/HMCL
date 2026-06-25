@@ -233,52 +233,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         Controllers.dialog(new ThemePackInfoDialog(themePack));
     }
 
-    /// Returns a subtitle for one installed theme pack.
-    private static String getThemePackSubtitle(ThemePackManifest manifest) {
-        @Nullable String description = manifest.displayDescription();
-        if (StringUtils.isBlank(description)) {
-            return manifest.id();
-        }
-        return description;
-    }
-
-    /// Returns the effective display name for one theme.
-    private static String getThemeDisplayName(ThemePackManifest manifest, Theme theme) {
-        return Objects.requireNonNullElse(theme.displayName(), manifest.displayName());
-    }
-
-    /// Returns the description shown below one theme in the theme list dialog.
-    private static @Nullable String getThemeDescription(Theme theme) {
-        @Nullable String description = theme.displayDescription();
-        return StringUtils.isBlank(description) ? null : description;
-    }
-
-    /// Creates a read-only theme information row.
-    private static TwoLineListItem createThemeInfoItem(ThemePackManifest manifest, Theme theme) {
-        TwoLineListItem item = new TwoLineListItem();
-        item.setTitle(getThemeDisplayName(manifest, theme));
-        item.setSubtitle(getThemeDescription(theme));
-        addThemeTags(item, manifest, theme);
-        return item;
-    }
-
-    /// Adds metadata tags for one theme.
-    private static void addThemeTags(TwoLineListItem item, ThemePackManifest manifest, Theme theme) {
-        if (theme.id() != null) {
-            item.addTag(i18n("theme_pack.theme.id", theme.id()));
-        }
-        String authors = getThemeAuthorDisplayNames(manifest, theme);
-        if (!StringUtils.isBlank(authors)) {
-            item.addTag(i18n("archive.author") + ": " + authors);
-        }
-    }
-
-    /// Returns the display names for authors credited on one theme.
-    private static String getThemeAuthorDisplayNames(ThemePackManifest manifest, Theme theme) {
-        List<ThemePackAuthor> authors = theme.authors().isEmpty() ? manifest.authors() : theme.authors();
-        return getAuthorDisplayNames(authors);
-    }
-
     /// Returns comma-separated author display names.
     private static String getAuthorDisplayNames(List<ThemePackAuthor> authors) {
         return authors.stream()
@@ -337,7 +291,23 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private static StackPane createBody(ThemePackManifest manifest) {
             ComponentList themes = new ComponentList();
             for (Theme theme : manifest.themes()) {
-                themes.getContent().add(createThemeInfoItem(manifest, theme));
+                TwoLineListItem item = new TwoLineListItem();
+                item.setTitle(Objects.requireNonNullElse(theme.displayName(), manifest.displayName()));
+
+                @Nullable String description = theme.displayDescription();
+                item.setSubtitle(StringUtils.isBlank(description) ? null : description);
+
+                if (theme.id() != null) {
+                    item.addTag(i18n("theme_pack.theme.id", theme.id()));
+                }
+
+                List<ThemePackAuthor> authors = theme.authors().isEmpty() ? manifest.authors() : theme.authors();
+                String authorNames = getAuthorDisplayNames(authors);
+                if (!StringUtils.isBlank(authorNames)) {
+                    item.addTag(i18n("archive.author") + ": " + authorNames);
+                }
+
+                themes.getContent().add(item);
             }
 
             ScrollPane scrollPane = new ScrollPane(themes);
@@ -549,7 +519,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             ThemePackManifest manifest = themePack.manifest();
             content.setTitle(manifest.displayName());
-            content.setSubtitle(getThemePackSubtitle(manifest));
+            @Nullable String description = manifest.displayDescription();
+            content.setSubtitle(StringUtils.isBlank(description) ? manifest.id() : description);
             if (themePack.builtin()) {
                 content.addTag(i18n("theme_pack.builtin"));
             }

@@ -307,6 +307,59 @@
           ]
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "image"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "path"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "network"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "url"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "paint"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "paint"
+            ]
+          }
+        }
+      ],
       "properties": {
         "id": {
           "$ref": "#/$defs/nonEmptyString"
@@ -354,6 +407,25 @@
           ]
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "paint"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "paint"
+            ]
+          }
+        }
+      ],
       "properties": {
         "id": {
           "$ref": "#/$defs/nonEmptyString"

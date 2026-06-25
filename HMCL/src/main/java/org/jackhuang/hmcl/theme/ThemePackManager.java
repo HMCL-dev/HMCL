@@ -1042,9 +1042,6 @@ public final class ThemePackManager {
                     parsePaint(requireNonBlank(paint.paint(), "background.paint")),
                     opacity);
         }
-        if (source instanceof ThemeBackground.Patch patch) {
-            return resolvePartialBackground(themePackFile, patch, opacity);
-        }
         return new ResolvedBackground(
                 BackgroundType.DEFAULT,
                 null,
@@ -1076,57 +1073,7 @@ public final class ThemePackManager {
             Paint paint = parsePaint(requireNonBlank(paintBackground.paint(), "background.paint"));
             return paint instanceof Color paintColor ? ThemeColor.of(paintColor) : fallback;
         }
-        if (source instanceof ThemeBackground.Patch patch) {
-            if (patch.path() != null) {
-                return WallpaperColorExtractor.extract(resolveInstalledAsset(themePackFile, patch.path()), fallback);
-            }
-            if (patch.paint() != null) {
-                Paint paint = parsePaint(patch.paint());
-                return paint instanceof Color paintColor ? ThemeColor.of(paintColor) : fallback;
-            }
-        }
         return fallback;
-    }
-
-    /// Resolves a partial background object without an explicit source type.
-    private static ResolvedBackground resolvePartialBackground(
-            Path themePackFile,
-            ThemeBackground.Patch patch,
-            double opacity) throws IOException {
-        if (patch.path() != null) {
-            return new ResolvedBackground(
-                    BackgroundType.CUSTOM,
-                    resolveInstalledAsset(themePackFile, patch.path()),
-                    null,
-                    null,
-                    null,
-                    opacity);
-        }
-        if (patch.url() != null) {
-            return new ResolvedBackground(
-                    BackgroundType.NETWORK,
-                    null,
-                    patch.url(),
-                    patch.cache(),
-                    null,
-                    opacity);
-        }
-        if (patch.paint() != null) {
-            return new ResolvedBackground(
-                    BackgroundType.PAINT,
-                    null,
-                    null,
-                    null,
-                    parsePaint(patch.paint()),
-                    opacity);
-        }
-        return new ResolvedBackground(
-                BackgroundType.DEFAULT,
-                null,
-                null,
-                null,
-                null,
-                opacity);
     }
 
     /// Resolves one asset referenced by an installed theme.
@@ -1157,7 +1104,9 @@ public final class ThemePackManager {
             if (entry == null || entry.isDirectory()) {
                 throw new IOException("Installed theme-pack asset is missing: " + normalizedEntryName);
             }
-            copyZipEntryToCache(zipFile, entry, cacheFile);
+            try (InputStream input = zipFile.getInputStream(entry)) {
+                copyInputStreamToCache(input, cacheFile);
+            }
         }
         return cacheFile;
     }
@@ -1230,13 +1179,6 @@ public final class ThemePackManager {
             throw new IOException("Theme-pack asset escapes the cache directory: " + entryName);
         }
         return cacheFile;
-    }
-
-    /// Copies one zip entry into the installed-asset cache.
-    private static void copyZipEntryToCache(ZipFile zipFile, ZipEntry entry, Path cacheFile) throws IOException {
-        try (InputStream input = zipFile.getInputStream(entry)) {
-            copyInputStreamToCache(input, cacheFile);
-        }
     }
 
     /// Copies one input stream into the installed-asset cache.
@@ -1445,8 +1387,12 @@ public final class ThemePackManager {
             case DEFAULT -> new ThemeBackgroundSettings(
                     new ThemeBackground.Default(),
                     opacity);
-            case BUILTIN -> createCurrentBuiltinBackground(opacity);
-            case CUSTOM -> createCurrentImageBackground(assets, background.imagePath(), opacity);
+            case BUILTIN -> new ThemeBackgroundSettings(
+                    new ThemeBackground.Builtin(currentBuiltinBackgroundId()),
+                    opacity);
+            case CUSTOM -> new ThemeBackgroundSettings(
+                    createCurrentImageBackgroundSource(assets, background.imagePath()),
+                    opacity);
             case NETWORK -> new ThemeBackgroundSettings(
                     new ThemeBackground.Network(
                             requireNonBlank(background.networkImageUrl(), "networkBackgroundImageUrl"),
@@ -1491,31 +1437,6 @@ public final class ThemePackManager {
     /// Returns the flat paint used by the theme-color background option.
     private static Color getThemeColorBackgroundPaint() {
         return Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER);
-    }
-
-    /// Creates the background model for the currently selected built-in wallpaper.
-    private static ThemeBackgroundSettings createCurrentBuiltinBackground(Double opacity) throws IOException {
-        String builtinBackgroundId = currentBuiltinBackgroundId();
-        return new ThemeBackgroundSettings(new ThemeBackground.Builtin(builtinBackgroundId), opacity);
-    }
-
-    /// Creates the image background model for the current launcher settings.
-    private static ThemeBackgroundSettings createCurrentImageBackground(
-            List<ThemePackAsset> assets,
-            @Nullable Path imagePath,
-            Double opacity) throws IOException {
-        if (imagePath == null) {
-            throw new IOException("Theme background image path is not configured");
-        }
-        Path source = imagePath.toAbsolutePath().normalize();
-        if (Files.isDirectory(source)) {
-            throw new IOException("Cannot export a background directory as a theme-pack asset: " + source);
-        }
-        if (!Files.isRegularFile(source)) {
-            throw new IOException("Theme background image does not exist: " + source);
-        }
-
-        return new ThemeBackgroundSettings(createCurrentImageBackgroundSource(assets, source), opacity);
     }
 
     /// Creates the image background source for a local background file.

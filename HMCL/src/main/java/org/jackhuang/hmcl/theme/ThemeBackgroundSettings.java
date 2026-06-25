@@ -65,12 +65,6 @@ public record ThemeBackgroundSettings(
     /// @param fallback the fallback background source, or `null` when inherited
     /// @param loadPolicy the background loading policy, or `null` when inherited
     public ThemeBackgroundSettings {
-        if (source != null && source.isEmpty()) {
-            source = null;
-        }
-        if (fallback != null && fallback.isEmpty()) {
-            fallback = null;
-        }
         opacity = validateOpacity(opacity);
     }
 
@@ -81,15 +75,8 @@ public record ThemeBackgroundSettings(
     static ThemeBackgroundSettings fromJson(JsonObject object) throws JsonParseException {
         Objects.requireNonNull(object);
 
-        @Nullable ThemeBackground source = null;
-        try {
-            source = ThemeBackground.fromJson(object);
-        } catch (JsonParseException | IllegalArgumentException e) {
-            LOG.warning("Ignored invalid theme background source: " + e.getMessage(), e);
-        }
-
         return new ThemeBackgroundSettings(
-                source,
+                ThemeBackground.fromJson(object),
                 readOpacity(object),
                 readFallback(object),
                 readLoadPolicy(object));
@@ -126,13 +113,9 @@ public record ThemeBackgroundSettings(
     public ThemeBackgroundSettings merge(ThemeBackgroundSettings patch) {
         Objects.requireNonNull(patch);
 
-        @Nullable ThemeBackground mergedSource = source != null && patch.source != null
-                ? source.merge(patch.source)
-                : patch.source != null ? patch.source : source;
+        @Nullable ThemeBackground mergedSource = patch.source != null ? patch.source : source;
         @Nullable Double mergedOpacity = patch.opacity != null ? patch.opacity : opacity;
-        @Nullable ThemeBackground mergedFallback = fallback != null && patch.fallback != null
-                ? fallback.merge(patch.fallback)
-                : patch.fallback != null ? patch.fallback : fallback;
+        @Nullable ThemeBackground mergedFallback = patch.fallback != null ? patch.fallback : fallback;
         @Nullable BackgroundLoadPolicy mergedLoadPolicy = patch.loadPolicy != null ? patch.loadPolicy : loadPolicy;
         return new ThemeBackgroundSettings(mergedSource, mergedOpacity, mergedFallback, mergedLoadPolicy);
     }
