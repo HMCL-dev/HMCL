@@ -376,6 +376,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     } while (true);
 
                     InputStream inputStream = null;
+                    boolean responseBodyConsumed = false;
                     try {
                         if (resumeRequested && responseCode == 416) {
                             resumeContext = null;
@@ -440,6 +441,7 @@ public abstract class FetchTask<T> extends Task<T> {
                                     contentLength,
                                     contentEncoding);
                             inputStream = null;
+                            responseBodyConsumed = true;
                         } catch (IOException | InterruptedException | RuntimeException | Error e) {
                             if (context.broken) {
                                 IOUtils.closeQuietly(context, e);
@@ -461,7 +463,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         return;
                     } finally {
                         IOUtils.closeQuietly(inputStream);
-                        if (connection != null)
+                        if (connection != null && !responseBodyConsumed)
                             closeHttpConnection(connection);
                     }
                 } catch (InterruptedException e) {
@@ -496,7 +498,7 @@ public abstract class FetchTask<T> extends Task<T> {
         throw toDownloadException(uri, null, exceptions);
     }
 
-    /// Releases resources associated with an HTTP URL connection.
+    /// Disconnects an HTTP URL connection whose response body will not be consumed.
     private static void closeHttpConnection(HttpURLConnection connection) {
         IOUtils.closeQuietly(connection.getErrorStream());
         connection.disconnect();
