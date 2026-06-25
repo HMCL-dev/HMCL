@@ -23,7 +23,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.http.HttpHeaders;
-import java.net.http.HttpResponse;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,17 +33,7 @@ import java.util.Map;
 public record UrlResponseInfo(URI uri, HttpHeaders headers) {
     /// Creates response metadata from a URL connection.
     public static UrlResponseInfo of(URLConnection connection) throws IOException {
-        return new UrlResponseInfo(toURI(connection.getURL()), HttpHeaders.of(headers(connection), (name, value) -> true));
-    }
-
-    /// Creates response metadata from an HTTP client response.
-    public static UrlResponseInfo of(HttpResponse<?> httpResponse) {
-        return new UrlResponseInfo(httpResponse.uri(), httpResponse.headers());
-    }
-
-    /// Creates response metadata from an HTTP client response-info object.
-    public static UrlResponseInfo of(URI uri, HttpResponse.ResponseInfo info) {
-        return new UrlResponseInfo(uri, info.headers());
+        return new UrlResponseInfo(toURI(connection.getURL()), headers(connection));
     }
 
     /// Converts a response URL into a URI.
@@ -57,10 +46,10 @@ public record UrlResponseInfo(URI uri, HttpHeaders headers) {
     }
 
     /// Copies named header fields from a URL connection.
-    private static Map<String, List<String>> headers(URLConnection connection) {
+    private static HttpHeaders headers(URLConnection connection) {
         Map<String, List<String>> headerFields = connection.getHeaderFields();
         if (headerFields == null || headerFields.isEmpty()) {
-            return Map.of();
+            return HttpHeaders.of(Map.of(), (k, v) -> true);
         }
 
         LinkedHashMap<String, List<String>> headers = new LinkedHashMap<>();
@@ -71,6 +60,6 @@ public record UrlResponseInfo(URI uri, HttpHeaders headers) {
                 headers.put(name, List.copyOf(values));
             }
         }
-        return headers;
+        return HttpHeaders.of(headers, (name, value) -> true);
     }
 }
