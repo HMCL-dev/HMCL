@@ -207,7 +207,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
         }, it -> profile.setSelectedVersion(it.getId()));
 
-        StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
+        StackPane.setAlignment(launchPane, Pos.BOTTOM_CENTER);
         {
             JFXButton launchButton = new JFXButton();
             launchButton.getStyleClass().add("launch-button");
@@ -216,7 +216,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 VBox graphic = new VBox();
                 graphic.setAlignment(Pos.CENTER);
                 Label launchLabel = new Label();
-                launchLabel.setStyle("-fx-font-size: 16px;");
+                launchLabel.setStyle("-fx-font-size: 19px;");
                 Label currentLabel = new Label();
                 currentLabel.setStyle("-fx-font-size: 12px;");
 
