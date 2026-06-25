@@ -864,8 +864,13 @@ public class PersonalizationPage extends StackPane {
                             case BUILTIN -> settings().builtinBackgroundIdProperty().set(Objects.requireNonNullElse(
                                     background.builtinBackgroundId(),
                                     BuiltinBackground.FALLBACK.id()));
-                            case CUSTOM -> settings().customBackgroundImagePathProperty().set(
-                                    background.imagePath() != null ? background.imagePath().toString() : null);
+                            case CUSTOM -> {
+                                if (background.imagePath() != null) {
+                                    settings().customBackgroundImagePathProperty().set(background.imagePath().toString());
+                                } else {
+                                    settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
+                                }
+                            }
                             case NETWORK -> {
                                 settings().networkBackgroundImageUrlProperty().set(background.networkImageUrl());
                                 settings().networkBackgroundImageCachePolicyProperty().set(Objects.requireNonNullElse(
@@ -1045,6 +1050,8 @@ public class PersonalizationPage extends StackPane {
                                         BuiltinBackground.FALLBACK.id());
                                 case CUSTOM -> background.imagePath() != null
                                         ? background.imagePath().toString()
+                                        : background.imageResource() != null
+                                        ? background.imageResource().name()
                                         : i18n("settings.custom");
                                 case NETWORK -> Objects.toString(background.networkImageUrl(), i18n("launcher.background.network"));
                                 case PAINT -> background.paint() != null

@@ -202,7 +202,7 @@ public final class Themes {
             ThemePackManager.ResolvedBackground background =
                     ThemePackManager.resolveCurrentBackground(ThemeResolveContext.current(getCurrentBrightness()));
             return switch (background.type()) {
-                case CUSTOM -> getImageThemeColor(background.imagePath(), fallback);
+                case CUSTOM -> getImageThemeColor(background.imagePath(), background.imageResource(), fallback);
                 case PAINT -> background.paint() instanceof Color color ? ThemeColor.of(color) : fallback;
                 case THEME_COLOR -> ThemeColor.DEFAULT;
                 case DEFAULT, BUILTIN, NETWORK -> fallback;
@@ -213,7 +213,18 @@ public final class Themes {
     }
 
     /// Returns a Monet seed color extracted from the current custom background image.
-    private static ThemeColor getImageThemeColor(@Nullable Path imageFile, ThemeColor fallback) {
+    private static ThemeColor getImageThemeColor(
+            @Nullable Path imageFile,
+            @Nullable ThemePackResource imageResource,
+            ThemeColor fallback) {
+        if (imageResource != null) {
+            try {
+                return WallpaperColorExtractor.extract(imageResource, fallback);
+            } catch (IOException | RuntimeException e) {
+                return fallback;
+            }
+        }
+
         if (imageFile == null) {
             return fallback;
         }
@@ -547,8 +558,15 @@ public final class Themes {
         @Nullable Image image = null;
         switch (resolvedBackground.type()) {
             case CUSTOM:
-                @Nullable Path imagePath = resolvedBackground.imagePath();
-                if (imagePath != null) {
+                @Nullable ThemePackResource imageResource = resolvedBackground.imageResource();
+                if (imageResource != null) {
+                    try {
+                        image = loadThemePackImage(imageResource);
+                    } catch (Exception e) {
+                        LOG.warning("Couldn't load background image", e);
+                    }
+                } else if (resolvedBackground.imagePath() != null) {
+                    Path imagePath = resolvedBackground.imagePath();
                     try {
                         image = Files.isDirectory(imagePath)
                                 ? randomImageIn(imagePath)
@@ -737,6 +755,11 @@ public final class Themes {
             return FXUtils.loadImage(WebURL.parseBrowserInput(url));
         }
         return FXUtils.loadImage(new CacheFileTask(url).run());
+    }
+
+    /// Loads one theme-pack image resource.
+    private static Image loadThemePackImage(ThemePackResource resource) throws Exception {
+        return FXUtils.loadImage(resource.openStream(), resource.name());
     }
 
     /// Creates a JavaFX paint background with the requested opacity.

@@ -71,9 +71,6 @@ public final class ThemePackManager {
     /// Directory where user-wide theme packs are discovered.
     private static final Path USER_THEME_PACKS_DIRECTORY = Metadata.HMCL_USER_HOME.resolve("themes");
 
-    /// Directory containing files extracted from installed theme packs on demand.
-    private static final String CACHE_DIRECTORY = ".cache";
-
     /// Default version used when exporting the current launcher appearance.
     private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
 
@@ -153,6 +150,7 @@ public final class ThemePackManager {
     /// @param type                    the launcher background source type
     /// @param builtinBackgroundId     the selected built-in wallpaper ID, or `null` when not using a built-in wallpaper
     /// @param imagePath               the resolved local image file or directory, or `null` when not using a local image
+    /// @param imageResource           the resolved theme-pack image resource, or `null` when not using a theme-pack image
     /// @param networkImageUrl         the remote image URL, or `null` when not using a network image
     /// @param networkImageCachePolicy whether the remote image cache policy is explicitly overridden, or `null` for default behavior
     /// @param paint                   the resolved background paint, or `null` when not using a paint background
@@ -161,6 +159,7 @@ public final class ThemePackManager {
             BackgroundType type,
             @Nullable String builtinBackgroundId,
             @Nullable Path imagePath,
+            @Nullable ThemePackResource imageResource,
             @Nullable String networkImageUrl,
             @Nullable NetworkBackgroundImageCachePolicy networkImageCachePolicy,
             @Nullable Paint paint,
@@ -180,7 +179,21 @@ public final class ThemePackManager {
                 @Nullable NetworkBackgroundImageCachePolicy networkImageCachePolicy,
                 @Nullable Paint paint,
                 double opacity) {
-            this(type, null, imagePath, networkImageUrl, networkImageCachePolicy, paint, opacity);
+            this(type, null, imagePath, null, networkImageUrl, networkImageCachePolicy, paint, opacity);
+        }
+
+        /// Creates a resolved launcher background with a theme-pack image resource.
+        ///
+        /// @param type          the launcher background source type
+        /// @param imagePath     the resolved local image file, or `null` when the resource is not a direct file
+        /// @param imageResource the resolved theme-pack image resource
+        /// @param opacity       the background opacity clamped to `[0, 1]`
+        public ResolvedBackground(
+                BackgroundType type,
+                @Nullable Path imagePath,
+                ThemePackResource imageResource,
+                double opacity) {
+            this(type, null, imagePath, imageResource, null, null, null, opacity);
         }
 
         /// Creates a resolved launcher background.
@@ -188,6 +201,27 @@ public final class ThemePackManager {
         /// @param type                    the launcher background source type
         /// @param builtinBackgroundId     the selected built-in wallpaper ID, or `null` when not using a built-in wallpaper
         /// @param imagePath               the resolved local image file or directory, or `null` when not using a local image
+        /// @param networkImageUrl         the remote image URL, or `null` when not using a network image
+        /// @param networkImageCachePolicy whether the remote image cache policy is explicitly overridden, or `null` for default behavior
+        /// @param paint                   the resolved background paint, or `null` when not using a paint background
+        /// @param opacity                 the background opacity clamped to `[0, 1]`
+        public ResolvedBackground(
+                BackgroundType type,
+                @Nullable String builtinBackgroundId,
+                @Nullable Path imagePath,
+                @Nullable String networkImageUrl,
+                @Nullable NetworkBackgroundImageCachePolicy networkImageCachePolicy,
+                @Nullable Paint paint,
+                double opacity) {
+            this(type, builtinBackgroundId, imagePath, null, networkImageUrl, networkImageCachePolicy, paint, opacity);
+        }
+
+        /// Creates a resolved launcher background.
+        ///
+        /// @param type                    the launcher background source type
+        /// @param builtinBackgroundId     the selected built-in wallpaper ID, or `null` when not using a built-in wallpaper
+        /// @param imagePath               the resolved local image file or directory, or `null` when not using a local image
+        /// @param imageResource           the resolved theme-pack image resource, or `null` when not using a theme-pack image
         /// @param networkImageUrl         the remote image URL, or `null` when not using a network image
         /// @param networkImageCachePolicy whether the remote image cache policy is explicitly overridden, or `null` for default behavior
         /// @param paint                   the resolved background paint, or `null` when not using a paint background
@@ -211,6 +245,7 @@ public final class ThemePackManager {
                     type,
                     builtinBackgroundId,
                     imagePath,
+                    imageResource,
                     networkImageUrl,
                     networkImageCachePolicy,
                     paint,
@@ -372,7 +407,6 @@ public final class ThemePackManager {
 
         Files.createDirectories(Objects.requireNonNull(targetFile.getParent()));
         deleteIfExists(temporaryFile);
-        deleteIfExists(installedThemePackCacheDirectory(loadedThemePack.manifest().id()));
         try {
             Files.copy(loadedThemePack.file(), temporaryFile, StandardCopyOption.REPLACE_EXISTING);
             moveReplacing(temporaryFile, targetFile);
@@ -407,7 +441,6 @@ public final class ThemePackManager {
         }
 
         deleteIfExists(targetFile);
-        deleteIfExists(installedThemePackCacheDirectory(themePack.manifest().id()));
 
         ThemeReference reference = settings().getThemeOrDefault();
         ThemePackManifest manifest = themePack.manifest();
@@ -974,12 +1007,13 @@ public final class ThemePackManager {
                     opacity);
         }
         if (source instanceof ThemeBackground.Image image) {
+            ThemePackResource resource = resolveInstalledAsset(
+                    themePackFile,
+                    requireNonBlank(image.path(), "background.path"));
             return new ResolvedBackground(
                     BackgroundType.CUSTOM,
-                    resolveInstalledAsset(themePackFile, requireNonBlank(image.path(), "background.path")),
-                    null,
-                    null,
-                    null,
+                    resource.file(),
+                    resource,
                     opacity);
         }
         if (source instanceof ThemeBackground.ThemeColor) {
@@ -1035,7 +1069,7 @@ public final class ThemePackManager {
     }
 
     /// Resolves one asset referenced by an installed theme.
-    static Path resolveInstalledAsset(Path themePackFile, String entryName) throws IOException {
+    static ThemePackResource resolveInstalledAsset(Path themePackFile, String entryName) throws IOException {
         String normalizedEntryName = ThemePackAsset.normalizeEntryName(entryName);
         Path installedFile = themePackFile.toAbsolutePath().normalize();
         @Nullable InstalledThemePack builtinThemePack = findBuiltinThemePack(installedFile);
@@ -1050,37 +1084,31 @@ public final class ThemePackManager {
             if (!Files.isRegularFile(assetFile)) {
                 throw new IOException("Installed theme-pack asset is missing: " + normalizedEntryName);
             }
-            return assetFile;
+            return new ThemePackResource.File(assetFile);
         }
         if (!Files.isRegularFile(installedFile)) {
             throw new IOException("Installed theme-pack file is missing: " + installedFile);
         }
 
-        Path cacheFile = cachedInstalledAssetFile(installedFile, normalizedEntryName);
         try (ZipFile zipFile = new ZipFile(installedFile.toFile(), StandardCharsets.UTF_8)) {
             ZipEntry entry = zipFile.getEntry(normalizedEntryName);
             if (entry == null || entry.isDirectory()) {
                 throw new IOException("Installed theme-pack asset is missing: " + normalizedEntryName);
             }
-            try (InputStream input = zipFile.getInputStream(entry)) {
-                copyInputStreamToCache(input, cacheFile);
-            }
         }
-        return cacheFile;
+        return new ThemePackResource.Zip(installedFile, normalizedEntryName);
     }
 
     /// Resolves one asset stored in a bundled theme pack.
-    private static Path resolveBuiltinAsset(InstalledThemePack themePack, String entryName) throws IOException {
-        Path cacheFile = cachedInstalledAssetFile(themePack.file(), entryName);
+    private static ThemePackResource resolveBuiltinAsset(InstalledThemePack themePack, String entryName) throws IOException {
         String id = requirePackageId(themePack.manifest().id());
         String resourcePath = "/assets/themes/" + id + "/" + entryName;
         try (InputStream input = ThemePackManager.class.getResourceAsStream(resourcePath)) {
             if (input == null) {
                 throw new IOException("Built-in theme-pack asset is missing: " + entryName);
             }
-            copyInputStreamToCache(input, cacheFile);
         }
-        return cacheFile;
+        return new ThemePackResource.Builtin(resourcePath, entryName);
     }
 
     /// Returns the installed theme-pack file for one manifest.
@@ -1106,55 +1134,10 @@ public final class ThemePackManager {
     private static Path builtinThemePackFile(String packId) {
         String id = requirePackageId(packId);
         return THEME_PACKS_DIRECTORY
-                .resolve(CACHE_DIRECTORY)
-                .resolve("builtin")
+                .resolve(".builtin")
                 .resolve(id + ThemePackExporter.FILE_EXTENSION)
                 .toAbsolutePath()
                 .normalize();
-    }
-
-    /// Returns the cache directory used for assets extracted from one installed theme pack.
-    private static Path installedThemePackCacheDirectory(String packId) {
-        String id = requirePackageId(packId);
-        return THEME_PACKS_DIRECTORY
-                .resolve(CACHE_DIRECTORY)
-                .resolve(id)
-                .toAbsolutePath()
-                .normalize();
-    }
-
-    /// Returns the cache file used for one installed asset.
-    private static Path cachedInstalledAssetFile(Path installedFile, String entryName) throws IOException {
-        String fileName = installedFile.getFileName().toString();
-        if (!fileName.endsWith(ThemePackExporter.FILE_EXTENSION)) {
-            throw new IOException("Installed theme-pack file has an unsupported extension: " + installedFile);
-        }
-
-        String packId = fileName.substring(0, fileName.length() - ThemePackExporter.FILE_EXTENSION.length());
-        Path cacheDirectory = installedThemePackCacheDirectory(packId);
-        Path cacheFile = cacheDirectory.resolve(entryName).normalize();
-        if (!cacheFile.startsWith(cacheDirectory)) {
-            throw new IOException("Theme-pack asset escapes the cache directory: " + entryName);
-        }
-        return cacheFile;
-    }
-
-    /// Copies one input stream into the installed-asset cache.
-    private static void copyInputStreamToCache(InputStream input, Path cacheFile) throws IOException {
-        Files.createDirectories(Objects.requireNonNull(cacheFile.getParent()));
-        Path temporaryFile = FileUtils.tmpSaveFile(cacheFile);
-        deleteIfExists(temporaryFile);
-        try {
-            Files.copy(input, temporaryFile, StandardCopyOption.REPLACE_EXISTING);
-            moveReplacing(temporaryFile, cacheFile);
-        } catch (IOException | RuntimeException e) {
-            try {
-                deleteIfExists(temporaryFile);
-            } catch (IOException suppressed) {
-                e.addSuppressed(suppressed);
-            }
-            throw e;
-        }
     }
 
     /// Returns whether a path is an installed theme-pack file candidate.
