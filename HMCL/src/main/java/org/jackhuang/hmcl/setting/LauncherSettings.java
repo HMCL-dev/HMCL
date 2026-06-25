@@ -89,6 +89,9 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Theme appearance override key for the primary background source.
     public static final String THEME_APPEARANCE_BACKGROUND = "background";
 
+    /// Theme appearance override key for background opacity.
+    public static final String THEME_APPEARANCE_BACKGROUND_OPACITY = "backgroundOpacity";
+
     /// Theme appearance override key for URL background image cache policy.
     public static final String THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY = "networkBackgroundImageCachePolicy";
 
@@ -97,9 +100,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// Theme appearance override key for background loading policy.
     public static final String THEME_APPEARANCE_BACKGROUND_LOAD_POLICY = "backgroundLoadPolicy";
-
-    /// Theme appearance override key for background opacity.
-    public static final String THEME_APPEARANCE_BACKGROUND_OPACITY = "backgroundOpacity";
 
     /// Gson instance used for launcher settings and related settings objects that depend on JavaFX properties.
     public static final Gson SETTINGS_GSON = new GsonBuilder()
@@ -269,6 +269,8 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     // UI
 
+    // Theme selection
+
     /// The installed theme selected by the launcher, or `null` when older settings do not contain a theme reference.
     @SerializedName("theme")
     private final ObjectProperty<@Nullable ThemeReference> theme = new SimpleObjectProperty<>(DEFAULT_THEME_REFERENCE);
@@ -282,6 +284,8 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     public ThemeReference getThemeOrDefault() {
         return Objects.requireNonNullElse(theme.get(), DEFAULT_THEME_REFERENCE);
     }
+
+    // Theme appearance overrides
 
     /// Theme appearance setting keys overridden by the launcher.
     @SerializedName("themeAppearanceOverrides")
@@ -306,6 +310,8 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
             themeAppearanceOverrides.remove(setting);
         }
     }
+
+    // Theme appearance values
 
     /// The configured theme brightness identifier.
     @SerializedName("themeBrightness")
@@ -343,46 +349,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return themeColorStyle;
     }
 
-    /// The font family used by launcher log views.
-    @SerializedName("logFontFamily")
-    private final StringProperty logFontFamily = new SimpleStringProperty();
-
-    /// Returns the launcher log font family property.
-    public StringProperty logFontFamilyProperty() {
-        return logFontFamily;
-    }
-
-    /// The launcher log font size.
-    @SerializedName("logFontSize")
-    private final DoubleProperty logFontSize = new SimpleDoubleProperty(12);
-
-    /// Returns the launcher log font size property.
-    public DoubleProperty logFontSizeProperty() {
-        return logFontSize;
-    }
-
-    /// The font family used by launcher chrome.
-    @SerializedName("launcherFontFamily")
-    private final StringProperty launcherFontFamily = new SimpleStringProperty();
-
-    /// Returns the launcher chrome font family property.
-    public StringProperty launcherFontFamilyProperty() {
-        return launcherFontFamily;
-    }
-
-    /// Whether UI animations are disabled.
-    @SerializedName("animationDisabled")
-    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
-            FXUtils.REDUCED_MOTION == Boolean.TRUE
-                    || !JavaRuntime.CURRENT_JIT_ENABLED
-                    || !FXUtils.GPU_ACCELERATION_ENABLED
-    );
-
-    /// Returns the UI animation disable property.
-    public BooleanProperty animationDisabledProperty() {
-        return animationDisabled;
-    }
-
     /// Whether the launcher title area is transparent.
     @SerializedName("titleTransparent")
     private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
@@ -391,6 +357,8 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     public BooleanProperty titleTransparentProperty() {
         return titleTransparent;
     }
+
+    // Background source
 
     /// The launcher background source type.
     @SerializedName("backgroundType")
@@ -428,6 +396,28 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return networkBackgroundImageUrl;
     }
 
+    /// The custom launcher background paint.
+    @SerializedName("customBackgroundPaint")
+    private final ObjectProperty<@Nullable Paint> customBackgroundPaint = new SimpleObjectProperty<>();
+
+    /// Returns the custom launcher background paint property.
+    public ObjectProperty<@Nullable Paint> customBackgroundPaintProperty() {
+        return customBackgroundPaint;
+    }
+
+    // Background appearance
+
+    /// The launcher background opacity value.
+    @SerializedName("backgroundOpacity")
+    private final DoubleProperty backgroundOpacity = new SimpleDoubleProperty(1.0);
+
+    /// Returns the custom launcher background opacity value property.
+    public DoubleProperty backgroundOpacityProperty() {
+        return backgroundOpacity;
+    }
+
+    // Background loading
+
     /// The URL image cache policy for network launcher backgrounds.
     @SerializedName("networkBackgroundImageCachePolicy")
     private final ObjectProperty<NetworkBackgroundImageCachePolicy> networkBackgroundImageCachePolicy =
@@ -436,15 +426,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Returns the URL image cache policy for network launcher backgrounds.
     public ObjectProperty<NetworkBackgroundImageCachePolicy> networkBackgroundImageCachePolicyProperty() {
         return networkBackgroundImageCachePolicy;
-    }
-
-    /// The custom launcher background paint.
-    @SerializedName("customBackgroundPaint")
-    private final ObjectProperty<@Nullable Paint> customBackgroundPaint = new SimpleObjectProperty<>();
-
-    /// Returns the custom launcher background paint property.
-    public ObjectProperty<@Nullable Paint> customBackgroundPaintProperty() {
-        return customBackgroundPaint;
     }
 
     /// The fallback source used when the selected launcher background cannot be loaded.
@@ -476,13 +457,48 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return backgroundLoadPolicy;
     }
 
-    /// The launcher background opacity value.
-    @SerializedName("backgroundOpacity")
-    private final DoubleProperty backgroundOpacity = new SimpleDoubleProperty(1.0);
+    // Fonts
 
-    /// Returns the custom launcher background opacity value property.
-    public DoubleProperty backgroundOpacityProperty() {
-        return backgroundOpacity;
+    /// The font family used by launcher log views.
+    @SerializedName("logFontFamily")
+    private final StringProperty logFontFamily = new SimpleStringProperty();
+
+    /// Returns the launcher log font family property.
+    public StringProperty logFontFamilyProperty() {
+        return logFontFamily;
+    }
+
+    /// The launcher log font size.
+    @SerializedName("logFontSize")
+    private final DoubleProperty logFontSize = new SimpleDoubleProperty(12);
+
+    /// Returns the launcher log font size property.
+    public DoubleProperty logFontSizeProperty() {
+        return logFontSize;
+    }
+
+    /// The font family used by launcher chrome.
+    @SerializedName("launcherFontFamily")
+    private final StringProperty launcherFontFamily = new SimpleStringProperty();
+
+    /// Returns the launcher chrome font family property.
+    public StringProperty launcherFontFamilyProperty() {
+        return launcherFontFamily;
+    }
+
+    // General UI
+
+    /// Whether UI animations are disabled.
+    @SerializedName("animationDisabled")
+    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
+            FXUtils.REDUCED_MOTION == Boolean.TRUE
+                    || !JavaRuntime.CURRENT_JIT_ENABLED
+                    || !FXUtils.GPU_ACCELERATION_ENABLED
+    );
+
+    /// Returns the UI animation disable property.
+    public BooleanProperty animationDisabledProperty() {
+        return animationDisabled;
     }
 
     // Networks

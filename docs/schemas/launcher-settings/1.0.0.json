@@ -42,9 +42,6 @@
     "theme": {
       "$ref": "#/$defs/themeSelection"
     },
-    "backgroundTheme": {
-      "$ref": "#/$defs/themeSelection"
-    },
     "themeAppearanceOverrides": {
       "type": "array",
       "items": {
@@ -54,10 +51,10 @@
           "themeColorStyle",
           "titleTransparent",
           "background",
+          "backgroundOpacity",
           "networkBackgroundImageCachePolicy",
           "backgroundFallback",
-          "backgroundLoadPolicy",
-          "backgroundOpacity"
+          "backgroundLoadPolicy"
         ]
       },
       "uniqueItems": true
@@ -86,18 +83,6 @@
         "FRUIT_SALAD"
       ]
     },
-    "logFontFamily": {
-      "type": "string"
-    },
-    "logFontSize": {
-      "type": "number"
-    },
-    "launcherFontFamily": {
-      "type": "string"
-    },
-    "animationDisabled": {
-      "type": "boolean"
-    },
     "titleTransparent": {
       "type": "boolean"
     },
@@ -120,13 +105,18 @@
     "networkBackgroundImageUrl": {
       "type": "string"
     },
+    "customBackgroundPaint": true,
+    "backgroundOpacity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
     "networkBackgroundImageCachePolicy": {
       "enum": [
         "ENABLED",
         "DISABLED"
       ]
     },
-    "customBackgroundPaint": true,
     "backgroundFallbackType": {
       "enum": [
         "BUILTIN",
@@ -143,10 +133,17 @@
         "SHOW_FALLBACK_WHILE_LOADING"
       ]
     },
-    "backgroundOpacity": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1
+    "logFontFamily": {
+      "type": "string"
+    },
+    "logFontSize": {
+      "type": "number"
+    },
+    "launcherFontFamily": {
+      "type": "string"
+    },
+    "animationDisabled": {
+      "type": "boolean"
     },
     "autoDownloadThreads": {
       "type": "boolean"
