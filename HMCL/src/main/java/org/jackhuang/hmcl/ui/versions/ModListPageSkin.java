@@ -582,8 +582,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
         BooleanProperty booleanProperty;
-        InvalidationListener activeListener;
-        WeakInvalidationListener weakActiveListener;
+        final InvalidationListener activeListener = observable -> {
+            ModInfoObject item = getItem();
+            if (item != null) {
+                content.setSubtitle(createModSubtitle(item.getModInfo()));
+            }
+        };
+        final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
 
         Tooltip warningTooltip;
 
@@ -618,11 +623,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             if (booleanProperty != null) {
-                if (weakActiveListener != null) {
-                    booleanProperty.removeListener(weakActiveListener);
-                    weakActiveListener = null;
-                }
-                activeListener = null;
+                booleanProperty.removeListener(weakActiveListener);
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
                 booleanProperty = null;
             }
@@ -686,8 +687,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
             // Re-read the current path after active toggling; failed renames leave it unchanged.
-            activeListener = observable -> content.setSubtitle(createModSubtitle(modInfo));
-            weakActiveListener = new WeakInvalidationListener(activeListener);
             dataItem.active.addListener(weakActiveListener);
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
