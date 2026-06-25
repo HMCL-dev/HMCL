@@ -61,7 +61,6 @@ import org.jackhuang.hmcl.theme.ThemePackManifest;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemeResolveContext;
 import org.jackhuang.hmcl.theme.ThemeReference;
-import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -518,18 +517,6 @@ public class PersonalizationPage extends StackPane {
         Objects.requireNonNull(refreshSelectedTheme);
 
         ThemeResolveContext context = ThemePackManager.currentResolveContext();
-        applyThemeChoiceNow(choice, context, refreshSelectedTheme);
-    }
-
-    /// Applies a theme choice on the JavaFX thread.
-    ///
-    /// @param choice               the selected theme choice
-    /// @param context              the theme condition context
-    /// @param refreshSelectedTheme refreshes the selector after the apply attempt
-    private static void applyThemeChoiceNow(
-            ThemeChoice choice,
-            ThemeResolveContext context,
-            Runnable refreshSelectedTheme) {
         try {
             choice.apply(context);
         } catch (IOException | RuntimeException e) {
