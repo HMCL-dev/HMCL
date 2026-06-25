@@ -133,6 +133,13 @@
         "name": {
           "$ref": "#/$defs/localizedText"
         },
+        "authors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/author"
+          },
+          "uniqueItems": true
+        },
         "thumbnail": {
           "$ref": "#/$defs/assetPath"
         },
@@ -307,6 +314,39 @@
         }
       },
       "allOf": [
+        {
+          "if": {
+            "not": {
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "id",
+                    "path"
+                  ]
+                },
+                {
+                  "required": [
+                    "id",
+                    "paint"
+                  ]
+                },
+                {
+                  "required": [
+                    "path",
+                    "paint"
+                  ]
+                }
+              ]
+            }
+          }
+        },
         {
           "if": {
             "properties": {

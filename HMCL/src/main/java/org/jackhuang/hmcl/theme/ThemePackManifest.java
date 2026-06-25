@@ -60,7 +60,7 @@ public record ThemePackManifest(
             new JsonSchema("theme-pack", new JsonSchema.Version(1, 0, 0));
 
     /// Package ID format that can be used directly as an installed theme-pack file name.
-    private static final Pattern PACKAGE_ID_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]+");
+    private static final Pattern PACKAGE_ID_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]*");
 
     /// Creates a theme-pack manifest.
     ///

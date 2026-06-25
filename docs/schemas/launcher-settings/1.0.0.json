@@ -119,6 +119,7 @@
     },
     "backgroundFallbackType": {
       "enum": [
+        "DEFAULT",
         "BUILTIN",
         "CUSTOM",
         "NETWORK",
