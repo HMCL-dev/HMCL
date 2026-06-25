@@ -47,7 +47,7 @@ public final class NetworkUtils {
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
 
-    public static final Duration TIMEOUT = Duration.ofSeconds(30);
+    public static final Duration TIMEOUT = Duration.ofSeconds(10);
     public static final int TIMEOUT_MILLIS = (int) TIMEOUT.toMillis();
 
     private NetworkUtils() {

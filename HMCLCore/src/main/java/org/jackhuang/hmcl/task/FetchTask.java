@@ -29,9 +29,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLConnection;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -47,7 +44,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
 
-    protected static final int DEFAULT_RETRY = 3;
+    protected static final int DEFAULT_RETRY = 5;
 
     protected final List<URI> uris;
     protected int retry = DEFAULT_RETRY;
@@ -86,7 +83,7 @@ public abstract class FetchTask<T> extends Task<T> {
         return getContext(null, false, null);
     }
 
-    protected abstract Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException;
+    protected abstract Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException;
 
     @Override
     public void execute() throws Exception {
@@ -136,8 +133,8 @@ public abstract class FetchTask<T> extends Task<T> {
     private static final class HttpResumeContext {
         private static final Pattern CONTENT_RANGE_PATTERN = Pattern.compile("bytes ([0-9]+)-([0-9]+)/([0-9]+)");
 
-        static @Nullable FetchTask.HttpResumeContext of(HttpResponse<?> response) throws IOException {
-            if (response.statusCode() != HttpURLConnection.HTTP_OK)
+        static @Nullable FetchTask.HttpResumeContext of(int statusCode, UrlResponseInfo response) throws IOException {
+            if (statusCode != HttpURLConnection.HTTP_OK)
                 return null;
 
             boolean acceptRanges = response.headers().firstValue("accept-ranges").orElse("").equalsIgnoreCase("bytes");
@@ -183,8 +180,8 @@ public abstract class FetchTask<T> extends Task<T> {
             return strongETag != null ? strongETag : Objects.requireNonNull(lastModified);
         }
 
-        boolean canResume(HttpResponse<?> response) throws IOException {
-            if (response.statusCode() != HttpURLConnection.HTTP_PARTIAL)
+        boolean canResume(int statusCode, UrlResponseInfo response) throws IOException {
+            if (statusCode != HttpURLConnection.HTTP_PARTIAL)
                 return false;
 
             var contentEncoding = ContentEncoding.fromHeaders(response.headers());
@@ -312,8 +309,10 @@ public abstract class FetchTask<T> extends Task<T> {
                     beforeDownload(uri);
                     updateProgress(0);
 
-                    HttpResponse<InputStream> response;
+                    HttpURLConnection connection = null;
+                    UrlResponseInfo responseInfo;
                     String bmclapiHash;
+                    int responseCode;
 
                     URI currentURI = uri;
 
@@ -329,51 +328,56 @@ public abstract class FetchTask<T> extends Task<T> {
                     }
 
                     do {
-                        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI)
-                                .timeout(NetworkUtils.TIMEOUT)
-                                .header("User-Agent", NetworkUtils.USER_AGENT);
-                        headers.forEach(requestBuilder::header);
-                        response = Holder.HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
+                        connection = NetworkUtils.createHttpConnection(currentURI);
+                        boolean keepConnection = false;
+                        try {
+                            headers.forEach(connection::setRequestProperty);
+                            responseCode = connection.getResponseCode();
+                            responseInfo = UrlResponseInfo.of(connection);
 
-                        bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
-                        if (DigestUtils.isSha1Digest(bmclapiHash)) {
-                            Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
-                            if (cache.isPresent()) {
-                                closeResponseBody(response);
-                                useCachedResult(cache.get());
-                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                                return;
-                            }
-                        }
-
-                        int code = response.statusCode();
-                        if (code >= 300 && code <= 308 && code != 306 && code != 304) {
-                            if (redirects == null) {
-                                redirects = new ArrayList<>();
-                            } else if (redirects.size() >= 20) {
-                                throw new IOException("Too much redirects");
+                            bmclapiHash = responseInfo.headers().firstValue("x-bmclapi-hash").orElse(null);
+                            if (DigestUtils.isSha1Digest(bmclapiHash)) {
+                                Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
+                                if (cache.isPresent()) {
+                                    useCachedResult(cache.get());
+                                    LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                                    return;
+                                }
                             }
 
-                            String location = response.headers().firstValue("Location").orElse(null);
-                            if (StringUtils.isBlank(location))
-                                throw new IOException("Redirected to an empty location");
+                            if (responseCode >= 300 && responseCode <= 308 && responseCode != 306 && responseCode != 304) {
+                                if (redirects == null) {
+                                    redirects = new ArrayList<>();
+                                } else if (redirects.size() >= 20) {
+                                    throw new IOException("Too much redirects");
+                                }
 
-                            URI target = currentURI.resolve(NetworkUtils.encodeLocation(location));
-                            redirects.add(target);
+                                String location = connection.getHeaderField("Location");
+                                if (StringUtils.isBlank(location))
+                                    throw new IOException("Redirected to an empty location");
 
-                            if (!NetworkUtils.isHttpUri(target))
-                                throw new IOException("Redirected to not http URI: " + target);
+                                URI target = currentURI.resolve(NetworkUtils.encodeLocation(location));
+                                redirects.add(target);
 
-                            closeResponseBody(response);
-                            currentURI = target;
-                        } else {
-                            break;
+                                if (!NetworkUtils.isHttpUri(target))
+                                    throw new IOException("Redirected to not http URI: " + target);
+
+                                currentURI = target;
+                            } else {
+                                keepConnection = true;
+                                break;
+                            }
+                        } finally {
+                            if (!keepConnection && connection != null) {
+                                closeHttpConnection(connection);
+                                connection = null;
+                            }
                         }
                     } while (true);
 
-                    boolean closeResponseBody = true;
+                    InputStream inputStream = null;
+                    boolean responseBodyConsumed = false;
                     try {
-                        int responseCode = response.statusCode();
                         if (resumeRequested && responseCode == 416) {
                             resumeContext = null;
                             discardContext(context);
@@ -385,7 +389,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         if (useCachedResult && responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
                             // Handle cache
                             try {
-                                Path cache = repository.getCachedRemoteFile(currentURI, false);
+                                Path cache = repository.getCachedRemoteFile(responseInfo.uri(), false);
                                 useCachedResult(cache);
                                 LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
                                 return;
@@ -406,14 +410,14 @@ public abstract class FetchTask<T> extends Task<T> {
                             throw new ResponseCodeException(uri, responseCode);
                         }
 
-                        long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
-                        var contentEncoding = ContentEncoding.fromHeaders(response.headers());
+                        long contentLength = responseInfo.headers().firstValueAsLong("content-length").orElse(-1L);
+                        var contentEncoding = ContentEncoding.fromHeaders(responseInfo.headers());
 
                         if (context == null) {
-                            context = getContext(response, checkETag, bmclapiHash);
-                            resumeContext = HttpResumeContext.of(response);
+                            context = getContext(responseInfo, checkETag, bmclapiHash);
+                            resumeContext = HttpResumeContext.of(responseCode, responseInfo);
                         } else if (resumeRequested) {
-                            if (resumeContext.canResume(response)) {
+                            if (resumeContext.canResume(responseCode, responseInfo)) {
                                 // Resume download
                                 LOG.info("Resuming " + resumeContext.uri + " from " + resumeContext.countUncompressed);
                             } else {
@@ -426,16 +430,18 @@ public abstract class FetchTask<T> extends Task<T> {
                             }
                         } else {
                             discardContext(context);
-                            context = getContext(response, checkETag, bmclapiHash);
-                            resumeContext = HttpResumeContext.of(response);
+                            context = getContext(responseInfo, checkETag, bmclapiHash);
+                            resumeContext = HttpResumeContext.of(responseCode, responseInfo);
                         }
 
                         try {
-                            closeResponseBody = false;
+                            inputStream = connection.getInputStream();
                             download(context,
-                                    resumeContext, response.body(),
+                                    resumeContext, inputStream,
                                     contentLength,
                                     contentEncoding);
+                            inputStream = null;
+                            responseBodyConsumed = true;
                         } catch (IOException | InterruptedException | RuntimeException | Error e) {
                             if (context.broken) {
                                 IOUtils.closeQuietly(context, e);
@@ -456,9 +462,9 @@ public abstract class FetchTask<T> extends Task<T> {
                         context = null;
                         return;
                     } finally {
-                        if (closeResponseBody) {
-                            closeResponseBody(response);
-                        }
+                        IOUtils.closeQuietly(inputStream);
+                        if (connection != null && !responseBodyConsumed)
+                            closeHttpConnection(connection);
                     }
                 } catch (InterruptedException e) {
                     throw e;
@@ -492,10 +498,10 @@ public abstract class FetchTask<T> extends Task<T> {
         throw toDownloadException(uri, null, exceptions);
     }
 
-    private static void closeResponseBody(HttpResponse<InputStream> response) {
-        InputStream body = response.body();
-        if (body != null)
-            IOUtils.closeQuietly(body);
+    /// Disconnects an HTTP URL connection whose response body will not be consumed.
+    private static void closeHttpConnection(HttpURLConnection connection) {
+        IOUtils.closeQuietly(connection.getErrorStream());
+        connection.disconnect();
     }
 
     private static void discardContext(@Nullable Context context) {
@@ -649,12 +655,6 @@ public abstract class FetchTask<T> extends Task<T> {
         CACHED
     }
 
-    private static final HttpResponse.BodyHandler<InputStream> BODY_HANDLER = responseInfo -> {
-        if (responseInfo.statusCode() / 100 == 2)
-            return HttpResponse.BodySubscribers.ofInputStream();
-        else
-            return HttpResponse.BodySubscribers.replacing(null);
-    };
 
     public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
     private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
@@ -726,24 +726,4 @@ public abstract class FetchTask<T> extends Task<T> {
         initialized = true;
     }
 
-    /// Ensure that [#HTTP_CLIENT] is initialized after ProxyManager has been initialized.
-    private static final class Holder {
-        private static final HttpClient HTTP_CLIENT;
-
-        static {
-            if (!initialized) {
-                throw new AssertionError("FetchTask.Holder accessed before ProxyManager initialization.");
-            }
-
-            boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
-
-            HTTP_CLIENT = HttpClient.newBuilder()
-                    .connectTimeout(NetworkUtils.TIMEOUT)
-                    .version(useHttp2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1)
-                    .build();
-        }
-
-        private Holder() {
-        }
-    }
 }
