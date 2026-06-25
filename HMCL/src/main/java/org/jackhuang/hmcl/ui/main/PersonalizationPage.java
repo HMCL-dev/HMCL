@@ -497,7 +497,7 @@ public class PersonalizationPage extends StackPane {
                 return false;
             }
 
-            ThemePackManager.apply(themePack.file(), themePack.manifest(), theme, context);
+            ThemePackManager.apply(themePack, theme);
             return true;
         }
 

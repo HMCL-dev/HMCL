@@ -197,7 +197,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         if (themePack.builtin()) {
             return;
         }
-        FXUtils.showFileInExplorer(themePack.file());
+        @Nullable Path file = themePack.file();
+        if (file != null) {
+            FXUtils.showFileInExplorer(file);
+        }
     }
 
     /// Asks for confirmation and deletes an installed theme pack.
