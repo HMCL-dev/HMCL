@@ -45,10 +45,12 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /// Note: for JFXDialog to work properly, the root node **MUST**
 /// be of type [StackPane]
@@ -118,16 +120,10 @@ public class JFXDialog extends StackPane {
     ///   - BOTTOM
     ///   - LEFT
     public JFXDialog(StackPane dialogContainer, Region content, DialogTransition transitionType, boolean overlayClose) {
-        setOverlayClose(overlayClose);
-        initialize();
-        setContent(content);
-        setDialogContainer(dialogContainer);
-        this.transitionType.set(transitionType);
-        // init change listeners
-        initChangeListeners();
+        this(dialogContainer, content, null, transitionType, overlayClose);
     }
 
-    public JFXDialog(StackPane dialogContainer, Region content, StackPane overlayPane, DialogTransition transitionType, boolean overlayClose) {
+    public JFXDialog(StackPane dialogContainer, Region content, @Nullable StackPane overlayPane, DialogTransition transitionType, boolean overlayClose) {
         setOverlayClose(overlayClose);
         setOverlayPane(overlayPane);
         initialize();
@@ -147,6 +143,9 @@ public class JFXDialog extends StackPane {
             }
         });
         this.overlayPaneProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue == null) oldValue = JFXDialog.this;
+            if (newValue == null) newValue = JFXDialog.this;
+            if (oldValue == newValue) return;
             oldValue.getStyleClass().remove("jfx-dialog-overlay-pane");
             oldValue.setBackground(null);
             oldValue.removeEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
@@ -247,10 +246,10 @@ public class JFXDialog extends StackPane {
 
     @NotNull
     public final StackPane getOverlayPane() {
-        return this.overlayPaneProperty().get();
+        return Objects.requireNonNullElse(this.overlayPaneProperty().get(), this);
     }
 
-    public final void setOverlayPane(final StackPane overlayPane) {
+    public final void setOverlayPane(final @Nullable StackPane overlayPane) {
         this.overlayPaneProperty().set(overlayPane == null ? this : overlayPane);
     }
 

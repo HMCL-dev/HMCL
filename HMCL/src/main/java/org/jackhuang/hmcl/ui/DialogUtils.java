@@ -78,10 +78,10 @@ public final class DialogUtils {
             dialog = new JFXDialog(
                     container,
                     dialogPane,
+                    overlayPane,
                     AnimationUtils.isAnimationEnabled() ? JFXDialog.DialogTransition.CENTER : JFXDialog.DialogTransition.NONE,
                     false
             );
-            if (overlayPane != null) dialog.setOverlayPane(overlayPane);
 
             container.getProperties().put(PROPERTY_DIALOG_INSTANCE, dialog);
             container.getProperties().put(PROPERTY_DIALOG_PANE_INSTANCE, dialogPane);
