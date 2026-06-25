@@ -37,12 +37,12 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.mod.*;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
-import org.jackhuang.hmcl.resourcepack.ResourcePackFile;
-import org.jackhuang.hmcl.resourcepack.ResourcePackManager;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.addon.*;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -194,13 +194,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!Boolean.TRUE.equals(ConfigHolder.config().getShownTips().get(TIP_KEY)) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
+        if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
             Controllers.confirm(
                     i18n("resourcepack.warning.manipulate"),
                     i18n("message.warning"),
                     MessageDialogPane.MessageType.WARNING,
                     () -> {
-                        ConfigHolder.config().getShownTips().put(TIP_KEY, true);
+                        SettingsManager.state().getShownTips().put(TIP_KEY, true);
                         setSelectedEnabled(selectedItems, true);
                     }, null);
         } else {
@@ -237,15 +237,15 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {
-                                Controllers.dialog(i18n("mods.check_updates.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                             } else if (result.isEmpty()) {
-                                Controllers.dialog(i18n("mods.check_updates.empty"));
+                                Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
                                 Controllers.navigateForward(new AddonUpdatesPage<>(resourcePackManager, result));
                             }
                         })
                         .withStagesHints("update.checking"),
-                i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
+                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
         if (profile.getRepository().isModpack(instanceId)) {
             Controllers.confirm(
@@ -293,7 +293,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
                         createToolbarButton2(i18n("button.disable"), SVG.CLOSE, () ->
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
-                        createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 control.checkUpdates(
                                         listView.getSelectionModel().getSelectedItems().stream().map(ResourcePackInfoObject::getFile).toList()
                                 )
@@ -336,7 +336,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
                         createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, control::onOpenFolder),
-                        createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 control.checkUpdates(listView.getItems().stream().map(ResourcePackInfoObject::getFile).toList())
                         ),
                         createToolbarButton2(i18n("download"), SVG.DOWNLOAD, control::onDownload),
@@ -493,14 +493,14 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox = new JFXCheckBox() {
                 @Override
                 public void fire() {
-                    if (!Boolean.TRUE.equals(ConfigHolder.config().getShownTips().get(TIP_KEY)) && !isSelected() && object != null && !object.getFile().isCompatible()) {
+                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && object != null && !object.getFile().isCompatible()) {
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
                                 MessageDialogPane.MessageType.INFO,
                                 () -> {
                                     super.fire();
-                                    ConfigHolder.config().getShownTips().put(TIP_KEY, true);
+                                    SettingsManager.state().getShownTips().put(TIP_KEY, true);
                                 }, null);
                     } else {
                         super.fire();
@@ -601,24 +601,24 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             setBody(descriptionPane);
 
-            for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
-                    pair("mods.curseforge", CurseForgeRemoteModRepository.RESOURCE_PACKS),
-                    pair("mods.modrinth", ModrinthRemoteModRepository.RESOURCE_PACKS)
+            for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
+                    pair("addon.curseforge", CurseForgeRemoteAddonRepository.RESOURCE_PACKS),
+                    pair("addon.modrinth", ModrinthRemoteAddonRepository.RESOURCE_PACKS)
             )) {
-                RemoteModRepository repository = item.getValue();
+                RemoteAddonRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                 Task.runAsync(() -> {
-                    Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
+                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
                     if (versionOptional.isPresent()) {
-                        RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
+                        RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                         FXUtils.runInFX(() -> {
                             button.setOnAction(e -> {
                                 fireEvent(new DialogCloseEvent());
                                 Controllers.navigate(new DownloadPage(
-                                        repository instanceof CurseForgeRemoteModRepository
+                                        repository instanceof CurseForgeRemoteAddonRepository
                                                 ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
                                                 : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
-                                        remoteMod,
+                                        remoteAddon,
                                         new Profile.ProfileVersion(page.profile, page.instanceId),
                                         org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
                                 ));
