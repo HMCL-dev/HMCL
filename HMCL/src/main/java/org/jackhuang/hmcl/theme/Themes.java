@@ -255,8 +255,8 @@ public final class Themes {
     /// The last loaded background source used to rebuild the JavaFX background without reloading images.
     private static @Nullable LoadedBackground loadedBackground;
 
-    /// Monotonic counter used to ignore obsolete asynchronous background updates.
-    private static int backgroundUpdateCount = 0;
+    /// Current background load generation used to ignore obsolete asynchronous updates.
+    private static int backgroundLoadGeneration = 0;
 
     /// Whether JavaFX background loading has been requested by the UI.
     private static boolean backgroundUpdatesStarted = false;
@@ -493,21 +493,21 @@ public final class Themes {
 
     /// Loads the initial JavaFX launcher background synchronously before the UI uses it.
     private static void loadInitialBackground() {
-        final int currentCount = ++backgroundUpdateCount;
-        applyLoadedBackground(loadBackground(), currentCount);
+        final int currentGeneration = ++backgroundLoadGeneration;
+        applyLoadedBackground(loadBackground(), currentGeneration);
     }
 
     /// Refreshes the current JavaFX launcher background asynchronously.
     public static void refreshBackground() {
-        final int currentCount = ++backgroundUpdateCount;
+        final int currentGeneration = ++backgroundLoadGeneration;
         if (getBackgroundLoadPolicy() == BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING) {
-            applyLoadedBackground(loadFallbackBackground(), currentCount);
+            applyLoadedBackground(loadFallbackBackground(), currentGeneration);
         }
         Task.supplyAsync(Schedulers.io(), Themes::loadBackground)
                 .setName("Update background")
                 .whenComplete(Schedulers.javafx(), (newLoadedBackground, exception) -> {
                     if (exception == null) {
-                        applyLoadedBackground(newLoadedBackground, currentCount);
+                        applyLoadedBackground(newLoadedBackground, currentGeneration);
                     } else {
                         LOG.warning("Failed to update background", exception);
                     }
@@ -515,8 +515,8 @@ public final class Themes {
     }
 
     /// Applies one loaded background when it is still the newest requested update.
-    private static void applyLoadedBackground(LoadedBackground newLoadedBackground, int updateCount) {
-        if (backgroundUpdateCount != updateCount) {
+    private static void applyLoadedBackground(LoadedBackground newLoadedBackground, int generation) {
+        if (backgroundLoadGeneration != generation) {
             return;
         }
 
@@ -530,7 +530,7 @@ public final class Themes {
     /// @param newLoadedBackground the preloaded background
     public static void applyLoadedBackground(LoadedBackground newLoadedBackground) {
         Objects.requireNonNull(newLoadedBackground);
-        applyLoadedBackground(newLoadedBackground, ++backgroundUpdateCount);
+        applyLoadedBackground(newLoadedBackground, ++backgroundLoadGeneration);
     }
 
     /// Loads the current JavaFX launcher background.
