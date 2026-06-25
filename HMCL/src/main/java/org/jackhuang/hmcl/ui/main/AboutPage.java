@@ -51,11 +51,28 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList about = new ComponentList();
         {
+            var hellcraft = LineButton.createExternalLinkButton("https://discord.gg/RZuNWDvDQg");
+            hellcraft.setLargeTitle(true);
+            hellcraft.setLeading(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+            hellcraft.setTitle("Hellcraft 2");
+            hellcraft.setSubtitle("Minecraft event by Infernum Studios");
+
+            var infernum = LineButton.createExternalLinkButton("https://github.com/Alvaro842DEV/Infernum-Launcher");
+            infernum.setLargeTitle(true);
+            infernum.setTitle("Infernum Launcher");
+            infernum.setSubtitle(Metadata.VERSION);
+
+            about.getContent().setAll(hellcraft, infernum);
+        }
+
+        // Créditos al proyecto original (HMCL) para cumplir la
+        // licencia GPLv3
+        ComponentList upstream = new ComponentList();
+        {
             var launcher = LineButton.createExternalLinkButton(Metadata.PUBLISH_URL);
             launcher.setLargeTitle(true);
-            launcher.setLeading(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             launcher.setTitle("Hello Minecraft! Launcher");
-            launcher.setSubtitle(Metadata.VERSION);
+            launcher.setSubtitle("The original launcher this project is based on");
 
             var author = LineButton.createExternalLinkButton("https://space.bilibili.com/1445341");
             author.setLargeTitle(true);
@@ -63,10 +80,8 @@ public final class AboutPage extends SpinnerPane {
             author.setTitle("huanghongxun");
             author.setSubtitle(i18n("about.author.statement"));
 
-            about.getContent().setAll(launcher, author);
+            upstream.getContent().setAll(launcher, author);
         }
-
-        ComponentList thanks = loadIconedTwoLineList("/assets/about/thanks.json");
 
         ComponentList deps = loadIconedTwoLineList("/assets/about/deps.json");
 
@@ -93,8 +108,8 @@ public final class AboutPage extends SpinnerPane {
         content.getChildren().setAll(
                 ComponentList.createComponentListTitle(i18n("about")),
                 about,
-                ComponentList.createComponentListTitle(i18n("about.thanks_to")),
-                thanks,
+                ComponentList.createComponentListTitle("Based on"),
+                upstream,
                 ComponentList.createComponentListTitle(i18n("about.dependency")),
                 deps,
                 ComponentList.createComponentListTitle(i18n("about.legal")),
