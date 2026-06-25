@@ -32,7 +32,6 @@ import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -874,7 +873,8 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            MultiFileItem<BackgroundType> backgroundItem = new MultiFileItem<>();
+            RadioChoiceList<BackgroundType> backgroundItem = new RadioChoiceList<>();
+            backgroundItem.setFallbackValue(BackgroundType.DEFAULT);
             ComponentSublist backgroundSublist = new ComponentSublist();
             backgroundSublist.setTitle(i18n("launcher.background"));
             backgroundSublist.setHasSubtitle(true);
@@ -884,54 +884,37 @@ public class PersonalizationPage extends StackPane {
             builtinBackgroundComboBox.valueProperty().bindBidirectional(settings().builtinBackgroundIdProperty());
             FXUtils.setLimitWidth(builtinBackgroundComboBox, 160);
 
-            MultiFileItem.Option<BackgroundType> builtinBackgroundOption =
-                    new MultiFileItem.Option<>(i18n("launcher.background.builtin"), BackgroundType.BUILTIN) {
+            RadioChoiceList.Choice<BackgroundType> builtinBackgroundOption =
+                    new RadioChoiceList.Choice<>(i18n("launcher.background.builtin"), BackgroundType.BUILTIN) {
                         @Override
-                        protected Node createItem(ToggleGroup group) {
-                            BorderPane pane = new BorderPane();
-                            pane.setPadding(new Insets(3));
-                            FXUtils.setLimitHeight(pane, 30);
-
-                            left.setText(title);
-                            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                            left.setToggleGroup(group);
-                            left.setUserData(data);
-                            if (StringUtils.isNotBlank(tooltip)) {
-                                FXUtils.installFastTooltip(left, tooltip);
-                            }
-                            pane.setLeft(left);
-
-                            builtinBackgroundComboBox.disableProperty().bind(left.selectedProperty().not());
-                            BorderPane.setAlignment(builtinBackgroundComboBox, Pos.CENTER_RIGHT);
-                            pane.setRight(builtinBackgroundComboBox);
-                            return pane;
+                        protected Node createRightNode() {
+                            return builtinBackgroundComboBox;
                         }
                     };
 
-            backgroundItem.loadChildren(Arrays.asList(
-                    new MultiFileItem.Option<>(i18n("message.default"), BackgroundType.DEFAULT)
+            backgroundItem.setChoices(Arrays.asList(
+                    new RadioChoiceList.Choice<>(i18n("message.default"), BackgroundType.DEFAULT)
                             .setTooltip(i18n("launcher.background.default.tooltip")),
                     builtinBackgroundOption,
-                    new MultiFileItem.Option<>(i18n("launcher.background.theme_color"), BackgroundType.THEME_COLOR),
-                    new MultiFileItem.FileOption<>(i18n("settings.custom"), BackgroundType.CUSTOM)
+                    new RadioChoiceList.Choice<>(i18n("launcher.background.theme_color"), BackgroundType.THEME_COLOR),
+                    new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .addExtensionFilter(FXUtils.getImageExtensionFilter())
                             .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY)
-                            .bindBidirectional(settings().customBackgroundImagePathProperty()),
-                    new MultiFileItem.StringOption<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
+                            .bindPathBidirectional(settings().customBackgroundImagePathProperty()),
+                    new RadioChoiceList.TextChoice<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
                             .setValidators(new URLValidator(true))
-                            .bindBidirectional(settings().networkBackgroundImageUrlProperty()),
-                    new MultiFileItem.PaintOption<>(i18n("launcher.background.paint"), BackgroundType.PAINT)
-                            .bindBidirectional(settings().customBackgroundPaintProperty())
+                            .bindTextBidirectional(settings().networkBackgroundImageUrlProperty()),
+                    new PaintChoice(i18n("launcher.background.paint"), BackgroundType.PAINT, settings().customBackgroundPaintProperty())
             ));
-            backgroundItem.selectedDataProperty().bindBidirectional(settings().backgroundTypeProperty());
+            backgroundItem.selectedValueProperty().bindBidirectional(settings().backgroundTypeProperty());
             JFXButton backgroundOverrideButton = createThemeAppearanceOverrideButton();
             backgroundSublist.setTitleRight(backgroundOverrideButton);
             InvalidationListener refreshBackgroundOverride = ignored -> updateThemeAppearanceOverrideButton(
                     backgroundOverrideButton,
                     !settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
             addThemeAppearanceRefreshListener(refreshBackgroundOverride);
-            backgroundItem.selectedDataProperty().addListener((observable, oldValue, newValue) ->
+            backgroundItem.selectedValueProperty().addListener((observable, oldValue, newValue) ->
                     settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
             settings().builtinBackgroundIdProperty().addListener(ignored ->
                     settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
@@ -1005,22 +988,21 @@ public class PersonalizationPage extends StackPane {
             backgroundFallbackSublist.setTitle(i18n("launcher.background.fallback"));
             backgroundFallbackSublist.setHasSubtitle(true);
 
-            MultiFileItem<BackgroundType> backgroundFallbackItem = new MultiFileItem<>();
-            backgroundFallbackItem.setFallbackData(BackgroundType.BUILTIN);
-            backgroundFallbackItem.loadChildren(Arrays.asList(
-                    new MultiFileItem.Option<>(i18n("launcher.background.fallback.builtin"), BackgroundType.BUILTIN),
-                    new MultiFileItem.Option<>(i18n("launcher.background.fallback.theme_color"), BackgroundType.THEME_COLOR),
-                    new MultiFileItem.PaintOption<BackgroundType>(i18n("launcher.background.fallback.paint"), BackgroundType.PAINT)
-                            .bindBidirectional(settings().backgroundFallbackPaintProperty())
+            RadioChoiceList<BackgroundType> backgroundFallbackItem = new RadioChoiceList<>();
+            backgroundFallbackItem.setFallbackValue(BackgroundType.BUILTIN);
+            backgroundFallbackItem.setChoices(Arrays.asList(
+                    new RadioChoiceList.Choice<>(i18n("launcher.background.fallback.builtin"), BackgroundType.BUILTIN),
+                    new RadioChoiceList.Choice<>(i18n("launcher.background.fallback.theme_color"), BackgroundType.THEME_COLOR),
+                    new PaintChoice(i18n("launcher.background.fallback.paint"), BackgroundType.PAINT, settings().backgroundFallbackPaintProperty())
             ));
-            backgroundFallbackItem.selectedDataProperty().bindBidirectional(settings().backgroundFallbackTypeProperty());
+            backgroundFallbackItem.selectedValueProperty().bindBidirectional(settings().backgroundFallbackTypeProperty());
             JFXButton backgroundFallbackOverrideButton = createThemeAppearanceOverrideButton();
             backgroundFallbackSublist.setTitleRight(backgroundFallbackOverrideButton);
             InvalidationListener refreshBackgroundFallbackOverride = ignored -> updateThemeAppearanceOverrideButton(
                     backgroundFallbackOverrideButton,
                     !settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
             addThemeAppearanceRefreshListener(refreshBackgroundFallbackOverride);
-            backgroundFallbackItem.selectedDataProperty().addListener((observable, oldValue, newValue) ->
+            backgroundFallbackItem.selectedValueProperty().addListener((observable, oldValue, newValue) ->
                     settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true));
             settings().backgroundFallbackPaintProperty().addListener(ignored ->
                     settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true));
@@ -1053,7 +1035,7 @@ public class PersonalizationPage extends StackPane {
             backgroundFallbackSublist.getContent().setAll(backgroundFallbackItem);
             backgroundFallbackSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         if (settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
-                            BackgroundType type = backgroundFallbackItem.selectedDataProperty().get();
+                            BackgroundType type = backgroundFallbackItem.selectedValueProperty().get();
                             return switch (type) {
                                 case PAINT -> {
                                     Paint backgroundFallbackPaint = settings().backgroundFallbackPaintProperty().get();
@@ -1078,7 +1060,7 @@ public class PersonalizationPage extends StackPane {
                             return i18n("launcher.background.fallback.builtin");
                         }
                     },
-                    backgroundFallbackItem.selectedDataProperty(),
+                    backgroundFallbackItem.selectedValueProperty(),
                     settings().getThemeAppearanceOverrides(),
                     settings().themeProperty(),
                     settings().themeBrightnessProperty(),
@@ -1107,7 +1089,7 @@ public class PersonalizationPage extends StackPane {
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         if (settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
-                            BackgroundType type = backgroundItem.selectedDataProperty().get();
+                            BackgroundType type = backgroundItem.selectedValueProperty().get();
                             return switch (type) {
                                 case DEFAULT -> i18n("message.default");
                                 case THEME_COLOR -> i18n("launcher.background.theme_color");
@@ -1145,7 +1127,7 @@ public class PersonalizationPage extends StackPane {
                             return i18n("message.default");
                         }
                     },
-                    backgroundItem.selectedDataProperty(),
+                    backgroundItem.selectedValueProperty(),
                     settings().getThemeAppearanceOverrides(),
                     settings().themeProperty(),
                     settings().themeBrightnessProperty(),
@@ -1416,6 +1398,28 @@ public class PersonalizationPage extends StackPane {
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.fonts")), fontPane);
+        }
+    }
+
+    /// Choice with a right-side paint picker.
+    private static final class PaintChoice extends RadioChoiceList.Choice<BackgroundType> {
+        /// The paint picker owned by this option.
+        private final ColorPicker colorPicker = new JFXColorPicker();
+
+        /// Creates a paint choice.
+        ///
+        /// @param title    the choice title
+        /// @param value    the selected background type
+        /// @param property the paint property edited by this choice
+        private PaintChoice(String title, BackgroundType value, Property<Paint> property) {
+            super(title, value);
+            FXUtils.bindPaint(colorPicker, property);
+        }
+
+        /// Creates the right-side paint picker.
+        @Override
+        protected Node createRightNode() {
+            return colorPicker;
         }
     }
 }

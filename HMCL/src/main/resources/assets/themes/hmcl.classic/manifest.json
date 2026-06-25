@@ -27,11 +27,7 @@
       "background" : {
         "type" : "builtin",
         "id" : "2021-08-26",
-        "opacity" : 1.0,
-        "fallback" : {
-          "type" : "builtin"
-        },
-        "loadPolicy" : "wait_for_background"
+        "opacity" : 1.0
       },
       "titleBar" : {
         "transparent" : false
@@ -46,11 +42,7 @@
       "background" : {
         "type" : "builtin",
         "id" : "2016-02-25",
-        "opacity" : 1.0,
-        "fallback" : {
-          "type" : "builtin"
-        },
-        "loadPolicy" : "wait_for_background"
+        "opacity" : 1.0
       },
       "titleBar" : {
         "transparent" : true
