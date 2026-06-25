@@ -44,7 +44,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
 
-    protected static final int DEFAULT_RETRY = 3;
+    protected static final int DEFAULT_RETRY = 5;
 
     protected final List<URI> uris;
     protected int retry = DEFAULT_RETRY;

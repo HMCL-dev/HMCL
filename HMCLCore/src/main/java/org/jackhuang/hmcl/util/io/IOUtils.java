@@ -41,7 +41,7 @@ public final class IOUtils {
     private IOUtils() {
     }
 
-    public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
+    public static final int DEFAULT_BUFFER_SIZE = 256 * 1024;
 
     public static BufferedReader newBufferedReaderMaybeNativeEncoding(Path file) throws IOException {
         if (NATIVE_CHARSET == UTF_8)
