@@ -474,13 +474,6 @@ public final class ThemePackManager {
             ThemeResolveContext context) throws IOException {
         Objects.requireNonNull(themePackFile);
         Objects.requireNonNull(context);
-        applyTheme(manifest, theme);
-    }
-
-    /// Applies one theme from an installed theme-pack file to current launcher settings.
-    private static void applyTheme(
-            ThemePackManifest manifest,
-            Theme theme) {
         Objects.requireNonNull(manifest);
         Objects.requireNonNull(theme);
 
