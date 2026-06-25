@@ -307,7 +307,7 @@ public final class Config extends ObservableSetting {
     // UI
 
     @SerializedName("themeBrightness")
-    private final StringProperty themeBrightness = new SimpleStringProperty("light");
+    private final StringProperty themeBrightness = new SimpleStringProperty("dark");
 
     public StringProperty themeBrightnessProperty() {
         return themeBrightness;

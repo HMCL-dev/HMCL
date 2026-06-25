@@ -25,7 +25,6 @@ import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorScheme;
-import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -159,10 +158,7 @@ public final class StyleSheets {
     }
 
     private static String getThemeStyleSheet() {
-        final String blueCss = "/assets/css/blue.css";
-
-        if (Theme.DEFAULT.equals(Themes.getTheme()))
-            return blueCss;
+        final String fallbackCss = "/assets/css/blue.css";
 
         ColorScheme scheme = Themes.getColorScheme();
 
@@ -184,7 +180,7 @@ public final class StyleSheets {
         addColor(builder, scheme, ColorRole.INVERSE_SURFACE, 0.8);
 
         builder.append("}\n");
-        return toStyleSheetUri(builder.toString(), blueCss);
+        return toStyleSheetUri(builder.toString(), fallbackCss);
     }
 
     public static void init(Scene scene) {

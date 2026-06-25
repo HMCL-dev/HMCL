@@ -41,10 +41,15 @@ import java.util.Objects;
 @JsonSerializable
 public record ThemeColor(@NotNull String name, @NotNull Color color) {
 
-    public static final ThemeColor DEFAULT = new ThemeColor("blue", Color.web("#5C6BC0"));
+    /*
+     * monetfx se encarga de generar la paleta de colores
+     * con ese único código de color
+     */
+    public static final ThemeColor DEFAULT = new ThemeColor("infernum", Color.web("#E2461E"));
 
     public static final List<ThemeColor> STANDARD_COLORS = List.of(
             DEFAULT,
+            new ThemeColor("blue", Color.web("#5C6BC0")),
             new ThemeColor("darker_blue", Color.web("#283593")),
             new ThemeColor("green", Color.web("#43A047")),
             new ThemeColor("orange", Color.web("#E67E22")),
