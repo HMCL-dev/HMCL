@@ -31,7 +31,8 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Tests for instance mods list file name change
+ * Tests for instance mods list file name change.
+ *
  * @author dev@howxu.cn
  */
 final class ModListPageTest {

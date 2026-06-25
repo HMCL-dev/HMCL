@@ -21,6 +21,7 @@ import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -580,6 +581,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
         BooleanProperty booleanProperty;
         InvalidationListener activeListener;
+        WeakInvalidationListener weakActiveListener;
 
         Tooltip warningTooltip;
 
@@ -614,10 +616,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             if (booleanProperty != null) {
-                if (activeListener != null) {
-                    booleanProperty.removeListener(activeListener);
-                    activeListener = null;
+                if (weakActiveListener != null) {
+                    booleanProperty.removeListener(weakActiveListener);
+                    weakActiveListener = null;
                 }
+                activeListener = null;
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
                 booleanProperty = null;
             }
@@ -680,12 +683,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
-            // Re-read the current path after active toggling
-            // failed renames leave it unchanged
-            // Note: a more deep change is on HMCLCore, adding ReadOnlyProperty will forcing waiting for file name change result
-            // but it's more out of scope, these lines also does good
+            // Re-read the current path after active toggling; failed renames leave it unchanged.
             activeListener = observable -> content.setSubtitle(createModSubtitle(modInfo));
-            dataItem.active.addListener(activeListener);
+            weakActiveListener = new WeakInvalidationListener(activeListener);
+            dataItem.active.addListener(weakActiveListener);
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()
