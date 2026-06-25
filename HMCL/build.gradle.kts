@@ -26,7 +26,7 @@ val projectConfig = PropertiesUtils.load(rootProject.file("config/project.proper
 
 val isOfficial = JenkinsUtils.IS_ON_CI || GitHubActionUtils.IS_ON_OFFICIAL_REPO
 
-val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
+val versionType = System.getenv("VERSION_TYPE") ?: "stable"
 val versionRoot = System.getenv("VERSION_ROOT") ?: projectConfig.getProperty("versionRoot") ?: "3"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
