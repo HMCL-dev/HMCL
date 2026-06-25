@@ -518,7 +518,7 @@ public class PersonalizationPage extends StackPane {
         Objects.requireNonNull(refreshSelectedTheme);
 
         ThemeResolveContext context = ThemePackManager.currentResolveContext();
-        applyThemeChoiceNow(choice, context, refreshSelectedTheme, null);
+        applyThemeChoiceNow(choice, context, refreshSelectedTheme);
     }
 
     /// Applies a theme choice on the JavaFX thread.
@@ -526,17 +526,12 @@ public class PersonalizationPage extends StackPane {
     /// @param choice               the selected theme choice
     /// @param context              the theme condition context
     /// @param refreshSelectedTheme refreshes the selector after the apply attempt
-    /// @param loadedBackground     the preloaded background, or `null` when not available
     private static void applyThemeChoiceNow(
             ThemeChoice choice,
             ThemeResolveContext context,
-            Runnable refreshSelectedTheme,
-            @Nullable Themes.LoadedBackground loadedBackground) {
+            Runnable refreshSelectedTheme) {
         try {
-            boolean applied = choice.apply(context);
-            if (applied && loadedBackground != null) {
-                Themes.applyLoadedBackground(loadedBackground);
-            }
+            choice.apply(context);
         } catch (IOException | RuntimeException e) {
             showThemePackError(i18n("theme_pack.apply.failed"), e);
         } finally {
