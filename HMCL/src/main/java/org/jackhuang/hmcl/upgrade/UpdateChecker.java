@@ -105,18 +105,20 @@ public final class UpdateChecker {
 
             thread(() -> {
                 RemoteVersion result = null;
+                boolean b = false;
                 try {
                     result = checkUpdate(channel, preview);
+                    b = checkOutdated(result);
                     LOG.info("Latest version (" + channel + ", preview=" + preview + ") is " + result);
-                    if (download) result.tryDownload();
+                    if (download && b) result.tryDownload();
                 } catch (Throwable e) {
                     LOG.warning("Failed to check for update", e);
                 }
+                boolean isOutdated = b;
 
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
                     if (finalResult != null) {
-                        boolean isOutdated = checkOutdated(finalResult);
                         latestVersion.set(finalResult);
                         outdated.set(isOutdated);
                     }
