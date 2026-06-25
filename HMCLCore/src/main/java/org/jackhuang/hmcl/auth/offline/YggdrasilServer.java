@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
+import org.glavo.uuid.UUIDs;
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
@@ -24,7 +25,6 @@ import org.jackhuang.hmcl.util.KeyUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.HttpServer;
 
 import java.io.ByteArrayInputStream;
@@ -113,7 +113,7 @@ public class YggdrasilServer extends HttpServer {
     private Response profile(Request request) {
         String uuid = request.getPathVariables().group("uuid");
 
-        Optional<Character> character = findCharacterByUuid(UUIDTypeAdapter.fromString(uuid));
+        Optional<Character> character = findCharacterByUuid(UUIDs.parse(uuid));
 
         //Workaround for JDK-8138667
         //noinspection OptionalIsPresent
@@ -194,13 +194,13 @@ public class YggdrasilServer extends HttpServer {
 
             Map<String, Object> textureResponse = mapOf(
                     pair("timestamp", System.currentTimeMillis()),
-                    pair("profileId", uuid),
+                    pair("profileId", UUIDs.toCompactString(uuid)),
                     pair("profileName", name),
                     pair("textures", realTextures)
             );
 
             return mapOf(
-                    pair("id", uuid),
+                    pair("id", UUIDs.toCompactString(uuid)),
                     pair("name", name),
                     pair("properties", properties(true,
                             pair("textures", new String(

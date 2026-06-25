@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.java;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonWriter;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -27,16 +30,20 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.game.JavaVersionConstraint;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -74,8 +81,8 @@ public final class JavaManager {
             "Semeru"
     };
 
-    public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("java"));
-    public static final HMCLJavaRepository LOCAL_REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_CURRENT_DIRECTORY.resolve("java"));
+    public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_USER_HOME.resolve("java"));
+    public static final HMCLJavaRepository LOCAL_REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_LOCAL_HOME.resolve("java"));
 
     public static String getMojangJavaPlatform(Platform platform) {
         if (platform.getOperatingSystem() == OperatingSystem.WINDOWS) {
@@ -213,9 +220,11 @@ public final class JavaManager {
 
                     String pathString = javaRuntime.getBinary().toString();
 
-                    ConfigHolder.globalConfig().getDisabledJava().remove(pathString);
-                    if (ConfigHolder.globalConfig().getUserJava().add(pathString)) {
-                        addJava(javaRuntime);
+                    if (!SettingsManager.isUserSettingsReadOnly()) {
+                        SettingsManager.userSettings().getDisabledJava().remove(pathString);
+                        if (SettingsManager.userSettings().getUserJava().add(pathString)) {
+                            addJava(javaRuntime);
+                        }
                     }
                     return javaRuntime;
                 });
@@ -267,7 +276,7 @@ public final class JavaManager {
         }
     }
 
-    // FXThread
+    @FXThread
     public static void addJava(JavaRuntime java) throws InterruptedException {
         Map<Path, JavaRuntime> oldMap = getAllJavaMap();
         if (!oldMap.containsKey(java.getBinary())) {
@@ -278,12 +287,12 @@ public final class JavaManager {
         }
     }
 
-    // FXThread
+    @FXThread
     public static void removeJava(JavaRuntime java) throws InterruptedException {
         removeJava(java.getBinary());
     }
 
-    // FXThread
+    @FXThread
     public static void removeJava(Path realPath) throws InterruptedException {
         Map<Path, JavaRuntime> oldMap = getAllJavaMap();
         if (oldMap.containsKey(realPath)) {
@@ -365,7 +374,7 @@ public final class JavaManager {
     // search java
 
     private static Map<Path, JavaRuntime> searchPotentialJavaExecutables(boolean useCache) {
-        Searcher searcher = new Searcher(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("javaCache.json"));
+        Searcher searcher = new Searcher(Metadata.HMCL_USER_HOME.resolve("javaCache.json"));
         if (useCache)
             searcher.loadCache();
 
@@ -468,7 +477,7 @@ public final class JavaManager {
 
         searcher.searchAllJavaInDirectory(Path.of(System.getProperty("user.home"), ".jdks"));
 
-        for (String javaPath : ConfigHolder.globalConfig().getUserJava()) {
+        for (String javaPath : SettingsManager.userSettings().getUserJava()) {
             try {
                 searcher.tryAddJavaExecutable(Path.of(javaPath));
             } catch (InvalidPathException e) {
@@ -479,7 +488,7 @@ public final class JavaManager {
         JavaRuntime currentJava = JavaRuntime.CURRENT_JAVA;
         if (currentJava != null
                 && !searcher.javaRuntimes.containsKey(currentJava.getBinary())
-                && !ConfigHolder.globalConfig().getDisabledJava().contains(currentJava.getBinary().toString())) {
+                && !SettingsManager.userSettings().getDisabledJava().contains(currentJava.getBinary().toString())) {
             searcher.addResult(currentJava.getBinary(), currentJava);
         }
 
@@ -685,7 +694,7 @@ public final class JavaManager {
 
             if (javaRuntimes.containsKey(executable)
                     || failed.contains(executable)
-                    || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())) {
+                    || SettingsManager.userSettings().getDisabledJava().contains(executable.toString())) {
                 return;
             }
 

@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.tree.TarFileTree;
 
@@ -44,6 +43,8 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class TerracottaBundle {
     private final Path root;
@@ -162,7 +163,7 @@ public final class TerracottaBundle {
                 return AbstractTerracottaProvider.Status.LEGACY_VERSION;
             }
         } catch (IOException e) {
-            Logger.LOG.warning("Cannot determine whether legacy versions exist.", e);
+            LOG.warning("Cannot determine whether legacy versions exist.", e);
         }
         return AbstractTerracottaProvider.Status.NOT_EXIST;
     }

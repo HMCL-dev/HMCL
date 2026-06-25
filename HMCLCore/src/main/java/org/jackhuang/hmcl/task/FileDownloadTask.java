@@ -246,7 +246,7 @@ public class FileDownloadTask extends FetchTask<Void> {
                         handler.checkIntegrity(temp, file);
                     }
 
-                    if (checksum != null) {
+                    if (checksum != null && !checksum.isEmpty()) {
                         String actualChecksum = HexFormat.of().formatHex(digest.digest());
                         if (!checksum.equalsIgnoreCase(actualChecksum)) {
                             throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
