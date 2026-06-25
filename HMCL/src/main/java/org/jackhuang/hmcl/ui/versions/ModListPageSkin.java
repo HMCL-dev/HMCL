@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -89,6 +90,16 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
     private final JFXListView<ModInfoObject> listView;
     private final JFXTextField searchField;
+
+    /// Creates the file subtitle shown in the mod list.
+    static String createModSubtitle(LocalModFile modInfo) {
+        StringJoiner joiner = new StringJoiner(" | ");
+        if (modInfo.getModLoaderType() != ModLoaderType.UNKNOWN && StringUtils.isNotBlank(modInfo.getId()))
+            joiner.add(modInfo.getId());
+
+        joiner.add(FileUtils.getName(modInfo.getFile()));
+        return joiner.toString();
+    }
 
     @FXThread
     private boolean isSearching = false;
@@ -568,6 +579,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
         BooleanProperty booleanProperty;
+        InvalidationListener activeListener;
 
         Tooltip warningTooltip;
 
@@ -599,6 +611,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             if (warningTooltip != null) {
                 Tooltip.uninstall(this, warningTooltip);
                 warningTooltip = null;
+            }
+
+            if (booleanProperty != null) {
+                if (activeListener != null) {
+                    booleanProperty.removeListener(activeListener);
+                    activeListener = null;
+                }
+                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
+                booleanProperty = null;
             }
 
             if (empty) return;
@@ -636,13 +657,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             }
             content.setTitle(displayName);
 
-            StringJoiner joiner = new StringJoiner(" | ");
-            if (modLoaderType != ModLoaderType.UNKNOWN && StringUtils.isNotBlank(modInfo.getId()))
-                joiner.add(modInfo.getId());
-
-            joiner.add(FileUtils.getName(modInfo.getFile()));
-
-            content.setSubtitle(joiner.toString());
+            content.setSubtitle(createModSubtitle(modInfo));
 
             if (modLoaderType == ModLoaderType.UNKNOWN) {
                 content.addTagWarning(i18n("mods.unknown"));
@@ -664,10 +679,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 content.addTag(modVersion);
             }
 
-            if (booleanProperty != null) {
-                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
-            }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
+            // Re-read the current path after active toggling
+            // failed renames leave it unchanged
+            // Note: a more deep change is on HMCLCore, adding ReadOnlyProperty will forcing waiting for file name change result
+            // but it's more out of scope, these lines also does good
+            activeListener = observable -> content.setSubtitle(createModSubtitle(modInfo));
+            dataItem.active.addListener(activeListener);
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()
