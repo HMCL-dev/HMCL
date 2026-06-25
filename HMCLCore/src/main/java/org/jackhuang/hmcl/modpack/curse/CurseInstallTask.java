@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
@@ -136,9 +137,34 @@ public final class CurseInstallTask extends Task<Void> {
         return dependencies;
     }
 
+    private Set<String> getNewOverridesMods() throws IOException {
+        Set<String> result = new HashSet<>();
+        String overridesDir = manifest.overrides();
+        if (StringUtils.isBlank(overridesDir)) {
+            return result;
+        }
+
+        String pathPrefix = StringUtils.addSuffix(overridesDir, "/");
+        try (var reader = CompressingUtils.openZipFileWithPossibleEncoding(zipFile, modpack.getEncoding())) {
+            for (var entry : reader.getEntries()) {
+                String normalizedPath = FileUtils.normalizePath(entry.getName());
+                if (!normalizedPath.startsWith(pathPrefix)) {
+                    continue;
+                }
+                String relativePath = normalizedPath.substring(pathPrefix.length());
+                if (relativePath.startsWith("mods/") && !entry.isDirectory()) {
+                    result.add(relativePath);
+                }
+            }
+        }
+        return result;
+    }
+
     @Override
     public void execute() throws Exception {
         if (config != null) {
+            Set<String> newOverridesMods = getNewOverridesMods();
+
             // For update, remove mods not listed in new manifest.
             // ModpackConfiguration stored in modpack.json preserves the raw
             // CurseForge manifest where fileName is missing. CurseCompletionTask
@@ -154,9 +180,10 @@ public final class CurseInstallTask extends Task<Void> {
             }
             for (CurseManifestFile oldCurseManifestFile : oldFiles) {
                 if (StringUtils.isBlank(oldCurseManifestFile.fileName())) continue;
-                Path oldFile = run.resolve("mods/" + oldCurseManifestFile.fileName());
+                String relativePath = "mods/" + oldCurseManifestFile.fileName();
+                Path oldFile = run.resolve(relativePath);
                 if (Files.notExists(oldFile)) continue;
-                if (manifest.files().stream().noneMatch(oldCurseManifestFile::equals))
+                if (manifest.files().stream().noneMatch(oldCurseManifestFile::equals) && !newOverridesMods.contains(relativePath))
                     Files.deleteIfExists(oldFile);
             }
         }
