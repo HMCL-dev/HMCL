@@ -33,11 +33,8 @@ public final class PriorityComparator<T> implements Comparator<T> {
 
     /// Creates a new `PriorityComparator` with a priority map and a fallback comparator.
     /// Elements with a defined priority are ordered before those without.
-    public static <T extends Comparable<T>> PriorityComparator<T> of(T... values) {
-        Map<T, Integer> priorities = new HashMap<>();
-        for (int i = 0; i < values.length; i++)
-            priorities.put(values[i], i);
-        return new PriorityComparator<>(priorities, Comparator.naturalOrder(), true);
+    public static <T extends Comparable<T>> PriorityComparator<T> of(List<T> values) {
+        return of(values, Comparator.naturalOrder(), true);
     }
 
     /// Creates a new `PriorityComparator` with a priority map, a fallback comparator, and a flag to determine the order of prioritized elements.
