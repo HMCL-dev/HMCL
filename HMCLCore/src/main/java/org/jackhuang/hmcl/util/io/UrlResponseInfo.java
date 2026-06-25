@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.*;
 import java.net.http.HttpHeaders;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,10 +27,10 @@ import java.util.Map;
 /// Response URI and headers captured from a URL response.
 ///
 /// @author Glavo
-public record UrlResponseInfo(URI uri, HttpHeaders headers) {
+public record UrlResponseInfo(int responseCode, URI uri, HttpHeaders headers) {
     /// Creates response metadata from a URL connection.
-    public static UrlResponseInfo of(URLConnection connection) throws IOException {
-        return new UrlResponseInfo(toURI(connection.getURL()), headers(connection));
+    public static UrlResponseInfo of(HttpURLConnection connection) throws IOException {
+        return new UrlResponseInfo(connection.getResponseCode(), toURI(connection.getURL()), headers(connection));
     }
 
     /// Converts a response URL into a URI.

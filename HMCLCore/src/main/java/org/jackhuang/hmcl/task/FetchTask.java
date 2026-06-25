@@ -133,8 +133,8 @@ public abstract class FetchTask<T> extends Task<T> {
     private static final class HttpResumeContext {
         private static final Pattern CONTENT_RANGE_PATTERN = Pattern.compile("bytes ([0-9]+)-([0-9]+)/([0-9]+)");
 
-        static @Nullable FetchTask.HttpResumeContext of(int statusCode, UrlResponseInfo response) throws IOException {
-            if (statusCode != HttpURLConnection.HTTP_OK)
+        static @Nullable FetchTask.HttpResumeContext of(UrlResponseInfo response) throws IOException {
+            if (response.responseCode() != HttpURLConnection.HTTP_OK)
                 return null;
 
             boolean acceptRanges = response.headers().firstValue("accept-ranges").orElse("").equalsIgnoreCase("bytes");
@@ -415,7 +415,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
                         if (context == null) {
                             context = getContext(responseInfo, checkETag, bmclapiHash);
-                            resumeContext = HttpResumeContext.of(responseCode, responseInfo);
+                            resumeContext = HttpResumeContext.of(responseInfo);
                         } else if (resumeRequested) {
                             if (resumeContext.canResume(responseCode, responseInfo)) {
                                 // Resume download
@@ -431,7 +431,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         } else {
                             discardContext(context);
                             context = getContext(responseInfo, checkETag, bmclapiHash);
-                            resumeContext = HttpResumeContext.of(responseCode, responseInfo);
+                            resumeContext = HttpResumeContext.of(responseInfo);
                         }
 
                         try {
