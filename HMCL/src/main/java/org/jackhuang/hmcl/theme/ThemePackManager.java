@@ -26,6 +26,7 @@ import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
+import org.jackhuang.hmcl.setting.BuiltinBackground;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.ThemeColorType;
@@ -794,7 +795,7 @@ public final class ThemePackManager {
             }
             return new ResolvedBackground(
                     BackgroundType.BUILTIN,
-                    BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID,
+                    BuiltinBackground.FALLBACK.id(),
                     null,
                     null,
                     null,
@@ -809,7 +810,7 @@ public final class ThemePackManager {
         return switch (fallbackType) {
             case BUILTIN -> new ResolvedBackground(
                     BackgroundType.BUILTIN,
-                    BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID,
+                    BuiltinBackground.FALLBACK.id(),
                     null,
                     null,
                     null,
@@ -831,7 +832,7 @@ public final class ThemePackManager {
                     opacity);
             case CUSTOM, NETWORK, DEFAULT -> new ResolvedBackground(
                     BackgroundType.BUILTIN,
-                    BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID,
+                    BuiltinBackground.FALLBACK.id(),
                     null,
                     null,
                     null,
@@ -1474,7 +1475,7 @@ public final class ThemePackManager {
             case BUILTIN, DEFAULT -> new ThemeBackground.Builtin(
                     Objects.requireNonNullElse(
                             fallback.builtinBackgroundId(),
-                            BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID));
+                            BuiltinBackground.FALLBACK.id()));
             case CUSTOM -> createCurrentImageBackgroundSource(assets, fallback.imagePath());
             case NETWORK -> new ThemeBackground.Network(
                     requireNonBlank(fallback.networkImageUrl(), "networkBackgroundImageUrl"),
@@ -1562,18 +1563,15 @@ public final class ThemePackManager {
 
     /// Returns the currently selected built-in wallpaper ID.
     private static String currentBuiltinBackgroundId() {
-        String id = settings().builtinBackgroundIdProperty().get();
-        return BackgroundType.BUILTIN_WALLPAPER_IDS.contains(id)
-                ? id
-                : BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID;
+        return BuiltinBackground.fromIdOrFallback(settings().builtinBackgroundIdProperty().get()).id();
     }
 
     /// Resolves a theme-pack built-in wallpaper ID.
     private static String resolveBuiltinBackgroundId(@Nullable String id) throws IOException {
         String normalizedId = StringUtils.isBlank(id)
-                ? BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID
+                ? BuiltinBackground.FALLBACK.id()
                 : id.trim().toLowerCase(Locale.ROOT);
-        if (BackgroundType.BUILTIN_WALLPAPER_IDS.contains(normalizedId)) {
+        if (BuiltinBackground.fromId(normalizedId) != null) {
             return normalizedId;
         }
         throw new IOException("Theme packs cannot reference built-in wallpaper: " + normalizedId);

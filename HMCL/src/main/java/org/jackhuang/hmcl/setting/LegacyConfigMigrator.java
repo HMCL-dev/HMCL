@@ -832,13 +832,13 @@ public final class LegacyConfigMigrator {
             json.addProperty("backgroundType", LEGACY_BACKGROUND_IMAGE_TYPES[ordinal]);
             addThemeAppearanceOverride(json, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
             if (ordinal == 2) {
-                json.addProperty("builtinBackgroundId", BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID);
+                json.addProperty("builtinBackgroundId", BuiltinBackground.WALLPAPER_2016_02_25.id());
             }
         }
 
         if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "CLASSIC")) {
             json.addProperty("backgroundType", BackgroundType.BUILTIN.name());
-            json.addProperty("builtinBackgroundId", BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID);
+            json.addProperty("builtinBackgroundId", BuiltinBackground.WALLPAPER_2016_02_25.id());
             addThemeAppearanceOverride(json, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
         }
 

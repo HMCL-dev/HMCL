@@ -56,6 +56,7 @@ import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
+import org.jackhuang.hmcl.setting.BuiltinBackground;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.task.CacheFileTask;
@@ -623,7 +624,7 @@ public final class Themes {
             LOG.warning("Couldn't resolve fallback background", e);
         }
 
-        Image image = loadBuiltinBackgroundImage(BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID);
+        Image image = loadBuiltinBackgroundImage(BuiltinBackground.FALLBACK.id());
         return new LoadedBackground(
                 createBackgroundWithOpacity(image, getLoadedBackgroundOpacity(true)),
                 image,
@@ -829,14 +830,12 @@ public final class Themes {
             }
         }
 
-        return loadBuiltinBackgroundImage(BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID);
+        return loadBuiltinBackgroundImage(BuiltinBackground.FALLBACK.id());
     }
 
     /// Loads one built-in launcher wallpaper by ID.
     private static Image loadBuiltinBackgroundImage(@Nullable String id) {
-        String wallpaperId = BackgroundType.BUILTIN_WALLPAPER_IDS.contains(id)
-                ? id
-                : BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID;
+        String wallpaperId = BuiltinBackground.fromIdOrFallback(id).id();
         return newBuiltinImage("/assets/img/wallpapers/" + wallpaperId + ".jpg");
     }
 

@@ -45,6 +45,7 @@ import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.setting.BackgroundType;
+import org.jackhuang.hmcl.setting.BuiltinBackground;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -879,7 +880,7 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.setHasSubtitle(true);
 
             JFXComboBox<String> builtinBackgroundComboBox = new JFXComboBox<>();
-            builtinBackgroundComboBox.getItems().setAll(BackgroundType.BUILTIN_WALLPAPER_IDS);
+            builtinBackgroundComboBox.getItems().setAll(BuiltinBackground.BUILTIN_BACKGROUND_IDS);
             builtinBackgroundComboBox.valueProperty().bindBidirectional(settings().builtinBackgroundIdProperty());
             FXUtils.setLimitWidth(builtinBackgroundComboBox, 160);
 
@@ -949,7 +950,7 @@ public class PersonalizationPage extends StackPane {
                         switch (background.type()) {
                             case BUILTIN -> settings().builtinBackgroundIdProperty().set(Objects.requireNonNullElse(
                                     background.builtinBackgroundId(),
-                                    BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID));
+                                    BuiltinBackground.FALLBACK.id()));
                             case CUSTOM -> settings().customBackgroundImagePathProperty().set(
                                     background.imagePath() != null ? background.imagePath().toString() : null);
                             case NETWORK -> {
@@ -1112,9 +1113,7 @@ public class PersonalizationPage extends StackPane {
                                 case THEME_COLOR -> i18n("launcher.background.theme_color");
                                 case BUILTIN -> {
                                     String id = settings().builtinBackgroundIdProperty().get();
-                                    yield BackgroundType.BUILTIN_WALLPAPER_IDS.contains(id)
-                                            ? id
-                                            : BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID;
+                                    yield BuiltinBackground.fromIdOrFallback(id).id();
                                 }
                                 case CUSTOM -> settings().customBackgroundImagePathProperty().get();
                                 case NETWORK -> settings().networkBackgroundImageUrlProperty().get();
@@ -1132,7 +1131,7 @@ public class PersonalizationPage extends StackPane {
                                 case DEFAULT -> i18n("message.default");
                                 case BUILTIN -> Objects.requireNonNullElse(
                                         background.builtinBackgroundId(),
-                                        BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID);
+                                        BuiltinBackground.FALLBACK.id());
                                 case CUSTOM -> background.imagePath() != null
                                         ? background.imagePath().toString()
                                         : i18n("settings.custom");

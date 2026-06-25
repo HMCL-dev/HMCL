@@ -292,11 +292,11 @@ public final class LauncherSettingsMigrationTest {
         JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
 
         assertEquals(BackgroundType.BUILTIN.name(), settings.get("backgroundType").getAsString());
-        assertEquals(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID, settings.get("builtinBackgroundId").getAsString());
+        assertEquals(BuiltinBackground.WALLPAPER_2016_02_25.id(), settings.get("builtinBackgroundId").getAsString());
         assertEquals(BackgroundType.BUILTIN, launcherSettings.backgroundTypeProperty().get());
-        assertEquals(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID, launcherSettings.builtinBackgroundIdProperty().get());
+        assertEquals(BuiltinBackground.WALLPAPER_2016_02_25.id(), launcherSettings.builtinBackgroundIdProperty().get());
         assertEquals(BackgroundType.BUILTIN.name(), serialized.get("backgroundType").getAsString());
-        assertEquals(BackgroundType.BUILTIN_WALLPAPER_2016_02_25_ID, serialized.get("builtinBackgroundId").getAsString());
+        assertEquals(BuiltinBackground.WALLPAPER_2016_02_25.id(), serialized.get("builtinBackgroundId").getAsString());
     }
 
     /// Tests migrating legacy download source combinations into current download source fields.

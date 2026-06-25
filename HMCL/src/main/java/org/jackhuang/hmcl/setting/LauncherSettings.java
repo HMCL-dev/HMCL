@@ -403,7 +403,7 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The selected built-in launcher wallpaper ID.
     @SerializedName("builtinBackgroundId")
-    private final StringProperty builtinBackgroundId = new SimpleStringProperty(BackgroundType.FALLBACK_BUILTIN_WALLPAPER_ID);
+    private final StringProperty builtinBackgroundId = new SimpleStringProperty(BuiltinBackground.FALLBACK.id());
 
     /// Returns the selected built-in launcher wallpaper ID property.
     public StringProperty builtinBackgroundIdProperty() {
