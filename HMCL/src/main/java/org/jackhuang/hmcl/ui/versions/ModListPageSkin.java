@@ -92,7 +92,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private final JFXListView<ModInfoObject> listView;
     private final JFXTextField searchField;
 
-    /// Creates the file subtitle shown in the mod list.
+    /**
+     * Creates the file subtitle shown in the mod list.
+     */
     static String createModSubtitle(LocalModFile modInfo) {
         StringJoiner joiner = new StringJoiner(" | ");
         if (modInfo.getModLoaderType() != ModLoaderType.UNKNOWN && StringUtils.isNotBlank(modInfo.getId()))
