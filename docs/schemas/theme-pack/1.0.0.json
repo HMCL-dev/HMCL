@@ -301,7 +301,6 @@
             "default",
             "builtin",
             "image",
-            "network",
             "paint",
             "theme_color"
           ]
@@ -322,23 +321,6 @@
           "then": {
             "required": [
               "path"
-            ]
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "network"
-              }
-            },
-            "required": [
-              "type"
-            ]
-          },
-          "then": {
-            "required": [
-              "url"
             ]
           }
         },
@@ -367,71 +349,13 @@
         "path": {
           "$ref": "#/$defs/assetPath"
         },
-        "url": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
         "paint": {
           "$ref": "#/$defs/nonEmptyString"
-        },
-        "cache": {
-          "enum": [
-            "enabled",
-            "disabled"
-          ]
         },
         "opacity": {
           "type": "number",
           "minimum": 0,
           "maximum": 1
-        },
-        "fallback": {
-          "$ref": "#/$defs/backgroundFallback"
-        },
-        "loadPolicy": {
-          "enum": [
-            "wait_for_background",
-            "show_fallback_while_loading"
-          ]
-        }
-      }
-    },
-    "backgroundFallback": {
-      "type": "object",
-      "patternProperties": {
-        "^type$": {
-          "enum": [
-            "default",
-            "builtin",
-            "paint",
-            "theme_color"
-          ]
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "paint"
-              }
-            },
-            "required": [
-              "type"
-            ]
-          },
-          "then": {
-            "required": [
-              "paint"
-            ]
-          }
-        }
-      ],
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "paint": {
-          "$ref": "#/$defs/nonEmptyString"
         }
       }
     },

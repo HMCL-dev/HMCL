@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Objects;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 /// Background source contributed by a theme-pack appearance.
 ///
 /// The sealed implementations describe where the wallpaper comes from. Rendering
@@ -36,8 +34,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public sealed interface ThemeBackground
         permits ThemeBackground.Default, ThemeBackground.Builtin, ThemeBackground.Image,
-        ThemeBackground.Network, ThemeBackground.Paint,
-        ThemeBackground.ThemeColor {
+        ThemeBackground.Paint, ThemeBackground.ThemeColor {
     /// JSON member name for the background type.
     String FIELD_TYPE = "type";
 
@@ -47,14 +44,8 @@ public sealed interface ThemeBackground
     /// JSON member name for the local theme-pack image path.
     String FIELD_PATH = "path";
 
-    /// JSON member name for a remote background URL.
-    String FIELD_URL = "url";
-
     /// JSON member name for a serialized paint value.
     String FIELD_PAINT = "paint";
-
-    /// JSON member name for the remote image cache policy.
-    String FIELD_CACHE = "cache";
 
     /// Adds this background source's concrete fields to a JSON object.
     ///
@@ -81,23 +72,7 @@ public sealed interface ThemeBackground
         @Nullable String type = readString(object, FIELD_TYPE);
         @Nullable String id = readString(object, FIELD_ID);
         @Nullable String path = readString(object, FIELD_PATH);
-        @Nullable String url = readString(object, FIELD_URL);
         @Nullable String paint = readString(object, FIELD_PAINT);
-        @Nullable NetworkBackgroundImageCachePolicy cache = null;
-        JsonElement cacheElement = object.get(FIELD_CACHE);
-        if (cacheElement != null) {
-            if (!(cacheElement instanceof JsonPrimitive primitive) || !primitive.isString()) {
-                LOG.warning("Ignored invalid theme background cache: expected a string, got " + cacheElement);
-            } else {
-                String cacheValue = primitive.getAsString();
-                switch (cacheValue.trim().replace('-', '_').toUpperCase(Locale.ROOT)) {
-                    case "ENABLED" -> cache = NetworkBackgroundImageCachePolicy.ENABLED;
-                    case "DISABLED" -> cache = NetworkBackgroundImageCachePolicy.DISABLED;
-                    default -> LOG.warning(
-                            "Ignored invalid theme background cache: unsupported cache policy `" + cacheValue + "`");
-                }
-            }
-        }
 
         if (type == null) {
             int sourceFields = 0;
@@ -105,9 +80,6 @@ public sealed interface ThemeBackground
                 sourceFields++;
             }
             if (path != null) {
-                sourceFields++;
-            }
-            if (url != null) {
                 sourceFields++;
             }
             if (paint != null) {
@@ -122,14 +94,8 @@ public sealed interface ThemeBackground
             if (path != null) {
                 return new Image(path);
             }
-            if (url != null) {
-                return new Network(url, cache);
-            }
             if (paint != null) {
                 return new Paint(paint);
-            }
-            if (cache != null) {
-                throw new JsonParseException("Theme background cache requires a network background URL");
             }
             return null;
         }
@@ -138,7 +104,6 @@ public sealed interface ThemeBackground
             case "DEFAULT" -> new Default();
             case "BUILTIN" -> new Builtin(id);
             case "IMAGE" -> new Image(path);
-            case "NETWORK" -> new Network(url, cache);
             case "PAINT" -> new Paint(paint);
             case "THEME_COLOR" -> new ThemeColor();
             default -> throw new JsonParseException("Unsupported theme background type: " + type);
@@ -237,35 +202,6 @@ public sealed interface ThemeBackground
         public void addToJsonObject(JsonObject object) {
             addType(object, "image");
             object.addProperty(FIELD_PATH, path);
-        }
-
-    }
-
-    /// A source that uses a remote background image URL.
-    ///
-    /// @param url the remote image URL
-    /// @param cache the remote image cache policy, or `null` for the default policy
-    @NotNullByDefault
-    record Network(String url, @Nullable NetworkBackgroundImageCachePolicy cache) implements ThemeBackground {
-        /// Creates a network background source.
-        ///
-        /// @param url the remote image URL
-        /// @param cache the remote image cache policy, or `null` for the default policy
-        public Network {
-            url = requireNonBlank(url, FIELD_URL);
-        }
-
-        /// Adds this source to a JSON object.
-        @Override
-        public void addToJsonObject(JsonObject object) {
-            addType(object, "network");
-            object.addProperty(FIELD_URL, url);
-            if (cache != null) {
-                object.addProperty(FIELD_CACHE, switch (cache) {
-                    case ENABLED -> "enabled";
-                    case DISABLED -> "disabled";
-                });
-            }
         }
 
     }

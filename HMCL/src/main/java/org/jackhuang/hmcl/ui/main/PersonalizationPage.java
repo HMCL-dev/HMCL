@@ -50,13 +50,9 @@ import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.setting.UserSettings;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.Theme;
-import org.jackhuang.hmcl.theme.ThemeAppearance;
-import org.jackhuang.hmcl.theme.ThemeBackgroundSettings;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemeColorSource;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
@@ -74,7 +70,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -92,7 +87,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -507,38 +501,6 @@ public class PersonalizationPage extends StackPane {
             return true;
         }
 
-        /// Resolves the network background to preload before applying this choice.
-        ///
-        /// @param context the theme condition context used for both preload and apply
-        /// @return the resolved network background, or `null` when no preload is required
-        private @Nullable ThemePackManager.ResolvedBackground resolveNetworkBackgroundToPreload(
-                ThemeResolveContext context) throws IOException {
-            Objects.requireNonNull(context);
-
-            if (themePack == null || theme == null) {
-                return null;
-            }
-
-            ThemeAppearance appearance = theme.resolve(context);
-            @Nullable ThemeBackgroundSettings background = appearance.background();
-            if (background == null) {
-                return null;
-            }
-
-            BackgroundLoadPolicy loadPolicy = Objects.requireNonNullElse(
-                    background.loadPolicy(),
-                    BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
-            if (loadPolicy != BackgroundLoadPolicy.WAIT_FOR_BACKGROUND) {
-                return null;
-            }
-
-            @Nullable ThemePackManager.ResolvedBackground resolvedBackground =
-                    ThemePackManager.resolveThemeBackground(themePack.file(), theme, context);
-            return resolvedBackground != null && resolvedBackground.type() == BackgroundType.NETWORK
-                    ? resolvedBackground
-                    : null;
-        }
-
         /// Returns a display name for apply-result messages.
         private String applyDisplayName() {
             return theme != null && themePack != null
@@ -547,7 +509,7 @@ public class PersonalizationPage extends StackPane {
         }
     }
 
-    /// Applies a selected theme choice, preloading its network background first when required by the load policy.
+    /// Applies a selected theme choice.
     ///
     /// @param choice               the selected theme choice
     /// @param refreshSelectedTheme refreshes the selector after the apply attempt
@@ -556,39 +518,7 @@ public class PersonalizationPage extends StackPane {
         Objects.requireNonNull(refreshSelectedTheme);
 
         ThemeResolveContext context = ThemePackManager.currentResolveContext();
-        @Nullable ThemePackManager.ResolvedBackground backgroundToPreload;
-        try {
-            backgroundToPreload = choice.resolveNetworkBackgroundToPreload(context);
-        } catch (IOException | RuntimeException e) {
-            showThemePackError(i18n("theme_pack.apply.failed"), e);
-            refreshSelectedTheme.run();
-            return;
-        }
-
-        if (backgroundToPreload == null) {
-            applyThemeChoiceNow(choice, context, refreshSelectedTheme, null);
-            return;
-        }
-
-        Task<Themes.LoadedBackground> task = Task.supplyAsync(
-                i18n("theme_pack.apply.prepare_background"),
-                Schedulers.io(),
-                () -> Themes.loadResolvedBackground(backgroundToPreload));
-        Controllers.taskDialog(task.whenComplete(Schedulers.javafx(), (loadedBackground, exception) -> {
-                    if (exception != null) {
-                        if (exception instanceof CancellationException) {
-                            Controllers.showToast(i18n("message.cancelled"));
-                        } else {
-                            showThemePackError(i18n("theme_pack.apply.failed"), exception);
-                        }
-                        refreshSelectedTheme.run();
-                        return;
-                    }
-
-                    applyThemeChoiceNow(choice, context, refreshSelectedTheme, loadedBackground);
-                }),
-                i18n("theme_pack.apply.preparing"),
-                TaskCancellationAction.NORMAL);
+        applyThemeChoiceNow(choice, context, refreshSelectedTheme, null);
     }
 
     /// Applies a theme choice on the JavaFX thread.
@@ -1074,9 +1004,8 @@ public class PersonalizationPage extends StackPane {
                     settings().backgroundLoadPolicyProperty(),
                     () -> {
                         try {
-                            return ThemePackManager.resolveCurrentBackgroundLoadPolicy(
-                                    ThemePackManager.currentResolveContext());
-                        } catch (IOException | RuntimeException e) {
+                            return ThemePackManager.resolveCurrentBackgroundLoadPolicy();
+                        } catch (RuntimeException e) {
                             return BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
                         }
                     },

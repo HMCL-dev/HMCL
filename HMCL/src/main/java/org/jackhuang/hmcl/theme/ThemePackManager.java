@@ -217,17 +217,6 @@ public final class ThemePackManager {
                     opacity);
         }
 
-        /// Returns a copy with a different network image cache policy.
-        public ResolvedBackground withNetworkImageCachePolicy(@Nullable NetworkBackgroundImageCachePolicy networkImageCachePolicy) {
-            return new ResolvedBackground(
-                    type,
-                    builtinBackgroundId,
-                    imagePath,
-                    networkImageUrl,
-                    networkImageCachePolicy,
-                    paint,
-                    opacity);
-        }
     }
 
     /// Loads and parses a theme-pack file or unpacked theme-pack directory.
@@ -775,24 +764,11 @@ public final class ThemePackManager {
         Objects.requireNonNull(context);
 
         if (!SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
-            ThemeReference reference = settings().getThemeOrDefault();
-            @Nullable InstalledThemePack themePack = findInstalled(reference);
-            @Nullable ThemeBackgroundSettings background = null;
-            if (themePack != null) {
-                @Nullable Theme theme = themePack.manifest().findTheme(reference.themeId());
-                if (theme != null) {
-                    background = theme.resolve(context).background();
-                }
-            }
+            @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
+            @Nullable ThemeBackgroundSettings background = appearance != null ? appearance.background() : null;
             double opacity = SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)
                     ? currentBackgroundOpacity()
                     : background != null && background.opacity() != null ? background.opacity() : 1.0;
-            if (themePack != null && background != null && background.fallback() != null) {
-                return resolveBackground(
-                        themePack.file(),
-                        new ThemeBackgroundSettings(background.fallback(), null),
-                        opacity);
-            }
             return new ResolvedBackground(
                     BackgroundType.BUILTIN,
                     BuiltinBackground.FALLBACK.id(),
@@ -843,21 +819,15 @@ public final class ThemePackManager {
 
     /// Resolves the background loading policy used by current launcher settings.
     ///
-    /// @param context the condition resolution context
     /// @return the effective background loading policy
-    /// @throws IOException if the selected theme pack cannot be read
-    public static BackgroundLoadPolicy resolveCurrentBackgroundLoadPolicy(ThemeResolveContext context) throws IOException {
+    public static BackgroundLoadPolicy resolveCurrentBackgroundLoadPolicy() {
         if (SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY)) {
             return Objects.requireNonNullElse(
                     settings().backgroundLoadPolicyProperty().get(),
                     BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
         }
 
-        @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
-        @Nullable ThemeBackgroundSettings background = appearance != null ? appearance.background() : null;
-        return background != null && background.loadPolicy() != null
-                ? background.loadPolicy()
-                : BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
+        return BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
     }
 
     /// Resolves the launcher custom background fields without considering theme-pack background references.
@@ -951,9 +921,6 @@ public final class ThemePackManager {
         if (SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
             resolved = resolved.withOpacity(currentBackgroundOpacity());
         }
-        if (resolved.type() == BackgroundType.NETWORK && SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY)) {
-            resolved = resolved.withNetworkImageCachePolicy(currentNetworkBackgroundImageCachePolicy());
-        }
         return resolved;
     }
 
@@ -1012,15 +979,6 @@ public final class ThemePackManager {
                     resolveInstalledAsset(themePackFile, requireNonBlank(image.path(), "background.path")),
                     null,
                     null,
-                    null,
-                    opacity);
-        }
-        if (source instanceof ThemeBackground.Network network) {
-            return new ResolvedBackground(
-                    BackgroundType.NETWORK,
-                    null,
-                    requireNonBlank(network.url(), "background.url"),
-                    network.cache(),
                     null,
                     opacity);
         }
@@ -1393,45 +1351,12 @@ public final class ThemePackManager {
             case CUSTOM -> new ThemeBackgroundSettings(
                     createCurrentImageBackgroundSource(assets, background.imagePath()),
                     opacity);
-            case NETWORK -> new ThemeBackgroundSettings(
-                    new ThemeBackground.Network(
-                            requireNonBlank(background.networkImageUrl(), "networkBackgroundImageUrl"),
-                            background.networkImageCachePolicy() == NetworkBackgroundImageCachePolicy.ENABLED
-                                    ? null
-                                    : background.networkImageCachePolicy()),
-                    opacity);
+            case NETWORK -> throw new IOException("Network backgrounds cannot be exported as theme-pack wallpapers");
             case PAINT, THEME_COLOR -> new ThemeBackgroundSettings(
                     new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),
                     opacity);
         };
-        if (background.type() != BackgroundType.NETWORK) {
-            return backgroundSettings;
-        }
-        return new ThemeBackgroundSettings(
-                backgroundSettings.source(),
-                backgroundSettings.opacity(),
-                createCurrentBackgroundFallback(assets),
-                resolveCurrentBackgroundLoadPolicy(currentResolveContext()));
-    }
-
-    /// Creates the fallback background model for the current launcher settings.
-    private static ThemeBackground createCurrentBackgroundFallback(List<ThemePackAsset> assets) throws IOException {
-        ResolvedBackground fallback = resolveCurrentBackgroundFallback(currentResolveContext());
-        return switch (fallback.type()) {
-            case BUILTIN, DEFAULT -> new ThemeBackground.Builtin(
-                    Objects.requireNonNullElse(
-                            fallback.builtinBackgroundId(),
-                            BuiltinBackground.FALLBACK.id()));
-            case CUSTOM -> createCurrentImageBackgroundSource(assets, fallback.imagePath());
-            case NETWORK -> new ThemeBackground.Network(
-                    requireNonBlank(fallback.networkImageUrl(), "networkBackgroundImageUrl"),
-                    fallback.networkImageCachePolicy() == NetworkBackgroundImageCachePolicy.ENABLED
-                            ? null
-                            : fallback.networkImageCachePolicy());
-            case PAINT -> new ThemeBackground.Paint(
-                    Objects.requireNonNullElse(fallback.paint(), Color.WHITE).toString());
-            case THEME_COLOR -> new ThemeBackground.ThemeColor();
-        };
+        return backgroundSettings;
     }
 
     /// Returns the flat paint used by the theme-color background option.

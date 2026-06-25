@@ -474,8 +474,8 @@ public final class Themes {
     /// Returns the configured launcher background loading policy.
     private static BackgroundLoadPolicy getBackgroundLoadPolicy() {
         try {
-            return ThemePackManager.resolveCurrentBackgroundLoadPolicy(ThemePackManager.currentResolveContext());
-        } catch (IOException | RuntimeException e) {
+            return ThemePackManager.resolveCurrentBackgroundLoadPolicy();
+        } catch (RuntimeException e) {
             return BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
         }
     }
@@ -600,15 +600,6 @@ public final class Themes {
             return null;
         }
         return createImageBackground(image, resolvedBackground.opacity(), fallbackBackground);
-    }
-
-    /// Loads a resolved theme-pack background without changing the current launcher background.
-    ///
-    /// @param resolvedBackground the resolved background to load
-    /// @return the loaded background, or `null` if it cannot be loaded
-    public static @Nullable LoadedBackground loadResolvedBackground(ThemePackManager.ResolvedBackground resolvedBackground) {
-        Objects.requireNonNull(resolvedBackground);
-        return tryCreateResolvedBackground(resolvedBackground, false);
     }
 
     /// Loads the deterministic fallback background configured by launcher settings.

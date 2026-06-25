@@ -24,7 +24,6 @@ import com.google.gson.JsonPrimitive;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -33,37 +32,17 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 ///
 /// @param source the background source, or `null` when inherited
 /// @param opacity the background opacity override, or `null` when inherited
-/// @param fallback the fallback background source, or `null` when inherited
-/// @param loadPolicy the background loading policy, or `null` when inherited
 @NotNullByDefault
 public record ThemeBackgroundSettings(
         @Nullable ThemeBackground source,
-        @Nullable Double opacity,
-        @Nullable ThemeBackground fallback,
-        @Nullable BackgroundLoadPolicy loadPolicy) {
+        @Nullable Double opacity) {
     /// JSON member name for the background opacity.
     private static final String FIELD_OPACITY = "opacity";
-
-    /// JSON member name for the fallback background source.
-    private static final String FIELD_FALLBACK = "fallback";
-
-    /// JSON member name for the background loading policy.
-    private static final String FIELD_LOAD_POLICY = "loadPolicy";
-
-    /// Creates background settings with only source and opacity values.
-    ///
-    /// @param source the background source, or `null` when inherited
-    /// @param opacity the background opacity override, or `null` when inherited
-    public ThemeBackgroundSettings(@Nullable ThemeBackground source, @Nullable Double opacity) {
-        this(source, opacity, null, null);
-    }
 
     /// Creates background settings.
     ///
     /// @param source the background source, or `null` when inherited
     /// @param opacity the background opacity override, or `null` when inherited
-    /// @param fallback the fallback background source, or `null` when inherited
-    /// @param loadPolicy the background loading policy, or `null` when inherited
     public ThemeBackgroundSettings {
         opacity = validateOpacity(opacity);
     }
@@ -77,9 +56,7 @@ public record ThemeBackgroundSettings(
 
         return new ThemeBackgroundSettings(
                 ThemeBackground.fromJson(object),
-                readOpacity(object),
-                readFallback(object),
-                readLoadPolicy(object));
+                readOpacity(object));
     }
 
     /// Converts these settings to their JSON representation.
@@ -90,12 +67,6 @@ public record ThemeBackgroundSettings(
         if (opacity != null) {
             object.addProperty(FIELD_OPACITY, opacity);
         }
-        if (fallback != null) {
-            object.add(FIELD_FALLBACK, fallback.toJsonObject());
-        }
-        if (loadPolicy != null) {
-            object.addProperty(FIELD_LOAD_POLICY, toJsonLoadPolicy(loadPolicy));
-        }
         return object;
     }
 
@@ -103,7 +74,7 @@ public record ThemeBackgroundSettings(
     ///
     /// @return `true` when every background setting is inherited
     public boolean isEmpty() {
-        return source == null && opacity == null && fallback == null && loadPolicy == null;
+        return source == null && opacity == null;
     }
 
     /// Returns settings that apply the given patch over these settings.
@@ -115,50 +86,7 @@ public record ThemeBackgroundSettings(
 
         @Nullable ThemeBackground mergedSource = patch.source != null ? patch.source : source;
         @Nullable Double mergedOpacity = patch.opacity != null ? patch.opacity : opacity;
-        @Nullable ThemeBackground mergedFallback = patch.fallback != null ? patch.fallback : fallback;
-        @Nullable BackgroundLoadPolicy mergedLoadPolicy = patch.loadPolicy != null ? patch.loadPolicy : loadPolicy;
-        return new ThemeBackgroundSettings(mergedSource, mergedOpacity, mergedFallback, mergedLoadPolicy);
-    }
-
-    /// Reads the optional fallback background source field.
-    private static @Nullable ThemeBackground readFallback(JsonObject object) {
-        JsonElement element = object.get(FIELD_FALLBACK);
-        if (element == null) {
-            return null;
-        }
-        if (!(element instanceof JsonObject fallback)) {
-            LOG.warning("Ignored invalid theme background fallback: expected an object, got " + element);
-            return null;
-        }
-        try {
-            return ThemeBackground.fromJson(fallback);
-        } catch (JsonParseException | IllegalArgumentException e) {
-            LOG.warning("Ignored invalid theme background fallback: " + e.getMessage(), e);
-            return null;
-        }
-    }
-
-    /// Reads the optional background loading policy field.
-    private static @Nullable BackgroundLoadPolicy readLoadPolicy(JsonObject object) {
-        JsonElement element = object.get(FIELD_LOAD_POLICY);
-        if (element == null) {
-            return null;
-        }
-        if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
-            LOG.warning("Ignored invalid theme background loadPolicy: expected a string, got " + element);
-            return null;
-        }
-
-        String value = primitive.getAsString();
-        String normalized = value.trim().replace('-', '_').replace(' ', '_').toUpperCase(Locale.ROOT);
-        return switch (normalized) {
-            case "WAIT_FOR_BACKGROUND" -> BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
-            case "SHOW_FALLBACK_WHILE_LOADING" -> BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING;
-            default -> {
-                LOG.warning("Ignored invalid theme background loadPolicy: unsupported value `" + value + "`");
-                yield null;
-            }
-        };
+        return new ThemeBackgroundSettings(mergedSource, mergedOpacity);
     }
 
     /// Reads the optional opacity field.
@@ -192,13 +120,5 @@ public record ThemeBackgroundSettings(
             throw new IllegalArgumentException("Theme background opacity must be between 0 and 1: " + opacity);
         }
         return opacity;
-    }
-
-    /// Converts a background loading policy to its theme-pack JSON value.
-    private static String toJsonLoadPolicy(BackgroundLoadPolicy loadPolicy) {
-        return switch (loadPolicy) {
-            case WAIT_FOR_BACKGROUND -> "wait_for_background";
-            case SHOW_FALLBACK_WHILE_LOADING -> "show_fallback_while_loading";
-        };
     }
 }
