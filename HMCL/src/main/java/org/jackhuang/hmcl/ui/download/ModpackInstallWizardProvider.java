@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -145,7 +146,17 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
         });
 
-        return finishModpackInstallingAsync(settings);
+        FileSystem wrapperFs = settings.get(LocalModpackPage.MODPACK_WRAPPER_FS);
+        Task<?> task = finishModpackInstallingAsync(settings);
+        if (wrapperFs != null && task != null) {
+            task = task.whenComplete(Schedulers.defaultScheduler(), ignored -> {
+                try {
+                    wrapperFs.close();
+                } catch (IOException e) {
+                }
+            });
+        }
+        return task;
     }
 
     private static Node createModpackInstallPage(WizardController controller) {

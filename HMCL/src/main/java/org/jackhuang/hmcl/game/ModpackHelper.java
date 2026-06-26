@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -124,20 +125,19 @@ public final class ModpackHelper {
         throw new UnsupportedModpackException(file.toString());
     }
 
-    /// Checks if the given ZIP file is an HMCL "include launcher" wrapper
-    /// that contains an inner modpack file ([modpack.zip] or [modpack.mrpack]).
-    /// If so, returns the [Path] of the inner entry within the wrapper filesystem
-    /// so the inner modpack can be read without extracting to disk.
-    /// The caller must keep the returned [Path] reachable, which keeps the
-    /// wrapper filesystem alive. Returns [null] if the file is not a wrapper.
+    /// Detects whether [file] is an HMCL launcher wrapper ZIP that embeds
+    /// the actual modpack as [modpack.zip] or [modpack.mrpack].
+    /// Returns a [Pair] of the inner entry [Path] and the wrapper
+    /// [FileSystem], or [null] if this is not a wrapper.
+    /// The caller must close the wrapper filesystem when done.
     @Nullable
-    public static Path unwrapIfLauncherWrapper(Path file, Charset charset) {
+    public static Pair<Path, FileSystem> unwrapIfLauncherWrapper(Path file, Charset charset) {
         try {
             FileSystem outerFs = CompressingUtils.createReadOnlyZipFileSystem(file, charset);
             for (String innerName : new String[]{"modpack.zip", "modpack.mrpack"}) {
                 Path entryPath = outerFs.getPath("/" + innerName);
                 if (Files.isRegularFile(entryPath)) {
-                    return entryPath;
+                    return pair(entryPath, outerFs);
                 }
             }
             try {

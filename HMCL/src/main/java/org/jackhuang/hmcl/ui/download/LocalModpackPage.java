@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -105,10 +106,11 @@ public final class LocalModpackPage extends ModpackPage {
                 .thenApplyAsync(encoding -> {
                     charset = encoding;
                     Path actualFile = selectedFile;
-                    Path inner = ModpackHelper.unwrapIfLauncherWrapper(selectedFile, encoding);
-                    if (inner != null) {
-                        actualFile = inner;
-                        controller.getSettings().put(MODPACK_FILE, inner);
+                    var wrapper = ModpackHelper.unwrapIfLauncherWrapper(selectedFile, encoding);
+                    if (wrapper != null) {
+                        actualFile = wrapper.getKey();
+                        controller.getSettings().put(MODPACK_FILE, wrapper.getKey());
+                        controller.getSettings().put(MODPACK_WRAPPER_FS, wrapper.getValue());
                     }
                     manifest = ModpackHelper.readModpackManifest(actualFile, encoding);
                     return manifest;
@@ -185,6 +187,7 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("MODPACK_FILE");
+    public static final SettingsMap.Key<FileSystem> MODPACK_WRAPPER_FS = new SettingsMap.Key<>("MODPACK_WRAPPER_FS");
     public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
     public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
     public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");
