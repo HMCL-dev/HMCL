@@ -22,8 +22,8 @@ import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.game.tlauncher.TLauncherVersion;
-import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.mod.ModpackConfiguration;
+import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
@@ -110,17 +110,9 @@ public class DefaultGameRepository implements GameRepository {
         return artifact.getPath(getBaseDirectory().resolve("libraries"));
     }
 
-    public GameDirectoryType getGameDirectoryType(String id) {
-        return GameDirectoryType.ROOT_FOLDER;
-    }
-
     @Override
     public Path getRunDirectory(String id) {
-        return switch (getGameDirectoryType(id)) {
-            case VERSION_FOLDER -> getVersionRoot(id);
-            case ROOT_FOLDER -> getBaseDirectory();
-            default -> throw new IllegalStateException();
-        };
+        return getBaseDirectory();
     }
 
     @Override

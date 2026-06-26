@@ -101,7 +101,7 @@ public class CacheRepository {
     }
 
     protected boolean fileExists(String algorithm, String hash) {
-        if (hash == null) return false;
+        if (!DigestUtils.isSha1Digest(hash)) return false;
         Path file = getFile(algorithm, hash);
         if (Files.exists(file)) {
             try {
@@ -114,13 +114,23 @@ public class CacheRepository {
         }
     }
 
+    private void checkHash(String hash) throws IOException {
+        if (!DigestUtils.isSha1Digest(hash)) {
+            throw new IOException("Not SHA-1 checksum: " + hash);
+        }
+    }
+
     public void tryCacheFile(Path path, String algorithm, String hash) throws IOException {
+        checkHash(hash);
+
         Path cache = getFile(algorithm, hash);
         if (Files.isRegularFile(cache)) return;
         FileUtils.copyFile(path, cache);
     }
 
     public Path cacheFile(Path path, String algorithm, String hash) throws IOException {
+        checkHash(hash);
+
         Path cache = getFile(algorithm, hash);
         FileUtils.copyFile(path, cache);
         return cache;

@@ -69,7 +69,7 @@ public class ComponentList extends Control implements NoPaddingComponent {
                     sublist.getStyleClass().add("options-sublist");
                     wrapper = new ComponentSublistWrapper(sublist);
                 } else {
-                    wrapper = new StackPane(node);
+                    wrapper = new ItemWrapper(node);
                 }
 
                 wrapper.getStyleClass().add("options-list-item");
@@ -143,5 +143,23 @@ public class ComponentList extends Control implements NoPaddingComponent {
 
     public static void setNoPadding(Node node) {
         node.getProperties().put("ComponentList.noPadding", true);
+    }
+
+    /// Wrapper for a component list row.
+    private static final class ItemWrapper extends StackPane {
+        /// The row content displayed by this wrapper.
+        private final Node content;
+
+        /// Creates a row wrapper for the given content node.
+        private ItemWrapper(Node content) {
+            super(content);
+            this.content = content;
+        }
+
+        /// Propagates the child content bias so wrapped text can compute height from row width.
+        @Override
+        public Orientation getContentBias() {
+            return content.getContentBias();
+        }
     }
 }

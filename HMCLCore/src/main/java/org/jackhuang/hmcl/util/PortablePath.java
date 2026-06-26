@@ -1,0 +1,144 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.util;
+
+import com.google.gson.JsonParseException;
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Objects;
+
+/// Stores a path string together with whether the path is absolute.
+///
+/// Relative paths use `/` as their portable separator. Absolute paths are kept as
+/// provided so their platform-specific separators are preserved.
+///
+/// @author Glavo
+@JsonAdapter(PortablePath.Adapter.class)
+@JsonSerializable
+@NotNullByDefault
+public final class PortablePath {
+    /// The separator used by relative portable paths.
+    public static final char SEPARATOR = '/';
+
+    /// Creates a portable path.
+    ///
+    /// @param path the path string
+    /// @return the portable path
+    public static PortablePath of(String path) {
+        Objects.requireNonNull(path);
+
+        boolean absolute = isAbsolute(path);
+        return new PortablePath(absolute ? path : path.replace('\\', SEPARATOR), absolute);
+    }
+
+    /// Creates a portable path from a [Path].
+    ///
+    /// @param path the path to convert
+    /// @return the portable path
+    public static PortablePath fromPath(Path path) {
+        return of(Objects.requireNonNull(path).toString());
+    }
+
+    /// Returns whether the given path string is absolute.
+    private static boolean isAbsolute(String path) {
+        if (path.startsWith("/") || path.startsWith("\\")) {
+            return true;
+        }
+
+        if (path.length() >= 2 && path.charAt(1) == ':') {
+            char ch = path.charAt(0);
+            return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+        }
+
+        return false;
+    }
+
+    /// The stored path string.
+    private final String path;
+
+    /// Whether the stored path is absolute.
+    private final boolean absolute;
+
+    /// Creates a portable path with a normalized relative path string and an absolute flag.
+    private PortablePath(String path, boolean absolute) {
+        this.path = path;
+        this.absolute = absolute;
+    }
+
+    /// Returns the stored path string.
+    ///
+    /// @return the stored path string
+    public String getPath() {
+        return path;
+    }
+
+    /// Returns whether this path is absolute.
+    ///
+    /// @return whether this path is absolute
+    public boolean isAbsolute() {
+        return absolute;
+    }
+
+    /// Converts this portable path to a [Path] on the current platform.
+    ///
+    /// @return the converted path
+    public Path toPath() {
+        return Path.of(path);
+    }
+
+    /// Returns the stored path string.
+    ///
+    /// @return the stored path string
+    @Override
+    public String toString() {
+        return path;
+    }
+
+    /// Gson adapter that serializes portable paths as strings.
+    @NotNullByDefault
+    public static final class Adapter extends TypeAdapter<@Nullable PortablePath> {
+        /// Writes a portable path as its stored path string, or JSON null when the value is null.
+        @Override
+        public void write(JsonWriter out, @Nullable PortablePath value) throws IOException {
+            out.value(value == null ? null : value.getPath());
+        }
+
+        /// Reads a portable path from a string or JSON null.
+        @Override
+        public @Nullable PortablePath read(JsonReader in) throws IOException {
+            if (in.peek() == JsonToken.NULL) {
+                in.nextNull();
+                return null;
+            }
+            if (in.peek() != JsonToken.STRING) {
+                throw new JsonParseException("PortablePath must be a string: " + in.peek());
+            }
+
+            return PortablePath.of(in.nextString());
+        }
+    }
+}

@@ -32,6 +32,8 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
@@ -56,7 +58,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
-import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -69,8 +70,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class TerracottaControllerPage extends StackPane {
     private static final String FEEDBACK_TIP = "terracotta-feedback";
@@ -162,11 +164,11 @@ public class TerracottaControllerPage extends StackPane {
                     }
 
                     if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
-                        Object feedback = config().getShownTips().get(FEEDBACK_TIP);
+                        Object feedback = state().getShownTips().get(FEEDBACK_TIP);
                         if (!(feedback instanceof Number number) || number.intValue() < 1) {
                             Controllers.confirm(i18n("terracotta.feedback.desc.update"), i18n("terracotta.feedback.title"), () -> {
                                 FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
-                                config().getShownTips().put(FEEDBACK_TIP, 1);
+                                state().getShownTips().put(FEEDBACK_TIP, 1);
                             }, () -> {
                             });
                         }
@@ -212,7 +214,7 @@ public class TerracottaControllerPage extends StackPane {
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("version.launch"), () -> {
                             Profile profile = Profiles.getSelectedProfile();
-                            Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                            Versions.launch(profile, Profiles.getSelectedInstance(profile), launcherHelper -> {
                                 launcherHelper.setKeep();
                                 launcherHelper.setDisableOfflineSkin();
                             });
@@ -460,7 +462,7 @@ public class TerracottaControllerPage extends StackPane {
                         try (Zipper zipper = new Zipper(path)) {
                             zipper.putTextFile(data, StandardCharsets.UTF_8, "terracotta.log");
                             try (OutputStream os = zipper.putStream("hmcl-latest.log")) {
-                                Logger.LOG.exportLogs(os);
+                                LOG.exportLogs(os);
                             }
                         }
                         FXUtils.showFileInExplorer(path);
@@ -554,6 +556,7 @@ public class TerracottaControllerPage extends StackPane {
         header.getStyleClass().add("no-padding");
         header.setLargeTitle(true);
         header.setMinHeight(LinePane.USE_COMPUTED_SIZE);
+        HBox.setHgrow(header, Priority.ALWAYS);
         header.setMouseTransparent(true);
         header.setLeading(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
         header.setTitle(i18n("terracotta.from_local.title"));
