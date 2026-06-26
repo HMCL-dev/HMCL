@@ -272,7 +272,7 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     // Theme selection
 
     /// The installed theme selected by the launcher, or `null` when older settings do not contain a theme reference.
-    @SerializedName("theme")
+    @SerializedName("selectedTheme")
     private final ObjectProperty<@Nullable ThemeReference> selectedTheme =
             new SimpleObjectProperty<>(DEFAULT_THEME_REFERENCE);
 

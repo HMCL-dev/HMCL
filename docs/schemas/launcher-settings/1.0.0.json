@@ -39,7 +39,7 @@
     "logLines": {
       "type": "integer"
     },
-    "theme": {
+    "selectedTheme": {
       "$ref": "#/$defs/themeSelection"
     },
     "themeAppearanceOverrides": {
