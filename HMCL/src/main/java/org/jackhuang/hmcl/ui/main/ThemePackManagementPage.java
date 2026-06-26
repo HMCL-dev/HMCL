@@ -96,9 +96,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     /// The thumbnail container size used by theme-pack icons.
     private static final double THUMBNAIL_SIZE = 40;
 
-    /// The vector fallback icon size used when a non-built-in theme pack does not provide a thumbnail.
-    private static final double FALLBACK_THUMBNAIL_ICON_SIZE = 24;
-
     /// The requested decoded thumbnail image size used for HiDPI displays.
     private static final int THUMBNAIL_IMAGE_SIZE = (int) (THUMBNAIL_SIZE * 2);
 
@@ -270,7 +267,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     /// Creates the vector fallback icon used by non-built-in theme packs.
     private static SVGContainer createFallbackThumbnailIcon() {
-        SVGContainer fallbackIcon = new SVGContainer(SVG.PACKAGE2, FALLBACK_THUMBNAIL_ICON_SIZE);
+        SVGContainer fallbackIcon = new SVGContainer(SVG.PACKAGE2, THUMBNAIL_SIZE);
         fallbackIcon.setMouseTransparent(true);
         return fallbackIcon;
     }
