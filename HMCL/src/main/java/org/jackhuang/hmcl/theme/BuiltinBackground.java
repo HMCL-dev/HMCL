@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.setting;
+package org.jackhuang.hmcl.theme;
 
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -25,18 +25,19 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /// Identifies a built-in launcher background wallpaper.
 @NotNullByDefault
 public enum BuiltinBackground {
     /// Built-in launcher wallpaper from 2021-08-26.
-    WALLPAPER_2021_08_26("2021-08-26"),
+    WALLPAPER_2021_08_26("2021-08-26", "#3F6AA2"),
 
     /// Built-in launcher wallpaper from 2016-02-25.
-    WALLPAPER_2016_02_25("2016-02-25"),
+    WALLPAPER_2016_02_25("2016-02-25", "#354264"),
 
     /// Built-in launcher wallpaper from 2015-06-22.
-    WALLPAPER_2015_06_22("2015-06-22"),
+    WALLPAPER_2015_06_22("2015-06-22", "#FBC578"),
     ;
 
     /// Built-in wallpaper used when a wallpaper ID is missing or unsupported.
@@ -60,16 +61,26 @@ public enum BuiltinBackground {
     /// Serialized wallpaper ID.
     private final String id;
 
+    /// Precomputed MonetFX seed color extracted from this wallpaper.
+    private final ThemeColor themeColor;
+
     /// Creates a built-in wallpaper entry.
     ///
-    /// @param id the serialized wallpaper ID
-    BuiltinBackground(String id) {
+    /// @param id         the serialized wallpaper ID
+    /// @param themeColor the precomputed MonetFX seed color
+    BuiltinBackground(String id, String themeColor) {
         this.id = id;
+        this.themeColor = Objects.requireNonNull(ThemeColor.of(themeColor));
     }
 
     /// Returns the serialized wallpaper ID.
     public String id() {
         return id;
+    }
+
+    /// Returns the precomputed MonetFX seed color extracted from this wallpaper.
+    public ThemeColor themeColor() {
+        return themeColor;
     }
 
     /// Returns the built-in wallpaper for a serialized ID, or `null` when the ID is not supported.

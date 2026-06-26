@@ -26,7 +26,6 @@ import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
-import org.jackhuang.hmcl.setting.BuiltinBackground;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.ThemeColorType;

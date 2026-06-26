@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AccountID;
+import org.jackhuang.hmcl.theme.BuiltinBackground;
 import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.util.gson.JsonSchema;

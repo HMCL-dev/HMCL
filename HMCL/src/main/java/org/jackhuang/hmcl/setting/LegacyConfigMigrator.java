@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
+import org.jackhuang.hmcl.theme.BuiltinBackground;
 import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;

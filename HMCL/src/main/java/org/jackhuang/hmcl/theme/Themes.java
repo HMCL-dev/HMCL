@@ -56,7 +56,6 @@ import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
-import org.jackhuang.hmcl.setting.BuiltinBackground;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.ThemeColorType;
 import org.jackhuang.hmcl.task.CacheFileTask;
@@ -202,9 +201,10 @@ public final class Themes {
                     ThemePackManager.resolveCurrentBackground(ThemeResolveContext.current(getCurrentBrightness()));
             return switch (background.type()) {
                 case CUSTOM -> getImageThemeColor(background.imagePath(), background.imageResource(), fallback);
+                case BUILTIN -> BuiltinBackground.fromIdOrFallback(background.builtinBackgroundId()).themeColor();
                 case PAINT -> background.paint() instanceof Color color ? ThemeColor.of(color) : fallback;
                 case THEME_COLOR -> ThemeColor.DEFAULT;
-                case DEFAULT, BUILTIN, NETWORK -> fallback;
+                case DEFAULT, NETWORK -> fallback;
             };
         } catch (IOException | RuntimeException e) {
             return fallback;
@@ -579,6 +579,7 @@ public final class Themes {
             ThemePackManager.ResolvedBackground resolvedBackground,
             boolean fallbackBackground) {
         @Nullable Image image = null;
+        @Nullable ThemeColor imageThemeColor = null;
         switch (resolvedBackground.type()) {
             case CUSTOM:
                 @Nullable ThemePackResource imageResource = resolvedBackground.imageResource();
@@ -612,7 +613,10 @@ public final class Themes {
                 }
                 break;
             case BUILTIN:
-                image = loadBuiltinBackgroundImage(resolvedBackground.builtinBackgroundId());
+                BuiltinBackground builtinBackground =
+                        BuiltinBackground.fromIdOrFallback(resolvedBackground.builtinBackgroundId());
+                image = loadBuiltinBackgroundImage(builtinBackground.id());
+                imageThemeColor = builtinBackground.themeColor();
                 break;
             case PAINT:
                 @Nullable Paint paint = resolvedBackground.paint();
@@ -626,7 +630,11 @@ public final class Themes {
                         createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity()),
                         fallbackBackground);
             case DEFAULT:
-                image = loadDefaultBackgroundImage();
+                image = loadLocalDefaultBackgroundImage();
+                if (image == null) {
+                    image = loadBuiltinBackgroundImage(BuiltinBackground.FALLBACK.id());
+                    imageThemeColor = BuiltinBackground.FALLBACK.themeColor();
+                }
                 break;
         }
         if (image == null) {
@@ -635,7 +643,7 @@ public final class Themes {
         return new LoadedBackground.Image(
                 createBackgroundWithOpacity(image, resolvedBackground.opacity()),
                 image,
-                extractWallpaperThemeColor(image),
+                imageThemeColor != null ? imageThemeColor : extractWallpaperThemeColor(image),
                 fallbackBackground);
     }
 
@@ -656,7 +664,7 @@ public final class Themes {
         return new LoadedBackground.Image(
                 createBackgroundWithOpacity(image, getLoadedBackgroundOpacity(true)),
                 image,
-                extractWallpaperThemeColor(image),
+                BuiltinBackground.FALLBACK.themeColor(),
                 true);
     }
 
@@ -816,8 +824,8 @@ public final class Themes {
         }
     }
 
-    /// Loads the default launcher background image.
-    private static Image loadDefaultBackgroundImage() {
+    /// Loads a default launcher background image from local workspace files.
+    private static @Nullable Image loadLocalDefaultBackgroundImage() {
         @Nullable Image image = randomImageIn(Metadata.HMCL_LOCAL_HOME.resolve("background"));
         if (image != null) {
             return image;
@@ -842,7 +850,7 @@ public final class Themes {
             }
         }
 
-        return loadBuiltinBackgroundImage(BuiltinBackground.FALLBACK.id());
+        return null;
     }
 
     /// Loads one built-in launcher wallpaper by ID.
