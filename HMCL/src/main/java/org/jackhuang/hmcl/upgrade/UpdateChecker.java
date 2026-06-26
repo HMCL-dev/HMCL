@@ -42,6 +42,7 @@ public final class UpdateChecker {
     private static final BooleanBinding checkingUpdate = Bindings.createBooleanBinding(() -> runningThreads.get() > 0, runningThreads);
 
     private static UpdateChannel desiredChannel = null;
+    private static Boolean desiredPreview = null;
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get(), settings().autoDownloadUpdateProperty().get());
@@ -104,10 +105,11 @@ public final class UpdateChecker {
 
     public static void requestCheckUpdate(UpdateChannel channel, boolean preview, boolean download) {
         Platform.runLater(() -> {
-            if (isCheckingUpdate() && desiredChannel == channel)
+            if (isCheckingUpdate() && desiredChannel == channel && desiredPreview != null && desiredPreview.equals(preview))
                 return;
             runningThreads.set(runningThreads.get() + 1);
             desiredChannel = channel;
+            desiredPreview = preview;
 
             thread(() -> {
                 RemoteVersion result = null;
@@ -124,7 +126,7 @@ public final class UpdateChecker {
 
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
-                    if (finalResult != null && desiredChannel == channel) {
+                    if (finalResult != null && desiredChannel == channel && desiredPreview.equals(preview)) {
                         latestVersion.set(finalResult);
                         outdated.set(isOutdated);
                     }
