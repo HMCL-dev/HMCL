@@ -41,8 +41,7 @@ public final class UpdateChecker {
     private static final IntegerProperty runningThreads = new SimpleIntegerProperty(0);
     private static final BooleanBinding checkingUpdate = Bindings.createBooleanBinding(() -> runningThreads.get() > 0, runningThreads);
 
-    private static UpdateChannel desiredChannel = null;
-    private static Boolean desiredPreview = null;
+    private static UpdateTarget desiredTarget = null;
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get(), settings().autoDownloadUpdateProperty().get());
@@ -104,21 +103,24 @@ public final class UpdateChecker {
     }
 
     public static void requestCheckUpdate(UpdateChannel channel, boolean preview, boolean download) {
+        requestCheckUpdate(new UpdateTarget(channel, preview, download));
+    }
+
+    private static void requestCheckUpdate(UpdateTarget target) {
         Platform.runLater(() -> {
-            if (isCheckingUpdate() && desiredChannel == channel && desiredPreview != null && desiredPreview.equals(preview))
+            if (isCheckingUpdate() && target.concealedBy(desiredTarget))
                 return;
             runningThreads.set(runningThreads.get() + 1);
-            desiredChannel = channel;
-            desiredPreview = preview;
+            desiredTarget = target;
 
             thread(() -> {
                 RemoteVersion result = null;
                 boolean b = false;
                 try {
-                    result = checkUpdate(channel, preview);
+                    result = checkUpdate(target.channel(), target.preview());
                     b = checkOutdated(result);
-                    LOG.info("Latest version (" + channel + ", preview=" + preview + ") is " + result);
-                    if (download && b) result.tryDownload();
+                    LOG.info("Latest version (" + target.channel() + ", preview=" + target.preview() + ") is " + result);
+                    if (target.download() && b) result.tryDownload();
                 } catch (Throwable e) {
                     LOG.warning("Failed to check for update", e);
                 }
@@ -126,7 +128,7 @@ public final class UpdateChecker {
 
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
-                    if (finalResult != null && desiredChannel == channel && desiredPreview.equals(preview)) {
+                    if (finalResult != null && target.concealedBy(desiredTarget)) {
                         latestVersion.set(finalResult);
                         outdated.set(isOutdated);
                     }
@@ -134,5 +136,12 @@ public final class UpdateChecker {
                 });
             }, "Update Checker", true);
         });
+    }
+
+    private record UpdateTarget(UpdateChannel channel, boolean preview, boolean download) {
+        public boolean concealedBy(UpdateTarget other) {
+            if (other == null) return false;
+            return other.channel == channel && other.preview == preview && (!download || other.download);
+        }
     }
 }
