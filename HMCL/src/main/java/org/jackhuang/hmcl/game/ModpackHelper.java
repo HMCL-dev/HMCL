@@ -149,6 +149,7 @@ public final class ModpackHelper {
                 try {
                     outerFs.close();
                 } catch (IOException ignored) {
+                    // Ignore close errors for wrapper filesystem
                 }
             }
         }

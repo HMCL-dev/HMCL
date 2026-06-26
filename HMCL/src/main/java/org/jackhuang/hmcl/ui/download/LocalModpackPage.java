@@ -161,6 +161,7 @@ public final class LocalModpackPage extends ModpackPage {
             try {
                 wrapperFs.close();
             } catch (IOException ignored) {
+                // Ignore close errors for wrapper filesystem
             }
         }
     }

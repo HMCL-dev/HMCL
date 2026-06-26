@@ -155,12 +155,14 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                     try {
                         wrapperFs.close();
                     } catch (IOException e) {
+                        // Ignore close errors for wrapper filesystem
                     }
                 });
             } else {
                 try {
                     wrapperFs.close();
                 } catch (IOException ignored) {
+                    // Ignore close errors for wrapper filesystem
                 }
             }
         }
