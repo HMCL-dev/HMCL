@@ -103,9 +103,9 @@ public final class Themes {
         {
             List<Observable> observables = new ArrayList<>();
 
-            observables.add(settings().themeProperty());
+            observables.add(settings().selectedThemeProperty());
             observables.add(settings().getThemeAppearanceOverrides());
-            observables.add(settings().themeBrightnessProperty());
+            observables.add(settings().themeBrightnessModeProperty());
             observables.add(settings().customThemeColorProperty());
             observables.add(settings().themeColorTypeProperty());
             observables.add(settings().themeColorStyleProperty());
@@ -306,7 +306,7 @@ public final class Themes {
                 refreshBackground();
             }
         };
-        settings().themeProperty().addListener(backgroundListener);
+        settings().selectedThemeProperty().addListener(backgroundListener);
         settings().getThemeAppearanceOverrides().addListener(backgroundListener);
         settings().backgroundTypeProperty().addListener(backgroundListener);
         settings().builtinBackgroundIdProperty().addListener(backgroundListener);
@@ -317,7 +317,7 @@ public final class Themes {
         settings().backgroundOpacityProperty().addListener(ignored -> refreshBackgroundOpacity());
         settings().backgroundFallbackTypeProperty().addListener(ignored -> refreshFallbackBackground());
         settings().backgroundFallbackPaintProperty().addListener(ignored -> refreshFallbackBackground());
-        settings().themeBrightnessProperty().addListener(backgroundListener);
+        settings().themeBrightnessModeProperty().addListener(backgroundListener);
         if (FXUtils.DARK_MODE != null) {
             FXUtils.DARK_MODE.addListener(backgroundListener);
         }
@@ -331,12 +331,12 @@ public final class Themes {
     ///
     /// @return the brightness used by theme condition matching
     public static Brightness getThemeConditionBrightness() {
-        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS)) {
+        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
             return getAutomaticBrightness();
         }
 
-        String themeBrightness = settings().themeBrightnessProperty().get();
-        return switch (Objects.toString(themeBrightness, "").toLowerCase(Locale.ROOT).trim()) {
+        String themeBrightnessMode = settings().themeBrightnessModeProperty().get();
+        return switch (Objects.toString(themeBrightnessMode, "").toLowerCase(Locale.ROOT).trim()) {
             case "light" -> Brightness.LIGHT;
             case "dark" -> Brightness.DARK;
             default -> getAutomaticBrightness();
@@ -347,7 +347,7 @@ public final class Themes {
     ///
     /// @return the effective launcher brightness
     public static Brightness getCurrentBrightness() {
-        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS)) {
+        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
             Brightness contextBrightness = getThemeConditionBrightness();
             try {
                 return ThemePackManager.resolveCurrentThemeBrightness(
@@ -358,8 +358,8 @@ public final class Themes {
             }
         }
 
-        String themeBrightness = settings().themeBrightnessProperty().get();
-        return switch (Objects.toString(themeBrightness, "").toLowerCase(Locale.ROOT).trim()) {
+        String themeBrightnessMode = settings().themeBrightnessModeProperty().get();
+        return switch (Objects.toString(themeBrightnessMode, "").toLowerCase(Locale.ROOT).trim()) {
             case "auto" -> getAutomaticBrightness();
             case "dark" -> Brightness.DARK;
             case "light" -> Brightness.LIGHT;
@@ -898,10 +898,10 @@ public final class Themes {
     }
 
     /// Whether the title area should be transparent after applying launcher and theme settings.
-    private static final BooleanBinding titleTransparent = Bindings.createBooleanBinding(
+    private static final BooleanBinding titleBarTransparent = Bindings.createBooleanBinding(
             () -> {
-                if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_TRANSPARENT)) {
-                    return settings().titleTransparentProperty().get();
+                if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT)) {
+                    return settings().titleBarTransparentProperty().get();
                 }
                 try {
                     return ThemePackManager.resolveCurrentTitleBarTransparent(
@@ -911,20 +911,20 @@ public final class Themes {
                     return false;
                 }
             },
-            settings().titleTransparentProperty(),
+            settings().titleBarTransparentProperty(),
             settings().getThemeAppearanceOverrides(),
-            settings().themeProperty(),
-            settings().themeBrightnessProperty(),
-            FXUtils.DARK_MODE != null ? FXUtils.DARK_MODE : settings().themeBrightnessProperty()
+            settings().selectedThemeProperty(),
+            settings().themeBrightnessModeProperty(),
+            FXUtils.DARK_MODE != null ? FXUtils.DARK_MODE : settings().themeBrightnessModeProperty()
     );
 
     /// The title text fill derived from the current color scheme.
     private static final ObjectBinding<Color> titleFill = Bindings.createObjectBinding(
-            () -> titleTransparent.get()
+            () -> titleBarTransparent.get()
                     ? getColorScheme().getOnSurface()
                     : getColorScheme().getOnPrimaryContainer(),
             colorSchemeProperty(),
-            titleTransparent
+            titleBarTransparent
     );
 
     /// Returns the title text fill property derived from the current color scheme.
@@ -933,8 +933,8 @@ public final class Themes {
     }
 
     /// Returns whether the title area should be transparent after applying launcher and theme settings.
-    public static BooleanBinding titleTransparentProperty() {
-        return titleTransparent;
+    public static BooleanBinding titleBarTransparentProperty() {
+        return titleBarTransparent;
     }
 
     /// Returns whether the current color scheme uses dark brightness.

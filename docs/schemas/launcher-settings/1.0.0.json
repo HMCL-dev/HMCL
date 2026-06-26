@@ -46,10 +46,10 @@
       "type": "array",
       "items": {
         "enum": [
-          "themeBrightness",
+          "themeBrightnessMode",
           "themeColor",
           "themeColorStyle",
-          "titleTransparent",
+          "titleBarTransparent",
           "background",
           "backgroundOpacity",
           "networkBackgroundImageCachePolicy",
@@ -59,7 +59,7 @@
       },
       "uniqueItems": true
     },
-    "themeBrightness": {
+    "themeBrightnessMode": {
       "type": "string"
     },
     "customThemeColor": true,
@@ -83,7 +83,7 @@
         "FRUIT_SALAD"
       ]
     },
-    "titleTransparent": {
+    "titleBarTransparent": {
       "type": "boolean"
     },
     "backgroundType": {

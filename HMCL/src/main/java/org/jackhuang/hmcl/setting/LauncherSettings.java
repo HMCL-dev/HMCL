@@ -74,8 +74,8 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Default launcher theme used when no stored theme reference is available.
     public static final ThemeReference DEFAULT_THEME_REFERENCE = new ThemeReference("hmcl.default", null);
 
-    /// Theme appearance override key for theme brightness.
-    public static final String THEME_APPEARANCE_BRIGHTNESS = "themeBrightness";
+    /// Theme appearance override key for theme brightness mode.
+    public static final String THEME_APPEARANCE_BRIGHTNESS_MODE = "themeBrightnessMode";
 
     /// Theme appearance override key for theme color seed.
     public static final String THEME_APPEARANCE_COLOR = "themeColor";
@@ -83,8 +83,8 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Theme appearance override key for theme color style.
     public static final String THEME_APPEARANCE_COLOR_STYLE = "themeColorStyle";
 
-    /// Theme appearance override key for title area transparency.
-    public static final String THEME_APPEARANCE_TITLE_TRANSPARENT = "titleTransparent";
+    /// Theme appearance override key for title-bar transparency.
+    public static final String THEME_APPEARANCE_TITLE_BAR_TRANSPARENT = "titleBarTransparent";
 
     /// Theme appearance override key for the primary background source.
     public static final String THEME_APPEARANCE_BACKGROUND = "background";
@@ -273,16 +273,17 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The installed theme selected by the launcher, or `null` when older settings do not contain a theme reference.
     @SerializedName("theme")
-    private final ObjectProperty<@Nullable ThemeReference> theme = new SimpleObjectProperty<>(DEFAULT_THEME_REFERENCE);
+    private final ObjectProperty<@Nullable ThemeReference> selectedTheme =
+            new SimpleObjectProperty<>(DEFAULT_THEME_REFERENCE);
 
     /// Returns the selected installed theme property.
-    public ObjectProperty<@Nullable ThemeReference> themeProperty() {
-        return theme;
+    public ObjectProperty<@Nullable ThemeReference> selectedThemeProperty() {
+        return selectedTheme;
     }
 
     /// Returns the selected installed theme, falling back to the built-in default theme.
-    public ThemeReference getThemeOrDefault() {
-        return Objects.requireNonNullElse(theme.get(), DEFAULT_THEME_REFERENCE);
+    public ThemeReference getSelectedThemeOrDefault() {
+        return Objects.requireNonNullElse(selectedTheme.get(), DEFAULT_THEME_REFERENCE);
     }
 
     // Theme appearance overrides
@@ -313,13 +314,13 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     // Theme appearance values
 
-    /// The configured theme brightness identifier.
-    @SerializedName("themeBrightness")
-    private final StringProperty themeBrightness = new SimpleStringProperty("auto");
+    /// The configured theme brightness mode identifier.
+    @SerializedName("themeBrightnessMode")
+    private final StringProperty themeBrightnessMode = new SimpleStringProperty("auto");
 
-    /// Returns the theme brightness property.
-    public StringProperty themeBrightnessProperty() {
-        return themeBrightness;
+    /// Returns the theme brightness mode property.
+    public StringProperty themeBrightnessModeProperty() {
+        return themeBrightnessMode;
     }
 
     /// The custom launcher theme color preserved when dynamic color extraction is used.
@@ -349,13 +350,13 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return themeColorStyle;
     }
 
-    /// Whether the launcher title area is transparent.
-    @SerializedName("titleTransparent")
-    private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
+    /// Whether the launcher title bar is transparent.
+    @SerializedName("titleBarTransparent")
+    private final BooleanProperty titleBarTransparent = new SimpleBooleanProperty(false);
 
-    /// Returns the transparent title area property.
-    public BooleanProperty titleTransparentProperty() {
-        return titleTransparent;
+    /// Returns the transparent title-bar property.
+    public BooleanProperty titleBarTransparentProperty() {
+        return titleBarTransparent;
     }
 
     // Background source

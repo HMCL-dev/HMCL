@@ -157,9 +157,9 @@ public class PersonalizationPage extends StackPane {
 
     /// Adds listeners for state that can change effective inherited appearance values.
     private static void addThemeAppearanceRefreshListener(InvalidationListener listener) {
-        settings().themeProperty().addListener(listener);
+        settings().selectedThemeProperty().addListener(listener);
         settings().getThemeAppearanceOverrides().addListener(listener);
-        settings().themeBrightnessProperty().addListener(listener);
+        settings().themeBrightnessModeProperty().addListener(listener);
         settings().backgroundTypeProperty().addListener(listener);
         if (FXUtils.DARK_MODE != null) {
             FXUtils.DARK_MODE.addListener(listener);
@@ -348,7 +348,7 @@ public class PersonalizationPage extends StackPane {
             LOG.warning("Failed to load installed theme packs", e);
         }
 
-        ThemeReference reference = settings().getThemeOrDefault();
+        ThemeReference reference = settings().getSelectedThemeOrDefault();
         if (findThemeChoice(choices, reference) == null) {
             choices.add(ThemeChoice.missing(reference));
         }
@@ -358,7 +358,7 @@ public class PersonalizationPage extends StackPane {
 
     /// Returns the choice that matches the current launcher theme reference.
     private static ThemeChoice getSelectedThemeChoice(List<ThemeChoice> choices) {
-        ThemeReference reference = settings().getThemeOrDefault();
+        ThemeReference reference = settings().getSelectedThemeOrDefault();
         @Nullable ThemeChoice choice = findThemeChoice(choices, reference);
         if (choice != null) {
             return choice;
@@ -636,7 +636,7 @@ public class PersonalizationPage extends StackPane {
 
                 applyThemeChoice(choice, refreshSelectedTheme);
             });
-            FXUtils.onChange(settings().themeProperty(), ignored -> reloadThemeChoices.run());
+            FXUtils.onChange(settings().selectedThemeProperty(), ignored -> reloadThemeChoices.run());
             reloadThemeChoices.run();
             themeList.getContent().add(themeSelectButton);
 
@@ -665,8 +665,8 @@ public class PersonalizationPage extends StackPane {
             brightnessPane.setItems(Arrays.asList("auto", "light", "dark"));
             bindThemeAppearanceLineSelectButton(
                     brightnessPane,
-                    LauncherSettings.THEME_APPEARANCE_BRIGHTNESS,
-                    settings().themeBrightnessProperty(),
+                    LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE,
+                    settings().themeBrightnessModeProperty(),
                     () -> {
                         try {
                             @Nullable Brightness brightness = ThemePackManager.resolveCurrentThemeBrightness(
@@ -709,8 +709,8 @@ public class PersonalizationPage extends StackPane {
                     },
                     settings().themeColorTypeProperty(),
                     settings().getThemeAppearanceOverrides(),
-                    settings().themeProperty(),
-                    settings().themeBrightnessProperty()));
+                    settings().selectedThemeProperty(),
+                    settings().themeBrightnessModeProperty()));
 
             ColorPicker picker = new JFXColorPicker();
             picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
@@ -979,8 +979,8 @@ public class PersonalizationPage extends StackPane {
                     },
                     backgroundFallbackItem.selectedValueProperty(),
                     settings().getThemeAppearanceOverrides(),
-                    settings().themeProperty(),
-                    settings().themeBrightnessProperty(),
+                    settings().selectedThemeProperty(),
+                    settings().themeBrightnessModeProperty(),
                     settings().backgroundFallbackPaintProperty()));
 
             LineToggleButton backgroundLoadPolicyButton = new LineToggleButton();
@@ -1047,8 +1047,8 @@ public class PersonalizationPage extends StackPane {
                     },
                     backgroundItem.selectedValueProperty(),
                     settings().getThemeAppearanceOverrides(),
-                    settings().themeProperty(),
-                    settings().themeBrightnessProperty(),
+                    settings().selectedThemeProperty(),
+                    settings().themeBrightnessModeProperty(),
                     settings().builtinBackgroundIdProperty(),
                     settings().customBackgroundImagePathProperty(),
                     settings().networkBackgroundImageUrlProperty(),
@@ -1151,12 +1151,12 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            LineToggleButton titleTransparentButton = new LineToggleButton();
-            titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
+            LineToggleButton titleBarTransparentButton = new LineToggleButton();
+            titleBarTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
             bindThemeAppearanceToggleButton(
-                    titleTransparentButton,
-                    LauncherSettings.THEME_APPEARANCE_TITLE_TRANSPARENT,
-                    settings().titleTransparentProperty(),
+                    titleBarTransparentButton,
+                    LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT,
+                    settings().titleBarTransparentProperty(),
                     () -> {
                         try {
                             return ThemePackManager.resolveCurrentTitleBarTransparent(
@@ -1169,7 +1169,7 @@ public class PersonalizationPage extends StackPane {
                     Boolean.TRUE,
                     Boolean.FALSE,
                     null);
-            themeAppearanceList.getContent().add(titleTransparentButton);
+            themeAppearanceList.getContent().add(titleBarTransparentButton);
         }
         content.getChildren().addAll(
                 ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")),

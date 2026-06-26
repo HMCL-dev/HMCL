@@ -49,7 +49,7 @@ public class DecoratorController {
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
-        decorator.titleTransparentProperty().bind(Themes.titleTransparentProperty());
+        decorator.titleTransparentProperty().bind(Themes.titleBarTransparentProperty());
 
         navigator = new Navigator();
         navigator.setOnNavigated(this::onNavigated);

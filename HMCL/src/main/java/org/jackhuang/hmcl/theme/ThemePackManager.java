@@ -515,7 +515,7 @@ public final class ThemePackManager {
 
         deleteIfExists(targetFile);
 
-        ThemeReference reference = settings().getThemeOrDefault();
+        ThemeReference reference = settings().getSelectedThemeOrDefault();
         ThemePackManifest manifest = themePack.manifest();
         if (reference.packId().equals(manifest.id())) {
             @Nullable InstalledThemePack replacementThemePack = findInstalled(reference);
@@ -523,7 +523,7 @@ public final class ThemePackManager {
                     ? null
                     : replacementThemePack.manifest().findTheme(reference.themeId());
             if (replacementTheme == null) {
-                settings().themeProperty().set(BUILTIN_DEFAULT_THEME_REFERENCE);
+                settings().selectedThemeProperty().set(BUILTIN_DEFAULT_THEME_REFERENCE);
             }
         }
     }
@@ -569,7 +569,7 @@ public final class ThemePackManager {
         ThemeReference reference = new ThemeReference(manifest.id(), theme.id());
         LauncherSettings currentSettings = settings();
         currentSettings.getThemeAppearanceOverrides().clear();
-        currentSettings.themeProperty().set(reference);
+        currentSettings.selectedThemeProperty().set(reference);
     }
 
     /// Exports the current launcher appearance to a theme-pack file.
@@ -663,11 +663,11 @@ public final class ThemePackManager {
 
     /// Returns the current launcher brightness as an explicit theme-pack directive, or `null` for auto mode.
     private static @Nullable Brightness currentControlledBrightness() throws IOException {
-        if (!SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS)) {
+        if (!SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
             return resolveCurrentThemeBrightness(currentResolveContext());
         }
 
-        String brightness = settings().themeBrightnessProperty().get();
+        String brightness = settings().themeBrightnessModeProperty().get();
         if (StringUtils.isBlank(brightness)) {
             return null;
         }
@@ -680,8 +680,8 @@ public final class ThemePackManager {
 
     /// Returns whether the current title bar should be transparent.
     private static boolean currentTitleBarTransparent() throws IOException {
-        return SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_TRANSPARENT)
-                ? settings().titleTransparentProperty().get()
+        return SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT)
+                ? settings().titleBarTransparentProperty().get()
                 : resolveCurrentTitleBarTransparent(currentResolveContext(), false);
     }
 
@@ -711,7 +711,7 @@ public final class ThemePackManager {
         if (color instanceof ThemeColorSource.Wallpaper && backgroundType == BackgroundType.THEME_COLOR) {
             return ThemeColor.DEFAULT;
         }
-        ThemeReference reference = settings().getThemeOrDefault();
+        ThemeReference reference = settings().getSelectedThemeOrDefault();
         @Nullable InstalledThemePack themePack = findInstalled(reference);
         return themePack != null ? resolveThemeColor(themePack.location(), appearance) : fallback;
     }
@@ -802,7 +802,7 @@ public final class ThemePackManager {
     private static @Nullable ThemeAppearance resolveCurrentThemeAppearance(ThemeResolveContext context) throws IOException {
         Objects.requireNonNull(context);
 
-        ThemeReference reference = settings().getThemeOrDefault();
+        ThemeReference reference = settings().getSelectedThemeOrDefault();
 
         @Nullable InstalledThemePack themePack = findInstalled(reference);
         if (themePack == null) {
@@ -836,7 +836,7 @@ public final class ThemePackManager {
         Objects.requireNonNull(context);
 
         if (!SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
-            ThemeReference reference = settings().getThemeOrDefault();
+            ThemeReference reference = settings().getSelectedThemeOrDefault();
             @Nullable ResolvedBackground resolved = resolveThemeBackground(reference, context);
             if (resolved != null) {
                 return resolved;

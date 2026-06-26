@@ -221,6 +221,9 @@ public final class LegacyConfigMigrator {
             renameMember(jsonObject, "commonDirType", "commonDirectoryType");
             renameMember(jsonObject, "commonpath", "commonDirectory");
             migrateLegacyLanguage(jsonObject);
+            if (renameMember(jsonObject, "titleTransparent", "titleBarTransparent")) {
+                addThemeAppearanceOverride(jsonObject, LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT);
+            }
             if (renameMember(jsonObject, "theme", "customThemeColor")) {
                 jsonObject.addProperty("themeColorType", ThemeColorType.CUSTOM.name());
                 addThemeAppearanceOverride(jsonObject, LauncherSettings.THEME_APPEARANCE_COLOR);
