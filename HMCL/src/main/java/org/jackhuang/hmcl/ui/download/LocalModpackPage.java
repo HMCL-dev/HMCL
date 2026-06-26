@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -107,11 +108,29 @@ public final class LocalModpackPage extends ModpackPage {
                 .thenApplyAsync(encoding -> {
                     charset = encoding;
                     Path actualFile = selectedFile;
-                    var wrapper = ModpackHelper.unwrapIfLauncherWrapper(selectedFile, encoding);
-                    if (wrapper != null) {
-                        actualFile = wrapper.getKey();
-                        controller.getSettings().put(MODPACK_FILE, wrapper.getKey());
-                        controller.getSettings().put(MODPACK_WRAPPER_FS, wrapper.getValue());
+                    if (selectedFile.getFileSystem() == FileSystems.getDefault()) {
+                        var wrapper = ModpackHelper.unwrapIfLauncherWrapper(selectedFile, encoding);
+                        if (wrapper != null) {
+                            actualFile = wrapper.getKey();
+                            controller.getSettings().put(MODPACK_FILE, wrapper.getKey());
+                            FileSystem oldFs = controller.getSettings().put(MODPACK_WRAPPER_FS, wrapper.getValue());
+                            if (oldFs != null) {
+                                try {
+                                    oldFs.close();
+                                } catch (IOException ignored) {
+                                    // Ignore close errors for wrapper filesystem
+                                }
+                            }
+                        } else {
+                            FileSystem oldFs = controller.getSettings().remove(MODPACK_WRAPPER_FS);
+                            if (oldFs != null) {
+                                try {
+                                    oldFs.close();
+                                } catch (IOException ignored) {
+                                    // Ignore close errors for wrapper filesystem
+                                }
+                            }
+                        }
                     }
                     manifest = ModpackHelper.readModpackManifest(actualFile, encoding);
                     return manifest;
