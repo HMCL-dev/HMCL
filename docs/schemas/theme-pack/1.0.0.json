@@ -87,7 +87,10 @@
     },
     "packId": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(\\.[A-Za-z0-9][A-Za-z0-9_-]*)*$"
+    },
+    "themeId": {
+      "$ref": "#/$defs/packId"
     },
     "assetPath": {
       "type": "string",
@@ -128,7 +131,7 @@
       },
       "properties": {
         "id": {
-          "$ref": "#/$defs/nonEmptyString"
+          "$ref": "#/$defs/themeId"
         },
         "name": {
           "$ref": "#/$defs/localizedText"

@@ -59,8 +59,10 @@ public record ThemePackManifest(
     public static final JsonSchema CURRENT_SCHEMA =
             new JsonSchema("theme-pack", new JsonSchema.Version(1, 0, 0));
 
-    /// Package ID format that can be used directly as an installed theme-pack file name.
-    private static final Pattern PACKAGE_ID_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]*");
+    /// Package and theme ID format used by theme-pack manifests.
+    private static final Pattern PACKAGE_ID_PATTERN = Pattern.compile(
+            "[A-Za-z0-9][A-Za-z0-9_-]*(\\.[A-Za-z0-9][A-Za-z0-9_-]*)*"
+    );
 
     /// Creates a theme-pack manifest.
     ///
@@ -240,11 +242,21 @@ public record ThemePackManifest(
         return trimmed;
     }
 
-    /// Returns a package ID that can be used directly as an installed theme-pack file name.
+    /// Returns a package ID matching the theme-pack ID format.
     static String requirePackageId(String value) {
-        String id = requireNonBlank(value, "id");
+        return requireId(value, "id", "Theme-pack manifest ID must follow package ID format: ");
+    }
+
+    /// Returns a theme ID matching the theme-pack ID format.
+    static String requireThemeId(String value) {
+        return requireId(value, "theme id", "Theme ID must follow package ID format: ");
+    }
+
+    /// Returns an ID matching the theme-pack ID format.
+    private static String requireId(String value, String field, String messagePrefix) {
+        String id = requireNonBlank(value, field);
         if (!PACKAGE_ID_PATTERN.matcher(id).matches()) {
-            throw new IllegalArgumentException("Theme-pack manifest ID cannot be used as a file name: " + value);
+            throw new IllegalArgumentException(messagePrefix + value);
         }
         return id;
     }

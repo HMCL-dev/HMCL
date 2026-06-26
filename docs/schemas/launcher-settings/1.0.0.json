@@ -207,6 +207,10 @@
     }
   },
   "$defs": {
+    "packageId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(\\.[A-Za-z0-9][A-Za-z0-9_-]*)*$"
+    },
     "downloadSource": {
       "enum": [
         "DEFAULT",
@@ -222,12 +226,10 @@
       ],
       "properties": {
         "packId": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/packageId"
         },
         "themeId": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/packageId"
         }
       }
     },

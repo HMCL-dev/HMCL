@@ -594,6 +594,7 @@ public final class ThemePackManager {
     /// @return the exportable theme-pack descriptor
     /// @throws IOException if the current appearance cannot be represented as a theme pack
     public static ExportedThemePack createCurrent(String packId, String packName, String authorName) throws IOException {
+        packId = ThemePackManifest.requirePackageId(packId);
         packName = requireNonBlank(packName, "packName");
 
         List<ThemePackAsset> assets = new ArrayList<>();
@@ -613,7 +614,7 @@ public final class ThemePackManager {
                 appearance,
                 List.of());
         ThemePackManifest manifest = new ThemePackManifest(
-                requireNonBlank(packId, "packId"),
+                packId,
                 CURRENT_THEME_PACK_VERSION,
                 LocalizedText.plain(packName),
                 List.of(new ThemePackAuthor(LocalizedText.plain(requireNonBlank(authorName, "authorName")))),

@@ -66,8 +66,8 @@ public record Theme(
     /// @param appearance  the default appearance fields
     /// @param overrides   conditional appearance patches applied in declaration order
     public Theme {
-        if (id != null && id.isBlank()) {
-            throw new IllegalArgumentException("Theme field is blank: " + "id");
+        if (id != null) {
+            id = ThemePackManifest.requireThemeId(id);
         }
         if (name != null && name.mayBeEmpty()) {
             throw new IllegalArgumentException("Theme name is empty: " + name);

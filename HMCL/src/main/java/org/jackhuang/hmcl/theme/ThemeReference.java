@@ -21,8 +21,6 @@ import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 /// Identifies one theme declared by an installed theme pack.
 ///
 /// @param packId the theme-pack identifier
@@ -37,18 +35,9 @@ public record ThemeReference(
     /// @param packId the theme-pack identifier
     /// @param themeId the selected theme identifier inside the pack, or `null` for an unnamed single-theme pack
     public ThemeReference {
-        packId = requireNonBlank(packId, "packId");
+        packId = ThemePackManifest.requirePackageId(packId);
         if (themeId != null) {
-            themeId = requireNonBlank(themeId, "themeId");
+            themeId = ThemePackManifest.requireThemeId(themeId);
         }
-    }
-
-    /// Returns a non-blank identifier value.
-    private static String requireNonBlank(String value, String name) {
-        String trimmed = Objects.requireNonNull(value).trim();
-        if (trimmed.isEmpty()) {
-            throw new IllegalArgumentException("Theme reference field is blank: " + name);
-        }
-        return trimmed;
     }
 }
