@@ -166,6 +166,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             HBox hbox = new HBox(16);
             HBox.setHgrow(twoLineListItem, Priority.ALWAYS);
+            twoLineListItem.setAlignment(Pos.CENTER);
             hbox.setAlignment(Pos.CENTER);
 
             HBox actions = new HBox(8);

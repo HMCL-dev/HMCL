@@ -111,7 +111,10 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -296,11 +299,6 @@ public final class FXUtils {
         return originalListener;
     }
 
-    public static void runLaterIf(BooleanSupplier condition, Runnable runnable) {
-        if (condition.getAsBoolean()) Platform.runLater(() -> runLaterIf(condition, runnable));
-        else runnable.run();
-    }
-
     public static void limitSize(ImageView imageView, double maxWidth, double maxHeight) {
         imageView.setPreserveRatio(true);
         onChangeAndOperate(imageView.imageProperty(), image -> {
@@ -378,10 +376,6 @@ public final class FXUtils {
             ((JFXPasswordField) field).validate();
         } else
             throw new IllegalArgumentException("Only JFXTextField and JFXPasswordField allowed");
-    }
-
-    public static boolean getValidateWhileTextChanged(Node field) {
-        return field.getProperties().containsKey("FXUtils.validation");
     }
 
     public static Rectangle setOverflowHidden(Region region) {

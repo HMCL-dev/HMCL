@@ -35,20 +35,13 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
-import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.AuthlibInjectorServers;
-import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.ProxyManager;
-import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.setting.SambaException;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
-import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.*;
@@ -72,6 +65,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -170,13 +164,13 @@ public final class Launcher extends Application {
 
         CacheRepository.setInstance(HMCLCacheRepository.REPOSITORY);
         HMCLCacheRepository.REPOSITORY.directoryProperty().bind(Bindings.createStringBinding(() -> {
-            String commonDirectory = SettingsManager.settings().getResolvedCommonDirectory();
+            String commonDirectory = settings().getResolvedCommonDirectory();
             if (commonDirectory != null && FileUtils.canCreateDirectory(commonDirectory)) {
                 return commonDirectory;
             } else {
                 return LauncherSettings.getDefaultCommonDirectory();
             }
-        }, SettingsManager.settings().commonDirectoryProperty(), SettingsManager.settings().commonDirectoryTypeProperty()));
+        }, settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
     }
 
     private static void appendScreen(StringBuilder builder, Screen screen) {
