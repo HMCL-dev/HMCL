@@ -78,6 +78,10 @@ public record RemoteVersion(UpdateChannel channel, String version, String url, T
             downloadCache.put(this, downloaded);
         } else {
             LOG.warning("Failed to download update for " + this, executor.getException());
+            try {
+                Files.deleteIfExists(downloaded);
+            } catch (IOException ignored) {
+            }
         }
     }
 
