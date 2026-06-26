@@ -597,6 +597,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             header.setPickOnBounds(false);
             header.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
+            // Allow the title to shrink/ellipsize instead of pushing the buttons out of view.
+            content.setMinWidth(0);
             content.setMouseTransparent(true);
             setSelectable();
 
@@ -604,6 +606,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
             FXUtils.installFastTooltip(expandButton, i18n("addon.bundled"));
+            // Don't reserve layout space for the restore button when it is hidden,
+            // otherwise it leaves a gap between the expand button and the other buttons.
+            restoreButton.managedProperty().bind(restoreButton.visibleProperty());
 
             expandButton.getGraphic().rotateProperty().bind(
                     Bindings.when(expanded).then(180.0).otherwise(0.0));
@@ -618,7 +623,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             nestedBox.visibleProperty().bind(expanded);
             nestedBox.managedProperty().bind(nestedBox.visibleProperty());
 
-            header.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton, expandButton);
+            header.getChildren().setAll(checkBox, imageContainer, content, expandButton, restoreButton, revealButton, infoButton);
 
             VBox container = new VBox(header, nestedBox);
             container.setPickOnBounds(false);
