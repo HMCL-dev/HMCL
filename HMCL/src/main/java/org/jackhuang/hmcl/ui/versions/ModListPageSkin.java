@@ -24,6 +24,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -35,6 +36,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.*;
@@ -184,6 +187,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                             .toList()
                             )
                     ),
+                    createToolbarButton2(i18n("mods.export"), SVG.DOWNLOAD, this::showExportDialog),
                     selectAll,
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
                             listView.getSelectionModel().clearSelection())
@@ -296,6 +300,106 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             }
         }
+    }
+
+    private void showExportDialog() {
+        ToggleGroup formatGroup = new ToggleGroup();
+        JFXRadioButton csvRadio = new JFXRadioButton("CSV");
+        JFXRadioButton jsonRadio = new JFXRadioButton("JSON");
+        csvRadio.setToggleGroup(formatGroup);
+        jsonRadio.setToggleGroup(formatGroup);
+        csvRadio.setSelected(true);
+
+        JFXCheckBox chkName = new JFXCheckBox("Name");
+        JFXCheckBox chkVersion = new JFXCheckBox("Version");
+        JFXCheckBox chkId = new JFXCheckBox("Mod ID");
+        JFXCheckBox chkGameVersion = new JFXCheckBox("Game Version");
+        JFXCheckBox chkAuthors = new JFXCheckBox("Authors");
+        JFXCheckBox chkDescription = new JFXCheckBox("Description");
+        JFXCheckBox chkUrl = new JFXCheckBox("URL");
+        JFXCheckBox chkActive = new JFXCheckBox("Active");
+        JFXCheckBox chkModLoaderType = new JFXCheckBox("Mod Loader Type");
+        JFXCheckBox chkMcmodId = new JFXCheckBox("MCMod ID");
+        JFXCheckBox chkAbbr = new JFXCheckBox("Abbreviation");
+        JFXCheckBox chkChineseName = new JFXCheckBox("Chinese Name");
+        JFXCheckBox chkSha1 = new JFXCheckBox("SHA1");
+        JFXCheckBox chkSha512 = new JFXCheckBox("SHA512");
+
+        chkName.setSelected(true);
+        chkVersion.setSelected(true);
+        chkId.setSelected(true);
+        chkGameVersion.setSelected(false);
+        chkAuthors.setSelected(false);
+        chkDescription.setSelected(false);
+        chkUrl.setSelected(false);
+        chkActive.setSelected(false);
+        chkModLoaderType.setSelected(false);
+        chkMcmodId.setSelected(false);
+        chkAbbr.setSelected(false);
+        chkChineseName.setSelected(false);
+        chkSha1.setSelected(false);
+        chkSha512.setSelected(false);
+
+        Label formatLabel = new Label(i18n("mods.export.format"));
+        Label fieldsLabel = new Label(i18n("mods.export.fields"));
+
+        HBox formatBox = new HBox(10, csvRadio, jsonRadio);
+        formatBox.setAlignment(Pos.CENTER_LEFT);
+
+        VBox fieldsBox = new VBox(8,
+                chkName, chkVersion, chkId, chkGameVersion, chkAuthors,
+                chkDescription, chkUrl, chkActive, chkModLoaderType,
+                chkMcmodId, chkAbbr, chkChineseName,
+                chkSha1, chkSha512);
+        fieldsBox.setAlignment(Pos.CENTER_LEFT);
+
+        VBox contentBox = new VBox(15, formatLabel, formatBox, fieldsLabel, fieldsBox);
+        contentBox.setAlignment(Pos.CENTER_LEFT);
+        contentBox.setMaxWidth(400);
+        contentBox.setMaxHeight(500);
+
+        ScrollPane scrollPane = new ScrollPane(contentBox);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setPrefHeight(500);
+
+        JFXDialogLayout dialogLayout = new JFXDialogLayout();
+        dialogLayout.setHeading(new Label(i18n("mods.export.title")));
+        dialogLayout.setBody(scrollPane);
+
+        JFXButton exportButton = new JFXButton(i18n("button.export"));
+        exportButton.getStyleClass().add("dialog-accept");
+        exportButton.setOnAction(e -> {
+            String format = csvRadio.isSelected() ? "csv" : "json";
+            Set<String> fields = new LinkedHashSet<>();
+            if (chkName.isSelected()) fields.add("name");
+            if (chkVersion.isSelected()) fields.add("version");
+            if (chkId.isSelected()) fields.add("modid");
+            if (chkGameVersion.isSelected()) fields.add("gameVersion");
+            if (chkAuthors.isSelected()) fields.add("authors");
+            if (chkDescription.isSelected()) fields.add("description");
+            if (chkUrl.isSelected()) fields.add("url");
+            if (chkActive.isSelected()) fields.add("active");
+            if (chkModLoaderType.isSelected()) fields.add("modLoaderType");
+            if (chkMcmodId.isSelected()) fields.add("mcmodId");
+            if (chkAbbr.isSelected()) fields.add("abbr");
+            if (chkChineseName.isSelected()) fields.add("chineseName");
+            if (chkSha1.isSelected()) fields.add("sha1");
+            if (chkSha512.isSelected()) fields.add("sha512");
+
+            dialogLayout.fireEvent(new DialogCloseEvent());
+            getSkinnable().exportMods(listView.getSelectionModel().getSelectedItems(), format, fields);
+        });
+
+        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        cancelButton.setButtonType(JFXButton.ButtonType.FLAT);
+        cancelButton.getStyleClass().add("dialog-cancel");
+        cancelButton.setOnAction(ev -> dialogLayout.fireEvent(new DialogCloseEvent()));
+
+        dialogLayout.setActions(exportButton, cancelButton);
+
+        Controllers.dialog(dialogLayout);
     }
 
     static final class ModInfoObject {

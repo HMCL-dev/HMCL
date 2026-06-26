@@ -28,6 +28,8 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -38,10 +40,17 @@ import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -268,6 +277,167 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     public void download() {
         Controllers.getDownloadPage().showModDownloads().selectVersion(instanceId);
         Controllers.navigate(Controllers.getDownloadPage());
+    }
+
+    /// Exports the mod list to a file.
+    /// @param selectedMods The list of selected mods to export
+    /// @param format The export format: "csv" or "json"
+    /// @param fields The set of field names to export
+    public void exportMods(List<ModListPageSkin.ModInfoObject> selectedMods, String format, Set<String> fields) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(i18n("mods.export.title"));
+        String extension = format.equals("csv") ? ".csv" : ".json";
+        chooser.getExtensionFilters().setAll(
+                new FileChooser.ExtensionFilter(format.equals("csv") ? i18n("extension.csv") : i18n("extension.json"),
+                        "*" + extension));
+        chooser.setInitialFileName(instanceId + "-mods" + extension);
+        Path targetPath = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
+        if (targetPath == null) return;
+
+        try {
+            if (format.equals("csv")) {
+                exportToCSV(selectedMods, fields, targetPath);
+            } else {
+                exportToJSON(selectedMods, fields, targetPath);
+            }
+            Controllers.showToast(i18n("mods.export.success"));
+        } catch (IOException e) {
+            LOG.warning("Failed to export mods", e);
+            Controllers.dialog(e.getMessage(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+        }
+    }
+
+    private void exportToCSV(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields, Path targetPath) throws IOException {
+        CSVTable table = new CSVTable();
+
+        // Header row
+        List<String> headers = getFieldHeaders(fields);
+        for (int col = 0; col < headers.size(); col++) {
+            table.set(col, 0, headers.get(col));
+        }
+
+        // Data rows
+        for (int row = 0; row < mods.size(); row++) {
+            ModListPageSkin.ModInfoObject mod = mods.get(row);
+            List<String> values = getFieldValues(mod, fields);
+            for (int col = 0; col < values.size(); col++) {
+                table.set(col, row + 1, values.get(col));
+            }
+        }
+
+        table.write(targetPath);
+    }
+
+    private void exportToJSON(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields, Path targetPath) throws IOException {
+        List<Map<String, String>> jsonData = new ArrayList<>();
+        for (ModListPageSkin.ModInfoObject mod : mods) {
+            Map<String, String> modData = new LinkedHashMap<>();
+            for (String field : fields) {
+                modData.put(field, getFieldValue(mod, field));
+            }
+            jsonData.add(modData);
+        }
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String json = gson.toJson(jsonData);
+        Files.writeString(targetPath, json, StandardCharsets.UTF_8);
+    }
+
+    private List<String> getFieldHeaders(Set<String> fields) {
+        List<String> headers = new ArrayList<>();
+        for (String field : fields) {
+            headers.add(switch (field) {
+                case "name" -> "Name";
+                case "version" -> "Version";
+                case "modid" -> "Mod ID";
+                case "gameVersion" -> "Game Version";
+                case "authors" -> "Authors";
+                case "description" -> "Description";
+                case "url" -> "URL";
+                case "active" -> "Active";
+                case "modLoaderType" -> "Mod Loader Type";
+                case "mcmodId" -> "MCMod ID";
+                case "abbr" -> "Abbreviation";
+                case "chineseName" -> "Chinese Name";
+                case "sha1" -> "SHA1";
+                case "sha512" -> "SHA512";
+                default -> field;
+            });
+        }
+        return headers;
+    }
+
+    private List<String> getFieldValues(ModListPageSkin.ModInfoObject modInfo, Set<String> fields) {
+        List<String> values = new ArrayList<>();
+        for (String field : fields) {
+            values.add(getFieldValue(modInfo, field));
+        }
+        return values;
+    }
+
+    private String getFieldValue(ModListPageSkin.ModInfoObject modInfo, String field) {
+        LocalModFile mod = modInfo.getModInfo();
+        ModTranslations.Mod modTranslations = modInfo.getModTranslations();
+
+        return switch (field) {
+            case "name" -> mod.getName();
+            case "version" -> mod.getVersion();
+            case "modid" -> mod.getId() != null ? mod.getId() : "";
+            case "gameVersion" -> mod.getGameVersion();
+            case "authors" -> mod.getAuthors();
+            case "description" -> mod.getDescription().toStringSingleLine();
+            case "url" -> mod.getUrl() != null ? mod.getUrl() : "";
+            case "active" -> String.valueOf(mod.isActive());
+            case "modLoaderType" -> mod.getModLoaderType() != null ? mod.getModLoaderType().name() : "";
+            case "mcmodId" -> modTranslations != null ? modTranslations.getMcmod() : "";
+            case "abbr" -> modTranslations != null ? modTranslations.getAbbr() : "";
+            case "chineseName" -> {
+                if (modTranslations == null) {
+                    yield "";
+                }
+                String chineseName = modTranslations.getName();
+                if (chineseName == null || !StringUtils.containsChinese(chineseName)) {
+                    yield "";
+                }
+                if (StringUtils.containsEmoji(chineseName)) {
+                    StringBuilder builder = new StringBuilder();
+                    chineseName.codePoints().forEach(cp -> {
+                        if (cp < 0x1F300 || cp > 0x1FAFF) {
+                            builder.appendCodePoint(cp);
+                        }
+                    });
+                    chineseName = builder.toString().trim();
+                }
+                yield chineseName;
+            }
+            case "sha1" -> {
+                String sha1 = computeSha1(mod.getFile());
+                yield sha1 != null ? sha1 : "";
+            }
+            case "sha512" -> {
+                String sha512 = computeSha512(mod.getFile());
+                yield sha512 != null ? sha512 : "";
+            }
+            default -> "";
+        };
+    }
+
+    private @Nullable String computeSha1(Path path) {
+        try {
+            return DigestUtils.digestToString("SHA-1", path);
+        } catch (IOException e) {
+            LOG.warning("Failed to compute SHA1 for " + path, e);
+            return null;
+        }
+    }
+
+    private @Nullable String computeSha512(Path path) {
+        try {
+            return DigestUtils.digestToString("SHA-512", path);
+        } catch (IOException e) {
+            LOG.warning("Failed to compute SHA512 for " + path, e);
+            return null;
+        }
     }
 
     public void rollback(LocalModFile from, LocalModFile to) {
