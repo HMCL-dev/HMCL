@@ -1097,6 +1097,23 @@
     -fx-background-color: -monet-error-container;
 }
 
+.mod-nested-list {
+    -fx-spacing: 2;
+    -fx-padding: 2 0 4 42;
+}
+
+.mod-nested-item {
+    -fx-padding: 3 8 3 0;
+}
+
+.mod-nested-item .label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.mod-nested-item .svg {
+    -fx-fill: -monet-on-surface-variant;
+}
+
 .resource-pack-list-cell:warning {
     -fx-background-color: -monet-error-container;
 }

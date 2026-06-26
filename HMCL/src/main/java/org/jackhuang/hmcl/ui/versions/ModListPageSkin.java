@@ -23,6 +23,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -32,9 +33,11 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.*;
@@ -291,7 +294,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         || predicate.test(modInfo.getGameVersion())
                         || predicate.test(modInfo.getId())
                         || predicate.test(Objects.toString(modInfo.getModLoaderType()))
-                        || predicate.test((item.getModTranslations() != null ? item.getModTranslations().getDisplayName() : null))) {
+                        || predicate.test((item.getModTranslations() != null ? item.getModTranslations().getDisplayName() : null))
+                        || modInfo.getBundledMods().stream().anyMatch(predicate)) {
                     listView.getItems().add(item);
                 }
             }
@@ -300,6 +304,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
     static final class ModInfoObject {
         private final BooleanProperty active;
+        // Whether the nested (Jar-in-Jar) mods of this entry are expanded in the list.
+        // Stored on the data object so the state survives ListCell recycling.
+        private final BooleanProperty expanded = new SimpleBooleanProperty(this, "expanded", false);
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
 
@@ -314,6 +321,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         LocalModFile getModInfo() {
             return localModFile;
+        }
+
+        BooleanProperty expandedProperty() {
+            return expanded;
         }
 
         public @Nullable ModTranslations.Mod getModTranslations() {
@@ -567,7 +578,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
+        JFXButton expandButton = FXUtils.newToggleButton4(SVG.KEYBOARD_ARROW_DOWN);
+        VBox nestedBox = new VBox();
         BooleanProperty booleanProperty;
+        // Mirrors the bound ModInfoObject's expanded state, so the chevron and the
+        // nested list react to it while this cell is showing that item.
+        private final BooleanProperty expanded = new SimpleBooleanProperty(this, "expanded", false);
+        private BooleanProperty expandedBinding;
 
         Tooltip warningTooltip;
 
@@ -576,9 +593,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             this.getStyleClass().add("mod-info-list-cell");
 
-            HBox container = new HBox(8);
-            container.setPickOnBounds(false);
-            container.setAlignment(Pos.CENTER_LEFT);
+            HBox header = new HBox(8);
+            header.setPickOnBounds(false);
+            header.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
             setSelectable();
@@ -586,11 +603,41 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             imageContainer.setImage(VersionIconType.COMMAND.getIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
+            FXUtils.installFastTooltip(expandButton, i18n("addon.bundled"));
 
-            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
+            expandButton.getGraphic().rotateProperty().bind(
+                    Bindings.when(expanded).then(180.0).otherwise(0.0));
+            // Toggle on press and consume the event so it never reaches the ListView's
+            // selection handler — expanding the nested list should not select the row.
+            expandButton.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
+                expanded.set(!expanded.get());
+                e.consume();
+            });
 
+            nestedBox.getStyleClass().add("mod-nested-list");
+            nestedBox.visibleProperty().bind(expanded);
+            nestedBox.managedProperty().bind(nestedBox.visibleProperty());
+
+            header.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton, expandButton);
+
+            VBox container = new VBox(header, nestedBox);
+            container.setPickOnBounds(false);
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
+        }
+
+        private Node createNestedRow(String path) {
+            String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
+
+            Label label = new Label(name);
+            HBox.setHgrow(label, Priority.ALWAYS);
+            if (!name.equals(path))
+                label.setTooltip(new Tooltip(path));
+
+            HBox row = new HBox(8, SVG.STACKS.createIcon(16), label);
+            row.getStyleClass().add("mod-nested-item");
+            row.setAlignment(Pos.CENTER_LEFT);
+            return row;
         }
 
         @Override
@@ -681,6 +728,24 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             });
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
+
+            // Nested (Jar-in-Jar) mods
+            if (expandedBinding != null) {
+                expanded.unbindBidirectional(expandedBinding);
+            }
+            expanded.bindBidirectional(expandedBinding = dataItem.expandedProperty());
+
+            nestedBox.getChildren().clear();
+            boolean hasBundled = modInfo.hasBundledMods();
+            expandButton.setVisible(hasBundled);
+            expandButton.setManaged(hasBundled);
+            if (hasBundled) {
+                List<String> bundledMods = modInfo.getBundledMods();
+                content.addTag(i18n("addon.bundled") + ": " + bundledMods.size());
+                for (String path : bundledMods) {
+                    nestedBox.getChildren().add(createNestedRow(path));
+                }
+            }
 
             if (!warning.isEmpty()) {
                 pseudoClassStateChanged(WARNING, true);
