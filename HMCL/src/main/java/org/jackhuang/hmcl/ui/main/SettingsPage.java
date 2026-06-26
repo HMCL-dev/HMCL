@@ -171,11 +171,10 @@ public final class SettingsPage extends ScrollPane {
 
                 {
                     InvalidationListener checkUpdateListener = e -> {
-                        UpdateChecker.requestCheckUpdate(updateChannel.get(), preview.get(), autoDownloadUpdate.get());
+                        UpdateChecker.requestCheckUpdate(updateChannel.get(), preview.get(), false);
                     };
                     updateChannel.addListener(checkUpdateListener);
                     preview.addListener(checkUpdateListener);
-                    autoDownloadUpdate.addListener(checkUpdateListener);
                 }
 
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);
