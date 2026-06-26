@@ -124,6 +124,31 @@ public final class ModpackHelper {
         throw new UnsupportedModpackException(file.toString());
     }
 
+    /// Checks if the given ZIP file is an HMCL "include launcher" wrapper
+    /// that contains an inner modpack file ([modpack.zip] or [modpack.mrpack]).
+    /// If so, returns the [Path] of the inner entry within the wrapper filesystem
+    /// so the inner modpack can be read without extracting to disk.
+    /// The caller must keep the returned [Path] reachable, which keeps the
+    /// wrapper filesystem alive. Returns [null] if the file is not a wrapper.
+    @Nullable
+    public static Path unwrapIfLauncherWrapper(Path file, Charset charset) {
+        try {
+            FileSystem outerFs = CompressingUtils.createReadOnlyZipFileSystem(file, charset);
+            for (String innerName : new String[]{"modpack.zip", "modpack.mrpack"}) {
+                Path entryPath = outerFs.getPath("/" + innerName);
+                if (Files.isRegularFile(entryPath)) {
+                    return entryPath;
+                }
+            }
+            try {
+                outerFs.close();
+            } catch (IOException ignored) {
+            }
+        } catch (IOException ignored) {
+        }
+        return null;
+    }
+
     public static Path findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, FileSystem fs) throws IOException, UnsupportedModpackException {
         Path root = fs.getPath("/");
         if (isMinecraftDirectory(root)) return root;
