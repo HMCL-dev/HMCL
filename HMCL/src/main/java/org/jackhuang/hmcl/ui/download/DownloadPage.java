@@ -178,7 +178,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
             handler.resolve();
-        }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValidForJar), new Validator(i18n("profile.already_exists"), (it) -> !finalExistingFiles.contains(it)));
+        }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("profile.already_exists"), (it) -> !finalExistingFiles.contains(it)));
 
     }
 
