@@ -598,12 +598,13 @@ public final class ThemePackManager {
         packName = requireNonBlank(packName, "packName");
 
         List<ThemePackAsset> assets = new ArrayList<>();
+        ThemeBackgroundSettings background = createCurrentBackground(assets);
         ThemeAppearance appearance = new ThemeAppearance(
                 currentThemeColorSource(),
                 currentControlledBrightness(),
                 currentColorStyle(),
                 null,
-                createCurrentBackground(assets),
+                background,
                 new ThemeTitleBar(currentTitleBarTransparent()));
         Theme theme = new Theme(
                 null,
@@ -618,6 +619,7 @@ public final class ThemePackManager {
                 CURRENT_THEME_PACK_VERSION,
                 LocalizedText.plain(packName),
                 List.of(new ThemePackAuthor(LocalizedText.plain(requireNonBlank(authorName, "authorName")))),
+                background.source() instanceof ThemeBackground.Image image ? image.path() : null,
                 null,
                 List.of(theme));
 
@@ -1125,8 +1127,13 @@ public final class ThemePackManager {
         return fallback;
     }
 
-    /// Resolves one asset referenced by an installed theme.
-    static ThemePackResource resolveInstalledAsset(ThemePackLocation location, String entryName) throws IOException {
+    /// Resolves one asset referenced by an installed theme pack.
+    ///
+    /// @param location the installed theme-pack location
+    /// @param entryName the theme-pack relative asset entry name
+    /// @return the resolved resource
+    /// @throws IOException if the asset cannot be read
+    public static ThemePackResource resolveInstalledAsset(ThemePackLocation location, String entryName) throws IOException {
         Objects.requireNonNull(location);
         String normalizedEntryName = ThemePackAsset.normalizeEntryName(entryName);
         if (location instanceof ThemePackLocation.Builtin builtin) {
@@ -1166,11 +1173,11 @@ public final class ThemePackManager {
         String id = ThemePackManifest.requirePackageId(builtin.id());
         String resourcePath = "/assets/themes/" + id + "/" + entryName;
         try (InputStream input = ThemePackManager.class.getResourceAsStream(resourcePath)) {
-            if (input == null) {
-                throw new IOException("Built-in theme-pack asset is missing: " + entryName);
+            if (input != null) {
+                return new ThemePackResource.Builtin(resourcePath, entryName);
             }
         }
-        return new ThemePackResource.Builtin(resourcePath, entryName);
+        throw new IOException("Built-in theme-pack asset is missing: " + entryName);
     }
 
     /// Returns the installed theme-pack file under a theme-pack directory for one package ID.

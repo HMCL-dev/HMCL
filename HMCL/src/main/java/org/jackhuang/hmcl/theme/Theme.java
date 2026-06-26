@@ -72,6 +72,9 @@ public record Theme(
         if (name != null && name.mayBeEmpty()) {
             throw new IllegalArgumentException("Theme name is empty: " + name);
         }
+        if (thumbnail != null) {
+            thumbnail = ThemePackAsset.normalizeEntryName(thumbnail);
+        }
         authors = List.copyOf(authors);
         Objects.requireNonNull(appearance);
         overrides = List.copyOf(overrides);

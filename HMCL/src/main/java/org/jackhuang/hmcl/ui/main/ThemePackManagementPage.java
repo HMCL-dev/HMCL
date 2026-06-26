@@ -36,6 +36,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -51,6 +52,7 @@ import org.jackhuang.hmcl.theme.ThemePackAuthor;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemePackManifest;
+import org.jackhuang.hmcl.theme.ThemePackResource;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
@@ -59,6 +61,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -235,6 +238,51 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         return value != null && value.toLowerCase(Locale.ROOT).contains(query);
     }
 
+    /// Creates a thumbnail node for a theme-pack asset path.
+    private static Node createThumbnail(
+            ThemePackManager.InstalledThemePack themePack,
+            @Nullable String thumbnail,
+            double width,
+            double height,
+            double fallbackSize) {
+        @Nullable Image image = loadThumbnail(themePack, thumbnail, (int) width, (int) height);
+        if (image == null) {
+            return createDefaultThumbnail(fallbackSize, fallbackSize);
+        }
+
+        ImageContainer container = new ImageContainer(width, height);
+        container.setImage(image);
+        container.setMouseTransparent(true);
+        return container;
+    }
+
+    /// Creates the default theme-pack thumbnail.
+    private static Node createDefaultThumbnail(double width, double height) {
+        ImageContainer container = new ImageContainer(width, height);
+        container.setImage(FXUtils.newBuiltinImage("/assets/img/icon@8x.png", width, height, true, true));
+        container.setMouseTransparent(true);
+        return container;
+    }
+
+    /// Loads a theme-pack thumbnail image.
+    private static @Nullable Image loadThumbnail(
+            ThemePackManager.InstalledThemePack themePack,
+            @Nullable String thumbnail,
+            int width,
+            int height) {
+        if (StringUtils.isBlank(thumbnail)) {
+            return null;
+        }
+
+        try {
+            ThemePackResource resource = ThemePackManager.resolveInstalledAsset(themePack.location(), thumbnail);
+            return FXUtils.loadImage(resource.openStream(), resource.name(), width, height, true, true);
+        } catch (Exception e) {
+            LOG.warning("Failed to load theme-pack thumbnail: " + thumbnail, e);
+            return null;
+        }
+    }
+
     /// Dialog showing all themes declared by one installed theme pack.
     @NotNullByDefault
     private static final class ThemePackInfoDialog extends JFXDialogLayout {
@@ -249,7 +297,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             HBox heading = new HBox(8);
             heading.setAlignment(Pos.CENTER_LEFT);
 
-            Node icon = SVG.STYLE.createIcon(40);
+            Node icon = createThumbnail(themePack, manifest.thumbnail(), 48, 48, 40);
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(manifest.displayName());
             title.setSubtitle(manifest.id());
@@ -280,7 +328,12 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                     item.addTag(i18n("archive.author") + ": " + authorNames);
                 }
 
-                themes.getContent().add(item);
+                HBox row = new HBox(8);
+                row.setAlignment(Pos.CENTER_LEFT);
+                Node thumbnail = createThumbnail(themePack, theme.thumbnail(), 56, 36, 32);
+                HBox.setHgrow(item, Priority.ALWAYS);
+                row.getChildren().setAll(thumbnail, item);
+                themes.getContent().add(row);
             }
 
             ScrollPane scrollPane = new ScrollPane(themes);
@@ -420,6 +473,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// The text content shown for the current theme pack.
         private final TwoLineListItem content = new TwoLineListItem();
 
+        /// Left-side package thumbnail.
+        private final StackPane thumbnail = new StackPane();
+
         /// Right-side action container.
         private final HBox right = new HBox();
 
@@ -443,11 +499,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             center.setAlignment(Pos.CENTER_LEFT);
             root.setCenter(center);
 
-            Node icon = SVG.STYLE.createIcon(32);
-            icon.setMouseTransparent(true);
+            thumbnail.setMouseTransparent(true);
             BorderPane.setAlignment(content, Pos.CENTER);
             content.setMouseTransparent(true);
-            center.getChildren().setAll(icon, content);
+            center.getChildren().setAll(thumbnail, content);
             HBox.setHgrow(content, Priority.ALWAYS);
             center.setCursor(Cursor.HAND);
             FXUtils.onClicked(center, () -> {
@@ -485,6 +540,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             super.updateItem(themePack, empty);
 
             content.getTags().clear();
+            thumbnail.getChildren().clear();
             if (empty || themePack == null) {
                 setGraphic(null);
                 return;
@@ -493,6 +549,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             setGraphic(graphic);
 
             ThemePackManifest manifest = themePack.manifest();
+            thumbnail.getChildren().setAll(createThumbnail(themePack, manifest.thumbnail(), 40, 40, 32));
             content.setTitle(manifest.displayName());
             @Nullable String description = manifest.displayDescription();
             content.setSubtitle(StringUtils.isBlank(description) ? manifest.id() : description);

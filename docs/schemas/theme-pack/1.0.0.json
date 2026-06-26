@@ -36,6 +36,9 @@
       },
       "uniqueItems": true
     },
+    "thumbnail": {
+      "$ref": "#/$defs/assetPath"
+    },
     "theme": {
       "$ref": "#/$defs/theme"
     },

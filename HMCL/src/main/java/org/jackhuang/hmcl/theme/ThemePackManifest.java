@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
 /// @param version     the package version string
 /// @param name        the localized display name
 /// @param authors     the package authors
+/// @param thumbnail   the optional theme-pack relative thumbnail path
 /// @param description the optional localized package description
 /// @param themes      selectable themes declared by the package
 @NotNullByDefault
@@ -52,6 +53,7 @@ public record ThemePackManifest(
         String version,
         LocalizedText name,
         @Unmodifiable List<ThemePackAuthor> authors,
+        @Nullable String thumbnail,
         @Nullable LocalizedText description,
         @Unmodifiable List<Theme> themes) {
 
@@ -70,6 +72,7 @@ public record ThemePackManifest(
     /// @param version     the package version string
     /// @param name        the localized display name
     /// @param authors     the package authors
+    /// @param thumbnail   the optional theme-pack relative thumbnail path
     /// @param description the optional localized package description
     /// @param themes      selectable themes declared by the package
     public ThemePackManifest {
@@ -77,6 +80,9 @@ public record ThemePackManifest(
         version = requireNonBlank(version, "version");
         name = requireLocalizedText(name, "name");
         authors = List.copyOf(authors);
+        if (thumbnail != null) {
+            thumbnail = ThemePackAsset.normalizeEntryName(thumbnail);
+        }
         if (description != null) {
             description = requireLocalizedText(description, "description");
         }
@@ -285,6 +291,7 @@ public record ThemePackManifest(
                     version,
                     name,
                     ThemePackAuthor.parseAuthors(object.get("authors")),
+                    JsonUtils.getString(object, "thumbnail"),
                     description,
                     readThemes(object));
         }
@@ -304,6 +311,9 @@ public record ThemePackManifest(
 
             if (src.description != null) {
                 object.add("description", src.description.toJsonElement());
+            }
+            if (src.thumbnail != null) {
+                object.addProperty("thumbnail", src.thumbnail);
             }
 
             if (src.isSimpleThemePack()) {

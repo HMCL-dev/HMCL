@@ -489,7 +489,7 @@ public class PersonalizationPage extends StackPane {
     /// Asks for theme-pack metadata and then saves the current launcher appearance as a theme-pack file.
     private void exportCurrentThemePack() {
         Instant exportTimestamp = Instant.now();
-        String defaultPackId = "com.example.hmcl-theme-pack." + UUIDs.toCompactString(UUIDs.generateV7(exportTimestamp));
+        String defaultPackId = "com.example.hmcl.theme-pack." + UUIDs.toCompactString(UUIDs.generateV7(exportTimestamp));
         String defaultPackName = LocalDateTime.ofInstant(exportTimestamp, ZoneId.systemDefault()).format(EXPORTED_THEME_NAME_FORMATTER);
 
         String userName = System.getProperty("user.name").trim();
