@@ -242,24 +242,22 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     private static Node createThumbnail(
             ThemePackManager.InstalledThemePack themePack,
             @Nullable String thumbnail,
-            double width,
-            double height,
-            double fallbackSize) {
-        @Nullable Image image = loadThumbnail(themePack, thumbnail, (int) width, (int) height);
+            double size) {
+        @Nullable Image image = loadThumbnail(themePack, thumbnail, (int) size);
         if (image == null) {
-            return createDefaultThumbnail(fallbackSize, fallbackSize);
+            return createDefaultThumbnail(size);
         }
 
-        ImageContainer container = new ImageContainer(width, height);
+        ImageContainer container = new ImageContainer(size);
         container.setImage(image);
         container.setMouseTransparent(true);
         return container;
     }
 
     /// Creates the default theme-pack thumbnail.
-    private static Node createDefaultThumbnail(double width, double height) {
-        ImageContainer container = new ImageContainer(width, height);
-        container.setImage(FXUtils.newBuiltinImage("/assets/img/icon@8x.png", width, height, true, true));
+    private static Node createDefaultThumbnail(double size) {
+        ImageContainer container = new ImageContainer(size);
+        container.setImage(FXUtils.newBuiltinImage("/assets/img/icon@8x.png", size, size, true, true));
         container.setMouseTransparent(true);
         return container;
     }
@@ -268,15 +266,14 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     private static @Nullable Image loadThumbnail(
             ThemePackManager.InstalledThemePack themePack,
             @Nullable String thumbnail,
-            int width,
-            int height) {
+            int size) {
         if (StringUtils.isBlank(thumbnail)) {
             return null;
         }
 
         try {
             ThemePackResource resource = ThemePackManager.resolveInstalledAsset(themePack.location(), thumbnail);
-            return FXUtils.loadImage(resource.openStream(), resource.name(), width, height, true, true);
+            return FXUtils.loadImage(resource.openStream(), resource.name(), size, size, true, true);
         } catch (Exception e) {
             LOG.warning("Failed to load theme-pack thumbnail: " + thumbnail, e);
             return null;
@@ -297,7 +294,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             HBox heading = new HBox(8);
             heading.setAlignment(Pos.CENTER_LEFT);
 
-            Node icon = createThumbnail(themePack, manifest.thumbnail(), 48, 48, 40);
+            Node icon = createThumbnail(themePack, manifest.thumbnail(), 48);
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(manifest.displayName());
             title.setSubtitle(manifest.id());
@@ -330,7 +327,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
                 HBox row = new HBox(8);
                 row.setAlignment(Pos.CENTER_LEFT);
-                Node thumbnail = createThumbnail(themePack, theme.thumbnail(), 56, 36, 32);
+                Node thumbnail = createThumbnail(themePack, theme.thumbnail(), 40);
                 HBox.setHgrow(item, Priority.ALWAYS);
                 row.getChildren().setAll(thumbnail, item);
                 themes.getContent().add(row);
@@ -549,7 +546,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             setGraphic(graphic);
 
             ThemePackManifest manifest = themePack.manifest();
-            thumbnail.getChildren().setAll(createThumbnail(themePack, manifest.thumbnail(), 40, 40, 32));
+            thumbnail.getChildren().setAll(createThumbnail(themePack, manifest.thumbnail(), 40));
             content.setTitle(manifest.displayName());
             @Nullable String description = manifest.displayDescription();
             content.setSubtitle(StringUtils.isBlank(description) ? manifest.id() : description);
