@@ -56,9 +56,8 @@ public final class DialogUtils {
         }
 
         show(decorator.getDrawerWrapper(), content, decorator.getDialogOverlayPane(), (dialog) -> {
-            JFXDialogPane pane = (JFXDialogPane) dialog.getContent();
-            decorator.capableDraggingWindow(dialog);
-            decorator.forbidDraggingWindow(pane);
+            decorator.capableDraggingWindow(dialog.getOverlayPane());
+            decorator.forbidDraggingWindow(dialog.getContent());
             dialog.setDialogContainer(decorator.getDrawerWrapper());
         });
     }
