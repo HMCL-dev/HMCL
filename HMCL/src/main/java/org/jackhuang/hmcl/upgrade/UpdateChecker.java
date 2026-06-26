@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.upgrade;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -36,7 +38,10 @@ public final class UpdateChecker {
 
     private static final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
     private static final ReadOnlyBooleanWrapper outdated = new ReadOnlyBooleanWrapper(false);
-    private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
+    private static final IntegerProperty runningThreads = new SimpleIntegerProperty(0);
+    private static final BooleanBinding checkingUpdate = Bindings.createBooleanBinding(() -> runningThreads.get() > 0, runningThreads);
+
+    private static UpdateChannel desiredChannel = null;
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get(), settings().autoDownloadUpdateProperty().get());
@@ -62,8 +67,8 @@ public final class UpdateChecker {
         return checkingUpdate.get();
     }
 
-    public static ReadOnlyBooleanProperty checkingUpdateProperty() {
-        return checkingUpdate.getReadOnlyProperty();
+    public static BooleanBinding checkingUpdateProperty() {
+        return checkingUpdate;
     }
 
     private static RemoteVersion checkUpdate(UpdateChannel channel, boolean preview) throws IOException {
@@ -99,9 +104,10 @@ public final class UpdateChecker {
 
     public static void requestCheckUpdate(UpdateChannel channel, boolean preview, boolean download) {
         Platform.runLater(() -> {
-            if (isCheckingUpdate())
+            if (isCheckingUpdate() && desiredChannel == channel)
                 return;
-            checkingUpdate.set(true);
+            runningThreads.set(runningThreads.get() + 1);
+            desiredChannel = channel;
 
             thread(() -> {
                 RemoteVersion result = null;
@@ -118,11 +124,11 @@ public final class UpdateChecker {
 
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
-                    if (finalResult != null) {
+                    if (finalResult != null && desiredChannel == channel) {
                         latestVersion.set(finalResult);
                         outdated.set(isOutdated);
                     }
-                    checkingUpdate.set(false);
+                    runningThreads.set(runningThreads.get() - 1);
                 });
             }, "Update Checker", true);
         });
