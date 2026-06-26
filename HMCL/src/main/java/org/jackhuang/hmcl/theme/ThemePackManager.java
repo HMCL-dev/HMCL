@@ -1360,22 +1360,32 @@ public final class ThemePackManager {
                     new ThemeBackground.Default(),
                     opacity);
             case BUILTIN -> new ThemeBackgroundSettings(
-                    new ThemeBackground.Builtin(currentBuiltinBackgroundId()),
+                    new ThemeBackground.Builtin(background.builtinBackgroundId()),
                     opacity);
             case CUSTOM -> new ThemeBackgroundSettings(
-                    createCurrentImageBackgroundSource(assets, background.imagePath()),
+                    createCurrentImageBackgroundSource(assets, background),
                     opacity);
             case NETWORK -> throw new IOException("Network backgrounds cannot be exported as theme-pack wallpapers");
-            case PAINT, THEME_COLOR -> new ThemeBackgroundSettings(
+            case PAINT -> new ThemeBackgroundSettings(
                     new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),
+                    opacity);
+            case THEME_COLOR -> new ThemeBackgroundSettings(
+                    new ThemeBackground.ThemeColor(),
                     opacity);
         };
     }
 
-    /// Creates the image background source for a local background file.
+    /// Creates the image background source for the resolved current background image.
     private static ThemeBackground.Image createCurrentImageBackgroundSource(
             List<ThemePackAsset> assets,
-            @Nullable Path imagePath) throws IOException {
+            ResolvedBackground background) throws IOException {
+        @Nullable ThemePackResource imageResource = background.imageResource();
+        if (imageResource != null) {
+            assets.add(new ThemePackAsset(imageResource, imageResource.name()));
+            return new ThemeBackground.Image(imageResource.name());
+        }
+
+        @Nullable Path imagePath = background.imagePath();
         if (imagePath == null) {
             throw new IOException("Theme background image path is not configured");
         }

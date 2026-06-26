@@ -123,16 +123,36 @@ public final class ExportWizardProvider implements WizardProvider {
                 if (!packWithLauncher) return;
                 try (Zipper zip = new Zipper(modpackFile)) {
                     LauncherSettings exported = new LauncherSettings();
+                    LauncherSettings current = settings();
 
-                    exported.backgroundTypeProperty().set(settings().backgroundTypeProperty().get());
-                    exported.customBackgroundImagePathProperty().set(settings().customBackgroundImagePathProperty().get());
-                    exported.networkBackgroundImageUrlProperty().set(settings().networkBackgroundImageUrlProperty().get());
-                    exported.networkBackgroundImageCachePolicyProperty().set(settings().networkBackgroundImageCachePolicyProperty().get());
-                    exported.customBackgroundPaintProperty().set(settings().customBackgroundPaintProperty().get());
-                    exported.customThemeColorProperty().set(settings().customThemeColorProperty().get());
-                    exported.versionListSourceProperty().set(settings().versionListSourceProperty().get());
-                    exported.fileDownloadSourceProperty().set(settings().fileDownloadSourceProperty().get());
-                    exported.preferredLoginTypeProperty().set(settings().preferredLoginTypeProperty().get());
+                    exported.themeBrightnessModeProperty().set(current.themeBrightnessModeProperty().get());
+                    exported.customThemeColorProperty().set(current.customThemeColorProperty().get());
+                    exported.themeColorTypeProperty().set(current.themeColorTypeProperty().get());
+                    exported.themeColorStyleProperty().set(current.themeColorStyleProperty().get());
+                    exported.titleBarTransparentProperty().set(current.titleBarTransparentProperty().get());
+                    exported.backgroundTypeProperty().set(current.backgroundTypeProperty().get());
+                    exported.builtinBackgroundIdProperty().set(current.builtinBackgroundIdProperty().get());
+                    exported.customBackgroundImagePathProperty().set(current.customBackgroundImagePathProperty().get());
+                    exported.networkBackgroundImageUrlProperty().set(current.networkBackgroundImageUrlProperty().get());
+                    exported.customBackgroundPaintProperty().set(current.customBackgroundPaintProperty().get());
+                    exported.backgroundOpacityProperty().set(current.backgroundOpacityProperty().get());
+                    exported.networkBackgroundImageCachePolicyProperty().set(current.networkBackgroundImageCachePolicyProperty().get());
+                    exported.backgroundFallbackTypeProperty().set(current.backgroundFallbackTypeProperty().get());
+                    exported.backgroundFallbackPaintProperty().set(current.backgroundFallbackPaintProperty().get());
+                    exported.backgroundLoadPolicyProperty().set(current.backgroundLoadPolicyProperty().get());
+                    exported.getThemeAppearanceOverrides().addAll(List.of(
+                            LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE,
+                            LauncherSettings.THEME_APPEARANCE_COLOR,
+                            LauncherSettings.THEME_APPEARANCE_COLOR_STYLE,
+                            LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT,
+                            LauncherSettings.THEME_APPEARANCE_BACKGROUND,
+                            LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY,
+                            LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY,
+                            LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK,
+                            LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY));
+                    exported.versionListSourceProperty().set(current.versionListSourceProperty().get());
+                    exported.fileDownloadSourceProperty().set(current.fileDownloadSourceProperty().get());
+                    exported.preferredLoginTypeProperty().set(current.preferredLoginTypeProperty().get());
 
                     zip.putTextFile(exported.toJson(), ".hmcl/config/launcher-settings.json");
                     AuthlibInjectorServerList exportedServers = new AuthlibInjectorServerList();

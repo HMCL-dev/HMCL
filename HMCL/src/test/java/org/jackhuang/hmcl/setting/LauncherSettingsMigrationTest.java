@@ -156,6 +156,48 @@ public final class LauncherSettingsMigrationTest {
         }
     }
 
+    /// Tests migrating old launcher-settings 1.0.0 appearance fields before deserialization.
+    @Test
+    public void migratesOldLauncherSettingsAppearanceFields() {
+        LauncherSettings launcherSettings = Objects.requireNonNull(LauncherSettings.fromJson(JsonParser.parseString("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/launcher-settings/1.0.0",
+                  "themeBrightness": "dark",
+                  "themeColor": "#336699",
+                  "titleTransparent": true,
+                  "backgroundType": "NETWORK",
+                  "backgroundImageUrl": "https://example.com/background.png",
+                  "backgroundOpacity": 0.75
+                }
+                """).getAsJsonObject()));
+        JsonObject serialized = JsonParser.parseString(launcherSettings.toJson()).getAsJsonObject();
+
+        assertFalse(serialized.has("themeBrightness"));
+        assertFalse(serialized.has("themeColor"));
+        assertFalse(serialized.has("titleTransparent"));
+        assertFalse(serialized.has("backgroundImageUrl"));
+        assertEquals("dark", launcherSettings.themeBrightnessModeProperty().get());
+        assertEquals(ThemeColor.of("#336699"), launcherSettings.customThemeColorProperty().get());
+        assertEquals(ThemeColorType.CUSTOM, launcherSettings.themeColorTypeProperty().get());
+        assertTrue(launcherSettings.titleBarTransparentProperty().get());
+        assertEquals(BackgroundType.NETWORK, launcherSettings.backgroundTypeProperty().get());
+        assertEquals("https://example.com/background.png",
+                launcherSettings.networkBackgroundImageUrlProperty().get());
+        assertEquals(0.75, launcherSettings.backgroundOpacityProperty().get(), 0.0);
+        assertEquals(NetworkBackgroundImageCachePolicy.DISABLED,
+                launcherSettings.networkBackgroundImageCachePolicyProperty().get());
+        assertTrue(launcherSettings.isThemeAppearanceOverridden(
+                LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE));
+        assertTrue(launcherSettings.isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR));
+        assertTrue(launcherSettings.isThemeAppearanceOverridden(
+                LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT));
+        assertTrue(launcherSettings.isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
+        assertTrue(launcherSettings.isThemeAppearanceOverridden(
+                LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY));
+        assertTrue(launcherSettings.isThemeAppearanceOverridden(
+                LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY));
+    }
+
     /// Tests migrating the removed classic background type to the built-in wallpaper ID setting.
     @Test
     public void migratesLegacyClassicBackgroundType() {

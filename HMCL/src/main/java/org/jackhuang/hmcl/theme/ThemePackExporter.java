@@ -21,9 +21,11 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -75,7 +77,9 @@ public final class ThemePackExporter {
             try (Zipper zipper = new Zipper(temporaryFile)) {
                 zipper.putTextFile(JsonUtils.GSON.toJson(manifest), MANIFEST_ENTRY);
                 for (ThemePackAsset asset : assets) {
-                    zipper.putFile(asset.source(), asset.entryName());
+                    try (InputStream input = asset.source().openStream()) {
+                        zipper.putStream(input, asset.entryName());
+                    }
                 }
             }
             Files.move(temporaryFile, output, StandardCopyOption.REPLACE_EXISTING);
@@ -96,8 +100,12 @@ public final class ThemePackExporter {
 
         for (ThemePackAsset asset : assets) {
             Objects.requireNonNull(asset);
-            if (!Files.isRegularFile(asset.source())) {
-                throw new IOException("Theme-pack asset source is not a regular file: " + asset.source());
+            @Nullable Path sourceFile = asset.source().file();
+            if (sourceFile != null && !Files.isRegularFile(sourceFile)) {
+                throw new IOException("Theme-pack asset source is not a regular file: " + sourceFile);
+            }
+            try (InputStream ignored = asset.source().openStream()) {
+                // Validate readability before writing the target zip.
             }
             if (!entries.add(asset.entryName())) {
                 throw new IllegalArgumentException("Duplicate theme-pack zip entry: " + asset.entryName());

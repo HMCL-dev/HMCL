@@ -22,22 +22,30 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.nio.file.Path;
 import java.util.Objects;
 
-/// One file copied into an exported theme-pack zip.
+/// One resource copied into an exported theme-pack zip.
 ///
-/// @param source the local file to copy
+/// @param source    the resource to copy
 /// @param entryName the normalized zip entry name under `assets/`
 @NotNullByDefault
-public record ThemePackAsset(Path source, String entryName) {
+public record ThemePackAsset(ThemePackResource source, String entryName) {
 
     /// Required prefix for theme-pack asset entries.
     private static final String ASSETS_PREFIX = "assets/";
 
+    /// Creates a theme-pack asset from a local file.
+    ///
+    /// @param source    the local file to copy
+    /// @param entryName the normalized zip entry name under `assets/`
+    public ThemePackAsset(Path source, String entryName) {
+        this(new ThemePackResource.File(source), entryName);
+    }
+
     /// Creates a theme-pack asset entry.
     ///
-    /// @param source the local file to copy
+    /// @param source    the resource to copy
     /// @param entryName the normalized zip entry name under `assets/`
     public ThemePackAsset {
-        source = Objects.requireNonNull(source).toAbsolutePath().normalize();
+        Objects.requireNonNull(source);
         entryName = normalizeEntryName(entryName);
     }
 
