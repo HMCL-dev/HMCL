@@ -238,7 +238,7 @@ public class JFXDialog extends StackPane {
         this.overlayCloseProperty().set(overlayClose);
     }
 
-    private final ObjectProperty<@NotNull StackPane> overlayPane = new SimpleObjectProperty<>(this);
+    private final ObjectProperty<StackPane> overlayPane = new SimpleObjectProperty<>(this);
 
     public final ObjectProperty<StackPane> overlayPaneProperty() {
         return this.overlayPane;
@@ -249,7 +249,7 @@ public class JFXDialog extends StackPane {
         return Objects.requireNonNullElse(this.overlayPaneProperty().get(), this);
     }
 
-    public final void setOverlayPane(final @Nullable StackPane overlayPane) {
+    public final void setOverlayPane(final StackPane overlayPane) {
         this.overlayPaneProperty().set(overlayPane == null ? this : overlayPane);
     }
 
