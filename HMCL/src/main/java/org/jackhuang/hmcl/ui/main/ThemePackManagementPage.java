@@ -255,9 +255,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     /// Creates a thumbnail node for a theme-pack asset path.
     private Node createThumbnailNode(
             ThemePackManager.InstalledThemePack themePack,
-            @Nullable String thumbnail) {
+            @Nullable String thumbnail,
+            SVG fallback) {
         ImageContainer imageContainer = new ImageContainer(THUMBNAIL_SIZE);
-        SVGContainer fallbackIcon = createFallbackThumbnailIcon();
+        SVGContainer fallbackIcon = createFallbackThumbnailIcon(fallback);
         updateThumbnail(imageContainer, fallbackIcon, themePack, thumbnail);
 
         StackPane container = new StackPane(imageContainer, fallbackIcon);
@@ -265,9 +266,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         return container;
     }
 
-    /// Creates the vector fallback icon used by non-built-in theme packs.
-    private static SVGContainer createFallbackThumbnailIcon() {
-        SVGContainer fallbackIcon = new SVGContainer(SVG.PACKAGE2, THUMBNAIL_SIZE);
+    /// Creates a vector fallback icon.
+    private static SVGContainer createFallbackThumbnailIcon(SVG fallback) {
+        SVGContainer fallbackIcon = new SVGContainer(fallback, THUMBNAIL_SIZE);
         fallbackIcon.setMouseTransparent(true);
         return fallbackIcon;
     }
@@ -380,7 +381,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             HBox heading = new HBox(8);
             heading.setAlignment(Pos.CENTER_LEFT);
 
-            Node icon = page.createThumbnailNode(themePack, manifest.thumbnail());
+            Node icon = page.createThumbnailNode(themePack, manifest.thumbnail(), SVG.PACKAGE2);
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(manifest.displayName());
             title.setSubtitle(manifest.id());
@@ -413,7 +414,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
                 HBox row = new HBox(8);
                 row.setAlignment(Pos.CENTER_LEFT);
-                Node thumbnail = page.createThumbnailNode(themePack, theme.thumbnail());
+                Node thumbnail = page.createThumbnailNode(themePack, theme.thumbnail(), SVG.STYLE);
                 HBox.setHgrow(item, Priority.ALWAYS);
                 row.getChildren().setAll(thumbnail, item);
                 themes.getContent().add(row);
@@ -566,7 +567,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private final ImageContainer thumbnailImage = new ImageContainer(THUMBNAIL_SIZE);
 
         /// Reused fallback thumbnail icon.
-        private final SVGContainer thumbnailFallback = createFallbackThumbnailIcon();
+        private final SVGContainer thumbnailFallback = createFallbackThumbnailIcon(SVG.PACKAGE2);
 
         /// Right-side action container.
         private final HBox right = new HBox();
