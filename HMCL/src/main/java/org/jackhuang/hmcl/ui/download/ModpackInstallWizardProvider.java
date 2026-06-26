@@ -147,7 +147,19 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         });
 
         FileSystem wrapperFs = settings.get(LocalModpackPage.MODPACK_WRAPPER_FS);
-        Task<?> task = finishModpackInstallingAsync(settings);
+        Task<?> task;
+        try {
+            task = finishModpackInstallingAsync(settings);
+        } catch (Throwable t) {
+            if (wrapperFs != null) {
+                try {
+                    wrapperFs.close();
+                } catch (IOException ignored) {
+                    // Ignore close errors for wrapper filesystem
+                }
+            }
+            throw t;
+        }
         if (wrapperFs != null) {
             if (task != null) {
                 settings.remove(LocalModpackPage.MODPACK_WRAPPER_FS);
