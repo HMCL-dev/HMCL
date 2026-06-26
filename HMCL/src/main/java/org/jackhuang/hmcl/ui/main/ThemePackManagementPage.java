@@ -121,11 +121,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         return state;
     }
 
-    /// Returns the file chooser filter for HMCL theme-pack files.
-    private static FileChooser.ExtensionFilter getThemePackExtensionFilter() {
-        return new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION);
-    }
-
     /// Reloads installed theme packs from disk.
     private void refreshThemePacks() {
         try {
@@ -159,16 +154,12 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         };
     }
 
-    /// Opens the managed theme-pack directory in the platform file manager.
-    private void openThemePackDirectory() {
-        FXUtils.openFolder(ThemePackManager.THEME_PACKS_DIRECTORY);
-    }
-
     /// Opens a theme-pack file and installs it.
     private void importThemePack() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("theme_pack.import.title"));
-        chooser.getExtensionFilters().setAll(getThemePackExtensionFilter());
+        chooser.getExtensionFilters().setAll(
+                new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
 
         @Nullable Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (file == null) {
@@ -231,11 +222,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         }
     }
 
-    /// Shows all themes declared by an installed theme pack.
-    private void showThemePackInfo(ThemePackManager.InstalledThemePack themePack) {
-        Controllers.dialog(new ThemePackInfoDialog(themePack));
-    }
-
     /// Returns comma-separated author display names.
     private static String getAuthorDisplayNames(List<ThemePackAuthor> authors) {
         return authors.stream()
@@ -260,18 +246,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             Stage stage = Controllers.getStage();
             maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
 
-            setHeading(createHeading(manifest));
-            setBody(createBody(manifest));
-
-            JFXButton okButton = new JFXButton(i18n("button.ok"));
-            okButton.getStyleClass().add("dialog-accept");
-            okButton.setOnAction(event -> fireEvent(new DialogCloseEvent()));
-            setActions(okButton);
-            onEscPressed(this, okButton::fire);
-        }
-
-        /// Creates the dialog heading.
-        private static HBox createHeading(ThemePackManifest manifest) {
             HBox heading = new HBox(8);
             heading.setAlignment(Pos.CENTER_LEFT);
 
@@ -285,13 +259,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             if (!StringUtils.isBlank(authors)) {
                 title.addTag(i18n("archive.author") + ": " + authors);
             }
-
             heading.getChildren().setAll(icon, title);
-            return heading;
-        }
+            setHeading(heading);
 
-        /// Creates the scrollable dialog body.
-        private static StackPane createBody(ThemePackManifest manifest) {
             ComponentList themes = new ComponentList();
             for (Theme theme : manifest.themes()) {
                 TwoLineListItem item = new TwoLineListItem();
@@ -304,8 +274,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                     item.addTag(i18n("theme_pack.theme.id", theme.id()));
                 }
 
-                List<ThemePackAuthor> authors = theme.authors().isEmpty() ? manifest.authors() : theme.authors();
-                String authorNames = getAuthorDisplayNames(authors);
+                List<ThemePackAuthor> themeAuthors = theme.authors().isEmpty() ? manifest.authors() : theme.authors();
+                String authorNames = getAuthorDisplayNames(themeAuthors);
                 if (!StringUtils.isBlank(authorNames)) {
                     item.addTag(i18n("archive.author") + ": " + authorNames);
                 }
@@ -324,7 +294,13 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             StackPane body = new StackPane(scrollPane);
             body.setPadding(new Insets(10, 0, 0, 0));
-            return body;
+            setBody(body);
+
+            JFXButton okButton = new JFXButton(i18n("button.ok"));
+            okButton.getStyleClass().add("dialog-accept");
+            okButton.setOnAction(event -> fireEvent(new DialogCloseEvent()));
+            setActions(okButton);
+            onEscPressed(this, okButton::fire);
         }
 
     }
@@ -395,7 +371,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshThemePacks),
                     createToolbarButton2(i18n("theme_pack.import"), SVG.FILE_OPEN, skinnable::importThemePack),
-                    createToolbarButton2(i18n("theme_pack.directory"), SVG.FOLDER_OPEN, skinnable::openThemePackDirectory),
+                    createToolbarButton2(i18n("theme_pack.directory"), SVG.FOLDER_OPEN,
+                            () -> FXUtils.openFolder(ThemePackManager.THEME_PACKS_DIRECTORY)),
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
 
             toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
@@ -476,7 +453,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             FXUtils.onClicked(center, () -> {
                 ThemePackManager.InstalledThemePack themePack = getItem();
                 if (themePack != null) {
-                    page.showThemePackInfo(themePack);
+                    Controllers.dialog(new ThemePackInfoDialog(themePack));
                 }
             });
 

@@ -556,14 +556,6 @@ public final class Themes {
         wallpaperThemeColor.set(newLoadedBackground.wallpaperThemeColor());
     }
 
-    /// Applies a preloaded background and ignores older pending background refreshes.
-    ///
-    /// @param newLoadedBackground the preloaded background
-    private static void applyLoadedBackground(LoadedBackground newLoadedBackground) {
-        Objects.requireNonNull(newLoadedBackground);
-        applyLoadedBackground(newLoadedBackground, ++backgroundLoadGeneration);
-    }
-
     /// Loads the current JavaFX launcher background.
     private static LoadedBackground loadBackground() {
         @Nullable LoadedBackground loaded = tryLoadBackground();

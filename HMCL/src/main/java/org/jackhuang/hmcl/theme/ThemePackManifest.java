@@ -181,23 +181,14 @@ public record ThemePackManifest(
 
     /// Reads a required string member.
     private static String requireMemberString(JsonObject object, String fieldName) {
-        @Nullable String value = readString(object, fieldName);
-        if (value == null) {
+        JsonElement element = object.get(fieldName);
+        if (element == null) {
             throw new JsonParseException("Theme-pack manifest is missing " + fieldName);
         }
-        return value;
-    }
-
-    /// Reads an optional string member.
-    private static @Nullable String readString(JsonObject object, String field) {
-        JsonElement element = object.get(field);
-        if (element == null) {
-            return null;
-        }
         if (!(element instanceof JsonPrimitive primitive) || !primitive.isString()) {
-            throw new JsonParseException("Theme-pack manifest field must be a string: " + field);
+            throw new JsonParseException("Theme-pack manifest field must be a string: " + fieldName);
         }
-        return requireNonBlank(primitive.getAsString(), field);
+        return requireNonBlank(primitive.getAsString(), fieldName);
     }
 
     /// Parses a localized text value.

@@ -865,7 +865,7 @@ public final class ThemePackManager {
                     null,
                     null,
                     null,
-                    getThemeColorBackgroundPaint(),
+                    Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER),
                     opacity);
             case CUSTOM, NETWORK, DEFAULT -> new ResolvedBackground(
                     BackgroundType.BUILTIN,
@@ -932,7 +932,9 @@ public final class ThemePackManager {
                         BackgroundType.NETWORK,
                         null,
                         StringUtils.isBlank(networkBackgroundImageUrl) ? null : networkBackgroundImageUrl.trim(),
-                        currentNetworkBackgroundImageCachePolicy(),
+                        Objects.requireNonNullElse(
+                                settings().networkBackgroundImageCachePolicyProperty().get(),
+                                NetworkBackgroundImageCachePolicy.ENABLED),
                         null,
                         opacity);
             }
@@ -948,7 +950,7 @@ public final class ThemePackManager {
                     null,
                     null,
                     null,
-                    getThemeColorBackgroundPaint(),
+                    Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER),
                     opacity);
         };
     }
@@ -1077,7 +1079,7 @@ public final class ThemePackManager {
                     null,
                     null,
                     null,
-                    getThemeColorBackgroundPaint(),
+                    Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER),
                     opacity);
         }
         if (source instanceof ThemeBackground.Paint paint) {
@@ -1353,7 +1355,7 @@ public final class ThemePackManager {
     private static ThemeBackgroundSettings createCurrentBackground(List<ThemePackAsset> assets) throws IOException {
         ResolvedBackground background = resolveCurrentBackground(currentResolveContext());
         Double opacity = background.opacity();
-        ThemeBackgroundSettings backgroundSettings = switch (background.type()) {
+        return switch (background.type()) {
             case DEFAULT -> new ThemeBackgroundSettings(
                     new ThemeBackground.Default(),
                     opacity);
@@ -1368,12 +1370,6 @@ public final class ThemePackManager {
                     new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),
                     opacity);
         };
-        return backgroundSettings;
-    }
-
-    /// Returns the flat paint used by the theme-color background option.
-    private static Color getThemeColorBackgroundPaint() {
-        return Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER);
     }
 
     /// Creates the image background source for a local background file.
@@ -1410,13 +1406,6 @@ public final class ThemePackManager {
         return SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)
                 ? currentBackgroundOpacity()
                 : 1.0;
-    }
-
-    /// Returns the direct network background cache policy.
-    private static NetworkBackgroundImageCachePolicy currentNetworkBackgroundImageCachePolicy() {
-        return Objects.requireNonNullElse(
-                settings().networkBackgroundImageCachePolicyProperty().get(),
-                NetworkBackgroundImageCachePolicy.ENABLED);
     }
 
     /// Returns the currently selected built-in wallpaper ID.

@@ -110,11 +110,6 @@ public sealed interface ThemeBackground
         };
     }
 
-    /// Adds a background type member to a JSON object.
-    private static void addType(JsonObject object, String type) {
-        object.addProperty(FIELD_TYPE, type);
-    }
-
     /// Reads an optional string field.
     private static @Nullable String readString(JsonObject object, String field) {
         JsonElement element = object.get(field);
@@ -125,11 +120,6 @@ public sealed interface ThemeBackground
             throw new JsonParseException("Theme background field must be a string: " + field);
         }
         return primitive.getAsString();
-    }
-
-    /// Returns a non-blank string value.
-    private static @Nullable String optionalNonBlank(@Nullable String value, String field) {
-        return value != null ? requireNonBlank(value, field) : null;
     }
 
     /// Returns a required non-blank string value.
@@ -150,7 +140,7 @@ public sealed interface ThemeBackground
         /// Adds this source to a JSON object.
         @Override
         public void addToJsonObject(JsonObject object) {
-            addType(object, "default");
+            object.addProperty(FIELD_TYPE, "default");
         }
 
     }
@@ -170,14 +160,14 @@ public sealed interface ThemeBackground
         /// @param id the built-in wallpaper ID, or `null` for the fallback built-in wallpaper
         public Builtin {
             if (id != null) {
-                id = optionalNonBlank(id, FIELD_ID);
+                id = requireNonBlank(id, FIELD_ID);
             }
         }
 
         /// Adds this source to a JSON object.
         @Override
         public void addToJsonObject(JsonObject object) {
-            addType(object, "builtin");
+            object.addProperty(FIELD_TYPE, "builtin");
             if (id != null) {
                 object.addProperty(FIELD_ID, id);
             }
@@ -200,7 +190,7 @@ public sealed interface ThemeBackground
         /// Adds this source to a JSON object.
         @Override
         public void addToJsonObject(JsonObject object) {
-            addType(object, "image");
+            object.addProperty(FIELD_TYPE, "image");
             object.addProperty(FIELD_PATH, path);
         }
 
@@ -221,7 +211,7 @@ public sealed interface ThemeBackground
         /// Adds this source to a JSON object.
         @Override
         public void addToJsonObject(JsonObject object) {
-            addType(object, "paint");
+            object.addProperty(FIELD_TYPE, "paint");
             object.addProperty(FIELD_PAINT, paint);
         }
 
@@ -233,7 +223,7 @@ public sealed interface ThemeBackground
         /// Adds this source to a JSON object.
         @Override
         public void addToJsonObject(JsonObject object) {
-            addType(object, "theme_color");
+            object.addProperty(FIELD_TYPE, "theme_color");
         }
 
     }

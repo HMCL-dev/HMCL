@@ -44,7 +44,9 @@ public record ThemeBackgroundSettings(
     /// @param source the background source, or `null` when inherited
     /// @param opacity the background opacity override, or `null` when inherited
     public ThemeBackgroundSettings {
-        opacity = validateOpacity(opacity);
+        if (opacity != null && (opacity < 0.0 || opacity > 1.0 || !Double.isFinite(opacity))) {
+            throw new IllegalArgumentException("Theme background opacity must be between 0 and 1: " + opacity);
+        }
     }
 
     /// Parses background settings from a JSON object.
@@ -112,13 +114,5 @@ public record ThemeBackgroundSettings(
             LOG.warning("Ignored invalid theme background opacity: " + e.getMessage(), e);
             return null;
         }
-    }
-
-    /// Validates an opacity value.
-    private static @Nullable Double validateOpacity(@Nullable Double opacity) {
-        if (opacity != null && (opacity < 0.0 || opacity > 1.0 || !Double.isFinite(opacity))) {
-            throw new IllegalArgumentException("Theme background opacity must be between 0 and 1: " + opacity);
-        }
-        return opacity;
     }
 }
