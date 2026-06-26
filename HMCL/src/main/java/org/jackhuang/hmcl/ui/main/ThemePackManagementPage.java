@@ -436,10 +436,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     /// List cell that renders one installed theme pack.
     @NotNullByDefault
-    private static final class ThemePackItemCell extends ListCell<ThemePackManager.InstalledThemePack> {
-        /// Owning management page.
-        private final ThemePackManagementPage page;
-
+    private static final class ThemePackItemCell extends ListCell<ThemePackManager.@Nullable InstalledThemePack> {
         /// Root graphic reused by this cell.
         private final Region graphic;
 
@@ -459,8 +456,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         ///
         /// @param page the owning management page
         private ThemePackItemCell(ThemePackManagementPage page) {
-            this.page = page;
-
             BorderPane root = new BorderPane();
             root.getStyleClass().add("md-list-cell");
             root.setPadding(new Insets(8));
@@ -509,7 +504,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
         /// Updates this cell for one installed theme pack.
         @Override
-        protected void updateItem(ThemePackManager.InstalledThemePack themePack, boolean empty) {
+        protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
             super.updateItem(themePack, empty);
 
             content.getTags().clear();
