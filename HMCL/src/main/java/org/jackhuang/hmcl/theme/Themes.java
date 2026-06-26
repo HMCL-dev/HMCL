@@ -261,33 +261,80 @@ public final class Themes {
     private static boolean backgroundUpdatesStarted = false;
 
     /// A loaded JavaFX background source and the wallpaper color extracted while loading it.
-    ///
-    /// @param background the loaded JavaFX background
-    /// @param image the loaded image used by image backgrounds, or `null` for paint backgrounds
-    /// @param paint the paint used by paint backgrounds, or `null` for image and theme-color backgrounds
-    /// @param paintBackground whether the background should be rebuilt as a paint background
-    /// @param themeColorBackground whether the background should be rebuilt from the current theme color scheme
-    /// @param wallpaperThemeColor the color extracted from the actual wallpaper image, or `null` when unavailable
-    /// @param fallbackBackground whether this background is the configured fallback background
-    public record LoadedBackground(
-            Background background,
-            @Nullable Image image,
-            @Nullable Paint paint,
-            boolean paintBackground,
-            boolean themeColorBackground,
-            @Nullable ThemeColor wallpaperThemeColor,
-            boolean fallbackBackground) {
-        /// Creates a loaded background result.
+    private sealed interface LoadedBackground {
+        /// Returns the loaded JavaFX background.
+        Background background();
+
+        /// Returns whether this background is the configured fallback background.
+        boolean fallbackBackground();
+
+        /// Returns the seed color extracted from the actual wallpaper image, or `null` when unavailable.
+        @Nullable ThemeColor wallpaperThemeColor();
+
+        /// A loaded image background.
         ///
-        /// @param background the loaded JavaFX background
-        /// @param image the loaded image used by image backgrounds, or `null` for paint backgrounds
-        /// @param paint the paint used by paint backgrounds, or `null` for image and theme-color backgrounds
-        /// @param paintBackground whether the background should be rebuilt as a paint background
-        /// @param themeColorBackground whether the background should be rebuilt from the current theme color scheme
-        /// @param wallpaperThemeColor the color extracted from the actual wallpaper image, or `null` when unavailable
+        /// @param background          the loaded JavaFX background
+        /// @param image               the loaded image source
+        /// @param wallpaperThemeColor the seed color extracted from [#image], or `null` when unavailable
+        /// @param fallbackBackground  whether this background is the configured fallback background
+        record Image(
+                Background background,
+                javafx.scene.image.Image image,
+                @Nullable ThemeColor wallpaperThemeColor,
+                boolean fallbackBackground) implements LoadedBackground {
+            /// Creates a loaded image background.
+            ///
+            /// @param background          the loaded JavaFX background
+            /// @param image               the loaded image source
+            /// @param wallpaperThemeColor the seed color extracted from [#image], or `null` when unavailable
+            /// @param fallbackBackground  whether this background is the configured fallback background
+            public Image {
+                Objects.requireNonNull(background);
+                Objects.requireNonNull(image);
+            }
+        }
+
+        /// A loaded fixed-paint background.
+        ///
+        /// @param background          the loaded JavaFX background
+        /// @param paint               the paint source, or `null` for the launcher default paint
+        /// @param wallpaperThemeColor the seed color represented by [#paint], or `null` when unavailable
+        /// @param fallbackBackground  whether this background is the configured fallback background
+        record Paint(
+                Background background,
+                @Nullable javafx.scene.paint.Paint paint,
+                @Nullable ThemeColor wallpaperThemeColor,
+                boolean fallbackBackground) implements LoadedBackground {
+            /// Creates a loaded fixed-paint background.
+            ///
+            /// @param background          the loaded JavaFX background
+            /// @param paint               the paint source, or `null` for the launcher default paint
+            /// @param wallpaperThemeColor the seed color represented by [#paint], or `null` when unavailable
+            /// @param fallbackBackground  whether this background is the configured fallback background
+            public Paint {
+                Objects.requireNonNull(background);
+            }
+        }
+
+        /// A loaded background whose paint follows the current theme color scheme.
+        ///
+        /// @param background         the loaded JavaFX background
         /// @param fallbackBackground whether this background is the configured fallback background
-        public LoadedBackground {
-            Objects.requireNonNull(background);
+        record ThemeColorFill(
+                Background background,
+                boolean fallbackBackground) implements LoadedBackground {
+            /// Creates a loaded theme-color background.
+            ///
+            /// @param background         the loaded JavaFX background
+            /// @param fallbackBackground whether this background is the configured fallback background
+            public ThemeColorFill {
+                Objects.requireNonNull(background);
+            }
+
+            @Override
+            public @Nullable ThemeColor wallpaperThemeColor() {
+                return null;
+            }
         }
     }
 
@@ -512,7 +559,7 @@ public final class Themes {
     /// Applies a preloaded background and ignores older pending background refreshes.
     ///
     /// @param newLoadedBackground the preloaded background
-    public static void applyLoadedBackground(LoadedBackground newLoadedBackground) {
+    private static void applyLoadedBackground(LoadedBackground newLoadedBackground) {
         Objects.requireNonNull(newLoadedBackground);
         applyLoadedBackground(newLoadedBackground, ++backgroundLoadGeneration);
     }
@@ -577,22 +624,14 @@ public final class Themes {
                 break;
             case PAINT:
                 @Nullable Paint paint = resolvedBackground.paint();
-                return new LoadedBackground(
+                return new LoadedBackground.Paint(
                         createPaintBackground(paint, resolvedBackground.opacity()),
-                        null,
                         paint,
-                        true,
-                        false,
                         paint instanceof Color color ? ThemeColor.of(color) : null,
                         fallbackBackground);
             case THEME_COLOR:
-                return new LoadedBackground(
+                return new LoadedBackground.ThemeColorFill(
                         createPaintBackground(resolvedBackground.paint(), resolvedBackground.opacity()),
-                        null,
-                        null,
-                        true,
-                        true,
-                        null,
                         fallbackBackground);
             case DEFAULT:
                 image = loadDefaultBackgroundImage();
@@ -601,12 +640,9 @@ public final class Themes {
         if (image == null) {
             return null;
         }
-        return new LoadedBackground(
+        return new LoadedBackground.Image(
                 createBackgroundWithOpacity(image, resolvedBackground.opacity()),
                 image,
-                null,
-                false,
-                false,
                 extractWallpaperThemeColor(image),
                 fallbackBackground);
     }
@@ -625,12 +661,9 @@ public final class Themes {
         }
 
         Image image = loadBuiltinBackgroundImage(BuiltinBackground.FALLBACK.id());
-        return new LoadedBackground(
+        return new LoadedBackground.Image(
                 createBackgroundWithOpacity(image, getLoadedBackgroundOpacity(true)),
                 image,
-                null,
-                false,
-                false,
                 extractWallpaperThemeColor(image),
                 true);
     }
@@ -641,9 +674,9 @@ public final class Themes {
             return;
         }
         @Nullable LoadedBackground loaded = loadedBackground;
-        if (loaded != null && loaded.themeColorBackground()) {
+        if (loaded instanceof LoadedBackground.ThemeColorFill themeColorFill) {
             Background newBackground = createThemeColorBackground(getLoadedBackgroundOpacity(loaded.fallbackBackground()));
-            loadedBackground = new LoadedBackground(newBackground, null, null, true, true, null, loaded.fallbackBackground());
+            loadedBackground = new LoadedBackground.ThemeColorFill(newBackground, themeColorFill.fallbackBackground());
             background.set(newBackground);
         }
     }
@@ -673,26 +706,29 @@ public final class Themes {
         }
 
         double opacity = getLoadedBackgroundOpacity(loaded.fallbackBackground());
-        Background newBackground;
-        if (loaded.image() != null) {
-            newBackground = createBackgroundWithOpacity(loaded.image(), opacity);
-        } else if (loaded.themeColorBackground()) {
-            newBackground = createThemeColorBackground(opacity);
-        } else if (loaded.paintBackground()) {
-            newBackground = createPaintBackground(loaded.paint(), opacity);
+        LoadedBackground refreshed;
+        if (loaded instanceof LoadedBackground.Image imageBackground) {
+            refreshed = new LoadedBackground.Image(
+                    createBackgroundWithOpacity(imageBackground.image(), opacity),
+                    imageBackground.image(),
+                    imageBackground.wallpaperThemeColor(),
+                    imageBackground.fallbackBackground());
+        } else if (loaded instanceof LoadedBackground.ThemeColorFill themeColorFill) {
+            refreshed = new LoadedBackground.ThemeColorFill(
+                    createThemeColorBackground(opacity),
+                    themeColorFill.fallbackBackground());
+        } else if (loaded instanceof LoadedBackground.Paint paintBackground) {
+            refreshed = new LoadedBackground.Paint(
+                    createPaintBackground(paintBackground.paint(), opacity),
+                    paintBackground.paint(),
+                    paintBackground.wallpaperThemeColor(),
+                    paintBackground.fallbackBackground());
         } else {
             return;
         }
 
-        loadedBackground = new LoadedBackground(
-                newBackground,
-                loaded.image(),
-                loaded.paint(),
-                loaded.paintBackground(),
-                loaded.themeColorBackground(),
-                loaded.wallpaperThemeColor(),
-                loaded.fallbackBackground());
-        background.set(newBackground);
+        loadedBackground = refreshed;
+        background.set(refreshed.background());
     }
 
     /// Resolves the opacity for the currently loaded primary or fallback background.
