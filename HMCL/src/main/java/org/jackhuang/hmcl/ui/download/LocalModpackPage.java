@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -155,6 +156,13 @@ public final class LocalModpackPage extends ModpackPage {
     @Override
     public void cleanup(SettingsMap settings) {
         settings.remove(MODPACK_FILE);
+        FileSystem wrapperFs = settings.remove(MODPACK_WRAPPER_FS);
+        if (wrapperFs != null) {
+            try {
+                wrapperFs.close();
+            } catch (IOException ignored) {
+            }
+        }
     }
 
     protected void onInstall() {

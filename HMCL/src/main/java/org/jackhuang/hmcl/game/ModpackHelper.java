@@ -132,19 +132,25 @@ public final class ModpackHelper {
     /// The caller must close the wrapper filesystem when done.
     @Nullable
     public static Pair<Path, FileSystem> unwrapIfLauncherWrapper(Path file, Charset charset) {
+        FileSystem outerFs = null;
         try {
-            FileSystem outerFs = CompressingUtils.createReadOnlyZipFileSystem(file, charset);
+            outerFs = CompressingUtils.createReadOnlyZipFileSystem(file, charset);
             for (String innerName : new String[]{"modpack.zip", "modpack.mrpack"}) {
                 Path entryPath = outerFs.getPath("/" + innerName);
                 if (Files.isRegularFile(entryPath)) {
-                    return pair(entryPath, outerFs);
+                    FileSystem fs = outerFs;
+                    outerFs = null;
+                    return pair(entryPath, fs);
                 }
             }
-            try {
-                outerFs.close();
-            } catch (IOException ignored) {
-            }
         } catch (IOException ignored) {
+        } finally {
+            if (outerFs != null) {
+                try {
+                    outerFs.close();
+                } catch (IOException ignored) {
+                }
+            }
         }
         return null;
     }
