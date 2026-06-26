@@ -60,6 +60,7 @@ import org.jackhuang.hmcl.theme.ThemePackAuthor;
 import org.jackhuang.hmcl.theme.ThemePackManifest;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemeReference;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -68,6 +69,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -596,7 +598,14 @@ public class PersonalizationPage extends StackPane {
 
                 try {
                     if (choice.themePack() != null && choice.theme() != null) {
-                        ThemePackManager.apply(choice.themePack(), choice.theme());
+                        if (Themes.shouldWaitForThemeBackground()) {
+                            Controllers.taskDialog(
+                                    Themes.applyTheme(choice.themePack(), choice.theme()),
+                                    i18n("launcher.background.loading"),
+                                    TaskCancellationAction.NO_CANCEL);
+                        } else {
+                            ThemePackManager.apply(choice.themePack(), choice.theme());
+                        }
                     }
                 } catch (IOException | RuntimeException e) {
                     showThemePackError(i18n("theme_pack.apply.failed"), e);

@@ -145,10 +145,10 @@ public final class Themes {
         ThemeColor fallback = settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
                 ? Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT)
                 : ThemeColor.DEFAULT;
+        ThemeResolveContext context = ThemePackManager.currentResolveContext();
         BackgroundType backgroundType;
         try {
-            backgroundType = ThemePackManager.resolveCurrentBackground(
-                    ThemeResolveContext.current(getCurrentBrightness())).type();
+            backgroundType = ThemePackManager.resolveCurrentBackground(context).type();
         } catch (IOException | RuntimeException e) {
             backgroundType = BackgroundType.DEFAULT;
         }
@@ -157,22 +157,25 @@ public final class Themes {
                 settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
                         ? Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT)
                         : null,
-                backgroundType);
+                backgroundType,
+                context);
     }
 
     /// Resolves a Monet seed color from configured theme color and background sources.
     static ThemeColor resolveThemeColor(
             ThemeColor fallback,
             @Nullable ThemeColorType themeColorType,
-            BackgroundType backgroundType) {
+            BackgroundType backgroundType,
+            ThemeResolveContext context) {
         Objects.requireNonNull(fallback);
         Objects.requireNonNull(backgroundType);
+        Objects.requireNonNull(context);
 
         if (themeColorType == null) {
             try {
-                return ThemePackManager.resolveCurrentThemeColor(
-                        ThemeResolveContext.current(getCurrentBrightness()),
+                return resolveThemeColorSource(
                         fallback,
+                        ThemePackManager.resolveCurrentThemeColorSource(context),
                         backgroundType);
             } catch (IOException | RuntimeException e) {
                 return fallback;
@@ -181,24 +184,44 @@ public final class Themes {
         return switch (themeColorType) {
             case DEFAULT -> ThemeColor.DEFAULT;
             case CUSTOM -> fallback;
-            case BACKGROUND -> {
-                if (backgroundType == BackgroundType.THEME_COLOR) {
-                    yield ThemeColor.DEFAULT;
-                }
-                @Nullable ThemeColor loadedWallpaperColor = wallpaperThemeColor.get();
-                if (loadedWallpaperColor != null) {
-                    yield loadedWallpaperColor;
-                }
-                yield getBackgroundThemeColor(fallback);
-            }
+            case BACKGROUND -> resolveWallpaperThemeColor(fallback, backgroundType);
         };
+    }
+
+    /// Resolves a theme-pack color source into a concrete Monet seed color.
+    private static ThemeColor resolveThemeColorSource(
+            ThemeColor fallback,
+            @Nullable ThemeColorSource source,
+            BackgroundType backgroundType) {
+        if (source == null) {
+            return fallback;
+        }
+        if (source instanceof ThemeColorSource.Default) {
+            return ThemeColor.DEFAULT;
+        }
+        if (source instanceof ThemeColorSource.Custom custom) {
+            return custom.color();
+        }
+        return resolveWallpaperThemeColor(fallback, backgroundType);
+    }
+
+    /// Resolves the Monet seed color represented by the effective wallpaper.
+    private static ThemeColor resolveWallpaperThemeColor(ThemeColor fallback, BackgroundType backgroundType) {
+        if (backgroundType == BackgroundType.THEME_COLOR) {
+            return ThemeColor.DEFAULT;
+        }
+        @Nullable ThemeColor loadedWallpaperColor = wallpaperThemeColor.get();
+        if (loadedWallpaperColor != null) {
+            return loadedWallpaperColor;
+        }
+        return getBackgroundThemeColor(fallback);
     }
 
     /// Returns a Monet seed color extracted from the current background when possible.
     private static ThemeColor getBackgroundThemeColor(ThemeColor fallback) {
         try {
             ThemePackManager.ResolvedBackground background =
-                    ThemePackManager.resolveCurrentBackground(ThemeResolveContext.current(getCurrentBrightness()));
+                    ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
             return switch (background.type()) {
                 case CUSTOM -> getImageThemeColor(background.imagePath(), background.imageResource(), fallback);
                 case BUILTIN -> BuiltinBackground.fromIdOrFallback(background.builtinBackgroundId()).themeColor();
@@ -259,6 +282,9 @@ public final class Themes {
 
     /// Whether JavaFX background loading has been requested by the UI.
     private static boolean backgroundUpdatesStarted = false;
+
+    /// Whether theme application is already installing a preloaded background.
+    private static boolean suppressBackgroundRefresh = false;
 
     /// A loaded JavaFX background source and the wallpaper color extracted while loading it.
     private sealed interface LoadedBackground {
@@ -348,7 +374,7 @@ public final class Themes {
         theme.addListener(listener);
 
         InvalidationListener backgroundListener = ignored -> {
-            if (backgroundUpdatesStarted) {
+            if (backgroundUpdatesStarted && !suppressBackgroundRefresh) {
                 refreshBackground();
             }
         };
@@ -501,6 +527,37 @@ public final class Themes {
         return background.getReadOnlyProperty();
     }
 
+    /// Returns whether applying a theme should wait for its background before changing settings.
+    public static boolean shouldWaitForThemeBackground() {
+        return backgroundUpdatesStarted && getBackgroundLoadPolicy() == BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
+    }
+
+    /// Creates a task that applies one theme and waits for its background when requested.
+    ///
+    /// @param themePack the installed theme pack
+    /// @param theme     the selected theme
+    /// @return the task applying the theme
+    public static Task<Void> applyTheme(ThemePackManager.InstalledThemePack themePack, Theme theme) {
+        Objects.requireNonNull(themePack);
+        Objects.requireNonNull(theme);
+
+        if (!backgroundUpdatesStarted || getBackgroundLoadPolicy() != BackgroundLoadPolicy.WAIT_FOR_BACKGROUND) {
+            return Task.runAsync(Schedulers.javafx(), () -> ThemePackManager.apply(themePack, theme));
+        }
+
+        ThemeResolveContext context = ThemePackManager.currentResolveContext();
+        return Task.supplyAsync(Schedulers.io(), () -> loadBackground(themePack, theme, context))
+                .thenAcceptAsync(Schedulers.javafx(), loadedBackground -> {
+                    suppressBackgroundRefresh = true;
+                    try {
+                        ThemePackManager.apply(themePack, theme);
+                        applyLoadedBackground(loadedBackground, ++backgroundLoadGeneration);
+                    } finally {
+                        suppressBackgroundRefresh = false;
+                    }
+                });
+    }
+
     /// Starts JavaFX launcher background loading when the UI first requests it.
     private static void startBackgroundUpdates() {
         if (!backgroundUpdatesStarted) {
@@ -560,6 +617,24 @@ public final class Themes {
     private static LoadedBackground loadBackground() {
         @Nullable LoadedBackground loaded = tryLoadBackground();
         return loaded != null ? loaded : loadFallbackBackground();
+    }
+
+    /// Loads the background that will become effective after applying the given theme.
+    private static LoadedBackground loadBackground(
+            ThemePackManager.InstalledThemePack themePack,
+            Theme theme,
+            ThemeResolveContext context) throws IOException {
+        @Nullable ThemePackManager.ResolvedBackground resolved = ThemePackManager.resolveThemeBackground(
+                themePack,
+                theme,
+                context);
+        if (resolved != null) {
+            @Nullable LoadedBackground loaded = tryCreateResolvedBackground(resolved, false);
+            if (loaded != null) {
+                return loaded;
+            }
+        }
+        return loadFallbackBackground(theme, context);
     }
 
     /// Attempts to load the configured JavaFX launcher background.
@@ -663,6 +738,22 @@ public final class Themes {
         Image image = loadBuiltinBackgroundImage(BuiltinBackground.FALLBACK.id());
         return new LoadedBackground.Image(
                 createBackgroundWithOpacity(image, getLoadedBackgroundOpacity(true)),
+                image,
+                BuiltinBackground.FALLBACK.themeColor(),
+                true);
+    }
+
+    /// Loads the fallback background used while applying a not-yet-selected theme.
+    private static LoadedBackground loadFallbackBackground(Theme theme, ThemeResolveContext context) {
+        double opacity = 1.0;
+        @Nullable ThemeBackgroundSettings background = theme.resolve(context).background();
+        if (background != null && background.opacity() != null) {
+            opacity = background.opacity();
+        }
+
+        Image image = loadBuiltinBackgroundImage(BuiltinBackground.FALLBACK.id());
+        return new LoadedBackground.Image(
+                createBackgroundWithOpacity(image, opacity),
                 image,
                 BuiltinBackground.FALLBACK.themeColor(),
                 true);

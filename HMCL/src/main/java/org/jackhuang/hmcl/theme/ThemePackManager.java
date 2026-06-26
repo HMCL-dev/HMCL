@@ -488,7 +488,7 @@ public final class ThemePackManager {
         }
     }
 
-    /// Removes an installed theme pack from the launcher's local theme-pack directory.
+    /// Removes an installed theme pack from a managed theme-pack directory.
     ///
     /// If the removed package is currently selected, the stored theme reference is cleared.
     ///
@@ -506,9 +506,12 @@ public final class ThemePackManager {
             throw new IOException("Theme pack does not have a local file: " + themePack.manifest().id());
         }
 
-        Path rootDirectory = THEME_PACKS_DIRECTORY.toAbsolutePath().normalize();
         Path targetFile = file.toAbsolutePath().normalize();
-        if (!targetFile.startsWith(rootDirectory) || targetFile.equals(rootDirectory)) {
+        Path localDirectory = THEME_PACKS_DIRECTORY.toAbsolutePath().normalize();
+        Path userDirectory = USER_THEME_PACKS_DIRECTORY.toAbsolutePath().normalize();
+        boolean localThemePack = targetFile.startsWith(localDirectory) && !targetFile.equals(localDirectory);
+        boolean userThemePack = targetFile.startsWith(userDirectory) && !targetFile.equals(userDirectory);
+        if (!localThemePack && !userThemePack) {
             throw new IOException("Theme-pack file is outside the managed directory: " + targetFile);
         }
 
@@ -687,37 +690,6 @@ public final class ThemePackManager {
         return SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT)
                 ? settings().titleBarTransparentProperty().get()
                 : Objects.requireNonNullElse(resolveCurrentTitleBarTransparent(currentResolveContext()), false);
-    }
-
-    /// Resolves the current selected theme color source into a concrete launcher theme color.
-    ///
-    /// @param context        the condition resolution context
-    /// @param fallback       the color used when no selected theme color source is available
-    /// @param backgroundType the current launcher background type
-    /// @return the resolved theme color
-    /// @throws IOException if the selected theme pack exists but its referenced color assets cannot be read
-    static ThemeColor resolveCurrentThemeColor(
-            ThemeResolveContext context,
-            ThemeColor fallback,
-            BackgroundType backgroundType) throws IOException {
-        Objects.requireNonNull(context);
-        Objects.requireNonNull(fallback);
-        Objects.requireNonNull(backgroundType);
-
-        @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
-        if (appearance == null) {
-            return fallback;
-        }
-        @Nullable ThemeColorSource color = appearance.color();
-        if (color == null) {
-            return fallback;
-        }
-        if (color instanceof ThemeColorSource.Wallpaper && backgroundType == BackgroundType.THEME_COLOR) {
-            return ThemeColor.DEFAULT;
-        }
-        ThemeReference reference = settings().getSelectedThemeOrDefault();
-        @Nullable InstalledThemePack themePack = findInstalled(reference);
-        return themePack != null ? resolveThemeColor(themePack.location(), appearance) : fallback;
     }
 
     /// Resolves the selected theme's controlled brightness.
@@ -1099,31 +1071,6 @@ public final class ThemePackManager {
                 null,
                 null,
                 opacity);
-    }
-
-    /// Resolves a concrete launcher color from a theme appearance.
-    private static ThemeColor resolveThemeColor(ThemePackLocation location, ThemeAppearance appearance) throws IOException {
-        ThemeColorSource color = Objects.requireNonNull(appearance.color());
-        if (color instanceof ThemeColorSource.Custom || color instanceof ThemeColorSource.Default) {
-            return color.resolveFallback();
-        }
-
-        ThemeColor fallback = color.resolveFallback();
-        ThemeBackgroundSettings background = appearance.background();
-        if (background == null) {
-            return fallback;
-        }
-
-        @Nullable ThemeBackground source = background.source();
-        if (source instanceof ThemeBackground.Image image) {
-            String path = requireNonBlank(image.path(), "background.path");
-            return WallpaperColorExtractor.extract(resolveInstalledAsset(location, path), fallback);
-        }
-        if (source instanceof ThemeBackground.Paint paintBackground) {
-            Paint paint = parsePaint(requireNonBlank(paintBackground.paint(), "background.paint"));
-            return paint instanceof Color paintColor ? ThemeColor.of(paintColor) : fallback;
-        }
-        return fallback;
     }
 
     /// Resolves one asset referenced by an installed theme pack.
