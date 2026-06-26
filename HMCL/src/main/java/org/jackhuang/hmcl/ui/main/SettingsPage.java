@@ -158,21 +158,24 @@ public final class SettingsPage extends ScrollPane {
                     updatePaneList.getContent().add(disableAutoShowUpdateDialogPane);
                 }
 
+                BooleanProperty autoDownloadUpdate;
                 {
                     LineToggleButton autoDownloadUpdatePane = new LineToggleButton();
                     autoDownloadUpdatePane.setTitle(i18n("update.auto_download"));
                     autoDownloadUpdatePane.setSubtitle(i18n("update.auto_download.subtitle"));
                     autoDownloadUpdatePane.selectedProperty().bindBidirectional(settings().autoDownloadUpdateProperty());
+                    autoDownloadUpdate = autoDownloadUpdatePane.selectedProperty();
 
                     updatePaneList.getContent().add(autoDownloadUpdatePane);
                 }
 
                 {
                     InvalidationListener checkUpdateListener = e -> {
-                        UpdateChecker.requestCheckUpdate(updateChannel.get(), preview.get(), false);
+                        UpdateChecker.requestCheckUpdate(updateChannel.get(), preview.get(), autoDownloadUpdate.get());
                     };
                     updateChannel.addListener(checkUpdateListener);
                     preview.addListener(checkUpdateListener);
+                    autoDownloadUpdate.addListener(checkUpdateListener);
                 }
 
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);
