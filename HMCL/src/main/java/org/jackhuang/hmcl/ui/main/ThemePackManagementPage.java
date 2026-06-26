@@ -56,6 +56,7 @@ import org.jackhuang.hmcl.theme.ThemePackResource;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.SVGContainer;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -73,9 +74,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -89,6 +93,15 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Shows installed theme packs and common theme-pack actions.
 @NotNullByDefault
 public final class ThemePackManagementPage extends ListPageBase<ThemePackManager.InstalledThemePack> implements DecoratorPage {
+    /// The thumbnail container size used by theme-pack icons.
+    private static final double THUMBNAIL_SIZE = 40;
+
+    /// The vector fallback icon size used when a non-built-in theme pack does not provide a thumbnail.
+    private static final double FALLBACK_THUMBNAIL_ICON_SIZE = 24;
+
+    /// The requested decoded thumbnail image size used for HiDPI displays.
+    private static final int THUMBNAIL_IMAGE_SIZE = (int) (THUMBNAIL_SIZE * 2);
+
     /// The decorator title state for this page.
     private final ObjectProperty<State> state = new SimpleObjectProperty<>(State.fromTitle(i18n("theme_pack.manage")));
 
@@ -98,6 +111,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     /// Filtered list shown by the current search query.
     private final FilteredList<ThemePackManager.InstalledThemePack> filteredList = new FilteredList<>(sourceList);
+
+    /// Page-scoped thumbnail image cache cleared when installed theme packs are reloaded.
+    private final ThumbnailCache thumbnailCache = new ThumbnailCache();
 
     /// Callback invoked after the installed theme-pack set changes.
     private final Runnable onThemePacksChanged;
@@ -126,6 +142,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     /// Reloads installed theme packs from disk.
     private void refreshThemePacks() {
+        thumbnailCache.clear();
         try {
             List<ThemePackManager.InstalledThemePack> themePacks = ThemePackManager.listInstalled();
             sourceList.setAll(themePacks);
@@ -239,44 +256,116 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     }
 
     /// Creates a thumbnail node for a theme-pack asset path.
-    private static Node createThumbnail(
+    private Node createThumbnailNode(
             ThemePackManager.InstalledThemePack themePack,
-            @Nullable String thumbnail,
-            double size) {
-        @Nullable Image image = loadThumbnail(themePack, thumbnail, (int) size);
-        if (image == null) {
-            return createDefaultThumbnail(size);
-        }
+            @Nullable String thumbnail) {
+        ImageContainer imageContainer = new ImageContainer(THUMBNAIL_SIZE);
+        SVGContainer fallbackIcon = createFallbackThumbnailIcon();
+        updateThumbnail(imageContainer, fallbackIcon, themePack, thumbnail);
 
-        ImageContainer container = new ImageContainer(size);
-        container.setImage(image);
+        StackPane container = new StackPane(imageContainer, fallbackIcon);
         container.setMouseTransparent(true);
         return container;
     }
 
-    /// Creates the default theme-pack thumbnail.
-    private static Node createDefaultThumbnail(double size) {
-        ImageContainer container = new ImageContainer(size);
-        container.setImage(FXUtils.newBuiltinImage("/assets/img/icon@8x.png", size, size, true, true));
-        container.setMouseTransparent(true);
-        return container;
+    /// Creates the vector fallback icon used by non-built-in theme packs.
+    private static SVGContainer createFallbackThumbnailIcon() {
+        SVGContainer fallbackIcon = new SVGContainer(SVG.PACKAGE2, FALLBACK_THUMBNAIL_ICON_SIZE);
+        fallbackIcon.setMouseTransparent(true);
+        return fallbackIcon;
     }
 
-    /// Loads a theme-pack thumbnail image.
-    private static @Nullable Image loadThumbnail(
+    /// Updates reusable thumbnail nodes for the supplied theme pack.
+    private void updateThumbnail(
+            ImageContainer imageContainer,
+            SVGContainer fallbackIcon,
             ThemePackManager.InstalledThemePack themePack,
-            @Nullable String thumbnail,
-            int size) {
-        if (StringUtils.isBlank(thumbnail)) {
-            return null;
+            @Nullable String thumbnail) {
+        @Nullable Image image = getThumbnailImage(themePack, thumbnail);
+        imageContainer.setImage(image);
+        fallbackIcon.setVisible(image == null);
+    }
+
+    /// Returns the thumbnail image for a fixed-size thumbnail container.
+    private @Nullable Image getThumbnailImage(
+            ThemePackManager.InstalledThemePack themePack,
+            @Nullable String thumbnail) {
+        @Nullable Image image = null;
+        if (!StringUtils.isBlank(thumbnail)) {
+            image = thumbnailCache.getThemePackThumbnail(themePack.location(), thumbnail);
+        }
+        return image != null || !themePack.builtin() ? image : thumbnailCache.getDefaultBuiltinThumbnail();
+    }
+
+    /// Cache key for one decoded thumbnail image.
+    ///
+    /// @param location  the source theme-pack location
+    /// @param thumbnail the theme-pack asset path
+    @NotNullByDefault
+    private record ThumbnailCacheKey(
+            ThemePackManager.ThemePackLocation location,
+            String thumbnail) {
+        /// Creates a thumbnail cache key.
+        ///
+        /// @param location  the source theme-pack location
+        /// @param thumbnail the theme-pack asset path
+        private ThumbnailCacheKey {
+            Objects.requireNonNull(location);
+            Objects.requireNonNull(thumbnail);
+        }
+    }
+
+    /// Page-scoped cache for decoded thumbnail images.
+    @NotNullByDefault
+    private static final class ThumbnailCache {
+        /// Decoded theme-pack thumbnails keyed by location and asset path.
+        private final Map<ThumbnailCacheKey, Optional<Image>> thumbnails = new HashMap<>();
+
+        /// Decoded built-in fallback thumbnail.
+        private @Nullable Image defaultBuiltinThumbnail;
+
+        /// Clears all decoded images held by this cache.
+        private void clear() {
+            thumbnails.clear();
+            defaultBuiltinThumbnail = null;
         }
 
-        try {
-            ThemePackResource resource = ThemePackManager.resolveInstalledAsset(themePack.location(), thumbnail);
-            return FXUtils.loadImage(resource.openStream(), resource.name(), size, size, true, true);
-        } catch (Exception e) {
-            LOG.warning("Failed to load theme-pack thumbnail: " + thumbnail, e);
-            return null;
+        /// Returns a theme-pack thumbnail image, or `null` when it cannot be loaded.
+        private @Nullable Image getThemePackThumbnail(
+                ThemePackManager.ThemePackLocation location,
+                String thumbnail) {
+            ThumbnailCacheKey key = new ThumbnailCacheKey(location, thumbnail);
+            return thumbnails.computeIfAbsent(key, this::loadThemePackThumbnail).orElse(null);
+        }
+
+        /// Returns the built-in default thumbnail for built-in theme packs.
+        private Image getDefaultBuiltinThumbnail() {
+            if (defaultBuiltinThumbnail == null) {
+                defaultBuiltinThumbnail = FXUtils.newBuiltinImage(
+                        "/assets/img/icon@8x.png",
+                        THUMBNAIL_IMAGE_SIZE,
+                        THUMBNAIL_IMAGE_SIZE,
+                        true,
+                        true);
+            }
+            return defaultBuiltinThumbnail;
+        }
+
+        /// Loads and decodes one theme-pack thumbnail image.
+        private Optional<Image> loadThemePackThumbnail(ThumbnailCacheKey key) {
+            try {
+                ThemePackResource resource = ThemePackManager.resolveInstalledAsset(key.location(), key.thumbnail());
+                return Optional.of(FXUtils.loadImage(
+                        resource.openStream(),
+                        resource.name(),
+                        THUMBNAIL_IMAGE_SIZE,
+                        THUMBNAIL_IMAGE_SIZE,
+                        true,
+                        true));
+            } catch (Exception e) {
+                LOG.warning("Failed to load theme-pack thumbnail: " + key.thumbnail(), e);
+                return Optional.empty();
+            }
         }
     }
 
@@ -286,7 +375,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Creates the theme-pack information dialog.
         ///
         /// @param themePack the installed theme pack to display
-        private ThemePackInfoDialog(ThemePackManager.InstalledThemePack themePack) {
+        private ThemePackInfoDialog(ThemePackManagementPage page, ThemePackManager.InstalledThemePack themePack) {
             ThemePackManifest manifest = themePack.manifest();
             Stage stage = Controllers.getStage();
             maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
@@ -294,7 +383,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             HBox heading = new HBox(8);
             heading.setAlignment(Pos.CENTER_LEFT);
 
-            Node icon = createThumbnail(themePack, manifest.thumbnail(), 48);
+            Node icon = page.createThumbnailNode(themePack, manifest.thumbnail());
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(manifest.displayName());
             title.setSubtitle(manifest.id());
@@ -327,7 +416,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
                 HBox row = new HBox(8);
                 row.setAlignment(Pos.CENTER_LEFT);
-                Node thumbnail = createThumbnail(themePack, theme.thumbnail(), 40);
+                Node thumbnail = page.createThumbnailNode(themePack, theme.thumbnail());
                 HBox.setHgrow(item, Priority.ALWAYS);
                 row.getChildren().setAll(thumbnail, item);
                 themes.getContent().add(row);
@@ -464,14 +553,23 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     /// List cell that renders one installed theme pack.
     @NotNullByDefault
     private static final class ThemePackItemCell extends ListCell<ThemePackManager.@Nullable InstalledThemePack> {
+        /// The owning management page.
+        private final ThemePackManagementPage page;
+
         /// Root graphic reused by this cell.
         private final Region graphic;
 
         /// The text content shown for the current theme pack.
         private final TwoLineListItem content = new TwoLineListItem();
 
-        /// Left-side package thumbnail.
+        /// Left-side package thumbnail container.
         private final StackPane thumbnail = new StackPane();
+
+        /// Reused thumbnail image node.
+        private final ImageContainer thumbnailImage = new ImageContainer(THUMBNAIL_SIZE);
+
+        /// Reused fallback thumbnail icon.
+        private final SVGContainer thumbnailFallback = createFallbackThumbnailIcon();
 
         /// Right-side action container.
         private final HBox right = new HBox();
@@ -486,6 +584,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         ///
         /// @param page the owning management page
         private ThemePackItemCell(ThemePackManagementPage page) {
+            this.page = page;
+
             BorderPane root = new BorderPane();
             root.getStyleClass().add("md-list-cell");
             root.setPadding(new Insets(8));
@@ -497,6 +597,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             root.setCenter(center);
 
             thumbnail.setMouseTransparent(true);
+            thumbnail.getChildren().setAll(thumbnailImage, thumbnailFallback);
             BorderPane.setAlignment(content, Pos.CENTER);
             content.setMouseTransparent(true);
             center.getChildren().setAll(thumbnail, content);
@@ -505,7 +606,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             FXUtils.onClicked(center, () -> {
                 ThemePackManager.InstalledThemePack themePack = getItem();
                 if (themePack != null) {
-                    Controllers.dialog(new ThemePackInfoDialog(themePack));
+                    Controllers.dialog(new ThemePackInfoDialog(page, themePack));
                 }
             });
 
@@ -537,7 +638,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             super.updateItem(themePack, empty);
 
             content.getTags().clear();
-            thumbnail.getChildren().clear();
+            thumbnailImage.setImage(null);
+            thumbnailFallback.setVisible(false);
             if (empty || themePack == null) {
                 setGraphic(null);
                 return;
@@ -546,7 +648,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             setGraphic(graphic);
 
             ThemePackManifest manifest = themePack.manifest();
-            thumbnail.getChildren().setAll(createThumbnail(themePack, manifest.thumbnail(), 40));
+            page.updateThumbnail(thumbnailImage, thumbnailFallback, themePack, manifest.thumbnail());
             content.setTitle(manifest.displayName());
             @Nullable String description = manifest.displayDescription();
             content.setSubtitle(StringUtils.isBlank(description) ? manifest.id() : description);
