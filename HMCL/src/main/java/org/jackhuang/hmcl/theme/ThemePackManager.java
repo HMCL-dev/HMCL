@@ -145,7 +145,7 @@ public final class ThemePackManager {
             ///
             /// @param id the built-in theme-pack ID
             public Builtin {
-                id = ThemePackManager.requirePackageId(id);
+                id = ThemePackManifest.requirePackageId(id);
             }
 
             /// Returns whether this location points to launcher-bundled resources.
@@ -470,7 +470,7 @@ public final class ThemePackManager {
         LoadedThemePack loadedThemePack = load(file);
         validateThemePackFile(loadedThemePack.file());
 
-        Path targetFile = installedThemePackFile(loadedThemePack.manifest());
+        Path targetFile = installedThemePackFile(THEME_PACKS_DIRECTORY, loadedThemePack.manifest().id());
         Path temporaryFile = FileUtils.tmpSaveFile(targetFile);
 
         Files.createDirectories(Objects.requireNonNull(targetFile.getParent()));
@@ -658,7 +658,9 @@ public final class ThemePackManager {
     private static ColorStyle currentColorStyle() throws IOException {
         return SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR_STYLE)
                 ? Objects.requireNonNullElse(settings().themeColorStyleProperty().get(), ResolvedTheme.DEFAULT.colorStyle())
-                : resolveCurrentThemeColorStyle(currentResolveContext(), ResolvedTheme.DEFAULT.colorStyle());
+                : Objects.requireNonNullElse(
+                        resolveCurrentThemeColorStyle(currentResolveContext()),
+                        ResolvedTheme.DEFAULT.colorStyle());
     }
 
     /// Returns the current launcher brightness as an explicit theme-pack directive, or `null` for auto mode.
@@ -682,7 +684,7 @@ public final class ThemePackManager {
     private static boolean currentTitleBarTransparent() throws IOException {
         return SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT)
                 ? settings().titleBarTransparentProperty().get()
-                : resolveCurrentTitleBarTransparent(currentResolveContext(), false);
+                : Objects.requireNonNullElse(resolveCurrentTitleBarTransparent(currentResolveContext()), false);
     }
 
     /// Resolves the current selected theme color source into a concrete launcher theme color.
@@ -726,26 +728,6 @@ public final class ThemePackManager {
         return appearance != null ? appearance.brightness() : null;
     }
 
-    /// Resolves the selected theme brightness or returns the given fallback.
-    ///
-    /// @param context  the condition resolution context
-    /// @param fallback the brightness used when the selected theme does not control brightness
-    /// @return the effective brightness from the selected theme or fallback
-    /// @throws IOException if the selected theme pack cannot be read
-    static Brightness resolveCurrentThemeBrightness(ThemeResolveContext context, Brightness fallback) throws IOException {
-        return Objects.requireNonNullElse(resolveCurrentThemeBrightness(context), fallback);
-    }
-
-    /// Resolves the selected theme color style or returns the given fallback.
-    ///
-    /// @param context  the condition resolution context
-    /// @param fallback the color style used when the selected theme does not define one
-    /// @return the effective color style from the selected theme or fallback
-    /// @throws IOException if the selected theme pack cannot be read
-    static ColorStyle resolveCurrentThemeColorStyle(ThemeResolveContext context, ColorStyle fallback) throws IOException {
-        return Objects.requireNonNullElse(resolveCurrentThemeColorStyle(context), fallback);
-    }
-
     /// Resolves the selected theme color style directive.
     ///
     /// @param context the condition resolution context
@@ -754,16 +736,6 @@ public final class ThemePackManager {
     public static @Nullable ColorStyle resolveCurrentThemeColorStyle(ThemeResolveContext context) throws IOException {
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
         return appearance != null ? appearance.colorStyle() : null;
-    }
-
-    /// Resolves the selected theme title-bar transparency or returns the given fallback.
-    ///
-    /// @param context  the condition resolution context
-    /// @param fallback the value used when the selected theme does not define one
-    /// @return the effective title-bar transparency from the selected theme or fallback
-    /// @throws IOException if the selected theme pack cannot be read
-    public static boolean resolveCurrentTitleBarTransparent(ThemeResolveContext context, boolean fallback) throws IOException {
-        return Objects.requireNonNullElse(resolveCurrentTitleBarTransparent(context), fallback);
     }
 
     /// Resolves the selected theme title-bar transparency directive.
@@ -786,16 +758,6 @@ public final class ThemePackManager {
 
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
         return appearance != null ? appearance.color() : null;
-    }
-
-    /// Resolves the selected theme background settings directive.
-    ///
-    /// @param context the condition resolution context
-    /// @return the selected theme background settings directive, or `null` when unavailable
-    /// @throws IOException if the selected theme pack cannot be read
-    public static @Nullable ThemeBackgroundSettings resolveCurrentThemeBackgroundSettings(ThemeResolveContext context) throws IOException {
-        @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
-        return appearance != null ? appearance.background() : null;
     }
 
     /// Resolves the selected theme appearance for a condition context.
@@ -1198,7 +1160,7 @@ public final class ThemePackManager {
 
     /// Resolves one asset stored in a bundled theme pack.
     private static ThemePackResource resolveBuiltinAsset(ThemePackLocation.Builtin builtin, String entryName) throws IOException {
-        String id = requirePackageId(builtin.id());
+        String id = ThemePackManifest.requirePackageId(builtin.id());
         String resourcePath = "/assets/themes/" + id + "/" + entryName;
         try (InputStream input = ThemePackManager.class.getResourceAsStream(resourcePath)) {
             if (input == null) {
@@ -1208,19 +1170,9 @@ public final class ThemePackManager {
         return new ThemePackResource.Builtin(resourcePath, entryName);
     }
 
-    /// Returns the installed theme-pack file for one manifest.
-    private static Path installedThemePackFile(ThemePackManifest manifest) {
-        return installedThemePackFile(manifest.id());
-    }
-
-    /// Returns the installed theme-pack file for one package ID.
-    static Path installedThemePackFile(String packId) {
-        return installedThemePackFile(THEME_PACKS_DIRECTORY, packId);
-    }
-
     /// Returns the installed theme-pack file under a theme-pack directory for one package ID.
     private static Path installedThemePackFile(Path themePacksDirectory, String packId) {
-        String id = requirePackageId(packId);
+        String id = ThemePackManifest.requirePackageId(packId);
         return themePacksDirectory
                 .resolve(id + ThemePackExporter.FILE_EXTENSION)
                 .toAbsolutePath()
@@ -1497,11 +1449,6 @@ public final class ThemePackManager {
             throw new IOException("Theme pack value is missing: " + name);
         }
         return value.trim();
-    }
-
-    /// Returns a package ID that can be used directly as an installed theme-pack file name.
-    private static String requirePackageId(String packId) {
-        return ThemePackManifest.requirePackageId(packId);
     }
 
     /// Sanitizes one path segment used for exported asset files.

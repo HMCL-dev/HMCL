@@ -59,7 +59,6 @@ import org.jackhuang.hmcl.theme.ThemePackExporter;
 import org.jackhuang.hmcl.theme.ThemePackAuthor;
 import org.jackhuang.hmcl.theme.ThemePackManifest;
 import org.jackhuang.hmcl.theme.ThemePackManager;
-import org.jackhuang.hmcl.theme.ThemeResolveContext;
 import org.jackhuang.hmcl.theme.ThemeReference;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -485,45 +484,6 @@ public class PersonalizationPage extends StackPane {
                     reference);
         }
 
-        /// Applies this choice to launcher settings.
-        ///
-        /// @return `true` if a selection was applied, otherwise `false`
-        /// @throws IOException if an installed theme cannot be applied
-        private boolean apply(ThemeResolveContext context) throws IOException {
-            Objects.requireNonNull(context);
-
-            if (themePack == null || theme == null) {
-                return false;
-            }
-
-            ThemePackManager.apply(themePack, theme);
-            return true;
-        }
-
-        /// Returns a display name for apply-result messages.
-        private String applyDisplayName() {
-            return theme != null && themePack != null
-                    ? Objects.requireNonNullElse(theme.displayName(), themePack.manifest().displayName())
-                    : title;
-        }
-    }
-
-    /// Applies a selected theme choice.
-    ///
-    /// @param choice               the selected theme choice
-    /// @param refreshSelectedTheme refreshes the selector after the apply attempt
-    private static void applyThemeChoice(ThemeChoice choice, Runnable refreshSelectedTheme) {
-        Objects.requireNonNull(choice);
-        Objects.requireNonNull(refreshSelectedTheme);
-
-        ThemeResolveContext context = ThemePackManager.currentResolveContext();
-        try {
-            choice.apply(context);
-        } catch (IOException | RuntimeException e) {
-            showThemePackError(i18n("theme_pack.apply.failed"), e);
-        } finally {
-            refreshSelectedTheme.run();
-        }
     }
 
     /// Asks for theme-pack metadata and then saves the current launcher appearance as a theme-pack file.
@@ -634,7 +594,15 @@ public class PersonalizationPage extends StackPane {
                     return;
                 }
 
-                applyThemeChoice(choice, refreshSelectedTheme);
+                try {
+                    if (choice.themePack() != null && choice.theme() != null) {
+                        ThemePackManager.apply(choice.themePack(), choice.theme());
+                    }
+                } catch (IOException | RuntimeException e) {
+                    showThemePackError(i18n("theme_pack.apply.failed"), e);
+                } finally {
+                    refreshSelectedTheme.run();
+                }
             });
             FXUtils.onChange(settings().selectedThemeProperty(), ignored -> reloadThemeChoices.run());
             reloadThemeChoices.run();
@@ -1161,8 +1129,9 @@ public class PersonalizationPage extends StackPane {
                     settings().titleBarTransparentProperty(),
                     () -> {
                         try {
-                            return ThemePackManager.resolveCurrentTitleBarTransparent(
-                                    ThemePackManager.currentResolveContext(),
+                            return Objects.requireNonNullElse(
+                                    ThemePackManager.resolveCurrentTitleBarTransparent(
+                                            ThemePackManager.currentResolveContext()),
                                     false);
                         } catch (IOException | RuntimeException e) {
                             return false;

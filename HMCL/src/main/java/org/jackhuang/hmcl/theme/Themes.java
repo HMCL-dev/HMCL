@@ -120,14 +120,14 @@ public final class Themes {
 
         /// Returns the configured MonetFX color style.
         private ColorStyle getColorStyle() {
-            if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR_STYLE)) {
+            if (settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR_STYLE)) {
                 return Objects.requireNonNullElse(
                         settings().themeColorStyleProperty().get(),
                         ResolvedTheme.DEFAULT.colorStyle());
             }
             try {
-                return ThemePackManager.resolveCurrentThemeColorStyle(
-                        ThemePackManager.currentResolveContext(),
+                return Objects.requireNonNullElse(
+                        ThemePackManager.resolveCurrentThemeColorStyle(ThemePackManager.currentResolveContext()),
                         ResolvedTheme.DEFAULT.colorStyle());
             } catch (IOException | RuntimeException e) {
                 return ResolvedTheme.DEFAULT.colorStyle();
@@ -143,7 +143,7 @@ public final class Themes {
 
     /// Returns the effective theme color for the current launcher settings.
     static ThemeColor resolveCurrentThemeColor() {
-        ThemeColor fallback = isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
+        ThemeColor fallback = settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
                 ? Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT)
                 : ThemeColor.DEFAULT;
         BackgroundType backgroundType;
@@ -155,7 +155,7 @@ public final class Themes {
         }
         return resolveThemeColor(
                 fallback,
-                isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
+                settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
                         ? Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT)
                         : null,
                 backgroundType);
@@ -330,7 +330,7 @@ public final class Themes {
     ///
     /// @return the brightness used by theme condition matching
     public static Brightness getThemeConditionBrightness() {
-        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
+        if (!settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
             return getAutomaticBrightness();
         }
 
@@ -346,11 +346,11 @@ public final class Themes {
     ///
     /// @return the effective launcher brightness
     public static Brightness getCurrentBrightness() {
-        if (!isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
+        if (!settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
             Brightness contextBrightness = getThemeConditionBrightness();
             try {
-                return ThemePackManager.resolveCurrentThemeBrightness(
-                        ThemeResolveContext.current(contextBrightness),
+                return Objects.requireNonNullElse(
+                        ThemePackManager.resolveCurrentThemeBrightness(ThemeResolveContext.current(contextBrightness)),
                         contextBrightness);
             } catch (IOException | RuntimeException e) {
                 return contextBrightness;
@@ -364,11 +364,6 @@ public final class Themes {
             case "light" -> Brightness.LIGHT;
             default -> getAutomaticBrightness();
         };
-    }
-
-    /// Returns whether the launcher overrides one theme appearance setting.
-    private static boolean isThemeAppearanceOverridden(String setting) {
-        return settings().isThemeAppearanceOverridden(setting);
     }
 
     /// Returns the brightness requested by the current system or platform settings.
@@ -438,14 +433,9 @@ public final class Themes {
         return defaultBrightness = brightness;
     }
 
-    /// Returns the resolved launcher theme property.
-    public static ObjectExpression<ResolvedTheme> themeProperty() {
-        return theme;
-    }
-
     /// Returns the current resolved launcher theme.
     public static ResolvedTheme getTheme() {
-        return themeProperty().get();
+        return theme.get();
     }
 
     /// Returns the current MonetFX color scheme property.
@@ -462,11 +452,6 @@ public final class Themes {
     public static ReadOnlyObjectProperty<Background> backgroundProperty() {
         startBackgroundUpdates();
         return background.getReadOnlyProperty();
-    }
-
-    /// Returns the current JavaFX launcher background.
-    public static Background getBackground() {
-        return backgroundProperty().get();
     }
 
     /// Starts JavaFX launcher background loading when the UI first requests it.
@@ -560,7 +545,7 @@ public final class Themes {
                 @Nullable ThemePackResource imageResource = resolvedBackground.imageResource();
                 if (imageResource != null) {
                     try {
-                        image = loadThemePackImage(imageResource);
+                        image = FXUtils.loadImage(imageResource.openStream(), imageResource.name());
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -616,7 +601,14 @@ public final class Themes {
         if (image == null) {
             return null;
         }
-        return createImageBackground(image, resolvedBackground.opacity(), fallbackBackground);
+        return new LoadedBackground(
+                createBackgroundWithOpacity(image, resolvedBackground.opacity()),
+                image,
+                null,
+                false,
+                false,
+                extractWallpaperThemeColor(image),
+                fallbackBackground);
     }
 
     /// Loads the deterministic fallback background configured by launcher settings.
@@ -703,18 +695,6 @@ public final class Themes {
         background.set(newBackground);
     }
 
-    /// Creates a JavaFX image background and extracts a seed color from the same loaded image.
-    private static LoadedBackground createImageBackground(Image image, double opacity, boolean fallbackBackground) {
-        return new LoadedBackground(
-                createBackgroundWithOpacity(image, opacity),
-                image,
-                null,
-                false,
-                false,
-                extractWallpaperThemeColor(image),
-                fallbackBackground);
-    }
-
     /// Resolves the opacity for the currently loaded primary or fallback background.
     private static double getLoadedBackgroundOpacity(boolean fallbackBackground) {
         try {
@@ -723,7 +703,7 @@ public final class Themes {
                     : ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext()).opacity();
         } catch (IOException | RuntimeException e) {
             double configured = settings().backgroundOpacityProperty().get();
-            return isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY) && Double.isFinite(configured)
+            return settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY) && Double.isFinite(configured)
                     ? MathUtils.clamp(configured, 0., 1.)
                     : 1.0;
         }
@@ -732,18 +712,14 @@ public final class Themes {
     /// Extracts a seed color from a loaded wallpaper image.
     private static @Nullable ThemeColor extractWallpaperThemeColor(Image image) {
         try {
-            return WallpaperColorExtractor.extract(image, getWallpaperThemeColorFallback());
+            ThemeColor fallback = !settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
+                    ? ThemeColor.DEFAULT
+                    : Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
+            return WallpaperColorExtractor.extract(image, fallback);
         } catch (RuntimeException e) {
             LOG.warning("Couldn't extract theme color from background image", e);
             return null;
         }
-    }
-
-    /// Returns the fallback seed color used while extracting wallpaper colors.
-    private static ThemeColor getWallpaperThemeColorFallback() {
-        return !isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
-                ? ThemeColor.DEFAULT
-                : Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
     }
 
     /// Loads one remote background image using the requested cache policy.
@@ -754,11 +730,6 @@ public final class Themes {
             return FXUtils.loadImage(WebURL.parseBrowserInput(url));
         }
         return FXUtils.loadImage(new CacheFileTask(url).run());
-    }
-
-    /// Loads one theme-pack image resource.
-    private static Image loadThemePackImage(ThemePackResource resource) throws Exception {
-        return FXUtils.loadImage(resource.openStream(), resource.name());
     }
 
     /// Creates a JavaFX paint background with the requested opacity.
@@ -899,12 +870,12 @@ public final class Themes {
     /// Whether the title area should be transparent after applying launcher and theme settings.
     private static final BooleanBinding titleBarTransparent = Bindings.createBooleanBinding(
             () -> {
-                if (isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT)) {
+                if (settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT)) {
                     return settings().titleBarTransparentProperty().get();
                 }
                 try {
-                    return ThemePackManager.resolveCurrentTitleBarTransparent(
-                            ThemePackManager.currentResolveContext(),
+                    return Objects.requireNonNullElse(
+                            ThemePackManager.resolveCurrentTitleBarTransparent(ThemePackManager.currentResolveContext()),
                             false);
                 } catch (IOException | RuntimeException e) {
                     return false;
