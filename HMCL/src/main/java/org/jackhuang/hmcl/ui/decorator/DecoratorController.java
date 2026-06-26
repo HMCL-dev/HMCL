@@ -39,7 +39,6 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 

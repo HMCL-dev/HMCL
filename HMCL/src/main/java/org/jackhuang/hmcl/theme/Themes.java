@@ -66,7 +66,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.MacOSNativeUtils;
 import org.jackhuang.hmcl.ui.WindowsNativeUtils;
 import org.jackhuang.hmcl.util.MathUtils;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OSVersion;

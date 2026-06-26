@@ -420,11 +420,11 @@ public class PersonalizationPage extends StackPane {
 
     /// A selectable launcher theme.
     ///
-    /// @param title            the label shown by the selector
-    /// @param description      the optional secondary text shown in the selector popup
-    /// @param themePack        the installed theme pack, or `null` for non-pack choices
-    /// @param theme            the installed theme, or `null` for non-pack choices
-    /// @param reference        the stored theme reference, or `null` for unresolved placeholder choices
+    /// @param title       the label shown by the selector
+    /// @param description the optional secondary text shown in the selector popup
+    /// @param themePack   the installed theme pack, or `null` for non-pack choices
+    /// @param theme       the installed theme, or `null` for non-pack choices
+    /// @param reference   the stored theme reference, or `null` for unresolved placeholder choices
     private record ThemeChoice(
             String title,
             @Nullable String description,
@@ -935,7 +935,8 @@ public class PersonalizationPage extends StackPane {
                                         background.paint(),
                                         Color.WHITE));
                             }
-                            case THEME_COLOR -> settings().backgroundFallbackTypeProperty().set(BackgroundType.THEME_COLOR);
+                            case THEME_COLOR ->
+                                    settings().backgroundFallbackTypeProperty().set(BackgroundType.THEME_COLOR);
                             default -> settings().backgroundFallbackTypeProperty().set(BackgroundType.BUILTIN);
                         }
                     } catch (IOException | RuntimeException e) {
@@ -1033,9 +1034,10 @@ public class PersonalizationPage extends StackPane {
                                 case CUSTOM -> background.imagePath() != null
                                         ? background.imagePath().toString()
                                         : background.imageResource() != null
-                                        ? background.imageResource().name()
-                                        : i18n("settings.custom");
-                                case NETWORK -> Objects.toString(background.networkImageUrl(), i18n("launcher.background.network"));
+                                          ? background.imageResource().name()
+                                          : i18n("settings.custom");
+                                case NETWORK ->
+                                        Objects.toString(background.networkImageUrl(), i18n("launcher.background.network"));
                                 case PAINT -> background.paint() != null
                                         ? background.paint().toString()
                                         : i18n("launcher.background.paint");
