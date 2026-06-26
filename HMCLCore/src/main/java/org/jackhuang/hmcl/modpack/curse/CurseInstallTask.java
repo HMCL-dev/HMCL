@@ -144,7 +144,7 @@ public final class CurseInstallTask extends Task<Void> {
             return result;
         }
 
-        String pathPrefix = StringUtils.addSuffix(overridesDir, "/");
+        String pathPrefix = StringUtils.addSuffix(FileUtils.normalizePath(overridesDir), "/");
         try (var reader = CompressingUtils.openZipFileWithPossibleEncoding(zipFile, modpack.getEncoding())) {
             for (var entry : reader.getEntries()) {
                 String normalizedPath = FileUtils.normalizePath(entry.getName());
