@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.theme;
 
 import org.glavo.monetfx.Brightness;
+import org.glavo.monetfx.Contrast;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -86,5 +87,41 @@ public final class ThemePackManifestTest {
 
         assertEquals(BackgroundType.DEFAULT, background.type());
         assertEquals(1.0, background.opacity(), 0.0);
+    }
+
+    /// Network background fields are parsed and resolved from theme-pack manifests.
+    @Test
+    public void networkBackgroundFieldsResolveFromManifest() throws Exception {
+        ThemePackManifest manifest = Objects.requireNonNull(JsonUtils.fromJson("""
+                {
+                  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                  "id": "example.loading",
+                  "version": "1.0.0",
+                  "name": "Example",
+                  "theme": {
+                    "color": "#5C6BC0",
+                    "contrast": "high",
+                    "background": {
+                      "type": "network",
+                      "url": "https://example.com/background.png",
+                      "cachePolicy": "disabled",
+                      "opacity": 0.75
+                    }
+                  }
+                }
+                """, ThemePackManifest.class));
+        Theme theme = manifest.themes().get(0);
+        ThemeResolveContext context = new ThemeResolveContext(Brightness.LIGHT, "linux", "en");
+        ThemePackManager.InstalledThemePack themePack =
+                new ThemePackManager.InstalledThemePack(Path.of("example.hmcl-theme"), manifest);
+
+        assertEquals(Contrast.HIGH, theme.resolve(context).contrast());
+
+        ThemePackManager.ResolvedBackground background =
+                Objects.requireNonNull(ThemePackManager.resolveThemeBackground(themePack, theme, context));
+        assertEquals(BackgroundType.NETWORK, background.type());
+        assertEquals("https://example.com/background.png", background.networkImageUrl());
+        assertEquals(NetworkBackgroundImageCachePolicy.DISABLED, background.networkImageCachePolicy());
+        assertEquals(0.75, background.opacity(), 0.0);
     }
 }

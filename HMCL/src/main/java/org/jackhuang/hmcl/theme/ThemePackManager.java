@@ -24,6 +24,7 @@ import kala.compress.archivers.zip.ZipArchiveReader;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
+import org.glavo.monetfx.Contrast;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -309,6 +310,23 @@ public final class ThemePackManager {
 
         /// Returns a copy with a different opacity.
         public ResolvedBackground withOpacity(double opacity) {
+            return new ResolvedBackground(
+                    type,
+                    builtinBackgroundId,
+                    imagePath,
+                    imageResource,
+                    networkImageUrl,
+                    networkImageCachePolicy,
+                    paint,
+                    opacity);
+        }
+
+        /// Returns a copy with a different remote image cache policy.
+        ///
+        /// @param networkImageCachePolicy the new remote image cache policy
+        /// @return the copied background
+        public ResolvedBackground withNetworkImageCachePolicy(
+                @Nullable NetworkBackgroundImageCachePolicy networkImageCachePolicy) {
             return new ResolvedBackground(
                     type,
                     builtinBackgroundId,
@@ -712,6 +730,16 @@ public final class ThemePackManager {
         return appearance != null ? appearance.colorStyle() : null;
     }
 
+    /// Resolves the selected theme contrast directive.
+    ///
+    /// @param context the condition resolution context
+    /// @return the selected theme contrast directive, or `null` when unavailable
+    /// @throws IOException if the selected theme pack cannot be read
+    public static @Nullable Contrast resolveCurrentThemeContrast(ThemeResolveContext context) throws IOException {
+        @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
+        return appearance != null ? appearance.contrast() : null;
+    }
+
     /// Resolves the selected theme title-bar transparency directive.
     ///
     /// @param context the condition resolution context
@@ -988,6 +1016,13 @@ public final class ThemePackManager {
         if (SettingsManager.settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
             resolved = resolved.withOpacity(currentBackgroundOpacity());
         }
+        if (resolved.type() == BackgroundType.NETWORK
+                && SettingsManager.settings().isThemeAppearanceOverridden(
+                        LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY)) {
+            resolved = resolved.withNetworkImageCachePolicy(Objects.requireNonNullElse(
+                    settings().networkBackgroundImageCachePolicyProperty().get(),
+                    NetworkBackgroundImageCachePolicy.ENABLED));
+        }
         return resolved;
     }
 
@@ -1080,6 +1115,17 @@ public final class ThemePackManager {
                     BackgroundType.CUSTOM,
                     resource.file(),
                     resource,
+                    opacity);
+        }
+        if (source instanceof ThemeBackground.Network network) {
+            return new ResolvedBackground(
+                    BackgroundType.NETWORK,
+                    null,
+                    requireNonBlank(network.url(), "background.url"),
+                    Objects.requireNonNullElse(
+                            network.cachePolicy(),
+                            NetworkBackgroundImageCachePolicy.ENABLED),
+                    null,
                     opacity);
         }
         if (source instanceof ThemeBackground.ThemeColor) {
@@ -1354,7 +1400,11 @@ public final class ThemePackManager {
             case CUSTOM -> new ThemeBackgroundSettings(
                     createCurrentImageBackgroundSource(assets, background),
                     opacity);
-            case NETWORK -> throw new IOException("Network backgrounds cannot be exported as theme-pack wallpapers");
+            case NETWORK -> new ThemeBackgroundSettings(
+                    new ThemeBackground.Network(
+                            requireNonBlank(background.networkImageUrl(), "background.url"),
+                            background.networkImageCachePolicy()),
+                    opacity);
             case PAINT -> new ThemeBackgroundSettings(
                     new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),
                     opacity);

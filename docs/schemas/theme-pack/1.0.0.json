@@ -306,6 +306,12 @@
         }
       ]
     },
+    "networkBackgroundImageCachePolicy": {
+      "enum": [
+        "enabled",
+        "disabled"
+      ]
+    },
     "background": {
       "type": "object",
       "patternProperties": {
@@ -314,6 +320,7 @@
             "default",
             "builtin",
             "image",
+            "network",
             "paint",
             "theme_color"
           ]
@@ -347,6 +354,24 @@
                   "required": [
                     "path",
                     "paint"
+                  ]
+                },
+                {
+                  "required": [
+                    "id",
+                    "url"
+                  ]
+                },
+                {
+                  "required": [
+                    "path",
+                    "url"
+                  ]
+                },
+                {
+                  "required": [
+                    "paint",
+                    "url"
                   ]
                 }
               ]
@@ -386,6 +411,23 @@
               "paint"
             ]
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "network"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "url"
+            ]
+          }
         }
       ],
       "properties": {
@@ -397,6 +439,12 @@
         },
         "paint": {
           "$ref": "#/$defs/nonEmptyString"
+        },
+        "url": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "cachePolicy": {
+          "$ref": "#/$defs/networkBackgroundImageCachePolicy"
         },
         "opacity": {
           "type": "number",

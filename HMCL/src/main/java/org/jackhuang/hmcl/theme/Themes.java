@@ -133,10 +133,21 @@ public final class Themes {
             }
         }
 
+        /// Returns the configured MonetFX contrast.
+        private Contrast getContrast() {
+            try {
+                return Objects.requireNonNullElse(
+                        ThemePackManager.resolveCurrentThemeContrast(ThemePackManager.currentResolveContext()),
+                        ResolvedTheme.DEFAULT.contrast());
+            } catch (IOException | RuntimeException e) {
+                return ResolvedTheme.DEFAULT.contrast();
+            }
+        }
+
         /// Computes the resolved launcher theme.
         @Override
         protected ResolvedTheme computeValue() {
-            return new ResolvedTheme(resolveCurrentThemeColor(), getCurrentBrightness(), getColorStyle(), Contrast.DEFAULT);
+            return new ResolvedTheme(resolveCurrentThemeColor(), getCurrentBrightness(), getColorStyle(), getContrast());
         }
     };
 
