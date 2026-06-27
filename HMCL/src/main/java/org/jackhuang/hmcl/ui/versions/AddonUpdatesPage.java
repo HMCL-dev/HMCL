@@ -29,9 +29,9 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.mod.LocalAddonFile;
-import org.jackhuang.hmcl.mod.LocalAddonManager;
-import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.addon.LocalAddonFile;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -61,7 +61,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("mods.check_updates")));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("addon.check_update")));
 
     private final LocalAddonManager<F> localAddonManager;
     private final ObservableList<AddonUpdateObject> objects;
@@ -82,19 +82,19 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         enabledColumn.setMaxWidth(40);
         enabledColumn.setMinWidth(40);
 
-        TableColumn<AddonUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("mods.check_updates.file"));
+        TableColumn<AddonUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("addon.check_update.file"));
         fileNameColumn.setPrefWidth(200);
         setupCellValueFactory(fileNameColumn, AddonUpdateObject::fileNameProperty);
 
-        TableColumn<AddonUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("mods.check_updates.current_version"));
+        TableColumn<AddonUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("addon.check_update.current_version"));
         currentVersionColumn.setPrefWidth(200);
         setupCellValueFactory(currentVersionColumn, AddonUpdateObject::currentVersionProperty);
 
-        TableColumn<AddonUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("mods.check_updates.target_version"));
+        TableColumn<AddonUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("addon.check_update.target_version"));
         targetVersionColumn.setPrefWidth(200);
         setupCellValueFactory(targetVersionColumn, AddonUpdateObject::targetVersionProperty);
 
-        TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("mods.check_updates.source"));
+        TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("addon.check_update.source"));
         setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceProperty);
 
         objects = FXCollections.observableList(updates.stream().map(AddonUpdateObject::new).collect(Collectors.toList()));
@@ -114,7 +114,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         JFXButton exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
         exportListButton.setOnAction(e -> exportList());
 
-        JFXButton nextButton = FXUtils.newRaisedButton(i18n("mods.check_updates.confirm"));
+        JFXButton nextButton = FXUtils.newRaisedButton(i18n("addon.check_update.confirm"));
         nextButton.setOnAction(e -> updateFiles());
 
         JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
@@ -142,7 +142,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 task.whenComplete(Schedulers.javafx(), exception -> {
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedAddons().isEmpty()) {
-                        Controllers.dialog(i18n("mods.check_updates.failed_download") + "\n" +
+                        Controllers.dialog(i18n("addon.check_update.failed_download") + "\n" +
                                         task.getFailedAddons().stream().map(LocalAddonFile::getFileName).collect(Collectors.joining("\n")),
                                 i18n("install.failed"),
                                 MessageDialogPane.MessageType.ERROR);
@@ -152,7 +152,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                         Controllers.dialog(i18n("install.success"));
                     }
                 }),
-                i18n("mods.check_updates"),
+                i18n("addon.check_update"),
                 TaskCancellationAction.NORMAL);
     }
 
@@ -204,14 +204,14 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
             enabled.set(!data.localAddonFile().isDisabled());
             fileName.set(data.localAddonFile().getFileName());
-            currentVersion.set(data.currentVersion().getVersion());
-            targetVersion.set(data.targetVersion().getVersion());
-            switch (data.currentVersion().getSelf().getType()) {
+            currentVersion.set(data.currentVersion().version());
+            targetVersion.set(data.targetVersion().version());
+            switch (data.currentVersion().self().getType()) {
                 case CURSEFORGE:
-                    source.set(i18n("mods.curseforge"));
+                    source.set(i18n("addon.curseforge"));
                     break;
                 case MODRINTH:
-                    source.set(i18n("mods.modrinth"));
+                    source.set(i18n("addon.modrinth"));
             }
         }
 
@@ -285,29 +285,29 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         private final List<LocalAddonFile> failedAddons = new ArrayList<>();
 
         AddonUpdateTask(Path addonDirectory, List<LocalAddonFile.AddonUpdate> addons) {
-            setStage("mods.check_updates.confirm");
+            setStage("addon.check_update.confirm");
             getProperties().put("total", addons.size());
 
             this.dependents = new ArrayList<>();
             for (LocalAddonFile.AddonUpdate addon : addons) {
                 LocalAddonFile local = addon.localAddonFile();
-                RemoteMod.Version remote = addon.targetVersion();
+                RemoteAddon.Version remote = addon.targetVersion();
                 boolean isDisabled = local.isDisabled();
                 String originalFileName = local.getFile().getFileName().toString();
 
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
                         .thenComposeAsync(() -> {
-                            String fileName = addon.useRemoteFileName() ? remote.getFile().getFilename() : originalFileName;
+                            String fileName = addon.useRemoteFileName() ? remote.file().filename() : originalFileName;
                             if (isDisabled)
                                 fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
 
                             var task = new FileDownloadTask(
-                                    remote.getFile().getUrl(),
+                                    remote.file().url(),
                                     addonDirectory.resolve(fileName)
                             );
 
-                            task.setName(remote.getName());
+                            task.setName(remote.name());
                             return task;
                         })
                         .whenComplete(Schedulers.javafx(), exception -> {
@@ -325,7 +325,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                                 }
                             }
                         })
-                        .withCounter("mods.check_updates.confirm"));
+                        .withCounter("addon.check_update.confirm"));
             }
         }
 
