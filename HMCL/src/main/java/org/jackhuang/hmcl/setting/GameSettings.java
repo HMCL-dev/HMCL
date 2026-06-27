@@ -638,6 +638,19 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return vulkanRenderer;
     }
 
+    /// Property name for the Vulkan renderer.
+    public static final String PROPERTY_HIGH_PERFORMANCE = "highPerformance";
+
+    /// The Vulkan renderer used by the game.
+    @SerializedName(PROPERTY_HIGH_PERFORMANCE)
+    private final InheritableProperty<Boolean> highPerformance =
+            newInheritableProperty(PROPERTY_HIGH_PERFORMANCE, true);
+
+    /// Returns the Vulkan renderer property.
+    public InheritableProperty<Boolean> highPerformanceProperty() {
+        return highPerformance;
+    }
+
     /// Property name for customized environment variables.
     public static final String PROPERTY_ENVIRONMENT_VARIABLES = "environmentVariables";
 

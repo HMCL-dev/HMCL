@@ -22,7 +22,10 @@ import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.*;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -337,15 +340,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 defaultIsolationTypePane.setSubtitle(i18n("settings.game.default_isolation.subtitle"));
                 defaultIsolationTypePane.setItems(DefaultIsolationType.values());
                 defaultIsolationTypePane.setNullSafeConverter(type -> switch (type) {
-                        case NEVER -> i18n("settings.game.default_isolation.never");
-                        case ALWAYS -> i18n("settings.game.default_isolation.always");
-                        case MODDED -> i18n("settings.game.default_isolation.modded");
-                    });
+                    case NEVER -> i18n("settings.game.default_isolation.never");
+                    case ALWAYS -> i18n("settings.game.default_isolation.always");
+                    case MODDED -> i18n("settings.game.default_isolation.modded");
+                });
                 defaultIsolationTypePane.setDescriptionConverter(type -> switch (type) {
-                        case NEVER -> i18n("settings.game.default_isolation.never.desc");
-                        case ALWAYS -> i18n("settings.game.default_isolation.always.desc");
-                        case MODDED -> i18n("settings.game.default_isolation.modded.desc");
-                    });
+                    case NEVER -> i18n("settings.game.default_isolation.never.desc");
+                    case ALWAYS -> i18n("settings.game.default_isolation.always.desc");
+                    case MODDED -> i18n("settings.game.default_isolation.modded.desc");
+                });
                 bindPresetBidirectional(defaultIsolationTypePane.valueProperty(), GameSettings.Preset::defaultIsolationTypeProperty);
             } else {
                 var isolationButton = new LineToggleButton();
@@ -753,6 +756,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             graphicsSettings.getContent().add(vulkanRendererPane);
             vulkanRendererPane.setTitle(i18n("settings.advanced.renderer.vulkan"));
 
+            var highPerformancePane = createInheritableBooleanButton(GameSettings::highPerformanceProperty);
+            graphicsSettings.getContent().add(highPerformancePane);
+            highPerformancePane.setTitle(i18n("settings.launcher.renderer.gpu_preferences"));
+            highPerformancePane.setSubtitle(i18n("settings.advanced.windows_only"));
         }
 
         var nativeLibrarySettings = new ComponentList();
@@ -2448,15 +2455,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Updates the page read-only state used when settings cannot be saved safely.
     ///
     /// @param readOnly whether the current settings should be displayed read-only
-    /// @param message the warning message shown when the page is read-only
+    /// @param message  the warning message shown when the page is read-only
     private void setSettingsReadOnly(boolean readOnly, String message) {
         setSettingsReadOnly(readOnly, message, null);
     }
 
     /// Updates the page read-only state used when settings cannot be saved safely.
     ///
-    /// @param readOnly whether the current settings should be displayed read-only
-    /// @param message the warning message shown when the page is read-only
+    /// @param readOnly       whether the current settings should be displayed read-only
+    /// @param message        the warning message shown when the page is read-only
     /// @param forceOverwrite the action used to back up and overwrite the read-only file
     private void setSettingsReadOnly(boolean readOnly, String message, @Nullable Runnable forceOverwrite) {
         if (readOnly && forceOverwrite != null) {
