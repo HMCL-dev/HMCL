@@ -595,15 +595,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 if (chineseName == null || !StringUtils.containsChinese(chineseName)) {
                     yield "";
                 }
-                if (StringUtils.containsEmoji(chineseName)) {
-                    StringBuilder builder = new StringBuilder();
-                    chineseName.codePoints().forEach(cp -> {
-                        if (cp < 0x1F300 || cp > 0x1FAFF) {
-                            builder.appendCodePoint(cp);
-                        }
-                    });
-                    chineseName = builder.toString().trim();
-                }
+                chineseName = StringUtils.removeEmoji(chineseName);
                 yield chineseName;
             }
             case "sha1" -> {

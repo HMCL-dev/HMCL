@@ -799,16 +799,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             if (modTranslations != null && I18n.isUseChinese()) {
                 String chineseName = modTranslations.getName();
                 if (StringUtils.containsChinese(chineseName)) {
-                    if (StringUtils.containsEmoji(chineseName)) {
-                        StringBuilder builder = new StringBuilder();
-
-                        chineseName.codePoints().forEach(ch -> {
-                            if (ch < 0x1F300 || ch > 0x1FAFF)
-                                builder.appendCodePoint(ch);
-                        });
-
-                        chineseName = builder.toString().trim();
-                    }
+                    chineseName = StringUtils.removeEmoji(chineseName);
 
                     if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName)) {
                         displayName = displayName + " (" + chineseName + ")";
