@@ -197,7 +197,6 @@ public final class TexturesLoader {
             SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
             InvalidationListener listener = o -> {
                 OfflineSkinConfig skin = offlineAccount.getSkin();
-                String profileName = offlineAccount.getProfileName();
 
                 binding.set(uuidFallback);
                 if (skin != null) {
