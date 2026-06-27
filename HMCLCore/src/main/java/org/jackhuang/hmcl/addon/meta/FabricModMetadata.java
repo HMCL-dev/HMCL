@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Immutable
@@ -47,12 +48,16 @@ public final class FabricModMetadata {
     private final List<FabricModAuthor> authors;
     private final Map<String, String> contact;
     private final List<FabricNestedJar> jars;
+    private final Map<String, Object> depends;
+
+    // Loader/runtime ids that are not user-installable mods, excluded from the dependency list.
+    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "fabricloader");
 
     public FabricModMetadata() {
-        this("", "", "", "", "", Collections.emptyList(), Collections.emptyMap(), Collections.emptyList());
+        this("", "", "", "", "", Collections.emptyList(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyMap());
     }
 
-    public FabricModMetadata(String id, String name, String version, String icon, String description, List<FabricModAuthor> authors, Map<String, String> contact, List<FabricNestedJar> jars) {
+    public FabricModMetadata(String id, String name, String version, String icon, String description, List<FabricModAuthor> authors, Map<String, String> contact, List<FabricNestedJar> jars, Map<String, Object> depends) {
         this.id = id;
         this.name = name;
         this.version = version;
@@ -61,6 +66,7 @@ public final class FabricModMetadata {
         this.authors = authors;
         this.contact = contact;
         this.jars = jars;
+        this.depends = depends;
     }
 
     public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
@@ -71,8 +77,10 @@ public final class FabricModMetadata {
         String authors = metadata.authors == null ? "" : metadata.authors.stream().map(author -> author.name).collect(Collectors.joining(", "));
         List<String> bundledMods = metadata.jars == null ? Collections.emptyList()
                 : metadata.jars.stream().map(jar -> jar.file).toList();
+        List<String> dependencies = metadata.depends == null ? Collections.emptyList()
+                : metadata.depends.keySet().stream().filter(id -> !IGNORED_DEPENDENCIES.contains(id)).toList();
         return new LocalModFile(modManager, modManager.getLocalMod(metadata.id, ModLoaderType.FABRIC), modFile, metadata.name, new LocalAddonFile.Description(metadata.description),
-                authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon, bundledMods);
+                authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon, bundledMods, dependencies);
     }
 
     public static final class FabricNestedJar {

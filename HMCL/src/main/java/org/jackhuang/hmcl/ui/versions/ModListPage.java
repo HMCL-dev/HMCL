@@ -95,7 +95,14 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         this.gameVersion = repository.getGameVersion(resolved).orElse(null);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         modded.set(analyzer.hasModLoader());
-        loadMods(profile.getRepository().getModManager(id));
+
+        // Reuse the existing ModManager (and its incremental scan cache) when reopening the same
+        // instance, so navigating back to the mod list doesn't rescan every jar from scratch.
+        ModManager manager = this.modManager;
+        if (manager == null || manager.getRepository() != repository || !id.equals(manager.getInstanceId())) {
+            manager = repository.getModManager(id);
+        }
+        loadMods(manager);
     }
 
     private void loadMods(ModManager modManager) {

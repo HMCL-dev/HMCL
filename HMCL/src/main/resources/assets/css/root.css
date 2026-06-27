@@ -1114,6 +1114,13 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
+.mod-nested-section {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 0 1 0;
+}
+
 .resource-pack-list-cell:warning {
     -fx-background-color: -monet-error-container;
 }

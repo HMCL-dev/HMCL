@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -93,6 +94,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private final JFXListView<ModInfoObject> listView;
     private final JFXTextField searchField;
 
+    // Re-render visible rows when a mod is enabled/disabled, so dependency statuses
+    // ("installed"/"disabled"/...) of the mods related to it update immediately.
+    private final InvalidationListener activeChangeListener;
+
     @FXThread
     private boolean isSearching = false;
 
@@ -107,6 +112,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
         listView.getStyleClass().add("no-horizontal-scrollbar");
+        activeChangeListener = o -> listView.refresh();
 
         {
             toolbarPane = new TransitionPane();
@@ -224,6 +230,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
+                while (c.next()) {
+                    for (ModInfoObject removed : c.getRemoved())
+                        removed.active.removeListener(activeChangeListener);
+                    for (ModInfoObject added : c.getAddedSubList())
+                        added.active.addListener(activeChangeListener);
+                }
                 if (isSearching) {
                     search();
                 }
@@ -605,7 +617,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             imageContainer.setImage(VersionIconType.COMMAND.getIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
-            FXUtils.installFastTooltip(expandButton, i18n("addon.bundled"));
+            FXUtils.installFastTooltip(expandButton, i18n("addon.relations"));
             // Don't reserve layout space for the restore button when it is hidden,
             // otherwise it leaves a gap between the expand button and the other buttons.
             restoreButton.managedProperty().bind(restoreButton.visibleProperty());
@@ -643,6 +655,58 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             row.getStyleClass().add("mod-nested-item");
             row.setAlignment(Pos.CENTER_LEFT);
             return row;
+        }
+
+        private Node createSectionLabel(String text) {
+            Label label = new Label(text);
+            label.getStyleClass().add("mod-nested-section");
+            return label;
+        }
+
+        private Node createDependencyRow(LocalModFile modInfo, String depId) {
+            Label name = new Label(depId);
+
+            var modManager = modInfo.getModManager();
+            var loaderType = modInfo.getModLoaderType();
+            // Only call getLocalMod() when the mod actually exists — it creates an entry otherwise.
+            Set<LocalModFile> installedFiles = modManager.hasMod(depId, loaderType)
+                    ? modManager.getLocalMod(depId, loaderType).getFiles()
+                    : Set.of();
+            String statusText;
+            if (installedFiles.isEmpty()) {
+                // Not installed separately — it may instead be bundled inside this mod via Jar-in-Jar.
+                statusText = isBundledDependency(depId, modInfo.getBundledMods())
+                        ? i18n("addon.dependencies.bundled")
+                        : i18n("addon.dependencies.missing");
+            } else if (installedFiles.stream().anyMatch(LocalModFile::isActive)) {
+                statusText = i18n("addon.dependencies.installed");
+            } else {
+                statusText = i18n("addon.dependencies.disabled");
+            }
+            Label status = new Label("(" + statusText + ")");
+
+            HBox row = new HBox(8, SVG.EXTENSION.createIcon(16), name, status);
+            row.getStyleClass().add("mod-nested-item");
+            row.setAlignment(Pos.CENTER_LEFT);
+            return row;
+        }
+
+        // Heuristic: a dependency may be shipped inside the mod's own Jar-in-Jar payload,
+        // in which case it won't show up as a separately installed mod. Match the dependency
+        // id against the bundled jar file names.
+        private boolean isBundledDependency(String depId, List<String> bundledMods) {
+            if (bundledMods.isEmpty())
+                return false;
+
+            String id = depId.toLowerCase(Locale.ROOT);
+            String idAlt = id.replace("-", "").replace("_", "");
+            for (String path : bundledMods) {
+                String fileName = (path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path)
+                        .toLowerCase(Locale.ROOT);
+                if (fileName.contains(id) || fileName.replace("-", "").replace("_", "").contains(idAlt))
+                    return true;
+            }
+            return false;
         }
 
         @Override
@@ -742,13 +806,24 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             nestedBox.getChildren().clear();
             boolean hasBundled = modInfo.hasBundledMods();
-            expandButton.setVisible(hasBundled);
-            expandButton.setManaged(hasBundled);
+            boolean hasDeps = modInfo.hasDependencies();
+            boolean expandable = hasBundled || hasDeps;
+            expandButton.setVisible(expandable);
+            expandButton.setManaged(expandable);
+
             if (hasBundled) {
                 List<String> bundledMods = modInfo.getBundledMods();
                 content.addTag(i18n("addon.bundled") + ": " + bundledMods.size());
+                nestedBox.getChildren().add(createSectionLabel(i18n("addon.bundled")));
                 for (String path : bundledMods) {
                     nestedBox.getChildren().add(createNestedRow(path));
+                }
+            }
+
+            if (hasDeps) {
+                nestedBox.getChildren().add(createSectionLabel(i18n("addon.dependencies")));
+                for (String depId : modInfo.getDependencies()) {
+                    nestedBox.getChildren().add(createDependencyRow(modInfo, depId));
                 }
             }
 

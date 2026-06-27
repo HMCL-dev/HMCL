@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.addon.meta;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
@@ -30,9 +32,11 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Immutable
@@ -66,14 +70,19 @@ public final class QuiltModMetadata {
         private final String version;
         private final Metadata metadata;
         private final List<NestedJar> jars;
+        private final JsonArray depends;
 
-        public QuiltLoader(String id, String version, Metadata metadata, List<NestedJar> jars) {
+        public QuiltLoader(String id, String version, Metadata metadata, List<NestedJar> jars, JsonArray depends) {
             this.id = id;
             this.version = version;
             this.metadata = metadata;
             this.jars = jars;
+            this.depends = depends;
         }
     }
+
+    // Loader/runtime ids that are not user-installable mods, excluded from the dependency list.
+    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "quilt_loader", "quilt_base");
 
     private final int schema_version;
     private final QuiltLoader quilt_loader;
@@ -101,6 +110,21 @@ public final class QuiltModMetadata {
         List<String> bundledMods = root.quilt_loader.jars == null ? Collections.emptyList()
                 : root.quilt_loader.jars.stream().map(jar -> jar.file).toList();
 
+        List<String> dependencies = new ArrayList<>();
+        if (root.quilt_loader.depends != null) {
+            for (JsonElement element : root.quilt_loader.depends) {
+                String id = null;
+                if (element.isJsonPrimitive()) {
+                    id = element.getAsString();
+                } else if (element.isJsonObject() && element.getAsJsonObject().has("id")) {
+                    id = element.getAsJsonObject().getAsJsonPrimitive("id").getAsString();
+                }
+                if (id != null && !IGNORED_DEPENDENCIES.contains(id)) {
+                    dependencies.add(id);
+                }
+            }
+        }
+
         return new LocalModFile(
                 modManager,
                 modManager.getLocalMod(root.quilt_loader.id, ModLoaderType.QUILT),
@@ -112,7 +136,8 @@ public final class QuiltModMetadata {
                 "",
                 homepage,
                 root.quilt_loader.metadata.icon,
-                bundledMods
+                bundledMods,
+                dependencies
         );
     }
 }

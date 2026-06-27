@@ -68,6 +68,13 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     private boolean loaded = false;
 
+    // Caches parsed mods by file path + fingerprint, so repeated refreshes only re-parse the
+    // files that were actually added, removed, or changed instead of rescanning everything.
+    private final Map<Path, CachedMod> cache = new HashMap<>();
+
+    private record CachedMod(long lastModified, long size, LocalModFile mod) {
+    }
+
     public ModManager(GameRepository repository, String id) {
         super(repository, id);
     }
@@ -100,14 +107,14 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
-    private void addModInfo(Path file) {
+    private LocalModFile addModInfo(Path file) {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
 
         List<Pair<ModMetadataReader, ModLoaderType>> readersMap = READERS.get(extension);
         if (readersMap == null) {
             // Is not a mod file.
-            return;
+            return null;
         }
 
         Set<ModLoaderType> modLoaderTypes = analyzer.getModLoaders();
@@ -169,35 +176,86 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         if (!modInfo.isOld()) {
             localFiles.add(modInfo);
         }
+
+        return modInfo;
+    }
+
+    private void removeModInfo(LocalModFile modInfo) {
+        localFiles.remove(modInfo);
+
+        LocalMod mod = modInfo.getMod();
+        mod.getFiles().remove(modInfo);
+        mod.getOldFiles().remove(modInfo);
+        if (mod.getFiles().isEmpty() && mod.getOldFiles().isEmpty()) {
+            localMods.remove(pair(mod.getId(), mod.getModLoaderType()));
+        }
+    }
+
+    private static boolean isModCandidate(Path file) {
+        String name = StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
+        int dot = name.lastIndexOf('.');
+        return dot >= 0 && READERS.containsKey(name.substring(dot + 1));
+    }
+
+    private void collectModFiles(Path file, Map<Path, long[]> current) {
+        try {
+            if (Files.isRegularFile(file) && isModCandidate(file)) {
+                current.put(file, new long[]{Files.getLastModifiedTime(file).toMillis(), Files.size(file)});
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to stat mod file " + file, e);
+        }
     }
 
     @Override
     public void refresh() throws IOException {
         lock.lock();
         try {
-            localFiles.clear();
-            localMods.clear();
-
             analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
 
             boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                     || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
 
+            // Snapshot the current mod files on disk together with their fingerprints.
+            Map<Path, long[]> current = new LinkedHashMap<>();
             if (Files.isDirectory(getDirectory())) {
                 try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
                     for (Path subitem : modsDirectoryStream) {
                         if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
                             try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
                                 for (Path subsubitem : subitemDirectoryStream) {
-                                    addModInfo(subsubitem);
+                                    collectModFiles(subsubitem, current);
                                 }
                             }
                         } else {
-                            addModInfo(subitem);
+                            collectModFiles(subitem, current);
                         }
                     }
                 }
             }
+
+            // Drop cached mods whose file was removed or changed.
+            Iterator<Map.Entry<Path, CachedMod>> iterator = cache.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<Path, CachedMod> entry = iterator.next();
+                long[] stamp = current.get(entry.getKey());
+                CachedMod cached = entry.getValue();
+                if (stamp == null || stamp[0] != cached.lastModified() || stamp[1] != cached.size()) {
+                    removeModInfo(cached.mod());
+                    iterator.remove();
+                }
+            }
+
+            // Parse only the files that are new or changed; reuse the rest from the cache.
+            for (Map.Entry<Path, long[]> entry : current.entrySet()) {
+                if (cache.containsKey(entry.getKey()))
+                    continue;
+                LocalModFile modInfo = addModInfo(entry.getKey());
+                if (modInfo != null) {
+                    cache.put(entry.getKey(), new CachedMod(entry.getValue()[0], entry.getValue()[1], modInfo));
+                }
+            }
+
             loaded = true;
         } finally {
             lock.unlock();
@@ -235,7 +293,10 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             Path newFile = modsDirectory.resolve(file.getFileName());
             FileUtils.copyFile(file, newFile);
 
-            addModInfo(newFile);
+            LocalModFile modInfo = addModInfo(newFile);
+            if (modInfo != null) {
+                cache.put(newFile, new CachedMod(Files.getLastModifiedTime(newFile).toMillis(), Files.size(newFile), modInfo));
+            }
         } finally {
             lock.unlock();
         }
