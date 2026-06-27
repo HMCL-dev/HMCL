@@ -418,6 +418,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         VBox contentBox = new VBox(12, formatLabel, formatBox, fieldsLabel, fieldsBox, templateBox);
         contentBox.setAlignment(Pos.CENTER_LEFT);
         contentBox.setMaxWidth(380);
+        contentBox.setPadding(new Insets(0, 0, 12, 0));
 
         ScrollPane scrollPane = new ScrollPane(contentBox);
         FXUtils.smoothScrolling(scrollPane);
