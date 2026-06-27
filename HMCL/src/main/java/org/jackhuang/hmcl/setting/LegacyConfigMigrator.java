@@ -216,39 +216,54 @@ public final class LegacyConfigMigrator {
             migrateLegacySelectedAccount(jsonObject);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
-            migrateLegacyBackgroundImageType(jsonObject);
+            JsonArray themeAppearanceOverrides = new JsonArray();
+            migrateLegacyBackgroundImageType(jsonObject, themeAppearanceOverrides);
             migrateLegacyProxyType(jsonObject);
             migrateLegacyDownloadSources(jsonObject);
             renameMember(jsonObject, "commonDirType", "commonDirectoryType");
             renameMember(jsonObject, "commonpath", "commonDirectory");
             migrateLegacyLanguage(jsonObject);
             if (renameMember(jsonObject, "themeBrightness", "themeBrightnessMode")) {
-                addThemeAppearanceOverride(jsonObject, LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE);
+                addThemeAppearanceOverride(
+                        themeAppearanceOverrides,
+                        LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE);
             }
             if (renameMember(jsonObject, "titleTransparent", "titleBarTransparent")) {
-                addThemeAppearanceOverride(jsonObject, LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT);
+                addThemeAppearanceOverride(
+                        themeAppearanceOverrides,
+                        LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT);
             }
             if (renameMember(jsonObject, "theme", "customThemeColor")) {
                 jsonObject.addProperty("themeColorType", ThemeColorType.CUSTOM.name());
-                addThemeAppearanceOverride(jsonObject, LauncherSettings.THEME_APPEARANCE_COLOR);
+                addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_COLOR);
             }
             renameMember(jsonObject, "fontFamily", "logFontFamily");
             renameMember(jsonObject, "fontSize", "logFontSize");
             boolean migratedBackgroundSource = false;
+            boolean migratedNetworkBackgroundSource = false;
             migratedBackgroundSource |= renameMember(jsonObject, "bgpath", "customBackgroundImagePath");
             migratedBackgroundSource |= renameMember(jsonObject, "backgroundImage", "customBackgroundImagePath");
-            migratedBackgroundSource |= renameMember(jsonObject, "bgurl", "networkBackgroundImageUrl");
-            migratedBackgroundSource |= renameMember(jsonObject, "backgroundImageUrl", "networkBackgroundImageUrl");
+            migratedNetworkBackgroundSource |= renameMember(jsonObject, "bgurl", "networkBackgroundImageUrl");
+            migratedNetworkBackgroundSource |= renameMember(
+                    jsonObject,
+                    "backgroundImageUrl",
+                    "networkBackgroundImageUrl");
+            migratedBackgroundSource |= migratedNetworkBackgroundSource;
             if (migratedBackgroundSource) {
-                addThemeAppearanceOverride(jsonObject, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
             }
-            if (jsonObject.has("networkBackgroundImageUrl")) {
-                jsonObject.addProperty("networkBackgroundImageCachePolicy", NetworkBackgroundImageCachePolicy.DISABLED.name());
-                addThemeAppearanceOverride(jsonObject, LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY);
+            if (migratedNetworkBackgroundSource) {
+                jsonObject.addProperty(
+                        "networkBackgroundImageCachePolicy",
+                        NetworkBackgroundImageCachePolicy.DISABLED.name());
+                addThemeAppearanceOverride(
+                        themeAppearanceOverrides,
+                        LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY);
             }
             renameMember(jsonObject, "bgpaint", "customBackgroundPaint");
             renameMember(jsonObject, "backgroundPaint", "customBackgroundPaint");
-            migrateBackgroundOpacity(jsonObject);
+            migrateBackgroundOpacity(jsonObject, themeAppearanceOverrides);
+            writeThemeAppearanceOverrides(jsonObject, themeAppearanceOverrides);
             renameMember(jsonObject, "proxyUserName", "proxyUser");
             migrateLegacySelectedVersions(jsonObject);
             migrateLegacySelectedGameDirectory(jsonObject);
@@ -794,13 +809,15 @@ public final class LegacyConfigMigrator {
     }
 
     /// Migrates the legacy background opacity percentage into the current opacity value.
-    private static void migrateBackgroundOpacity(JsonObject json) {
+    private static void migrateBackgroundOpacity(JsonObject json, JsonArray themeAppearanceOverrides) {
         JsonElement legacyValue = json.remove("bgImageOpacity");
         if (legacyValue == null) {
             return;
         }
 
-        if (json.has("backgroundOpacity")) {
+        if (hasThemeAppearanceOverride(
+                themeAppearanceOverrides,
+                LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
             return;
         }
 
@@ -811,7 +828,7 @@ public final class LegacyConfigMigrator {
 
         double opacity = opacityPercent / 100.;
         json.addProperty("backgroundOpacity", Math.max(0., Math.min(opacity, 1.)));
-        addThemeAppearanceOverride(json, LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
+        addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
     }
 
     /// Migrates the legacy `localization` field into the current `language` field.
@@ -833,11 +850,18 @@ public final class LegacyConfigMigrator {
     /// Migrates the legacy background image type into the current enum values.
     @VisibleForTesting
     static void migrateLegacyBackgroundImageType(JsonObject json) {
+        JsonArray themeAppearanceOverrides = new JsonArray();
+        migrateLegacyBackgroundImageType(json, themeAppearanceOverrides);
+        writeThemeAppearanceOverrides(json, themeAppearanceOverrides);
+    }
+
+    /// Migrates the legacy background image type into the current enum values.
+    private static void migrateLegacyBackgroundImageType(JsonObject json, JsonArray themeAppearanceOverrides) {
         JsonElement legacyValue = json.get("backgroundType");
         @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
         if (ordinal != null && ordinal >= 0 && ordinal < LEGACY_BACKGROUND_IMAGE_TYPES.length) {
             json.addProperty("backgroundType", LEGACY_BACKGROUND_IMAGE_TYPES[ordinal]);
-            addThemeAppearanceOverride(json, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+            addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
             if (ordinal == 2) {
                 json.addProperty("builtinBackgroundId", BuiltinBackground.WALLPAPER_2016_02_25.id());
             }
@@ -846,37 +870,42 @@ public final class LegacyConfigMigrator {
         if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "CLASSIC")) {
             json.addProperty("backgroundType", BackgroundType.BUILTIN.name());
             json.addProperty("builtinBackgroundId", BuiltinBackground.WALLPAPER_2016_02_25.id());
-            addThemeAppearanceOverride(json, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+            addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
         }
 
         if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "TRANSLUCENT")) {
             json.addProperty("backgroundType", BackgroundType.PAINT.name());
             json.addProperty("customBackgroundPaint", "#ffffff");
             json.addProperty("backgroundOpacity", 0.5);
-            addThemeAppearanceOverride(json, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
-            addThemeAppearanceOverride(json, LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
+            addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+            addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
             json.remove("bgpaint");
         }
     }
 
     /// Adds one theme appearance override key to the migration result.
-    private static void addThemeAppearanceOverride(JsonObject json, String key) {
-        JsonArray overrides;
-        JsonElement existing = json.get("themeAppearanceOverrides");
-        if (existing instanceof JsonArray existingArray) {
-            overrides = existingArray;
-        } else {
-            overrides = new JsonArray();
-            json.add("themeAppearanceOverrides", overrides);
+    private static void addThemeAppearanceOverride(JsonArray themeAppearanceOverrides, String key) {
+        if (!hasThemeAppearanceOverride(themeAppearanceOverrides, key)) {
+            themeAppearanceOverrides.add(key);
         }
+    }
 
-        for (JsonElement element : overrides) {
+    /// Returns whether the generated theme appearance overrides already contain the given key.
+    private static boolean hasThemeAppearanceOverride(JsonArray themeAppearanceOverrides, String key) {
+        for (JsonElement element : themeAppearanceOverrides) {
             if (element instanceof JsonPrimitive primitive && primitive.isString()
                     && key.equals(primitive.getAsString())) {
-                return;
+                return true;
             }
         }
-        overrides.add(key);
+        return false;
+    }
+
+    /// Writes generated theme appearance overrides to the migrated launcher settings JSON.
+    private static void writeThemeAppearanceOverrides(JsonObject json, JsonArray themeAppearanceOverrides) {
+        if (themeAppearanceOverrides.size() > 0) {
+            json.add("themeAppearanceOverrides", themeAppearanceOverrides);
+        }
     }
 
     /// Migrates the legacy proxy enable flag and type into the current proxy mode.
@@ -1187,9 +1216,7 @@ public final class LegacyConfigMigrator {
             return false;
         }
 
-        JsonObject selectedInstance = json.get(LauncherSettings.PROPERTY_SELECTED_INSTANCE) instanceof JsonObject existingSelectedInstance
-                ? existingSelectedInstance
-                : new JsonObject();
+        JsonObject selectedInstance = new JsonObject();
         boolean changed = false;
 
         for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
@@ -1207,7 +1234,7 @@ public final class LegacyConfigMigrator {
             changed = true;
         }
 
-        if (changed && !json.has(LauncherSettings.PROPERTY_SELECTED_INSTANCE)) {
+        if (changed) {
             json.add(LauncherSettings.PROPERTY_SELECTED_INSTANCE, selectedInstance);
         }
         return changed;
