@@ -160,6 +160,7 @@ public class JFXDialog extends StackPane {
 
     private void initialize() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+        this.setVisible(false);
 
         FXUtils.onChange(overlayPane, t -> animation = getShowAnimation(transitionType.get()));
         FXUtils.onChange(transitionType, t -> animation = getShowAnimation(transitionType.get()));
@@ -314,6 +315,7 @@ public class JFXDialog extends StackPane {
         if (animation != null) {
             animation.play();
         } else {
+            this.setVisible(true);
             contentHolder.setVisible(true);
             contentHolder.setOpacity(1);
             getOverlayPane().setVisible(true);
@@ -333,6 +335,7 @@ public class JFXDialog extends StackPane {
                 closeDialog();
             });
         } else {
+            this.setVisible(false);
             contentHolder.setOpacity(0);
             contentHolder.setVisible(false);
             getOverlayPane().setOpacity(0);
@@ -383,6 +386,7 @@ public class JFXDialog extends StackPane {
     }
 
     private void resetProperties() {
+        this.setVisible(false);
         contentHolder.setVisible(false);
         getOverlayPane().setVisible(false);
         contentHolder.setTranslateX(0);
@@ -399,10 +403,12 @@ public class JFXDialog extends StackPane {
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(contentHolder.scaleXProperty(), INITIAL_SCALE, INTERPOLATOR),
                             new KeyValue(contentHolder.scaleYProperty(), INITIAL_SCALE, INTERPOLATOR),
+                            new KeyValue(JFXDialog.this.visibleProperty(), false, Motion.LINEAR),
                             new KeyValue(contentHolder.visibleProperty(), false, Motion.LINEAR),
                             new KeyValue(getOverlayPane().visibleProperty(), false, Motion.LINEAR)
                     ),
                     new KeyFrame(Duration.millis(10),
+                            new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR),
                             new KeyValue(contentHolder.visibleProperty(), true, Motion.LINEAR),
                             new KeyValue(contentHolder.opacityProperty(), 0, INTERPOLATOR),
                             new KeyValue(getOverlayPane().visibleProperty(), true, Motion.LINEAR),
@@ -411,6 +417,7 @@ public class JFXDialog extends StackPane {
                     new KeyFrame(Motion.EXTRA_LONG4,
                             new KeyValue(contentHolder.scaleXProperty(), 1, INTERPOLATOR),
                             new KeyValue(contentHolder.scaleYProperty(), 1, INTERPOLATOR),
+                            new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR),
                             new KeyValue(contentHolder.visibleProperty(), true, Motion.LINEAR),
                             new KeyValue(contentHolder.opacityProperty(), 1, INTERPOLATOR),
                             new KeyValue(getOverlayPane().visibleProperty(), true, Motion.LINEAR),
