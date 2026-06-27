@@ -67,4 +67,4 @@ HMCL 乃社群共驅之開源項目，迎諸君獻碼或建言。
 
 ## 開源之約
 
-詳見 [README.md](README.md#license)。
+詳見 [README_zh_Hant.md](README_zh_Hant.md#開源協議)。
