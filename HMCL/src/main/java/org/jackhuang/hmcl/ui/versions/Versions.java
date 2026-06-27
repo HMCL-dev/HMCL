@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -76,15 +76,15 @@ public final class Versions {
         }
     }
 
-    public static void downloadModpackImpl(DownloadProvider downloadProvider, Profile profile, String version, RemoteMod mod, RemoteMod.Version file) {
+    public static void downloadModpackImpl(DownloadProvider downloadProvider, Profile profile, String version, RemoteAddon mod, RemoteAddon.Version file) {
         Path modpack;
         List<URI> downloadURLs;
         try {
-            downloadURLs = downloadProvider.injectURLWithCandidates(file.getFile().getUrl());
+            downloadURLs = downloadProvider.injectURLWithCandidates(file.file().url());
             modpack = Files.createTempFile("modpack", ".zip");
         } catch (IOException | IllegalArgumentException e) {
             Controllers.dialog(
-                    i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
+                    i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
@@ -97,14 +97,14 @@ public final class Versions {
                                     installWizardProvider = new ModpackInstallWizardProvider(profile, modpack, version);
                                 else
                                     installWizardProvider = new ModpackInstallWizardProvider(profile, modpack);
-                                if (StringUtils.isNotBlank(mod.getIconUrl()))
-                                    installWizardProvider.setIconUrl(mod.getIconUrl());
+                                if (StringUtils.isNotBlank(mod.iconUrl()))
+                                    installWizardProvider.setIconUrl(mod.iconUrl());
                                 Controllers.getDecorator().startWizard(installWizardProvider);
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));
                             } else {
                                 Controllers.dialog(
-                                        i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
+                                        i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
                                         i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                             }
                         }),

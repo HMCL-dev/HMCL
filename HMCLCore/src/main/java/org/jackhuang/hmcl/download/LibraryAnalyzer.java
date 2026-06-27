@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.download;
 
 import org.intellij.lang.annotations.Language;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
