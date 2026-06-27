@@ -137,7 +137,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
 
         setCenter(transitionPane);
 
-        this.state.set(State.fromTitle(i18n("account.skin.manage", account.getUsername())));
+        this.state.set(State.fromTitle(i18n("account.skin.manage", account.getProfileName())));
     }
 
     protected abstract void onDrag(Path skin);
@@ -174,7 +174,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
             FXUtils.setLimitWidth(rightRegion, 250);
 
 
-            var uuid = account.getUUID();
+            var uuid = account.getProfileID();
             var skin = TexturesLoader.getDefaultSkin(uuid).image();
             var slim = TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM;
 

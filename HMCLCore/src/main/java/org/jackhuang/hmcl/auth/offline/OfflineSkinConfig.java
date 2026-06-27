@@ -17,20 +17,17 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
+import com.google.gson.JsonObject;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.game.skin.TextureModel;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
-
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 public record OfflineSkinConfig(Type type, TextureModel textureModel, String localSkinPath, String localCapePath) {
 
@@ -105,23 +102,23 @@ public record OfflineSkinConfig(Type type, TextureModel textureModel, String loc
         }
     }
 
-    public Map<?, ?> toStorage() {
-        return mapOf(
-                pair("type", type.name().toLowerCase(Locale.ROOT)),
-                pair("textureModel", textureModel().modelName),
-                pair("localSkinPath", localSkinPath),
-                pair("localCapePath", localCapePath)
-        );
+    public void writeStorage(JsonObject storage) {
+        storage.addProperty("type", type.name().toLowerCase(Locale.ROOT));
+        storage.addProperty("localSkinPath", localSkinPath);
+        storage.addProperty("localCapePath", localCapePath);
     }
 
-    public static OfflineSkinConfig fromStorage(Map<?, ?> storage) {
+    public static OfflineSkinConfig fromStorage(JsonObject storage) {
         if (storage == null) return null;
 
-        Type type = tryCast(storage.get("type"), String.class).flatMap(t -> Optional.ofNullable(Type.fromStorage(t)))
-                .orElse(Type.DEFAULT);
-        String textureModel = tryCast(storage.get("textureModel"), String.class).orElse("default");
-        String localSkinPath = tryCast(storage.get("localSkinPath"), String.class).orElse(null);
-        String localCapePath = tryCast(storage.get("localCapePath"), String.class).orElse(null);
+        String typeText = JsonUtils.getString(storage, "type");
+        Type type = typeText != null ? Type.fromStorage(typeText) : Type.DEFAULT;
+        if (type == null) {
+            type = Type.DEFAULT;
+        }
+        String textureModel = JsonUtils.getString(storage, "textureModel", "default");
+        String localSkinPath = JsonUtils.getString(storage, "localSkinPath");
+        String localCapePath = JsonUtils.getString(storage, "localCapePath");
 
         return new OfflineSkinConfig(type, "slim".equals(textureModel) ? TextureModel.SLIM : TextureModel.WIDE, localSkinPath, localCapePath);
     }

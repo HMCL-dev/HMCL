@@ -61,7 +61,7 @@ public class OfflineAccount extends Account {
             AuthlibInjectorArtifactProvider downloader,
             String profileName,
             UUID profileID,
-            Skin skin) {
+            OfflineSkinConfig skin) {
         super(accountID);
         this.downloader = requireNonNull(downloader);
         this.profileName = requireNonNull(profileName);
@@ -161,7 +161,7 @@ public class OfflineAccount extends Account {
 
             try {
                 server.addCharacter(new YggdrasilServer.Character(profileID, profileName,
-                        skin != null ? skin.load(profileName).run() : null));
+                        skin != null ? skin.load().run() : null));
             } catch (IOException e) {
                 // ignore
             } catch (Exception e) {

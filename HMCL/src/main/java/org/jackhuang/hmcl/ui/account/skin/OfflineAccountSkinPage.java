@@ -125,7 +125,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
         var textureModel = switch (type) {
             case ALEX -> TextureModel.SLIM;
             case STEVE -> TextureModel.WIDE;
-            case DEFAULT -> TexturesLoader.getDefaultModel(account.getUUID());
+            case DEFAULT -> TexturesLoader.getDefaultModel(account.getProfileID());
             default -> model;
         };
 
@@ -141,7 +141,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
                 return;
             }
 
-            UUID uuid = account.getUUID();
+            UUID uuid = account.getProfileID();
             TextureModel model = TextureModel.WIDE;
             TextureObject skinTex = null;
             TextureObject capeTex = null;
