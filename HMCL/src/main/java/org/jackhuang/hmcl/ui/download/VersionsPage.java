@@ -386,7 +386,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         list = new JFXListView<>();
                         list.getStyleClass().add("jfx-list-view-float");
 
-                        list.setFixedCellSize(65);
+                        list.setFixedCellSize(55);
 
                         VBox.setVgrow(list, Priority.ALWAYS);
 
