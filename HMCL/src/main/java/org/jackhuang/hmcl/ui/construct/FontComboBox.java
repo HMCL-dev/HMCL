@@ -73,18 +73,17 @@ public final class FontComboBox extends JFXComboBox<String> {
 
             skin.setHideOnClick(false);
 
-            @SuppressWarnings("unchecked")
-            ListView<String> listView = (ListView<String>) skin.getPopupContent();
-
-            listView.setOnMouseClicked(e -> {
-                Node target = e.getTarget() instanceof Node ? (Node) e.getTarget() : null;
-                while (target != null && !(target instanceof ListCell)) {
-                    target = target.getParent();
-                }
-                if (target instanceof ListCell<?> cell && !cell.isEmpty()) {
-                    hide();
-                }
-            });
+            if (skin.getPopupContent() instanceof ListView<?> listView) {
+                listView.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, e -> {
+                    Node target = e.getTarget() instanceof Node ? (Node) e.getTarget() : null;
+                    while (target != null && !(target instanceof ListCell)) {
+                        target = target.getParent();
+                    }
+                    if (target instanceof ListCell<?> cell && !cell.isEmpty()) {
+                        hide();
+                    }
+                });
+            }
         });
     }
 }
