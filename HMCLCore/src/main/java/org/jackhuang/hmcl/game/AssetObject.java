@@ -29,28 +29,7 @@ import java.nio.file.Path;
  *
  * @author huangyuhui
  */
-public final class AssetObject implements Validation {
-
-    private final String hash;
-    private final long size;
-
-    public AssetObject() {
-        this("", 0);
-    }
-
-    public AssetObject(String hash, long size) {
-        this.hash = hash;
-        this.size = size;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public long getSize() {
-        return size;
-    }
-
+public record AssetObject(String hash, long size) implements Validation {
     public String getLocation() {
         return hash.substring(0, 2) + "/" + hash;
     }

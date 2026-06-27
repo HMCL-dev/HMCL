@@ -25,22 +25,16 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class ExtractRules {
+public record ExtractRules(List<String> exclude) {
 
     public static final ExtractRules EMPTY = new ExtractRules();
 
-    private final List<String> exclude;
-
     public ExtractRules() {
-        this.exclude = Collections.emptyList();
+        this(Collections.emptyList());
     }
 
     public ExtractRules(List<String> exclude) {
         this.exclude = new ArrayList<>(exclude);
-    }
-
-    public List<String> getExclude() {
-        return Collections.unmodifiableList(exclude);
     }
 
     public boolean shouldExtract(String path) {
