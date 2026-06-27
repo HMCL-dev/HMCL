@@ -726,10 +726,15 @@ public class PersonalizationPage extends StackPane {
                         case BUILTIN -> builtinBackgroundComboBox.setValue(Objects.requireNonNullElse(
                                 background.builtinBackgroundId(),
                                 BuiltinBackground.FALLBACK.id()));
-                        case CUSTOM -> customBackgroundOption.setPath(
-                                background.imagePath() != null
+                        case CUSTOM -> {
+                            if (background.imageResource() != null) {
+                                customBackgroundOption.setPath(i18n("launcher.background.theme"));
+                            } else {
+                                customBackgroundOption.setPath(background.imagePath() != null
                                         ? background.imagePath().toString()
-                                        : background.imageResource() != null ? background.imageResource().name() : "");
+                                        : "");
+                            }
+                        }
                         case NETWORK -> networkBackgroundOption.setText(Objects.toString(
                                 background.networkImageUrl(),
                                 ""));
@@ -837,29 +842,6 @@ public class PersonalizationPage extends StackPane {
                 updatingBackground.value = true;
                 try {
                     if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
-                        try {
-                            ThemePackManager.ResolvedBackground background =
-                                    ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
-                            settings().backgroundTypeProperty().set(background.type());
-                            switch (background.type()) {
-                                case BUILTIN -> settings().builtinBackgroundIdProperty().set(Objects.requireNonNullElse(
-                                        background.builtinBackgroundId(),
-                                        BuiltinBackground.FALLBACK.id()));
-                                case CUSTOM -> {
-                                    if (background.imagePath() != null) {
-                                        settings().customBackgroundImagePathProperty().set(background.imagePath().toString());
-                                    } else {
-                                        settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
-                                    }
-                                }
-                                case NETWORK -> settings().networkBackgroundImageUrlProperty().set(background.networkImageUrl());
-                                case PAINT -> settings().customBackgroundPaintProperty().set(background.paint());
-                                case DEFAULT, THEME_COLOR -> {
-                                }
-                            }
-                        } catch (IOException | RuntimeException e) {
-                            settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
-                        }
                         settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                     } else {
                         settings().getThemeAppearanceOverrides().remove(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
@@ -953,11 +935,14 @@ public class PersonalizationPage extends StackPane {
                                 case BUILTIN -> Objects.requireNonNullElse(
                                         background.builtinBackgroundId(),
                                         BuiltinBackground.FALLBACK.id());
-                                case CUSTOM -> background.imagePath() != null
-                                        ? background.imagePath().toString()
-                                        : background.imageResource() != null
-                                          ? background.imageResource().name()
-                                          : i18n("settings.custom");
+                                case CUSTOM -> {
+                                    if (background.imageResource() != null) {
+                                        yield i18n("launcher.background.theme");
+                                    }
+                                    yield background.imagePath() != null
+                                            ? background.imagePath().toString()
+                                            : i18n("settings.custom");
+                                }
                                 case NETWORK ->
                                         Objects.toString(background.networkImageUrl(), i18n("launcher.background.network"));
                                 case PAINT -> background.paint() != null
