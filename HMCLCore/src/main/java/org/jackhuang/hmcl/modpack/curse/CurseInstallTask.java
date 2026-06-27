@@ -164,7 +164,7 @@ public final class CurseInstallTask extends Task<Void> {
     public void execute() throws Exception {
         if (config != null) {
             Set<String> newOverridesMods = getNewOverridesMods();
-            Set<CurseManifestFile> newManifestFiles = new HashSet<>(manifest.files());
+            Set<CurseManifestFile> newManifestFiles = manifest.files() != null ? new HashSet<>(manifest.files()) : Collections.emptySet();
 
             // For update, remove mods not listed in new manifest.
             // ModpackConfiguration stored in modpack.json preserves the raw
