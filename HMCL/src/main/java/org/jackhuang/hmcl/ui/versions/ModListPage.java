@@ -78,12 +78,14 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private static final class RemoteModInfo {
         final String curseForgeUrl;
         final String curseForgeFileUrl;
+        final String curseForgeDownloadPage;
         final String modrinthUrl;
         final String modrinthFileUrl;
 
-        RemoteModInfo(String curseForgeUrl, String curseForgeFileUrl, String modrinthUrl, String modrinthFileUrl) {
+        RemoteModInfo(String curseForgeUrl, String curseForgeFileUrl, String curseForgeDownloadPage, String modrinthUrl, String modrinthFileUrl) {
             this.curseForgeUrl = curseForgeUrl;
             this.curseForgeFileUrl = curseForgeFileUrl;
+            this.curseForgeDownloadPage = curseForgeDownloadPage;
             this.modrinthUrl = modrinthUrl;
             this.modrinthFileUrl = modrinthFileUrl;
         }
@@ -438,6 +440,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 case "sha512" -> "SHA512";
                 case "curseForgeUrl" -> "CurseForge URL";
                 case "curseForgeFileUrl" -> "CurseForge File URL";
+                case "curseForgeDownloadPage" -> "CurseForge Download Page";
                 case "modrinthUrl" -> "Modrinth URL";
                 case "modrinthFileUrl" -> "Modrinth File URL";
                 default -> field;
@@ -505,6 +508,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 RemoteModInfo remoteInfo = getRemoteModInfo(mod);
                 yield remoteInfo.curseForgeFileUrl;
             }
+            case "curseForgeDownloadPage" -> {
+                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                yield remoteInfo.curseForgeDownloadPage;
+            }
             case "modrinthUrl" -> {
                 RemoteModInfo remoteInfo = getRemoteModInfo(mod);
                 yield remoteInfo.modrinthUrl;
@@ -544,6 +551,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         String curseForgeUrl = "";
         String curseForgeFileUrl = "";
+        String curseForgeDownloadPage = "";
         String modrinthUrl = "";
         String modrinthFileUrl = "";
 
@@ -560,6 +568,9 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         try {
                             RemoteAddon addon = curseForgeRepo.getModById(downloadProvider, version.modid());
                             curseForgeUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
+                            if (version.self() instanceof CurseForgeRemoteAddonRepository.CurseAddon.LatestFile latestFile) {
+                                curseForgeDownloadPage = curseForgeUrl + "/download/" + latestFile.id();
+                            }
                         } catch (IOException e) {
                             LOG.warning("Failed to get CurseForge mod info for " + filePath, e);
                         }
@@ -589,7 +600,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             LOG.warning("Failed to lookup Modrinth version for " + filePath, e);
         }
 
-        RemoteModInfo result = new RemoteModInfo(curseForgeUrl, curseForgeFileUrl, modrinthUrl, modrinthFileUrl);
+        RemoteModInfo result = new RemoteModInfo(curseForgeUrl, curseForgeFileUrl, curseForgeDownloadPage, modrinthUrl, modrinthFileUrl);
         remoteModInfoCache.put(filePath, result);
         return result;
     }

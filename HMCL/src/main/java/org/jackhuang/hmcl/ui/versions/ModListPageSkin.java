@@ -327,6 +327,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXCheckBox chkSha512 = new JFXCheckBox("SHA512");
         JFXCheckBox chkCurseForgeUrl = new JFXCheckBox(i18n("mods.export.field.curseforge_url"));
         JFXCheckBox chkCurseForgeFileUrl = new JFXCheckBox(i18n("mods.export.field.curseforge_file_url"));
+        JFXCheckBox chkCurseForgeDownloadPage = new JFXCheckBox(i18n("mods.export.field.curseforge_download_page"));
         JFXCheckBox chkModrinthUrl = new JFXCheckBox(i18n("mods.export.field.modrinth_url"));
         JFXCheckBox chkModrinthFileUrl = new JFXCheckBox(i18n("mods.export.field.modrinth_file_url"));
 
@@ -346,6 +347,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         chkSha512.setSelected(false);
         chkCurseForgeUrl.setSelected(false);
         chkCurseForgeFileUrl.setSelected(false);
+        chkCurseForgeDownloadPage.setSelected(false);
         chkModrinthUrl.setSelected(false);
         chkModrinthFileUrl.setSelected(false);
 
@@ -361,7 +363,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         placeholdersPane.setAlignment(Pos.CENTER_LEFT);
         String[] placeholders = {"name", "version", "modid", "gameVersion", "authors", 
                 "description", "url", "active", "modLoaderType", "mcmodId", "abbr", "chineseName", "sha1", "sha512",
-                "curseForgeUrl", "curseForgeFileUrl", "modrinthUrl", "modrinthFileUrl"};
+                "curseForgeUrl", "curseForgeFileUrl", "curseForgeDownloadPage", "modrinthUrl", "modrinthFileUrl"};
         for (String placeholder : placeholders) {
             String placeholderText = "{" + placeholder + "}";
             JFXButton btn = FXUtils.newBorderButton(placeholderText);
@@ -377,7 +379,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 chkDescription, chkUrl, chkActive, chkModLoaderType,
                 chkMcmodId, chkAbbr, chkChineseName,
                 chkSha1, chkSha512,
-                chkCurseForgeUrl, chkCurseForgeFileUrl,
+                chkCurseForgeUrl, chkCurseForgeFileUrl, chkCurseForgeDownloadPage,
                 chkModrinthUrl, chkModrinthFileUrl);
         fieldsBox.setAlignment(Pos.CENTER_LEFT);
 
