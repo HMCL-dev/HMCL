@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
@@ -227,5 +228,26 @@ public class ComponentSublist extends Control implements NoPaddingComponent {
 
     public void setTip(String tip) {
         this.tip.set(tip);
+    }
+
+    private static final PseudoClass PSEUDO_LARGE_TITLE = PseudoClass.getPseudoClass("large-title");
+
+    private final BooleanProperty largeTitle = new SimpleBooleanProperty(this, "largeTitle", false) {
+        @Override
+        protected void invalidated() {
+            pseudoClassStateChanged(PSEUDO_LARGE_TITLE, get());
+        }
+    };
+
+    public BooleanProperty largeTitleProperty() {
+        return largeTitle;
+    }
+
+    public final boolean isLargeTitle() {
+        return largeTitle.get();
+    }
+
+    public final void setLargeTitle(boolean value) {
+        largeTitle.set(value);
     }
 }
