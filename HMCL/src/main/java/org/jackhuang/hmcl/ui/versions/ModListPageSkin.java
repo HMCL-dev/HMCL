@@ -308,20 +308,20 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         jsonRadio.setToggleGroup(formatGroup);
         csvRadio.setSelected(true);
 
-        JFXCheckBox chkName = new JFXCheckBox("Name");
-        JFXCheckBox chkVersion = new JFXCheckBox("Version");
-        JFXCheckBox chkId = new JFXCheckBox("Mod ID");
-        JFXCheckBox chkGameVersion = new JFXCheckBox("Game Version");
-        JFXCheckBox chkAuthors = new JFXCheckBox("Authors");
-        JFXCheckBox chkDescription = new JFXCheckBox("Description");
-        JFXCheckBox chkUrl = new JFXCheckBox("URL");
-        JFXCheckBox chkActive = new JFXCheckBox("Active");
-        JFXCheckBox chkModLoaderType = new JFXCheckBox("Mod Loader Type");
-        JFXCheckBox chkMcmodId = new JFXCheckBox("MCMod ID");
-        JFXCheckBox chkAbbr = new JFXCheckBox("Abbreviation");
-        JFXCheckBox chkChineseName = new JFXCheckBox("Chinese Name");
-        JFXCheckBox chkSha1 = new JFXCheckBox("SHA1");
-        JFXCheckBox chkSha512 = new JFXCheckBox("SHA512");
+        JFXCheckBox chkName = new JFXCheckBox(i18n("mods.export.field.name"));
+        JFXCheckBox chkVersion = new JFXCheckBox(i18n("mods.export.field.version"));
+        JFXCheckBox chkId = new JFXCheckBox(i18n("mods.export.field.modid"));
+        JFXCheckBox chkGameVersion = new JFXCheckBox(i18n("mods.export.field.game_version"));
+        JFXCheckBox chkAuthors = new JFXCheckBox(i18n("mods.export.field.authors"));
+        JFXCheckBox chkDescription = new JFXCheckBox(i18n("mods.export.field.description"));
+        JFXCheckBox chkUrl = new JFXCheckBox(i18n("mods.export.field.url"));
+        JFXCheckBox chkActive = new JFXCheckBox(i18n("mods.export.field.active"));
+        JFXCheckBox chkModLoaderType = new JFXCheckBox(i18n("mods.export.field.mod_loader_type"));
+        JFXCheckBox chkMcmodId = new JFXCheckBox(i18n("mods.export.field.mcmod_id"));
+        JFXCheckBox chkAbbr = new JFXCheckBox(i18n("mods.export.field.abbr"));
+        JFXCheckBox chkChineseName = new JFXCheckBox(i18n("mods.export.field.chinese_name"));
+        JFXCheckBox chkSha1 = new JFXCheckBox(i18n("mods.export.field.sha1"));
+        JFXCheckBox chkSha512 = new JFXCheckBox(i18n("mods.export.field.sha512"));
 
         chkName.setSelected(true);
         chkVersion.setSelected(true);
