@@ -113,6 +113,7 @@ public final class LauncherSettingsMigrationTest {
             Files.writeString(config, """
                     {
                       "_version": 2,
+                      "themeBrightness": "dark",
                       "theme": "#336699",
                       "titleTransparent": true,
                       "backgroundImage": "/pictures/background.png",
@@ -129,8 +130,10 @@ public final class LauncherSettingsMigrationTest {
             assertFalse(serialized.has("backgroundImage"));
             assertFalse(serialized.has("backgroundImageUrl"));
             assertFalse(serialized.has("backgroundPaint"));
+            assertFalse(serialized.has("themeBrightness"));
             assertFalse(serialized.has("theme"));
             assertFalse(serialized.has("titleTransparent"));
+            assertEquals("dark", launcherSettings.themeBrightnessModeProperty().get());
             assertEquals(ThemeColor.of("#336699"), launcherSettings.customThemeColorProperty().get());
             assertEquals(ThemeColorType.CUSTOM, launcherSettings.themeColorTypeProperty().get());
             assertTrue(launcherSettings.titleBarTransparentProperty().get());
@@ -140,6 +143,8 @@ public final class LauncherSettingsMigrationTest {
             assertEquals(NetworkBackgroundImageCachePolicy.DISABLED,
                     launcherSettings.networkBackgroundImageCachePolicyProperty().get());
             assertTrue(launcherSettings.isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
+            assertTrue(launcherSettings.isThemeAppearanceOverridden(
+                    LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE));
             assertTrue(launcherSettings.isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR));
             assertTrue(launcherSettings.isThemeAppearanceOverridden(
                     LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY));
@@ -152,6 +157,7 @@ public final class LauncherSettingsMigrationTest {
                     serialized.get("networkBackgroundImageCachePolicy").getAsString());
             assertEquals("#336699", serialized.get("customThemeColor").getAsString());
             assertEquals(ThemeColorType.CUSTOM.name(), serialized.get("themeColorType").getAsString());
+            assertEquals("dark", serialized.get("themeBrightnessMode").getAsString());
             assertTrue(serialized.get("titleBarTransparent").getAsBoolean());
             assertEquals("#336699", serialized.get("customBackgroundPaint").getAsString());
         }
