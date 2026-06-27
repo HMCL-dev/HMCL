@@ -78,7 +78,7 @@ public class OfflineAccountSkinPane extends StackPane {
         StackPane canvasPane = new StackPane(canvas);
         canvasPane.setPrefWidth(300);
         canvasPane.setPrefHeight(300);
-        pane.setCenter(canvas);
+        pane.setCenter(canvasPane);
         canvas.getAnimationPlayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
         canvas.enableRotation(.5);
 
@@ -212,14 +212,6 @@ public class OfflineAccountSkinPane extends StackPane {
                     break;
 
                 case LOCAL_FILE:
-                    modelCombobox.setMaxWidth(Double.MAX_VALUE);
-                    skinSelector.setMaxWidth(Double.MAX_VALUE);
-                    capeSelector.setMaxWidth(Double.MAX_VALUE);
-
-                    GridPane.setHgrow(modelCombobox, Priority.ALWAYS);
-                    GridPane.setHgrow(skinSelector, Priority.ALWAYS);
-                    GridPane.setHgrow(capeSelector, Priority.ALWAYS);
-
                     gridPane.addRow(0, new Label(i18n("account.skin.model")));
                     gridPane.addRow(1, modelCombobox);
 
@@ -231,9 +223,6 @@ public class OfflineAccountSkinPane extends StackPane {
                     break;
 
                 case CUSTOM_SKIN_LOADER_API:
-                    cslApiField.setMaxWidth(Double.MAX_VALUE);
-                    GridPane.setHgrow(cslApiField, Priority.ALWAYS);
-
                     gridPane.addRow(0, new Label(i18n("account.skin.type.csl_api.location")));
                     gridPane.addRow(1, cslApiField);
                     break;
