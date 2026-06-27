@@ -164,6 +164,7 @@ public final class CurseInstallTask extends Task<Void> {
     public void execute() throws Exception {
         if (config != null) {
             Set<String> newOverridesMods = getNewOverridesMods();
+            Set<CurseManifestFile> newManifestFiles = new HashSet<>(manifest.files());
 
             // For update, remove mods not listed in new manifest.
             // ModpackConfiguration stored in modpack.json preserves the raw
@@ -189,7 +190,7 @@ public final class CurseInstallTask extends Task<Void> {
                 String relativePath = "mods/" + oldCurseManifestFile.fileName();
                 Path oldFile = run.resolve(relativePath);
                 if (Files.notExists(oldFile)) continue;
-                if (manifest.files().stream().noneMatch(oldCurseManifestFile::equals) && !newOverridesMods.contains(relativePath))
+                if (!newManifestFiles.contains(oldCurseManifestFile) && !newOverridesMods.contains(relativePath))
                     Files.deleteIfExists(oldFile);
             }
         }
