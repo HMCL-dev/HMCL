@@ -90,10 +90,33 @@ public record Theme(
         Objects.requireNonNull(object);
 
         @Nullable String id = JsonUtils.getString(object, "id");
+        if (id != null) {
+            try {
+                id = ThemePackManifest.requireThemeId(id);
+            } catch (IllegalArgumentException e) {
+                if (requireIdentity) {
+                    throw new JsonParseException(e);
+                }
+                LOG.warning("Ignored invalid theme id: " + id, e);
+                id = null;
+            }
+        }
         if (id == null && requireIdentity) {
             throw new JsonParseException("Theme is missing the id");
         }
-        @Nullable LocalizedText name = LocalizedText.fromJson(object.get("name"));
+        @Nullable LocalizedText name;
+        try {
+            name = LocalizedText.fromJson(object.get("name"));
+            if (name != null && name.mayBeEmpty()) {
+                throw new JsonParseException("Theme name is empty: " + name);
+            }
+        } catch (JsonParseException | IllegalArgumentException e) {
+            if (requireIdentity) {
+                throw e;
+            }
+            LOG.warning("Ignored invalid theme name", e);
+            name = null;
+        }
         if (name == null && requireIdentity) {
             throw new JsonParseException("Theme is missing required localized text field: " + "name");
         }
@@ -106,10 +129,13 @@ public record Theme(
             authors = List.of();
         }
 
-        LocalizedText description;
+        @Nullable LocalizedText description;
 
         try {
             description = LocalizedText.fromJson(object.get("description"));
+            if (description != null) {
+                description = ThemePackManifest.requireLocalizedText(description, "description");
+            }
         } catch (Exception e) {
             LOG.warning("Failed to parse description", e);
             description = null;
@@ -140,8 +166,18 @@ public record Theme(
             overrides = List.of();
         }
 
+        @Nullable String thumbnail = JsonUtils.getString(object, "thumbnail");
+        if (thumbnail != null) {
+            try {
+                thumbnail = ThemePackAsset.normalizeEntryName(thumbnail);
+            } catch (IllegalArgumentException e) {
+                LOG.warning("Ignored invalid theme thumbnail: " + thumbnail, e);
+                thumbnail = null;
+            }
+        }
+
         return new Theme(id, name, authors, description,
-                JsonUtils.getString(object, "thumbnail"),
+                thumbnail,
                 appearance, overrides);
     }
 

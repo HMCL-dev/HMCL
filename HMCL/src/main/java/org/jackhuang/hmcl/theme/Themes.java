@@ -624,15 +624,13 @@ public final class Themes {
             ThemePackManager.InstalledThemePack themePack,
             Theme theme,
             ThemeResolveContext context) throws IOException {
-        @Nullable ThemePackManager.ResolvedBackground resolved = ThemePackManager.resolveThemeBackground(
+        ThemePackManager.ResolvedBackground resolved = ThemePackManager.resolveBackgroundAfterApplyingTheme(
                 themePack,
                 theme,
                 context);
-        if (resolved != null) {
-            @Nullable LoadedBackground loaded = tryCreateResolvedBackground(resolved, false);
-            if (loaded != null) {
-                return loaded;
-            }
+        @Nullable LoadedBackground loaded = tryCreateResolvedBackground(resolved, false);
+        if (loaded != null) {
+            return loaded;
         }
         return loadFallbackBackground(theme, context);
     }

@@ -789,6 +789,37 @@ public final class ThemePackManager {
         return resolveCustomBackground();
     }
 
+    /// Resolves the background that will be effective after applying the given theme.
+    ///
+    /// Applying a theme clears launcher appearance overrides, so a theme without a
+    /// background resolves to the launcher default background with built-in opacity.
+    ///
+    /// @param themePack the theme pack to apply
+    /// @param theme     the theme to apply
+    /// @param context   the condition resolution context
+    /// @return the background that should be displayed after the theme is applied
+    /// @throws IOException if the theme background cannot be resolved
+    public static ResolvedBackground resolveBackgroundAfterApplyingTheme(
+            InstalledThemePack themePack,
+            Theme theme,
+            ThemeResolveContext context) throws IOException {
+        Objects.requireNonNull(themePack);
+        Objects.requireNonNull(theme);
+        Objects.requireNonNull(context);
+
+        @Nullable ResolvedBackground resolved = resolveThemeBackground(themePack, theme, context);
+        if (resolved != null) {
+            return resolved;
+        }
+        return new ResolvedBackground(
+                BackgroundType.DEFAULT,
+                null,
+                null,
+                null,
+                null,
+                1.0);
+    }
+
     /// Resolves the fallback background used when the current launcher background cannot be loaded.
     ///
     /// @param context the condition resolution context
@@ -1007,14 +1038,19 @@ public final class ThemePackManager {
         if (background == null) {
             return null;
         }
-        return resolveBackground(location, background, 1.0);
+        return resolveBackground(
+                location,
+                background,
+                1.0,
+                appearance.toResolvedTheme(context).toColorScheme().getColor(ColorRole.SURFACE_CONTAINER));
     }
 
     /// Resolves a concrete launcher background from a theme-pack background object.
     private static ResolvedBackground resolveBackground(
             ThemePackLocation location,
             ThemeBackgroundSettings background,
-            double fallbackOpacity) throws IOException {
+            double fallbackOpacity,
+            Paint themeColorPaint) throws IOException {
         double opacity = Objects.requireNonNullElse(background.opacity(), fallbackOpacity);
         @Nullable ThemeBackground source = background.source();
         if (source instanceof ThemeBackground.Default) {
@@ -1052,7 +1088,7 @@ public final class ThemePackManager {
                     null,
                     null,
                     null,
-                    Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER),
+                    themeColorPaint,
                     opacity);
         }
         if (source instanceof ThemeBackground.Paint paint) {

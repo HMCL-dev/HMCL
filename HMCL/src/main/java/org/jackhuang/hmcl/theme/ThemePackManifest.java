@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /// Parsed metadata and themes from a theme-pack manifest.
 ///
 /// @param id          the stable package identifier
@@ -284,14 +286,41 @@ public record ThemePackManifest(
                 throw new JsonParseException("Theme-pack manifest is missing name");
             }
 
-            @Nullable LocalizedText description = context.deserialize(object.get("description"), LocalizedText.class);
+            @Nullable LocalizedText description;
+            try {
+                description = context.deserialize(object.get("description"), LocalizedText.class);
+                if (description != null) {
+                    description = requireLocalizedText(description, "description");
+                }
+            } catch (JsonParseException | IllegalArgumentException e) {
+                LOG.warning("Ignored invalid theme-pack description", e);
+                description = null;
+            }
+
+            List<ThemePackAuthor> authors;
+            try {
+                authors = ThemePackAuthor.parseAuthors(object.get("authors"));
+            } catch (JsonParseException | IllegalArgumentException e) {
+                LOG.warning("Ignored invalid theme-pack authors", e);
+                authors = List.of();
+            }
+
+            @Nullable String thumbnail = JsonUtils.getString(object, "thumbnail");
+            if (thumbnail != null) {
+                try {
+                    thumbnail = ThemePackAsset.normalizeEntryName(thumbnail);
+                } catch (IllegalArgumentException e) {
+                    LOG.warning("Ignored invalid theme-pack thumbnail: " + thumbnail, e);
+                    thumbnail = null;
+                }
+            }
 
             return new ThemePackManifest(
                     id,
                     version,
                     name,
-                    ThemePackAuthor.parseAuthors(object.get("authors")),
-                    JsonUtils.getString(object, "thumbnail"),
+                    authors,
+                    thumbnail,
                     description,
                     readThemes(object));
         }
