@@ -237,7 +237,7 @@ public final class LauncherHelper {
                         launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
                     }
 
-                    if (setting.getInheritable(GameSettings::highPerformanceProperty)) {
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && setting.getInheritable(GameSettings::highPerformanceProperty)) {
                         javaPathGpuReg = FileUtils.getAbsolutePath(javaVersionRef.get().getBinary());
                         try {
                             WinReg reg = WinReg.INSTANCE;

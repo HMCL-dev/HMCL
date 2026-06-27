@@ -638,15 +638,15 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return vulkanRenderer;
     }
 
-    /// Property name for the Vulkan renderer.
+    /// Property name for high performance GPU preference.
     public static final String PROPERTY_HIGH_PERFORMANCE = "highPerformance";
 
-    /// The Vulkan renderer used by the game.
+    /// Whether to launch games with high-performance GPU.
     @SerializedName(PROPERTY_HIGH_PERFORMANCE)
     private final InheritableProperty<Boolean> highPerformance =
             newInheritableProperty(PROPERTY_HIGH_PERFORMANCE, true);
 
-    /// Returns the Vulkan renderer property.
+    /// Returns the high performance GPU preference property.
     public InheritableProperty<Boolean> highPerformanceProperty() {
         return highPerformance;
     }
