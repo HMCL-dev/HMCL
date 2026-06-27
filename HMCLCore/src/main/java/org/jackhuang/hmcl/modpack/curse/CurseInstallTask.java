@@ -174,9 +174,15 @@ public final class CurseInstallTask extends Task<Void> {
             List<CurseManifestFile> oldFiles = config.getManifest().files();
             if (Files.exists(oldManifestFile)) {
                 try {
-                    oldFiles = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class).files();
+                    CurseManifest oldManifest = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class);
+                    if (oldManifest != null) {
+                        oldFiles = oldManifest.files();
+                    }
                 } catch (IOException | JsonParseException ignored) {
                 }
+            }
+            if (oldFiles == null) {
+                oldFiles = Collections.emptyList();
             }
             for (CurseManifestFile oldCurseManifestFile : oldFiles) {
                 if (StringUtils.isBlank(oldCurseManifestFile.fileName())) continue;
