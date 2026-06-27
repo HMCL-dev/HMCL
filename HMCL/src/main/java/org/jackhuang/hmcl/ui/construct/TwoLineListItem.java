@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
@@ -26,10 +25,10 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
@@ -168,29 +167,17 @@ public class TwoLineListItem extends VBox {
             var tagsBox = new HBox(8);
             tagsBox.getStyleClass().add("tags");
             tagsBox.setAlignment(Pos.CENTER_LEFT);
+            tagsBox.setMinWidth(0);
+            HBox.setHgrow(tagsBox, Priority.ALWAYS);
             Bindings.bindContent(tagsBox.getChildren(), tags);
+            var isNotEmpty = Bindings.isNotEmpty(tags);
+            tagsBox.managedProperty().bind(isNotEmpty);
+            tagsBox.visibleProperty().bind(isNotEmpty);
 
-            var scrollPane = new ScrollPane(tagsBox);
-            scrollPane.setMinSize(0, 0);
-            HBox.setHgrow(scrollPane, Priority.ALWAYS);
+            FXUtils.setOverflowHidden(tagsBox);
+
             lblTitle.setMinWidth(Label.USE_PREF_SIZE);
-            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            var expectedHeight = Bindings.createDoubleBinding(
-                    () -> {
-                        if (tags.isEmpty()) return 0.0;
-                        double h = tagsBox.prefHeight(-1);
-                        return h > 0 ? h : Double.NaN;
-                    },
-                    tags, tagsBox.heightProperty()
-            );
-
-            scrollPane.minHeightProperty().bind(expectedHeight);
-            scrollPane.prefHeightProperty().bind(expectedHeight);
-            scrollPane.maxHeightProperty().bind(expectedHeight);
-            firstLine.getChildren().setAll(lblTitle, scrollPane);
-
-            tags.addListener((InvalidationListener) ignored -> scrollPane.requestLayout());
+            firstLine.getChildren().setAll(lblTitle, tagsBox);
         }
         return tags;
     }
@@ -198,6 +185,7 @@ public class TwoLineListItem extends VBox {
     public void addTag(String tag, PseudoClass pseudoClass) {
         var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag");
+        tagLabel.setMinWidth(Label.USE_PREF_SIZE);
         if (pseudoClass != null)
             tagLabel.pseudoClassStateChanged(pseudoClass, true);
         getTags().add(tagLabel);
