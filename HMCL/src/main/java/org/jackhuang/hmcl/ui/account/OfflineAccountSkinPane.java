@@ -193,7 +193,9 @@ public class OfflineAccountSkinPane extends StackPane {
         column.setHgrow(Priority.ALWAYS);
         gridPane.getColumnConstraints().setAll(column);
 
-        VBox right = new VBox(gridPane);
+        VBox right = new VBox();
+        right.setPadding(new Insets(0, 0, 0, 10));
+        right.setSpacing(12);
         right.setPrefWidth(230);
         HBox.setHgrow(right, Priority.ALWAYS);
 
@@ -205,7 +207,7 @@ public class OfflineAccountSkinPane extends StackPane {
         skinOptionPane.getChildren().setAll(body);
 
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
-            gridPane.getChildren().clear();
+            right.getChildren().clear();
 
             switch (selectedData) {
                 case DEFAULT:
@@ -218,29 +220,30 @@ public class OfflineAccountSkinPane extends StackPane {
                     hint.setText(i18n("account.skin.type.little_skin.hint"));
 
                     hint.setMaxWidth(Double.MAX_VALUE);
-                    GridPane.setHgrow(hint, Priority.ALWAYS);
 
-                    gridPane.addRow(0, hint);
+                    right.getChildren().add(hint);
                     break;
 
                 case LOCAL_FILE:
-                    gridPane.addRow(0, new Label(i18n("account.skin.model")));
-                    gridPane.addRow(1, modelCombobox);
-
-                    gridPane.addRow(2, new Label(i18n("account.skin")));
-                    gridPane.addRow(3, skinSelector);
-
-                    gridPane.addRow(4, new Label(i18n("account.cape")));
-                    gridPane.addRow(5, capeSelector);
+                    right.getChildren().addAll(
+                        new Label(i18n("account.skin.model")),
+                        modelCombobox,
+                        new Label(i18n("account.skin")),
+                        skinSelector,
+                        new Label(i18n("account.cape")),
+                        capeSelector
+                    );
                     break;
 
                 case CUSTOM_SKIN_LOADER_API:
-                    gridPane.addRow(0, new Label(i18n("account.skin.type.csl_api.location")));
-                    gridPane.addRow(1, cslApiField);
+                    right.getChildren().addAll(
+                        new Label(i18n("account.skin.type.csl_api.location")),
+                        cslApiField
+                    );
                     break;
             }
 
-            if (gridPane.getChildren().isEmpty()) {
+            if (right.getChildren().isEmpty()) {
                 body.getChildren().remove(right);
             } else if (!body.getChildren().contains(right)) {
                 body.getChildren().add(right);
