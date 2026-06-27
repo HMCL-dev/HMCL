@@ -459,6 +459,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 if (chkSha512.isSelected()) fields.add("sha512");
                 if (chkCurseForgeUrl.isSelected()) fields.add("curseForgeUrl");
                 if (chkCurseForgeFileUrl.isSelected()) fields.add("curseForgeFileUrl");
+                if (chkCurseForgeDownloadPage.isSelected()) fields.add("curseForgeDownloadPage");
                 if (chkModrinthUrl.isSelected()) fields.add("modrinthUrl");
                 if (chkModrinthFileUrl.isSelected()) fields.add("modrinthFileUrl");
             }
