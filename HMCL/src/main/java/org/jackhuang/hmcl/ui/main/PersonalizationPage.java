@@ -873,10 +873,7 @@ public class PersonalizationPage extends StackPane {
                     },
                     NetworkBackgroundImageCachePolicy.ENABLED,
                     NetworkBackgroundImageCachePolicy.DISABLED,
-                    policy -> i18n("launcher.background.network.cache."
-                            + Objects.requireNonNullElse(policy, NetworkBackgroundImageCachePolicy.ENABLED)
-                            .name()
-                            .toLowerCase(Locale.ROOT)));
+                    null);
 
             ComponentSublist backgroundFallbackSublist = new ComponentSublist();
             backgroundFallbackSublist.setTitle(i18n("launcher.background.fallback"));
