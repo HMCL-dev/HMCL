@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -72,16 +71,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The JSON property name for selected instance IDs keyed by game directory ID.
     static final String PROPERTY_SELECTED_INSTANCE = "selectedInstance";
-
-    /// Legacy ordinal order for launcher background source settings.
-    private static final String @Unmodifiable [] LEGACY_BACKGROUND_TYPES = {
-            "DEFAULT",
-            "CUSTOM",
-            "BUILTIN",
-            "NETWORK",
-            "TRANSLUCENT",
-            "PAINT"
-    };
 
     /// Default launcher theme used when no stored theme reference is available.
     public static final ThemeReference DEFAULT_THEME_REFERENCE = new ThemeReference("hmcl.default", null);
@@ -132,120 +121,7 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// @return the deserialized launcher settings
     /// @throws JsonParseException if the JSON cannot be deserialized as launcher settings
     public static LauncherSettings fromJson(JsonObject json) throws JsonParseException {
-        JsonObject migrated = json.deepCopy();
-        migrateLegacyLauncherAppearanceFields(migrated);
-        return SETTINGS_GSON.fromJson(migrated, LauncherSettings.class);
-    }
-
-    /// Migrates appearance fields used by older `launcher-settings/1.0.0` files.
-    private static void migrateLegacyLauncherAppearanceFields(JsonObject json) {
-        Objects.requireNonNull(json);
-
-        boolean oldAppearanceField = false;
-        if (moveLegacyMember(json, "themeBrightness", "themeBrightnessMode")) {
-            addThemeAppearanceOverride(json, THEME_APPEARANCE_BRIGHTNESS_MODE);
-            oldAppearanceField = true;
-        }
-        boolean migratedThemeColor = moveLegacyMember(json, "themeColor", "customThemeColor");
-        migratedThemeColor |= moveLegacyMember(json, "theme", "customThemeColor");
-        if (migratedThemeColor) {
-            if (!json.has("themeColorType")) {
-                json.addProperty("themeColorType", ThemeColorType.CUSTOM.name());
-            }
-            addThemeAppearanceOverride(json, THEME_APPEARANCE_COLOR);
-            oldAppearanceField = true;
-        }
-        if (moveLegacyMember(json, "titleTransparent", "titleBarTransparent")) {
-            addThemeAppearanceOverride(json, THEME_APPEARANCE_TITLE_BAR_TRANSPARENT);
-            oldAppearanceField = true;
-        }
-
-        oldAppearanceField |= migrateLegacyLauncherBackgroundType(json);
-
-        boolean migratedNetworkBackground = moveLegacyMember(
-                json, "backgroundImageUrl", "networkBackgroundImageUrl");
-        boolean migratedBackgroundSource = false;
-        migratedBackgroundSource |= moveLegacyMember(json, "backgroundImage", "customBackgroundImagePath");
-        migratedBackgroundSource |= migratedNetworkBackground;
-        migratedBackgroundSource |= moveLegacyMember(json, "backgroundPaint", "customBackgroundPaint")
-                && Objects.equals(JsonUtils.getString(json, "backgroundType"), BackgroundType.PAINT.name());
-        if (migratedBackgroundSource) {
-            addThemeAppearanceOverride(json, THEME_APPEARANCE_BACKGROUND);
-            oldAppearanceField = true;
-        }
-        if (migratedNetworkBackground) {
-            if (!json.has("networkBackgroundImageCachePolicy")) {
-                json.addProperty("networkBackgroundImageCachePolicy", NetworkBackgroundImageCachePolicy.DISABLED.name());
-            }
-            addThemeAppearanceOverride(json, THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY);
-        }
-        if (oldAppearanceField && json.has("backgroundOpacity")) {
-            addThemeAppearanceOverride(json, THEME_APPEARANCE_BACKGROUND_OPACITY);
-        }
-    }
-
-    /// Migrates older background type values used by launcher settings.
-    private static boolean migrateLegacyLauncherBackgroundType(JsonObject json) {
-        boolean migrated = false;
-        JsonElement backgroundType = json.get("backgroundType");
-        @Nullable Integer ordinal = JsonUtils.getInteger(backgroundType);
-        if (ordinal != null && ordinal >= 0 && ordinal < LEGACY_BACKGROUND_TYPES.length) {
-            json.addProperty("backgroundType", LEGACY_BACKGROUND_TYPES[ordinal]);
-            addThemeAppearanceOverride(json, THEME_APPEARANCE_BACKGROUND);
-            migrated = true;
-        }
-
-        String type = JsonUtils.getString(json, "backgroundType");
-        if (Objects.equals(type, "CLASSIC")) {
-            json.addProperty("backgroundType", BackgroundType.BUILTIN.name());
-            json.addProperty("builtinBackgroundId", BuiltinBackground.WALLPAPER_2016_02_25.id());
-            addThemeAppearanceOverride(json, THEME_APPEARANCE_BACKGROUND);
-            migrated = true;
-        } else if (Objects.equals(type, "TRANSLUCENT")) {
-            json.addProperty("backgroundType", BackgroundType.PAINT.name());
-            if (!json.has("customBackgroundPaint")) {
-                json.addProperty("customBackgroundPaint", "#ffffff");
-            }
-            if (!json.has("backgroundOpacity")) {
-                json.addProperty("backgroundOpacity", 0.5);
-            }
-            addThemeAppearanceOverride(json, THEME_APPEARANCE_BACKGROUND);
-            addThemeAppearanceOverride(json, THEME_APPEARANCE_BACKGROUND_OPACITY);
-            migrated = true;
-        }
-        return migrated;
-    }
-
-    /// Moves a legacy member to its current name and removes the old member.
-    private static boolean moveLegacyMember(JsonObject json, String legacyName, String currentName) {
-        JsonElement value = json.remove(legacyName);
-        if (value == null) {
-            return false;
-        }
-        if (!json.has(currentName)) {
-            json.add(currentName, value);
-        }
-        return true;
-    }
-
-    /// Adds one theme appearance override key to a serialized launcher settings object.
-    private static void addThemeAppearanceOverride(JsonObject json, String key) {
-        JsonArray overrides;
-        JsonElement existing = json.get("themeAppearanceOverrides");
-        if (existing instanceof JsonArray existingArray) {
-            overrides = existingArray;
-        } else {
-            overrides = new JsonArray();
-            json.add("themeAppearanceOverrides", overrides);
-        }
-
-        for (JsonElement element : overrides) {
-            if (element instanceof JsonPrimitive primitive && primitive.isString()
-                    && key.equals(primitive.getAsString())) {
-                return;
-            }
-        }
-        overrides.add(key);
+        return SETTINGS_GSON.fromJson(json, LauncherSettings.class);
     }
 
     /// Creates empty launcher settings using current defaults.
