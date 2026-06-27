@@ -107,11 +107,6 @@ public class OfflineAccountSkinPane extends StackPane {
         modelCombobox.setMaxWidth(Double.MAX_VALUE);
         cslApiField.setMaxWidth(Double.MAX_VALUE);
 
-        GridPane.setHgrow(modelCombobox, Priority.ALWAYS);
-        GridPane.setHgrow(skinSelector, Priority.ALWAYS);
-        GridPane.setHgrow(capeSelector, Priority.ALWAYS);
-        GridPane.setHgrow(cslApiField, Priority.ALWAYS);
-
         layout.setBody(pane);
 
         cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
@@ -184,15 +179,6 @@ public class OfflineAccountSkinPane extends StackPane {
             }
         }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
-        GridPane gridPane = new GridPane();
-        gridPane.setPadding(new Insets(0, 0, 0, 10));
-        gridPane.setHgap(16);
-        gridPane.setVgap(12);
-
-        ColumnConstraints column = new ColumnConstraints();
-        column.setHgrow(Priority.ALWAYS);
-        gridPane.getColumnConstraints().setAll(column);
-
         VBox right = new VBox();
         right.setPadding(new Insets(0, 0, 0, 10));
         right.setSpacing(12);
@@ -209,38 +195,40 @@ public class OfflineAccountSkinPane extends StackPane {
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
             right.getChildren().clear();
 
-            switch (selectedData) {
-                case DEFAULT:
-                case STEVE:
-                case ALEX:
-                    break;
+            if (selectedData != null) {
+                switch (selectedData) {
+                    case DEFAULT:
+                    case STEVE:
+                    case ALEX:
+                        break;
 
-                case LITTLE_SKIN:
-                    HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hint.setText(i18n("account.skin.type.little_skin.hint"));
+                    case LITTLE_SKIN:
+                        HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
+                        hint.setText(i18n("account.skin.type.little_skin.hint"));
 
-                    hint.setMaxWidth(Double.MAX_VALUE);
+                        hint.setMaxWidth(Double.MAX_VALUE);
 
-                    right.getChildren().add(hint);
-                    break;
+                        right.getChildren().add(hint);
+                        break;
 
-                case LOCAL_FILE:
-                    right.getChildren().addAll(
-                        new Label(i18n("account.skin.model")),
-                        modelCombobox,
-                        new Label(i18n("account.skin")),
-                        skinSelector,
-                        new Label(i18n("account.cape")),
-                        capeSelector
-                    );
-                    break;
+                    case LOCAL_FILE:
+                        right.getChildren().addAll(
+                            new Label(i18n("account.skin.model")),
+                            modelCombobox,
+                            new Label(i18n("account.skin")),
+                            skinSelector,
+                            new Label(i18n("account.cape")),
+                            capeSelector
+                        );
+                        break;
 
-                case CUSTOM_SKIN_LOADER_API:
-                    right.getChildren().addAll(
-                        new Label(i18n("account.skin.type.csl_api.location")),
-                        cslApiField
-                    );
-                    break;
+                    case CUSTOM_SKIN_LOADER_API:
+                        right.getChildren().addAll(
+                            new Label(i18n("account.skin.type.csl_api.location")),
+                            cslApiField
+                        );
+                        break;
+                }
             }
 
             if (right.getChildren().isEmpty()) {
