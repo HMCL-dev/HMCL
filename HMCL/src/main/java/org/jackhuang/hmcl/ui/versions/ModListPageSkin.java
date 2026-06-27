@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -94,10 +93,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private final JFXListView<ModInfoObject> listView;
     private final JFXTextField searchField;
 
-    // Re-render visible rows when a mod is enabled/disabled, so dependency statuses
-    // ("installed"/"disabled"/...) of the mods related to it update immediately.
-    private final InvalidationListener activeChangeListener;
-
     @FXThread
     private boolean isSearching = false;
 
@@ -112,7 +107,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
         listView.getStyleClass().add("no-horizontal-scrollbar");
-        activeChangeListener = o -> listView.refresh();
 
         {
             toolbarPane = new TransitionPane();
@@ -230,12 +224,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
-                while (c.next()) {
-                    for (ModInfoObject removed : c.getRemoved())
-                        removed.active.removeListener(activeChangeListener);
-                    for (ModInfoObject added : c.getAddedSubList())
-                        added.active.addListener(activeChangeListener);
-                }
                 if (isSearching) {
                     search();
                 }
