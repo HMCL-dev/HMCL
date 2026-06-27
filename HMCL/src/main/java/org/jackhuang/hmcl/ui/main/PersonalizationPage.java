@@ -183,7 +183,7 @@ public class PersonalizationPage extends StackPane {
             }
             updating.value = true;
             try {
-                boolean overridden = settings().isThemeAppearanceOverridden(setting);
+                boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
                 button.setValue(overridden ? directProperty.getValue() : effectiveValueSupplier.get());
                 updateThemeAppearanceOverrideButton(inheritButton, !overridden);
             } finally {
@@ -198,7 +198,7 @@ public class PersonalizationPage extends StackPane {
             updating.value = true;
             try {
                 directProperty.setValue(newValue);
-                settings().setThemeAppearanceOverridden(setting, true);
+                settings().getThemeAppearanceOverrides().add(setting);
                 updateThemeAppearanceOverrideButton(inheritButton, false);
             } finally {
                 updating.value = false;
@@ -208,11 +208,11 @@ public class PersonalizationPage extends StackPane {
         addThemeAppearanceRefreshListener(refresh);
 
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            if (!settings().isThemeAppearanceOverridden(setting)) {
+            if (!settings().getThemeAppearanceOverrides().contains(setting)) {
                 directProperty.setValue(effectiveValueSupplier.get());
-                settings().setThemeAppearanceOverridden(setting, true);
+                settings().getThemeAppearanceOverrides().add(setting);
             } else {
-                settings().setThemeAppearanceOverridden(setting, false);
+                settings().getThemeAppearanceOverrides().remove(setting);
             }
             refresh.invalidated(null);
             event.consume();
@@ -237,7 +237,7 @@ public class PersonalizationPage extends StackPane {
             }
             updating.value = true;
             try {
-                boolean overridden = settings().isThemeAppearanceOverridden(setting);
+                boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
                 choiceList.selectedValueProperty().set(overridden
                         ? directProperty.getValue()
                         : effectiveValueSupplier.get());
@@ -254,7 +254,7 @@ public class PersonalizationPage extends StackPane {
             updating.value = true;
             try {
                 directProperty.setValue(newValue);
-                settings().setThemeAppearanceOverridden(setting, true);
+                settings().getThemeAppearanceOverrides().add(setting);
                 updateThemeAppearanceOverrideButton(inheritButton, false);
             } finally {
                 updating.value = false;
@@ -264,11 +264,11 @@ public class PersonalizationPage extends StackPane {
         addThemeAppearanceRefreshListener(refresh);
 
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            if (!settings().isThemeAppearanceOverridden(setting)) {
+            if (!settings().getThemeAppearanceOverrides().contains(setting)) {
                 directProperty.setValue(effectiveValueSupplier.get());
-                settings().setThemeAppearanceOverridden(setting, true);
+                settings().getThemeAppearanceOverrides().add(setting);
             } else {
-                settings().setThemeAppearanceOverridden(setting, false);
+                settings().getThemeAppearanceOverrides().remove(setting);
             }
             refresh.invalidated(null);
             event.consume();
@@ -295,7 +295,7 @@ public class PersonalizationPage extends StackPane {
             }
             updating.value = true;
             try {
-                boolean overridden = settings().isThemeAppearanceOverridden(setting);
+                boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
                 T value = overridden ? directProperty.getValue() : effectiveValueSupplier.get();
                 button.setSelected(Objects.equals(value, selectedValue));
                 button.setSubtitle(valueConverter != null ? valueConverter.apply(value) : null);
@@ -312,7 +312,7 @@ public class PersonalizationPage extends StackPane {
             updating.value = true;
             try {
                 directProperty.setValue(Boolean.TRUE.equals(newValue) ? selectedValue : unselectedValue);
-                settings().setThemeAppearanceOverridden(setting, true);
+                settings().getThemeAppearanceOverrides().add(setting);
                 updateThemeAppearanceOverrideButton(inheritButton, false);
             } finally {
                 updating.value = false;
@@ -323,11 +323,11 @@ public class PersonalizationPage extends StackPane {
         addThemeAppearanceRefreshListener(refresh);
 
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            if (!settings().isThemeAppearanceOverridden(setting)) {
+            if (!settings().getThemeAppearanceOverrides().contains(setting)) {
                 directProperty.setValue(button.isSelected() ? selectedValue : unselectedValue);
-                settings().setThemeAppearanceOverridden(setting, true);
+                settings().getThemeAppearanceOverrides().add(setting);
             } else {
-                settings().setThemeAppearanceOverridden(setting, false);
+                settings().getThemeAppearanceOverrides().remove(setting);
             }
             refresh.invalidated(null);
             event.consume();
@@ -679,7 +679,7 @@ public class PersonalizationPage extends StackPane {
                 }
             };
             themeColorSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
-                        ThemeColorType type = settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
+                        ThemeColorType type = settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_COLOR)
                                 ? Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT)
                                 : effectiveThemeColorType.get();
                         return i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT));
@@ -801,20 +801,20 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.setTitleRight(backgroundOverrideButton);
             InvalidationListener refreshBackgroundOverride = ignored -> updateThemeAppearanceOverrideButton(
                     backgroundOverrideButton,
-                    !settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
+                    !settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
             addThemeAppearanceRefreshListener(refreshBackgroundOverride);
             backgroundItem.selectedValueProperty().addListener((observable, oldValue, newValue) ->
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
             settings().builtinBackgroundIdProperty().addListener(ignored ->
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
             settings().customBackgroundImagePathProperty().addListener(ignored ->
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
             settings().networkBackgroundImageUrlProperty().addListener(ignored ->
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
             settings().customBackgroundPaintProperty().addListener(ignored ->
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true));
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
             backgroundOverrideButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                if (!settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
+                if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
                     try {
                         ThemePackManager.ResolvedBackground background =
                                 ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
@@ -843,9 +843,9 @@ public class PersonalizationPage extends StackPane {
                     } catch (IOException | RuntimeException e) {
                         settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
                     }
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, true);
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                 } else {
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND, false);
+                    settings().getThemeAppearanceOverrides().remove(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                 }
                 refreshBackgroundOverride.invalidated(null);
                 event.consume();
@@ -894,14 +894,14 @@ public class PersonalizationPage extends StackPane {
             backgroundFallbackSublist.setTitleRight(backgroundFallbackOverrideButton);
             InvalidationListener refreshBackgroundFallbackOverride = ignored -> updateThemeAppearanceOverrideButton(
                     backgroundFallbackOverrideButton,
-                    !settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
+                    !settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
             addThemeAppearanceRefreshListener(refreshBackgroundFallbackOverride);
             backgroundFallbackItem.selectedValueProperty().addListener((observable, oldValue, newValue) ->
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true));
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
             settings().backgroundFallbackPaintProperty().addListener(ignored ->
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true));
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
             backgroundFallbackOverrideButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                if (!settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
+                if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
                     try {
                         ThemePackManager.ResolvedBackground background =
                                 ThemePackManager.resolveCurrentBackgroundFallback(ThemePackManager.currentResolveContext());
@@ -919,9 +919,9 @@ public class PersonalizationPage extends StackPane {
                     } catch (IOException | RuntimeException e) {
                         settings().backgroundFallbackTypeProperty().set(BackgroundType.BUILTIN);
                     }
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, true);
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK);
                 } else {
-                    settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK, false);
+                    settings().getThemeAppearanceOverrides().remove(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK);
                 }
                 refreshBackgroundFallbackOverride.invalidated(null);
                 event.consume();
@@ -929,7 +929,7 @@ public class PersonalizationPage extends StackPane {
             refreshBackgroundFallbackOverride.invalidated(null);
             backgroundFallbackSublist.getContent().setAll(backgroundFallbackItem);
             backgroundFallbackSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
-                        if (settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
+                        if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
                             BackgroundType type = backgroundFallbackItem.selectedValueProperty().get();
                             return switch (type) {
                                 case PAINT -> {
@@ -982,7 +982,7 @@ public class PersonalizationPage extends StackPane {
                             .toLowerCase(Locale.ROOT)));
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
-                        if (settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
+                        if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
                             BackgroundType type = backgroundItem.selectedValueProperty().get();
                             return switch (type) {
                                 case DEFAULT -> i18n("message.default");
@@ -1075,7 +1075,7 @@ public class PersonalizationPage extends StackPane {
                     }
                     updatingOpacity.value = true;
                     try {
-                        boolean overridden = settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
+                        boolean overridden = settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
                         double opacity = overridden
                                 ? settings().backgroundOpacityProperty().get()
                                 : effectiveBackgroundOpacity.get();
@@ -1094,7 +1094,7 @@ public class PersonalizationPage extends StackPane {
                     double opacity = snapOpacity(newValue.doubleValue());
                     updatingOpacity.value = true;
                     try {
-                        settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY, true);
+                        settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
                         updateThemeAppearanceOverrideButton(inheritButton, false);
                     } finally {
                         updatingOpacity.value = false;
@@ -1104,11 +1104,11 @@ public class PersonalizationPage extends StackPane {
                     }
                 });
                 inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                    if (!settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
+                    if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
                         settings().backgroundOpacityProperty().set(effectiveBackgroundOpacity.get());
-                        settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY, true);
+                        settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
                     } else {
-                        settings().setThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY, false);
+                        settings().getThemeAppearanceOverrides().remove(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
                     }
                     refreshOpacity.invalidated(null);
                     event.consume();

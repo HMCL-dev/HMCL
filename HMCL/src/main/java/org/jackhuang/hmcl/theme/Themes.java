@@ -120,7 +120,7 @@ public final class Themes {
 
         /// Returns the configured MonetFX color style.
         private ColorStyle getColorStyle() {
-            if (settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR_STYLE)) {
+            if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_COLOR_STYLE)) {
                 return Objects.requireNonNullElse(
                         settings().themeColorStyleProperty().get(),
                         ResolvedTheme.DEFAULT.colorStyle());
@@ -154,7 +154,7 @@ public final class Themes {
 
     /// Returns the effective theme color for the current launcher settings.
     static ThemeColor resolveCurrentThemeColor() {
-        ThemeColor fallback = settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
+        ThemeColor fallback = settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_COLOR)
                 ? Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT)
                 : ThemeColor.DEFAULT;
         ThemeResolveContext context = ThemePackManager.currentResolveContext();
@@ -166,7 +166,7 @@ public final class Themes {
         }
         return resolveThemeColor(
                 fallback,
-                settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
+                settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_COLOR)
                         ? Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT)
                         : null,
                 backgroundType,
@@ -427,7 +427,7 @@ public final class Themes {
     ///
     /// @return the brightness used by theme condition matching
     public static Brightness getThemeConditionBrightness() {
-        if (!settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
+        if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
             return getAutomaticBrightness();
         }
 
@@ -443,7 +443,7 @@ public final class Themes {
     ///
     /// @return the effective launcher brightness
     public static Brightness getCurrentBrightness() {
-        if (!settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
+        if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
             Brightness contextBrightness = getThemeConditionBrightness();
             try {
                 return Objects.requireNonNullElse(
@@ -852,7 +852,7 @@ public final class Themes {
                     : ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext()).opacity();
         } catch (IOException | RuntimeException e) {
             double configured = settings().backgroundOpacityProperty().get();
-            return settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY) && Double.isFinite(configured)
+            return settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY) && Double.isFinite(configured)
                     ? MathUtils.clamp(configured, 0., 1.)
                     : 1.0;
         }
@@ -861,7 +861,7 @@ public final class Themes {
     /// Extracts a seed color from a loaded wallpaper image.
     private static @Nullable ThemeColor extractWallpaperThemeColor(Image image) {
         try {
-            ThemeColor fallback = !settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_COLOR)
+            ThemeColor fallback = !settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_COLOR)
                     ? ThemeColor.DEFAULT
                     : Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
             return WallpaperColorExtractor.extract(image, fallback);
@@ -1019,7 +1019,7 @@ public final class Themes {
     /// Whether the title area should be transparent after applying launcher and theme settings.
     private static final BooleanBinding titleBarTransparent = Bindings.createBooleanBinding(
             () -> {
-                if (settings().isThemeAppearanceOverridden(LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT)) {
+                if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT)) {
                     return settings().titleBarTransparentProperty().get();
                 }
                 try {

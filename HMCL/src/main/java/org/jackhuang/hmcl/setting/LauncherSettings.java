@@ -298,21 +298,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return themeAppearanceOverrides;
     }
 
-    /// Returns whether a theme appearance setting is overridden by the launcher.
-    public boolean isThemeAppearanceOverridden(String setting) {
-        return themeAppearanceOverrides.contains(Objects.requireNonNull(setting));
-    }
-
-    /// Updates whether a theme appearance setting is overridden by the launcher.
-    public void setThemeAppearanceOverridden(String setting, boolean overridden) {
-        Objects.requireNonNull(setting);
-        if (overridden) {
-            themeAppearanceOverrides.add(setting);
-        } else {
-            themeAppearanceOverrides.remove(setting);
-        }
-    }
-
     // Theme appearance values
 
     /// The configured theme brightness mode identifier.
