@@ -533,8 +533,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         return result.toString();
     }
 
-
-
     private List<String> getFieldHeaders(Set<String> fields) {
         List<String> headers = new ArrayList<>();
         for (String field : fields) {
@@ -719,13 +717,13 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         RemoteAddon.Version version = modrinthVersion.get();
                         results.put("modrinthFileUrl", version.file() != null && version.file().url() != null ? version.file().url() : "");
                         try {
-                                RemoteAddon addon = modrinthRepo.getModById(downloadProvider, version.modid());
-                                if (addon != null) {
-                                    results.put("modrinthUrl", addon.pageUrl() != null ? addon.pageUrl() : "");
-                                }
-                            } catch (IOException e) {
-                                LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
+                            RemoteAddon addon = modrinthRepo.getModById(downloadProvider, version.modid());
+                            if (addon != null) {
+                                results.put("modrinthUrl", addon.pageUrl() != null ? addon.pageUrl() : "");
                             }
+                        } catch (IOException e) {
+                            LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
+                        }
                     }
                 }
             } catch (IOException e) {
