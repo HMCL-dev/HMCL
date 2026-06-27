@@ -28,6 +28,9 @@ import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListCell;
 
 import javafx.beans.binding.Bindings;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.scene.text.Font;
 
 public final class FontComboBox extends JFXComboBox<String> {
@@ -60,6 +63,23 @@ public final class FontComboBox extends JFXComboBox<String> {
             itemsProperty().unbind();
             setItems(observableList(Font.getFamilies()));
             loaded = true;
+        });
+
+        skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            if (!(newSkin instanceof ComboBoxListViewSkin<?> skin)) {
+                return;
+            }
+
+            skin.setHideOnClick(false);
+
+            @SuppressWarnings("unchecked")
+            ListView<String> listView = (ListView<String>) skin.getPopupContent();
+
+            listView.setOnMouseClicked(e -> {
+                if (e.getTarget() instanceof ListCell<?>) {
+                    hide();
+                }
+            });
         });
     }
 }
