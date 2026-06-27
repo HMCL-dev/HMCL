@@ -28,6 +28,7 @@ import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListCell;
 
 import javafx.beans.binding.Bindings;
+import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.skin.ComboBoxListViewSkin;
@@ -76,7 +77,11 @@ public final class FontComboBox extends JFXComboBox<String> {
             ListView<String> listView = (ListView<String>) skin.getPopupContent();
 
             listView.setOnMouseClicked(e -> {
-                if (e.getTarget() instanceof ListCell<?>) {
+                Node target = e.getTarget() instanceof Node ? (Node) e.getTarget() : null;
+                while (target != null && !(target instanceof ListCell)) {
+                    target = target.getParent();
+                }
+                if (target instanceof ListCell<?> cell && !cell.isEmpty()) {
                     hide();
                 }
             });
