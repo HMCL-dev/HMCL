@@ -53,6 +53,7 @@ import org.jackhuang.hmcl.theme.ThemePackExporter;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemePackManifest;
 import org.jackhuang.hmcl.theme.ThemePackResource;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
@@ -68,6 +69,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -239,12 +241,67 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         }
     }
 
+    /// Handles a theme-pack row click.
+    private void selectThemePack(ThemePackManager.InstalledThemePack themePack) {
+        ThemePackManifest manifest = themePack.manifest();
+        if (manifest.themes().size() == 1 && manifest.themes().get(0).id() == null) {
+            confirmApplyTheme(themePack, manifest.themes().get(0));
+        } else {
+            Controllers.dialog(new ThemePackInfoDialog(this, themePack));
+        }
+    }
+
+    /// Asks for confirmation before applying one theme.
+    private void confirmApplyTheme(ThemePackManager.InstalledThemePack themePack, Theme theme) {
+        Controllers.confirm(
+                i18n("theme_pack.apply.confirm", getThemeTitle(themePack.manifest(), theme)),
+                i18n("theme_pack.apply"),
+                MessageType.QUESTION,
+                () -> applyTheme(themePack, theme),
+                null);
+    }
+
+    /// Applies one theme after confirmation.
+    private void applyTheme(ThemePackManager.InstalledThemePack themePack, Theme theme) {
+        try {
+            if (Themes.shouldWaitForThemeBackground()) {
+                Controllers.taskDialog(
+                        Themes.applyTheme(themePack, theme),
+                        i18n("launcher.background.loading"),
+                        TaskCancellationAction.NO_CANCEL);
+            } else {
+                ThemePackManager.apply(themePack, theme);
+            }
+            onThemePacksChanged.run();
+        } catch (IOException | RuntimeException e) {
+            Controllers.dialog(
+                    i18n("theme_pack.apply.failed") + "\n\n" + StringUtils.getStackTrace(e),
+                    i18n("message.error"),
+                    MessageType.ERROR);
+        }
+    }
+
     /// Returns comma-separated author display names.
     private static String getAuthorDisplayNames(List<ThemePackAuthor> authors) {
         return authors.stream()
                 .map(ThemePackAuthor::displayName)
                 .filter(author -> !StringUtils.isBlank(author))
                 .collect(Collectors.joining(", "));
+    }
+
+    /// Returns the display title for one theme-pack theme.
+    private static String getThemeTitle(ThemePackManifest manifest, Theme theme) {
+        if (manifest.themes().size() == 1 && theme.id() == null) {
+            return manifest.displayName();
+        }
+        return manifest.displayName() + " - " + getThemeDisplayName(manifest, theme);
+    }
+
+    /// Returns the display name for one theme inside a theme list.
+    private static String getThemeDisplayName(ThemePackManifest manifest, Theme theme) {
+        return Objects.requireNonNullElse(
+                theme.displayName(),
+                Objects.requireNonNullElse(theme.id(), manifest.displayName()));
     }
 
     /// Returns whether a nullable value contains the lower-cased query.
@@ -397,7 +454,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             ComponentList themes = new ComponentList();
             for (Theme theme : manifest.themes()) {
                 TwoLineListItem item = new TwoLineListItem();
-                item.setTitle(Objects.requireNonNullElse(theme.displayName(), manifest.displayName()));
+                item.setTitle(getThemeDisplayName(manifest, theme));
 
                 @Nullable String description = theme.displayDescription();
                 item.setSubtitle(StringUtils.isBlank(description) ? null : description);
@@ -414,9 +471,15 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
                 HBox row = new HBox(8);
                 row.setAlignment(Pos.CENTER_LEFT);
+                row.setCursor(Cursor.HAND);
                 Node thumbnail = page.createThumbnailNode(themePack, theme.thumbnail(), SVG.STYLE);
                 HBox.setHgrow(item, Priority.ALWAYS);
+                item.setMouseTransparent(true);
                 row.getChildren().setAll(thumbnail, item);
+                FXUtils.onClicked(row, () -> {
+                    fireEvent(new DialogCloseEvent());
+                    page.confirmApplyTheme(themePack, theme);
+                });
                 themes.getContent().add(row);
             }
 
@@ -604,7 +667,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             FXUtils.onClicked(center, () -> {
                 ThemePackManager.InstalledThemePack themePack = getItem();
                 if (themePack != null) {
-                    Controllers.dialog(new ThemePackInfoDialog(page, themePack));
+                    page.selectThemePack(themePack);
                 }
             });
 

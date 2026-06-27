@@ -55,11 +55,9 @@ import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemeColorSource;
 import org.jackhuang.hmcl.theme.ThemePackExporter;
-import org.jackhuang.hmcl.theme.ThemePackAuthor;
 import org.jackhuang.hmcl.theme.ThemePackManifest;
 import org.jackhuang.hmcl.theme.ThemePackManager;
 import org.jackhuang.hmcl.theme.ThemeReference;
-import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -68,7 +66,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -80,15 +77,12 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
@@ -334,47 +328,35 @@ public class PersonalizationPage extends StackPane {
         refresh.invalidated(null);
     }
 
-    /// Loads all theme choices shown by the theme selector.
-    private static List<ThemeChoice> loadThemeChoices() {
-        ArrayList<ThemeChoice> choices = new ArrayList<>();
-
+    /// Returns the display name for the currently selected launcher theme.
+    private static String getSelectedThemeTitle() {
+        ThemeReference reference = settings().getSelectedThemeOrDefault();
         try {
-            for (ThemePackManager.InstalledThemePack themePack : ThemePackManager.listInstalled()) {
-                for (Theme theme : themePack.manifest().themes()) {
-                    choices.add(ThemeChoice.installed(themePack, theme));
+            @Nullable ThemePackManager.InstalledThemePack themePack = ThemePackManager.findInstalled(reference);
+            if (themePack != null) {
+                @Nullable Theme theme = themePack.manifest().findTheme(reference.themeId());
+                if (theme != null) {
+                    return getThemeTitle(themePack.manifest(), theme);
                 }
             }
         } catch (IOException | RuntimeException e) {
-            LOG.warning("Failed to load installed theme packs", e);
+            LOG.warning("Failed to load selected theme", e);
         }
 
-        ThemeReference reference = settings().getSelectedThemeOrDefault();
-        if (findThemeChoice(choices, reference) == null) {
-            choices.add(ThemeChoice.missing(reference));
-        }
-
-        return choices;
+        return reference.themeId() == null
+                ? reference.packId()
+                : reference.packId() + " - " + reference.themeId();
     }
 
-    /// Returns the choice that matches the current launcher theme reference.
-    private static ThemeChoice getSelectedThemeChoice(List<ThemeChoice> choices) {
-        ThemeReference reference = settings().getSelectedThemeOrDefault();
-        @Nullable ThemeChoice choice = findThemeChoice(choices, reference);
-        if (choice != null) {
-            return choice;
+    /// Returns the display title for one theme-pack theme.
+    private static String getThemeTitle(ThemePackManifest manifest, Theme theme) {
+        if (manifest.themes().size() == 1 && theme.id() == null) {
+            return manifest.displayName();
         }
-
-        return ThemeChoice.missing(reference);
-    }
-
-    /// Finds a selectable theme choice by theme reference.
-    private static @Nullable ThemeChoice findThemeChoice(List<ThemeChoice> choices, ThemeReference reference) {
-        for (ThemeChoice choice : choices) {
-            if (Objects.equals(choice.reference(), reference)) {
-                return choice;
-            }
-        }
-        return null;
+        String themeName = Objects.requireNonNullElse(
+                theme.displayName(),
+                Objects.requireNonNullElse(theme.id(), manifest.displayName()));
+        return manifest.displayName() + " - " + themeName;
     }
 
     /// Sanitizes a package name for use as a file name without changing the package metadata.
@@ -416,75 +398,6 @@ public class PersonalizationPage extends StackPane {
                 title + "\n\n" + StringUtils.getStackTrace(exception),
                 i18n("message.error"),
                 MessageType.ERROR);
-    }
-
-    /// A selectable launcher theme.
-    ///
-    /// @param title       the label shown by the selector
-    /// @param description the optional secondary text shown in the selector popup
-    /// @param themePack   the installed theme pack, or `null` for non-pack choices
-    /// @param theme       the installed theme, or `null` for non-pack choices
-    /// @param reference   the stored theme reference, or `null` for unresolved placeholder choices
-    private record ThemeChoice(
-            String title,
-            @Nullable String description,
-            @Nullable ThemePackManager.InstalledThemePack themePack,
-            @Nullable Theme theme,
-            @Nullable ThemeReference reference) {
-        /// Creates a theme selector choice.
-        private ThemeChoice {
-            Objects.requireNonNull(title);
-        }
-
-        /// Creates a choice for an installed theme-pack theme.
-        private static ThemeChoice installed(ThemePackManager.InstalledThemePack themePack, Theme theme) {
-            ThemePackManifest manifest = themePack.manifest();
-            String themeName = Objects.requireNonNullElse(theme.displayName(), manifest.displayName());
-            String title = manifest.themes().size() == 1
-                    ? manifest.displayName()
-                    : manifest.displayName() + " - " + themeName;
-
-            @Nullable String description = theme.displayDescription();
-            if (StringUtils.isBlank(description)) {
-                List<ThemePackAuthor> authors = theme.authors().isEmpty() ? manifest.authors() : theme.authors();
-                String authorNames = authors.stream()
-                        .map(ThemePackAuthor::displayName)
-                        .filter(author -> !StringUtils.isBlank(author))
-                        .collect(Collectors.joining(", "));
-                if (!StringUtils.isBlank(authorNames)) {
-                    description = i18n("archive.author") + ": " + authorNames;
-                }
-            }
-            if (StringUtils.isBlank(description)) {
-                description = manifest.displayDescription();
-            }
-            if (StringUtils.isBlank(description)) {
-                description = manifest.id();
-            }
-
-            ThemeReference reference = new ThemeReference(
-                    manifest.id(),
-                    theme.id());
-            return new ThemeChoice(
-                    title,
-                    description,
-                    themePack,
-                    theme,
-                    reference);
-        }
-
-        /// Creates the placeholder shown when the stored theme reference cannot be resolved.
-        private static ThemeChoice missing(ThemeReference reference) {
-            return new ThemeChoice(
-                    i18n("theme_pack.current.missing"),
-                    reference.themeId() == null
-                            ? reference.packId()
-                            : reference.packId() + " - " + reference.themeId(),
-                    null,
-                    null,
-                    reference);
-        }
-
     }
 
     /// Asks for theme-pack metadata and then saves the current launcher appearance as a theme-pack file.
@@ -565,61 +478,14 @@ public class PersonalizationPage extends StackPane {
 
         ComponentList themeList = new ComponentList();
         {
-            Holder<List<ThemeChoice>> themeChoices = new Holder<>(List.of());
-            var themeSelectButton = new LineSelectButton<ThemeChoice>();
-            themeSelectButton.setTitle(i18n("theme_pack.current.title"));
-            themeSelectButton.setNullSafeConverter(ThemeChoice::title);
-            themeSelectButton.setDescriptionConverter(choice -> Objects.toString(choice.description(), ""));
-
-            boolean[] updatingThemeChoice = {false};
-            Runnable refreshSelectedTheme = () -> {
-                updatingThemeChoice[0] = true;
-                try {
-                    themeSelectButton.setValue(getSelectedThemeChoice(themeChoices.value));
-                } finally {
-                    updatingThemeChoice[0] = false;
-                }
-            };
-            Runnable reloadThemeChoices = () -> {
-                updatingThemeChoice[0] = true;
-                try {
-                    themeChoices.value = loadThemeChoices();
-                    themeSelectButton.setItems(themeChoices.value);
-                    themeSelectButton.setValue(getSelectedThemeChoice(themeChoices.value));
-                } finally {
-                    updatingThemeChoice[0] = false;
-                }
-            };
-            FXUtils.onChange(themeSelectButton.valueProperty(), choice -> {
-                if (updatingThemeChoice[0]) {
-                    return;
-                }
-
-                try {
-                    if (choice.themePack() != null && choice.theme() != null) {
-                        if (Themes.shouldWaitForThemeBackground()) {
-                            Controllers.taskDialog(
-                                    Themes.applyTheme(choice.themePack(), choice.theme()),
-                                    i18n("launcher.background.loading"),
-                                    TaskCancellationAction.NO_CANCEL);
-                        } else {
-                            ThemePackManager.apply(choice.themePack(), choice.theme());
-                        }
-                    }
-                } catch (IOException | RuntimeException e) {
-                    showThemePackError(i18n("theme_pack.apply.failed"), e);
-                } finally {
-                    refreshSelectedTheme.run();
-                }
-            });
-            FXUtils.onChange(settings().selectedThemeProperty(), ignored -> reloadThemeChoices.run());
-            reloadThemeChoices.run();
-            themeList.getContent().add(themeSelectButton);
-
-            LineButton manageThemeButton = LineButton.createNavigationButton();
-            manageThemeButton.setTitle(i18n("theme_pack.manage"));
-            manageThemeButton.setOnAction(event -> Controllers.navigateForward(new ThemePackManagementPage(reloadThemeChoices)));
-            themeList.getContent().add(manageThemeButton);
+            LineButton currentThemeButton = LineButton.createNavigationButton();
+            currentThemeButton.setTitle(i18n("theme_pack.theme"));
+            Runnable updateCurrentThemeButton = () -> currentThemeButton.setSubtitle(getSelectedThemeTitle());
+            FXUtils.onChange(settings().selectedThemeProperty(), ignored -> updateCurrentThemeButton.run());
+            updateCurrentThemeButton.run();
+            currentThemeButton.setOnAction(event ->
+                    Controllers.navigateForward(new ThemePackManagementPage(updateCurrentThemeButton)));
+            themeList.getContent().add(currentThemeButton);
 
             LineButton exportThemeButton = new LineButton();
             exportThemeButton.setTitle(i18n("theme_pack.export"));
