@@ -289,6 +289,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     private void updateSupportedLoaders() {
         supportedLoaders.clear();
 
+        if (this.analyzer == null) Collections.addAll(supportedLoaders, ModLoaderType.values());
+
         for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
             if (type.isModLoader() && this.analyzer.has(type)) {
                 ModLoaderType modLoaderType = type.getModLoaderType();
