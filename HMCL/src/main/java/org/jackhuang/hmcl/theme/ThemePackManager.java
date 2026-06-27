@@ -35,12 +35,18 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.ContentEncoding;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
@@ -201,16 +207,30 @@ public final class ThemePackManager {
 
     /// A theme pack assembled from launcher settings and ready to export.
     ///
-    /// @param manifest the manifest to write
-    /// @param assets   the asset files to include
-    public record ExportedThemePack(ThemePackManifest manifest, @Unmodifiable List<ThemePackAsset> assets) {
-        /// Creates an exportable theme-pack descriptor.
+    /// @param manifest       the manifest to write
+    /// @param assets         the asset files to include
+    /// @param temporaryFiles temporary files owned by this export result
+    public record ExportedThemePack(
+            ThemePackManifest manifest,
+            @Unmodifiable List<ThemePackAsset> assets,
+            @Unmodifiable List<Path> temporaryFiles) {
+        /// Creates an exportable theme-pack descriptor without owned temporary files.
         ///
         /// @param manifest the manifest to write
         /// @param assets   the asset files to include
+        public ExportedThemePack(ThemePackManifest manifest, @Unmodifiable List<ThemePackAsset> assets) {
+            this(manifest, assets, List.of());
+        }
+
+        /// Creates an exportable theme-pack descriptor.
+        ///
+        /// @param manifest       the manifest to write
+        /// @param assets         the asset files to include
+        /// @param temporaryFiles temporary files owned by this export result
         public ExportedThemePack {
             Objects.requireNonNull(manifest);
             assets = List.copyOf(assets);
+            temporaryFiles = List.copyOf(temporaryFiles);
         }
     }
 
@@ -603,7 +623,17 @@ public final class ThemePackManager {
         Objects.requireNonNull(outputFile);
 
         ExportedThemePack themePack = createCurrent(packId, packName, authorName);
-        ThemePackExporter.export(themePack.manifest(), themePack.assets(), outputFile);
+        try {
+            ThemePackExporter.export(themePack.manifest(), themePack.assets(), outputFile);
+        } finally {
+            for (Path temporaryFile : themePack.temporaryFiles()) {
+                try {
+                    Files.deleteIfExists(temporaryFile);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete temporary theme-pack asset: " + temporaryFile, e);
+                }
+            }
+        }
     }
 
     /// Creates an exportable theme pack from the current launcher appearance.
@@ -616,34 +646,47 @@ public final class ThemePackManager {
     public static ExportedThemePack createCurrent(String packId, String packName, String authorName) throws IOException {
         packId = ThemePackManifest.requirePackageId(packId);
         packName = requireNonBlank(packName, "packName");
+        authorName = requireNonBlank(authorName, "authorName");
 
         List<ThemePackAsset> assets = new ArrayList<>();
-        ThemeBackgroundSettings background = createCurrentBackground(assets);
-        ThemeAppearance appearance = new ThemeAppearance(
-                currentThemeColorSource(),
-                currentControlledBrightness(),
-                currentColorStyle(),
-                null,
-                background,
-                new ThemeTitleBar(currentTitleBarTransparent()));
-        Theme theme = new Theme(
-                null,
-                null,
-                List.of(),
-                null,
-                null,
-                appearance,
-                List.of());
-        ThemePackManifest manifest = new ThemePackManifest(
-                packId,
-                CURRENT_THEME_PACK_VERSION,
-                LocalizedText.plain(packName),
-                List.of(new ThemePackAuthor(LocalizedText.plain(requireNonBlank(authorName, "authorName")))),
-                background.source() instanceof ThemeBackground.Image image ? image.path() : null,
-                null,
-                List.of(theme));
+        List<Path> temporaryFiles = new ArrayList<>();
+        try {
+            ThemeBackgroundSettings background = createCurrentBackground(assets, temporaryFiles);
+            ThemeAppearance appearance = new ThemeAppearance(
+                    currentThemeColorSource(),
+                    currentControlledBrightness(),
+                    currentColorStyle(),
+                    null,
+                    background,
+                    new ThemeTitleBar(currentTitleBarTransparent()));
+            Theme theme = new Theme(
+                    null,
+                    null,
+                    List.of(),
+                    null,
+                    null,
+                    appearance,
+                    List.of());
+            ThemePackManifest manifest = new ThemePackManifest(
+                    packId,
+                    CURRENT_THEME_PACK_VERSION,
+                    LocalizedText.plain(packName),
+                    List.of(new ThemePackAuthor(LocalizedText.plain(authorName))),
+                    background.source() instanceof ThemeBackground.Image image ? image.path() : null,
+                    null,
+                    List.of(theme));
 
-        return new ExportedThemePack(manifest, assets);
+            return new ExportedThemePack(manifest, assets, temporaryFiles);
+        } catch (IOException | RuntimeException e) {
+            for (Path temporaryFile : temporaryFiles) {
+                try {
+                    Files.deleteIfExists(temporaryFile);
+                } catch (IOException suppressed) {
+                    e.addSuppressed(suppressed);
+                }
+            }
+            throw e;
+        }
     }
 
     /// Returns the current launcher theme color source as a theme-pack directive.
@@ -1379,7 +1422,9 @@ public final class ThemePackManager {
     }
 
     /// Creates the background model for the current launcher settings.
-    private static ThemeBackgroundSettings createCurrentBackground(List<ThemePackAsset> assets) throws IOException {
+    private static ThemeBackgroundSettings createCurrentBackground(
+            List<ThemePackAsset> assets,
+            List<Path> temporaryFiles) throws IOException {
         ResolvedBackground background = resolveCurrentBackground(currentResolveContext());
         Double opacity = background.opacity();
         return switch (background.type()) {
@@ -1393,9 +1438,7 @@ public final class ThemePackManager {
                     createCurrentImageBackgroundSource(assets, background),
                     opacity);
             case NETWORK -> new ThemeBackgroundSettings(
-                    new ThemeBackground.Network(
-                            requireNonBlank(background.networkImageUrl(), "background.url"),
-                            null),
+                    createCurrentNetworkBackgroundSource(assets, temporaryFiles, background),
                     opacity);
             case PAINT -> new ThemeBackgroundSettings(
                     new ThemeBackground.Paint(Objects.requireNonNullElse(background.paint(), Color.WHITE).toString()),
@@ -1431,6 +1474,65 @@ public final class ThemePackManager {
         String entryName = "assets/wallpapers/" + sanitizePathSegment(source.getFileName().toString());
         assets.add(new ThemePackAsset(source, entryName));
         return new ThemeBackground.Image(entryName);
+    }
+
+    /// Downloads the current network background and exports it as a theme-pack image asset.
+    private static ThemeBackground.Image createCurrentNetworkBackgroundSource(
+            List<ThemePackAsset> assets,
+            List<Path> temporaryFiles,
+            ResolvedBackground background) throws IOException {
+        String url = requireNonBlank(background.networkImageUrl(), "background.url");
+        URI uri = NetworkUtils.toURI(url);
+        if (!NetworkUtils.isHttpUri(uri)) {
+            throw new IOException("Theme background URL must be HTTP or HTTPS: " + url);
+        }
+
+        String entryName = "assets/wallpapers/" + networkBackgroundAssetName(uri);
+        Path temporaryFile = Files.createTempFile("hmcl-theme-background-", ".tmp");
+        boolean success = false;
+        try {
+            downloadNetworkBackground(uri, temporaryFile);
+            assets.add(new ThemePackAsset(temporaryFile, entryName));
+            temporaryFiles.add(temporaryFile);
+            success = true;
+            return new ThemeBackground.Image(entryName);
+        } finally {
+            if (!success) {
+                try {
+                    deleteIfExists(temporaryFile);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete temporary theme-pack asset: " + temporaryFile, e);
+                }
+            }
+        }
+    }
+
+    /// Downloads one network background into a temporary file without installing it into the persistent image cache.
+    private static void downloadNetworkBackground(URI uri, Path outputFile) throws IOException {
+        HttpURLConnection connection = NetworkUtils.resolveConnection(NetworkUtils.createHttpConnection(uri));
+        try {
+            int responseCode = connection.getResponseCode();
+            if (responseCode / 100 != 2) {
+                throw new IOException("Failed to download theme background: HTTP " + responseCode + " " + uri);
+            }
+
+            ContentEncoding contentEncoding = ContentEncoding.fromConnection(connection);
+            try (InputStream input = contentEncoding.wrap(connection.getInputStream());
+                 OutputStream output = Files.newOutputStream(outputFile)) {
+                IOUtils.copyTo(input, output, new byte[IOUtils.DEFAULT_BUFFER_SIZE]);
+            }
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    /// Returns a safe theme-pack asset file name for a downloaded network background.
+    private static String networkBackgroundAssetName(URI uri) {
+        String path = Objects.toString(uri.getPath(), "");
+        @Nullable Path fileNamePath = path.isBlank() ? null : Path.of(path).getFileName();
+        String fileName = fileNamePath != null ? fileNamePath.toString() : "";
+        String sanitized = sanitizePathSegment(fileName);
+        return "_".equals(sanitized) ? "network-background" : sanitized;
     }
 
     /// Returns the current launcher background opacity.
