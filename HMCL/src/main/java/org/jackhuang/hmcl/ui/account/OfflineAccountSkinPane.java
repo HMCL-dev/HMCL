@@ -76,8 +76,8 @@ public class OfflineAccountSkinPane extends StackPane {
 
         SkinCanvas canvas = new SkinCanvas(TexturesLoader.getDefaultSkinImage(), 260, 260, true);
         StackPane canvasPane = new StackPane(canvas);
-        canvasPane.setPrefWidth(300);
-        canvasPane.setPrefHeight(300);
+        canvasPane.setPrefWidth(260);
+        canvasPane.setPrefHeight(260);
         pane.setCenter(canvasPane);
         canvas.getAnimationPlayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
         canvas.enableRotation(.5);
@@ -184,16 +184,28 @@ public class OfflineAccountSkinPane extends StackPane {
             }
         }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
+        GridPane gridPane = new GridPane();
+        gridPane.setPadding(new Insets(0, 0, 0, 10));
+        gridPane.setHgap(16);
+        gridPane.setVgap(12);
+
+        ColumnConstraints column = new ColumnConstraints();
+        column.setHgrow(Priority.ALWAYS);
+        gridPane.getColumnConstraints().setAll(column);
+
+        VBox right = new VBox(gridPane);
+        right.setPrefWidth(230);
+        HBox.setHgrow(right, Priority.ALWAYS);
+
+        HBox body = new HBox(20);
+        skinItem.setPrefWidth(170);
+        skinItem.setMinWidth(170);
+        body.getChildren().add(skinItem);
+
+        skinOptionPane.getChildren().setAll(body);
+
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
-            GridPane gridPane = new GridPane();
-
-            gridPane.setPadding(new Insets(0, 0, 0, 10));
-            gridPane.setHgap(16);
-            gridPane.setVgap(12);
-
-            ColumnConstraints column = new ColumnConstraints();
-            column.setHgrow(Priority.ALWAYS);
-            gridPane.getColumnConstraints().setAll(column);
+            gridPane.getChildren().clear();
 
             switch (selectedData) {
                 case DEFAULT:
@@ -228,24 +240,11 @@ public class OfflineAccountSkinPane extends StackPane {
                     break;
             }
 
-            HBox body = new HBox(20);
-
-            skinItem.setPrefWidth(170);
-            skinItem.setMinWidth(170);
-
-            body.getChildren().add(skinItem);
-
-            if (!gridPane.getChildren().isEmpty()) {
-                VBox right = new VBox();
-                right.getChildren().add(gridPane);
-
-                right.setPrefWidth(230);
-                HBox.setHgrow(right, Priority.ALWAYS);
-
+            if (gridPane.getChildren().isEmpty()) {
+                body.getChildren().remove(right);
+            } else if (!body.getChildren().contains(right)) {
                 body.getChildren().add(right);
             }
-
-            skinOptionPane.getChildren().setAll(body);
         });
 
         JFXButton acceptButton = new JFXButton(i18n("button.ok"));
