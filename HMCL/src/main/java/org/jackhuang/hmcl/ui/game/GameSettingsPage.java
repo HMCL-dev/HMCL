@@ -758,7 +758,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
             var highPerformancePane = createInheritableBooleanButton(GameSettings::highPerformanceProperty);
             graphicsSettings.getContent().add(highPerformancePane);
-            highPerformancePane.setTitle(i18n("settings.launcher.renderer.gpu_preferences"));
+            highPerformancePane.setTitle(i18n("settings.advanced.renderer.gpu_preferences"));
             highPerformancePane.setSubtitle(i18n("settings.advanced.windows_only"));
         }
 
