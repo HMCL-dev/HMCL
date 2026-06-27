@@ -958,9 +958,16 @@ public class PersonalizationPage extends StackPane {
                     settings().themeBrightnessModeProperty(),
                     settings().backgroundFallbackPaintProperty()));
 
-            LineToggleButton backgroundLoadPolicyButton = new LineToggleButton();
-            backgroundLoadPolicyButton.setTitle(i18n("launcher.background.load_policy.show_fallback_while_loading"));
-            bindThemeAppearanceToggleButton(
+            LineSelectButton<BackgroundLoadPolicy> backgroundLoadPolicyButton = new LineSelectButton<>();
+            backgroundLoadPolicyButton.setTitle(i18n("launcher.background.load_policy"));
+            backgroundLoadPolicyButton.setConverter(policy -> i18n("launcher.background.load_policy."
+                    + Objects.requireNonNullElse(policy, BackgroundLoadPolicy.WAIT_FOR_BACKGROUND)
+                    .name()
+                    .toLowerCase(Locale.ROOT)));
+            backgroundLoadPolicyButton.setItems(Arrays.asList(
+                    BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
+                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING));
+            bindThemeAppearanceLineSelectButton(
                     backgroundLoadPolicyButton,
                     LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY,
                     settings().backgroundLoadPolicyProperty(),
@@ -970,13 +977,7 @@ public class PersonalizationPage extends StackPane {
                         } catch (RuntimeException e) {
                             return BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
                         }
-                    },
-                    BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING,
-                    BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
-                    policy -> i18n("launcher.background.load_policy."
-                            + Objects.requireNonNullElse(policy, BackgroundLoadPolicy.WAIT_FOR_BACKGROUND)
-                            .name()
-                            .toLowerCase(Locale.ROOT)));
+                    });
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
