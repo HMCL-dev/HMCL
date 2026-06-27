@@ -159,13 +159,13 @@ public class JFXDialog extends StackPane {
     }
 
     private void initialize() {
-        //this.setVisible(false);
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
         FXUtils.onChange(overlayPane, t -> animation = getShowAnimation(transitionType.get()));
         FXUtils.onChange(transitionType, t -> animation = getShowAnimation(transitionType.get()));
 
         contentHolder = new StackPane();
+        contentHolder.setVisible(false);
         JFXDepthManager.setDepth(contentHolder, 4);
         contentHolder.setPickOnBounds(false);
         // ensure stackpane is never resized beyond it's preferred size
@@ -175,6 +175,7 @@ public class JFXDialog extends StackPane {
 
         this.setPickOnBounds(false);
 
+        getOverlayPane().setVisible(false);
         getOverlayPane().getStyleClass().add("jfx-dialog-overlay-pane");
         getOverlayPane().setBackground(new Background(new BackgroundFill(Color.rgb(0, 0, 0, 0.1), null, null)));
         // close the dialog if clicked on the overlay pane
