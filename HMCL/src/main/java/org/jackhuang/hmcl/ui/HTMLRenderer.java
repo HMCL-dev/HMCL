@@ -80,18 +80,21 @@ public final class HTMLRenderer {
         var accum = new StringBuilder();
         boolean lastWasWhite = false;
         int len = str.length();
-        int c;
-        for (int i = 0; i < len; i += Character.charCount(c)) {
-            c = str.codePointAt(i);
+        int i = 0;
+        while (i < len) {
+            int c = str.codePointAt(i);
             if (isWhitespace(c)) { // Ignore &nbsp;
-                if (lastWasWhite)
+                if (lastWasWhite) {
+                    i += Character.charCount(c);
                     continue;
+                }
                 accum.append(' ');
                 lastWasWhite = true;
             } else if (!isInvisibleChar(c)) {
                 accum.appendCodePoint(c);
                 lastWasWhite = false;
             }
+            i += Character.charCount(c);
         }
         return accum.toString();
     }
