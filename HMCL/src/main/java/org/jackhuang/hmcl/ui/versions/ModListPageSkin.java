@@ -359,10 +359,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         contentBox.setMaxHeight(500);
 
         ScrollPane scrollPane = new ScrollPane(contentBox);
+        FXUtils.smoothScrolling(scrollPane);
+        scrollPane.setPrefHeight(350);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
         scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setPrefHeight(500);
 
         JFXDialogLayout dialogLayout = new JFXDialogLayout();
         dialogLayout.setHeading(new Label(i18n("mods.export.title")));
