@@ -343,7 +343,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                                 Controllers.dialog(i18n("mods.export.success"), i18n("mods.export.title"));
                             } else {
                                 LOG.warning("Failed to export mods", exception);
-                                Controllers.dialog(exception.getMessage(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                                String errorMessage = StringUtils.isBlank(exception.getMessage()) ? exception.toString() : exception.getMessage();
+                                Controllers.dialog(errorMessage, i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
                         }),
                 i18n("mods.export.title"), TaskCancellationAction.NORMAL);
