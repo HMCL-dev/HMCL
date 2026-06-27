@@ -256,9 +256,6 @@ public final class LegacyConfigMigrator {
                 jsonObject.addProperty(
                         "networkBackgroundImageCachePolicy",
                         NetworkBackgroundImageCachePolicy.DISABLED.name());
-                addThemeAppearanceOverride(
-                        themeAppearanceOverrides,
-                        LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY);
             }
             renameMember(jsonObject, "bgpaint", "customBackgroundPaint");
             renameMember(jsonObject, "backgroundPaint", "customBackgroundPaint");

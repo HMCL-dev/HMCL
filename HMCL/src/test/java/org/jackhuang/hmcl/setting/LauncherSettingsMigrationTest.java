@@ -147,9 +147,8 @@ public final class LauncherSettingsMigrationTest {
                     LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE));
             assertTrue(launcherSettings.getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_COLOR));
             assertTrue(launcherSettings.getThemeAppearanceOverrides().contains(
-                    LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY));
-            assertTrue(launcherSettings.getThemeAppearanceOverrides().contains(
                     LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT));
+            assertFalse(launcherSettings.getThemeAppearanceOverrides().contains("networkBackgroundImageCachePolicy"));
             assertEquals("/pictures/background.png", serialized.get("customBackgroundImagePath").getAsString());
             assertEquals("https://example.com/background.png",
                     serialized.get("networkBackgroundImageUrl").getAsString());

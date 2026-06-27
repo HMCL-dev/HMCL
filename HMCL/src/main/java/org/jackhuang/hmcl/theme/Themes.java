@@ -395,11 +395,9 @@ public final class Themes {
             String setting = change.wasAdded() ? change.getElementAdded() : change.getElementRemoved();
             switch (setting) {
                 case LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE,
-                     LauncherSettings.THEME_APPEARANCE_BACKGROUND,
-                     LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY ->
+                     LauncherSettings.THEME_APPEARANCE_BACKGROUND ->
                         backgroundListener.invalidated(settings().getThemeAppearanceOverrides());
                 case LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY -> refreshBackgroundOpacity();
-                case LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK -> refreshFallbackBackground();
                 default -> {
                 }
             }

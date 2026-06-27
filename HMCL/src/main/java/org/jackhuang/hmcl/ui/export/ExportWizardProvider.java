@@ -148,10 +148,6 @@ public final class ExportWizardProvider implements WizardProvider {
                         exported.backgroundFallbackTypeProperty().set(current.backgroundFallbackTypeProperty().get());
                         exported.backgroundFallbackPaintProperty().set(current.backgroundFallbackPaintProperty().get());
                         exported.backgroundLoadPolicyProperty().set(current.backgroundLoadPolicyProperty().get());
-                        exported.getThemeAppearanceOverrides().addAll(List.of(
-                                LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY,
-                                LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK,
-                                LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY));
                     }
                     exported.versionListSourceProperty().set(current.versionListSourceProperty().get());
                     exported.fileDownloadSourceProperty().set(current.fileDownloadSourceProperty().get());

@@ -93,15 +93,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Theme appearance override key for background opacity.
     public static final String THEME_APPEARANCE_BACKGROUND_OPACITY = "backgroundOpacity";
 
-    /// Theme appearance override key for URL background image cache policy.
-    public static final String THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY = "networkBackgroundImageCachePolicy";
-
-    /// Theme appearance override key for background fallback source.
-    public static final String THEME_APPEARANCE_BACKGROUND_FALLBACK = "backgroundFallback";
-
-    /// Theme appearance override key for background loading policy.
-    public static final String THEME_APPEARANCE_BACKGROUND_LOAD_POLICY = "backgroundLoadPolicy";
-
     /// Gson instance used for launcher settings and related settings objects that depend on JavaFX properties.
     public static final Gson SETTINGS_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)

@@ -34,7 +34,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.css.PseudoClass;
 import javafx.scene.text.Font;
@@ -830,12 +829,7 @@ public class PersonalizationPage extends StackPane {
                                     settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
                                 }
                             }
-                            case NETWORK -> {
-                                settings().networkBackgroundImageUrlProperty().set(background.networkImageUrl());
-                                settings().networkBackgroundImageCachePolicyProperty().set(Objects.requireNonNullElse(
-                                        background.networkImageCachePolicy(),
-                                        NetworkBackgroundImageCachePolicy.ENABLED));
-                            }
+                            case NETWORK -> settings().networkBackgroundImageUrlProperty().set(background.networkImageUrl());
                             case PAINT -> settings().customBackgroundPaintProperty().set(background.paint());
                             case DEFAULT, THEME_COLOR -> {
                             }
@@ -854,26 +848,17 @@ public class PersonalizationPage extends StackPane {
 
             LineToggleButton networkBackgroundCacheButton = new LineToggleButton();
             networkBackgroundCacheButton.setTitle(i18n("launcher.background.network.cache"));
-            bindThemeAppearanceToggleButton(
-                    networkBackgroundCacheButton,
-                    LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY,
-                    settings().networkBackgroundImageCachePolicyProperty(),
-                    () -> {
-                        try {
-                            ThemePackManager.ResolvedBackground background =
-                                    ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
-                            if (background.type() == BackgroundType.NETWORK) {
-                                return Objects.requireNonNullElse(
-                                        background.networkImageCachePolicy(),
-                                        NetworkBackgroundImageCachePolicy.ENABLED);
-                            }
-                        } catch (IOException | RuntimeException ignored) {
-                        }
-                        return NetworkBackgroundImageCachePolicy.ENABLED;
-                    },
-                    NetworkBackgroundImageCachePolicy.ENABLED,
-                    NetworkBackgroundImageCachePolicy.DISABLED,
-                    null);
+            networkBackgroundCacheButton.setSelected(Objects.requireNonNullElse(
+                    settings().networkBackgroundImageCachePolicyProperty().get(),
+                    NetworkBackgroundImageCachePolicy.ENABLED) == NetworkBackgroundImageCachePolicy.ENABLED);
+            networkBackgroundCacheButton.selectedProperty().addListener((observable, oldValue, newValue) ->
+                    settings().networkBackgroundImageCachePolicyProperty().set(Boolean.TRUE.equals(newValue)
+                            ? NetworkBackgroundImageCachePolicy.ENABLED
+                            : NetworkBackgroundImageCachePolicy.DISABLED));
+            settings().networkBackgroundImageCachePolicyProperty().addListener((observable, oldValue, newValue) ->
+                    networkBackgroundCacheButton.setSelected(Objects.requireNonNullElse(
+                            newValue,
+                            NetworkBackgroundImageCachePolicy.ENABLED) == NetworkBackgroundImageCachePolicy.ENABLED));
 
             ComponentSublist backgroundFallbackSublist = new ComponentSublist();
             backgroundFallbackSublist.setTitle(i18n("launcher.background.fallback"));
@@ -887,75 +872,21 @@ public class PersonalizationPage extends StackPane {
                     new PaintChoice(i18n("launcher.background.fallback.paint"), BackgroundType.PAINT, settings().backgroundFallbackPaintProperty())
             ));
             backgroundFallbackItem.selectedValueProperty().bindBidirectional(settings().backgroundFallbackTypeProperty());
-            JFXButton backgroundFallbackOverrideButton = createThemeAppearanceOverrideButton();
-            backgroundFallbackSublist.setTitleRight(backgroundFallbackOverrideButton);
-            InvalidationListener refreshBackgroundFallbackOverride = ignored -> updateThemeAppearanceOverrideButton(
-                    backgroundFallbackOverrideButton,
-                    !settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
-            addThemeAppearanceRefreshListener(refreshBackgroundFallbackOverride);
-            backgroundFallbackItem.selectedValueProperty().addListener((observable, oldValue, newValue) ->
-                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
-            settings().backgroundFallbackPaintProperty().addListener(ignored ->
-                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK));
-            backgroundFallbackOverrideButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
-                    try {
-                        ThemePackManager.ResolvedBackground background =
-                                ThemePackManager.resolveCurrentBackgroundFallback(ThemePackManager.currentResolveContext());
-                        switch (background.type()) {
-                            case PAINT -> {
-                                settings().backgroundFallbackTypeProperty().set(BackgroundType.PAINT);
-                                settings().backgroundFallbackPaintProperty().set(Objects.requireNonNullElse(
-                                        background.paint(),
-                                        Color.WHITE));
-                            }
-                            case THEME_COLOR ->
-                                    settings().backgroundFallbackTypeProperty().set(BackgroundType.THEME_COLOR);
-                            default -> settings().backgroundFallbackTypeProperty().set(BackgroundType.BUILTIN);
-                        }
-                    } catch (IOException | RuntimeException e) {
-                        settings().backgroundFallbackTypeProperty().set(BackgroundType.BUILTIN);
-                    }
-                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK);
-                } else {
-                    settings().getThemeAppearanceOverrides().remove(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK);
-                }
-                refreshBackgroundFallbackOverride.invalidated(null);
-                event.consume();
-            });
-            refreshBackgroundFallbackOverride.invalidated(null);
             backgroundFallbackSublist.getContent().setAll(backgroundFallbackItem);
             backgroundFallbackSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
-                        if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK)) {
-                            BackgroundType type = backgroundFallbackItem.selectedValueProperty().get();
-                            return switch (type) {
-                                case PAINT -> {
-                                    Paint backgroundFallbackPaint = settings().backgroundFallbackPaintProperty().get();
-                                    yield backgroundFallbackPaint.toString();
-                                }
-                                case THEME_COLOR -> i18n("launcher.background.fallback.theme_color");
-                                default -> i18n("launcher.background.fallback.builtin");
-                            };
-                        }
-
-                        try {
-                            ThemePackManager.ResolvedBackground background =
-                                    ThemePackManager.resolveCurrentBackgroundFallback(ThemePackManager.currentResolveContext());
-                            return switch (background.type()) {
-                                case PAINT -> background.paint() != null
-                                        ? background.paint().toString()
-                                        : i18n("launcher.background.fallback.paint");
-                                case THEME_COLOR -> i18n("launcher.background.fallback.theme_color");
-                                default -> i18n("launcher.background.fallback.builtin");
-                            };
-                        } catch (IOException | RuntimeException e) {
-                            return i18n("launcher.background.fallback.builtin");
-                        }
+                        BackgroundType type = Objects.requireNonNullElse(
+                                backgroundFallbackItem.selectedValueProperty().get(),
+                                BackgroundType.BUILTIN);
+                        return switch (type) {
+                            case PAINT -> {
+                                Paint backgroundFallbackPaint = settings().backgroundFallbackPaintProperty().get();
+                                yield backgroundFallbackPaint.toString();
+                            }
+                            case THEME_COLOR -> i18n("launcher.background.fallback.theme_color");
+                            default -> i18n("launcher.background.fallback.builtin");
+                        };
                     },
                     backgroundFallbackItem.selectedValueProperty(),
-                    settings().getThemeAppearanceOverrides(),
-                    settings().selectedThemeProperty(),
-                    settings().themeBrightnessModeProperty(),
                     settings().backgroundFallbackPaintProperty()));
 
             LineSelectButton<BackgroundLoadPolicy> backgroundLoadPolicyButton = new LineSelectButton<>();
@@ -967,17 +898,7 @@ public class PersonalizationPage extends StackPane {
             backgroundLoadPolicyButton.setItems(Arrays.asList(
                     BackgroundLoadPolicy.WAIT_FOR_BACKGROUND,
                     BackgroundLoadPolicy.SHOW_FALLBACK_WHILE_LOADING));
-            bindThemeAppearanceLineSelectButton(
-                    backgroundLoadPolicyButton,
-                    LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY,
-                    settings().backgroundLoadPolicyProperty(),
-                    () -> {
-                        try {
-                            return ThemePackManager.resolveCurrentBackgroundLoadPolicy();
-                        } catch (RuntimeException e) {
-                            return BackgroundLoadPolicy.WAIT_FOR_BACKGROUND;
-                        }
-                    });
+            backgroundLoadPolicyButton.valueProperty().bindBidirectional(settings().backgroundLoadPolicyProperty());
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
