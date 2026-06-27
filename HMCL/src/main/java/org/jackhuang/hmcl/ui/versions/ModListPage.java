@@ -280,15 +280,26 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     /// Exports the mod list to a file asynchronously to avoid blocking the UI thread.
     /// @param selectedMods The list of selected mods to export
-    /// @param format The export format: "csv" or "json"
-    /// @param fields The set of field names to export
-    public void exportMods(List<ModListPageSkin.ModInfoObject> selectedMods, String format, Set<String> fields) {
+    /// @param format The export format: "csv", "json", or "custom"
+    /// @param fields The set of field names to export (used for csv/json)
+    /// @param customTemplate The custom format template string (used when format is "custom")
+    public void exportMods(List<ModListPageSkin.ModInfoObject> selectedMods, String format, Set<String> fields, String customTemplate) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.export.title"));
-        String extension = format.equals("csv") ? ".csv" : ".json";
-        chooser.getExtensionFilters().setAll(
-                new FileChooser.ExtensionFilter(format.equals("csv") ? i18n("extension.csv") : i18n("extension.json"),
-                        "*" + extension));
+        String extension;
+        if (format.equals("csv")) {
+            extension = ".csv";
+        } else if (format.equals("json")) {
+            extension = ".json";
+        } else {
+            extension = ".txt";
+        }
+        FileChooser.ExtensionFilter filter = format.equals("csv")
+                ? new FileChooser.ExtensionFilter(i18n("extension.csv"), "*" + extension)
+                : format.equals("json")
+                        ? new FileChooser.ExtensionFilter(i18n("extension.json"), "*" + extension)
+                        : new FileChooser.ExtensionFilter(i18n("extension.txt"), "*" + extension);
+        chooser.getExtensionFilters().setAll(filter);
         chooser.setInitialFileName(instanceId + "-mods" + extension);
         Path targetPath = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
         if (targetPath == null) return;
@@ -296,13 +307,16 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         final List<ModListPageSkin.ModInfoObject> modsSnapshot = new ArrayList<>(selectedMods);
         final Path outputPath = targetPath;
         final String exportFormat = format;
+        final String template = customTemplate;
 
         Controllers.taskDialog(
                 Task.runAsync(() -> {
                     if (exportFormat.equals("csv")) {
                         exportToCSV(modsSnapshot, fields, outputPath);
-                    } else {
+                    } else if (exportFormat.equals("json")) {
                         exportToJSON(modsSnapshot, fields, outputPath);
+                    } else {
+                        exportToCustomText(modsSnapshot, template, outputPath);
                     }
                 }).withStagesHints(i18n("mods.export.exporting"))
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -314,6 +328,38 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             }
                         }),
                 i18n("mods.export.title"), TaskCancellationAction.NO_CANCEL);
+    }
+
+    private void exportToCustomText(List<ModListPageSkin.ModInfoObject> mods, String template, Path targetPath) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        for (ModListPageSkin.ModInfoObject modInfo : mods) {
+            sb.append(applyTemplate(modInfo, template));
+            sb.append(System.lineSeparator());
+        }
+        Files.writeString(targetPath, sb.toString(), StandardCharsets.UTF_8);
+    }
+
+    private String applyTemplate(ModListPageSkin.ModInfoObject modInfo, String template) {
+        // Parse template with {field} placeholders
+        StringBuilder result = new StringBuilder();
+        int i = 0;
+        while (i < template.length()) {
+            if (template.charAt(i) == '{') {
+                int end = template.indexOf('}', i);
+                if (end != -1) {
+                    String field = template.substring(i + 1, end);
+                    result.append(getFieldValue(modInfo, field));
+                    i = end + 1;
+                } else {
+                    result.append(template.charAt(i));
+                    i++;
+                }
+            } else {
+                result.append(template.charAt(i));
+                i++;
+            }
+        }
+        return result.toString();
     }
 
     private void exportToCSV(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields, Path targetPath) throws IOException {

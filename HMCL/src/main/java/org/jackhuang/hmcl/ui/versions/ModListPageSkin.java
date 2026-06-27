@@ -32,6 +32,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -304,8 +305,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ToggleGroup formatGroup = new ToggleGroup();
         JFXRadioButton csvRadio = new JFXRadioButton("CSV");
         JFXRadioButton jsonRadio = new JFXRadioButton("JSON");
+        JFXRadioButton customRadio = new JFXRadioButton(i18n("mods.export.format.custom"));
         csvRadio.setToggleGroup(formatGroup);
         jsonRadio.setToggleGroup(formatGroup);
+        customRadio.setToggleGroup(formatGroup);
         csvRadio.setSelected(true);
 
         JFXCheckBox chkName = new JFXCheckBox(i18n("mods.export.field.name"));
@@ -340,8 +343,24 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         Label formatLabel = new Label(i18n("mods.export.format"));
         Label fieldsLabel = new Label(i18n("mods.export.fields"));
+        Label templateLabel = new Label(i18n("mods.export.template"));
 
-        HBox formatBox = new HBox(10, csvRadio, jsonRadio);
+        JFXTextField templateTextField = new JFXTextField("- {name}, {version}, {modid}");
+
+        // Create clickable placeholder buttons
+        Label placeholdersLabel = new Label(i18n("mods.export.placeholders"));
+        FlowPane placeholdersPane = new FlowPane(5, 5);
+        placeholdersPane.setAlignment(Pos.CENTER_LEFT);
+        String[] placeholders = {"name", "version", "modid", "gameVersion", "authors", 
+                "description", "url", "active", "modLoaderType", "mcmodId", "abbr", "chineseName", "sha1", "sha512"};
+        for (String placeholder : placeholders) {
+            String placeholderText = "{" + placeholder + "}";
+            JFXButton btn = FXUtils.newBorderButton(placeholderText);
+            btn.setOnAction(ev -> FXUtils.copyText(placeholderText));
+            placeholdersPane.getChildren().add(btn);
+        }
+
+        HBox formatBox = new HBox(10, csvRadio, jsonRadio, customRadio);
         formatBox.setAlignment(Pos.CENTER_LEFT);
 
         VBox fieldsBox = new VBox(8,
@@ -351,16 +370,49 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 chkSha1, chkSha512);
         fieldsBox.setAlignment(Pos.CENTER_LEFT);
 
-        VBox contentBox = new VBox(15, formatLabel, formatBox, fieldsLabel, fieldsBox);
+        VBox templateBox = new VBox(5, templateLabel, templateTextField, placeholdersLabel, placeholdersPane);
+        templateBox.setAlignment(Pos.CENTER_LEFT);
+        templateBox.setMaxWidth(360);
+        templateBox.setVisible(false);
+        templateBox.setManaged(false);
+
+        // Toggle visibility of fields vs template based on format selection
+        csvRadio.setOnAction(e -> {
+            fieldsLabel.setVisible(true);
+            fieldsLabel.setManaged(true);
+            fieldsBox.setVisible(true);
+            fieldsBox.setManaged(true);
+            templateBox.setVisible(false);
+            templateBox.setManaged(false);
+        });
+        jsonRadio.setOnAction(e -> {
+            fieldsLabel.setVisible(true);
+            fieldsLabel.setManaged(true);
+            fieldsBox.setVisible(true);
+            fieldsBox.setManaged(true);
+            templateBox.setVisible(false);
+            templateBox.setManaged(false);
+        });
+        customRadio.setOnAction(e -> {
+            fieldsLabel.setVisible(false);
+            fieldsLabel.setManaged(false);
+            fieldsBox.setVisible(false);
+            fieldsBox.setManaged(false);
+            templateBox.setVisible(true);
+            templateBox.setManaged(true);
+        });
+
+        VBox contentBox = new VBox(12, formatLabel, formatBox, fieldsLabel, fieldsBox, templateBox);
         contentBox.setAlignment(Pos.CENTER_LEFT);
-        contentBox.setMaxWidth(400);
-        contentBox.setMaxHeight(500);
+        contentBox.setMaxWidth(380);
 
         ScrollPane scrollPane = new ScrollPane(contentBox);
         FXUtils.smoothScrolling(scrollPane);
-        scrollPane.setPrefHeight(350);
-        VBox.setVgrow(scrollPane, Priority.ALWAYS);
         scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setMaxHeight(400);
+        scrollPane.setPrefHeight(350);
 
         JFXDialogLayout dialogLayout = new JFXDialogLayout();
         dialogLayout.setHeading(new Label(i18n("mods.export.title")));
@@ -369,25 +421,33 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton exportButton = new JFXButton(i18n("button.export"));
         exportButton.getStyleClass().add("dialog-accept");
         exportButton.setOnAction(e -> {
-            String format = csvRadio.isSelected() ? "csv" : "json";
+            String format;
             Set<String> fields = new LinkedHashSet<>();
-            if (chkName.isSelected()) fields.add("name");
-            if (chkVersion.isSelected()) fields.add("version");
-            if (chkId.isSelected()) fields.add("modid");
-            if (chkGameVersion.isSelected()) fields.add("gameVersion");
-            if (chkAuthors.isSelected()) fields.add("authors");
-            if (chkDescription.isSelected()) fields.add("description");
-            if (chkUrl.isSelected()) fields.add("url");
-            if (chkActive.isSelected()) fields.add("active");
-            if (chkModLoaderType.isSelected()) fields.add("modLoaderType");
-            if (chkMcmodId.isSelected()) fields.add("mcmodId");
-            if (chkAbbr.isSelected()) fields.add("abbr");
-            if (chkChineseName.isSelected()) fields.add("chineseName");
-            if (chkSha1.isSelected()) fields.add("sha1");
-            if (chkSha512.isSelected()) fields.add("sha512");
+            String customTemplate = null;
+
+            if (customRadio.isSelected()) {
+                format = "custom";
+                customTemplate = templateTextField.getText();
+            } else {
+                format = csvRadio.isSelected() ? "csv" : "json";
+                if (chkName.isSelected()) fields.add("name");
+                if (chkVersion.isSelected()) fields.add("version");
+                if (chkId.isSelected()) fields.add("modid");
+                if (chkGameVersion.isSelected()) fields.add("gameVersion");
+                if (chkAuthors.isSelected()) fields.add("authors");
+                if (chkDescription.isSelected()) fields.add("description");
+                if (chkUrl.isSelected()) fields.add("url");
+                if (chkActive.isSelected()) fields.add("active");
+                if (chkModLoaderType.isSelected()) fields.add("modLoaderType");
+                if (chkMcmodId.isSelected()) fields.add("mcmodId");
+                if (chkAbbr.isSelected()) fields.add("abbr");
+                if (chkChineseName.isSelected()) fields.add("chineseName");
+                if (chkSha1.isSelected()) fields.add("sha1");
+                if (chkSha512.isSelected()) fields.add("sha512");
+            }
 
             dialogLayout.fireEvent(new DialogCloseEvent());
-            getSkinnable().exportMods(listView.getSelectionModel().getSelectedItems(), format, fields);
+            getSkinnable().exportMods(listView.getSelectionModel().getSelectedItems(), format, fields, customTemplate);
         });
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
