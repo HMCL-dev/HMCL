@@ -34,6 +34,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.css.PseudoClass;
 import javafx.scene.text.Font;
@@ -185,62 +186,6 @@ public class PersonalizationPage extends StackPane {
         };
 
         button.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (updating.value) {
-                return;
-            }
-            updating.value = true;
-            try {
-                directProperty.setValue(newValue);
-                settings().getThemeAppearanceOverrides().add(setting);
-                updateThemeAppearanceOverrideButton(inheritButton, false);
-            } finally {
-                updating.value = false;
-            }
-        });
-        directProperty.addListener(refresh);
-        addThemeAppearanceRefreshListener(refresh);
-
-        inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            if (!settings().getThemeAppearanceOverrides().contains(setting)) {
-                directProperty.setValue(effectiveValueSupplier.get());
-                settings().getThemeAppearanceOverrides().add(setting);
-            } else {
-                settings().getThemeAppearanceOverrides().remove(setting);
-            }
-            refresh.invalidated(null);
-            event.consume();
-        });
-        refresh.invalidated(null);
-    }
-
-    /// Installs an inheritance button on a radio choice list inside a sublist.
-    private static <T> void bindThemeAppearanceChoiceList(
-            ComponentSublist sublist,
-            RadioChoiceList<T> choiceList,
-            String setting,
-            Property<T> directProperty,
-            Supplier<T> effectiveValueSupplier) {
-        JFXButton inheritButton = createThemeAppearanceOverrideButton();
-        sublist.setTitleRight(inheritButton);
-
-        Holder<Boolean> updating = new Holder<>(false);
-        InvalidationListener refresh = ignored -> {
-            if (updating.value) {
-                return;
-            }
-            updating.value = true;
-            try {
-                boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
-                choiceList.selectedValueProperty().set(overridden
-                        ? directProperty.getValue()
-                        : effectiveValueSupplier.get());
-                updateThemeAppearanceOverrideButton(inheritButton, !overridden);
-            } finally {
-                updating.value = false;
-            }
-        };
-
-        choiceList.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
             if (updating.value) {
                 return;
             }
@@ -528,35 +473,26 @@ public class PersonalizationPage extends StackPane {
             ComponentSublist themeColorSublist = new ComponentSublist();
             themeColorSublist.setTitle(i18n("settings.launcher.theme_color"));
             themeColorSublist.setHasSubtitle(true);
-            Supplier<ThemeColorType> effectiveThemeColorType = () -> {
+            Supplier<@Nullable ThemeColorSource> effectiveThemeColorSource = () -> {
                 try {
-                    @Nullable ThemeColorSource source = ThemePackManager.resolveCurrentThemeColorSource(
-                            ThemePackManager.currentResolveContext());
-                    if (source instanceof ThemeColorSource.Wallpaper) {
-                        return ThemeColorType.BACKGROUND;
-                    }
-                    if (source instanceof ThemeColorSource.Custom) {
-                        return ThemeColorType.CUSTOM;
-                    }
-                    return ThemeColorType.DEFAULT;
+                    return ThemePackManager.resolveCurrentThemeColorSource(ThemePackManager.currentResolveContext());
                 } catch (IOException | RuntimeException e) {
-                    return ThemeColorType.DEFAULT;
+                    return null;
                 }
             };
-            themeColorSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
-                        ThemeColorType type = settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_COLOR)
-                                ? Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT)
-                                : effectiveThemeColorType.get();
-                        return i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT));
-                    },
-                    settings().themeColorTypeProperty(),
-                    settings().getThemeAppearanceOverrides(),
-                    settings().selectedThemeProperty(),
-                    settings().themeBrightnessModeProperty()));
+            Supplier<ThemeColorType> effectiveThemeColorType = () -> {
+                @Nullable ThemeColorSource source = effectiveThemeColorSource.get();
+                if (source instanceof ThemeColorSource.Wallpaper) {
+                    return ThemeColorType.BACKGROUND;
+                }
+                if (source instanceof ThemeColorSource.Custom) {
+                    return ThemeColorType.CUSTOM;
+                }
+                return ThemeColorType.DEFAULT;
+            };
 
             ColorPicker picker = new JFXColorPicker();
             picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
-            ThemeColor.bindBidirectional(picker, settings().customThemeColorProperty());
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
 
             var defaultColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
@@ -580,12 +516,106 @@ public class PersonalizationPage extends StackPane {
             RadioChoiceList<ThemeColorType> themeColorChoiceList = new RadioChoiceList<>();
             themeColorChoiceList.setFallbackValue(ThemeColorType.DEFAULT);
             themeColorChoiceList.setChoices(Arrays.asList(defaultColorChoice, customColorChoice, backgroundColorChoice));
-            bindThemeAppearanceChoiceList(
-                    themeColorSublist,
-                    themeColorChoiceList,
-                    LauncherSettings.THEME_APPEARANCE_COLOR,
-                    settings().themeColorTypeProperty(),
-                    effectiveThemeColorType);
+
+            JFXButton themeColorOverrideButton = createThemeAppearanceOverrideButton();
+            themeColorSublist.setTitleRight(themeColorOverrideButton);
+            Holder<Boolean> updatingThemeColor = new Holder<>(false);
+            InvalidationListener refreshThemeColor = ignored -> {
+                if (updatingThemeColor.value) {
+                    return;
+                }
+                updatingThemeColor.value = true;
+                try {
+                    boolean overridden = settings().getThemeAppearanceOverrides().contains(
+                            LauncherSettings.THEME_APPEARANCE_COLOR);
+                    ThemeColorType type = overridden
+                            ? Objects.requireNonNullElse(settings().themeColorTypeProperty().get(), ThemeColorType.DEFAULT)
+                            : effectiveThemeColorType.get();
+                    ThemeColor color = Objects.requireNonNullElse(
+                            settings().customThemeColorProperty().get(),
+                            ThemeColor.DEFAULT);
+                    if (!overridden) {
+                        @Nullable ThemeColorSource source = effectiveThemeColorSource.get();
+                        if (source instanceof ThemeColorSource.Custom custom) {
+                            color = custom.color();
+                        }
+                    }
+                    themeColorChoiceList.selectedValueProperty().set(type);
+                    picker.setValue(color.color());
+                    updateThemeAppearanceOverrideButton(themeColorOverrideButton, !overridden);
+                } finally {
+                    updatingThemeColor.value = false;
+                }
+            };
+            themeColorChoiceList.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
+                if (updatingThemeColor.value) {
+                    return;
+                }
+                updatingThemeColor.value = true;
+                try {
+                    ThemeColorType type = Objects.requireNonNullElse(newValue, ThemeColorType.DEFAULT);
+                    settings().themeColorTypeProperty().set(type);
+                    if (type == ThemeColorType.CUSTOM) {
+                        @Nullable Color color = picker.getValue();
+                        settings().customThemeColorProperty().set(
+                                color != null ? ThemeColor.of(color) : ThemeColor.DEFAULT);
+                    }
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_COLOR);
+                    updateThemeAppearanceOverrideButton(themeColorOverrideButton, false);
+                } finally {
+                    updatingThemeColor.value = false;
+                }
+            });
+            picker.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if (updatingThemeColor.value) {
+                    return;
+                }
+                updatingThemeColor.value = true;
+                try {
+                    settings().themeColorTypeProperty().set(ThemeColorType.CUSTOM);
+                    settings().customThemeColorProperty().set(
+                            newValue != null ? ThemeColor.of(newValue) : ThemeColor.DEFAULT);
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_COLOR);
+                    themeColorChoiceList.selectedValueProperty().set(ThemeColorType.CUSTOM);
+                    updateThemeAppearanceOverrideButton(themeColorOverrideButton, false);
+                } finally {
+                    updatingThemeColor.value = false;
+                }
+            });
+            settings().themeColorTypeProperty().addListener(refreshThemeColor);
+            settings().customThemeColorProperty().addListener(refreshThemeColor);
+            addThemeAppearanceRefreshListener(refreshThemeColor);
+            themeColorOverrideButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                updatingThemeColor.value = true;
+                try {
+                    if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_COLOR)) {
+                        ThemeColorType type = Objects.requireNonNullElse(
+                                themeColorChoiceList.getSelectedValue(),
+                                ThemeColorType.DEFAULT);
+                        settings().themeColorTypeProperty().set(type);
+                        if (type == ThemeColorType.CUSTOM) {
+                            @Nullable Color color = picker.getValue();
+                            settings().customThemeColorProperty().set(
+                                    color != null ? ThemeColor.of(color) : ThemeColor.DEFAULT);
+                        }
+                        settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_COLOR);
+                    } else {
+                        settings().getThemeAppearanceOverrides().remove(LauncherSettings.THEME_APPEARANCE_COLOR);
+                    }
+                } finally {
+                    updatingThemeColor.value = false;
+                }
+                refreshThemeColor.invalidated(null);
+                event.consume();
+            });
+            themeColorSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
+                        ThemeColorType type = Objects.requireNonNullElse(
+                                themeColorChoiceList.selectedValueProperty().get(),
+                                ThemeColorType.DEFAULT);
+                        return i18n("settings.launcher.theme_color_type." + type.name().toLowerCase(Locale.ROOT));
+                    },
+                    themeColorChoiceList.selectedValueProperty()));
+            refreshThemeColor.invalidated(null);
 
             themeColorSublist.getContent().setAll(themeColorChoiceList);
             themeAppearanceList.getContent().add(themeColorSublist);
@@ -635,7 +665,6 @@ public class PersonalizationPage extends StackPane {
 
             JFXComboBox<String> builtinBackgroundComboBox = new JFXComboBox<>();
             builtinBackgroundComboBox.getItems().setAll(BuiltinBackground.BUILTIN_BACKGROUND_IDS);
-            builtinBackgroundComboBox.valueProperty().bindBidirectional(settings().builtinBackgroundIdProperty());
             FXUtils.setLimitWidth(builtinBackgroundComboBox, 160);
 
             RadioChoiceList.Choice<BackgroundType> builtinBackgroundOption =
@@ -646,71 +675,202 @@ public class PersonalizationPage extends StackPane {
                         }
                     };
 
+            RadioChoiceList.FileChoice<BackgroundType> customBackgroundOption =
+                    new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM)
+                            .setChooserTitle(i18n("launcher.background.choose"))
+                            .addExtensionFilter(FXUtils.getImageExtensionFilter())
+                            .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY);
+            RadioChoiceList.TextChoice<BackgroundType> networkBackgroundOption =
+                    new RadioChoiceList.TextChoice<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
+                            .setValidators(new URLValidator(true));
+            PaintChoice paintBackgroundOption =
+                    new PaintChoice(i18n("launcher.background.paint"), BackgroundType.PAINT);
+
             backgroundItem.setChoices(Arrays.asList(
                     new RadioChoiceList.Choice<>(i18n("message.default"), BackgroundType.DEFAULT)
                             .setTooltip(i18n("launcher.background.default.tooltip")),
                     builtinBackgroundOption,
                     new RadioChoiceList.Choice<>(i18n("launcher.background.theme_color"), BackgroundType.THEME_COLOR),
-                    new RadioChoiceList.FileChoice<>(i18n("settings.custom"), BackgroundType.CUSTOM)
-                            .setChooserTitle(i18n("launcher.background.choose"))
-                            .addExtensionFilter(FXUtils.getImageExtensionFilter())
-                            .setSelectionMode(FileSelector.SelectionMode.FILE_OR_DIRECTORY)
-                            .bindPathBidirectional(settings().customBackgroundImagePathProperty()),
-                    new RadioChoiceList.TextChoice<>(i18n("launcher.background.network"), BackgroundType.NETWORK)
-                            .setValidators(new URLValidator(true))
-                            .bindTextBidirectional(settings().networkBackgroundImageUrlProperty()),
-                    new PaintChoice(i18n("launcher.background.paint"), BackgroundType.PAINT, settings().customBackgroundPaintProperty())
+                    customBackgroundOption,
+                    networkBackgroundOption,
+                    paintBackgroundOption
             ));
-            backgroundItem.selectedValueProperty().bindBidirectional(settings().backgroundTypeProperty());
             JFXButton backgroundOverrideButton = createThemeAppearanceOverrideButton();
             backgroundSublist.setTitleRight(backgroundOverrideButton);
-            InvalidationListener refreshBackgroundOverride = ignored -> updateThemeAppearanceOverrideButton(
-                    backgroundOverrideButton,
-                    !settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
-            addThemeAppearanceRefreshListener(refreshBackgroundOverride);
-            backgroundItem.selectedValueProperty().addListener((observable, oldValue, newValue) ->
-                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
-            settings().builtinBackgroundIdProperty().addListener(ignored ->
-                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
-            settings().customBackgroundImagePathProperty().addListener(ignored ->
-                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
-            settings().networkBackgroundImageUrlProperty().addListener(ignored ->
-                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
-            settings().customBackgroundPaintProperty().addListener(ignored ->
-                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND));
-            backgroundOverrideButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-                if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
+            Holder<Boolean> updatingBackground = new Holder<>(false);
+            InvalidationListener refreshBackground = ignored -> {
+                if (updatingBackground.value) {
+                    return;
+                }
+                updatingBackground.value = true;
+                try {
+                    boolean overridden = settings().getThemeAppearanceOverrides().contains(
+                            LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                    ThemePackManager.ResolvedBackground background;
                     try {
-                        ThemePackManager.ResolvedBackground background =
-                                ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
-                        settings().backgroundTypeProperty().set(background.type());
-                        switch (background.type()) {
-                            case BUILTIN -> settings().builtinBackgroundIdProperty().set(Objects.requireNonNullElse(
-                                    background.builtinBackgroundId(),
-                                    BuiltinBackground.FALLBACK.id()));
-                            case CUSTOM -> {
-                                if (background.imagePath() != null) {
-                                    settings().customBackgroundImagePathProperty().set(background.imagePath().toString());
-                                } else {
-                                    settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
-                                }
-                            }
-                            case NETWORK -> settings().networkBackgroundImageUrlProperty().set(background.networkImageUrl());
-                            case PAINT -> settings().customBackgroundPaintProperty().set(background.paint());
-                            case DEFAULT, THEME_COLOR -> {
-                            }
-                        }
+                        background = overridden
+                                ? ThemePackManager.resolveCustomBackground()
+                                : ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
                     } catch (IOException | RuntimeException e) {
-                        settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
+                        background = new ThemePackManager.ResolvedBackground(
+                                BackgroundType.DEFAULT,
+                                null,
+                                null,
+                                null,
+                                null,
+                                1.0);
+                    }
+
+                    backgroundItem.selectedValueProperty().set(background.type());
+                    switch (background.type()) {
+                        case BUILTIN -> builtinBackgroundComboBox.setValue(Objects.requireNonNullElse(
+                                background.builtinBackgroundId(),
+                                BuiltinBackground.FALLBACK.id()));
+                        case CUSTOM -> customBackgroundOption.setPath(
+                                background.imagePath() != null
+                                        ? background.imagePath().toString()
+                                        : background.imageResource() != null ? background.imageResource().name() : "");
+                        case NETWORK -> networkBackgroundOption.setText(Objects.toString(
+                                background.networkImageUrl(),
+                                ""));
+                        case PAINT -> paintBackgroundOption.setPaint(background.paint());
+                        case DEFAULT, THEME_COLOR -> {
+                        }
+                    }
+                    updateThemeAppearanceOverrideButton(backgroundOverrideButton, !overridden);
+                } finally {
+                    updatingBackground.value = false;
+                }
+            };
+            backgroundItem.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
+                if (updatingBackground.value) {
+                    return;
+                }
+                updatingBackground.value = true;
+                try {
+                    BackgroundType type = Objects.requireNonNullElse(newValue, BackgroundType.DEFAULT);
+                    settings().backgroundTypeProperty().set(type);
+                    switch (type) {
+                        case BUILTIN -> settings().builtinBackgroundIdProperty().set(Objects.requireNonNullElse(
+                                builtinBackgroundComboBox.getValue(),
+                                BuiltinBackground.FALLBACK.id()));
+                        case CUSTOM -> settings().customBackgroundImagePathProperty().set(customBackgroundOption.getPath());
+                        case NETWORK -> settings().networkBackgroundImageUrlProperty().set(networkBackgroundOption.getText());
+                        case PAINT -> settings().customBackgroundPaintProperty().set(paintBackgroundOption.getPaint());
+                        case DEFAULT, THEME_COLOR -> {
+                        }
                     }
                     settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
-                } else {
-                    settings().getThemeAppearanceOverrides().remove(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                    updateThemeAppearanceOverrideButton(backgroundOverrideButton, false);
+                } finally {
+                    updatingBackground.value = false;
                 }
-                refreshBackgroundOverride.invalidated(null);
+            });
+            builtinBackgroundComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if (updatingBackground.value) {
+                    return;
+                }
+                updatingBackground.value = true;
+                try {
+                    settings().builtinBackgroundIdProperty().set(Objects.requireNonNullElse(
+                            newValue,
+                            BuiltinBackground.FALLBACK.id()));
+                    settings().backgroundTypeProperty().set(BackgroundType.BUILTIN);
+                    backgroundItem.selectedValueProperty().set(BackgroundType.BUILTIN);
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                    updateThemeAppearanceOverrideButton(backgroundOverrideButton, false);
+                } finally {
+                    updatingBackground.value = false;
+                }
+            });
+            customBackgroundOption.pathProperty().addListener((observable, oldValue, newValue) -> {
+                if (updatingBackground.value) {
+                    return;
+                }
+                updatingBackground.value = true;
+                try {
+                    settings().customBackgroundImagePathProperty().set(newValue);
+                    settings().backgroundTypeProperty().set(BackgroundType.CUSTOM);
+                    backgroundItem.selectedValueProperty().set(BackgroundType.CUSTOM);
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                    updateThemeAppearanceOverrideButton(backgroundOverrideButton, false);
+                } finally {
+                    updatingBackground.value = false;
+                }
+            });
+            networkBackgroundOption.textProperty().addListener((observable, oldValue, newValue) -> {
+                if (updatingBackground.value) {
+                    return;
+                }
+                updatingBackground.value = true;
+                try {
+                    settings().networkBackgroundImageUrlProperty().set(newValue);
+                    settings().backgroundTypeProperty().set(BackgroundType.NETWORK);
+                    backgroundItem.selectedValueProperty().set(BackgroundType.NETWORK);
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                    updateThemeAppearanceOverrideButton(backgroundOverrideButton, false);
+                } finally {
+                    updatingBackground.value = false;
+                }
+            });
+            paintBackgroundOption.colorProperty().addListener((observable, oldValue, newValue) -> {
+                if (updatingBackground.value) {
+                    return;
+                }
+                updatingBackground.value = true;
+                try {
+                    settings().customBackgroundPaintProperty().set(newValue);
+                    settings().backgroundTypeProperty().set(BackgroundType.PAINT);
+                    backgroundItem.selectedValueProperty().set(BackgroundType.PAINT);
+                    settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                    updateThemeAppearanceOverrideButton(backgroundOverrideButton, false);
+                } finally {
+                    updatingBackground.value = false;
+                }
+            });
+            addThemeAppearanceRefreshListener(refreshBackground);
+            settings().builtinBackgroundIdProperty().addListener(refreshBackground);
+            settings().customBackgroundImagePathProperty().addListener(refreshBackground);
+            settings().networkBackgroundImageUrlProperty().addListener(refreshBackground);
+            settings().customBackgroundPaintProperty().addListener(refreshBackground);
+            backgroundOverrideButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                updatingBackground.value = true;
+                try {
+                    if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
+                        try {
+                            ThemePackManager.ResolvedBackground background =
+                                    ThemePackManager.resolveCurrentBackground(ThemePackManager.currentResolveContext());
+                            settings().backgroundTypeProperty().set(background.type());
+                            switch (background.type()) {
+                                case BUILTIN -> settings().builtinBackgroundIdProperty().set(Objects.requireNonNullElse(
+                                        background.builtinBackgroundId(),
+                                        BuiltinBackground.FALLBACK.id()));
+                                case CUSTOM -> {
+                                    if (background.imagePath() != null) {
+                                        settings().customBackgroundImagePathProperty().set(background.imagePath().toString());
+                                    } else {
+                                        settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
+                                    }
+                                }
+                                case NETWORK -> settings().networkBackgroundImageUrlProperty().set(background.networkImageUrl());
+                                case PAINT -> settings().customBackgroundPaintProperty().set(background.paint());
+                                case DEFAULT, THEME_COLOR -> {
+                                }
+                            }
+                        } catch (IOException | RuntimeException e) {
+                            settings().backgroundTypeProperty().set(BackgroundType.DEFAULT);
+                        }
+                        settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                    } else {
+                        settings().getThemeAppearanceOverrides().remove(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                    }
+                } finally {
+                    updatingBackground.value = false;
+                }
+                refreshBackground.invalidated(null);
                 event.consume();
             });
-            refreshBackgroundOverride.invalidated(null);
+            refreshBackground.invalidated(null);
 
             LineToggleButton networkBackgroundCacheButton = new LineToggleButton();
             networkBackgroundCacheButton.setTitle(i18n("launcher.background.network.cache"));
@@ -1093,10 +1253,33 @@ public class PersonalizationPage extends StackPane {
         ///
         /// @param title    the choice title
         /// @param value    the selected background type
+        private PaintChoice(String title, BackgroundType value) {
+            super(title, value);
+        }
+
+        /// Creates a paint choice bound directly to a setting property.
+        ///
+        /// @param title    the choice title
+        /// @param value    the selected background type
         /// @param property the paint property edited by this choice
         private PaintChoice(String title, BackgroundType value, Property<Paint> property) {
-            super(title, value);
+            this(title, value);
             FXUtils.bindPaint(colorPicker, property);
+        }
+
+        /// Returns the displayed paint.
+        private @Nullable Paint getPaint() {
+            return colorPicker.getValue();
+        }
+
+        /// Sets the displayed paint.
+        private void setPaint(@Nullable Paint paint) {
+            colorPicker.setValue(paint instanceof Color color ? color : null);
+        }
+
+        /// Returns the displayed color property.
+        private Property<Color> colorProperty() {
+            return colorPicker.valueProperty();
         }
 
         /// Creates the right-side paint picker.
