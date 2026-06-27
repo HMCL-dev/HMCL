@@ -210,7 +210,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             modManager.analyze();
             var analyzer = modManager.getLibraryAnalyzer();
             if (analyzer == null) return LitematicaFetchResult.EMPTY;
-            var modLoaders = modManager.getLibraryAnalyzer().getModLoaders(); // We don't care about kilt or connector
+            var modLoaders = analyzer.getModLoaders(); // We don't care about kilt or connector
             boolean shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGE))
                     && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
             RemoteAddon litematica = oldRes.litematica(), forgematica = oldRes.forgematica();
