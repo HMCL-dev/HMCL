@@ -36,10 +36,10 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.mod.ModpackExportInfo;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
+import org.jackhuang.hmcl.modpack.ModpackExportInfo;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -56,7 +56,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_SERVER;
@@ -98,12 +98,12 @@ public final class ModpackInfoPage extends Control implements WizardPage {
             throw new IllegalArgumentException("Settings.MODPACK_INFO_OPTION is required");
 
         name.set(version);
-        author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getUsername).orElse(""));
+        author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getProfileName).orElse(""));
 
-        VersionSetting versionSetting = gameRepository.getVersionSetting(versionName);
-        minMemory.set(Optional.ofNullable(versionSetting.getMinMemory()).orElse(0));
-        launchArguments.set(versionSetting.getMinecraftArgs());
-        javaArguments.set(versionSetting.getJavaArgs());
+        GameSettings.Effective versionSetting = gameRepository.getEffectiveGameSettings(versionName);
+        minMemory.set(Optional.ofNullable(versionSetting.get(GameSettings::minMemoryProperty)).orElse(0));
+        launchArguments.set(versionSetting.get(GameSettings::gameArgumentsProperty));
+        javaArguments.set(versionSetting.get(GameSettings::jvmOptionsProperty));
 
         canIncludeLauncher = JarUtils.thisJarPath() != null;
     }
@@ -318,7 +318,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         serversSelectButton.setTitle(i18n("account.injector.server"));
                         serversSelectButton.setNullSafeConverter(AuthlibInjectorServer::getName);
                         serversSelectButton.setDescriptionConverter(AuthlibInjectorServer::getUrl);
-                        serversSelectButton.itemsProperty().set(config().getAuthlibInjectorServers());
+                        serversSelectButton.itemsProperty().set(getAuthlibInjectorServers());
 
                         skinnable.authlibInjectorServer.bind(Bindings.createStringBinding(() -> {
                             AuthlibInjectorServer selected = serversSelectButton.getValue();

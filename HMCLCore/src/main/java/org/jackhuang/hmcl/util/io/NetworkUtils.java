@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -45,7 +47,9 @@ public final class NetworkUtils {
 
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
-    public static final int TIME_OUT = 8000;
+
+    public static final Duration TIMEOUT = Duration.ofSeconds(10);
+    public static final int TIMEOUT_MILLIS = (int) TIMEOUT.toMillis();
 
     private NetworkUtils() {
     }
@@ -160,6 +164,21 @@ public final class NetworkUtils {
         }
     }
 
+    private static final Map<String, String> API_KEYS = Map.of(
+            "api.curseforge.com", CurseForgeRemoteAddonRepository.API_KEY,
+            "edge.forgecdn.net", CurseForgeRemoteAddonRepository.API_KEY
+    );
+
+    public static java.net.http.HttpRequest.Builder newRequestBuilder(URI uri) {
+        var builder = java.net.http.HttpRequest.newBuilder(uri);
+        var host = uri.getHost();
+        if (host == null) return builder;
+        var apiKey = API_KEYS.get(host.toLowerCase(Locale.ROOT));
+        if (StringUtils.isNotBlank(apiKey))
+            builder.header("x-api-key", apiKey);
+        return builder;
+    }
+
     public static URLConnection createConnection(WebURL url) throws IOException {
         URLConnection connection;
         try {
@@ -167,8 +186,8 @@ public final class NetworkUtils {
         } catch (IllegalArgumentException | MalformedURLException e) {
             throw new IOException(e);
         }
-        connection.setConnectTimeout(TIME_OUT);
-        connection.setReadTimeout(TIME_OUT);
+        connection.setConnectTimeout(TIMEOUT_MILLIS);
+        connection.setReadTimeout(TIMEOUT_MILLIS);
         if (connection instanceof HttpURLConnection httpConnection) {
             httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
             httpConnection.setRequestProperty("User-Agent", USER_AGENT);
@@ -276,8 +295,8 @@ public final class NetworkUtils {
         int redirect = 0;
         while (true) {
             conn.setUseCaches(useCache);
-            conn.setConnectTimeout(TIME_OUT);
-            conn.setReadTimeout(TIME_OUT);
+            conn.setConnectTimeout(TIMEOUT_MILLIS);
+            conn.setReadTimeout(TIMEOUT_MILLIS);
             conn.setInstanceFollowRedirects(false);
             Map<String, List<String>> properties = conn.getRequestProperties();
             String method = conn.getRequestMethod();

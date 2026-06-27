@@ -93,24 +93,15 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerMove.getStyleClass().add("small-spinner-pane");
         btnMove.setOnAction(e -> {
             Account account = skinnable.getAccount();
-            Accounts.getAccounts().remove(account);
-            if (account.isPortable()) {
-                account.setPortable(false);
-                if (!Accounts.getAccounts().contains(account))
-                    Accounts.getAccounts().add(account);
-            } else {
-                account.setPortable(true);
-                if (!Accounts.getAccounts().contains(account)) {
-                    int idx = 0;
-                    for (int i = Accounts.getAccounts().size() - 1; i >= 0; i--) {
-                        if (Accounts.getAccounts().get(i).isPortable()) {
-                            idx = i + 1;
-                            break;
-                        }
-                    }
-                    Accounts.getAccounts().add(idx, account);
-                }
+            if (!Accounts.canMoveAccount(account)) {
+                Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
+                    Accounts.forceOverwriteAccountFiles();
+                    moveAccount(skinnable);
+                });
+                return;
             }
+
+            moveAccount(skinnable);
         });
         btnMove.getStyleClass().add("toggle-icon4");
         if (skinnable.getAccount().isPortable()) {
@@ -166,7 +157,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
         SpinnerPane spinnerCopyUUID = new SpinnerPane();
         spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
-        btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getUUID().toString()));
+        btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getProfileID().toString()));
         FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid"));
         spinnerCopyUUID.setContent(btnCopyUUID);
         right.getChildren().add(spinnerCopyUUID);
@@ -183,5 +174,28 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);
+    }
+
+    /// Moves the account between local and user account files.
+    private static void moveAccount(AccountListItem skinnable) {
+        Account account = skinnable.getAccount();
+        Accounts.getAccounts().remove(account);
+        if (account.isPortable()) {
+            account.setPortable(false);
+            if (!Accounts.getAccounts().contains(account))
+                Accounts.getAccounts().add(account);
+        } else {
+            account.setPortable(true);
+            if (!Accounts.getAccounts().contains(account)) {
+                int idx = 0;
+                for (int i = Accounts.getAccounts().size() - 1; i >= 0; i--) {
+                    if (Accounts.getAccounts().get(i).isPortable()) {
+                        idx = i + 1;
+                        break;
+                    }
+                }
+                Accounts.getAccounts().add(idx, account);
+            }
+        }
     }
 }
