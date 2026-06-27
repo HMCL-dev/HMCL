@@ -141,12 +141,7 @@ public class AccountListItem extends RadioButton {
     @Nullable
     public Task<?> uploadSkin() {
         if (account instanceof OfflineAccount) {
-            OfflineAccountSkinPane pane = new OfflineAccountSkinPane((OfflineAccount) account);
-
-            pane.setScaleX(0.85);
-            pane.setScaleY(0.85);
-
-            Controllers.dialog(pane);
+            Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
             return null;
         }
         if (!account.canUploadSkin()) {

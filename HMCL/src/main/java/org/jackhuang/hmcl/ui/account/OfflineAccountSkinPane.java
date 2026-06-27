@@ -75,7 +75,7 @@ public class OfflineAccountSkinPane extends StackPane {
 
         BorderPane pane = new BorderPane();
 
-        SkinCanvas canvas = new SkinCanvas(TexturesLoader.getDefaultSkinImage(), 300, 300, true);
+        SkinCanvas canvas = new SkinCanvas(TexturesLoader.getDefaultSkinImage(), 260, 260, true);
         StackPane canvasPane = new StackPane(canvas);
         canvasPane.setPrefWidth(300);
         canvasPane.setPrefHeight(300);
@@ -101,12 +101,17 @@ public class OfflineAccountSkinPane extends StackPane {
         });
 
         StackPane skinOptionPane = new StackPane();
-        skinOptionPane.setMaxWidth(300);
-        VBox optionPane = new VBox(skinItem, skinOptionPane);
-        pane.setRight(optionPane);
+        pane.setRight(skinOptionPane);
 
-        skinSelector.maxWidthProperty().bind(skinOptionPane.maxWidthProperty().multiply(0.7));
-        capeSelector.maxWidthProperty().bind(skinOptionPane.maxWidthProperty().multiply(0.7));
+        skinSelector.setMaxWidth(Double.MAX_VALUE);
+        capeSelector.setMaxWidth(Double.MAX_VALUE);
+        modelCombobox.setMaxWidth(Double.MAX_VALUE);
+        cslApiField.setMaxWidth(Double.MAX_VALUE);
+
+        GridPane.setHgrow(modelCombobox, Priority.ALWAYS);
+        GridPane.setHgrow(skinSelector, Priority.ALWAYS);
+        GridPane.setHgrow(capeSelector, Priority.ALWAYS);
+        GridPane.setHgrow(cslApiField, Priority.ALWAYS);
 
         layout.setBody(pane);
 
@@ -182,48 +187,77 @@ public class OfflineAccountSkinPane extends StackPane {
 
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
             GridPane gridPane = new GridPane();
-            // Increase bottom padding to prevent the prompt from overlapping with the dialog action area
 
-            gridPane.setPadding(new Insets(0, 0, 45, 10));
+            gridPane.setPadding(new Insets(0, 0, 0, 10));
             gridPane.setHgap(16);
-            gridPane.setVgap(8);
-            gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
+            gridPane.setVgap(12);
+
+            ColumnConstraints column = new ColumnConstraints();
+            column.setHgrow(Priority.ALWAYS);
+            gridPane.getColumnConstraints().setAll(column);
 
             switch (selectedData) {
                 case DEFAULT:
                 case STEVE:
                 case ALEX:
                     break;
+
                 case LITTLE_SKIN:
                     HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
                     hint.setText(i18n("account.skin.type.little_skin.hint"));
 
-                    // Spanning two columns and expanding horizontally
-                    GridPane.setColumnSpan(hint, 2);
-                    GridPane.setHgrow(hint, Priority.ALWAYS);
                     hint.setMaxWidth(Double.MAX_VALUE);
-
-                    // Force top alignment within cells (to avoid vertical offset caused by the baseline)
-                    GridPane.setValignment(hint, VPos.TOP);
-
-                    // Set a fixed height as the preferred height to prevent the GridPane from stretching or leaving empty space.
-                    hint.setMaxHeight(Region.USE_PREF_SIZE);
-                    hint.setMinHeight(Region.USE_PREF_SIZE);
+                    GridPane.setHgrow(hint, Priority.ALWAYS);
 
                     gridPane.addRow(0, hint);
                     break;
+
                 case LOCAL_FILE:
-                    gridPane.setPadding(new Insets(0, 0, 0, 10));
-                    gridPane.addRow(0, new Label(i18n("account.skin.model")), modelCombobox);
-                    gridPane.addRow(1, new Label(i18n("account.skin")), skinSelector);
-                    gridPane.addRow(2, new Label(i18n("account.cape")), capeSelector);
+                    modelCombobox.setMaxWidth(Double.MAX_VALUE);
+                    skinSelector.setMaxWidth(Double.MAX_VALUE);
+                    capeSelector.setMaxWidth(Double.MAX_VALUE);
+
+                    GridPane.setHgrow(modelCombobox, Priority.ALWAYS);
+                    GridPane.setHgrow(skinSelector, Priority.ALWAYS);
+                    GridPane.setHgrow(capeSelector, Priority.ALWAYS);
+
+                    gridPane.addRow(0, new Label(i18n("account.skin.model")));
+                    gridPane.addRow(1, modelCombobox);
+
+                    gridPane.addRow(2, new Label(i18n("account.skin")));
+                    gridPane.addRow(3, skinSelector);
+
+                    gridPane.addRow(4, new Label(i18n("account.cape")));
+                    gridPane.addRow(5, capeSelector);
                     break;
+
                 case CUSTOM_SKIN_LOADER_API:
-                    gridPane.addRow(0, new Label(i18n("account.skin.type.csl_api.location")), cslApiField);
+                    cslApiField.setMaxWidth(Double.MAX_VALUE);
+                    GridPane.setHgrow(cslApiField, Priority.ALWAYS);
+
+                    gridPane.addRow(0, new Label(i18n("account.skin.type.csl_api.location")));
+                    gridPane.addRow(1, cslApiField);
                     break;
             }
 
-            skinOptionPane.getChildren().setAll(gridPane);
+            HBox body = new HBox(20);
+
+            skinItem.setPrefWidth(170);
+            skinItem.setMinWidth(170);
+
+            body.getChildren().add(skinItem);
+
+            if (!gridPane.getChildren().isEmpty()) {
+                VBox right = new VBox();
+                right.getChildren().add(gridPane);
+
+                right.setPrefWidth(230);
+                HBox.setHgrow(right, Priority.ALWAYS);
+
+                body.getChildren().add(right);
+            }
+
+            skinOptionPane.getChildren().setAll(body);
         });
 
         JFXButton acceptButton = new JFXButton(i18n("button.ok"));
