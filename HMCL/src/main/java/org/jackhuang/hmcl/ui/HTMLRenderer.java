@@ -22,6 +22,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
@@ -369,18 +370,26 @@ public final class HTMLRenderer {
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         for (int i = 0; i < columnCount; i++) {
             int finalI = i;
-            TableColumn<List<Element>, javafx.scene.Node> c = new TableColumn<>();
+            TableColumn<List<Element>, Element> c = new TableColumn<>();
             Element e = head.get(i);
             if (e != null) {
                 var box = new VBox(new HTMLRenderer(onClickHyperlink).appendNode(e).mergeLineBreaks().render());
                 box.setAlignment(Pos.CENTER_LEFT);
                 c.setGraphic(box);
             }
-            c.setCellValueFactory(param -> {
-                Element el = param.getValue().get(finalI);
-                if (el == null) return null;
-                return new SimpleObjectProperty<>(new Pane(new HTMLRenderer(onClickHyperlink).appendNode(el).mergeLineBreaks().render()));
+            c.setCellFactory(param -> new TableCell<>() {
+                @Override
+                protected void updateItem(Element item, boolean empty) {
+                    if (item == getItem()) return;
+                    super.updateItem(item, empty);
+                    if (item == null) {
+                        setGraphic(null);
+                    } else {
+                        setGraphic(new Pane(new HTMLRenderer(onClickHyperlink).appendNode(item).mergeLineBreaks().render()));
+                    }
+                }
             });
+            c.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().get(finalI)));
             tableView.getColumns().add(c);
         }
 
