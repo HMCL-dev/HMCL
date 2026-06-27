@@ -18,10 +18,10 @@
 package org.jackhuang.hmcl.launch;
 
 import org.glavo.uuid.UUIDs;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
