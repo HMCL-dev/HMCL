@@ -28,6 +28,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.SetChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.image.Image;
@@ -390,7 +391,19 @@ public final class Themes {
             }
         };
         settings().selectedThemeProperty().addListener(backgroundListener);
-        settings().getThemeAppearanceOverrides().addListener(backgroundListener);
+        settings().getThemeAppearanceOverrides().addListener((SetChangeListener<String>) change -> {
+            String setting = change.wasAdded() ? change.getElementAdded() : change.getElementRemoved();
+            switch (setting) {
+                case LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE,
+                     LauncherSettings.THEME_APPEARANCE_BACKGROUND,
+                     LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY ->
+                        backgroundListener.invalidated(settings().getThemeAppearanceOverrides());
+                case LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY -> refreshBackgroundOpacity();
+                case LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK -> refreshFallbackBackground();
+                default -> {
+                }
+            }
+        });
         settings().backgroundTypeProperty().addListener(backgroundListener);
         settings().builtinBackgroundIdProperty().addListener(backgroundListener);
         settings().customBackgroundImagePathProperty().addListener(backgroundListener);

@@ -136,20 +136,23 @@ public final class ExportWizardProvider implements WizardProvider {
                     exported.networkBackgroundImageUrlProperty().set(current.networkBackgroundImageUrlProperty().get());
                     exported.customBackgroundPaintProperty().set(current.customBackgroundPaintProperty().get());
                     exported.backgroundOpacityProperty().set(current.backgroundOpacityProperty().get());
-                    exported.networkBackgroundImageCachePolicyProperty().set(current.networkBackgroundImageCachePolicyProperty().get());
-                    exported.backgroundFallbackTypeProperty().set(current.backgroundFallbackTypeProperty().get());
-                    exported.backgroundFallbackPaintProperty().set(current.backgroundFallbackPaintProperty().get());
-                    exported.backgroundLoadPolicyProperty().set(current.backgroundLoadPolicyProperty().get());
                     exported.getThemeAppearanceOverrides().addAll(List.of(
                             LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE,
                             LauncherSettings.THEME_APPEARANCE_COLOR,
                             LauncherSettings.THEME_APPEARANCE_COLOR_STYLE,
                             LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT,
                             LauncherSettings.THEME_APPEARANCE_BACKGROUND,
-                            LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY,
-                            LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY,
-                            LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK,
-                            LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY));
+                            LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY));
+                    if (current.backgroundTypeProperty().get() == BackgroundType.NETWORK) {
+                        exported.networkBackgroundImageCachePolicyProperty().set(current.networkBackgroundImageCachePolicyProperty().get());
+                        exported.backgroundFallbackTypeProperty().set(current.backgroundFallbackTypeProperty().get());
+                        exported.backgroundFallbackPaintProperty().set(current.backgroundFallbackPaintProperty().get());
+                        exported.backgroundLoadPolicyProperty().set(current.backgroundLoadPolicyProperty().get());
+                        exported.getThemeAppearanceOverrides().addAll(List.of(
+                                LauncherSettings.THEME_APPEARANCE_NETWORK_BACKGROUND_IMAGE_CACHE_POLICY,
+                                LauncherSettings.THEME_APPEARANCE_BACKGROUND_FALLBACK,
+                                LauncherSettings.THEME_APPEARANCE_BACKGROUND_LOAD_POLICY));
+                    }
                     exported.versionListSourceProperty().set(current.versionListSourceProperty().get());
                     exported.fileDownloadSourceProperty().set(current.fileDownloadSourceProperty().get());
                     exported.preferredLoginTypeProperty().set(current.preferredLoginTypeProperty().get());

@@ -1268,28 +1268,42 @@ public final class ThemePackManager {
     private static @Nullable InstalledThemePack findInstalled(Path themePacksDirectory, String packId) throws IOException {
         Path file = installedThemePackFile(themePacksDirectory, packId);
         if (Files.isRegularFile(file)) {
-            return loadInstalled(file);
+            InstalledThemePack themePack = loadInstalled(file);
+            if (themePack.manifest().id().equals(packId)) {
+                return themePack;
+            }
+            LOG.warning("Installed theme-pack file name does not match manifest id: " + file);
         }
-        return findInstalledDirectory(themePacksDirectory, packId);
+        return findInstalledByManifestId(themePacksDirectory, packId, file);
     }
 
-    /// Finds an installed unpacked theme-pack directory by package ID.
-    private static @Nullable InstalledThemePack findInstalledDirectory(Path themePacksDirectory, String packId) throws IOException {
+    /// Finds an installed theme-pack path by package ID stored in its manifest.
+    private static @Nullable InstalledThemePack findInstalledByManifestId(
+            Path themePacksDirectory,
+            String packId,
+            Path excludedPath) throws IOException {
         if (!Files.isDirectory(themePacksDirectory)) {
             return null;
         }
 
-        try (Stream<Path> themePackDirectories = Files.list(themePacksDirectory)) {
-            for (Path themePackDirectory : themePackDirectories
-                    .filter(ThemePackManager::isInstalledThemePackDirectory)
+        Path excluded = excludedPath.toAbsolutePath().normalize();
+        try (Stream<Path> themePackPaths = Files.list(themePacksDirectory)) {
+            for (Path themePackPath : themePackPaths
+                    .filter(ThemePackManager::isInstalledThemePackPath)
+                    .sorted(Comparator.comparing(
+                            (Path path) -> path.getFileName().toString(),
+                            String.CASE_INSENSITIVE_ORDER))
                     .toList()) {
+                if (themePackPath.toAbsolutePath().normalize().equals(excluded)) {
+                    continue;
+                }
                 try {
-                    InstalledThemePack themePack = loadInstalled(themePackDirectory);
+                    InstalledThemePack themePack = loadInstalled(themePackPath);
                     if (themePack.manifest().id().equals(packId)) {
                         return themePack;
                     }
                 } catch (IOException | RuntimeException e) {
-                    LOG.warning("Failed to load installed theme-pack directory: " + themePackDirectory, e);
+                    LOG.warning("Failed to load installed theme pack: " + themePackPath, e);
                 }
             }
         }
