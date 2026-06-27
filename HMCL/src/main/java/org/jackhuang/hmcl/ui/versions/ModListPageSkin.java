@@ -320,8 +320,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXCheckBox chkMcmodId = new JFXCheckBox(i18n("mods.export.field.mcmod_id"));
         JFXCheckBox chkAbbr = new JFXCheckBox(i18n("mods.export.field.abbr"));
         JFXCheckBox chkChineseName = new JFXCheckBox(i18n("mods.export.field.chinese_name"));
-        JFXCheckBox chkSha1 = new JFXCheckBox(i18n("mods.export.field.sha1"));
-        JFXCheckBox chkSha512 = new JFXCheckBox(i18n("mods.export.field.sha512"));
+        JFXCheckBox chkSha1 = new JFXCheckBox("SHA1");
+        JFXCheckBox chkSha512 = new JFXCheckBox("SHA512");
 
         chkName.setSelected(true);
         chkVersion.setSelected(true);
