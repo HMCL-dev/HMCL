@@ -38,12 +38,40 @@ Para los sistemas y arquitecturas de CPU compatibles con HMCL, consulta [esta ta
 
 ## Descarga
 
-Descarga la última versión desde el [sitio web oficial](https://hmcl.huangyuhui.net/download).
+Puedes descargar HMCL desde las siguientes fuentes:
 
-También puedes encontrar la última versión de HMCL en [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases).
+- [Sitio web oficial de HMCL](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-Aunque no es necesario, se recomienda descargar las versiones solo de los sitios web oficiales mencionados anteriormente.
+## Contribuir
+
+HMCL es un proyecto de código abierto impulsado por la comunidad, y todos son bienvenidos a contribuir código o enviar sugerencias.
+
+Puedes contribuir al desarrollo de HMCL de las siguientes maneras:
+
+- Informa errores o solicita funciones [creando un issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) en GitHub.
+- Contribuye código haciendo fork del repositorio en GitHub y [enviando un pull request](https://github.com/HMCL-dev/HMCL/compare).
+
+Antes de contribuir, lee la [guía de contribución](./Contributing.md), que incluye lo siguiente:
+
+- [Cómo compilar y ejecutar HMCL desde el código fuente](./Contributing.md#build-hmcl)
+- [Cómo ajustar el comportamiento de HMCL con opciones de depuración](./Contributing.md#debug-options)
+
+## Colaboradores
+
+Desde 2015, más de 120 colaboradores han participado en HMCL. Gracias por su trabajo.
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## Licencia
 
-Consulta [README.md](README.md#license).
+El software se distribuye bajo la licencia [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) con los siguientes términos adicionales:
+
+### Términos adicionales bajo la sección 7 de GPLv3
+
+1. Cuando distribuyas una versión modificada del software, debes cambiar el nombre del software o el número de versión de una forma razonable para distinguirla de la versión original. (Según [GPLv3, 7(c)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374))
+
+   El nombre del software y el número de versión se pueden editar [aquí](https://github.com/HMCL-dev/HMCL/blob/86529c6f15b3be54ed8d89ece47566cf57f43eb7/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L36-L38).
+
+2. No debes eliminar la declaración de copyright que se muestra en el software. (Según [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
