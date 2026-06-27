@@ -26,9 +26,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
-import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -37,14 +37,13 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
-import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadSettingsPage extends StackPane {
@@ -64,40 +63,41 @@ public class DownloadSettingsPage extends StackPane {
             var downloadSource = new ComponentList();
             downloadSource.getStyleClass().add("card-non-transparent");
             {
-
-                var autoChooseDownloadSource = new LineToggleButton();
-                autoChooseDownloadSource.setTitle(i18n("settings.launcher.download_source.auto"));
-                autoChooseDownloadSource.selectedProperty().bindBidirectional(config().autoChooseDownloadTypeProperty());
-
-                Function<String, String> converter = key -> i18n("download.provider." + key);
-                Function<String, String> descriptionConverter = key -> {
-                    String bundleKey = "download.provider." + key + ".desc";
+                Function<DownloadSource, String> converter = source -> switch (source) {
+                        case DEFAULT -> i18n("settings.launcher.download_source.auto");
+                        case OFFICIAL -> i18n("download.provider.official");
+                        case MIRROR -> i18n("download.provider.mirror");
+                    };
+                Function<DownloadSource, String> descriptionConverter = source -> {
+                    String bundleKey = switch (source) {
+                        case DEFAULT -> "download.provider.balanced.desc";
+                        case OFFICIAL -> "download.provider.official.desc";
+                        case MIRROR -> "download.provider.mirror.desc";
+                    };
                     return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
                 };
 
-                var versionListSourcePane = new LineSelectButton<String>();
-                versionListSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty().not());
+                var versionListSourcePane = new LineSelectButton<DownloadSource>();
                 versionListSourcePane.setTitle(i18n("settings.launcher.version_list_source"));
                 versionListSourcePane.setNullSafeConverter(converter);
                 versionListSourcePane.setDescriptionConverter(descriptionConverter);
-                versionListSourcePane.setItems(DownloadProviders.AUTO_PROVIDERS.keySet());
-                versionListSourcePane.valueProperty().bindBidirectional(config().versionListSourceProperty());
+                versionListSourcePane.setItems(DownloadSource.values());
+                versionListSourcePane.valueProperty().bindBidirectional(settings().versionListSourceProperty());
 
-                var downloadSourcePane = new LineSelectButton<String>();
-                downloadSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty());
+                var downloadSourcePane = new LineSelectButton<DownloadSource>();
                 downloadSourcePane.setTitle(i18n("settings.launcher.download_source"));
                 downloadSourcePane.setNullSafeConverter(converter);
                 downloadSourcePane.setDescriptionConverter(descriptionConverter);
-                downloadSourcePane.setItems(DownloadProviders.DIRECT_PROVIDERS.keySet());
-                downloadSourcePane.valueProperty().bindBidirectional(config().downloadTypeProperty());
+                downloadSourcePane.setItems(DownloadSource.values());
+                downloadSourcePane.valueProperty().bindBidirectional(settings().fileDownloadSourceProperty());
 
                 var defaultAddonSourcePane = new LineSelectButton<String>();
                 defaultAddonSourcePane.setTitle(i18n("settings.launcher.default_addon_source"));
                 defaultAddonSourcePane.setNullSafeConverter(key -> I18n.i18n("mods." + key));
                 defaultAddonSourcePane.setItems("modrinth", "curseforge");
-                defaultAddonSourcePane.valueProperty().bindBidirectional(config().defaultAddonSourceProperty());
+                defaultAddonSourcePane.valueProperty().bindBidirectional(settings().defaultAddonSourceProperty());
 
-                downloadSource.getContent().setAll(autoChooseDownloadSource, versionListSourcePane, downloadSourcePane, defaultAddonSourcePane);
+                downloadSource.getContent().setAll(versionListSourcePane, downloadSourcePane, defaultAddonSourcePane);
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);
@@ -118,17 +118,17 @@ public class DownloadSettingsPage extends StackPane {
                             new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
                                     .setChooserTitle(i18n("launcher.cache_directory.choose"))
                                     .setSelectionMode(FileSelector.SelectionMode.DIRECTORY)
-                                    .bindBidirectional(config().commonDirectoryProperty())
+                                    .bindBidirectional(settings().commonDirectoryProperty())
                     ));
-                    fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
+                    fileCommonLocation.selectedDataProperty().bindBidirectional(settings().commonDirectoryTypeProperty());
 
                     fileCommonLocationSublist.getContent().add(fileCommonLocation);
                     fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
                     fileCommonLocationSublist.setHasSubtitle(true);
-                    fileCommonLocationSublist.subtitleProperty().bind(
-                            Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
+                    fileCommonLocationSublist.descriptionProperty().bind(
+                            Bindings.createObjectBinding(() -> Optional.ofNullable(settings().getResolvedCommonDirectory())
                                             .orElse(i18n("launcher.cache_directory.disabled")),
-                                    config().commonDirectoryProperty(), config().commonDirTypeProperty()));
+                                    settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
 
                     JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
                     cleanButton.setOnAction(e -> clearCacheDirectory());
@@ -138,12 +138,12 @@ public class DownloadSettingsPage extends StackPane {
                 {
                     JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.download.threads.auto"));
                     VBox.setMargin(chkAutoDownloadThreads, new Insets(8, 0, 0, 0));
-                    chkAutoDownloadThreads.selectedProperty().bindBidirectional(config().autoDownloadThreadsProperty());
+                    chkAutoDownloadThreads.selectedProperty().bindBidirectional(settings().autoDownloadThreadsProperty());
                     downloadThreads.getChildren().add(chkAutoDownloadThreads);
 
                     chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
                         if (newValue) {
-                            config().downloadThreadsProperty().set(FetchTask.DEFAULT_CONCURRENCY);
+                            settings().downloadThreadsProperty().set(FetchTask.DEFAULT_CONCURRENCY);
                         }
                     });
                 }
@@ -153,7 +153,7 @@ public class DownloadSettingsPage extends StackPane {
                     hbox.setStyle("-fx-view-order: -1;"); // prevent the indicator from being covered by the hint
                     hbox.setAlignment(Pos.CENTER);
                     hbox.setPadding(new Insets(0, 0, 0, 30));
-                    hbox.disableProperty().bind(config().autoDownloadThreadsProperty());
+                    hbox.disableProperty().bind(settings().autoDownloadThreadsProperty());
                     Label label = new Label(i18n("settings.launcher.download.threads"));
 
                     JFXSlider slider = new JFXSlider(1, 256, 64);
@@ -161,17 +161,17 @@ public class DownloadSettingsPage extends StackPane {
 
                     JFXTextField threadsField = new JFXTextField();
                     FXUtils.setLimitWidth(threadsField, 60);
-                    FXUtils.bindInt(threadsField, config().downloadThreadsProperty());
+                    FXUtils.bindInt(threadsField, settings().downloadThreadsProperty());
 
                     AtomicBoolean changedByTextField = new AtomicBoolean(false);
-                    FXUtils.onChangeAndOperate(config().downloadThreadsProperty(), value -> {
+                    FXUtils.onChangeAndOperate(settings().downloadThreadsProperty(), value -> {
                         changedByTextField.set(true);
                         slider.setValue(value.intValue());
                         changedByTextField.set(false);
                     });
                     slider.valueProperty().addListener((value, oldVal, newVal) -> {
                         if (changedByTextField.get()) return;
-                        config().downloadThreadsProperty().set(value.getValue().intValue());
+                        settings().downloadThreadsProperty().set(value.getValue().intValue());
                     });
 
                     hbox.getChildren().setAll(label, slider, threadsField);
@@ -181,7 +181,7 @@ public class DownloadSettingsPage extends StackPane {
                 {
                     HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                     VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
-                    hintPane.disableProperty().bind(config().autoDownloadThreadsProperty());
+                    hintPane.disableProperty().bind(settings().autoDownloadThreadsProperty());
                     hintPane.setText(i18n("settings.launcher.download.threads.hint"));
                     downloadThreads.getChildren().add(hintPane);
                 }
@@ -201,51 +201,37 @@ public class DownloadSettingsPage extends StackPane {
 
                 ToggleGroup proxyConfigurationGroup = new ToggleGroup();
 
-                JFXRadioButton chkProxyDefault = new JFXRadioButton(i18n("settings.launcher.proxy.default"));
-                chkProxyDefault.setUserData(null);
-                chkProxyDefault.setToggleGroup(proxyConfigurationGroup);
+                JFXRadioButton chkProxySystem = new JFXRadioButton(i18n("settings.launcher.proxy.default"));
+                chkProxySystem.setUserData(ProxyType.SYSTEM);
+                chkProxySystem.setToggleGroup(proxyConfigurationGroup);
 
                 JFXRadioButton chkProxyNone = new JFXRadioButton(i18n("settings.launcher.proxy.none"));
-                chkProxyNone.setUserData(Proxy.Type.DIRECT);
+                chkProxyNone.setUserData(ProxyType.DIRECT);
                 chkProxyNone.setToggleGroup(proxyConfigurationGroup);
 
                 JFXRadioButton chkProxyHttp = new JFXRadioButton(i18n("settings.launcher.proxy.http"));
-                chkProxyHttp.setUserData(Proxy.Type.HTTP);
+                chkProxyHttp.setUserData(ProxyType.HTTP);
                 chkProxyHttp.setToggleGroup(proxyConfigurationGroup);
 
 
                 JFXRadioButton chkProxySocks = new JFXRadioButton(i18n("settings.launcher.proxy.socks"));
-                chkProxySocks.setUserData(Proxy.Type.SOCKS);
+                chkProxySocks.setUserData(ProxyType.SOCKS);
                 chkProxySocks.setToggleGroup(proxyConfigurationGroup);
 
-                if (config().hasProxy()) {
-                    Proxy.Type proxyType = config().getProxyType();
-                    if (proxyType == Proxy.Type.DIRECT) {
-                        chkProxyNone.setSelected(true);
-                    } else if (proxyType == Proxy.Type.HTTP) {
-                        chkProxyHttp.setSelected(true);
-                    } else if (proxyType == Proxy.Type.SOCKS) {
-                        chkProxySocks.setSelected(true);
-                    } else {
-                        chkProxyNone.setSelected(true);
-                    }
-                } else {
-                    chkProxyDefault.setSelected(true);
+                switch (settings().proxyTypeProperty().get()) {
+                    case DIRECT -> chkProxyNone.setSelected(true);
+                    case HTTP -> chkProxyHttp.setSelected(true);
+                    case SOCKS -> chkProxySocks.setSelected(true);
+                    case SYSTEM -> chkProxySystem.setSelected(true);
                 }
 
                 holder.add(FXUtils.onWeakChange(proxyConfigurationGroup.selectedToggleProperty(), toggle -> {
-                    Proxy.Type proxyType = toggle != null ? (Proxy.Type) toggle.getUserData() : null;
-
-                    if (proxyType == null) {
-                        config().setHasProxy(false);
-                        config().setProxyType(null);
-                    } else {
-                        config().setHasProxy(true);
-                        config().setProxyType(proxyType);
-                    }
+                    settings().proxyTypeProperty().set(toggle != null
+                            ? (ProxyType) toggle.getUserData()
+                            : ProxyType.SYSTEM);
                 }));
 
-                proxyTypePane.getChildren().setAll(chkProxyDefault, chkProxyNone, chkProxyHttp, chkProxySocks);
+                proxyTypePane.getChildren().setAll(chkProxySystem, chkProxyNone, chkProxyHttp, chkProxySocks);
                 proxyList.getChildren().add(proxyTypePane);
             }
 
@@ -253,9 +239,8 @@ public class DownloadSettingsPage extends StackPane {
             {
                 proxyPane.disableProperty().bind(
                         Bindings.createBooleanBinding(() ->
-                                        !config().hasProxy() || config().getProxyType() == null || config().getProxyType() == Proxy.Type.DIRECT,
-                                config().hasProxyProperty(),
-                                config().proxyTypeProperty()));
+                                        !settings().proxyTypeProperty().get().usesCustomAddress(),
+                                settings().proxyTypeProperty()));
 
                 ColumnConstraints colHgrow = new ColumnConstraints();
                 colHgrow.setHgrow(Priority.ALWAYS);
@@ -280,7 +265,7 @@ public class DownloadSettingsPage extends StackPane {
                         GridPane.setRowIndex(txtProxyHost, 1);
                         GridPane.setColumnIndex(txtProxyHost, 1);
                         gridPane.getChildren().add(txtProxyHost);
-                        FXUtils.bindString(txtProxyHost, config().proxyHostProperty());
+                        FXUtils.bindString(txtProxyHost, settings().proxyHostProperty());
                     }
 
                     {
@@ -299,7 +284,7 @@ public class DownloadSettingsPage extends StackPane {
                         FXUtils.setValidateWhileTextChanged(txtProxyPort, true);
                         gridPane.getChildren().add(txtProxyPort);
 
-                        FXUtils.bind(txtProxyPort, config().proxyPortProperty(), SafeStringConverter.fromInteger()
+                        FXUtils.bind(txtProxyPort, settings().proxyPortProperty(), SafeStringConverter.fromInteger()
                                 .restrict(it -> it >= 0 && it <= 0xFFFF)
                                 .fallbackTo(0)
                                 .asPredicate(Validator.addTo(txtProxyPort)));
@@ -313,7 +298,7 @@ public class DownloadSettingsPage extends StackPane {
 
                     JFXCheckBox chkProxyAuthentication = new JFXCheckBox(i18n("settings.launcher.proxy.authentication"));
                     chkProxyAuthenticationPane.getChildren().add(chkProxyAuthentication);
-                    chkProxyAuthentication.selectedProperty().bindBidirectional(config().hasProxyAuthProperty());
+                    chkProxyAuthentication.selectedProperty().bindBidirectional(settings().hasProxyAuthProperty());
 
                     proxyPane.getChildren().add(chkProxyAuthenticationPane);
                 }
@@ -325,7 +310,7 @@ public class DownloadSettingsPage extends StackPane {
                     authPane.setVgap(10);
                     authPane.getColumnConstraints().setAll(new ColumnConstraints(), colHgrow);
                     authPane.getRowConstraints().setAll(new RowConstraints(), new RowConstraints());
-                    authPane.disableProperty().bind(config().hasProxyAuthProperty().not());
+                    authPane.disableProperty().bind(settings().hasProxyAuthProperty().not());
 
                     {
                         Label username = new Label(i18n("settings.launcher.proxy.username"));
@@ -339,7 +324,7 @@ public class DownloadSettingsPage extends StackPane {
                         GridPane.setRowIndex(txtProxyUsername, 0);
                         GridPane.setColumnIndex(txtProxyUsername, 1);
                         authPane.getChildren().add(txtProxyUsername);
-                        FXUtils.bindString(txtProxyUsername, config().proxyUserProperty());
+                        FXUtils.bindString(txtProxyUsername, settings().proxyUserProperty());
                     }
 
                     {
@@ -354,7 +339,7 @@ public class DownloadSettingsPage extends StackPane {
                         GridPane.setRowIndex(txtProxyPassword, 1);
                         GridPane.setColumnIndex(txtProxyPassword, 1);
                         authPane.getChildren().add(txtProxyPassword);
-                        txtProxyPassword.textProperty().bindBidirectional(config().proxyPassProperty());
+                        txtProxyPassword.textProperty().bindBidirectional(settings().proxyPasswordProperty());
                     }
 
                     proxyPane.getChildren().add(authPane);
@@ -367,7 +352,7 @@ public class DownloadSettingsPage extends StackPane {
     }
 
     private void clearCacheDirectory() {
-        String commonDirectory = Settings.instance().getCommonDirectory();
+        String commonDirectory = settings().getResolvedCommonDirectory();
         if (commonDirectory != null) {
             FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache"));
         }

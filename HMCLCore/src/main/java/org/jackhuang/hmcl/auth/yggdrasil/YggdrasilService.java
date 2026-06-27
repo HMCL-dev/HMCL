@@ -20,12 +20,12 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
@@ -105,7 +105,7 @@ public class YggdrasilService {
 
         if (characterToSelect != null) {
             request.put("selectedProfile", mapOf(
-                    pair("id", characterToSelect.getId()),
+                    pair("id", UUIDs.toCompactString(characterToSelect.getId())),
                     pair("name", characterToSelect.getName())));
         }
 
@@ -266,7 +266,6 @@ public class YggdrasilService {
     }
 
     private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
             .create();
 

@@ -80,7 +80,7 @@ public final class TexturesLoader {
     }
 
     private static final ThreadPoolExecutor POOL = threadPool("TexturesDownload", true, 2, 10, TimeUnit.SECONDS);
-    private static final Path TEXTURES_DIR = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("skins");
+    private static final Path TEXTURES_DIR = Metadata.HMCL_USER_HOME.resolve("skins");
 
     private static Path getTexturePath(Texture texture) {
         String url = texture.url();
@@ -191,16 +191,17 @@ public final class TexturesLoader {
     }
 
     public static ObservableValue<LoadedTexture> skinBinding(Account account) {
-        LoadedTexture uuidFallback = getDefaultSkin(account.getUUID());
+        LoadedTexture uuidFallback = getDefaultSkin(account.getProfileID());
         if (account instanceof OfflineAccount offlineAccount) {
 
             SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
             InvalidationListener listener = o -> {
                 OfflineSkinConfig skin = offlineAccount.getSkin();
+                String profileName = offlineAccount.getProfileName();
 
                 binding.set(uuidFallback);
                 if (skin != null) {
-                    skin.load().setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    skin.load(profileName).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
                         } else if (result != null && result.skin() != null && result.skin().image() != null) {
@@ -309,7 +310,7 @@ public final class TexturesLoader {
             fxAvatarBinding(canvas, skinBinding(account));
         else {
             unbindAvatar(canvas);
-            drawAvatar(canvas, getDefaultSkin(account.getUUID()).image);
+            drawAvatar(canvas, getDefaultSkin(account.getProfileID()).image);
         }
     }
 

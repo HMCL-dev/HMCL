@@ -58,9 +58,9 @@ public final class QuiltAPIInstallTask extends Task<Version> {
     @Override
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
-                remote.getVersion().getFile().getUrl(),
-                dependencyManager.getGameRepository().getModsDirectory(version.getId()).resolve("quilt-api-" + remote.getVersion().getVersion() + ".jar"),
-                remote.getVersion().getFile().getIntegrityCheck())
+                remote.getVersion().file().url(),
+                dependencyManager.getGameRepository().getModsDirectory(version.getId()).resolve("quilt-api-" + remote.getVersion().version() + ".jar"),
+                remote.getVersion().file().getIntegrityCheck())
         );
     }
 }

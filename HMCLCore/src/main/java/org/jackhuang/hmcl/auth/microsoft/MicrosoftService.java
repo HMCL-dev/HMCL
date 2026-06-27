@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.auth.microsoft;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
@@ -269,7 +271,7 @@ public class MicrosoftService {
     public Optional<CompleteGameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
         Objects.requireNonNull(uuid);
 
-        return Optional.ofNullable(GSON.fromJson(request("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid), null), CompleteGameProfile.class));
+        return Optional.ofNullable(GSON.fromJson(request("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDs.toCompactString(uuid), null), CompleteGameProfile.class));
     }
 
     public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
@@ -457,6 +459,7 @@ public class MicrosoftService {
 
     public static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {
         @SerializedName("id")
+        @JsonAdapter(UnhyphenatedUUIDTypeAdapter.class)
         UUID id;
         @SerializedName("name")
         String name;
@@ -483,7 +486,6 @@ public class MicrosoftService {
     }
 
     private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
             .create();
 

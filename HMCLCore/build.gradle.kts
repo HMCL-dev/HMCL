@@ -27,7 +27,8 @@ dependencies {
     api(libs.jna)
     api(libs.pci.ids)
     api(libs.hello.nbt)
-
+    api(libs.weburl)
+    api(libs.uuid.tools)
     compileOnlyApi(libs.jetbrains.annotations)
 
     testImplementation(libs.jna.platform)

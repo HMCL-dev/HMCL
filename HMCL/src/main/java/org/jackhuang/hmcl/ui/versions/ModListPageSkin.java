@@ -37,12 +37,11 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.addon.*;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
@@ -72,7 +71,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -92,7 +90,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private final JFXListView<ModInfoObject> listView;
     private final JFXTextField searchField;
 
-    // FXThread
+    @FXThread
     private boolean isSearching = false;
 
     ModListPageSkin(ModListPage skinnable) {
@@ -145,7 +143,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                     createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
-                    createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                    createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                             skinnable.checkUpdates(
                                     listView.getItems().stream()
                                             .map(ModInfoObject::getModInfo)
@@ -179,7 +177,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
                     createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                             skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                    createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                             skinnable.checkUpdates(
                                     listView.getSelectionModel().getSelectedItems().stream()
                                             .map(ModInfoObject::getModInfo)
@@ -198,6 +196,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         else
                             changeToolbar(toolbarSelecting);
                     });
+
+            FXUtils.setOverflowHidden(toolbarPane, 8);
+
             root.getContent().add(toolbarPane);
 
             // Clear selection when pressing ESC
@@ -274,17 +275,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             listView.getItems().clear();
 
             Predicate<@Nullable String> predicate;
-            if (queryString.startsWith("regex:")) {
-                try {
-                    Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
-                    predicate = s -> s != null && pattern.matcher(s).find();
-                } catch (Throwable e) {
-                    LOG.warning("Illegal regular expression", e);
-                    return;
-                }
-            } else {
-                String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+            try {
+                predicate = StringUtils.compileQuery(queryString);
+            } catch (Throwable e) {
+                LOG.warning("Illegal regular expression", e);
+                return;
             }
 
             // Do we need to search in the background thread?
@@ -471,18 +466,18 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(descriptionPane);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
-                        pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
-                        pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
+                for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
+                        pair("addon.curseforge", CurseForgeRemoteAddonRepository.MODS),
+                        pair("addon.modrinth", ModrinthRemoteAddonRepository.MODS)
                 )) {
-                    RemoteModRepository repository = item.getValue();
+                    RemoteAddonRepository repository = item.getValue();
                     JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                     Task.runAsync(() -> {
-                        Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
+                        Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
+                            RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                             FXUtils.runInFX(() -> {
-                                for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
+                                for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
                                     String loaderName = switch (modLoaderType) {
                                         case FORGE -> i18n("install.installer.forge");
                                         case CLEANROOM -> i18n("install.installer.cleanroom");
@@ -505,10 +500,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
                                     Controllers.navigate(new DownloadPage(
-                                            repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
-                                            remoteMod,
+                                            repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
+                                            remoteAddon,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
-                                            (downloadProvider, profile, version, mod, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(downloadProvider, profile, version, file, "mods")
+                                            org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
                                     ));
                                 });
                                 button.setDisable(false);

@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -84,7 +83,7 @@ public final class CacheFileTask extends FetchTask<Path> {
     }
 
     @Override
-    protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
         assert checkETag;
         assert response != null;
 
@@ -125,7 +124,7 @@ public final class CacheFileTask extends FetchTask<Path> {
                 }
 
                 try {
-                    setResult(repository.cacheRemoteFile(UrlResponseInfo.of(response), temp));
+                    setResult(repository.cacheRemoteFile(response, temp));
                 } finally {
                     deleteTempFile();
                 }

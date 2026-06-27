@@ -99,7 +99,11 @@ public final class FileUtils {
     }
 
     public static String getNameWithoutExtension(Path file) {
-        return StringUtils.substringBeforeLast(getName(file), '.');
+        String name = getName(file);
+        if (Files.isDirectory(file)) {
+            return name;
+        }
+        return StringUtils.substringBeforeLast(name, '.');
     }
 
     public static String getExtension(String fileName) {
@@ -503,6 +507,11 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, String content) throws IOException {
+        Path parent = file.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
         Path tmpFile = tmpSaveFile(file);
         try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             writer.write(content);
@@ -519,6 +528,11 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, ExceptionalConsumer<? super OutputStream, IOException> action) throws IOException {
+        Path parent = file.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
         Path tmpFile = tmpSaveFile(file);
 
         try (OutputStream os = Files.newOutputStream(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
