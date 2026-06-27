@@ -278,7 +278,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
-    /// Exports the mod list to a file.
+    /// Exports the mod list to a file asynchronously to avoid blocking the UI thread.
     /// @param selectedMods The list of selected mods to export
     /// @param format The export format: "csv" or "json"
     /// @param fields The set of field names to export
@@ -293,17 +293,27 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         Path targetPath = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
         if (targetPath == null) return;
 
-        try {
-            if (format.equals("csv")) {
-                exportToCSV(selectedMods, fields, targetPath);
-            } else {
-                exportToJSON(selectedMods, fields, targetPath);
-            }
-            Controllers.showToast(i18n("mods.export.success"));
-        } catch (IOException e) {
-            LOG.warning("Failed to export mods", e);
-            Controllers.dialog(e.getMessage(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-        }
+        final List<ModListPageSkin.ModInfoObject> modsSnapshot = new ArrayList<>(selectedMods);
+        final Path outputPath = targetPath;
+        final String exportFormat = format;
+
+        Controllers.taskDialog(
+                Task.runAsync(() -> {
+                    if (exportFormat.equals("csv")) {
+                        exportToCSV(modsSnapshot, fields, outputPath);
+                    } else {
+                        exportToJSON(modsSnapshot, fields, outputPath);
+                    }
+                }).withStagesHints(i18n("mods.export.exporting"))
+                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            if (exception == null) {
+                                Controllers.showToast(i18n("mods.export.success"));
+                            } else {
+                                LOG.warning("Failed to export mods", exception);
+                                Controllers.dialog(exception.getMessage(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                            }
+                        }),
+                i18n("mods.export.title"), TaskCancellationAction.NO_CANCEL);
     }
 
     private void exportToCSV(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields, Path targetPath) throws IOException {
@@ -379,12 +389,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         ModTranslations.Mod modTranslations = modInfo.getModTranslations();
 
         return switch (field) {
-            case "name" -> mod.getName();
-            case "version" -> mod.getVersion();
+            case "name" -> mod.getName() != null ? mod.getName() : "";
+            case "version" -> mod.getVersion() != null ? mod.getVersion() : "";
             case "modid" -> mod.getId() != null ? mod.getId() : "";
-            case "gameVersion" -> mod.getGameVersion();
-            case "authors" -> mod.getAuthors();
-            case "description" -> mod.getDescription().toStringSingleLine();
+            case "gameVersion" -> mod.getGameVersion() != null ? mod.getGameVersion() : "";
+            case "authors" -> mod.getAuthors() != null ? mod.getAuthors() : "";
+            case "description" -> mod.getDescription() != null ? mod.getDescription().toStringSingleLine() : "";
             case "url" -> mod.getUrl() != null ? mod.getUrl() : "";
             case "active" -> String.valueOf(mod.isActive());
             case "modLoaderType" -> mod.getModLoaderType() != null ? mod.getModLoaderType().name() : "";
