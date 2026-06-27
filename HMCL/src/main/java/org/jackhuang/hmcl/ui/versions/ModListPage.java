@@ -58,6 +58,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -91,7 +92,9 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         }
     }
 
-    private final Map<Path, RemoteModInfo> remoteModInfoCache = new HashMap<>();
+    private final Map<Path, RemoteModInfo> remoteModInfoCache = new ConcurrentHashMap<>();
+    private final Map<Path, String> sha1Cache = new ConcurrentHashMap<>();
+    private final Map<Path, String> sha512Cache = new ConcurrentHashMap<>();
 
     public ModListPage() {
         FXUtils.applyDragListener(this, it -> ModManager.MOD_EXTENSIONS.contains(FileUtils.getExtension(it).toLowerCase(Locale.ROOT)), mods -> {
@@ -330,13 +333,15 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         final Path outputPath = targetPath;
         final String exportFormat = format;
         final String template = customTemplate;
+        final Set<String> fieldsSnapshot = new HashSet<>(fields);
 
         Controllers.taskDialog(
                 Task.runAsync(() -> {
+                    prefetchData(modsSnapshot, fieldsSnapshot);
                     if (exportFormat.equals("csv")) {
-                        exportToCSV(modsSnapshot, fields, outputPath);
+                        exportToCSV(modsSnapshot, fieldsSnapshot, outputPath);
                     } else if (exportFormat.equals("json")) {
-                        exportToJSON(modsSnapshot, fields, outputPath);
+                        exportToJSON(modsSnapshot, fieldsSnapshot, outputPath);
                     } else {
                         exportToCustomText(modsSnapshot, template, outputPath);
                     }
@@ -350,6 +355,66 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             }
                         }),
                 i18n("mods.export.title"), TaskCancellationAction.NO_CANCEL);
+    }
+
+    /// Prefetches remote mod information and file hashes in parallel to improve export performance.
+    /// This method checks which fields are needed and only fetches the required data.
+    /// @param mods The list of mods to prefetch data for
+    /// @param fields The set of fields that will be exported
+    private void prefetchData(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields) {
+        boolean needsRemoteInfo = fields.stream().anyMatch(f ->
+                f.equals("curseForgeUrl") || f.equals("curseForgeFileUrl") ||
+                        f.equals("curseForgeDownloadPage") || f.equals("modrinthUrl") ||
+                        f.equals("modrinthFileUrl"));
+        boolean needsSha1 = fields.contains("sha1");
+        boolean needsSha512 = fields.contains("sha512");
+
+        if (!needsRemoteInfo && !needsSha1 && !needsSha512) {
+            return; // No prefetch needed
+        }
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        for (ModListPageSkin.ModInfoObject modInfo : mods) {
+            LocalModFile mod = modInfo.getModInfo();
+            Path filePath = mod.getFile();
+
+            // Prefetch remote info in parallel
+            if (needsRemoteInfo) {
+                futures.add(CompletableFuture.runAsync(() -> {
+                    try {
+                        getRemoteModInfo(mod);
+                    } catch (Exception e) {
+                        LOG.warning("Failed to prefetch remote info for " + filePath, e);
+                    }
+                }, Schedulers.io()));
+            }
+
+            // Prefetch SHA1 in parallel
+            if (needsSha1) {
+                futures.add(CompletableFuture.runAsync(() -> {
+                    try {
+                        computeSha1Cached(filePath);
+                    } catch (Exception e) {
+                        LOG.warning("Failed to prefetch SHA1 for " + filePath, e);
+                    }
+                }, Schedulers.io()));
+            }
+
+            // Prefetch SHA512 in parallel
+            if (needsSha512) {
+                futures.add(CompletableFuture.runAsync(() -> {
+                    try {
+                        computeSha512Cached(filePath);
+                    } catch (Exception e) {
+                        LOG.warning("Failed to prefetch SHA512 for " + filePath, e);
+                    }
+                }, Schedulers.io()));
+            }
+        }
+
+        // Wait for all prefetch tasks to complete
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     private void exportToCustomText(List<ModListPageSkin.ModInfoObject> mods, String template, Path targetPath) throws IOException {
@@ -493,11 +558,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 yield chineseName;
             }
             case "sha1" -> {
-                String sha1 = computeSha1(mod.getFile());
+                String sha1 = computeSha1Cached(mod.getFile());
                 yield sha1 != null ? sha1 : "";
             }
             case "sha512" -> {
-                String sha512 = computeSha512(mod.getFile());
+                String sha512 = computeSha512Cached(mod.getFile());
                 yield sha512 != null ? sha512 : "";
             }
             case "curseForgeUrl" -> {
@@ -542,6 +607,20 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         }
     }
 
+    /// Computes SHA1 hash with caching to avoid redundant computation.
+    /// @param path The file path to compute hash for
+    /// @return The SHA1 hash string, or null if computation failed
+    private @Nullable String computeSha1Cached(Path path) {
+        return sha1Cache.computeIfAbsent(path, p -> computeSha1(p));
+    }
+
+    /// Computes SHA512 hash with caching to avoid redundant computation.
+    /// @param path The file path to compute hash for
+    /// @return The SHA512 hash string, or null if computation failed
+    private @Nullable String computeSha512Cached(Path path) {
+        return sha512Cache.computeIfAbsent(path, p -> computeSha512(p));
+    }
+
     private RemoteModInfo getRemoteModInfo(LocalModFile mod) {
         Path filePath = mod.getFile();
         RemoteModInfo cached = remoteModInfoCache.get(filePath);
@@ -549,58 +628,74 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             return cached;
         }
 
-        String curseForgeUrl = "";
-        String curseForgeFileUrl = "";
-        String curseForgeDownloadPage = "";
-        String modrinthUrl = "";
-        String modrinthFileUrl = "";
+        // Use ConcurrentHashMap to safely collect results from parallel operations
+        Map<String, String> results = new ConcurrentHashMap<>();
+        results.put("curseForgeUrl", "");
+        results.put("curseForgeFileUrl", "");
+        results.put("curseForgeDownloadPage", "");
+        results.put("modrinthUrl", "");
+        results.put("modrinthFileUrl", "");
 
         DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
-        try {
-            if (CurseForgeRemoteAddonRepository.isAvailable()) {
-                RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddonRepository.Type.MOD);
-                if (curseForgeRepo != null) {
-                    Optional<RemoteAddon.Version> curseForgeVersion = curseForgeRepo.getRemoteVersionByLocalFile(filePath);
-                    if (curseForgeVersion.isPresent()) {
-                        RemoteAddon.Version version = curseForgeVersion.get();
-                        curseForgeFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
-                        try {
-                            RemoteAddon addon = curseForgeRepo.getModById(downloadProvider, version.modid());
-                            curseForgeUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
-                            if (version.self() instanceof CurseForgeRemoteAddonRepository.CurseAddon.LatestFile latestFile) {
-                                curseForgeDownloadPage = curseForgeUrl + "/download/" + latestFile.id();
+        // Fetch CurseForge and Modrinth info in parallel
+        CompletableFuture<Void> curseForgeFuture = CompletableFuture.runAsync(() -> {
+            try {
+                if (CurseForgeRemoteAddonRepository.isAvailable()) {
+                    RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddonRepository.Type.MOD);
+                    if (curseForgeRepo != null) {
+                        Optional<RemoteAddon.Version> curseForgeVersion = curseForgeRepo.getRemoteVersionByLocalFile(filePath);
+                        if (curseForgeVersion.isPresent()) {
+                            RemoteAddon.Version version = curseForgeVersion.get();
+                            results.put("curseForgeFileUrl", version.file() != null && version.file().url() != null ? version.file().url() : "");
+                            try {
+                                RemoteAddon addon = curseForgeRepo.getModById(downloadProvider, version.modid());
+                                String url = addon.pageUrl() != null ? addon.pageUrl() : "";
+                                results.put("curseForgeUrl", url);
+                                if (version.self() instanceof CurseForgeRemoteAddonRepository.CurseAddon.LatestFile latestFile) {
+                                    results.put("curseForgeDownloadPage", url + "/download/" + latestFile.id());
+                                }
+                            } catch (IOException e) {
+                                LOG.warning("Failed to get CurseForge mod info for " + filePath, e);
                             }
-                        } catch (IOException e) {
-                            LOG.warning("Failed to get CurseForge mod info for " + filePath, e);
                         }
                     }
                 }
+            } catch (IOException e) {
+                LOG.warning("Failed to lookup CurseForge version for " + filePath, e);
             }
-        } catch (IOException e) {
-            LOG.warning("Failed to lookup CurseForge version for " + filePath, e);
-        }
+        }, Schedulers.io());
 
-        try {
-            RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddonRepository.Type.MOD);
-            if (modrinthRepo != null) {
-                Optional<RemoteAddon.Version> modrinthVersion = modrinthRepo.getRemoteVersionByLocalFile(filePath);
-                if (modrinthVersion.isPresent()) {
-                    RemoteAddon.Version version = modrinthVersion.get();
-                    modrinthFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
-                    try {
-                        RemoteAddon addon = modrinthRepo.getModById(downloadProvider, version.modid());
-                        modrinthUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
-                    } catch (IOException e) {
-                        LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
+        CompletableFuture<Void> modrinthFuture = CompletableFuture.runAsync(() -> {
+            try {
+                RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddonRepository.Type.MOD);
+                if (modrinthRepo != null) {
+                    Optional<RemoteAddon.Version> modrinthVersion = modrinthRepo.getRemoteVersionByLocalFile(filePath);
+                    if (modrinthVersion.isPresent()) {
+                        RemoteAddon.Version version = modrinthVersion.get();
+                        results.put("modrinthFileUrl", version.file() != null && version.file().url() != null ? version.file().url() : "");
+                        try {
+                            RemoteAddon addon = modrinthRepo.getModById(downloadProvider, version.modid());
+                            results.put("modrinthUrl", addon.pageUrl() != null ? addon.pageUrl() : "");
+                        } catch (IOException e) {
+                            LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
+                        }
                     }
                 }
+            } catch (IOException e) {
+                LOG.warning("Failed to lookup Modrinth version for " + filePath, e);
             }
-        } catch (IOException e) {
-            LOG.warning("Failed to lookup Modrinth version for " + filePath, e);
-        }
+        }, Schedulers.io());
 
-        RemoteModInfo result = new RemoteModInfo(curseForgeUrl, curseForgeFileUrl, curseForgeDownloadPage, modrinthUrl, modrinthFileUrl);
+        // Wait for both futures to complete
+        CompletableFuture.allOf(curseForgeFuture, modrinthFuture).join();
+
+        RemoteModInfo result = new RemoteModInfo(
+                results.get("curseForgeUrl"),
+                results.get("curseForgeFileUrl"),
+                results.get("curseForgeDownloadPage"),
+                results.get("modrinthUrl"),
+                results.get("modrinthFileUrl"));
         remoteModInfoCache.put(filePath, result);
         return result;
     }
