@@ -67,12 +67,4 @@ HMCL 乃社群共驅之開源項目，迎諸君獻碼或建言。
 
 ## 開源之約
 
-此程式以 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) 之約布之，並附下列增條：
-
-### 依 GPLv3 第七條所附增條
-
-1. 凡分發此程式之改本者，必以合理之法更其名或版本號，使別於原本。(依 [GPLv3, 7(c)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374))
-
-   程式名與版本號可於[此處](https://github.com/HMCL-dev/HMCL/blob/86529c6f15b3be54ed8d89ece47566cf57f43eb7/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L36-L38)改之。
-
-2. 不得去此程式所示版權之告。(依 [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
+詳見 [README.md](README.md#license)。

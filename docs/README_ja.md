@@ -66,12 +66,4 @@ HMCL の開発には、次の方法で参加できます。
 
 ## ライセンス
 
-このソフトウェアは、以下の追加条項を付けて [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) ライセンスの下で配布されます。
-
-### GPLv3 第 7 条に基づく追加条項
-
-1. このソフトウェアの改変版を配布する場合、元のバージョンと区別できるよう、合理的な方法でソフトウェア名またはバージョン番号を変更しなければなりません。([GPLv3, 7(c)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374) に基づく)
-
-   ソフトウェア名とバージョン番号は[ここ](https://github.com/HMCL-dev/HMCL/blob/86529c6f15b3be54ed8d89ece47566cf57f43eb7/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L36-L38)で変更できます。
-
-2. ソフトウェアに表示される著作権表示を削除してはなりません。([GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370) に基づく)
+ライセンスについては [README.md](README.md#license) をご参照ください。

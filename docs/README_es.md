@@ -66,12 +66,4 @@ Desde 2015, más de 120 colaboradores han participado en HMCL. Gracias por su tr
 
 ## Licencia
 
-El software se distribuye bajo la licencia [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) con los siguientes términos adicionales:
-
-### Términos adicionales bajo la sección 7 de GPLv3
-
-1. Cuando distribuyas una versión modificada del software, debes cambiar el nombre del software o el número de versión de una forma razonable para distinguirla de la versión original. (Según [GPLv3, 7(c)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374))
-
-   El nombre del software y el número de versión se pueden editar [aquí](https://github.com/HMCL-dev/HMCL/blob/86529c6f15b3be54ed8d89ece47566cf57f43eb7/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L36-L38).
-
-2. No debes eliminar la declaración de copyright que se muestra en el software. (Según [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
+Consulta [README.md](README.md#license).
