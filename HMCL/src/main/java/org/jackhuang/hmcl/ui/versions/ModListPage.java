@@ -28,6 +28,10 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -70,6 +74,22 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
+
+    private static final class RemoteModInfo {
+        final String curseForgeUrl;
+        final String curseForgeFileUrl;
+        final String modrinthUrl;
+        final String modrinthFileUrl;
+
+        RemoteModInfo(String curseForgeUrl, String curseForgeFileUrl, String modrinthUrl, String modrinthFileUrl) {
+            this.curseForgeUrl = curseForgeUrl;
+            this.curseForgeFileUrl = curseForgeFileUrl;
+            this.modrinthUrl = modrinthUrl;
+            this.modrinthFileUrl = modrinthFileUrl;
+        }
+    }
+
+    private final Map<Path, RemoteModInfo> remoteModInfoCache = new HashMap<>();
 
     public ModListPage() {
         FXUtils.applyDragListener(this, it -> ModManager.MOD_EXTENSIONS.contains(FileUtils.getExtension(it).toLowerCase(Locale.ROOT)), mods -> {
@@ -416,6 +436,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 case "chineseName" -> "Chinese Name";
                 case "sha1" -> "SHA1";
                 case "sha512" -> "SHA512";
+                case "curseForgeUrl" -> "CurseForge URL";
+                case "curseForgeFileUrl" -> "CurseForge File URL";
+                case "modrinthUrl" -> "Modrinth URL";
+                case "modrinthFileUrl" -> "Modrinth File URL";
                 default -> field;
             });
         }
@@ -473,6 +497,22 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 String sha512 = computeSha512(mod.getFile());
                 yield sha512 != null ? sha512 : "";
             }
+            case "curseForgeUrl" -> {
+                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                yield remoteInfo.curseForgeUrl;
+            }
+            case "curseForgeFileUrl" -> {
+                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                yield remoteInfo.curseForgeFileUrl;
+            }
+            case "modrinthUrl" -> {
+                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                yield remoteInfo.modrinthUrl;
+            }
+            case "modrinthFileUrl" -> {
+                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                yield remoteInfo.modrinthFileUrl;
+            }
             default -> "";
         };
     }
@@ -493,6 +533,65 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             LOG.warning("Failed to compute SHA512 for " + path, e);
             return null;
         }
+    }
+
+    private RemoteModInfo getRemoteModInfo(LocalModFile mod) {
+        Path filePath = mod.getFile();
+        RemoteModInfo cached = remoteModInfoCache.get(filePath);
+        if (cached != null) {
+            return cached;
+        }
+
+        String curseForgeUrl = "";
+        String curseForgeFileUrl = "";
+        String modrinthUrl = "";
+        String modrinthFileUrl = "";
+
+        DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
+
+        try {
+            if (CurseForgeRemoteAddonRepository.isAvailable()) {
+                RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddonRepository.Type.MOD);
+                if (curseForgeRepo != null) {
+                    Optional<RemoteAddon.Version> curseForgeVersion = curseForgeRepo.getRemoteVersionByLocalFile(filePath);
+                    if (curseForgeVersion.isPresent()) {
+                        RemoteAddon.Version version = curseForgeVersion.get();
+                        curseForgeFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
+                        try {
+                            RemoteAddon addon = curseForgeRepo.getModById(downloadProvider, version.modid());
+                            curseForgeUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
+                        } catch (IOException e) {
+                            LOG.warning("Failed to get CurseForge mod info for " + filePath, e);
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to lookup CurseForge version for " + filePath, e);
+        }
+
+        try {
+            RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddonRepository.Type.MOD);
+            if (modrinthRepo != null) {
+                Optional<RemoteAddon.Version> modrinthVersion = modrinthRepo.getRemoteVersionByLocalFile(filePath);
+                if (modrinthVersion.isPresent()) {
+                    RemoteAddon.Version version = modrinthVersion.get();
+                    modrinthFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
+                    try {
+                        RemoteAddon addon = modrinthRepo.getModById(downloadProvider, version.modid());
+                        modrinthUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
+                    } catch (IOException e) {
+                        LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to lookup Modrinth version for " + filePath, e);
+        }
+
+        RemoteModInfo result = new RemoteModInfo(curseForgeUrl, curseForgeFileUrl, modrinthUrl, modrinthFileUrl);
+        remoteModInfoCache.put(filePath, result);
+        return result;
     }
 
     public void rollback(LocalModFile from, LocalModFile to) {

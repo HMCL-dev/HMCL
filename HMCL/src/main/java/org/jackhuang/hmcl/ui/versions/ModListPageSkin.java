@@ -325,6 +325,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXCheckBox chkChineseName = new JFXCheckBox(i18n("mods.export.field.chinese_name"));
         JFXCheckBox chkSha1 = new JFXCheckBox("SHA1");
         JFXCheckBox chkSha512 = new JFXCheckBox("SHA512");
+        JFXCheckBox chkCurseForgeUrl = new JFXCheckBox(i18n("mods.export.field.curseforge_url"));
+        JFXCheckBox chkCurseForgeFileUrl = new JFXCheckBox(i18n("mods.export.field.curseforge_file_url"));
+        JFXCheckBox chkModrinthUrl = new JFXCheckBox(i18n("mods.export.field.modrinth_url"));
+        JFXCheckBox chkModrinthFileUrl = new JFXCheckBox(i18n("mods.export.field.modrinth_file_url"));
 
         chkName.setSelected(true);
         chkVersion.setSelected(true);
@@ -340,6 +344,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         chkChineseName.setSelected(false);
         chkSha1.setSelected(false);
         chkSha512.setSelected(false);
+        chkCurseForgeUrl.setSelected(false);
+        chkCurseForgeFileUrl.setSelected(false);
+        chkModrinthUrl.setSelected(false);
+        chkModrinthFileUrl.setSelected(false);
 
         Label formatLabel = new Label(i18n("mods.export.format"));
         Label fieldsLabel = new Label(i18n("mods.export.fields"));
@@ -352,7 +360,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         FlowPane placeholdersPane = new FlowPane(5, 5);
         placeholdersPane.setAlignment(Pos.CENTER_LEFT);
         String[] placeholders = {"name", "version", "modid", "gameVersion", "authors", 
-                "description", "url", "active", "modLoaderType", "mcmodId", "abbr", "chineseName", "sha1", "sha512"};
+                "description", "url", "active", "modLoaderType", "mcmodId", "abbr", "chineseName", "sha1", "sha512",
+                "curseForgeUrl", "curseForgeFileUrl", "modrinthUrl", "modrinthFileUrl"};
         for (String placeholder : placeholders) {
             String placeholderText = "{" + placeholder + "}";
             JFXButton btn = FXUtils.newBorderButton(placeholderText);
@@ -367,7 +376,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 chkName, chkVersion, chkId, chkGameVersion, chkAuthors,
                 chkDescription, chkUrl, chkActive, chkModLoaderType,
                 chkMcmodId, chkAbbr, chkChineseName,
-                chkSha1, chkSha512);
+                chkSha1, chkSha512,
+                chkCurseForgeUrl, chkCurseForgeFileUrl,
+                chkModrinthUrl, chkModrinthFileUrl);
         fieldsBox.setAlignment(Pos.CENTER_LEFT);
 
         VBox templateBox = new VBox(5, templateLabel, templateTextField, placeholdersLabel, placeholdersPane);
@@ -444,6 +455,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 if (chkChineseName.isSelected()) fields.add("chineseName");
                 if (chkSha1.isSelected()) fields.add("sha1");
                 if (chkSha512.isSelected()) fields.add("sha512");
+                if (chkCurseForgeUrl.isSelected()) fields.add("curseForgeUrl");
+                if (chkCurseForgeFileUrl.isSelected()) fields.add("curseForgeFileUrl");
+                if (chkModrinthUrl.isSelected()) fields.add("modrinthUrl");
+                if (chkModrinthFileUrl.isSelected()) fields.add("modrinthFileUrl");
             }
 
             dialogLayout.fireEvent(new DialogCloseEvent());
