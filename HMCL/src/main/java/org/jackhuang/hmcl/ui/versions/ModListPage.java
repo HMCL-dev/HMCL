@@ -59,6 +59,7 @@ import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -336,94 +337,176 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         final Set<String> fieldsSnapshot = new HashSet<>(fields);
 
         Controllers.taskDialog(
-                Task.runAsync(() -> {
-                    prefetchData(modsSnapshot, fieldsSnapshot);
-                    if (exportFormat.equals("csv")) {
-                        exportToCSV(modsSnapshot, fieldsSnapshot, outputPath);
-                    } else if (exportFormat.equals("json")) {
-                        exportToJSON(modsSnapshot, fieldsSnapshot, outputPath);
-                    } else {
-                        exportToCustomText(modsSnapshot, template, outputPath);
-                    }
-                }).withStagesHints(i18n("mods.export.exporting"))
+                new ExportTask(modsSnapshot, fieldsSnapshot, exportFormat, template, outputPath)
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception == null) {
-                                Controllers.showToast(i18n("mods.export.success"));
+                                Controllers.dialog(i18n("mods.export.success"), i18n("mods.export.title"));
                             } else {
                                 LOG.warning("Failed to export mods", exception);
                                 Controllers.dialog(exception.getMessage(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
                         }),
-                i18n("mods.export.title"), TaskCancellationAction.NO_CANCEL);
+                i18n("mods.export.title"), TaskCancellationAction.NORMAL);
     }
 
-    /// Prefetches remote mod information and file hashes in parallel to improve export performance.
-    /// This method checks which fields are needed and only fetches the required data.
-    /// @param mods The list of mods to prefetch data for
-    /// @param fields The set of fields that will be exported
-    private void prefetchData(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields) {
-        boolean needsRemoteInfo = fields.stream().anyMatch(f ->
-                f.equals("curseForgeUrl") || f.equals("curseForgeFileUrl") ||
-                        f.equals("curseForgeDownloadPage") || f.equals("modrinthUrl") ||
-                        f.equals("modrinthFileUrl"));
-        boolean needsSha1 = fields.contains("sha1");
-        boolean needsSha512 = fields.contains("sha512");
+    /// Custom Task class for exporting mods with progress updates.
+    private class ExportTask extends Task<Void> {
+        private final List<ModListPageSkin.ModInfoObject> mods;
+        private final Set<String> fields;
+        private final String format;
+        private final String template;
+        private final Path targetPath;
 
-        if (!needsRemoteInfo && !needsSha1 && !needsSha512) {
-            return; // No prefetch needed
+        ExportTask(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields, String format, String template, Path targetPath) {
+            this.mods = mods;
+            this.fields = fields;
+            this.format = format;
+            this.template = template;
+            this.targetPath = targetPath;
+            setName(i18n("mods.export.exporting"));
         }
 
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        @Override
+        public void execute() throws Exception {
+            // Prefetch data with progress updates
+            prefetchDataWithProgress();
 
-        for (ModListPageSkin.ModInfoObject modInfo : mods) {
-            LocalModFile mod = modInfo.getModInfo();
-            Path filePath = mod.getFile();
-
-            // Prefetch remote info in parallel
-            if (needsRemoteInfo) {
-                futures.add(CompletableFuture.runAsync(() -> {
-                    try {
-                        getRemoteModInfo(mod);
-                    } catch (Exception e) {
-                        LOG.warning("Failed to prefetch remote info for " + filePath, e);
-                    }
-                }, Schedulers.io()));
-            }
-
-            // Prefetch SHA1 in parallel
-            if (needsSha1) {
-                futures.add(CompletableFuture.runAsync(() -> {
-                    try {
-                        computeSha1Cached(filePath);
-                    } catch (Exception e) {
-                        LOG.warning("Failed to prefetch SHA1 for " + filePath, e);
-                    }
-                }, Schedulers.io()));
-            }
-
-            // Prefetch SHA512 in parallel
-            if (needsSha512) {
-                futures.add(CompletableFuture.runAsync(() -> {
-                    try {
-                        computeSha512Cached(filePath);
-                    } catch (Exception e) {
-                        LOG.warning("Failed to prefetch SHA512 for " + filePath, e);
-                    }
-                }, Schedulers.io()));
+            // Export based on format with progress updates
+            if (format.equals("csv")) {
+                exportToCSVWithProgress();
+            } else if (format.equals("json")) {
+                exportToJSONWithProgress();
+            } else {
+                exportToCustomTextWithProgress();
             }
         }
 
-        // Wait for all prefetch tasks to complete
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-    }
+        private void prefetchDataWithProgress() {
+            boolean needsRemoteInfo = fields.stream().anyMatch(f ->
+                    f.equals("curseForgeUrl") || f.equals("curseForgeFileUrl") ||
+                            f.equals("curseForgeDownloadPage") || f.equals("modrinthUrl") ||
+                            f.equals("modrinthFileUrl"));
+            boolean needsSha1 = fields.contains("sha1");
+            boolean needsSha512 = fields.contains("sha512");
 
-    private void exportToCustomText(List<ModListPageSkin.ModInfoObject> mods, String template, Path targetPath) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        for (ModListPageSkin.ModInfoObject modInfo : mods) {
-            sb.append(applyTemplate(modInfo, template));
-            sb.append(System.lineSeparator());
+            if (!needsRemoteInfo && !needsSha1 && !needsSha512) {
+                return; // No prefetch needed
+            }
+
+            final int totalTasks;
+            {
+                int temp = 0;
+                if (needsRemoteInfo) temp += mods.size();
+                if (needsSha1) temp += mods.size();
+                if (needsSha512) temp += mods.size();
+                totalTasks = temp;
+            }
+
+            if (totalTasks == 0) return;
+
+            AtomicInteger completedTasks = new AtomicInteger(0);
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+            for (ModListPageSkin.ModInfoObject modInfo : mods) {
+                LocalModFile mod = modInfo.getModInfo();
+                Path filePath = mod.getFile();
+
+                // Prefetch remote info in parallel
+                if (needsRemoteInfo) {
+                    futures.add(CompletableFuture.runAsync(() -> {
+                        try {
+                            getRemoteModInfo(mod);
+                        } catch (Exception e) {
+                            LOG.warning("Failed to prefetch remote info for " + filePath, e);
+                        } finally {
+                            updateProgress(completedTasks.incrementAndGet(), totalTasks);
+                        }
+                    }, Schedulers.io()));
+                }
+
+                // Prefetch SHA1 in parallel
+                if (needsSha1) {
+                    futures.add(CompletableFuture.runAsync(() -> {
+                        try {
+                            computeSha1Cached(filePath);
+                        } catch (Exception e) {
+                            LOG.warning("Failed to prefetch SHA1 for " + filePath, e);
+                        } finally {
+                            updateProgress(completedTasks.incrementAndGet(), totalTasks);
+                        }
+                    }, Schedulers.io()));
+                }
+
+                // Prefetch SHA512 in parallel
+                if (needsSha512) {
+                    futures.add(CompletableFuture.runAsync(() -> {
+                        try {
+                            computeSha512Cached(filePath);
+                        } catch (Exception e) {
+                            LOG.warning("Failed to prefetch SHA512 for " + filePath, e);
+                        } finally {
+                            updateProgress(completedTasks.incrementAndGet(), totalTasks);
+                        }
+                    }, Schedulers.io()));
+                }
+            }
+
+            // Wait for all prefetch tasks to complete
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         }
-        Files.writeString(targetPath, sb.toString(), StandardCharsets.UTF_8);
+
+        private void exportToCustomTextWithProgress() throws IOException {
+            StringBuilder sb = new StringBuilder();
+            int totalMods = mods.size();
+            for (int i = 0; i < totalMods; i++) {
+                ModListPageSkin.ModInfoObject modInfo = mods.get(i);
+                sb.append(applyTemplate(modInfo, template));
+                sb.append(System.lineSeparator());
+                updateProgress(i + 1, totalMods);
+            }
+            Files.writeString(targetPath, sb.toString(), StandardCharsets.UTF_8);
+        }
+
+        private void exportToCSVWithProgress() throws IOException {
+            CSVTable table = new CSVTable();
+
+            // Header row
+            List<String> headers = getFieldHeaders(fields);
+            for (int col = 0; col < headers.size(); col++) {
+                table.set(col, 0, headers.get(col));
+            }
+
+            // Data rows with progress updates
+            int totalMods = mods.size();
+            for (int row = 0; row < totalMods; row++) {
+                ModListPageSkin.ModInfoObject mod = mods.get(row);
+                List<String> values = getFieldValues(mod, fields);
+                for (int col = 0; col < values.size(); col++) {
+                    table.set(col, row + 1, values.get(col));
+                }
+                updateProgress(row + 1, totalMods);
+            }
+
+            table.write(targetPath);
+        }
+
+        private void exportToJSONWithProgress() throws IOException {
+            List<Map<String, String>> jsonData = new ArrayList<>();
+            int totalMods = mods.size();
+            for (int i = 0; i < totalMods; i++) {
+                ModListPageSkin.ModInfoObject mod = mods.get(i);
+                Map<String, String> modData = new LinkedHashMap<>();
+                for (String field : fields) {
+                    modData.put(field, getFieldValue(mod, field));
+                }
+                jsonData.add(modData);
+                updateProgress(i + 1, totalMods);
+            }
+
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String json = gson.toJson(jsonData);
+            Files.writeString(targetPath, json, StandardCharsets.UTF_8);
+        }
     }
 
     private String applyTemplate(ModListPageSkin.ModInfoObject modInfo, String template) {
@@ -449,41 +532,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         return result.toString();
     }
 
-    private void exportToCSV(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields, Path targetPath) throws IOException {
-        CSVTable table = new CSVTable();
 
-        // Header row
-        List<String> headers = getFieldHeaders(fields);
-        for (int col = 0; col < headers.size(); col++) {
-            table.set(col, 0, headers.get(col));
-        }
-
-        // Data rows
-        for (int row = 0; row < mods.size(); row++) {
-            ModListPageSkin.ModInfoObject mod = mods.get(row);
-            List<String> values = getFieldValues(mod, fields);
-            for (int col = 0; col < values.size(); col++) {
-                table.set(col, row + 1, values.get(col));
-            }
-        }
-
-        table.write(targetPath);
-    }
-
-    private void exportToJSON(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields, Path targetPath) throws IOException {
-        List<Map<String, String>> jsonData = new ArrayList<>();
-        for (ModListPageSkin.ModInfoObject mod : mods) {
-            Map<String, String> modData = new LinkedHashMap<>();
-            for (String field : fields) {
-                modData.put(field, getFieldValue(mod, field));
-            }
-            jsonData.add(modData);
-        }
-
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        String json = gson.toJson(jsonData);
-        Files.writeString(targetPath, json, StandardCharsets.UTF_8);
-    }
 
     private List<String> getFieldHeaders(Set<String> fields) {
         List<String> headers = new ArrayList<>();
