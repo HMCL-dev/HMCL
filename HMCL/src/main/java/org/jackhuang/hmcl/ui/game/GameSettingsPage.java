@@ -651,7 +651,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 {
                     var txtMinMemory = new JFXTextField();
                     txtMinMemory.setPrefWidth(160);
-                    minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label(i18n("settings.memory.unit.mib"))));
+
+                    var rightBox = new HBox(8, txtMinMemory, new Label(i18n("settings.memory.unit.mib")));
+                    rightBox.setAlignment(Pos.CENTER);
+
+                    minMemoryPane.setRight(new HBox(8, txtMinMemory, rightBox));
                     bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSettings::minMemoryProperty);
                 }
 
@@ -661,7 +665,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     var txtMetaspace = new JFXTextField();
                     txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
                     txtMetaspace.setPrefWidth(160);
-                    metaspacePane.setRight(new HBox(8, txtMetaspace, new Label(i18n("settings.memory.unit.mib"))));
+
+                    var rightBox = new HBox(8, txtMetaspace, new Label(i18n("settings.memory.unit.mib")));
+                    rightBox.setAlignment(Pos.CENTER);
+
+                    metaspacePane.setRight(new HBox(8, txtMetaspace, rightBox));
                     bindIndependentTextField(metaspacePane, txtMetaspace, GameSettings::permSizeProperty);
                 }
 
