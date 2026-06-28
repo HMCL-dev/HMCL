@@ -34,13 +34,12 @@ import javafx.collections.FXCollections;
 import javafx.scene.text.Font;
 
 public final class FontComboBox extends JFXComboBox<String> {
-
-    private static final List<String> ALLFONTS = Font.getFamilies();
-    private static final List<String> COMMON_FONTS = ALLFONTS.subList(0, Math.min(10, ALLFONTS.size()));
-
-    private boolean loaded = false;
+    private static List<String> allFonts;
+    private static List<String> headFonts;
 
     private Thread loadingThread = null;
+
+    private volatile boolean loaded = false;
 
     public FontComboBox() {
         setMinWidth(260);
@@ -71,18 +70,23 @@ public final class FontComboBox extends JFXComboBox<String> {
         });
 
         FXUtils.onClicked(this, () -> {
-            if (loaded) return;
+            if (loaded || (loadingThread != null && loadingThread.isAlive())) return;
 
             itemsProperty().unbind();
 
-            var currentItems = FXCollections.observableArrayList(COMMON_FONTS);
+            allFonts = Font.getFamilies();
+            headFonts = allFonts.subList(0, Math.min(10, allFonts.size()));
+
+            var currentItems = FXCollections.observableArrayList(headFonts);
             setItems(currentItems);
             show(); 
 
             loadingThread = new Thread(() -> {
-                
-                List<String> remainingFonts = ALLFONTS.stream()
-                        .filter(f -> !COMMON_FONTS.contains(f))
+
+                itemsProperty().unbind();
+
+                List<String> remainingFonts = allFonts.stream()
+                        .filter(f -> !headFonts.contains(f))
                         .toList();
 
                 int batchSize = 30;
@@ -107,6 +111,7 @@ public final class FontComboBox extends JFXComboBox<String> {
                 loaded = true;
             });
 
+            loadingThread.setDaemon(true);
             loadingThread.start();
         });   
     }
