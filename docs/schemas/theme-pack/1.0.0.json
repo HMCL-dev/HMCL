@@ -115,15 +115,22 @@
       ]
     },
     "author": {
-      "type": "object",
-      "required": [
-        "name"
-      ],
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/localizedText"
+      "oneOf": [
+        {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/localizedText"
+            }
+          }
         }
-      }
+      ]
     },
     "theme": {
       "type": "object",

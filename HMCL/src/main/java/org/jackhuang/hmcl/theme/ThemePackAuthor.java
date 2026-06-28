@@ -76,12 +76,25 @@ public record ThemePackAuthor(LocalizedText name) {
         return array;
     }
 
+    /// Parses author metadata from a JSON object or a plain string.
+    ///
+    /// @param json the author metadata JSON
+    /// @return the parsed author metadata, or `null` when `json` is `null`
+    /// @throws JsonParseException if `json` is neither an object nor a string author name
     public static @Nullable ThemePackAuthor fromJson(@Nullable JsonElement json) throws JsonParseException {
         if (json == null || json instanceof JsonNull)
             return null;
 
+        if (json instanceof JsonPrimitive primitive && primitive.isString()) {
+            try {
+                return new ThemePackAuthor(LocalizedText.plain(primitive.getAsString()));
+            } catch (IllegalArgumentException e) {
+                throw new JsonParseException(e);
+            }
+        }
+
         if (!(json instanceof JsonObject jsonObject)) {
-            throw new JsonParseException("Theme-pack author must be an object");
+            throw new JsonParseException("Theme-pack author must be an object or a string");
         }
 
         JsonElement nameJson = jsonObject.get("name");
