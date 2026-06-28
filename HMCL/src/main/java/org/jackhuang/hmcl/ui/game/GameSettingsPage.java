@@ -655,7 +655,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     var rightBox = new HBox(8, txtMinMemory, new Label(i18n("settings.memory.unit.mib")));
                     rightBox.setAlignment(Pos.CENTER);
 
-                    minMemoryPane.setRight(new HBox(8, txtMinMemory, rightBox));
+                    minMemoryPane.setRight(rightBox);
                     bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSettings::minMemoryProperty);
                 }
 
@@ -669,7 +669,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     var rightBox = new HBox(8, txtMetaspace, new Label(i18n("settings.memory.unit.mib")));
                     rightBox.setAlignment(Pos.CENTER);
 
-                    metaspacePane.setRight(new HBox(8, txtMetaspace, rightBox));
+                    metaspacePane.setRight(rightBox);
                     bindIndependentTextField(metaspacePane, txtMetaspace, GameSettings::permSizeProperty);
                 }
 
