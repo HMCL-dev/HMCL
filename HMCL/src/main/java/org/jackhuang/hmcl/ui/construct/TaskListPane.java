@@ -159,7 +159,7 @@ public final class TaskListPane extends StackPane {
 
             @Override
             public void onRunning(Task<?> task) {
-                if (!task.getSignificance().shouldShow() || task.getName() == null)
+                if (!task.getSignificance().shouldShow())
                     return;
                 if (task.getName() == null) {
                     task.setName(i18n("task.unnamed"));

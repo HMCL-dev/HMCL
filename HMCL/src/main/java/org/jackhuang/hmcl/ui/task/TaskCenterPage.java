@@ -18,9 +18,11 @@
 package org.jackhuang.hmcl.ui.task;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -38,13 +40,28 @@ import org.jackhuang.hmcl.ui.main.SettingsPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 
+import java.util.IdentityHashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.function.Function;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Single, reused page that visualizes the [TaskCenter]. A singleton so its list listeners are
+/// registered exactly once (navigating here repeatedly must not accumulate listeners or stale
+/// off-screen views).
 public final class TaskCenterPage extends DecoratorAnimatedPage implements DecoratorPage {
+    private static TaskCenterPage instance;
+
+    /// Must be called on the FX thread.
+    public static TaskCenterPage getInstance() {
+        if (instance == null)
+            instance = new TaskCenterPage();
+        return instance;
+    }
+
     private final ReadOnlyObjectWrapper<State> state =
             new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("task.manage")));
 
@@ -62,7 +79,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     private final Label completedEmpty = new Label(i18n("task.empty.completed"));
     private final Label failedEmpty = new Label(i18n("task.empty.failed"));
 
-    public TaskCenterPage() {
+    private TaskCenterPage() {
         runningTab.setNodeSupplier(this::createRunningPane);
         completedTab.setNodeSupplier(this::createCompletedPane);
         failedTab.setNodeSupplier(this::createFailedPane);
@@ -92,12 +109,34 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         styleEmptyLabel(completedEmpty);
         styleEmptyLabel(failedEmpty);
 
-        TaskCenter.getInstance().getEntries().addListener(
-                (ListChangeListener<TaskCenter.Entry>) change -> rebuildRunning());
-        TaskCenter.getInstance().getCompletedEntries().addListener(
-                (ListChangeListener<TaskCenter.Entry>) change -> rebuildCompleted());
-        TaskCenter.getInstance().getFailedEntries().addListener(
-                (ListChangeListener<TaskCenter.Entry>) change -> rebuildFailed());
+        // Incremental binding: cards are cached per entry so a running card's TaskListPane (which
+        // attaches a listener to its executor) is created once, not rebuilt on every list change.
+        TaskCenter center = TaskCenter.getInstance();
+        bindContainer(runningContainer, center.getEntries(), runningEmpty, this::createRunningCard);
+        bindContainer(completedContainer, center.getSucceededTasks(), completedEmpty, e -> createHistoryItem(e, true));
+        bindContainer(failedContainer, center.getFailedTasks(), failedEmpty, e -> createHistoryItem(e, false));
+    }
+
+    private static void bindContainer(VBox container, ObservableList<TaskCenter.Entry> source,
+                                      Label emptyLabel, Function<TaskCenter.Entry, Node> cardFactory) {
+        Map<TaskCenter.Entry, Node> cache = new IdentityHashMap<>();
+        Runnable sync = () -> {
+            container.getChildren().clear();
+            if (source.isEmpty()) {
+                container.getChildren().add(createCenteredEmpty(emptyLabel));
+                return;
+            }
+            for (TaskCenter.Entry entry : source)
+                container.getChildren().add(cache.computeIfAbsent(entry, cardFactory));
+        };
+        source.addListener((ListChangeListener<TaskCenter.Entry>) change -> {
+            while (change.next()) {
+                if (change.wasRemoved())
+                    change.getRemoved().forEach(cache::remove);
+            }
+            sync.run();
+        });
+        sync.run();
     }
 
     private static void styleEmptyLabel(Label label) {
@@ -116,7 +155,6 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
         runningContainer.setPadding(new Insets(12));
-        rebuildRunning();
         return scrollPane;
     }
 
@@ -142,8 +180,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         VBox wrapper = new VBox(8);
         wrapper.setPadding(new Insets(12));
 
-        HBox toolbar = createClearToolbar(() ->
-                TaskCenter.getInstance().getCompletedEntries().clear());
+        HBox toolbar = createClearToolbar(() -> TaskCenter.getInstance().clearSucceeded());
 
         wrapper.getChildren().addAll(toolbar, completedContainer);
         VBox.setVgrow(completedContainer, Priority.ALWAYS);
@@ -151,7 +188,6 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         ScrollPane scrollPane = new ScrollPane(wrapper);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
-        rebuildCompleted();
         return scrollPane;
     }
 
@@ -159,8 +195,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         VBox wrapper = new VBox(8);
         wrapper.setPadding(new Insets(12));
 
-        HBox toolbar = createClearToolbar(() ->
-                TaskCenter.getInstance().getFailedEntries().clear());
+        HBox toolbar = createClearToolbar(() -> TaskCenter.getInstance().clearFailed());
 
         wrapper.getChildren().addAll(toolbar, failedContainer);
         VBox.setVgrow(failedContainer, Priority.ALWAYS);
@@ -168,43 +203,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         ScrollPane scrollPane = new ScrollPane(wrapper);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
-        rebuildFailed();
         return scrollPane;
-    }
-
-    // ── rebuild ──────────────────────────────────────────────────────
-
-    private void rebuildRunning() {
-        runningContainer.getChildren().clear();
-        if (TaskCenter.getInstance().getEntries().isEmpty()) {
-            runningContainer.getChildren().add(createCenteredEmpty(runningEmpty));
-            return;
-        }
-        for (TaskCenter.Entry entry : TaskCenter.getInstance().getEntries()) {
-            runningContainer.getChildren().add(createRunningCard(entry));
-        }
-    }
-
-    private void rebuildCompleted() {
-        completedContainer.getChildren().clear();
-        if (TaskCenter.getInstance().getCompletedEntries().isEmpty()) {
-            completedContainer.getChildren().add(createCenteredEmpty(completedEmpty));
-            return;
-        }
-        for (TaskCenter.Entry entry : TaskCenter.getInstance().getCompletedEntries()) {
-            completedContainer.getChildren().add(createHistoryItem(entry, true));
-        }
-    }
-
-    private void rebuildFailed() {
-        failedContainer.getChildren().clear();
-        if (TaskCenter.getInstance().getFailedEntries().isEmpty()) {
-            failedContainer.getChildren().add(createCenteredEmpty(failedEmpty));
-            return;
-        }
-        for (TaskCenter.Entry entry : TaskCenter.getInstance().getFailedEntries()) {
-            failedContainer.getChildren().add(createHistoryItem(entry, false));
-        }
     }
 
     // ── running card ─────────────────────────────────────────────────
@@ -219,51 +218,55 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
 
         Label kindTag = createKindTag(entry.getKind());
 
-        String titleText = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
-        Label titleLabel = new Label(titleText);
+        Label titleLabel = new Label(entry.getDisplayText());
         titleLabel.getStyleClass().add("title-label");
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
         titleLabel.setMaxWidth(Double.MAX_VALUE);
 
-        boolean isRunning = TaskCenter.getInstance().getRunningEntry() == entry;
-        Label statusLabel = new Label(isRunning ? i18n("task.status.running") : i18n("task.waiting"));
+        Label statusLabel = new Label();
         statusLabel.getStyleClass().add("subtitle-label");
+        statusLabel.textProperty().bind(Bindings.createStringBinding(
+                () -> entry.getStatus() == TaskCenter.Status.RUNNING ? i18n("task.status.running") : i18n("task.waiting"),
+                entry.statusProperty()));
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> {
-            TaskCenter tc = TaskCenter.getInstance();
-            if (tc.isStarted(entry.getExecutor())) {
-                entry.getExecutor().cancel();
-            } else {
-                tc.cancelQueued(entry.getExecutor());
-            }
+            TaskCenter.getInstance().cancel(entry);
             e.consume();
         });
-        cancelButton.setOnMouseClicked(e -> e.consume());
+        cancelButton.setOnMouseClicked(javafx.event.Event::consume);
 
         header.getChildren().addAll(kindTag, titleLabel, statusLabel, cancelButton);
         card.getChildren().add(header);
 
-        if (isRunning) {
-            TaskListPane taskListPane = new TaskListPane();
-            taskListPane.setExecutor(entry.getExecutor());
-            taskListPane.setMaxHeight(120);
-            taskListPane.setPrefHeight(120);
-            card.getChildren().add(taskListPane);
-        }
+        // Progress list: created once and shown only while the task is actually running.
+        TaskListPane taskListPane = new TaskListPane();
+        taskListPane.setExecutor(entry.getExecutor());
+        taskListPane.setMaxHeight(120);
+        taskListPane.setPrefHeight(120);
+        taskListPane.visibleProperty().bind(entry.statusProperty().isEqualTo(TaskCenter.Status.RUNNING));
+        taskListPane.managedProperty().bind(taskListPane.visibleProperty());
+        card.getChildren().add(taskListPane);
 
-        card.setOnMouseClicked(e -> {
-            if (entry != TaskCenter.getInstance().getRunningEntry()) {
-                Controllers.dialog(i18n("task.waiting"), entry.getTitle(), MessageDialogPane.MessageType.INFO);
-                return;
+        // Once the task is terminal the card leaves the active list. Drop the bindings so this card
+        // (and its TaskListPane) can be GC'd instead of being pinned by the long-lived entry's
+        // status property.
+        entry.statusProperty().addListener(new javafx.beans.value.ChangeListener<>() {
+            @Override
+            public void changed(javafx.beans.value.ObservableValue<? extends TaskCenter.Status> obs,
+                                TaskCenter.Status old, TaskCenter.Status now) {
+                if (now.isTerminal()) {
+                    statusLabel.textProperty().unbind();
+                    taskListPane.visibleProperty().unbind();
+                    taskListPane.managedProperty().unbind();
+                    entry.statusProperty().removeListener(this);
+                }
             }
-            TaskExecutorDialogPane pane = Controllers.taskDialog(entry.getExecutor(), entry.getTitle(), TaskCancellationAction.NORMAL);
-            pane.setEscAction(() -> pane.fireEvent(new DialogCloseEvent()));
-            pane.setCancelText(i18n("button.close"));
-            pane.setCancelAction(() -> pane.fireEvent(new DialogCloseEvent()));
-            pane.refreshTaskList();
         });
+
+        // Click the card to (re)attach a foreground dialog to this task.
+        card.setOnMouseClicked(e -> Controllers.showManagedTaskDialog(entry, TaskCancellationAction.NORMAL));
 
         return card;
     }
@@ -276,7 +279,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("md-list-cell");
 
-        boolean cancelled = !success && entry.getExecutor().getException() instanceof CancellationException;
+        boolean cancelled = !success && entry.getException() instanceof CancellationException;
         Node icon;
         if (success) {
             icon = SVG.CHECK.createIcon(14);
@@ -288,8 +291,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
 
         Label kindTag = createKindTag(entry.getKind());
 
-        String text = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
-        Label label = new Label(text);
+        Label label = new Label(entry.getDisplayText());
         label.getStyleClass().add("subtitle-label");
         HBox.setHgrow(label, Priority.ALWAYS);
         label.setMaxWidth(Double.MAX_VALUE);
@@ -307,7 +309,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     // ── failed task dialog ─────────────────────────────────────────────
 
     static void showFailedTaskDialog(TaskCenter.Entry entry) {
-        Throwable ex = entry.getExecutor().getException();
+        Throwable ex = entry.getException();
         if (ex instanceof CancellationException) {
             Controllers.dialog(i18n("task.cancelled"), entry.getTitle(), MessageDialogPane.MessageType.ERROR);
         } else {
@@ -324,7 +326,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     // ── kind tag ─────────────────────────────────────────────────────
 
     private static Label createKindTag(TaskCenter.TaskKind kind) {
-        String text = switch (kind) {
+        String text = switch (kind == null ? TaskCenter.TaskKind.OTHER : kind) {
             case GAME_INSTALL -> i18n("task.kind.game_install");
             case MODPACK_INSTALL -> i18n("task.kind.modpack_install");
             case JAVA_DOWNLOAD -> i18n("task.kind.java_download");

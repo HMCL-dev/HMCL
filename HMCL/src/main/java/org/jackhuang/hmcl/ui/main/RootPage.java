@@ -197,7 +197,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             taskManagerItem.setLeftIcon(SVG.CHECKLIST);
             taskManagerItem.setTitle(i18n("task.manage"));
             taskManagerItem.setOnAction(e -> {
-                Controllers.navigate(new TaskCenterPage());
+                Controllers.navigate(TaskCenterPage.getInstance());
             });
             FXUtils.installFastTooltip(taskManagerItem, i18n("task.manage.hint"));
 

@@ -19,19 +19,20 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -45,124 +46,158 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
 
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(new TaskCancellationAction(it -> {
-            it.fireEvent(new DialogCloseEvent());
-            onEnd();
-        }));
-
-        pane.setTitle(i18n("message.doing"));
-        if (settings.containsKey("title")) {
-            Object title = settings.get("title");
-            if (title instanceof StringProperty titleProperty)
-                pane.titleProperty().bind(titleProperty);
-            else if (title instanceof String titleMessage)
-                pane.setTitle(titleMessage);
-        }
-
         runInFX(() -> {
+            // onEnd() performs wizard teardown + navigation; it must run exactly once across all
+            // the paths below (cancel / background / terminal / auto-background).
+            AtomicBoolean ended = new AtomicBoolean(false);
+            Runnable endOnce = () -> {
+                if (ended.compareAndSet(false, true))
+                    onEnd();
+            };
+
+            String titleText = settings.get("title") instanceof String s ? s : i18n("message.doing");
             boolean backgroundable = Boolean.TRUE.equals(settings.get("backgroundable"));
 
-            // Track whether this task has been moved to background
-            final boolean[] movedToBackground = {false};
-
-            TaskExecutor executor = task.executor(new TaskListener() {
-                @Override
-                public void onStop(boolean success, TaskExecutor executor) {
-                    runInFX(() -> {
-                        // If task was moved to background, TaskCenter handles notifications
-                        if (movedToBackground[0]) return;
-
-                        if (success) {
-                            if (settings.get("success_message") instanceof String successMessage)
-                                Controllers.dialog(successMessage, null, MessageType.SUCCESS, () -> onEnd());
-                            else if (!settings.containsKey("forbid_success_message"))
-                                Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, () -> onEnd());
-                        } else {
-                            if (executor.getException() == null)
-                                return;
-
-                            if (executor.getException() instanceof CancellationException) {
-                                onEnd();
-                                return;
-                            }
-
-                            String appendix = StringUtils.getStackTrace(executor.getException());
-                            if (settings.get(WizardProvider.FailureCallback.KEY) != null)
-                                settings.get(WizardProvider.FailureCallback.KEY).onFail(settings, executor.getException(), () -> onEnd());
-                            else if (settings.get("failure_message") instanceof String failureMessage)
-                                Controllers.dialog(appendix, failureMessage, MessageType.ERROR, () -> onEnd());
-                            else if (!settings.containsKey("forbid_failure_message"))
-                                Controllers.dialog(appendix, i18n("wizard.failed"), MessageType.ERROR, () -> onEnd());
-                        }
-                    });
-                }
-            });
-
-            if (backgroundable) {
-                Object detailObj = settings.get("task_detail");
-                String detail = detailObj != null ? detailObj.toString() : pane.getTitle();
-
-                TaskCenter.TaskKind kind = (TaskCenter.TaskKind) settings.get("task_kind");
-                String taskName = (String) settings.get("task_name");
-
-                if (settings().isAutoBackgroundTask()) {
-                    // Auto-background: enqueue directly without showing dialog
-                    movedToBackground[0] = true;
-                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
-                    Controllers.showToast(i18n("task.auto_background.enqueued", detail != null ? detail : pane.getTitle()));
-                    // onEnd() cleans up wizard state and navigates back to the parent page
-                    // (e.g. game install list, modpack list, mod page, etc.)
-                    // movedToBackground prevents onStop from navigating again on task completion
-                    onEnd();
-                    return;
-                }
-
-                Runnable moveToBackground = () -> {
-                    movedToBackground[0] = true;
-                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
-
-                    boolean returnToDownloadList = Boolean.TRUE.equals(settings.get("return_to_download_list"));
-                    onEnd();
-                    if (returnToDownloadList) {
-                        Controllers.getDownloadPage().showGameDownloads();
-                        Controllers.navigate(Controllers.getDownloadPage());
-                    }
-
-                    pane.fireEvent(new DialogCloseEvent());
-                };
-
-                // Manual mode: check if background tasks are running, wait if so
-                if (!TaskCenter.getInstance().getEntries().isEmpty()) {
-                    pane.setWaitingForBackground(true);
-                    TaskCenter.getInstance().getEntries().addListener(
-                            (javafx.collections.ListChangeListener<TaskCenter.Entry>) change -> {
-                                if (TaskCenter.getInstance().getEntries().isEmpty()) {
-                                    pane.setWaitingForBackground(false);
-                                    executor.start();
-                                    pane.refreshTaskList();
-                                }
-                            });
-                }
-                pane.setBackgroundAction(moveToBackground);
+            if (!backgroundable) {
+                handleUnmanaged(settings, task, titleText, endOnce);
+                return;
             }
 
-            pane.setExecutor(executor);
+            TaskCenter.TaskKind kind = settings.get("task_kind") instanceof TaskCenter.TaskKind k
+                    ? k : TaskCenter.TaskKind.OTHER;
+            String taskName = settings.get("task_name") instanceof String n ? n : null;
+            String detail = settings.get("task_detail") != null ? settings.get("task_detail").toString() : titleText;
 
-            pane.addEventHandler(DialogCloseEvent.CLOSE, event -> {
-                boolean returnToDownloadList = Boolean.TRUE.equals(settings.get("return_to_download_list"));
-                if (returnToDownloadList) {
-                    onEnd();
-                    Controllers.getDownloadPage().showGameDownloads();
-                    Controllers.navigate(Controllers.getDownloadPage());
-                }
+            TaskExecutor executor = task.executor();
+            TaskCenter.Entry entry = TaskCenter.getInstance().submit(executor, titleText, detail, kind, taskName);
+
+            // Terminal handling: a foreground completion shows the wizard's rich success/failure
+            // message; a background completion shows a lightweight toast. The two are mutually
+            // exclusive via foregroundShown, so the user is notified exactly once.
+            entry.statusProperty().addListener((obs, old, now) -> {
+                if (!now.isTerminal())
+                    return;
+                if (entry.isForegroundShown())
+                    showResult(settings, entry.getExecutor(), endOnce);
+                else
+                    showBackgroundToast(entry);
             });
 
-            Controllers.dialog(pane);
+            // Auto-background: never show a dialog, just enqueue and leave the wizard.
+            if (settings().isAutoBackgroundTask()) {
+                entry.setForegroundShown(false);
+                Controllers.showToast(i18n("task.auto_background.enqueued", entry.getDisplayText()));
+                endOnce.run();
+                return;
+            }
 
-            if (!backgroundable || TaskCenter.getInstance().getEntries().isEmpty()) {
-                executor.start();
-                pane.refreshTaskList();
+            presentForeground(settings, entry, titleText, endOnce);
+        });
+    }
+
+    /// Non-backgroundable task: runs immediately as an unmanaged modal dialog (legacy behaviour).
+    private void handleUnmanaged(SettingsMap settings, Task<?> task, String titleText, Runnable endOnce) {
+        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(new TaskCancellationAction(it -> {
+            it.fireEvent(new DialogCloseEvent());
+            endOnce.run();
+        }));
+        bindTitle(pane, settings, titleText);
+
+        TaskExecutor executor = task.executor(new TaskListener() {
+            @Override
+            public void onStop(boolean success, TaskExecutor executor) {
+                runInFX(() -> showResult(settings, executor, endOnce));
             }
         });
+
+        pane.setExecutor(executor);
+        Controllers.dialog(pane);
+        executor.start();
+        pane.refreshTaskList();
+    }
+
+    /// Foreground presentation of a managed entry.
+    private void presentForeground(SettingsMap settings, TaskCenter.Entry entry, String titleText, Runnable endOnce) {
+        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(new TaskCancellationAction(it -> {
+            TaskCenter.getInstance().cancel(entry);
+            it.fireEvent(new DialogCloseEvent());
+            endOnce.run();
+        }));
+        bindTitle(pane, settings, titleText);
+        pane.setExecutor(entry.getExecutor());
+
+        pane.setBackgroundAction(() -> {
+            entry.setForegroundShown(false);
+            endOnce.run();
+            pane.fireEvent(new DialogCloseEvent());
+        });
+
+        pane.setWaitingForBackground(entry.getStatus() == TaskCenter.Status.QUEUED);
+        entry.statusProperty().addListener((obs, old, now) ->
+                pane.setWaitingForBackground(now == TaskCenter.Status.QUEUED));
+
+        entry.setForegroundShown(true);
+
+        // Single close handler: detach the foreground flag and, for download-page installs, return
+        // to the download list (fires once per close — background, cancel or completion).
+        pane.addEventHandler(DialogCloseEvent.CLOSE, event -> {
+            entry.setForegroundShown(false);
+            if (Boolean.TRUE.equals(settings.get("return_to_download_list"))) {
+                Controllers.getDownloadPage().showGameDownloads();
+                Controllers.navigate(Controllers.getDownloadPage());
+            }
+        });
+
+        Controllers.dialog(pane);
+        pane.refreshTaskList();
+    }
+
+    private void bindTitle(TaskExecutorDialogPane pane, SettingsMap settings, String fallback) {
+        Object title = settings.get("title");
+        if (title instanceof StringProperty titleProperty)
+            pane.titleProperty().bind(titleProperty);
+        else
+            pane.setTitle(fallback);
+    }
+
+    private void showBackgroundToast(TaskCenter.Entry entry) {
+        String text = entry.getDisplayText();
+        switch (entry.getStatus()) {
+            case SUCCEEDED:
+                Controllers.showToast(i18n("task.toast.success", text));
+                break;
+            case CANCELLED:
+                Controllers.showToast(i18n("task.toast.cancelled", text));
+                break;
+            case FAILED:
+                Controllers.showToast(i18n("task.toast.failed", text));
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void showResult(SettingsMap settings, TaskExecutor executor, Runnable endOnce) {
+        Exception exception = executor.getException();
+        if (exception == null) {
+            if (settings.get("success_message") instanceof String successMessage)
+                Controllers.dialog(successMessage, null, MessageType.SUCCESS, endOnce);
+            else if (!settings.containsKey("forbid_success_message"))
+                Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, endOnce);
+        } else {
+            if (exception instanceof CancellationException) {
+                endOnce.run();
+                return;
+            }
+
+            String appendix = StringUtils.getStackTrace(exception);
+            WizardProvider.FailureCallback failureCallback = settings.get(WizardProvider.FailureCallback.KEY);
+            if (failureCallback != null)
+                failureCallback.onFail(settings, exception, endOnce);
+            else if (settings.get("failure_message") instanceof String failureMessage)
+                Controllers.dialog(appendix, failureMessage, MessageType.ERROR, endOnce);
+            else if (!settings.containsKey("forbid_failure_message"))
+                Controllers.dialog(appendix, i18n("wizard.failed"), MessageType.ERROR, endOnce);
+        }
     }
 }

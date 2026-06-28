@@ -240,7 +240,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 JFXButton btnTask = new JFXButton();
                 btnTask.setFocusTraversable(false);
                 btnTask.getStyleClass().add("jfx-decorator-button");
-                btnTask.setOnAction(e -> Controllers.navigate(new TaskCenterPage()));
+                btnTask.setOnAction(e -> Controllers.navigate(TaskCenterPage.getInstance()));
                 FXUtils.installFastTooltip(btnTask, i18n("task.manage"));
 
                 Label taskBadge = new Label();

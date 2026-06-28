@@ -17,27 +17,42 @@
  */
 package org.jackhuang.hmcl.ui.task;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CancellationException;
 import javafx.application.Platform;
+import javafx.beans.Observable;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.jackhuang.hmcl.task.AsyncTaskExecutor;
+import javafx.collections.transformation.FilteredList;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import java.util.concurrent.CancellationException;
 
+/// Central scheduler for "managed" (backgroundable) tasks.
+///
+/// Design (single serial queue):
+///  - Every managed task lives here from the moment it is submitted; a dialog is merely a *view*
+///    onto a task, not the owner of its lifecycle. Whether a task is shown in the foreground or
+///    runs headless in the background, it is the *same* entry in the *same* queue.
+///  - At most one task runs at a time (`running`). The scheduler attaches its completion listener
+///    *before* starting the executor, so the start/finish race that could orphan a task (and
+///    permanently block the queue) cannot happen.
+///  - This class performs **no** user-facing UI (no toasts / dialogs). Presenters observe
+///    [Entry#statusProperty] and decide what to show. This keeps notification policy out of the
+///    scheduler and avoids double-messaging.
+///
+/// Threading: all mutating/query methods must be called on the JavaFX Application Thread. The
+/// completion callback re-dispatches onto the FX thread before touching any state.
 public final class TaskCenter {
     private static final TaskCenter INSTANCE = new TaskCenter();
 
     public static TaskCenter getInstance() {
         return INSTANCE;
+    }
+
+    private TaskCenter() {
     }
 
     public enum TaskKind {
@@ -48,18 +63,41 @@ public final class TaskCenter {
         OTHER
     }
 
+    public enum Status {
+        QUEUED,
+        RUNNING,
+        SUCCEEDED,
+        FAILED,
+        CANCELLED;
+
+        public boolean isTerminal() {
+            return this == SUCCEEDED || this == FAILED || this == CANCELLED;
+        }
+
+        public boolean isActive() {
+            return this == QUEUED || this == RUNNING;
+        }
+    }
+
+    /// A single managed task. Immutable metadata + an observable [Status].
     public static final class Entry {
         private final TaskExecutor executor;
         private final String title;
         private final String detail;
         private final TaskKind kind;
         private final String name;
+        private final ReadOnlyObjectWrapper<Status> status = new ReadOnlyObjectWrapper<>(Status.QUEUED);
 
-        public Entry(TaskExecutor executor, String title, String detail, TaskKind kind, String name) {
+        /// Whether a foreground dialog is currently presenting this task. Read by presenters at
+        /// terminal time to decide between an in-dialog message and a background notification.
+        /// FX-thread only.
+        private boolean foregroundShown;
+
+        Entry(TaskExecutor executor, String title, String detail, TaskKind kind, String name) {
             this.executor = executor;
             this.title = title;
             this.detail = detail;
-            this.kind = kind;
+            this.kind = kind != null ? kind : TaskKind.OTHER;
             this.name = name;
         }
 
@@ -75,6 +113,11 @@ public final class TaskCenter {
             return detail;
         }
 
+        /// Detail if present, otherwise the title. Never null unless both are null.
+        public String getDisplayText() {
+            return detail != null ? detail : title;
+        }
+
         public TaskKind getKind() {
             return kind;
         }
@@ -82,195 +125,194 @@ public final class TaskCenter {
         public String getName() {
             return name;
         }
+
+        public Status getStatus() {
+            return status.get();
+        }
+
+        public ReadOnlyObjectProperty<Status> statusProperty() {
+            return status.getReadOnlyProperty();
+        }
+
+        public Throwable getException() {
+            return executor.getException();
+        }
+
+        public boolean isForegroundShown() {
+            return foregroundShown;
+        }
+
+        public void setForegroundShown(boolean foregroundShown) {
+            this.foregroundShown = foregroundShown;
+        }
     }
 
-    private final ObservableList<Entry> entries = FXCollections.observableArrayList();
-    private final ObservableList<Entry> completedEntries = FXCollections.observableArrayList();
-    private final ObservableList<Entry> failedEntries = FXCollections.observableArrayList();
+    /// Single source of truth. The extractor makes the list fire "update" change events when an
+    /// entry's status changes, so the derived [FilteredList]s below re-filter automatically.
+    private final ObservableList<Entry> tasks =
+            FXCollections.observableArrayList(entry -> new Observable[]{entry.statusProperty()});
 
-    private final Deque<Entry> queue = new ArrayDeque<>();
-    private final Map<TaskExecutor, Entry> entryIndex = new HashMap<>();
-    private final Map<TaskExecutor, Boolean> started = new HashMap<>();
+    private final FilteredList<Entry> activeTasks = new FilteredList<>(tasks, e -> e.getStatus().isActive());
+    private final FilteredList<Entry> succeededTasks = new FilteredList<>(tasks, e -> e.getStatus() == Status.SUCCEEDED);
+    private final FilteredList<Entry> failedTasks =
+            new FilteredList<>(tasks, e -> e.getStatus() == Status.FAILED || e.getStatus() == Status.CANCELLED);
+
     private Entry running;
 
+    private static void checkFxThread() {
+        if (!Platform.isFxApplicationThread())
+            throw new IllegalStateException("TaskCenter must be accessed from the JavaFX Application Thread");
+    }
+
+    /// All active (queued + running) tasks, ordered by submission. Live view.
     public ObservableList<Entry> getEntries() {
-        return entries;
+        return activeTasks;
+    }
+
+    public ObservableList<Entry> getSucceededTasks() {
+        return succeededTasks;
+    }
+
+    public ObservableList<Entry> getFailedTasks() {
+        return failedTasks;
     }
 
     public Entry getRunningEntry() {
         return running;
     }
 
-    public ObservableList<Entry> getCompletedEntries() {
-        return completedEntries;
-    }
+    /// Submits a managed task. Returns the (possibly pre-existing, de-duplicated) entry — never
+    /// silently drops a task. The caller may attach a dialog to the returned entry.
+    ///
+    /// The executor must **not** have been started yet; the scheduler owns starting it.
+    public Entry submit(TaskExecutor executor, String title, String detail, TaskKind kind, String name) {
+        checkFxThread();
 
-    public ObservableList<Entry> getFailedEntries() {
-        return failedEntries;
-    }
+        // De-duplicate by executor identity.
+        for (Entry e : activeTasks)
+            if (e.getExecutor() == executor)
+                return e;
 
-    private void assertFxThread() {
-        assert Platform.isFxApplicationThread() : "TaskCenter must be accessed from FX Application Thread";
-    }
-
-    public void enqueue(TaskExecutor executor, String title, String detail) {
-        enqueue(executor, title, detail, TaskKind.OTHER, null);
-    }
-
-    public void enqueue(TaskExecutor executor, String title, String detail, TaskKind kind, String name) {
-        if (!Platform.isFxApplicationThread()) {
-            Platform.runLater(() -> enqueue(executor, title, detail, kind, name));
-            return;
+        // De-duplicate installs by (kind, name).
+        if (kind != null && name != null) {
+            Entry existing = findActiveInstall(kind, name);
+            if (existing != null)
+                return existing;
         }
 
-        assertFxThread();
-
-        if (entryIndex.containsKey(executor)) {
-            return;
-        }
-
-        // Deduplicate by kind+name (e.g. same game/modpack install)
-        if (kind != null && name != null && hasQueuedInstallName(kind, name)) {
-            return;
-        }
-
-        // Deduplicate by detail (or title if detail is null) to prevent repeated downloads
-        String deduplicationKey = detail != null ? detail : title;
-        if (deduplicationKey != null) {
-            for (Entry existing : entries) {
-                String existingKey = existing.getDetail() != null ? existing.getDetail() : existing.getTitle();
-                if (deduplicationKey.equals(existingKey)) {
-                    return;
-                }
-            }
+        // De-duplicate by detail (a stable per-task description). Title is intentionally NOT used
+        // as a fallback key here: many unrelated tasks share a generic title (e.g. "Downloading"),
+        // and merging them would silently drop distinct work.
+        if (detail != null) {
+            for (Entry e : activeTasks)
+                if (detail.equals(e.getDetail()))
+                    return e;
         }
 
         Entry entry = new Entry(executor, title, detail, kind, name);
-        entryIndex.put(executor, entry);
-        entries.add(entry);
-        queue.add(entry);
+        tasks.add(entry);
         tryStartNext();
+        return entry;
     }
 
     private void tryStartNext() {
-        assertFxThread();
+        if (running != null)
+            return;
 
-        while (running == null) {
-            Entry next = queue.poll();
-            if (next == null) return;
-
-            TaskExecutor executor = next.getExecutor();
-            if (Boolean.TRUE.equals(started.get(executor))) {
+        for (Entry entry : tasks) {
+            if (entry.getStatus() != Status.QUEUED)
                 continue;
-            }
 
-            started.put(executor, true);
-            running = next;
+            running = entry;
+            entry.status.set(Status.RUNNING);
 
-            executor.addTaskListener(new TaskListener() {
+            // Attach the completion listener BEFORE starting so a fast-finishing task cannot
+            // complete before we are listening.
+            entry.executor.addTaskListener(new TaskListener() {
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
-                    Platform.runLater(() -> onTaskStopped(executor, success));
+                    Platform.runLater(() -> onStopped(entry));
                 }
             });
-
-            // Only start if not already running externally (e.g. started by downloadTaskDialog before enqueue)
-            if (!(executor instanceof AsyncTaskExecutor ate && ate.isStarted())) {
-                executor.start();
-            }
+            entry.executor.start();
             return;
         }
     }
 
-    private void onTaskStopped(TaskExecutor executor, boolean success) {
-        assertFxThread();
+    private void onStopped(Entry entry) {
+        checkFxThread();
 
-        Entry stoppedEntry = entryIndex.remove(executor);
-        started.remove(executor);
-
-        if (stoppedEntry != null) {
-            entries.remove(stoppedEntry);
-            if (success) {
-                completedEntries.add(stoppedEntry);
-            } else {
-                failedEntries.add(stoppedEntry);
-            }
-
-            // Show notification for background tasks
-            String detail = stoppedEntry.getDetail() != null ? stoppedEntry.getDetail() : stoppedEntry.getTitle();
-            if (success) {
-                Controllers.showToast(i18n("task.toast.success", detail));
-            } else if (stoppedEntry.getExecutor().getException() instanceof CancellationException) {
-                Controllers.showToast(i18n("task.toast.cancelled", detail));
-            } else {
-                Controllers.showToast(i18n("task.toast.failed", detail));
-                if (!Controllers.isDialogShowing()) {
-                    TaskCenterPage.showFailedTaskDialog(stoppedEntry);
-                }
-            }
-        }
-
-        if (running != null && running.getExecutor() == executor) {
+        if (running == entry)
             running = null;
+
+        // Idempotent: a cancelled-while-queued entry is already terminal; ignore the late onStop.
+        if (!entry.getStatus().isTerminal()) {
+            Throwable exception = entry.getException();
+            Status result;
+            if (exception instanceof CancellationException)
+                result = Status.CANCELLED;
+            else if (exception == null)
+                result = Status.SUCCEEDED;
+            else
+                result = Status.FAILED;
+            entry.status.set(result);
         }
 
         tryStartNext();
     }
 
-    public boolean contains(TaskExecutor executor) {
-        assertFxThread();
-        return entryIndex.containsKey(executor);
-    }
+    /// Cancels a task whether it is queued or running.
+    public void cancel(Entry entry) {
+        checkFxThread();
 
-    public boolean isStarted(TaskExecutor executor) {
-        assertFxThread();
-        return Boolean.TRUE.equals(started.get(executor));
-    }
-
-    public boolean hasQueuedInstallName(TaskKind kind, String name) {
-        assertFxThread();
-
-        if (name == null || kind == null) {
-            return false;
+        switch (entry.getStatus()) {
+            case QUEUED:
+                // Never started; mark terminal so the scheduler skips it. running is untouched.
+                entry.status.set(Status.CANCELLED);
+                break;
+            case RUNNING:
+                // onStopped() will finalize the status as CANCELLED via the CancellationException.
+                entry.executor.cancel();
+                break;
+            default:
+                break;
         }
-        for (Entry entry : entries) {
-            if (entry.getKind() != kind || entry.getName() == null) {
+    }
+
+    /// Removes all succeeded entries from the history.
+    public void clearSucceeded() {
+        checkFxThread();
+        tasks.removeIf(e -> e.getStatus() == Status.SUCCEEDED);
+    }
+
+    /// Removes all failed/cancelled entries from the history.
+    public void clearFailed() {
+        checkFxThread();
+        tasks.removeIf(e -> e.getStatus() == Status.FAILED || e.getStatus() == Status.CANCELLED);
+    }
+
+    private Entry findActiveInstall(TaskKind kind, String name) {
+        for (Entry entry : activeTasks) {
+            if (entry.getKind() != kind || entry.getName() == null)
                 continue;
-            }
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                if (entry.getName().equalsIgnoreCase(name)) return true;
-            } else {
-                if (entry.getName().equals(name)) return true;
-            }
+            if (nameEquals(entry.getName(), name))
+                return entry;
         }
-        return false;
+        return null;
     }
 
-    public boolean cancelQueued(TaskExecutor executor) {
-        assertFxThread();
-
-        Entry entry = entryIndex.get(executor);
-        if (entry == null) {
+    /// Whether an install of the given (kind, name) is already queued or running. Used by name
+    /// validators to forbid scheduling a duplicate install.
+    public boolean hasQueuedInstallName(TaskKind kind, String name) {
+        checkFxThread();
+        if (name == null || kind == null)
             return false;
-        }
-
-        if (Boolean.TRUE.equals(started.get(executor))) {
-            // Task is already running — cancel it properly
-            executor.cancel();
-        }
-
-        queue.remove(entry);
-        entries.remove(entry);
-        entryIndex.remove(executor);
-        started.remove(executor);
-
-        if (running != null && running.getExecutor() == executor) {
-            running = null;
-        }
-
-        failedEntries.add(entry);
-        tryStartNext();
-        return true;
+        return findActiveInstall(kind, name) != null;
     }
 
+    private static boolean nameEquals(String a, String b) {
+        return OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                ? a.equalsIgnoreCase(b)
+                : a.equals(b);
+    }
 }
