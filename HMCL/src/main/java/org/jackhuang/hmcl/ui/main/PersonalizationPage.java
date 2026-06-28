@@ -661,14 +661,18 @@ public class PersonalizationPage extends StackPane {
                                 1.0);
                     }
 
-                    backgroundItem.selectedValueProperty().set(background.type());
+                    if (background.type() == BackgroundType.CUSTOM && background.imageResource() != null) {
+                        backgroundItem.clearSelection();
+                    } else {
+                        backgroundItem.selectedValueProperty().set(background.type());
+                    }
                     switch (background.type()) {
                         case BUILTIN -> builtinBackgroundComboBox.setValue(Objects.requireNonNullElse(
                                 background.builtinBackgroundId(),
                                 BuiltinBackground.FALLBACK.id()));
                         case CUSTOM -> {
                             if (background.imageResource() != null) {
-                                customBackgroundOption.setPath(i18n("launcher.background.theme"));
+                                customBackgroundOption.setPath(settings().customBackgroundImagePathProperty().get());
                             } else {
                                 customBackgroundOption.setPath(background.imagePath() != null
                                         ? background.imagePath().toString()
@@ -850,7 +854,9 @@ public class PersonalizationPage extends StackPane {
 
             backgroundSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
                         if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BACKGROUND)) {
-                            BackgroundType type = backgroundItem.selectedValueProperty().get();
+                            BackgroundType type = Objects.requireNonNullElse(
+                                    backgroundItem.selectedValueProperty().get(),
+                                    BackgroundType.DEFAULT);
                             return switch (type) {
                                 case DEFAULT -> i18n("message.default");
                                 case THEME_COLOR -> i18n("launcher.background.theme_color");
