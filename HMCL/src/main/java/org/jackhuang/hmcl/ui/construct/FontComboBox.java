@@ -36,7 +36,7 @@ import javafx.scene.text.Font;
 public final class FontComboBox extends JFXComboBox<String> {
     private Thread loadingThread = null;
 
-    private volatile boolean loaded = false;
+    private boolean loaded = false;
 
     public FontComboBox() {
         setMinWidth(260);
@@ -71,17 +71,16 @@ public final class FontComboBox extends JFXComboBox<String> {
 
             itemsProperty().unbind();
 
-            List<String> allFonts = Font.getFamilies();
-            List<String> headFonts = allFonts.subList(0, Math.min(10, allFonts.size()));
+            List<String> allFonts = List.copyOf(Font.getFamilies());
+            int limit = Math.min(10, allFonts.size());
+            List<String> headFonts = allFonts.subList(0, limit);
+            List<String> remainingFonts = List.copyOf(allFonts.subList(limit, allFonts.size()));
 
             var currentItems = FXCollections.observableArrayList(headFonts);
             setItems(currentItems);
             show(); 
 
             loadingThread = new Thread(() -> {
-
-                List<String> remainingFonts = allFonts.subList(Math.min(10, allFonts.size()), allFonts.size());
-
                 int batchSize = 30;
                 for (int i = 0; i < remainingFonts.size(); i += batchSize) {
                     
@@ -101,7 +100,10 @@ public final class FontComboBox extends JFXComboBox<String> {
                     }
                 }
 
-                loaded = true;
+                Platform.runLater(() -> {
+                    loaded = true;
+                    loadingThread = null;
+                });
             });
 
             loadingThread.setDaemon(true);
