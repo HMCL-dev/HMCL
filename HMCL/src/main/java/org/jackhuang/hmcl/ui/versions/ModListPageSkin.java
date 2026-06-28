@@ -786,11 +786,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             // otherwise it leaves a gap between the expand button and the other buttons.
             restoreButton.managedProperty().bind(restoreButton.visibleProperty());
 
-            expandButton.getGraphic().rotateProperty().bind(
-                    Bindings.when(expanded).then(180.0).otherwise(0.0));
-            // Toggle on press and consume the event so it never reaches the ListView's
-            // selection handler — expanding the nested list should not select the row.
-            expandButton.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
+            // The chevron rotation is animated together with the expansion (see animateExpansion);
+            // its angle is set directly in snapExpansion when a cell is recycled.
+            expandButton.getGraphic().setRotate(0);
+            // Toggle on press. Use a bubbling handler (not a filter) so the button's own ripple
+            // (triggered deeper/earlier) still plays for click feedback, then consume the event so
+            // it never reaches the ListView's selection handler — expanding must not select the row.
+            expandButton.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
                 expanded.set(!expanded.get());
                 e.consume();
             });
@@ -929,6 +931,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             }
             nestedBox.setMinHeight(Region.USE_COMPUTED_SIZE);
             nestedBox.setMaxHeight(Region.USE_COMPUTED_SIZE);
+            expandButton.getGraphic().setRotate(expand ? 180 : 0);
             if (expand) {
                 rebuildNested(getItem());
                 nestedBox.setManaged(true);
@@ -961,7 +964,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 nestedBox.setMaxHeight(0);
                 Timeline timeline = new Timeline(new KeyFrame(Duration.millis(200),
                         new KeyValue(nestedBox.minHeightProperty(), target, Motion.EASE_IN_OUT_CUBIC),
-                        new KeyValue(nestedBox.maxHeightProperty(), target, Motion.EASE_IN_OUT_CUBIC)));
+                        new KeyValue(nestedBox.maxHeightProperty(), target, Motion.EASE_IN_OUT_CUBIC),
+                        new KeyValue(expandButton.getGraphic().rotateProperty(), 180, Motion.EASE_IN_OUT_CUBIC)));
                 timeline.setOnFinished(e -> {
                     nestedBox.setMinHeight(Region.USE_COMPUTED_SIZE);
                     nestedBox.setMaxHeight(Region.USE_COMPUTED_SIZE);
@@ -975,7 +979,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 nestedBox.setMaxHeight(current);
                 Timeline timeline = new Timeline(new KeyFrame(Duration.millis(200),
                         new KeyValue(nestedBox.minHeightProperty(), 0, Motion.EASE_IN_OUT_CUBIC),
-                        new KeyValue(nestedBox.maxHeightProperty(), 0, Motion.EASE_IN_OUT_CUBIC)));
+                        new KeyValue(nestedBox.maxHeightProperty(), 0, Motion.EASE_IN_OUT_CUBIC),
+                        new KeyValue(expandButton.getGraphic().rotateProperty(), 0, Motion.EASE_IN_OUT_CUBIC)));
                 timeline.setOnFinished(e -> {
                     nestedBox.setManaged(false);
                     nestedBox.setVisible(false);
