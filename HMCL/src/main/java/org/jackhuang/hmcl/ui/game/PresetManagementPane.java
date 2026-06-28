@@ -249,7 +249,7 @@ final class PresetManagementPane extends ComponentSublist {
                 return;
             }
 
-            String trimmedName = name.trim();            
+            String trimmedName = name.trim();
             if (isPresetNameExists(trimmedName, setting)) {
                 handler.reject(i18n("settings.type.global.preset.duplicate_name"));
                 return;
