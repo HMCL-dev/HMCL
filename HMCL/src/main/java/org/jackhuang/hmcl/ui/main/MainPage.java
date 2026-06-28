@@ -110,8 +110,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final UpdateBubble updateBubble = new UpdateBubble();
     private final JFXButton menuButton;
 
-    private RemoteVersion lastShownVersion;
-
+    public static final EnumUpdateMode UPDATE_MODE = settings().updateModeProperty().get();
+    
     {
         latestVersion.bind(UpdateChecker.latestVersionProperty());
         FXUtils.onChange(showUpdateProperty(), MainPage.this::doAnimation);
@@ -261,7 +261,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void doUpdateIfNeeded(Boolean show) {
         if (!show) return;
 
-        var mode = settings().updateModeProperty().get();
+        var mode = UPDATE_MODE;
         if (mode == EnumUpdateMode.NOTIFY) return;
 
         updateState.set(UpdateBubble.State.DOWNLOADING);
@@ -459,7 +459,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
                     this.getChildren().setAll(hBox);
                 } else if (updateState.get() == State.SUCCESS) {
-                    var mode = settings().updateModeProperty().get();
+                    var mode = UPDATE_MODE;
 
                     if (mode == EnumUpdateMode.SILENT) {
                         item.setSubtitle(i18n("update.bubble.success.subtitle.silent"));
@@ -500,7 +500,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             } else if (updateState.get() == State.SUCCESS) {
                 Task.runAsync(() -> {
                     try {
-                        UpdateHandler.finishUpdate(downloadedHmcl, settings().updateModeProperty().get() == EnumUpdateMode.SILENT);
+                        UpdateHandler.finishUpdate(downloadedHmcl, UPDATE_MODE == EnumUpdateMode.SILENT);
                     } catch (IOException e) {
                         LOG.warning("Failed to apply update", e);
                         javafx.application.Platform.runLater(() -> {

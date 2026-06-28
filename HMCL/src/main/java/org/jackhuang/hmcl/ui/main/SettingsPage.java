@@ -144,6 +144,7 @@ public final class SettingsPage extends ScrollPane {
                 {
                     LineSelectButton<EnumUpdateMode> updateModePane = new LineSelectButton<>();
                     updateModePane.setTitle(i18n("update.mode"));
+                    updateModePane.setSubtitle(i18n("settings.take_effect_after_restart"));
                     updateModePane.valueProperty().bindBidirectional(settings().updateModeProperty());
                     updateModePane.setConverter(mode -> i18n("update.mode." + mode.name().toLowerCase(Locale.ROOT)));
                     updateModePane.setItems(EnumUpdateMode.values());
