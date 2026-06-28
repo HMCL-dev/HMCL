@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -198,10 +199,12 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     private void collectModFiles(Path file, Map<Path, long[]> current) {
+        if (!isModCandidate(file)) // pure string check first, so non-mod files cost no syscall
+            return;
         try {
-            if (Files.isRegularFile(file) && isModCandidate(file)) {
-                current.put(file, new long[]{Files.getLastModifiedTime(file).toMillis(), Files.size(file)});
-            }
+            BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
+            if (attributes.isRegularFile())
+                current.put(file, new long[]{attributes.lastModifiedTime().toMillis(), attributes.size()});
         } catch (IOException e) {
             LOG.warning("Failed to stat mod file " + file, e);
         }

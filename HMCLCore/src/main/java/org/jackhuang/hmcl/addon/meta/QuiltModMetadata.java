@@ -81,8 +81,8 @@ public final class QuiltModMetadata {
         }
     }
 
-    // Loader/runtime ids that are not user-installable mods, excluded from the dependency list.
-    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "quilt_loader", "quilt_base");
+    // Loader/runtime/platform ids that are not shown as user-facing mod dependencies.
+    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "quilt_loader", "quilt_base", "fabric", "fabric-api");
 
     private final int schema_version;
     private final QuiltLoader quilt_loader;

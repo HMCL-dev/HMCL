@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -33,6 +36,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -56,7 +60,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.FXThread;
@@ -97,12 +103,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private final JFXTextField searchField;
 
     // Keeps the download page's cached installed-mods map in sync when a mod is enabled/disabled,
-    // so dependency installation status there stays correct without a re-scan.
+    // so dependency installation status there stays correct without a re-scan. Fires on the FX
+    // thread (active changes come from user toggles), matching DownloadPage's cache-mutation contract.
     private final InvalidationListener activeChangeListener = observable -> {
         if (observable instanceof BooleanProperty property && property.getBean() instanceof LocalModFile mod) {
+            // A mod id may have several files (versions); it counts as enabled while ANY is enabled.
+            boolean anyActive = mod.getMod().getFiles().stream().anyMatch(LocalModFile::isActive);
             DownloadPage.setModActive(
                     new Profile.ProfileVersion(getSkinnable().getProfile(), getSkinnable().getInstanceId()),
-                    mod.getId(), mod.isActive());
+                    mod.getId(), anyActive);
         }
     };
 
@@ -363,6 +372,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
     // Finds enabled mods (other than the targets themselves) that declare a dependency on any of
     // the targets — i.e. mods that may break if the targets are disabled.
+    //
+    // Matching is by exact mod id. A mod that satisfies a dependency under a different "provides"
+    // alias (we don't parse "provides") won't be matched, so this errs on the side of fewer
+    // warnings rather than false ones.
     private List<ModInfoObject> findActiveDependents(Collection<LocalModFile> targets) {
         Set<String> targetIds = new HashSet<>();
         for (LocalModFile target : targets) {
@@ -739,6 +752,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
         JFXButton expandButton = FXUtils.newToggleButton4(SVG.KEYBOARD_ARROW_DOWN);
         VBox nestedBox = new VBox();
+        private final Rectangle nestedClip = new Rectangle();
+        private Timeline nestedAnimation;
+        // Suppresses the expand animation while a cell is being recycled to another item.
+        private boolean suppressExpandAnimation;
         BooleanProperty booleanProperty;
         // Mirrors the bound ModInfoObject's expanded state, so the chevron and the
         // nested list react to it while this cell is showing that item.
@@ -801,8 +818,17 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             });
 
             nestedBox.getStyleClass().add("mod-nested-list");
-            nestedBox.visibleProperty().bind(expanded);
-            nestedBox.managedProperty().bind(nestedBox.visibleProperty());
+            nestedBox.setVisible(false);
+            nestedBox.setManaged(false);
+            // Crop overflow while the box height is animating, so rows don't spill out.
+            nestedClip.widthProperty().bind(nestedBox.widthProperty());
+            nestedClip.heightProperty().bind(nestedBox.heightProperty());
+            nestedBox.setClip(nestedClip);
+            // Animate open/close on real user toggles; recycling snaps without animation.
+            expanded.addListener((obs, was, now) -> {
+                if (!suppressExpandAnimation)
+                    animateExpansion(now);
+            });
 
             header.getChildren().setAll(checkBox, imageContainer, content, expandButton, restoreButton, revealButton, infoButton);
 
@@ -876,6 +902,91 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     return true;
             }
             return false;
+        }
+
+        private void rebuildNested(ModInfoObject item) {
+            nestedBox.getChildren().clear();
+            if (item == null)
+                return;
+            LocalModFile modInfo = item.getModInfo();
+            if (modInfo.hasBundledMods()) {
+                nestedBox.getChildren().add(createSectionLabel(i18n("addon.bundled")));
+                for (String path : modInfo.getBundledMods())
+                    nestedBox.getChildren().add(createNestedRow(path));
+            }
+            if (modInfo.hasDependencies()) {
+                nestedBox.getChildren().add(createSectionLabel(i18n("addon.dependencies")));
+                for (String depId : modInfo.getDependencies())
+                    nestedBox.getChildren().add(createDependencyRow(modInfo, depId));
+            }
+        }
+
+        // Snap to the given state without animating — used when a cell is recycled to another item.
+        private void snapExpansion(boolean expand) {
+            if (nestedAnimation != null) {
+                nestedAnimation.stop();
+                nestedAnimation = null;
+            }
+            nestedBox.setMinHeight(Region.USE_COMPUTED_SIZE);
+            nestedBox.setMaxHeight(Region.USE_COMPUTED_SIZE);
+            if (expand) {
+                rebuildNested(getItem());
+                nestedBox.setManaged(true);
+                nestedBox.setVisible(true);
+            } else {
+                nestedBox.setManaged(false);
+                nestedBox.setVisible(false);
+                nestedBox.getChildren().clear();
+            }
+        }
+
+        // Smoothly slide the nested list open/closed on a real user toggle.
+        private void animateExpansion(boolean expand) {
+            if (nestedAnimation != null) {
+                nestedAnimation.stop();
+                nestedAnimation = null;
+            }
+            if (!AnimationUtils.isAnimationEnabled()) {
+                snapExpansion(expand);
+                return;
+            }
+            if (expand) {
+                rebuildNested(getItem());
+                nestedBox.setManaged(true);
+                nestedBox.setVisible(true);
+                nestedBox.applyCss();
+                nestedBox.layout();
+                double target = nestedBox.prefHeight(-1);
+                nestedBox.setMinHeight(0);
+                nestedBox.setMaxHeight(0);
+                Timeline timeline = new Timeline(new KeyFrame(Duration.millis(200),
+                        new KeyValue(nestedBox.minHeightProperty(), target, Motion.EASE_IN_OUT_CUBIC),
+                        new KeyValue(nestedBox.maxHeightProperty(), target, Motion.EASE_IN_OUT_CUBIC)));
+                timeline.setOnFinished(e -> {
+                    nestedBox.setMinHeight(Region.USE_COMPUTED_SIZE);
+                    nestedBox.setMaxHeight(Region.USE_COMPUTED_SIZE);
+                    nestedAnimation = null;
+                });
+                nestedAnimation = timeline;
+                timeline.play();
+            } else {
+                double current = nestedBox.getHeight();
+                nestedBox.setMinHeight(current);
+                nestedBox.setMaxHeight(current);
+                Timeline timeline = new Timeline(new KeyFrame(Duration.millis(200),
+                        new KeyValue(nestedBox.minHeightProperty(), 0, Motion.EASE_IN_OUT_CUBIC),
+                        new KeyValue(nestedBox.maxHeightProperty(), 0, Motion.EASE_IN_OUT_CUBIC)));
+                timeline.setOnFinished(e -> {
+                    nestedBox.setManaged(false);
+                    nestedBox.setVisible(false);
+                    nestedBox.getChildren().clear();
+                    nestedBox.setMinHeight(Region.USE_COMPUTED_SIZE);
+                    nestedBox.setMaxHeight(Region.USE_COMPUTED_SIZE);
+                    nestedAnimation = null;
+                });
+                nestedAnimation = timeline;
+                timeline.play();
+            }
         }
 
         @Override
@@ -967,34 +1078,24 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
 
-            // Nested (Jar-in-Jar) mods
+            // Nested (Jar-in-Jar) mods & dependencies. Bind to this item's expanded state without
+            // triggering the animation (the cell is being recycled, not toggled by the user).
+            suppressExpandAnimation = true;
             if (expandedBinding != null) {
                 expanded.unbindBidirectional(expandedBinding);
             }
             expanded.bindBidirectional(expandedBinding = dataItem.expandedProperty());
+            suppressExpandAnimation = false;
 
-            nestedBox.getChildren().clear();
-            boolean hasBundled = modInfo.hasBundledMods();
-            boolean hasDeps = modInfo.hasDependencies();
-            boolean expandable = hasBundled || hasDeps;
+            boolean expandable = modInfo.hasBundledMods() || modInfo.hasDependencies();
             expandButton.setVisible(expandable);
             expandButton.setManaged(expandable);
+            if (modInfo.hasBundledMods())
+                content.addTag(i18n("addon.bundled") + ": " + modInfo.getBundledMods().size());
 
-            if (hasBundled) {
-                List<String> bundledMods = modInfo.getBundledMods();
-                content.addTag(i18n("addon.bundled") + ": " + bundledMods.size());
-                nestedBox.getChildren().add(createSectionLabel(i18n("addon.bundled")));
-                for (String path : bundledMods) {
-                    nestedBox.getChildren().add(createNestedRow(path));
-                }
-            }
-
-            if (hasDeps) {
-                nestedBox.getChildren().add(createSectionLabel(i18n("addon.dependencies")));
-                for (String depId : modInfo.getDependencies()) {
-                    nestedBox.getChildren().add(createDependencyRow(modInfo, depId));
-                }
-            }
+            // Build the nested rows lazily — only when expanded — so collapsed rows don't create
+            // nodes or compute dependency status on every render/scroll.
+            snapExpansion(dataItem.expandedProperty().get());
 
             if (!warning.isEmpty()) {
                 pseudoClassStateChanged(WARNING, true);

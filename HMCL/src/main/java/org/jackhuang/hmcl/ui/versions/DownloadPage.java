@@ -179,6 +179,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     // Called when a mod has actually been downloaded into the instance, to refresh just that mod's
     // entry in the cached installed-mods map (used for dependency installation status).
+    //
+    // Thread-safety: the cached map is only structurally mutated here and in setModActive, both of
+    // which are invoked on the JavaFX thread; background code only builds fresh maps / clears the
+    // reference under INSTALLED_CACHE_LOCK. Keep these mutators on the FX thread.
     public static void markModInstalled(Profile.ProfileVersion version, RemoteAddon addon) {
         if (version == null || addon == null)
             return;

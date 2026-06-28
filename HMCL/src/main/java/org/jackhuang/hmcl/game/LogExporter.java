@@ -117,6 +117,7 @@ public final class LogExporter {
                         infoBuilder.append("None").append(System.lineSeparator());
                     } else {
                         infoBuilder.append("These mods may conflict with their bundled copies and cause crashes:").append(System.lineSeparator());
+                        infoBuilder.append("(Heuristic: matched by mod id appearing in the bundled jar file name; may include false positives.)").append(System.lineSeparator());
                         for (String line : duplicates) {
                             infoBuilder.append("\t|-> ").append(line).append(System.lineSeparator());
                         }
