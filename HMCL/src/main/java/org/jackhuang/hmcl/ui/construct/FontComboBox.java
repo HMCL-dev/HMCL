@@ -34,9 +34,6 @@ import javafx.collections.FXCollections;
 import javafx.scene.text.Font;
 
 public final class FontComboBox extends JFXComboBox<String> {
-    private static List<String> allFonts;
-    private static List<String> headFonts;
-
     private Thread loadingThread = null;
 
     private volatile boolean loaded = false;
@@ -74,8 +71,8 @@ public final class FontComboBox extends JFXComboBox<String> {
 
             itemsProperty().unbind();
 
-            allFonts = Font.getFamilies();
-            headFonts = allFonts.subList(0, Math.min(10, allFonts.size()));
+            List<String> allFonts = Font.getFamilies();
+            List<String> headFonts = allFonts.subList(0, Math.min(10, allFonts.size()));
 
             var currentItems = FXCollections.observableArrayList(headFonts);
             setItems(currentItems);
@@ -83,11 +80,7 @@ public final class FontComboBox extends JFXComboBox<String> {
 
             loadingThread = new Thread(() -> {
 
-                itemsProperty().unbind();
-
-                List<String> remainingFonts = allFonts.stream()
-                        .filter(f -> !headFonts.contains(f))
-                        .toList();
+                List<String> remainingFonts = allFonts.subList(Math.min(10, allFonts.size()), allFonts.size());
 
                 int batchSize = 30;
                 for (int i = 0; i < remainingFonts.size(); i += batchSize) {
