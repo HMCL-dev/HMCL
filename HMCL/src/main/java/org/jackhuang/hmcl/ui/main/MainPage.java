@@ -116,7 +116,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         latestVersion.bind(UpdateChecker.latestVersionProperty());
         FXUtils.onChange(showUpdateProperty(), MainPage.this::doAnimation);
         FXUtils.onChange(showUpdateProperty(), MainPage.this::doUpdateIfNeeded);
-        FXUtils.onChange(showUpdateDialogProperty(), MainPage.this::showUpdateDialog);
 
         HBox titleNode = new HBox(8);
         titleNode.setPadding(new Insets(0, 0, 0, 2));
@@ -304,21 +303,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         }
     }
 
-    private void showUpdateDialog(boolean show) {
-        if (show && latestVersion.get() != null && !Objects.equals(latestVersion.get(), lastShownVersion)
-                && !Objects.equals(state().getPromptedVersion(), latestVersion.get().version())
-        ) {
-            lastShownVersion = latestVersion.get();
-            Controllers.dialogLater(new MessageDialogPane.Builder("", i18n("update.bubble.title", latestVersion.get().version()), MessageDialogPane.MessageType.INFO)
-                    .addAction(i18n("button.view"), () -> {
-                        state().setPromptedVersion(latestVersion.get().version());
-                        onUpgrade();
-                    })
-                    .addCancel(null)
-                    .build());
-        }
-    }
-
     private void doAnimation(boolean show) {
         if (AnimationUtils.isAnimationEnabled()) {
             Duration duration = Duration.millis(320);
@@ -426,18 +410,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     public BooleanProperty showUpdateProperty() {
         return showUpdate;
-    }
-
-    public void setShowUpdate(boolean showUpdate) {
-        this.showUpdate.set(showUpdate);
-    }
-
-    public boolean isShowUpdateDialog() {
-        return showUpdateDialog.get();
-    }
-
-    public BooleanProperty showUpdateDialogProperty() {
-        return showUpdateDialog;
     }
 
     public void initVersions(Profile profile, List<Version> versions) {

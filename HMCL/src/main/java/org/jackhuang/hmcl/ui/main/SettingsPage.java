@@ -165,14 +165,6 @@ public final class SettingsPage extends ScrollPane {
                     updatePaneList.getContent().add(previewPane);
                 }
 
-                {
-                    LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
-                    disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
-                    disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
-                    disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(settings().disableAutoShowUpdateDialogProperty());
-                    updatePaneList.getContent().add(disableAutoShowUpdateDialogPane);
-                }
-
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);
             }
 
