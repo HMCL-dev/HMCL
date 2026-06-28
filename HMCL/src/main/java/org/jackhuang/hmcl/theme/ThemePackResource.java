@@ -55,19 +55,26 @@ public sealed interface ThemePackResource
     /// A resource stored as a regular filesystem file.
     ///
     /// @param path the resource file path
+    /// @param name the stable resource name
     @NotNullByDefault
-    record File(Path path) implements ThemePackResource {
+    record File(Path path, String name) implements ThemePackResource {
+        /// Creates a file-backed theme-pack resource named after its file name.
+        ///
+        /// @param path the resource file path
+        public File(Path path) {
+            this(path, Objects.requireNonNull(path).getFileName().toString());
+        }
+
         /// Creates a file-backed theme-pack resource.
         ///
         /// @param path the resource file path
+        /// @param name the stable resource name
         public File {
             path = Objects.requireNonNull(path).toAbsolutePath().normalize();
-        }
-
-        /// Returns the file name.
-        @Override
-        public String name() {
-            return path.getFileName().toString();
+            name = Objects.requireNonNull(name).trim();
+            if (name.isEmpty()) {
+                throw new IllegalArgumentException("Theme-pack resource name is blank");
+            }
         }
 
         /// Opens the file.

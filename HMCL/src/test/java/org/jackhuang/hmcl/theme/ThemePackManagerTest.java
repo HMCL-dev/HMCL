@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.theme;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
@@ -44,6 +45,67 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 /// Tests for theme-pack import, export, and resolution behavior.
 @NotNullByDefault
 public final class ThemePackManagerTest {
+    /// Theme-pack image assets keep their entry names when exported from unpacked theme directories.
+    @Test
+    public void exportsUnpackedThemeResourceWithEntryName() throws Exception {
+        Field launcherSettingsField = SettingsManager.class.getDeclaredField("launcherSettings");
+        launcherSettingsField.setAccessible(true);
+        Object previousLauncherSettings = launcherSettingsField.get(null);
+
+        String packId = "example.unpacked-export";
+        Path themePacksDirectory = ThemePackManager.THEME_PACKS_DIRECTORY.toAbsolutePath().normalize();
+        Path themeDirectory = themePacksDirectory.resolve(packId).normalize();
+        if (!themeDirectory.startsWith(themePacksDirectory)) {
+            throw new AssertionError("Theme-pack test directory escapes the theme-pack directory: " + themeDirectory);
+        }
+
+        try {
+            if (Files.exists(themeDirectory)) {
+                FileUtils.forceDelete(themeDirectory);
+            }
+            Path wallpaper = themeDirectory.resolve("assets/wallpapers/wallpaper.png");
+            Files.createDirectories(wallpaper.getParent());
+            byte[] body = "unpacked image bytes".getBytes(StandardCharsets.US_ASCII);
+            Files.write(wallpaper, body);
+            Files.writeString(themeDirectory.resolve(ThemePackExporter.MANIFEST_ENTRY), """
+                    {
+                      "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+                      "id": "example.unpacked-export",
+                      "version": "1.0.0",
+                      "name": "Unpacked",
+                      "theme": {
+                        "background": {
+                          "type": "image",
+                          "path": "assets/wallpapers/wallpaper.png"
+                        }
+                      }
+                    }
+                    """);
+
+            LauncherSettings launcherSettings = new LauncherSettings();
+            launcherSettings.selectedThemeProperty().set(new ThemeReference(packId, null));
+            launcherSettingsField.set(null, launcherSettings);
+
+            ThemePackManager.ExportedThemePack exported =
+                    ThemePackManager.createCurrent("example.export", "Example", "Tester");
+            Theme theme = exported.manifest().themes().get(0);
+            ThemeBackgroundSettings background = Objects.requireNonNull(theme.appearance().background());
+            ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background.source());
+
+            assertEquals("assets/wallpapers/wallpaper.png", image.path());
+            assertEquals(1, exported.assets().size());
+            assertEquals("assets/wallpapers/wallpaper.png", exported.assets().get(0).entryName());
+            try (InputStream input = exported.assets().get(0).source().openStream()) {
+                assertArrayEquals(body, input.readAllBytes());
+            }
+        } finally {
+            launcherSettingsField.set(null, previousLauncherSettings);
+            if (Files.exists(themeDirectory)) {
+                FileUtils.forceDelete(themeDirectory);
+            }
+        }
+    }
+
     /// Network launcher backgrounds are downloaded and exported as local theme-pack image assets.
     @Test
     public void exportsNetworkBackgroundAsImageAsset() throws Exception {

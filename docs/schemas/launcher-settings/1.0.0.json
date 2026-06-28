@@ -51,10 +51,7 @@
           "themeColorStyle",
           "titleBarTransparent",
           "background",
-          "backgroundOpacity",
-          "networkBackgroundImageCachePolicy",
-          "backgroundFallback",
-          "backgroundLoadPolicy"
+          "backgroundOpacity"
         ]
       },
       "uniqueItems": true

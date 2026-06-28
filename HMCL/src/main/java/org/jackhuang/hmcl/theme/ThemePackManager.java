@@ -1191,7 +1191,7 @@ public final class ThemePackManager {
             if (!Files.isRegularFile(assetFile)) {
                 throw new IOException("Installed theme-pack asset is missing: " + normalizedEntryName);
             }
-            return new ThemePackResource.File(assetFile);
+            return new ThemePackResource.File(assetFile, normalizedEntryName);
         }
         if (!Files.isRegularFile(installedFile)) {
             throw new IOException("Installed theme-pack file is missing: " + installedFile);
