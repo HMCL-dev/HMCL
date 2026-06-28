@@ -116,10 +116,7 @@
     },
     "backgroundFallbackType": {
       "enum": [
-        "DEFAULT",
         "BUILTIN",
-        "CUSTOM",
-        "NETWORK",
         "PAINT",
         "THEME_COLOR"
       ]

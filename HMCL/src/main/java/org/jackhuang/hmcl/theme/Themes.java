@@ -567,7 +567,7 @@ public final class Themes {
             return Task.runAsync(Schedulers.javafx(), () -> ThemePackManager.apply(themePack, theme));
         }
 
-        ThemeResolveContext context = ThemePackManager.currentResolveContext();
+        ThemeResolveContext context = ThemeResolveContext.current(getAutomaticBrightness());
         return Task.supplyAsync(Schedulers.io(), () -> loadBackground(themePack, theme, context))
                 .thenAcceptAsync(Schedulers.javafx(), loadedBackground -> {
                     suppressBackgroundRefresh = true;
