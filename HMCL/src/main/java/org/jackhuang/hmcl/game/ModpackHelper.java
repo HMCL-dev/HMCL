@@ -31,11 +31,7 @@ import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.modpack.server.ServerModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
-import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.GameWindowType;
-import org.jackhuang.hmcl.setting.JavaVersionType;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
@@ -185,12 +181,12 @@ public final class ModpackHelper {
         return Files.exists(Paths.get("externalgames").resolve(name));
     }
 
-    public static Task<?> getInstallManuallyCreatedModpackTask(Profile profile, Path zipFile, String name, Charset charset) {
+    public static Task<?> getInstallManuallyCreatedModpackTask(Path zipFile, String name, Charset charset) {
         if (isExternalGameNameConflicts(name)) {
             throw new IllegalArgumentException("name existing");
         }
 
-        return new ManuallyCreatedModpackInstallTask(profile, zipFile, charset, name)
+        return new ManuallyCreatedModpackInstallTask(zipFile, charset, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
                     Profile newProfile = new Profile(
                             Profiles.newProfileId(),

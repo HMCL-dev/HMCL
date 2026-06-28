@@ -94,7 +94,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
 
         if (isManuallyCreated) {
-            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset);
+            return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name, charset);
         }
 
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
