@@ -41,7 +41,8 @@ import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Objects;
+import java.util.UUID;
 
 /// Stores the current workspace's main launcher settings.
 ///
@@ -167,6 +168,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Returns the preview update opt-in property.
     public BooleanProperty acceptPreviewUpdateProperty() {
         return acceptPreviewUpdate;
+    }
+
+    /// Whether preview builds are accepted by update checks.
+    @SerializedName("updateMode")
+    private final ObjectProperty<EnumUpdateMode> updateMode = new SimpleObjectProperty<>(EnumUpdateMode.NOTIFY);
+
+    /// Returns the update mode property.
+    public ObjectProperty<EnumUpdateMode> updateModeProperty() {
+        return updateMode;
     }
 
     /// Whether automatic update dialogs are disabled.

@@ -31,6 +31,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.EnumUpdateMode;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -137,6 +138,15 @@ public final class SettingsPage extends ScrollPane {
                     }
 
                     updatePaneList.getContent().add(updatePane);
+                }
+
+                {
+                    LineSelectButton<EnumUpdateMode> updateModePane = new LineSelectButton<>();
+                    updateModePane.setTitle(i18n("update.mode"));
+                    updateModePane.valueProperty().bindBidirectional(settings().updateModeProperty());
+                    updateModePane.setConverter(mode -> i18n("update.mode." + mode.name().toLowerCase()));
+                    updateModePane.setItems(EnumUpdateMode.values());
+                    updatePaneList.getContent().add(updateModePane);
                 }
 
                 {

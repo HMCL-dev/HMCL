@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-final class HMCLDownloadTask extends FileDownloadTask {
+public final class HMCLDownloadTask extends FileDownloadTask {
 
     private final RemoteVersion.Type archiveFormat;
 
