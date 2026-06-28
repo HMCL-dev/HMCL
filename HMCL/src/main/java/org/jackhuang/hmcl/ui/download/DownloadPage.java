@@ -69,11 +69,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
     public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_MOD =
-            (downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "mods");
+            (downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "mods", mod);
     public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_RESOURCE_PACK =
-            (downloadProvider, profile, version, pack, file) -> download(downloadProvider, profile, version, file, "resourcepacks");
+            (downloadProvider, profile, version, pack, file) -> download(downloadProvider, profile, version, file, "resourcepacks", null);
     public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_SHADER =
-            (downloadProvider, profile, version, shader, file) -> download(downloadProvider, profile, version, file, "shaderpacks");
+            (downloadProvider, profile, version, shader, file) -> download(downloadProvider, profile, version, file, "shaderpacks", null);
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
@@ -141,8 +141,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         };
     }
 
-    public static void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteAddon.Version file, String subdirectoryName) {
+    public static void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteAddon.Version file, String subdirectoryName, @Nullable RemoteAddon mod) {
         if (version == null) version = Profiles.getSelectedInstance(profile);
+
+        String finalVersion = version;
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
@@ -175,6 +177,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     }
                 } else {
                     Controllers.showToast(i18n("install.success"));
+                    if (mod != null)
+                        org.jackhuang.hmcl.ui.versions.DownloadPage.markModInstalled(
+                                new Profile.ProfileVersion(profile, finalVersion), mod);
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
             handler.resolve();

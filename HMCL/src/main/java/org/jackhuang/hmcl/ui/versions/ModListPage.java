@@ -108,6 +108,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private void loadMods(ModManager modManager) {
         setLoading(true);
 
+        // The mod set may have changed (added/removed/refreshed); drop the download page's cached
+        // installed-mods snapshot so dependency status there is re-read.
+        DownloadPage.invalidateInstalledMods();
+
         this.modManager = modManager;
         CompletableFuture.supplyAsync(() -> {
             lock.lock();

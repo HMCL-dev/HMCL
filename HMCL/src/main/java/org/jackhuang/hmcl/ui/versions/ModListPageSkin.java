@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -94,6 +95,16 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
     private final JFXListView<ModInfoObject> listView;
     private final JFXTextField searchField;
+
+    // Keeps the download page's cached installed-mods map in sync when a mod is enabled/disabled,
+    // so dependency installation status there stays correct without a re-scan.
+    private final InvalidationListener activeChangeListener = observable -> {
+        if (observable instanceof BooleanProperty property && property.getBean() instanceof LocalModFile mod) {
+            DownloadPage.setModActive(
+                    new Profile.ProfileVersion(getSkinnable().getProfile(), getSkinnable().getInstanceId()),
+                    mod.getId(), mod.isActive());
+        }
+    };
 
     @FXThread
     private boolean isSearching = false;
@@ -266,6 +277,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
+                while (c.next()) {
+                    for (ModInfoObject removed : c.getRemoved())
+                        removed.active.removeListener(activeChangeListener);
+                    for (ModInfoObject added : c.getAddedSubList())
+                        added.active.addListener(activeChangeListener);
+                }
                 if (isSearching) {
                     search();
                 }
