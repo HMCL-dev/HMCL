@@ -653,9 +653,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     var txtMinMemory = new JFXTextField();
                     txtMinMemory.setPrefWidth(160);
                     txtMinMemory.setTextFormatter(new TextFormatter<>(change -> {
-                        if (!change.getText().matches("\\d*")) {
-                            change.setText(""); 
-                        }
+                        change.setText(change.getText().replaceAll("[^0-9]", ""));
                         return change;
                     }));
                     minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label(i18n("settings.memory.unit.mib"))));
@@ -669,9 +667,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
                     txtMetaspace.setPrefWidth(160);
                     txtMetaspace.setTextFormatter(new TextFormatter<>(change -> {
-                        if (!change.getText().matches("\\d*")) {
-                            change.setText(""); 
-                        }
+                        change.setText(change.getText().replaceAll("[^0-9]", ""));
                         return change;
                     }));
                     metaspacePane.setRight(new HBox(8, txtMetaspace, new Label(i18n("settings.memory.unit.mib"))));
