@@ -30,7 +30,10 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -163,8 +166,16 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         return newFixedLengthResponse(Response.Status.OK, "text/html; charset=UTF-8", html);
     }
 
+    @Override
+    public void close() {
+        if (!future.isDone())
+            future.completeExceptionally(new AuthenticationException("OAuth server is closing"));
+        stop();
+    }
+
     public static class Factory implements OAuth.Callback {
         public final EventManager<GrantDeviceCodeEvent> onGrantDeviceCode = new EventManager<>();
+        public final EventManager<LoginCompletedDeviceCodeEvent> onLoginCompletedDeviceCode = new EventManager<>();
         public final EventManager<OpenBrowserEvent> onOpenBrowserAuthorizationCode = new EventManager<>();
         public final EventManager<OpenBrowserEvent> onOpenBrowserDevice = new EventManager<>();
 
@@ -190,6 +201,11 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         @Override
         public void grantDeviceCode(String userCode, String verificationURI) {
             onGrantDeviceCode.fireEvent(new GrantDeviceCodeEvent(this, userCode, verificationURI));
+        }
+
+        @Override
+        public void loginCompletedDeviceCode() {
+            onLoginCompletedDeviceCode.fireEvent(new LoginCompletedDeviceCodeEvent(this));
         }
 
         @Override
@@ -225,6 +241,12 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         public String getVerificationUri() {
             return verificationUri;
+        }
+    }
+
+    public static class LoginCompletedDeviceCodeEvent extends Event {
+        public LoginCompletedDeviceCodeEvent(Object source) {
+            super(source);
         }
     }
 

@@ -36,8 +36,9 @@ import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.ui.MacOSNativeUtils;
 import org.jackhuang.hmcl.ui.WindowsNativeUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -51,7 +52,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
@@ -61,8 +62,8 @@ public final class Themes {
         {
             List<Observable> observables = new ArrayList<>();
 
-            observables.add(config().themeBrightnessProperty());
-            observables.add(config().themeColorProperty());
+            observables.add(settings().themeBrightnessProperty());
+            observables.add(settings().themeColorProperty());
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
             }
@@ -70,7 +71,7 @@ public final class Themes {
         }
 
         private Brightness getBrightness() {
-            String themeBrightness = config().getThemeBrightness();
+            String themeBrightness = settings().themeBrightnessProperty().get();
             if (themeBrightness == null)
                 return Brightness.DEFAULT;
 
@@ -90,7 +91,7 @@ public final class Themes {
 
         @Override
         protected Theme computeValue() {
-            ThemeColor themeColor = Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT);
+            ThemeColor themeColor = Objects.requireNonNullElse(settings().themeColorProperty().get(), ThemeColor.DEFAULT);
 
             return new Theme(themeColor, getBrightness(), Theme.DEFAULT.colorStyle(), Contrast.DEFAULT);
         }
@@ -188,11 +189,11 @@ public final class Themes {
     }
 
     private static final ObjectBinding<Color> titleFill = Bindings.createObjectBinding(
-            () -> config().isTitleTransparent()
+            () -> settings().titleTransparentProperty().get()
                     ? getColorScheme().getOnSurface()
                     : getColorScheme().getOnPrimaryContainer(),
             colorSchemeProperty(),
-            config().titleTransparentProperty()
+            settings().titleTransparentProperty()
     );
 
     public static ObservableValue<Color> titleFillProperty() {
@@ -233,6 +234,11 @@ public final class Themes {
                     }
                 });
             }
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && MacOSNativeUtils.isSupported()) {
+            MacOSNativeUtils.setAppearance(darkModeProperty().get());
+
+            ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), MacOSNativeUtils::setAppearance);
+            stage.getProperties().put("Themes.applyNativeDarkMode.listener", listener);
         }
     }
 

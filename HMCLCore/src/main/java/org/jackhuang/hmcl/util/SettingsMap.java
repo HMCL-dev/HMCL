@@ -86,4 +86,9 @@ public final class SettingsMap {
     public void clear() {
         map.clear();
     }
+
+    @Override
+    public String toString() {
+        return "SettingsMap" + map;
+    }
 }

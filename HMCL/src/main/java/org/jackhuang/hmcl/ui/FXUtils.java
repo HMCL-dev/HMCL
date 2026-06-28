@@ -62,6 +62,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -109,7 +110,10 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -235,8 +239,8 @@ public final class FXUtils {
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
 
-    public static final List<String> IMAGE_EXTENSIONS = Lang.immutableListOf(
-            "png", "jpg", "jpeg", "bmp", "gif", "webp", "apng"
+    public static final List<String> IMAGE_EXTENSIONS = List.of(
+            "png", "jpg", "jpeg", "bmp", "gif", "webp", "svg", "apng"
     );
 
     private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
@@ -292,11 +296,6 @@ public final class FXUtils {
         }
         runnable.run();
         return originalListener;
-    }
-
-    public static void runLaterIf(BooleanSupplier condition, Runnable runnable) {
-        if (condition.getAsBoolean()) Platform.runLater(() -> runLaterIf(condition, runnable));
-        else runnable.run();
     }
 
     public static void limitSize(ImageView imageView, double maxWidth, double maxHeight) {
@@ -376,10 +375,6 @@ public final class FXUtils {
             ((JFXPasswordField) field).validate();
         } else
             throw new IllegalArgumentException("Only JFXTextField and JFXPasswordField allowed");
-    }
-
-    public static boolean getValidateWhileTextChanged(Node field) {
-        return field.getProperties().containsKey("FXUtils.validation");
     }
 
     public static Rectangle setOverflowHidden(Region region) {
@@ -1166,12 +1161,10 @@ public final class FXUtils {
         }
     }
 
-    public static Image loadImage(String url) throws Exception {
-        URI uri = NetworkUtils.toURI(url);
-
-        URLConnection connection = NetworkUtils.createConnection(uri);
-        if (connection instanceof HttpURLConnection)
-            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
+    public static Image loadImage(WebURL url) throws Exception {
+        URLConnection connection = NetworkUtils.createConnection(url);
+        if (connection instanceof HttpURLConnection httpConnection)
+            connection = NetworkUtils.resolveConnection(httpConnection);
 
         try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
             String contentType = Objects.requireNonNull(connection.getContentType(), "");
@@ -1585,9 +1578,8 @@ public final class FXUtils {
     }
 
     /**
-     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries.
-     * Supports multi-monitor setups by detecting the current screen where the component is located.
-     * Now handles first-time popup display by forcing layout measurement.
+     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries,
+     * window boundaries, and clipping containers like ScrollPane.
      *
      * @param root          the root node to calculate position relative to
      * @param popupInstance the popup instance to position
@@ -1596,8 +1588,10 @@ public final class FXUtils {
     public static JFXPopup.PopupVPosition determineOptimalPopupPosition(Node root, JFXPopup popupInstance) {
         // Get the screen bounds in screen coordinates
         Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
+        if (screenBounds == null) {
+            return JFXPopup.PopupVPosition.TOP; // Fallback
+        }
 
-        // Convert Bounds to Rectangle2D for getScreensForRectangle method
         Rectangle2D boundsRect = new Rectangle2D(
                 screenBounds.getMinX(), screenBounds.getMinY(),
                 screenBounds.getWidth(), screenBounds.getHeight()
@@ -1608,13 +1602,36 @@ public final class FXUtils {
         Screen currentScreen = screens.isEmpty() ? Screen.getPrimary() : screens.get(0);
         Rectangle2D visualBounds = currentScreen.getVisualBounds();
 
-        double screenHeight = visualBounds.getHeight();
-        double screenMinY = visualBounds.getMinY();
-        double itemScreenY = screenBounds.getMinY();
+        // 1. Initial bounds based on the physical Screen limits
+        double clipMinY = visualBounds.getMinY();
+        double clipMaxY = visualBounds.getMaxY();
 
-        // Calculate available space relative to the current screen
-        double availableSpaceAbove = itemScreenY - screenMinY;
-        double availableSpaceBelow = screenMinY + screenHeight - itemScreenY - root.getBoundsInLocal().getHeight();
+        // 2. Constrain by Window (Stage) bounds so it doesn't overflow the application window
+        if (root.getScene() != null && root.getScene().getWindow() != null) {
+            javafx.stage.Window window = root.getScene().getWindow();
+            clipMinY = Math.max(clipMinY, window.getY());
+            clipMaxY = Math.min(clipMaxY, window.getY() + window.getHeight());
+        }
+
+        // 3. Constrain by parent ScrollPanes to handle clipping within the UI layout
+        Node parent = root.getParent();
+        while (parent != null) {
+            if (parent instanceof ScrollPane) {
+                Bounds spBounds = parent.localToScreen(parent.getBoundsInLocal());
+                if (spBounds != null) {
+                    clipMinY = Math.max(clipMinY, spBounds.getMinY());
+                    clipMaxY = Math.min(clipMaxY, spBounds.getMaxY());
+                }
+            }
+            parent = parent.getParent();
+        }
+
+        double itemScreenY = screenBounds.getMinY();
+        double itemScreenMaxY = screenBounds.getMaxY();
+
+        // Calculate available space relative to the narrowest calculated clipping bounds
+        double availableSpaceAbove = itemScreenY - clipMinY;
+        double availableSpaceBelow = clipMaxY - itemScreenMaxY;
 
         // Get popup content and ensure it's properly measured
         Region popupContent = popupInstance.getPopupContent();
@@ -1630,8 +1647,7 @@ public final class FXUtils {
             menuHeight = popupContent.getHeight();
             if (menuHeight <= 0) {
                 // Fallback: estimate based on number of menu items
-                // Each menu item is roughly 36px height + separators + padding
-                menuHeight = 300; // Conservative estimate for the current menu structure
+                menuHeight = 300;
             }
         } else {
             menuHeight = popupContent.getHeight();
@@ -1640,9 +1656,12 @@ public final class FXUtils {
         // Add some margin for safety
         menuHeight += 20;
 
-        return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
-                ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
-                : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
+        // Logic: if there isn't enough space below, AND there is more space above, open upwards.
+        if (availableSpaceBelow < menuHeight && availableSpaceAbove > availableSpaceBelow) {
+            return JFXPopup.PopupVPosition.BOTTOM;  // Show menu above the button, expanding upward
+        } else {
+            return JFXPopup.PopupVPosition.TOP;     // Show menu below the button, expanding downward
+        }
     }
 
     public static void useJFXContextMenu(TextInputControl control) {

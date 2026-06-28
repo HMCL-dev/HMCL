@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -105,7 +105,7 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                 TaskCenter.TaskKind kind = (TaskCenter.TaskKind) settings.get("task_kind");
                 String taskName = (String) settings.get("task_name");
 
-                if (config().isAutoBackgroundTask()) {
+                if (settings().isAutoBackgroundTask()) {
                     // Auto-background: enqueue directly without showing dialog
                     movedToBackground[0] = true;
                     TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);

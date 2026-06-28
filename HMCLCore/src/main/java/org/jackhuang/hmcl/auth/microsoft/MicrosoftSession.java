@@ -17,17 +17,18 @@
  */
 package org.jackhuang.hmcl.auth.microsoft;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class MicrosoftSession {
     private final String tokenType;
@@ -76,70 +77,65 @@ public class MicrosoftSession {
         return profile;
     }
 
-    public static MicrosoftSession fromStorage(Map<?, ?> storage) {
-        UUID uuid = tryCast(storage.get("uuid"), String.class).map(UUIDTypeAdapter::fromString)
-                .orElseThrow(() -> new IllegalArgumentException("uuid is missing"));
-        String name = tryCast(storage.get("displayName"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
-        String tokenType = tryCast(storage.get("tokenType"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("tokenType is missing"));
-        String accessToken = tryCast(storage.get("accessToken"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
-        String refreshToken = tryCast(storage.get("refreshToken"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("refreshToken is missing"));
-        Long notAfter = tryCast(storage.get("notAfter"), Number.class).map(Number::longValue).orElse(0L);
-        String userId = tryCast(storage.get("userid"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("userid is missing"));
-        return new MicrosoftSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(uuid, name));
+    /// Returns whether the stored session contains a usable Minecraft profile name.
+    public boolean hasProfileName() {
+        return profile != null && StringUtils.isNotBlank(profile.name());
     }
 
-    public Map<Object, Object> toStorage() {
+    /// Loads a Microsoft session from persisted account metadata and private data.
+    public static MicrosoftSession fromStorage(JsonObject metadata, JsonObject privateData) {
+        String profileIDText = JsonUtils.getString(metadata, "profileID");
+        if (profileIDText == null) {
+            throw new IllegalArgumentException("profileID is missing");
+        }
+        UUID profileID = UUIDs.parse(profileIDText);
+        String profileName = JsonUtils.getString(privateData, "profileName", "");
+        String tokenType = requireStorageString(privateData, "tokenType");
+        String accessToken = requireStorageString(privateData, "accessToken");
+        String refreshToken = requireStorageString(privateData, "refreshToken");
+        JsonElement notAfterElement = privateData.get("notAfter");
+        long notAfter = notAfterElement != null
+                && notAfterElement.isJsonPrimitive()
+                && notAfterElement.getAsJsonPrimitive().isNumber()
+                ? notAfterElement.getAsLong()
+                : 0L;
+        String userId = requireStorageString(privateData, "userid");
+        return new MicrosoftSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(profileID, profileName));
+    }
+
+    /// Writes this session to persisted private account data.
+    public void writePrivateData(JsonObject privateData) {
         requireNonNull(profile);
         requireNonNull(user);
 
-        return mapOf(
-                pair("uuid", UUIDTypeAdapter.fromUUID(profile.getId())),
-                pair("displayName", profile.getName()),
-                pair("tokenType", tokenType),
-                pair("accessToken", accessToken),
-                pair("refreshToken", refreshToken),
-                pair("notAfter", notAfter),
-                pair("userid", user.id));
+        privateData.addProperty("profileName", profile.name());
+        privateData.addProperty("tokenType", tokenType);
+        privateData.addProperty("accessToken", accessToken);
+        privateData.addProperty("refreshToken", refreshToken);
+        privateData.addProperty("notAfter", notAfter);
+        privateData.addProperty("userid", user.id);
+    }
+
+    /// Reads a required string member from account storage.
+    private static String requireStorageString(JsonObject storage, String name) {
+        String value = JsonUtils.getString(storage, name);
+        if (value == null) {
+            throw new IllegalArgumentException(name + " is missing");
+        }
+        return value;
     }
 
     public AuthInfo toAuthInfo() {
         requireNonNull(profile);
 
-        return new AuthInfo(profile.getName(), profile.getId(), accessToken, AuthInfo.USER_TYPE_MSA, "{}");
+        return new AuthInfo(profile.name(), profile.id(), accessToken, AuthInfo.USER_TYPE_MSA, "{}");
     }
 
-    public static class User {
-        private final String id;
-
-        public User(String id) {
-            this.id = id;
-        }
-
-        public String getId() {
-            return id;
-        }
+    @JsonSerializable
+    public record User(String id) {
     }
 
-    public static class GameProfile {
-        private final UUID id;
-        private final String name;
-
-        public GameProfile(UUID id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        public UUID getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
+    @JsonSerializable
+    public record GameProfile(UUID id, String name) {
     }
 }

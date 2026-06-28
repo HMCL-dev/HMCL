@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
@@ -273,10 +274,10 @@ public class GameCrashWindow extends Stage {
         logWindow.show();
     }
 
-    private void exportGameCrashInfo() {
+    private CompletableFuture<Path> exportGameCrashInfo() {
         Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
 
-        CompletableFuture.supplyAsync(() ->
+        return CompletableFuture.supplyAsync(() ->
                         logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
                 .thenComposeAsync(logs -> {
                     long processStartTime = managedProcess.getProcess().info()
@@ -301,20 +302,7 @@ public class GameCrashWindow extends Stage {
                                     return false;
                                 }
                             });
-                })
-                .handleAsync((result, exception) -> {
-                    if (exception == null) {
-                        FXUtils.showFileInExplorer(logFile);
-                        var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageDialogPane.MessageType.SUCCESS).ok(null).build();
-                        DialogUtils.show(stackPane, dialog);
-                    } else {
-                        LOG.warning("Failed to export game crash info", exception);
-                        var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR).ok(null).build();
-                        DialogUtils.show(stackPane, dialog);
-                    }
-
-                    return null;
-                }, Schedulers.javafx());
+                }).thenApply(ignored -> logFile);
     }
 
     private final class View extends VBox {
@@ -444,8 +432,35 @@ public class GameCrashWindow extends Stage {
             HBox toolBar = new HBox();
             VBox.setMargin(toolBar, new Insets(0, 0, 4, 0));
             {
-                JFXButton exportGameCrashInfoButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
-                exportGameCrashInfoButton.setOnAction(e -> exportGameCrashInfo());
+                SpinnerPane exportButtonPane = new SpinnerPane();
+                exportButtonPane.getStyleClass().add("small-spinner-pane");
+
+                JFXButton exportButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
+                exportButtonPane.setContent(exportButton);
+                exportButton.setOnAction(e -> {
+                    exportButtonPane.showSpinner();
+                    exportGameCrashInfo().whenCompleteAsync((result, exception) -> {
+                        exportButtonPane.hideSpinner();
+
+                        if (exception == null) {
+                            FXUtils.showFileInExplorer(result);
+                            var dialog = new MessageDialogPane.Builder(
+                                    i18n("settings.launcher.launcher_log.export.success", result),
+                                    i18n("message.success"),
+                                    MessageDialogPane.MessageType.SUCCESS
+                            ).ok(null).build();
+                            DialogUtils.show(stackPane, dialog);
+                        } else {
+                            LOG.warning("Failed to export game crash info", exception);
+                            var dialog = new MessageDialogPane.Builder(
+                                    i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception),
+                                    i18n("message.error"),
+                                    MessageDialogPane.MessageType.ERROR
+                            ).ok(null).build();
+                            DialogUtils.show(stackPane, dialog);
+                        }
+                    }, Schedulers.javafx());
+                });
 
                 JFXButton logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
                 logButton.setOnAction(e -> showLogWindow());
@@ -457,7 +472,7 @@ public class GameCrashWindow extends Stage {
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, helpButton);
+                toolBar.getChildren().setAll(exportButtonPane, logButton, helpButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);

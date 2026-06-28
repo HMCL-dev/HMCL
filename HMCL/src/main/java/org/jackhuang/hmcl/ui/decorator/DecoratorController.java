@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXSnackbarLayout;
 import javafx.animation.Interpolator;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
@@ -34,9 +35,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
-import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -50,7 +52,7 @@ import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +65,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
@@ -75,7 +77,7 @@ public class DecoratorController {
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
-        decorator.titleTransparentProperty().bind(config().titleTransparentProperty());
+        decorator.titleTransparentProperty().bind(settings().titleTransparentProperty());
 
         navigator = new Navigator();
         navigator.setOnNavigated(this::onNavigated);
@@ -92,11 +94,11 @@ public class DecoratorController {
         decorator.setContentBackground(getBackground());
         changeBackgroundListener = o -> updateBackground();
         WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
-        config().backgroundImageTypeProperty().addListener(weakListener);
-        config().backgroundImageProperty().addListener(weakListener);
-        config().backgroundImageUrlProperty().addListener(weakListener);
-        config().backgroundPaintProperty().addListener(weakListener);
-        config().backgroundImageOpacityProperty().addListener(weakListener);
+        settings().backgroundTypeProperty().addListener(weakListener);
+        settings().backgroundImageProperty().addListener(weakListener);
+        settings().backgroundImageUrlProperty().addListener(weakListener);
+        settings().backgroundPaintProperty().addListener(weakListener);
+        settings().backgroundOpacityProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -183,14 +185,14 @@ public class DecoratorController {
     }
 
     private Background getBackground() {
-        EnumBackgroundImage imageType = config().getBackgroundImageType();
+        BackgroundType imageType = settings().backgroundTypeProperty().get();
         if (imageType == null)
-            imageType = EnumBackgroundImage.DEFAULT;
+            imageType = BackgroundType.DEFAULT;
 
         Image image = null;
         switch (imageType) {
             case CUSTOM:
-                String backgroundImage = config().getBackgroundImage();
+                String backgroundImage = settings().backgroundImageProperty().get();
                 if (backgroundImage != null)
                     try {
                         Path path = Path.of(backgroundImage);
@@ -202,10 +204,10 @@ public class DecoratorController {
                     }
                 break;
             case NETWORK:
-                String backgroundImageUrl = config().getBackgroundImageUrl();
+                String backgroundImageUrl = settings().backgroundImageUrlProperty().get();
                 if (backgroundImageUrl != null) {
                     try {
-                        image = FXUtils.loadImage(backgroundImageUrl);
+                        image = FXUtils.loadImage(WebURL.parseBrowserInput(backgroundImageUrl));
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -214,11 +216,9 @@ public class DecoratorController {
             case CLASSIC:
                 image = newBuiltinImage("/assets/img/background-classic.jpg");
                 break;
-            case TRANSLUCENT: // Deprecated
-                return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
             case PAINT:
-                Paint paint = config().getBackgroundPaint();
-                double opacity = Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.;
+                Paint paint = settings().backgroundPaintProperty().get();
+                double opacity = MathUtils.clamp(settings().backgroundOpacityProperty().get(), 0., 1.);
                 if (paint instanceof Color || paint == null) {
                     Color color = (Color) paint;
                     if (color == null)
@@ -234,13 +234,13 @@ public class DecoratorController {
         if (image == null) {
             image = loadDefaultBackgroundImage();
         }
-        return createBackgroundWithOpacity(image, config().getBackgroundImageOpacity());
+        return createBackgroundWithOpacity(image, settings().backgroundOpacityProperty().get());
     }
 
-    private Background createBackgroundWithOpacity(Image image, int opacity) {
+    private Background createBackgroundWithOpacity(Image image, double opacity) {
         if (opacity <= 0) {
             return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
-        } else if (opacity >= 100 || image.getPixelReader() == null) {
+        } else if (opacity >= 1. || image.getPixelReader() == null) {
             return new Background(new BackgroundImage(
                     image,
                     BackgroundRepeat.NO_REPEAT,
@@ -255,7 +255,7 @@ public class DecoratorController {
             for (int y = 0; y < image.getHeight(); y++) {
                 for (int x = 0; x < image.getWidth(); x++) {
                     Color color = pixelReader.getColor(x, y);
-                    Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity / 100);
+                    Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity);
                     pixelWriter.setColor(x, y, newColor);
                 }
             }
@@ -274,12 +274,12 @@ public class DecoratorController {
      * Load background image from bg/, background.png, background.jpg, background.gif
      */
     private Image loadDefaultBackgroundImage() {
-        Image image = randomImageIn(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background"));
+        Image image = randomImageIn(Metadata.HMCL_LOCAL_HOME.resolve("background"));
         if (image != null)
             return image;
 
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            image = tryLoadImage(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background." + extension));
+            image = tryLoadImage(Metadata.HMCL_LOCAL_HOME.resolve("background." + extension));
             if (image != null)
                 return image;
         }
@@ -341,6 +341,10 @@ public class DecoratorController {
 
     public void navigate(Node node, AnimationProducer animationProducer, Duration duration, Interpolator interpolator) {
         navigator.navigate(node, animationProducer, duration, interpolator);
+    }
+
+    public BooleanProperty backableProperty() {
+        return navigator.backableProperty();
     }
 
     private void close() {
@@ -425,6 +429,10 @@ public class DecoratorController {
 
     private void closeDialog(Node node) {
         DialogUtils.close(node);
+    }
+
+    public void showDialogLater(Node node) {
+        DialogUtils.showLater(decorator, node);
     }
 
     // ==== Toast ====

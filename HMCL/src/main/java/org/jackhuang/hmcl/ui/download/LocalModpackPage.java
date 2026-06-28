@@ -24,7 +24,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -74,7 +74,11 @@ public final class LocalModpackPage extends ModpackPage {
                 } else {
                     txtModpackName.getValidators().setAll(
                             new RequiredValidator(),
-                            new Validator(i18n("install.new_game.already_exists"), str -> !ModpackHelper.isExternalGameNameConflicts(str) && Profiles.getProfiles().stream().noneMatch(p -> p.getName().equals(str)) && !TaskCenter.getInstance().hasQueuedInstallName(TaskCenter.TaskKind.MODPACK_INSTALL, str)),
+                            new Validator(i18n("install.new_game.already_exists"), str -> !ModpackHelper.isExternalGameNameConflicts(str)
+                                    && Profiles.getProfiles().stream()
+                                            .noneMatch(existingProfile ->
+                                                    str.equals(Profiles.getProfileCustomName(existingProfile)))
+                                    && !TaskCenter.getInstance().hasQueuedInstallName(TaskCenter.TaskKind.MODPACK_INSTALL, str)),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
                 }
             });

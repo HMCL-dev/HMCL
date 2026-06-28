@@ -99,7 +99,11 @@ public final class FileUtils {
     }
 
     public static String getNameWithoutExtension(Path file) {
-        return StringUtils.substringBeforeLast(getName(file), '.');
+        String name = getName(file);
+        if (Files.isDirectory(file)) {
+            return name;
+        }
+        return StringUtils.substringBeforeLast(name, '.');
     }
 
     public static String getExtension(String fileName) {
@@ -207,6 +211,17 @@ public final class FileUtils {
         }
 
         return true;
+    }
+
+    /// @see #isNameValidForJar(OperatingSystem, String)
+    public static boolean isNameValidForJar(String name) {
+        return isNameValidForJar(OperatingSystem.CURRENT_OS, name);
+    }
+
+    /// Returns true if the given name is a valid jar file name on the given operating system,
+    /// and `false` otherwise.
+    public static boolean isNameValidForJar(OperatingSystem os, String name) {
+        return !name.contains("!") && isNameValid(os, name);
     }
 
     /// Safely get the file size. Returns `0` if the file does not exist or the size cannot be obtained.
@@ -492,6 +507,11 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, String content) throws IOException {
+        Path parent = file.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
         Path tmpFile = tmpSaveFile(file);
         try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             writer.write(content);
@@ -508,6 +528,11 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, ExceptionalConsumer<? super OutputStream, IOException> action) throws IOException {
+        Path parent = file.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
         Path tmpFile = tmpSaveFile(file);
 
         try (OutputStream os = Files.newOutputStream(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {

@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -63,12 +63,22 @@ public final class NativePatcher {
         });
     }
 
+    // https://github.com/LWJGL/lwjgl3/issues/1111
+    public static boolean needPatchMemoryUtil(Version version, int javaVersion) {
+        return javaVersion >= 25 && javaVersion <= 26 && version.getLibraries().stream().anyMatch(library ->
+                "org.lwjgl".equals(library.getGroupId())
+                        && "lwjgl".equals(library.getArtifactId())
+                        && "3.4.1".equals(library.getVersion())
+                        && library.getClassifier() == null
+        );
+    }
+
     public static Version patchNative(DefaultGameRepository repository,
                                       Version version, String gameVersion,
                                       JavaRuntime javaVersion,
-                                      VersionSetting settings,
+                                      GameSettings.Effective settings,
                                       List<String> javaArguments) {
-        if (settings.getNativesDirType() == NativesDirectoryType.CUSTOM) {
+        if (settings.get(GameSettings::useCustomNativesProperty)) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;
 
@@ -86,8 +96,8 @@ public final class NativePatcher {
             return version.setLibraries(newLibraries);
         }
 
-        final boolean useNativeGLFW = settings.isUseNativeGLFW();
-        final boolean useNativeOpenAL = settings.isUseNativeOpenAL();
+        final boolean useNativeGLFW = settings.get(GameSettings::useNativeGLFWProperty);
+        final boolean useNativeOpenAL = settings.get(GameSettings::useNativeOpenALProperty);
 
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && (useNativeGLFW || useNativeOpenAL)
                 && gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") >= 0) {
@@ -114,7 +124,7 @@ public final class NativePatcher {
         Architecture arch = javaVersion.getArchitecture();
         GameVersionNumber gameVersionNumber = gameVersion != null ? GameVersionNumber.asGameVersion(gameVersion) : null;
 
-        if (settings.isNotPatchNatives())
+        if (settings.get(GameSettings::notPatchNativesProperty))
             return version;
 
         if (arch.isX86() && (os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX || os == OperatingSystem.MACOS))
@@ -164,7 +174,7 @@ public final class NativePatcher {
         if (lwjglVersionChanged) {
             ModManager modManager = repository.getModManager(version.getId());
             try {
-                for (LocalModFile mod : modManager.getMods()) {
+                for (LocalModFile mod : modManager.getLocalFiles()) {
                     if ("sodium".equals(mod.getId())) {
                         // https://github.com/CaffeineMC/sodium/issues/2561
                         javaArguments.add("-Dsodium.checks.issue2561=false");
@@ -179,15 +189,16 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime javaVersion, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
+    /// @see <a href="https://github.com/HMCL-dev/mesa-loader-windows">Java Mesa Loader for Windows</a>
+    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime java, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
         if (renderer == Renderer.DEFAULT)
             return null;
 
         if (windowsVersion.isAtLeast(OSVersion.WINDOWS_10)) {
-            return getNatives(javaVersion.getPlatform()).get("mesa-loader");
+            return getNatives(java.getPlatform()).get("mesa-loader");
         } else if (windowsVersion.isAtLeast(OSVersion.WINDOWS_7)) {
-            if (renderer == Renderer.LLVMPIPE)
-                return getNatives(javaVersion.getPlatform()).get("software-renderer-loader");
+            if (renderer == Renderer.OpenGL.LLVMPIPE)
+                return getNatives(java.getPlatform()).get("software-renderer-loader");
             else
                 return null;
         } else {

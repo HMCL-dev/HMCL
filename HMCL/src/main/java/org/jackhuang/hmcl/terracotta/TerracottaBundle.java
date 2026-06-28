@@ -27,15 +27,15 @@ import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 import org.jackhuang.hmcl.util.tree.TarFileTree;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestInputStream;
@@ -44,6 +44,8 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class TerracottaBundle {
     private final Path root;
@@ -66,12 +68,18 @@ public final class TerracottaBundle {
                 .thenComposeAsync(Schedulers.javafx(), pkg -> {
                     FileDownloadTask download = new FileDownloadTask(links, pkg, hash) {
                         @Override
-                        protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+                        protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
                             FetchTask.Context delegate = super.getContext(response, checkETag, bmclapiHash);
                             return new Context() {
                                 @Override
                                 public void withResult(boolean success) {
+                                    super.withResult(success);
                                     delegate.withResult(success);
+                                }
+
+                                @Override
+                                public void reset() throws IOException {
+                                    delegate.reset();
                                 }
 
                                 @Override
@@ -113,7 +121,7 @@ public final class TerracottaBundle {
                         throw new ArtifactMalformedException(String.format("Expecting %s file in terracotta bundle.", file));
                     }
 
-                    MessageDigest digest = DigestUtils.getDigest(check.getAlgorithm());
+                    MessageDigest digest = DigestUtils.getDigest(check.algorithm());
                     try (
                             InputStream is = tree.getInputStream(archive);
                             OutputStream os = new DigestOutputStream(Files.newOutputStream(path), digest)
@@ -122,8 +130,8 @@ public final class TerracottaBundle {
                     }
 
                     String hash = HexFormat.of().formatHex(digest.digest());
-                    if (!check.getChecksum().equalsIgnoreCase(hash)) {
-                        throw new ChecksumMismatchException(check.getAlgorithm(), check.getChecksum(), hash);
+                    if (!check.checksum().equalsIgnoreCase(hash)) {
+                        throw new ChecksumMismatchException(check.algorithm(), check.checksum(), hash);
                     }
 
                     switch (OperatingSystem.CURRENT_OS) {
@@ -156,7 +164,7 @@ public final class TerracottaBundle {
                 return AbstractTerracottaProvider.Status.LEGACY_VERSION;
             }
         } catch (IOException e) {
-            Logger.LOG.warning("Cannot determine whether legacy versions exist.", e);
+            LOG.warning("Cannot determine whether legacy versions exist.", e);
         }
         return AbstractTerracottaProvider.Status.NOT_EXIST;
     }
@@ -172,7 +180,7 @@ public final class TerracottaBundle {
                 return false;
             }
 
-            MessageDigest digest = DigestUtils.getDigest(check.getAlgorithm());
+            MessageDigest digest = DigestUtils.getDigest(check.algorithm());
             try (InputStream is = new DigestInputStream(Files.newInputStream(path), digest)) {
                 int n;
                 while ((n = is.read(buffer)) >= 0) {
@@ -182,7 +190,7 @@ public final class TerracottaBundle {
                     }
                 }
             }
-            if (!HexFormat.of().formatHex(digest.digest()).equalsIgnoreCase(check.getChecksum())) {
+            if (!HexFormat.of().formatHex(digest.digest()).equalsIgnoreCase(check.checksum())) {
                 return false;
             }
         }

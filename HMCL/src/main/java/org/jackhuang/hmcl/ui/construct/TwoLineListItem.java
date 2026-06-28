@@ -25,7 +25,6 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -146,6 +145,10 @@ public class TwoLineListItem extends VBox {
         subtitleProperty().set(subtitle);
     }
 
+    public HBox getFirstLine() {
+        return firstLine;
+    }
+
     public Label getTitleLabel() {
         return lblTitle;
     }
@@ -164,15 +167,17 @@ public class TwoLineListItem extends VBox {
             var tagsBox = new HBox(8);
             tagsBox.getStyleClass().add("tags");
             tagsBox.setAlignment(Pos.CENTER_LEFT);
+            tagsBox.setMinWidth(0);
+            HBox.setHgrow(tagsBox, Priority.ALWAYS);
             Bindings.bindContent(tagsBox.getChildren(), tags);
+            var isNotEmpty = Bindings.isNotEmpty(tags);
+            tagsBox.managedProperty().bind(isNotEmpty);
+            tagsBox.visibleProperty().bind(isNotEmpty);
 
-            var scrollPane = new ScrollPane(tagsBox);
-            HBox.setHgrow(scrollPane, Priority.ALWAYS);
-            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            FXUtils.onChangeAndOperate(tagsBox.heightProperty(), height -> FXUtils.setLimitHeight(scrollPane, height.doubleValue()));
-            scrollPane.setPrefWidth(50);
-            firstLine.getChildren().setAll(lblTitle, scrollPane);
+            FXUtils.setOverflowHidden(tagsBox);
+
+            lblTitle.setMinWidth(Label.USE_PREF_SIZE);
+            firstLine.getChildren().setAll(lblTitle, tagsBox);
         }
         return tags;
     }
@@ -180,6 +185,7 @@ public class TwoLineListItem extends VBox {
     public void addTag(String tag, PseudoClass pseudoClass) {
         var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag");
+        tagLabel.setMinWidth(Label.USE_PREF_SIZE);
         if (pseudoClass != null)
             tagLabel.pseudoClassStateChanged(pseudoClass, true);
         getTags().add(tagLabel);

@@ -23,6 +23,7 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -30,6 +31,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -53,8 +55,20 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
     protected final HBox container;
 
+    /// The row containing the title and its optional trailing node.
+    private final HBox titleLine;
+
+    /// The primary title label.
     private final Label titleLabel;
+
+    /// The container holding the title row and optional subtitle.
     private final VBox titleContainer;
+
+    /// The optional node displayed immediately after the title.
+    private @Nullable Node titleTrailing;
+
+    /// The optional subtitle label.
+    private @Nullable Label subtitleLabel;
 
     public LineComponent() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
@@ -64,21 +78,90 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         this.container = new HBox(SPACING);
         container.getStyleClass().add("line-component-container");
         container.setAlignment(Pos.CENTER_LEFT);
+        container.setPickOnBounds(true);
 
         this.titleLabel = new Label();
         titleLabel.getStyleClass().add("title-label");
+        titleLabel.setContentDisplay(ContentDisplay.RIGHT);
+        titleLabel.setGraphicTextGap(4);
         titleLabel.setMinWidth(Region.USE_PREF_SIZE);
+        titleLabel.setMouseTransparent(true);
+        titleLabel.setPickOnBounds(false);
 
-        this.titleContainer = new VBox(titleLabel);
+        this.titleLine = new HBox(titleLabel);
+        titleLine.setAlignment(Pos.CENTER_LEFT);
+        titleLine.setPickOnBounds(false);
+
+        this.titleContainer = new VBox(titleLine);
         titleContainer.getStyleClass().add("title-container");
-        titleContainer.setMouseTransparent(true);
         titleContainer.setAlignment(Pos.CENTER_LEFT);
-        titleContainer.minWidthProperty().bind(titleLabel.prefWidthProperty());
+        titleContainer.minWidthProperty().bind(titleLine.prefWidthProperty());
+        titleContainer.setMouseTransparent(true);
+        titleContainer.setPickOnBounds(false);
         HBox.setHgrow(titleContainer, Priority.ALWAYS);
 
         this.setNode(IDX_TITLE, titleContainer);
 
         this.getChildren().setAll(container);
+        widthProperty().addListener(observable -> updatePreferredHeight());
+    }
+
+    /// Computes wrapped subtitle height from the row width.
+    @Override
+    public Orientation getContentBias() {
+        return Orientation.HORIZONTAL;
+    }
+
+    /// Computes preferred row height from the title column width after fixed-width nodes are removed.
+    @Override
+    protected double computePrefHeight(double width) {
+        return computeLineHeight(width);
+    }
+
+    /// Keeps wrapped subtitle rows from being compressed below their preferred height.
+    @Override
+    protected double computeMinHeight(double width) {
+        return computeLineHeight(width);
+    }
+
+    /// Computes row height with the same width split used by the `HBox` at layout time.
+    private double computeLineHeight(double width) {
+        double horizontalInsets = container.snappedLeftInset() + container.snappedRightInset();
+        double verticalInsets = container.snappedTopInset() + container.snappedBottomInset();
+        double contentWidth = width < 0 ? -1 : Math.max(0, width - horizontalInsets);
+
+        int managedCount = 0;
+        double fixedWidth = 0;
+        double contentHeight = 0;
+        for (Node child : container.getChildren()) {
+            if (!child.isManaged()) {
+                continue;
+            }
+
+            managedCount++;
+            if (child == titleContainer) {
+                continue;
+            }
+
+            fixedWidth += child.prefWidth(-1);
+            contentHeight = Math.max(contentHeight, child.prefHeight(-1));
+        }
+
+        double titleWidth = contentWidth < 0
+                ? -1
+                : Math.max(0, contentWidth - fixedWidth - container.getSpacing() * Math.max(0, managedCount - 1));
+        contentHeight = Math.max(contentHeight, computeTitleHeight(titleWidth));
+
+        return Math.max(MIN_HEIGHT, verticalInsets + contentHeight);
+    }
+
+    /// Computes the height of the title column at the given width.
+    private double computeTitleHeight(double width) {
+        double height = titleLine.prefHeight(width);
+        if (subtitleLabel != null && subtitleLabel.getParent() == titleContainer) {
+            height += titleContainer.getSpacing() + subtitleLabel.prefHeight(width);
+        }
+        return height;
     }
 
     private Node[] nodes = new Node[2];
@@ -90,7 +173,20 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         if (nodes[idx] != node) {
             nodes[idx] = node;
             container.getChildren().setAll(Arrays.stream(nodes).filter(Objects::nonNull).toArray(Node[]::new));
+            updatePreferredHeight();
         }
+    }
+
+    /// Sets the node displayed immediately after the title label.
+    public final void setTitleTrailing(@Nullable Node node) {
+        if (titleTrailing == node) {
+            return;
+        }
+
+        titleTrailing = node;
+        titleLabel.setGraphic(node);
+        titleLabel.setMouseTransparent(node == null);
+        titleContainer.setMouseTransparent(node == null);
     }
 
     public void setLargeTitle(boolean largeTitle) {
@@ -131,8 +227,6 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     public final StringProperty subtitleProperty() {
         if (subtitle == null) {
             subtitle = new StringPropertyBase() {
-                private Label subtitleLabel;
-
                 @Override
                 public String getName() {
                     return "subtitle";
@@ -151,6 +245,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
                             subtitleLabel = new Label();
                             subtitleLabel.setWrapText(true);
                             subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
+                            subtitleLabel.setMouseTransparent(true);
                             subtitleLabel.getStyleClass().add("subtitle-label");
                         }
                         subtitleLabel.setText(subtitle);
@@ -161,6 +256,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
                         if (titleContainer.getChildren().size() == 2)
                             titleContainer.getChildren().remove(1);
                     }
+                    updatePreferredHeight();
                 }
             };
         }
@@ -174,6 +270,21 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
     public final void setSubtitle(String subtitle) {
         subtitleProperty().set(subtitle);
+    }
+
+    /// Updates the fixed preferred height after the row width or subtitle content changes.
+    private void updatePreferredHeight() {
+        double width = getWidth();
+        if (width <= 0) {
+            setMinHeight(MIN_HEIGHT);
+            setPrefHeight(Region.USE_COMPUTED_SIZE);
+            return;
+        }
+
+        applyCss();
+        double height = computeLineHeight(width);
+        setMinHeight(height);
+        setPrefHeight(height);
     }
 
     private ObjectProperty<Node> leading;

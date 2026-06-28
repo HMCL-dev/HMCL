@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
@@ -29,6 +30,7 @@ import javafx.scene.control.Label;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
@@ -135,14 +137,16 @@ public class OfflineAccountSkinPane extends StackPane {
             capeSelector.setValue(account.getSkin().getLocalCapePath());
         }
 
-        skinBinding = FXUtils.observeWeak(() -> {
-            getSkin().load(account.getUsername())
+        PauseTransition pauseTransition = new PauseTransition(Duration.seconds(1));
+
+        Runnable loadSkin = () -> {
+            getSkin().load(account.getProfileName())
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load skin", exception);
                             Controllers.showToast(i18n("message.failed"));
                         } else {
-                            UUID uuid = this.account.getUUID();
+                            UUID uuid = this.account.getProfileID();
                             if (result == null || result.getSkin() == null && result.getCape() == null) {
                                 canvas.updateSkin(
                                         TexturesLoader.getDefaultSkin(uuid).getImage(),
@@ -157,6 +161,23 @@ public class OfflineAccountSkinPane extends StackPane {
                                     result.getCape() != null ? result.getCape().getImage() : null);
                         }
                     }).start();
+        };
+
+        pauseTransition.setOnFinished(e -> loadSkin.run());
+
+        skinBinding = FXUtils.observeWeak(() -> {
+            Skin.Type selectedType = skinItem.getSelectedData();
+
+            if (selectedType == Skin.Type.CUSTOM_SKIN_LOADER_API) {
+                if (!cslApiField.validate()) {
+                    pauseTransition.stop();
+                    return;
+                }
+                pauseTransition.playFromStart();
+            } else {
+                pauseTransition.stop();
+                loadSkin.run();
+            }
         }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {

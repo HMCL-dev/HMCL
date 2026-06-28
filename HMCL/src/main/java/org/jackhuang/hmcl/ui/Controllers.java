@@ -43,7 +43,6 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
@@ -57,7 +56,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
-import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.task.TaskCenter;
@@ -65,22 +63,25 @@ import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
+import static org.jackhuang.hmcl.setting.SettingsManager.state;
+import static org.jackhuang.hmcl.setting.SettingsManager.userState;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -90,8 +91,13 @@ public final class Controllers {
     public static final String SOFTWARE_RENDERING = "softwareRendering";
     public static final String APRIL_FOOLS = "aprilFools";
 
-    public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
-    public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
+    private static final int CUSTOM_DECORATION_SHADOW_SIZE = 8;
+    private static final int CUSTOM_DECORATION_SHADOW_EXTENT = CUSTOM_DECORATION_SHADOW_SIZE * 2;
+
+    public static final int MIN_CONTENT_WIDTH = 800 + 2; // bg width + border width*2
+    public static final int MIN_CONTENT_HEIGHT = 450 + 2 + 40; // bg height + border width*2 + toolbar height
+    public static final int MIN_WIDTH = MIN_CONTENT_WIDTH + CUSTOM_DECORATION_SHADOW_EXTENT;
+    public static final int MIN_HEIGHT = MIN_CONTENT_HEIGHT + CUSTOM_DECORATION_SHADOW_EXTENT;
     public static final Screen SCREEN = Screen.getPrimary();
     private static InvalidationListener stageSizeChangeListener;
     private static DoubleProperty stageX = new SimpleDoubleProperty();
@@ -102,16 +108,7 @@ public final class Controllers {
     private static Scene scene;
     private static Stage stage;
     private static VersionPage versionPage;
-    private static Lazy<GameListPage> gameListPage = new Lazy<>(() -> {
-        GameListPage gameListPage = new GameListPage();
-        gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
-        gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
-        FXUtils.applyDragListener(gameListPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            Path modpack = modpacks.get(0);
-            Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
-        });
-        return gameListPage;
-    });
+    private static Lazy<GameListPage> gameListPage = new Lazy<>(GameListPage::new);
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
     private static DownloadPage downloadPage;
@@ -119,13 +116,22 @@ public final class Controllers {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
         accountListPage.accountsProperty().bindContent(Accounts.getAccounts());
-        accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
+        accountListPage.authServersProperty().bindContentBidirectional(getAuthlibInjectorServers());
         return accountListPage;
     });
     private static LauncherSettingsPage settingsPage;
     private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
 
     private Controllers() {
+    }
+
+    /// Action used by confirmation dialogs that may fail before the confirmed operation is complete.
+    @FunctionalInterface
+    public interface ThrowingRunnable {
+        /// Runs the confirmed action.
+        ///
+        /// @throws Exception if the action fails
+        void run() throws Exception;
     }
 
     public static Scene getScene() {
@@ -136,7 +142,7 @@ public final class Controllers {
         return stage;
     }
 
-    // FXThread
+    @FXThread
     public static VersionPage getVersionPage() {
         if (versionPage == null) {
             versionPage = new VersionPage();
@@ -152,17 +158,17 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static GameListPage getGameListPage() {
         return gameListPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static RootPage getRootPage() {
         return rootPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static LauncherSettingsPage getSettingsPage() {
         if (settingsPage == null) {
             settingsPage = new LauncherSettingsPage();
@@ -178,12 +184,12 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static AccountListPage getAccountListPage() {
         return accountListPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static DownloadPage getDownloadPage() {
         if (downloadPage == null) {
             downloadPage = new DownloadPage();
@@ -199,34 +205,74 @@ public final class Controllers {
         }
     }
 
-    // FXThread
+    @FXThread
     public static Node getTerracottaPage() {
         return terracottaPage.get();
     }
 
-    // FXThread
+    @FXThread
     public static DecoratorController getDecorator() {
         return decorator;
     }
 
-    public static void onApplicationStop() {
-        stageSizeChangeListener = null;
+    public static void saveWindowStates() {
+        saveWindowBounds();
+    }
+
+    private static void saveWindowBounds() {
         if (stageX != null) {
-            config().setX(stageX.get() / SCREEN.getBounds().getWidth());
-            stageX = null;
+            state().setX(toContentX(stageX.get()) / SCREEN.getBounds().getWidth());
         }
         if (stageY != null) {
-            config().setY(stageY.get() / SCREEN.getBounds().getHeight());
-            stageY = null;
+            state().setY(toContentY(stageY.get()) / SCREEN.getBounds().getHeight());
         }
         if (stageHeight != null) {
-            config().setHeight(stageHeight.get());
-            stageHeight = null;
+            state().setHeight(toContentHeight(stageHeight.get()));
         }
         if (stageWidth != null) {
-            config().setWidth(stageWidth.get());
-            stageWidth = null;
+            state().setWidth(toContentWidth(stageWidth.get()));
         }
+    }
+
+    public static void onApplicationStop() {
+        stageSizeChangeListener = null;
+        saveWindowBounds();
+        stageX = null;
+        stageY = null;
+        stageHeight = null;
+        stageWidth = null;
+    }
+
+    private static double toContentX(double stageX) {
+        return stageX + CUSTOM_DECORATION_SHADOW_SIZE;
+    }
+
+    private static double toContentY(double stageY) {
+        return stageY + CUSTOM_DECORATION_SHADOW_SIZE;
+    }
+
+    private static double toStageX(double contentX) {
+        return contentX - CUSTOM_DECORATION_SHADOW_SIZE;
+    }
+
+    private static double toStageY(double contentY) {
+        return contentY - CUSTOM_DECORATION_SHADOW_SIZE;
+    }
+
+    private static double toContentWidth(double stageWidth) {
+        return Math.max(0.0, stageWidth - CUSTOM_DECORATION_SHADOW_EXTENT);
+    }
+
+    private static double toContentHeight(double stageHeight) {
+        return Math.max(0.0, stageHeight - CUSTOM_DECORATION_SHADOW_EXTENT);
+    }
+
+    private static double toStageWidth(double contentWidth) {
+        return contentWidth + CUSTOM_DECORATION_SHADOW_EXTENT;
+    }
+
+    private static double toStageHeight(double contentHeight) {
+        return contentHeight + CUSTOM_DECORATION_SHADOW_EXTENT;
     }
 
     public static void initialize(Stage stage) {
@@ -235,7 +281,7 @@ public final class Controllers {
         LOG.info("April Fools: " + AprilFools.isEnabled());
 
         if (System.getProperty("prism.lcdtext") == null) {
-            String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+            @Nullable String fontAntiAliasing = SettingsManager.userSettings().fontAntiAliasingProperty().get();
             if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
                 LOG.info("Enable sub-pixel antialiasing");
                 System.getProperties().put("prism.lcdtext", "true");
@@ -286,29 +332,38 @@ public final class Controllers {
 
         WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
 
-        double initWidth = Math.max(MIN_WIDTH, config().getWidth());
-        double initHeight = Math.max(MIN_HEIGHT, config().getHeight());
+        double initContentWidth = Math.max(MIN_CONTENT_WIDTH, state().getWidth());
+        double initContentHeight = Math.max(MIN_CONTENT_HEIGHT, state().getHeight());
+        double initWidth = toStageWidth(initContentWidth);
+        double initHeight = toStageHeight(initContentHeight);
 
         {
-            double initX = config().getX() * SCREEN.getBounds().getWidth();
-            double initY = config().getY() * SCREEN.getBounds().getHeight();
+            double initContentX = state().getX() * SCREEN.getBounds().getWidth();
+            double initContentY = state().getY() * SCREEN.getBounds().getHeight();
 
             boolean invalid = true;
             double border = 20D;
             for (Screen screen : Screen.getScreens()) {
                 Rectangle2D bound = screen.getBounds();
 
-                if (bound.getMinX() + border <= initX + initWidth && initX <= bound.getMaxX() - border && bound.getMinY() + border <= initY && initY <= bound.getMaxY() - border) {
+                if (bound.getMinX() + border <= initContentX + initContentWidth
+                        && initContentX <= bound.getMaxX() - border
+                        && bound.getMinY() + border <= initContentY
+                        && initContentY <= bound.getMaxY() - border) {
                     invalid = false;
                     break;
                 }
             }
 
             if (invalid) {
-                initX = (0.5D - initWidth / SCREEN.getBounds().getWidth() / 2) * SCREEN.getBounds().getWidth();
-                initY = (0.5D - initHeight / SCREEN.getBounds().getHeight() / 2) * SCREEN.getBounds().getHeight();
+                initContentX = (0.5D - initContentWidth / SCREEN.getBounds().getWidth() / 2)
+                        * SCREEN.getBounds().getWidth();
+                initContentY = (0.5D - initContentHeight / SCREEN.getBounds().getHeight() / 2)
+                        * SCREEN.getBounds().getHeight();
             }
 
+            double initX = toStageX(initContentX);
+            double initY = toStageY(initContentY);
             stage.setX(initX);
             stage.setY(initY);
             stageX.set(initX);
@@ -327,10 +382,16 @@ public final class Controllers {
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
         decorator = new DecoratorController(stage, getRootPage());
+        getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
+        getRootPage().getMainPage().showUpdateDialogProperty().bind(
+                decorator.backableProperty().not()
+                        .and(getRootPage().getMainPage().showUpdateProperty())
+                        .and(settings().disableAutoShowUpdateDialogProperty().not())
+        );
 
-        if (config().getCommonDirType() == EnumCommonDirectory.CUSTOM &&
-                !FileUtils.canCreateDirectory(config().getCommonDirectory())) {
-            config().setCommonDirType(EnumCommonDirectory.DEFAULT);
+        if (settings().commonDirectoryTypeProperty().get() == EnumCommonDirectory.CUSTOM &&
+                !FileUtils.canCreateDirectory(settings().getResolvedCommonDirectory())) {
+            settings().commonDirectoryTypeProperty().set(EnumCommonDirectory.DEFAULT);
             dialog(i18n("launcher.cache_directory.invalid"));
         }
 
@@ -367,11 +428,14 @@ public final class Controllers {
             timeline.play();
         }
 
-        if (!Architecture.SYSTEM_ARCH.isX86() && globalConfig().getPlatformPromptVersion() < 1) {
-            Runnable continueAction = () -> globalConfig().setPlatformPromptVersion(1);
+        if (!Architecture.SYSTEM_ARCH.isX86() && SettingsManager.userState().platformPromptVersionProperty().get() < 1) {
+            Runnable continueAction = () -> {
+                UserState userState = userState();
+                userState.platformPromptVersionProperty().set(1);
+            };
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                Controllers.dialog(i18n("fatal.unsupported_platform.macos_arm64"), null, MessageType.INFO, continueAction);
+                continueAction.run();
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 Controllers.dialog(i18n("fatal.unsupported_platform.windows_arm64"), null, MessageType.INFO, continueAction);
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX &&
@@ -387,7 +451,7 @@ public final class Controllers {
         if (JavaRuntime.CURRENT_VERSION < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
             Number shownTipVersion = null;
             try {
-                shownTipVersion = (Number) config().getShownTips().get(JAVA_VERSION_TIP);
+                shownTipVersion = (Number) state().getShownTips().get(JAVA_VERSION_TIP);
             } catch (ClassCastException e) {
                 LOG.warning("Invalid type for shown tips key: " + JAVA_VERSION_TIP, e);
             }
@@ -400,30 +464,30 @@ public final class Controllers {
                             downloadLink
                     );
                 Controllers.dialog(builder
-                        .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, Metadata.MINIMUM_SUPPORTED_JAVA_VERSION))
+                        .ok(() -> state().getShownTips().put(JAVA_VERSION_TIP, Metadata.MINIMUM_SUPPORTED_JAVA_VERSION))
                         .build());
             }
         }
 
         // Check whether JIT is enabled in the current environment
-        if (!JavaRuntime.CURRENT_JIT_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
+        if (!JavaRuntime.CURRENT_JIT_ENABLED && !Boolean.TRUE.equals(state().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
             Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.java_interpreted_mode"), i18n("message.warning"), MessageType.WARNING)
                     .ok(null)
                     .addCancel(i18n("button.do_not_show_again"), () ->
-                            config().getShownTips().put(JAVA_INTERPRETED_MODE_TIP, true))
+                            state().getShownTips().put(JAVA_INTERPRETED_MODE_TIP, true))
                     .build());
         }
 
         // Check whether hardware acceleration is enabled
-        if (!FXUtils.GPU_ACCELERATION_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(SOFTWARE_RENDERING))) {
+        if (!FXUtils.GPU_ACCELERATION_ENABLED && !Boolean.TRUE.equals(state().getShownTips().get(SOFTWARE_RENDERING))) {
             Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.software_rendering"), i18n("message.warning"), MessageType.WARNING)
                     .ok(null)
                     .addCancel(i18n("button.do_not_show_again"), () ->
-                            config().getShownTips().put(SOFTWARE_RENDERING, true))
+                            state().getShownTips().put(SOFTWARE_RENDERING, true))
                     .build());
         }
 
-        if (globalConfig().getAgreementVersion() < 1) {
+        if (SettingsManager.userState().agreementVersionProperty().get() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
             agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));
@@ -432,7 +496,8 @@ public final class Controllers {
             JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
             yesButton.getStyleClass().add("dialog-accept");
             yesButton.setOnAction(e -> {
-                globalConfig().setAgreementVersion(1);
+                UserState userState = userState();
+                userState.agreementVersionProperty().set(1);
                 agreementPane.fireEvent(new DialogCloseEvent());
             });
             JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
@@ -445,7 +510,7 @@ public final class Controllers {
         aprilFools:
         if (AprilFools.isEnabled()) {
             int currentYear = LocalDate.now().getYear();
-            if (config().getShownTips().get(APRIL_FOOLS) instanceof Number year && year.intValue() >= currentYear)
+            if (state().getShownTips().get(APRIL_FOOLS) instanceof Number year && year.intValue() >= currentYear)
                 break aprilFools;
 
             if (!I18n.getLocale().getLocale().getLanguage().equals("zh"))
@@ -460,7 +525,7 @@ public final class Controllers {
                 break aprilFools;
             }
 
-            Runnable updateShowTips = () -> config().getShownTips().put(APRIL_FOOLS, currentYear);
+            Runnable updateShowTips = () -> state().getShownTips().put(APRIL_FOOLS, currentYear);
 
             Controllers.confirmWithCountdown(i18n("launcher.april_fools.switch_lzh"), null, 10,
                     MessageType.QUESTION, () -> {
@@ -468,7 +533,7 @@ public final class Controllers {
                             LOG.info("Switching locale to " + lzh);
 
                             updateShowTips.run();
-                            config().setLocalization(lzh);
+                            settings().languageProperty().set(lzh);
 
                             Controllers.onApplicationStop();
 
@@ -519,6 +584,29 @@ public final class Controllers {
         dialog(new MessageDialogPane.Builder(text, title, type).yesOrNo(yes, no).build());
     }
 
+    /// Shows a warning that confirms backing up a read-only settings file before overwriting it.
+    ///
+    /// @param text the file-specific read-only warning
+    /// @param overwrite the action that backs up and overwrites the file
+    public static void confirmBackupAndOverwrite(String text, ThrowingRunnable overwrite) {
+        dialog(new MessageDialogPane.Builder(
+                text + "\n\n" + i18n("settings.file.force_write.confirm"),
+                i18n("message.warning"),
+                MessageType.WARNING)
+                .addAction(i18n("settings.file.force_write"), () -> {
+                    try {
+                        overwrite.run();
+                    } catch (Exception e) {
+                        LOG.warning("Failed to force overwrite settings file", e);
+                        dialog(i18n("message.failed") + "\n\n" + StringUtils.getStackTrace(e),
+                                i18n("message.error"),
+                                MessageType.ERROR);
+                    }
+                })
+                .addCancel(null)
+                .build());
+    }
+
     public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton) {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, null).build());
     }
@@ -559,6 +647,11 @@ public final class Controllers {
         timeline.play();
     }
 
+    public static void dialogLater(Region content) {
+        if (decorator != null)
+            decorator.showDialogLater(content);
+    }
+
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
         return prompt(title, onResult, "");
     }
@@ -575,7 +668,7 @@ public final class Controllers {
         return pane.getCompletableFuture();
     }
 
-    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel) {
+    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, @NotNull TaskCancellationAction onCancel) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
         pane.setExecutor(executor);
@@ -583,7 +676,7 @@ public final class Controllers {
         return pane;
     }
 
-    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, TaskCancellationAction onCancel) {
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, @NotNull TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
         TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
         executor.start();
@@ -628,7 +721,7 @@ public final class Controllers {
                     break;
                 case "hmcl://game/launch":
                     Profile profile = Profiles.getSelectedProfile();
-                    Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                    Versions.launch(profile, Profiles.getSelectedInstance(profile), LauncherHelper::setKeep);
                     break;
             }
         } else {

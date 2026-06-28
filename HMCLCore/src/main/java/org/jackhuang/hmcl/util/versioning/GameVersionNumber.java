@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.versioning;
 
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -94,6 +95,18 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return VersionRange.atMost(asGameVersion(maximum));
     }
 
+    /// Determines whether the given version string corresponds to a known Minecraft version.
+    ///
+    /// If the version string cannot be parsed as any known version type (release, snapshot, pre-release, etc.)
+    /// and is not a known April Fools snapshot, it is considered an unknown version.
+    ///
+    /// @param version the version string to check, e.g. `"1.21.4"`, `"25w14craftmine"`, etc.
+    /// @return {@code true} if the version string corresponds to a known Minecraft version, {@code false} otherwise
+    /// @see #asGameVersion(String)
+    public static boolean isKnown(String version) {
+        return !(asGameVersion(version) instanceof Special special && special.prev == null);
+    }
+
     final String value;
     final String normalized;
 
@@ -150,7 +163,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     ///
     /// ```java
     /// GameVersionNumber.asVersion("...").isAtLeast("1.13", "17w43a");
-    ///```
+    /// ```
     ///
     /// @param strictReleaseVersion When `strictReleaseVersion` is `false`, `releaseVersion` is considered less than
     ///                             its corresponding pre/rc versions.
@@ -187,6 +200,32 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
     public final String toDebugString() {
         return buildDebugString().toString();
+    }
+
+    public static @Nullable GameVersionNumber getReleaseOfSnapshot(GameVersionNumber gameVersion) {
+        if (gameVersion instanceof Release release) {
+            if (release.getEaType() == Release.ReleaseType.GA) {
+                return null;
+            }
+            if (release.getPatch() > 0) {
+                return asGameVersion(release.getMajor() + "." + release.getMinor() + "." + release.getPatch());
+            } else {
+                return asGameVersion(release.getMajor() + "." + release.getMinor());
+            }
+        }
+
+        if (gameVersion instanceof LegacySnapshot snapshot) {
+            String[] defaultVersions = Versions.DEFAULT_GAME_VERSIONS;
+            for (int i = defaultVersions.length - 1; i >= 0; i--) {
+                Release gaRelease = (Release) asGameVersion(defaultVersions[i]);
+
+                if (gaRelease.compareToSnapshot(snapshot) > 0) {
+                    return gaRelease;
+                }
+            }
+        }
+
+        return null;
     }
 
     public static final class Old extends GameVersionNumber {
@@ -268,18 +307,26 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     }
 
     public static final class Release extends GameVersionNumber {
-        private static final int MINIMUM_YEAR_MAJOR_VERSION = 25;
+        private static final int MINIMUM_YEAR_MAJOR_VERSION = 26;
 
         public enum ReleaseType {
             UNKNOWN(""),
             SNAPSHOT("-snapshot-"),
-            PRE_RELEASE("-pre"),
-            RELEASE_CANDIDATE("-rc"),
+            PRE_RELEASE("-pre", "-pre-"),
+            RELEASE_CANDIDATE("-rc", "-rc-"),
             GA("");
-            private final String infix;
+
+            private final String legacyInfix;
+            private final String newInfix;
 
             ReleaseType(String infix) {
-                this.infix = infix;
+                this.legacyInfix = infix;
+                this.newInfix = infix;
+            }
+
+            ReleaseType(String legacyInfix, String newInfix) {
+                this.legacyInfix = legacyInfix;
+                this.newInfix = newInfix;
             }
         }
 
@@ -317,6 +364,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
             String suffix = matcher.group("suffix");
 
+            boolean isLegacyRelease = major == 1;
+
             ReleaseType releaseType;
             VersionNumber eaVersion;
             Additional additional = Additional.NONE;
@@ -342,10 +391,15 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 releaseType = ReleaseType.SNAPSHOT;
                 eaVersion = VersionNumber.asVersion(suffix.substring(" Snapshot ".length()));
             } else if (suffix.startsWith("-pre-")) {
-                needNormalize = true;
+                if (isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-pre-".length()));
             } else if (suffix.startsWith("-pre")) {
+                if (!isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-pre".length()));
             } else if (suffix.startsWith(" Pre-Release ")) {
@@ -358,10 +412,15 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring(" Pre-release ".length()));
             } else if (suffix.startsWith("-rc-")) {
-                needNormalize = true;
+                if (isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-rc-".length()));
             } else if (suffix.startsWith("-rc")) {
+                if (!isLegacyRelease) {
+                    needNormalize = true;
+                }
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-rc".length()));
             } else if (suffix.startsWith(" Release Candidate ")) {
@@ -377,7 +436,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 StringBuilder builder = new StringBuilder(value.length());
                 builder.append(matcher.group("prefix"));
                 if (releaseType != ReleaseType.GA) {
-                    builder.append(releaseType.infix);
+                    builder.append(isLegacyRelease ? releaseType.legacyInfix : releaseType.newInfix);
                     builder.append(eaVersion);
                 }
                 builder.append(additional.suffix);
@@ -604,6 +663,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 year = Integer.parseInt(value, 0, 2, 10);
                 week = Integer.parseInt(value, 3, 5, 10);
             } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(value);
+            }
+
+            if (year >= Release.MINIMUM_YEAR_MAJOR_VERSION) {
                 throw new IllegalArgumentException(value);
             }
 

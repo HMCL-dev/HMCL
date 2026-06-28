@@ -37,7 +37,7 @@ public record GameJavaVersion(String component, int majorVersion) {
     public static final GameJavaVersion JAVA_16 = new GameJavaVersion("java-runtime-alpha", 16);
     public static final GameJavaVersion JAVA_8 = new GameJavaVersion("jre-legacy", 8);
 
-    public static final GameJavaVersion LATEST = JAVA_21;
+    public static final GameJavaVersion LATEST = JAVA_25;
 
     public static GameJavaVersion getMinimumJavaVersion(GameVersionNumber gameVersion) {
         if (gameVersion.compareTo("26.1") >= 0)

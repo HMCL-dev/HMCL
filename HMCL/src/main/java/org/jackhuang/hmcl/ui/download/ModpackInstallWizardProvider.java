@@ -20,12 +20,13 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.ModpackCompletionException;
-import org.jackhuang.hmcl.mod.UnsupportedModpackException;
-import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
+import org.jackhuang.hmcl.modpack.MismatchedModpackTypeException;
+import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.modpack.ModpackCompletionException;
+import org.jackhuang.hmcl.modpack.UnsupportedModpackException;
+import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -121,10 +122,10 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         } else {
             if (serverModpackManifest != null) {
                 return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
-                        .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+                        .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
             } else {
                 return ModpackHelper.getInstallTask(profile, selected, name, modpack, iconUrl)
-                        .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+                        .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
             }
         }
     }

@@ -17,35 +17,37 @@
  */
 package org.jackhuang.hmcl;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.setting.ConfigHolder;
-import org.jackhuang.hmcl.setting.SambaException;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.FileSaver;
+import javafx.util.Duration;
+import org.jackhuang.hmcl.game.HMCLCacheRepository;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
-import org.jackhuang.hmcl.util.CrashReporter;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.NativeUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,10 +65,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class Launcher extends Application {
     public static final CookieManager COOKIE_MANAGER = new CookieManager();
@@ -96,46 +99,50 @@ public final class Launcher extends Application {
 
         try {
             try {
-                ConfigHolder.init();
+                SettingsManager.init();
+                initializeSettingsRuntime();
             } catch (SambaException e) {
                 showAlert(AlertType.WARNING, i18n("fatal.samba"));
             } catch (IOException e) {
                 LOG.error("Failed to load config", e);
                 checkConfigInTempDir();
                 checkConfigOwner();
-                showAlert(AlertType.ERROR, i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
+                showAlert(AlertType.ERROR, i18n("fatal.config_loading_failure", SettingsManager.localConfigDirectory()));
                 EntryPoint.exit(1);
             }
 
             // https://lapcatsoftware.com/articles/app-translocation.html
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
-                    && ConfigHolder.isNewlyCreated()
+                    && SettingsManager.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
-                if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                if (!confirmWithCountdown(AlertType.WARNING, i18n("fatal.mac_app_translocation"), 5))
                     return;
             } else {
                 checkConfigInTempDir();
             }
 
-            if (ConfigHolder.isOwnerChanged()) {
+            if (SettingsManager.isOwnerChanged()) {
                 if (showAlert(AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
                     return;
             }
 
-            if (ConfigHolder.isUnsupportedVersion()) {
+            if (SettingsManager.hasReadOnlyCoreSettings()) {
                 showAlert(AlertType.WARNING, i18n("fatal.config_unsupported_version"));
             }
 
-            if (Metadata.HMCL_CURRENT_DIRECTORY.toString().indexOf('=') >= 0) {
+            if (Metadata.HMCL_LOCAL_HOME.toString().indexOf('=') >= 0) {
                 showAlert(AlertType.WARNING, i18n("fatal.illegal_char"));
             }
 
-            // runLater to ensure ConfigHolder.init() finished initialization
+            // runLater to ensure SettingsManager.init() finished initialization
             Platform.runLater(() -> {
                 // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
                 // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
                 Platform.setImplicitExit(false);
                 Controllers.initialize(primaryStage);
+
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+                    Themes.applyNativeDarkMode(primaryStage);
 
                 UpdateChecker.init();
 
@@ -144,6 +151,26 @@ public final class Launcher extends Application {
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
         }
+    }
+
+    /// Initializes modules and runtime services that depend on loaded settings.
+    private static void initializeSettingsRuntime() {
+        DownloadProviders.init();
+        ProxyManager.init();
+        Accounts.init();
+        Profiles.init();
+        AuthlibInjectorServers.init();
+        AnimationUtils.init();
+
+        CacheRepository.setInstance(HMCLCacheRepository.REPOSITORY);
+        HMCLCacheRepository.REPOSITORY.directoryProperty().bind(Bindings.createStringBinding(() -> {
+            String commonDirectory = settings().getResolvedCommonDirectory();
+            if (commonDirectory != null && FileUtils.canCreateDirectory(commonDirectory)) {
+                return commonDirectory;
+            } else {
+                return LauncherSettings.getDefaultCommonDirectory();
+            }
+        }, settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
     }
 
     private static void appendScreen(StringBuilder builder, Screen screen) {
@@ -182,8 +209,29 @@ public final class Launcher extends Application {
         return new Alert(alertType, contentText, buttons).showAndWait().orElse(null);
     }
 
+    private static boolean confirmWithCountdown(Alert.AlertType alertType, String contentText, int seconds) {
+        Alert alert = new Alert(alertType, contentText, ButtonType.YES, ButtonType.NO);
+        Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.YES);
+
+        okButton.setDisable(true);
+
+        KeyFrame[] keyFrames = new KeyFrame[seconds + 1];
+        for (int i = 0; i < seconds; i++) {
+            keyFrames[i] = new KeyFrame(Duration.seconds(i),
+                    new KeyValue(okButton.textProperty(), i18n("button.ok.countdown", seconds - i)));
+        }
+        keyFrames[seconds] = new KeyFrame(Duration.seconds(seconds),
+                new KeyValue(okButton.textProperty(), i18n("button.ok")),
+                new KeyValue(okButton.disableProperty(), false));
+
+        Timeline timeline = new Timeline(keyFrames);
+        alert.setOnShown(e -> timeline.play());
+        alert.setOnCloseRequest(e -> timeline.stop());
+        return alert.showAndWait().orElse(null) == ButtonType.YES;
+    }
+
     private static boolean isConfigInTempDir() {
-        String configPath = ConfigHolder.configLocation().toString();
+        String configPath = SettingsManager.localConfigDirectory().toString();
 
         String tmpdir = System.getProperty("java.io.tmpdir");
         if (StringUtils.isNotBlank(tmpdir) && configPath.startsWith(tmpdir))
@@ -220,8 +268,8 @@ public final class Launcher extends Application {
     }
 
     private static void checkConfigInTempDir() {
-        if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
-                && showAlert(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
+        if (SettingsManager.isNewlyCreated() && isConfigInTempDir()
+                && !confirmWithCountdown(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), 5)) {
             EntryPoint.exit(0);
         }
     }
@@ -231,23 +279,26 @@ public final class Launcher extends Application {
             return;
 
         String userName = System.getProperty("user.name");
+        Path configDirectory = SettingsManager.localConfigDirectory();
+        if (!Files.exists(configDirectory)) {
+            return;
+        }
+
         String owner;
         try {
-            owner = Files.getOwner(ConfigHolder.configLocation()).getName();
+            owner = Files.getOwner(configDirectory).getName();
         } catch (IOException ioe) {
             LOG.warning("Failed to get file owner", ioe);
             return;
         }
 
-        if (Files.isWritable(ConfigHolder.configLocation()) || userName.equals("root") || userName.equals(owner))
+        if (Files.isWritable(configDirectory) || userName.equals("root") || userName.equals(owner))
             return;
 
         ArrayList<String> files = new ArrayList<>();
-        files.add(ConfigHolder.configLocation().toString());
-        if (Files.exists(Metadata.HMCL_GLOBAL_DIRECTORY))
-            files.add(Metadata.HMCL_GLOBAL_DIRECTORY.toString());
-        if (Files.exists(Metadata.HMCL_CURRENT_DIRECTORY))
-            files.add(Metadata.HMCL_CURRENT_DIRECTORY.toString());
+        files.add(configDirectory.toString());
+        if (Files.exists(Metadata.HMCL_USER_HOME))
+            files.add(Metadata.HMCL_USER_HOME.toString());
 
         Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
         if (Files.exists(mcDir))
@@ -300,8 +351,8 @@ public final class Launcher extends Application {
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
             LOG.info("Java Home: " + System.getProperty("java.home"));
             LOG.info("Current Directory: " + Metadata.CURRENT_DIRECTORY);
-            LOG.info("HMCL Global Directory: " + Metadata.HMCL_GLOBAL_DIRECTORY);
-            LOG.info("HMCL Current Directory: " + Metadata.HMCL_CURRENT_DIRECTORY);
+            LOG.info("HMCL User Home: " + Metadata.HMCL_USER_HOME);
+            LOG.info("HMCL Local Home: " + Metadata.HMCL_LOCAL_HOME);
             LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
             LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
             LOG.info("JVM Max Memory: " + MEGABYTES.formatBytes(Runtime.getRuntime().maxMemory()));
@@ -320,6 +371,8 @@ public final class Launcher extends Application {
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
+
+            LOG.info("Zlib Compatible: " + ZlibUtils.IS_ZLIB_COMPATIBLE);
 
             Lang.thread(SystemInfo::initialize, "Detection System Information", true);
 

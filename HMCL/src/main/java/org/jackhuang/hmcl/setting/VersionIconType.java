@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public enum VersionIconType {
@@ -45,7 +45,7 @@ public enum VersionIconType {
     public static VersionIconType getIconType(ModLoaderType modLoaderType) {
         return switch (modLoaderType) {
             case FORGE -> VersionIconType.FORGE;
-            case NEO_FORGED -> VersionIconType.NEO_FORGE;
+            case NEO_FORGE -> VersionIconType.NEO_FORGE;
             case FABRIC -> VersionIconType.FABRIC;
             case QUILT -> VersionIconType.QUILT;
             case LITE_LOADER -> VersionIconType.CHICKEN;

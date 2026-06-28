@@ -38,14 +38,6 @@ public final class Lang {
         return value != null ? value : defaultValue;
     }
 
-    public static <T> T requireNonNullElseGet(T value, Supplier<? extends T> defaultValue) {
-        return value != null ? value : defaultValue.get();
-    }
-
-    public static <T, U> U requireNonNullElseGet(T value, Function<? super T, ? extends U> mapper, Supplier<? extends U> defaultValue) {
-        return value != null ? mapper.apply(value) : defaultValue.get();
-    }
-
     /**
      * Construct a mutable map by given key-value pairs.
      *
@@ -77,20 +69,6 @@ public final class Lang {
     @SafeVarargs
     public static <T> List<T> immutableListOf(T... elements) {
         return Collections.unmodifiableList(Arrays.asList(elements));
-    }
-
-    public static <T extends Comparable<T>> T clamp(T min, T val, T max) {
-        if (val.compareTo(min) < 0) return min;
-        else if (val.compareTo(max) > 0) return max;
-        else return val;
-    }
-
-    public static double clamp(double min, double val, double max) {
-        return Math.max(min, Math.min(val, max));
-    }
-
-    public static int clamp(int min, int val, int max) {
-        return Math.max(min, Math.min(val, max));
     }
 
     public static boolean test(ExceptionalRunnable<?> r) {
@@ -371,15 +349,6 @@ public final class Lang {
         };
     }
 
-    @SafeVarargs
-    public static <T> Consumer<T> compose(Consumer<T>... consumers) {
-        return t -> {
-            for (Consumer<T> consumer : consumers) {
-                consumer.accept(t);
-            }
-        };
-    }
-
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static <T> Stream<T> toStream(Optional<T> optional) {
         return optional.map(Stream::of).orElseGet(Stream::empty);
@@ -412,29 +381,12 @@ public final class Lang {
         return () -> iterator;
     }
 
-    public static <T, U> void forEachZipped(Iterable<T> i1, Iterable<U> i2, BiConsumer<T, U> action) {
-        Iterator<T> it1 = i1.iterator();
-        Iterator<U> it2 = i2.iterator();
-        while (it1.hasNext() && it2.hasNext())
-            action.accept(it1.next(), it2.next());
-    }
-
     public static Throwable resolveException(Throwable e) {
         if (e instanceof ExecutionException || e instanceof CompletionException)
             return resolveException(e.getCause());
         else
             return e;
     }
-
-    /**
-     * This is a useful function to prevent exceptions being eaten when using CompletableFuture.
-     * You can write:
-     * ... .exceptionally(handleUncaught);
-     */
-    public static final Function<Throwable, Void> handleUncaught = e -> {
-        handleUncaughtException(e);
-        return null;
-    };
 
     public static <R> R handleUncaughtException(Throwable e) {
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
