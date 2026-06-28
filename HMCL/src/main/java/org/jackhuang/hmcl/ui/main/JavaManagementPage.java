@@ -227,7 +227,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     private static final class JavaItemCell extends ListCell<JavaRuntime> {
         private final Node graphic;
         private final TwoLineListItem content;
-        private JavaRuntime currentItem;
 
         private SVG removeIcon;
         private final JFXButton removeButton;
@@ -289,17 +288,15 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         @Override
         protected void updateItem(JavaRuntime item, boolean empty) {
+            JavaRuntime oldItem = getItem();
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setGraphic(null);
-                currentItem = null;
             } else {
                 content.setTitle((item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
 
-                if (currentItem != item) {
-                    currentItem = item;
-
+                if (oldItem != item) {
                     content.getTags().clear();
                     content.addTag(i18n("java.info.architecture") + ": " + item.getArchitecture().getDisplayName());
                     String vendor = JavaInfo.normalizeVendor(item.getVendor());
