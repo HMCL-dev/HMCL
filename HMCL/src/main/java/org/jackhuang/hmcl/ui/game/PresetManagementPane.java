@@ -180,6 +180,23 @@ final class PresetManagementPane extends ComponentSublist {
         setDescription(setting != null ? getPresetDisplayName(setting) : "");
     }
 
+    /**
+     * 辅助方法：检查名称是否已存在
+     * @param name 要检查的名称
+     * @param excludeSetting 需要排除的预设（用于重命名时排除自身）
+     */
+    private boolean isPresetNameExists(String name, @Nullable GameSettings.Preset excludeSetting) {
+        for (GameSettings.Preset setting : SettingsManager.getGameSettings()) {
+            if (excludeSetting != null && setting == excludeSetting) {
+                continue;
+            }
+            if (Objects.equals(name, getPresetDisplayName(setting))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// Creates a new preset and selects it for editing.
     private void createPreset() {
         int number = createDefaultPresetNumber();
@@ -188,6 +205,15 @@ final class PresetManagementPane extends ComponentSublist {
                         .setPromptText(i18n("settings.type.global.preset.auto_name", number));
         Controllers.prompt(new PromptDialogPane.Builder(i18n("settings.type.global.preset.create"), (questions, handler) -> {
             String name = (String) questions.get(0).getValue();
+
+            if (StringUtils.isNotBlank(name)) {
+                String trimmedName = name.trim();
+                if (isPresetNameExists(trimmedName, null)) {
+                    handler.reject(i18n("settings.type.global.preset.duplicate_name")); // 需要在i18n中配置该错误提示
+                    return;
+                }
+            }
+
             GameSettings.Preset setting = new GameSettings.Preset(SettingsManager.gameSettingsPresets().newPresetId());
             if (StringUtils.isBlank(name)) {
                 setting.autoNameNumberProperty().setValue(number);
@@ -233,7 +259,13 @@ final class PresetManagementPane extends ComponentSublist {
                 return;
             }
 
-            setting.nameProperty().setValue(LocalizedText.plain(name.trim()));
+            String trimmedName = name.trim();            
+            if (isPresetNameExists(trimmedName, setting)) {
+                handler.reject(i18n("settings.type.global.preset.duplicate_name"));
+                return;
+            }
+
+            setting.nameProperty().setValue(LocalizedText.plain(trimmedName));
             setting.autoNameNumberProperty().setValue(null);
             handler.resolve();
         }).addQuestion(nameQuestion));
