@@ -35,6 +35,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -651,6 +652,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 {
                     var txtMinMemory = new JFXTextField();
                     txtMinMemory.setPrefWidth(160);
+                    txtMinMemory.setTextFormatter(new TextFormatter<>(change -> {
+                        if (!change.getText().matches("\\d*")) {
+                            change.setText(""); 
+                        }
+                        return change;
+                    }));
                     minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label(i18n("settings.memory.unit.mib"))));
                     bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSettings::minMemoryProperty);
                 }
@@ -661,6 +668,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     var txtMetaspace = new JFXTextField();
                     txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
                     txtMetaspace.setPrefWidth(160);
+                    txtMetaspace.setTextFormatter(new TextFormatter<>(change -> {
+                        if (!change.getText().matches("\\d*")) {
+                            change.setText(""); 
+                        }
+                        return change;
+                    }));
                     metaspacePane.setRight(new HBox(8, txtMetaspace, new Label(i18n("settings.memory.unit.mib"))));
                     bindIndependentTextField(metaspacePane, txtMetaspace, GameSettings::permSizeProperty);
                 }
