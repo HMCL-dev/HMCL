@@ -659,7 +659,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 metaspacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
                 {
                     var txtMetaspace = new JFXTextField();
-                    txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
                     txtMetaspace.setPrefWidth(160);
                     metaspacePane.setRight(new HBox(8, txtMetaspace, new Label(i18n("settings.memory.unit.mib"))));
                     bindIndependentTextField(metaspacePane, txtMetaspace, GameSettings::permSizeProperty);
