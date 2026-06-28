@@ -471,8 +471,19 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         private void exportToCSVWithProgress() throws IOException {
             CSVTable table = new CSVTable();
 
+            List<String> fieldOrder = List.of(
+                    "name", "version", "modid", "gameVersion", "authors", "description",
+                    "url", "active", "modLoaderType", "mcmodId", "abbr", "chineseName",
+                    "sha1", "sha512", "curseForgeUrl", "curseForgeFileUrl", "curseForgeDownloadPage",
+                    "modrinthUrl", "modrinthFileUrl"
+            );
+
+            List<String> orderedFields = fieldOrder.stream()
+                    .filter(fields::contains)
+                    .toList();
+
             // Header row
-            List<String> headers = getFieldHeaders(fields);
+            List<String> headers = getFieldHeaders(orderedFields);
             for (int col = 0; col < headers.size(); col++) {
                 table.set(col, 0, headers.get(col));
             }
@@ -481,7 +492,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             int totalMods = mods.size();
             for (int row = 0; row < totalMods; row++) {
                 ModListPageSkin.ModInfoObject mod = mods.get(row);
-                List<String> values = getFieldValues(mod, fields);
+                List<String> values = getFieldValues(mod, orderedFields);
                 for (int col = 0; col < values.size(); col++) {
                     table.set(col, row + 1, values.get(col));
                 }
@@ -533,7 +544,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         return result.toString();
     }
 
-    private List<String> getFieldHeaders(Set<String> fields) {
+    private List<String> getFieldHeaders(List<String> fields) {
         List<String> headers = new ArrayList<>();
         for (String field : fields) {
             headers.add(switch (field) {
@@ -562,7 +573,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         return headers;
     }
 
-    private List<String> getFieldValues(ModListPageSkin.ModInfoObject modInfo, Set<String> fields) {
+    private List<String> getFieldValues(ModListPageSkin.ModInfoObject modInfo, List<String> fields) {
         List<String> values = new ArrayList<>();
         for (String field : fields) {
             values.add(getFieldValue(modInfo, field));
