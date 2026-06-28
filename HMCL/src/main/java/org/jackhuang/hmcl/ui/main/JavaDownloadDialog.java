@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
@@ -376,7 +379,7 @@ public final class JavaDownloadDialog extends StackPane {
                             throw new IOException("Illegal result: " + json);
 
                         DiscoRemoteFileInfo fileInfo = result.getResult().get(0);
-                        if (!fileInfo.getChecksumType().equals("sha1") && !fileInfo.getChecksumType().equals("sha256"))
+                        if (!fileInfo.getChecksumType().isBlank() && !fileInfo.getChecksumType().equals("sha1") && !fileInfo.getChecksumType().equals("sha256") && !fileInfo.getChecksumType().equals("md5"))
                             throw new IOException("Unsupported checksum type: " + fileInfo.getChecksumType());
                         if (StringUtils.isBlank(fileInfo.getDirectDownloadUri()))
                             throw new IOException("Missing download URI: " + json);
@@ -399,7 +402,7 @@ public final class JavaDownloadDialog extends StackPane {
                                         return new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), checksum);
                                     });
                         else
-                            throw new IOException("Unable to get checksum for file");
+                            getIntegrityCheck = Task.completed(null);
 
                         return getIntegrityCheck
                                 .thenComposeAsync(integrityCheck ->
