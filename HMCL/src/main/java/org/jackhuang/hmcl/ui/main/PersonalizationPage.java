@@ -82,7 +82,6 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
@@ -204,65 +203,6 @@ public class PersonalizationPage extends StackPane {
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             if (!settings().getThemeAppearanceOverrides().contains(setting)) {
                 directProperty.setValue(effectiveValueSupplier.get());
-                settings().getThemeAppearanceOverrides().add(setting);
-            } else {
-                settings().getThemeAppearanceOverrides().remove(setting);
-            }
-            refresh.invalidated(null);
-            event.consume();
-        });
-        refresh.invalidated(null);
-    }
-
-    /// Installs an inheritance button on a binary toggle button.
-    private static <T> void bindThemeAppearanceToggleButton(
-            LineToggleButton button,
-            String setting,
-            Property<T> directProperty,
-            Supplier<T> effectiveValueSupplier,
-            T selectedValue,
-            T unselectedValue,
-            @Nullable Function<T, String> valueConverter) {
-        JFXButton inheritButton = createThemeAppearanceOverrideButton();
-        button.setTitleTrailing(inheritButton);
-
-        Holder<Boolean> updating = new Holder<>(false);
-        InvalidationListener refresh = ignored -> {
-            if (updating.value) {
-                return;
-            }
-            updating.value = true;
-            try {
-                boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
-                T value = overridden ? directProperty.getValue() : effectiveValueSupplier.get();
-                button.setSelected(Objects.equals(value, selectedValue));
-                button.setSubtitle(valueConverter != null ? valueConverter.apply(value) : null);
-                updateThemeAppearanceOverrideButton(inheritButton, !overridden);
-            } finally {
-                updating.value = false;
-            }
-        };
-
-        button.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            if (updating.value) {
-                return;
-            }
-            updating.value = true;
-            try {
-                directProperty.setValue(Boolean.TRUE.equals(newValue) ? selectedValue : unselectedValue);
-                settings().getThemeAppearanceOverrides().add(setting);
-                updateThemeAppearanceOverrideButton(inheritButton, false);
-            } finally {
-                updating.value = false;
-            }
-            refresh.invalidated(null);
-        });
-        directProperty.addListener(refresh);
-        addThemeAppearanceRefreshListener(refresh);
-
-        inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            if (!settings().getThemeAppearanceOverrides().contains(setting)) {
-                directProperty.setValue(button.isSelected() ? selectedValue : unselectedValue);
                 settings().getThemeAppearanceOverrides().add(setting);
             } else {
                 settings().getThemeAppearanceOverrides().remove(setting);
@@ -1060,25 +1000,68 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
+            String setting = LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT;
             LineToggleButton titleBarTransparentButton = new LineToggleButton();
             titleBarTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
-            bindThemeAppearanceToggleButton(
-                    titleBarTransparentButton,
-                    LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT,
-                    settings().titleBarTransparentProperty(),
-                    () -> {
+            JFXButton inheritButton = createThemeAppearanceOverrideButton();
+            titleBarTransparentButton.setTitleTrailing(inheritButton);
+
+            Holder<Boolean> updating = new Holder<>(false);
+            InvalidationListener refresh = ignored -> {
+                if (updating.value) {
+                    return;
+                }
+                updating.value = true;
+                try {
+                    boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
+                    boolean transparent;
+                    if (overridden) {
+                        transparent = settings().titleBarTransparentProperty().get();
+                    } else {
                         try {
-                            return Objects.requireNonNullElse(
+                            transparent = Objects.requireNonNullElse(
                                     ThemePackManager.resolveCurrentTitleBarTransparent(
                                             ThemePackManager.currentResolveContext()),
                                     false);
                         } catch (IOException | RuntimeException e) {
-                            return false;
+                            transparent = false;
                         }
-                    },
-                    Boolean.TRUE,
-                    Boolean.FALSE,
-                    null);
+                    }
+                    titleBarTransparentButton.setSelected(transparent);
+                    updateThemeAppearanceOverrideButton(inheritButton, !overridden);
+                } finally {
+                    updating.value = false;
+                }
+            };
+
+            titleBarTransparentButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                if (updating.value) {
+                    return;
+                }
+                updating.value = true;
+                try {
+                    settings().titleBarTransparentProperty().set(Boolean.TRUE.equals(newValue));
+                    settings().getThemeAppearanceOverrides().add(setting);
+                    updateThemeAppearanceOverrideButton(inheritButton, false);
+                } finally {
+                    updating.value = false;
+                }
+                refresh.invalidated(null);
+            });
+            settings().titleBarTransparentProperty().addListener(refresh);
+            addThemeAppearanceRefreshListener(refresh);
+
+            inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                if (!settings().getThemeAppearanceOverrides().contains(setting)) {
+                    settings().titleBarTransparentProperty().set(titleBarTransparentButton.isSelected());
+                    settings().getThemeAppearanceOverrides().add(setting);
+                } else {
+                    settings().getThemeAppearanceOverrides().remove(setting);
+                }
+                refresh.invalidated(null);
+                event.consume();
+            });
+            refresh.invalidated(null);
             themeAppearanceList.getContent().add(titleBarTransparentButton);
         }
         content.getChildren().addAll(

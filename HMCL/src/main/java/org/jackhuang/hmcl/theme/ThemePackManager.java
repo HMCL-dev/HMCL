@@ -1138,17 +1138,6 @@ public final class ThemePackManager {
                     resource,
                     opacity);
         }
-        if (source instanceof ThemeBackground.Network network) {
-            return new ResolvedBackground(
-                    BackgroundType.NETWORK,
-                    null,
-                    requireNonBlank(network.url(), "background.url"),
-                    Objects.requireNonNullElse(
-                            network.cachePolicy(),
-                            NetworkBackgroundImageCachePolicy.ENABLED),
-                    null,
-                    opacity);
-        }
         if (source instanceof ThemeBackground.ThemeColor) {
             return new ResolvedBackground(
                     BackgroundType.THEME_COLOR,
