@@ -60,6 +60,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
@@ -144,7 +145,7 @@ public final class SettingsPage extends ScrollPane {
                     LineSelectButton<EnumUpdateMode> updateModePane = new LineSelectButton<>();
                     updateModePane.setTitle(i18n("update.mode"));
                     updateModePane.valueProperty().bindBidirectional(settings().updateModeProperty());
-                    updateModePane.setConverter(mode -> i18n("update.mode." + mode.name().toLowerCase()));
+                    updateModePane.setConverter(mode -> i18n("update.mode." + mode.name().toLowerCase(Locale.ROOT)));
                     updateModePane.setItems(EnumUpdateMode.values());
                     updatePaneList.getContent().add(updateModePane);
                 }
