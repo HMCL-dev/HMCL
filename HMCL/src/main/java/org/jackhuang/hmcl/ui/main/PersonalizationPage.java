@@ -831,8 +831,10 @@ public class PersonalizationPage extends StackPane {
                                 BackgroundType.BUILTIN);
                         return switch (type) {
                             case PAINT -> {
-                                Paint backgroundFallbackPaint = settings().backgroundFallbackPaintProperty().get();
-                                yield backgroundFallbackPaint.toString();
+                                @Nullable Paint backgroundFallbackPaint = settings().backgroundFallbackPaintProperty().get();
+                                yield backgroundFallbackPaint != null
+                                        ? backgroundFallbackPaint.toString()
+                                        : i18n("launcher.background.fallback.paint");
                             }
                             case THEME_COLOR -> i18n("launcher.background.fallback.theme_color");
                             default -> i18n("launcher.background.fallback.builtin");

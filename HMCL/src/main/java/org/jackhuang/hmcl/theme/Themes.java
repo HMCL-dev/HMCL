@@ -645,14 +645,18 @@ public final class Themes {
     private static LoadedBackground loadBackground(
             ThemePackManager.InstalledThemePack themePack,
             Theme theme,
-            ThemeResolveContext context) throws IOException {
-        ThemePackManager.ResolvedBackground resolved = ThemePackManager.resolveBackgroundAfterApplyingTheme(
-                themePack,
-                theme,
-                context);
-        @Nullable LoadedBackground loaded = tryCreateResolvedBackground(resolved, false);
-        if (loaded != null) {
-            return loaded;
+            ThemeResolveContext context) {
+        try {
+            ThemePackManager.ResolvedBackground resolved = ThemePackManager.resolveBackgroundAfterApplyingTheme(
+                    themePack,
+                    theme,
+                    context);
+            @Nullable LoadedBackground loaded = tryCreateResolvedBackground(resolved, false);
+            if (loaded != null) {
+                return loaded;
+            }
+        } catch (IOException | RuntimeException e) {
+            LOG.warning("Couldn't load theme background before applying theme", e);
         }
         return loadFallbackBackground(theme, context);
     }
@@ -766,9 +770,43 @@ public final class Themes {
     /// Loads the fallback background used while applying a not-yet-selected theme.
     private static LoadedBackground loadFallbackBackground(Theme theme, ThemeResolveContext context) {
         double opacity = 1.0;
-        @Nullable ThemeBackgroundSettings background = theme.resolve(context).background();
+        ThemeAppearance appearance = theme.resolve(context);
+        @Nullable ThemeBackgroundSettings background = appearance.background();
         if (background != null && background.opacity() != null) {
             opacity = background.opacity();
+        }
+
+        Paint themeColorPaint = appearance.toResolvedTheme(context).toColorScheme().getColor(ColorRole.SURFACE_CONTAINER);
+        BackgroundType fallbackType = Objects.requireNonNullElse(
+                settings().backgroundFallbackTypeProperty().get(),
+                BackgroundType.BUILTIN);
+        ThemePackManager.ResolvedBackground resolvedBackground = switch (fallbackType) {
+            case PAINT -> new ThemePackManager.ResolvedBackground(
+                    BackgroundType.PAINT,
+                    null,
+                    null,
+                    null,
+                    settings().backgroundFallbackPaintProperty().get(),
+                    opacity);
+            case THEME_COLOR -> new ThemePackManager.ResolvedBackground(
+                    BackgroundType.THEME_COLOR,
+                    null,
+                    null,
+                    null,
+                    themeColorPaint,
+                    opacity);
+            case DEFAULT, BUILTIN, CUSTOM, NETWORK -> new ThemePackManager.ResolvedBackground(
+                    BackgroundType.BUILTIN,
+                    BuiltinBackground.FALLBACK.id(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    opacity);
+        };
+        @Nullable LoadedBackground loaded = tryCreateResolvedBackground(resolvedBackground, true);
+        if (loaded != null) {
+            return loaded;
         }
 
         Image image = loadBuiltinBackgroundImage(BuiltinBackground.FALLBACK.id());
