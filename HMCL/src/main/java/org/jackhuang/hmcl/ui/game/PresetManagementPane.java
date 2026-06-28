@@ -180,21 +180,11 @@ final class PresetManagementPane extends ComponentSublist {
         setDescription(setting != null ? getPresetDisplayName(setting) : "");
     }
 
-    /**
-     * 辅助方法：检查名称是否已存在
-     * @param name 要检查的名称
-     * @param excludeSetting 需要排除的预设（用于重命名时排除自身）
-     */
+    // Used to check the preset name.
     private boolean isPresetNameExists(String name, @Nullable GameSettings.Preset excludeSetting) {
-        for (GameSettings.Preset setting : SettingsManager.getGameSettings()) {
-            if (excludeSetting != null && setting == excludeSetting) {
-                continue;
-            }
-            if (Objects.equals(name, getPresetDisplayName(setting))) {
-                return true;
-            }
-        }
-        return false;
+        return SettingsManager.getGameSettings().stream()
+                .filter(setting -> excludeSetting == null || setting != excludeSetting)
+                .anyMatch(setting -> Objects.equals(name, getPresetDisplayName(setting)));
     }
 
     /// Creates a new preset and selects it for editing.
@@ -209,7 +199,7 @@ final class PresetManagementPane extends ComponentSublist {
             if (StringUtils.isNotBlank(name)) {
                 String trimmedName = name.trim();
                 if (isPresetNameExists(trimmedName, null)) {
-                    handler.reject(i18n("settings.type.global.preset.duplicate_name")); // 需要在i18n中配置该错误提示
+                    handler.reject(i18n("settings.type.global.preset.duplicate_name"));
                     return;
                 }
             }
