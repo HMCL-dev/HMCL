@@ -54,7 +54,8 @@ public class JFXSnackbarLayout extends BorderPane {
         StackPane toastContainer = new StackPane(toast);
         toastContainer.setPadding(new Insets(20));
         actionContainer = new StackPane();
-        actionContainer.setPadding(Insets.EMPTY);
+        actionContainer.setVisible(false);
+        actionContainer.setManaged(false);
 
         toast.prefWidthProperty().bind(Bindings.createDoubleBinding(() -> {
             if (getPrefWidth() == -1) {
