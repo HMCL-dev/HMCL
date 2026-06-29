@@ -17,24 +17,17 @@
  */
 package org.jackhuang.hmcl.game;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import org.jetbrains.annotations.Unmodifiable;
+
 import java.util.List;
 
-/**
- *
- * @author huangyuhui
- */
-public record ExtractRules(List<String> exclude) {
+/// @author huangyuhui
+public record ExtractRules(@Unmodifiable List<String> exclude) {
 
-    public static final ExtractRules EMPTY = new ExtractRules();
+    public static final ExtractRules EMPTY = new ExtractRules(List.of());
 
-    public ExtractRules() {
-        this(Collections.emptyList());
-    }
-
-    public ExtractRules(List<String> exclude) {
-        this.exclude = new ArrayList<>(exclude);
+    public ExtractRules {
+        exclude = List.copyOf(exclude);
     }
 
     public boolean shouldExtract(String path) {
