@@ -39,34 +39,16 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.theme.Theme;
-import org.jackhuang.hmcl.theme.ThemePackAuthor;
-import org.jackhuang.hmcl.theme.ThemePackExporter;
-import org.jackhuang.hmcl.theme.ThemePackManager;
-import org.jackhuang.hmcl.theme.ThemePackManifest;
-import org.jackhuang.hmcl.theme.ThemePackResource;
-import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.SVGContainer;
-import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.theme.*;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.ImageContainer;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -76,18 +58,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -650,11 +625,14 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             BorderPane root = new BorderPane();
             root.getStyleClass().add("md-list-cell");
             root.setPadding(new Insets(8));
-            this.graphic = root;
+
+            var ripplerContainer = new RipplerContainer(root);
+            this.graphic = ripplerContainer;
 
             HBox center = new HBox();
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
+            center.setMouseTransparent(true);
             root.setCenter(center);
 
             icon.setMouseTransparent(true);
@@ -664,7 +642,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             center.getChildren().setAll(icon, content);
             HBox.setHgrow(content, Priority.ALWAYS);
             center.setCursor(Cursor.HAND);
-            FXUtils.onClicked(center, () -> {
+            FXUtils.onClicked(ripplerContainer, () -> {
                 ThemePackManager.InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     page.selectThemePack(themePack);
@@ -696,7 +674,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Updates this cell for one installed theme pack.
         @Override
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
+            var currentItem = getItem();
+
             super.updateItem(themePack, empty);
+
+            if (Objects.equals(getItem(), currentItem)) return;
 
             content.getTags().clear();
             iconImage.setImage(null);
