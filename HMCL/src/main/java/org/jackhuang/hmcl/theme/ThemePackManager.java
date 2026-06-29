@@ -1335,7 +1335,12 @@ public final class ThemePackManager {
 
         try (ZipArchiveReader zipFile = new ZipArchiveReader(themePackFile, StandardCharsets.UTF_8)) {
             for (ZipArchiveEntry entry : zipFile.getEntries()) {
-                String entryName = normalizeThemePackEntryName(entry.getName());
+                String rawEntryName = entry.getName();
+                String entryName = normalizeThemePackEntryName(rawEntryName);
+                String canonicalEntryName = entry.isDirectory() ? entryName + "/" : entryName;
+                if (!canonicalEntryName.equals(rawEntryName)) {
+                    throw new IOException("Theme-pack entry name is not normalized: " + rawEntryName);
+                }
                 checkSupportedThemePackEntry(entryName);
 
                 if (!entries.add(entryName)) {

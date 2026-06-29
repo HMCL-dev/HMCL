@@ -878,6 +878,14 @@ public final class LegacyConfigMigrator {
             addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
             json.remove("bgpaint");
         }
+
+        @Nullable String backgroundType = JsonUtils.getString(json, "backgroundType");
+        for (BackgroundType type : BackgroundType.values()) {
+            if (type != BackgroundType.DEFAULT && type.name().equals(backgroundType)) {
+                addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                break;
+            }
+        }
     }
 
     /// Adds one theme appearance override key to the migration result.
