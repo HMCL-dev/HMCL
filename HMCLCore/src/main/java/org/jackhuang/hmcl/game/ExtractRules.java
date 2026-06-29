@@ -27,7 +27,7 @@ public record ExtractRules(@Unmodifiable List<String> exclude) {
     public static final ExtractRules EMPTY = new ExtractRules(List.of());
 
     public ExtractRules {
-        exclude = List.copyOf(exclude);
+        exclude = exclude != null ? List.copyOf(exclude) : List.of();
     }
 
     public boolean shouldExtract(String path) {
