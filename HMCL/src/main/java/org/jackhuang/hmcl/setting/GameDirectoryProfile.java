@@ -37,9 +37,6 @@ import java.util.Objects;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 
 /// Persistent configuration for a game directory.
-///
-/// A profile stores only identity, display metadata, path, and migrated preset state.
-/// Runtime services for the directory are owned by [org.jackhuang.hmcl.game.HMCLGameRepository].
 @JsonAdapter(GameDirectoryProfile.Serializer.class)
 @NotNullByDefault
 public final class GameDirectoryProfile implements Observable {
