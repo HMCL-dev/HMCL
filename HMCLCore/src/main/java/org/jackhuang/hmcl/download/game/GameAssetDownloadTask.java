@@ -104,15 +104,15 @@ public final class GameAssetDownloadTask extends Task<Void> {
             if (download) {
                 List<URI> uris = dependencyManager.getDownloadProvider().getAssetObjectCandidates(assetObject.getLocation());
 
-                var task = new FileDownloadTask(uris, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
-                task.setName(assetObject.getHash());
+                var task = new FileDownloadTask(uris, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.hash()));
+                task.setName(assetObject.hash());
                 task.setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
                         .resolve("assets").resolve("objects").resolve(assetObject.getLocation()));
                 task.setCacheRepository(dependencyManager.getCacheRepository());
                 task.setCaching(true);
                 dependencies.add(task.withCounter("hmcl.install.assets"));
             } else {
-                dependencyManager.getCacheRepository().tryCacheFile(file, CacheRepository.SHA1, assetObject.getHash());
+                dependencyManager.getCacheRepository().tryCacheFile(file, CacheRepository.SHA1, assetObject.hash());
             }
 
             updateProgress(++progress, index.getObjects().size());
