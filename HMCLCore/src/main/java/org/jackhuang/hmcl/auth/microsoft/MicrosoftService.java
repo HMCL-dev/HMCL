@@ -87,7 +87,7 @@ public class MicrosoftService {
 
     public MicrosoftSession refresh(MicrosoftSession oldSession) throws AuthenticationException {
         try {
-            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.getRefreshToken(), new OAuth.Options(SCOPE, callback));
+            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.refreshToken(), new OAuth.Options(SCOPE, callback));
             return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);

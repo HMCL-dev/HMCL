@@ -209,15 +209,15 @@ public final class TexturesLoader {
                     skin.load(profileName).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
-                        } else if (result != null && result.getSkin() != null && result.getSkin().getImage() != null) {
+                        } else if (result != null && result.skin() != null && result.skin().image() != null) {
                             Map<String, String> metadata;
-                            if (result.getModel() != null) {
-                                metadata = singletonMap("model", result.getModel().modelName);
+                            if (result.model() != null) {
+                                metadata = singletonMap("model", result.model().modelName);
                             } else {
                                 metadata = emptyMap();
                             }
 
-                            binding.set(new LoadedTexture(result.getSkin().getImage(), metadata));
+                            binding.set(new LoadedTexture(result.skin().image(), metadata));
                         }
                     }).start();
                 }

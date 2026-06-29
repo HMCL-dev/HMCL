@@ -30,13 +30,7 @@ import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
-public class MicrosoftSession {
-    private final String tokenType;
-    private final long notAfter;
-    private final String accessToken;
-    private final String refreshToken;
-    private final User user;
-    private final GameProfile profile;
+public record MicrosoftSession(String tokenType, String accessToken, long notAfter, String refreshToken, User user, GameProfile profile) {
 
     public MicrosoftSession(String tokenType, String accessToken, long notAfter, String refreshToken, User user, GameProfile profile) {
         this.tokenType = tokenType;
@@ -49,32 +43,8 @@ public class MicrosoftSession {
         if (accessToken != null) Logger.registerAccessToken(accessToken);
     }
 
-    public String getTokenType() {
-        return tokenType;
-    }
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public long getNotAfter() {
-        return notAfter;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
     public String getAuthorization() {
-        return String.format("%s %s", getTokenType(), getAccessToken());
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public GameProfile getProfile() {
-        return profile;
+        return String.format("%s %s", tokenType(), accessToken());
     }
 
     /// Returns whether the stored session contains a usable Minecraft profile name.
