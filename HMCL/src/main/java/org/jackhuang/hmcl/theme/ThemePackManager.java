@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.ThemeColorType;
+import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -1478,6 +1479,16 @@ public final class ThemePackManager {
         }
 
         String entryName = "assets/wallpapers/" + networkBackgroundAssetName(uri);
+        if (background.networkImageCachePolicy() == NetworkBackgroundImageCachePolicy.ENABLED) {
+            try {
+                Path cachedFile = new CacheFileTask(uri).run();
+                assets.add(new ThemePackAsset(cachedFile, entryName));
+                return new ThemeBackground.Image(entryName);
+            } catch (Exception e) {
+                throw new IOException("Failed to cache theme background: " + uri, e);
+            }
+        }
+
         Path temporaryFile = Files.createTempFile("hmcl-theme-background-", ".tmp");
         boolean success = false;
         try {
