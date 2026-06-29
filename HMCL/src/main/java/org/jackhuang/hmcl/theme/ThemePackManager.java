@@ -1481,11 +1481,13 @@ public final class ThemePackManager {
         String entryName = "assets/wallpapers/" + networkBackgroundAssetName(uri);
         if (background.networkImageCachePolicy() == NetworkBackgroundImageCachePolicy.ENABLED) {
             try {
-                Path cachedFile = new CacheFileTask(uri).run();
-                assets.add(new ThemePackAsset(cachedFile, entryName));
-                return new ThemeBackground.Image(entryName);
+                @Nullable Path cachedFile = new CacheFileTask(uri).run();
+                if (cachedFile != null && Files.isRegularFile(cachedFile)) {
+                    assets.add(new ThemePackAsset(cachedFile, entryName));
+                    return new ThemeBackground.Image(entryName);
+                }
             } catch (Exception e) {
-                throw new IOException("Failed to cache theme background: " + uri, e);
+                LOG.warning("Failed to cache theme background, falling back to direct download: " + uri, e);
             }
         }
 

@@ -141,6 +141,7 @@ public final class ThemePackManagerTest {
             launcherSettings.backgroundTypeProperty().set(BackgroundType.NETWORK);
             launcherSettings.networkBackgroundImageUrlProperty().set(
                     "http://127.0.0.1:" + server.getLocalPort() + "/wallpaper.png");
+            launcherSettings.networkBackgroundImageCachePolicyProperty().set(NetworkBackgroundImageCachePolicy.DISABLED);
             launcherSettings.getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
             launcherSettingsField.set(null, launcherSettings);
 
