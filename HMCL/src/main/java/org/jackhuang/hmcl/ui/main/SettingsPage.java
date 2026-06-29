@@ -31,6 +31,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.EnumUpdateMode;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -59,6 +60,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
@@ -140,6 +142,16 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
+                    LineSelectButton<EnumUpdateMode> updateModePane = new LineSelectButton<>();
+                    updateModePane.setTitle(i18n("update.mode"));
+                    updateModePane.setSubtitle(i18n("settings.take_effect_after_restart"));
+                    updateModePane.valueProperty().bindBidirectional(settings().updateModeProperty());
+                    updateModePane.setConverter(mode -> i18n("update.mode." + mode.name().toLowerCase(Locale.ROOT)));
+                    updateModePane.setItems(EnumUpdateMode.values());
+                    updatePaneList.getContent().add(updateModePane);
+                }
+
+                {
                     LineToggleButton previewPane = new LineToggleButton();
                     previewPane.setTitle(i18n("update.preview"));
                     previewPane.setSubtitle(i18n("update.preview.subtitle"));
@@ -152,14 +164,6 @@ public final class SettingsPage extends ScrollPane {
                     previewPane.selectedProperty().addListener(checkUpdateListener);
 
                     updatePaneList.getContent().add(previewPane);
-                }
-
-                {
-                    LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
-                    disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
-                    disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
-                    disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(settings().disableAutoShowUpdateDialogProperty());
-                    updatePaneList.getContent().add(disableAutoShowUpdateDialogPane);
                 }
 
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);

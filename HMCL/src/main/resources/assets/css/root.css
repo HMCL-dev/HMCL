@@ -383,6 +383,14 @@
     -fx-background-radius: 2px;
 }
 
+.bubble .jfx-spinner {
+    -jfx-radius: 12;
+}
+
+.bubble .jfx-spinner .arc {
+    -fx-stroke: -monet-inverse-on-surface;
+}
+
 .bubble > HBox > .two-line-list-item > .first-line > .title,
 .bubble > HBox > .two-line-list-item > HBox > .subtitle {
     -fx-text-fill: -monet-inverse-on-surface;
