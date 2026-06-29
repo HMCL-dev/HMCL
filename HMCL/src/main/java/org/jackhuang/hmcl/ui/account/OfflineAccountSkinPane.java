@@ -130,11 +130,11 @@ public class OfflineAccountSkinPane extends StackPane {
             skinItem.setSelectedData(Skin.Type.DEFAULT);
             modelCombobox.setValue(TextureModel.WIDE);
         } else {
-            skinItem.setSelectedData(account.getSkin().getType());
-            cslApiField.setText(account.getSkin().getCslApi());
-            modelCombobox.setValue(account.getSkin().getTextureModel());
-            skinSelector.setValue(account.getSkin().getLocalSkinPath());
-            capeSelector.setValue(account.getSkin().getLocalCapePath());
+            skinItem.setSelectedData(account.getSkin().type());
+            cslApiField.setText(account.getSkin().cslApi());
+            modelCombobox.setValue(account.getSkin().textureModel());
+            skinSelector.setValue(account.getSkin().localSkinPath());
+            capeSelector.setValue(account.getSkin().localCapePath());
         }
 
         PauseTransition pauseTransition = new PauseTransition(Duration.seconds(1));
@@ -147,7 +147,7 @@ public class OfflineAccountSkinPane extends StackPane {
                             Controllers.showToast(i18n("message.failed"));
                         } else {
                             UUID uuid = this.account.getProfileID();
-                            if (result == null || result.getSkin() == null && result.getCape() == null) {
+                            if (result == null || result.skin() == null && result.cape() == null) {
                                 canvas.updateSkin(
                                         TexturesLoader.getDefaultSkin(uuid).getImage(),
                                         TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
@@ -156,9 +156,9 @@ public class OfflineAccountSkinPane extends StackPane {
                                 return;
                             }
                             canvas.updateSkin(
-                                    result.getSkin() != null ? result.getSkin().getImage() : TexturesLoader.getDefaultSkin(uuid).getImage(),
-                                    result.getModel() == TextureModel.SLIM,
-                                    result.getCape() != null ? result.getCape().getImage() : null);
+                                    result.skin() != null ? result.skin().image() : TexturesLoader.getDefaultSkin(uuid).getImage(),
+                                    result.model() == TextureModel.SLIM,
+                                    result.cape() != null ? result.cape().image() : null);
                         }
                     }).start();
         };

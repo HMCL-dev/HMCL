@@ -30,21 +30,10 @@ import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
-public final class Texture {
-    private final String hash;
-    private final Image image;
-
+public record Texture(String hash, Image image) {
     public Texture(String hash, Image image) {
         this.hash = requireNonNull(hash);
         this.image = requireNonNull(image);
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public Image getImage() {
-        return image;
     }
 
     private static final Map<String, Texture> textures = new HashMap<>();
