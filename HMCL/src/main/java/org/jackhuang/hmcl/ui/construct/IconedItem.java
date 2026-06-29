@@ -23,7 +23,7 @@ import javafx.scene.layout.HBox;
 
 public class IconedItem extends RipplerContainer {
 
-    private Label label;
+    private final Label label;
 
     public IconedItem(Node icon, String text) {
         this(icon);
@@ -34,6 +34,16 @@ public class IconedItem extends RipplerContainer {
         super(createHBox(icon));
         label = ((Label) lookup("#label"));
         getStyleClass().setAll("iconed-item");
+
+        this.disabledProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                this.setOpacity(0.4);
+                this.setMouseTransparent(true); // 确保不可点击
+            } else {
+                this.setOpacity(1.0);
+                this.setMouseTransparent(false);
+            }
+        });
     }
 
     private static HBox createHBox(Node icon) {

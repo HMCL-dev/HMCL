@@ -15,16 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.auth.yggdrasil;
+package org.jackhuang.hmcl.auth.offline;
 
-import org.jackhuang.hmcl.util.Immutable;
-import org.jetbrains.annotations.Nullable;
+import org.jackhuang.hmcl.game.skin.TextureModel;
 
-import java.util.Map;
-
-@Immutable
-public record Texture(@Nullable String url, @Nullable Map<String, String> metadata) {
-    public Texture() {
-        this(null, null);
-    }
+public record LoadedOfflineSkin(TextureModel model, HashedTexture skin, HashedTexture cape) {
 }

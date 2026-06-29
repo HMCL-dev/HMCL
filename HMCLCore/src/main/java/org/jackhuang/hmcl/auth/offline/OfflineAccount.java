@@ -29,9 +29,9 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactInfo;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.LaunchOptions;
+import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 
@@ -54,14 +54,14 @@ public class OfflineAccount extends Account {
     private final AuthlibInjectorArtifactProvider downloader;
     private final String profileName;
     private final UUID profileID;
-    private Skin skin;
+    private OfflineSkinConfig skin;
 
     protected OfflineAccount(
             AccountID accountID,
             AuthlibInjectorArtifactProvider downloader,
             String profileName,
             UUID profileID,
-            Skin skin) {
+            OfflineSkinConfig skin) {
         super(accountID);
         this.downloader = requireNonNull(downloader);
         this.profileName = requireNonNull(profileName);
@@ -87,17 +87,17 @@ public class OfflineAccount extends Account {
         return profileName;
     }
 
-    public Skin getSkin() {
+    public OfflineSkinConfig getSkin() {
         return skin;
     }
 
-    public void setSkin(Skin skin) {
+    public void setSkin(OfflineSkinConfig skin) {
         this.skin = skin;
         invalidate();
     }
 
-    protected boolean loadAuthlibInjector(Skin skin) {
-        return skin != null && skin.getType() != Skin.Type.DEFAULT;
+    protected boolean loadAuthlibInjector(OfflineSkinConfig skin) {
+        return skin != null && skin.type() != OfflineSkinConfig.Type.DEFAULT;
     }
 
     public AuthInfo logInWithoutSkin() throws AuthenticationException {
@@ -161,7 +161,7 @@ public class OfflineAccount extends Account {
 
             try {
                 server.addCharacter(new YggdrasilServer.Character(profileID, profileName,
-                        skin != null ? skin.load(profileName).run() : null));
+                        skin != null ? skin.load().run() : null));
             } catch (IOException e) {
                 // ignore
             } catch (Exception e) {
