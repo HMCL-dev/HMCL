@@ -20,6 +20,10 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -97,6 +101,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// The persistent game directory for this repository.
     private final GameDirectory gameDirectory;
 
+    /// The selected instance ID persisted for this repository's game directory.
+    private final StringBinding selectedInstance;
+
     // instance game settings
     private final Map<String, GameSettings.Instance> instanceGameSettings = new HashMap<>();
     /// Instance IDs whose local game settings file has already been checked.
@@ -110,12 +117,40 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public HMCLGameRepository(GameDirectory gameDirectory) {
         super(gameDirectory.getPath().toPath());
         this.gameDirectory = gameDirectory;
+        this.selectedInstance = Bindings.stringValueAt(settings().getSelectedInstance(), gameDirectory.getId());
         gameDirectory.pathProperty().addListener((a, b, newValue) -> changeDirectory(newValue.toPath()));
     }
 
     /// Returns the persistent game directory for this repository.
     public GameDirectory getGameDirectory() {
         return gameDirectory;
+    }
+
+    /// Returns the selected instance ID property for this repository's game directory.
+    public StringBinding selectedInstanceProperty() {
+        return selectedInstance;
+    }
+
+    /// Returns the selected instance ID for this repository's game directory.
+    public @Nullable String getSelectedInstance() {
+        return selectedInstance.get();
+    }
+
+    /// Sets the selected instance ID for this repository's game directory.
+    public void setSelectedInstance(@Nullable String instance) {
+        settings().setSelectedInstance(gameDirectory.getId(), instance);
+    }
+
+    /// Refreshes the selected instance ID after versions are loaded.
+    public void refreshSelectedInstance() {
+        @Nullable String version = settings().getSelectedInstance(gameDirectory.getId());
+        if (!hasVersion(version)) {
+            version = getVersions().stream()
+                    .findFirst()
+                    .map(Version::getId)
+                    .orElse(null);
+        }
+        setSelectedInstance(version);
     }
 
     /// Returns a dependency manager using the currently selected download provider.

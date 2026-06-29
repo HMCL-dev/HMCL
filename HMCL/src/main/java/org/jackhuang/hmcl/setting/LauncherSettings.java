@@ -613,23 +613,22 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// Returns selected instance IDs keyed by game directory ID.
     ///
-    /// This map is exposed for persistence and migration code. Runtime code outside [GameDirectoryManager] should
-    /// use `GameDirectoryManager.getSelectedInstance` and `GameDirectoryManager.setSelectedInstance` instead of mutating it.
+    /// The map stores persisted selected instance values by game directory ID.
     public ObservableMap<GameDirectoryID, String> getSelectedInstance() {
         return selectedInstance;
     }
 
     /// Returns the selected instance ID for the given game directory ID.
     ///
-    /// This method is intended for [GameDirectoryManager].
-    @Nullable String getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
+    /// The value is loaded by the game repository for the matching game directory.
+    public @Nullable String getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.
     ///
-    /// This method is intended for [GameDirectoryManager].
-    void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable String selectedInstance) {
+    /// Blank values remove the persisted selected instance entry.
+    public void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable String selectedInstance) {
         if (gameDirectoryId == null) {
             return;
         }

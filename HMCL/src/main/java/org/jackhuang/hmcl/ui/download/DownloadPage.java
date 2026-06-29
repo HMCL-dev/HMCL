@@ -142,7 +142,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon.Version file, String subdirectoryName) {
-        if (version == null) version = GameDirectoryManager.getSelectedInstance(repository.getGameDirectory());
+        if (version == null) version = repository.getSelectedInstance();
 
         Path runDirectory = repository.hasVersion(version) ? repository.getRunDirectory(version) : repository.getBaseDirectory();
 
@@ -321,7 +321,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             return builder.buildAsync().whenComplete(any -> {
                 repository.refreshVersions();
                 repository.applyDefaultIsolationSetting(name);
-            }).thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), name));
+            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
         }
 
         @Override

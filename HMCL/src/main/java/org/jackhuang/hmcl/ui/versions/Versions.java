@@ -146,7 +146,7 @@ public final class Versions {
                 repository.refreshVersionsAsync()
                         .thenRunAsync(Schedulers.javafx(), () -> {
                             if (repository.hasVersion(newName)) {
-                                GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), newName);
+                                repository.setSelectedInstance(newName);
                             }
                         }).start();
             } else {
@@ -192,7 +192,7 @@ public final class Versions {
                             .thenRunAsync(repository::refreshVersions)
                             .whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
-                                    GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), result);
+                                    repository.setSelectedInstance(result);
                                 } else {
                                     Controllers.dialog(
                                             DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);

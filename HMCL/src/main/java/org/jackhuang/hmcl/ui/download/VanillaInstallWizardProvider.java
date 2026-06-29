@@ -66,7 +66,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
             repository.refreshVersions();
             repository.applyDefaultIsolationSetting(name);
         })
-                .thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), name));
+                .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
     }
 
     @Override

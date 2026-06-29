@@ -18,13 +18,13 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -39,7 +39,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.*;
@@ -132,8 +131,12 @@ public final class GameDirectoryManager {
     /// The selected game repository, or `null` before the fallback game directory is resolved.
     private static final ObjectProperty<@UnknownNullability HMCLGameRepository> selectedRepository = new SimpleObjectProperty<>(GameDirectoryManager.class, "selectedRepository");
 
-    /// The selected instance ID for the selected game directory.
+    /// The selected instance ID projected from the selected repository.
     private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper(GameDirectoryManager.class, "selectedInstance");
+
+    /// Updates [#selectedInstance] when the selected repository changes its selected instance.
+    private static final ChangeListener<String> selectedRepositoryInstanceListener =
+            (observable, oldValue, newValue) -> selectedInstance.set(newValue);
 
     /// Initializes game directory state from the stores loaded by [SettingsManager].
     ///
@@ -184,9 +187,14 @@ public final class GameDirectoryManager {
             }
 
             settings().selectedGameDirectoryProperty().set(newValue.getId());
-            selectedInstance.set(settings().getSelectedInstance(newValue.getId()));
+            @Nullable HMCLGameRepository oldRepository = selectedRepository.get();
+            if (oldRepository != null) {
+                oldRepository.selectedInstanceProperty().removeListener(selectedRepositoryInstanceListener);
+            }
             HMCLGameRepository repository = getOrCreateRepository(newValue);
             selectedRepository.set(repository);
+            selectedInstance.set(repository.getSelectedInstance());
+            repository.selectedInstanceProperty().addListener(selectedRepositoryInstanceListener);
             repository.refreshVersionsAsync().start();
         });
         selectedGameDirectory.set(currentGameDirectory != null ? currentGameDirectory : mergedGameDirectories.get(0));
@@ -195,28 +203,12 @@ public final class GameDirectoryManager {
             runInFX(() -> {
                 @Nullable HMCLGameRepository repository = selectedRepository.get();
                 if (repository != null && repository == event.getSource()) {
-                    refreshSelectedVersion(repository);
+                    repository.refreshSelectedInstance();
                     for (Consumer<HMCLGameRepository> listener : versionsListeners)
                         listener.accept(repository);
                 }
             });
         });
-    }
-
-    /// Refreshes selected instance state after the selected repository finishes loading versions.
-    private static void refreshSelectedVersion(HMCLGameRepository repository) {
-        GameDirectory gameDirectory = repository.getGameDirectory();
-        String version = settings().getSelectedInstance(gameDirectory.getId());
-        if (!repository.hasVersion(version)) {
-            Optional<String> fallback = repository.getVersions().stream()
-                    .findFirst()
-                    .map(Version::getId);
-            version = fallback.orElse(null);
-            if (!Objects.equals(settings().getSelectedInstance(gameDirectory.getId()), version)) {
-                settings().setSelectedInstance(gameDirectory.getId(), version);
-            }
-        }
-        selectedInstance.set(version);
     }
 
     /// Creates the built-in game directories only when no game directory exists.
@@ -472,35 +464,29 @@ public final class GameDirectoryManager {
         return selectedRepository;
     }
 
-    /// Returns the selected instance property for the selected game directory.
+    /// Returns the selected instance property projected from the selected repository.
     public static ReadOnlyStringProperty selectedInstanceProperty() {
         return selectedInstance.getReadOnlyProperty();
     }
 
-    /// Returns the selected instance ID for the selected game directory.
+    /// Returns the selected instance ID for the selected repository.
     public static @Nullable String getSelectedInstance() {
-        return selectedInstance.get();
+        return getSelectedRepository().getSelectedInstance();
     }
 
-    /// Returns the selected instance ID for the given game directory.
+    /// Returns the selected instance ID for the repository of the given game directory.
     public static @Nullable String getSelectedInstance(GameDirectory gameDirectory) {
-        return settings().getSelectedInstance(gameDirectory.getId());
+        return getOrCreateRepository(gameDirectory).getSelectedInstance();
     }
 
-    /// Sets the selected instance ID for the currently selected game directory.
+    /// Sets the selected instance ID for the selected repository.
     public static void setSelectedInstance(@Nullable String instance) {
-        @Nullable GameDirectory gameDirectory = selectedGameDirectory.get();
-        if (gameDirectory != null) {
-            setSelectedInstance(gameDirectory, instance);
-        }
+        getSelectedRepository().setSelectedInstance(instance);
     }
 
-    /// Sets the selected instance ID for the given game directory.
+    /// Sets the selected instance ID for the repository of the given game directory.
     public static void setSelectedInstance(GameDirectory gameDirectory, @Nullable String instance) {
-        settings().setSelectedInstance(gameDirectory.getId(), instance);
-        if (gameDirectory == selectedGameDirectory.get()) {
-            selectedInstance.set(settings().getSelectedInstance(gameDirectory.getId()));
-        }
+        getOrCreateRepository(gameDirectory).setSelectedInstance(instance);
     }
 
     /// Listeners notified after the selected repository has loaded versions.

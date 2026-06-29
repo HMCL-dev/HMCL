@@ -52,7 +52,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
             repository = GameDirectoryManager.getSelectedRepository();
             if (repository != null) {
                 onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
-                    this.loadVersion(GameDirectoryManager.getSelectedInstance());
+                    this.loadVersion(repository.getSelectedInstance());
                 });
             }
         }

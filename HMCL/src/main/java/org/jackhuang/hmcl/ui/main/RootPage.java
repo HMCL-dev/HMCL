@@ -154,8 +154,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // second item in left sidebar
             GameAdvancedListItem gameListItem = new GameAdvancedListItem();
             gameListItem.setOnAction(e -> {
-                GameDirectory profile = GameDirectoryManager.getSelectedGameDirectory();
-                String version = GameDirectoryManager.getSelectedInstance();
+                String version = GameDirectoryManager.getSelectedRepository().getSelectedInstance();
                 if (version == null) {
                     Controllers.navigate(Controllers.getGameListPage());
                 } else {
@@ -165,7 +164,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
                 String currentId = getSkinnable().getMainPage().getCurrentGame();
                 return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-            }, it -> GameDirectoryManager.setSelectedInstance(getSkinnable().getMainPage().getGameDirectory(), it.getId()));
+            }, it -> getSkinnable().getMainPage().getRepository().setSelectedInstance(it.getId()));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
             }

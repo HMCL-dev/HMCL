@@ -34,7 +34,7 @@ public class GameListItem extends GameItem {
         super(repository, id);
         this.isModpack = repository.isModpack(id);
         selected.bind(Bindings.createBooleanBinding(
-                () -> repository.getGameDirectory() == GameDirectoryManager.getSelectedGameDirectory() && Objects.equals(GameDirectoryManager.getSelectedInstance(repository.getGameDirectory()), id),
+                () -> repository.getGameDirectory() == GameDirectoryManager.getSelectedGameDirectory() && Objects.equals(repository.getSelectedInstance(), id),
                 GameDirectoryManager.selectedGameDirectoryProperty(),
                 GameDirectoryManager.selectedInstanceProperty()));
     }
