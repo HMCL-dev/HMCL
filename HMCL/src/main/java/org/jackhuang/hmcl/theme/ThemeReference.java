@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.theme;
 
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /// @param packId the theme-pack identifier
 /// @param themeId the selected theme identifier inside the pack, or `null` for an unnamed single-theme pack
 @NotNullByDefault
+@JsonSerializable
 public record ThemeReference(
         @SerializedName("packId") String packId,
         @SerializedName("themeId") @Nullable String themeId) {
