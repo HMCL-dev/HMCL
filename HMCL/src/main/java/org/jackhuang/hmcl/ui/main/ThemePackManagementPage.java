@@ -627,11 +627,14 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             BorderPane root = new BorderPane();
             root.getStyleClass().add("md-list-cell");
             root.setPadding(new Insets(8));
-            this.graphic = root;
+
+            var ripplerContainer = new RipplerContainer(root);
+            this.graphic = ripplerContainer;
 
             HBox center = new HBox();
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
+            center.setMouseTransparent(true);
             root.setCenter(center);
 
             icon.setMouseTransparent(true);
@@ -641,7 +644,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             center.getChildren().setAll(icon, content);
             HBox.setHgrow(content, Priority.ALWAYS);
             center.setCursor(Cursor.HAND);
-            FXUtils.onClicked(center, () -> {
+            FXUtils.onClicked(ripplerContainer, () -> {
                 ThemePackManager.InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     page.selectThemePack(themePack);
@@ -673,7 +676,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Updates this cell for one installed theme pack.
         @Override
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
+            var currentItem = getItem();
+
             super.updateItem(themePack, empty);
+
+            if (Objects.equals(getItem(), currentItem)) return;
 
             content.getTags().clear();
             iconImage.setImage(null);
