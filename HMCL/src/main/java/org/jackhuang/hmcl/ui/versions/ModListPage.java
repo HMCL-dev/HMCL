@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryProfile;
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -58,7 +57,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private final ReentrantLock lock = new ReentrantLock();
 
     private ModManager modManager;
-    private GameDirectoryProfile profile;
+    private HMCLGameRepository repository;
     private String instanceId;
     private String gameVersion;
 
@@ -87,16 +86,15 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     @Override
-    public void loadVersion(GameDirectoryProfile profile, String id) {
-        this.profile = profile;
+    public void loadVersion(HMCLGameRepository repository, String id) {
+        this.repository = repository;
         this.instanceId = id;
 
-        HMCLGameRepository repository = GameDirectoryManager.getRepository(profile);
         Version resolved = repository.getResolvedPreservingPatchesVersion(id);
         this.gameVersion = repository.getGameVersion(resolved).orElse(null);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         modded.set(analyzer.hasModLoader());
-        loadMods(GameDirectoryManager.getRepository(profile).getModManager(id));
+        loadMods(repository.getModManager(id));
     }
 
     private void loadMods(ModManager modManager) {
@@ -233,14 +231,14 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void openModFolder() {
-        FXUtils.openFolder(GameDirectoryManager.getRepository(profile).getRunDirectory(instanceId).resolve("mods"));
+        FXUtils.openFolder(repository.getRunDirectory(instanceId).resolve("mods"));
     }
 
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = GameDirectoryManager.getRepository(profile).getGameVersion(instanceId);
+                            Optional<String> gameVersion = repository.getGameVersion(instanceId);
                             return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, mods)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -256,7 +254,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .withStagesHints("update.checking"),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (GameDirectoryManager.getRepository(profile).isModpack(instanceId)) {
+        if (repository.isModpack(instanceId)) {
             Controllers.confirm(
                     i18n("mods.update_modpack_mod.warning"), null,
                     MessageDialogPane.MessageType.WARNING,
@@ -293,7 +291,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public GameDirectoryProfile getProfile() {
-        return this.profile;
+        return this.repository.getProfile();
+    }
+
+    public HMCLGameRepository getRepository() {
+        return this.repository;
     }
 
     public String getInstanceId() {

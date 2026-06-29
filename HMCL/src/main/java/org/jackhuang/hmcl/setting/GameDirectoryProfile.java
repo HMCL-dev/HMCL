@@ -164,14 +164,6 @@ public final class GameDirectoryProfile implements Observable {
         }
     }
 
-    /// Identifies a version by its owning game directory profile and version ID.
-    ///
-    /// @param profile the owning game directory profile
-    /// @param version the version ID, or `null` when no version is selected
-    @NotNullByDefault
-    public record ProfileVersion(GameDirectoryProfile profile, @Nullable String version) {
-    }
-
     /// Serializes and deserializes game directory profiles.
     @NotNullByDefault
     public static final class Serializer implements JsonSerializer<GameDirectoryProfile>, JsonDeserializer<GameDirectoryProfile> {

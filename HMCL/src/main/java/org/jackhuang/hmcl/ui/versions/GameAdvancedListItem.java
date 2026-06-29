@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.geometry.Pos;
 import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -34,7 +34,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class GameAdvancedListItem extends AdvancedListItem {
     private final ImageContainer imageContainer;
     private final WeakListenerHolder holder = new WeakListenerHolder();
-    private GameDirectoryProfile profile;
+    private HMCLGameRepository repository;
     @SuppressWarnings("unused")
     private Consumer<Event> onVersionIconChangedListener;
 
@@ -48,19 +48,18 @@ public class GameAdvancedListItem extends AdvancedListItem {
     }
 
     private void loadVersion(String version) {
-        if (GameDirectoryManager.getSelectedProfile() != profile) {
-            profile = GameDirectoryManager.getSelectedProfile();
-            if (profile != null) {
-                onVersionIconChangedListener = GameDirectoryManager.getRepository(profile).onVersionIconChanged.registerWeak(event -> {
+        if (GameDirectoryManager.getSelectedRepository() != repository) {
+            repository = GameDirectoryManager.getSelectedRepository();
+            if (repository != null) {
+                onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
                     this.loadVersion(GameDirectoryManager.getSelectedInstance());
                 });
             }
         }
-        if (version != null && GameDirectoryManager.getSelectedProfile() != null &&
-                GameDirectoryManager.getSelectedRepository().hasVersion(version)) {
+        if (version != null && repository != null && repository.hasVersion(version)) {
             setTitle(i18n("version.manage.manage"));
             setSubtitle(version);
-            imageContainer.setImage(GameDirectoryManager.getSelectedRepository().getVersionIconImage(version));
+            imageContainer.setImage(repository.getVersionIconImage(version));
         } else {
             setTitle(i18n("version.empty"));
             setSubtitle(i18n("version.empty.add"));

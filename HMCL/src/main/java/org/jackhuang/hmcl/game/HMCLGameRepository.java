@@ -74,6 +74,14 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// HMCL game repository implementation backed by a GameDirectoryProfile and per-instance game settings.
 @NotNullByDefault
 public final class HMCLGameRepository extends DefaultGameRepository {
+    /// Identifies a version by its owning repository and version ID.
+    ///
+    /// @param repository the owning game repository
+    /// @param version the version ID, or `null` when no version is selected
+    @NotNullByDefault
+    public record RepositoryVersion(HMCLGameRepository repository, @Nullable String version) {
+    }
+
     /// Directory under the version root that stores HMCL-managed instance metadata.
     private static final String INSTANCE_METADATA_DIRECTORY = ".hmcl";
 

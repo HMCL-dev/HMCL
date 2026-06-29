@@ -213,8 +213,8 @@ public class TerracottaControllerPage extends StackPane {
                                 i18n("terracotta.status.waiting.host.launch.title"),
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("version.launch"), () -> {
-                            GameDirectoryProfile profile = GameDirectoryManager.getSelectedProfile();
-                            Versions.launch(profile, GameDirectoryManager.getSelectedInstance(profile), launcherHelper -> {
+                            var repository = GameDirectoryManager.getSelectedRepository();
+                            Versions.launch(repository, GameDirectoryManager.getSelectedInstance(repository.getProfile()), launcherHelper -> {
                                 launcherHelper.setKeep();
                                 launcherHelper.setDisableOfflineSkin();
                             });

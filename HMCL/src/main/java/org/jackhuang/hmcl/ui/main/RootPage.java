@@ -77,8 +77,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
                 .register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
 
-        GameDirectoryProfile profile = GameDirectoryManager.getSelectedProfile();
-        if (profile != null && GameDirectoryManager.getRepository(profile).isLoaded())
+        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+        if (repository.isLoaded())
             onRefreshedVersions(GameDirectoryManager.getSelectedRepository());
 
         getStyleClass().remove("gray-background");
@@ -104,7 +104,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         Path file = modpacks.get(0);
                         if (ModpackHelper.isFileModpackByExtension(file)) {
                             Controllers.getDecorator().startWizard(
-                                    new ModpackInstallWizardProvider(GameDirectoryManager.getSelectedProfile(), file),
+                                    new ModpackInstallWizardProvider(GameDirectoryManager.getSelectedRepository(), file),
                                     i18n("install.modpack"));
                         } else if (NBTFileType.isNBTFileByExtension(file)) {
                             try {
@@ -115,7 +115,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                         i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
                         } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
-                            Versions.installFromJson(GameDirectoryManager.getSelectedProfile(), file);
+                            Versions.installFromJson(GameDirectoryManager.getSelectedRepository(), file);
                         }
                     });
 
@@ -132,7 +132,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         .collect(Collectors.toList());
                 runInFX(() -> {
                     if (profile == GameDirectoryManager.getSelectedProfile())
-                        mainPage.initVersions(profile, children);
+                        mainPage.initVersions(repository, children);
                 });
             });
             this.mainPage = mainPage;
@@ -159,7 +159,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 if (version == null) {
                     Controllers.navigate(Controllers.getGameListPage());
                 } else {
-                    Versions.modifyGameSettings(profile, version);
+                    Versions.modifyGameSettings(GameDirectoryManager.getSelectedRepository(), version);
                 }
             });
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
@@ -252,7 +252,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     JFXPopup.PopupHPosition.LEFT,
                     gameListItem.getWidth(),
                     0,
-                    getSkinnable().getMainPage().getProfile(),
+                    getSkinnable().getMainPage().getRepository(),
                     getSkinnable().getMainPage().getVersions());
         }
     }
@@ -281,7 +281,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
                                 .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
                                 .thenApplyAsync(modpack -> ModpackHelper
-                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack, null)
+                                        .getInstallTask(repository, modpackFile, modpack.getName(), modpack, null)
                                         .executor())
                                 .thenAcceptAsync(Schedulers.javafx(), executor -> {
                                     Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);

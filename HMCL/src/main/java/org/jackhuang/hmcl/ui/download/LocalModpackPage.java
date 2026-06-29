@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.modpack.Modpack;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -56,7 +55,7 @@ public final class LocalModpackPage extends ModpackPage {
     public LocalModpackPage(WizardController controller) {
         super(controller);
 
-        GameDirectoryProfile profile = controller.getSettings().get(ModpackPage.PROFILE);
+        HMCLGameRepository repository = controller.getSettings().get(ModpackPage.REPOSITORY);
 
         String name = controller.getSettings().get(MODPACK_NAME);
         if (name != null) {
@@ -67,7 +66,7 @@ public final class LocalModpackPage extends ModpackPage {
                 if (installAsVersion) {
                     txtModpackName.getValidators().setAll(
                             new RequiredValidator(),
-                            new Validator(i18n("install.new_game.already_exists"), str -> !GameDirectoryManager.getRepository(profile).versionIdConflicts(str)),
+                            new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
                 } else {
                     txtModpackName.getValidators().setAll(

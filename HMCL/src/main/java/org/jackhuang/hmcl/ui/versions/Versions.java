@@ -72,13 +72,13 @@ public final class Versions {
     }
 
     public static void importModpack() {
-        GameDirectoryProfile profile = GameDirectoryManager.getSelectedProfile();
-        if (GameDirectoryManager.getRepository(profile).isLoaded()) {
-            Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile), i18n("install.modpack"));
+        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+        if (repository.isLoaded()) {
+            Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(repository), i18n("install.modpack"));
         }
     }
 
-    public static void downloadModpackImpl(DownloadProvider downloadProvider, GameDirectoryProfile profile, String version, RemoteAddon mod, RemoteAddon.Version file) {
+    public static void downloadModpackImpl(DownloadProvider downloadProvider, HMCLGameRepository repository, String version, RemoteAddon mod, RemoteAddon.Version file) {
         Path modpack;
         List<URI> downloadURLs;
         try {
@@ -96,9 +96,9 @@ public final class Versions {
                             if (e == null) {
                                 ModpackInstallWizardProvider installWizardProvider;
                                 if (version != null)
-                                    installWizardProvider = new ModpackInstallWizardProvider(profile, modpack, version);
+                                    installWizardProvider = new ModpackInstallWizardProvider(repository, modpack, version);
                                 else
-                                    installWizardProvider = new ModpackInstallWizardProvider(profile, modpack);
+                                    installWizardProvider = new ModpackInstallWizardProvider(repository, modpack);
                                 if (StringUtils.isNotBlank(mod.iconUrl()))
                                     installWizardProvider.setIconUrl(mod.iconUrl());
                                 Controllers.getDecorator().startWizard(installWizardProvider);
@@ -115,16 +115,16 @@ public final class Versions {
         );
     }
 
-    public static void deleteVersion(GameDirectoryProfile profile, String version) {
-        boolean isIndependent = GameDirectoryManager.getRepository(profile).getRunDirectory(version).toAbsolutePath().normalize()
-                .equals(GameDirectoryManager.getRepository(profile).getVersionRoot(version).toAbsolutePath().normalize());
+    public static void deleteVersion(HMCLGameRepository repository, String version) {
+        boolean isIndependent = repository.getRunDirectory(version).toAbsolutePath().normalize()
+                .equals(repository.getVersionRoot(version).toAbsolutePath().normalize());
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
                 i18n("version.manage.remove.confirm.trash", version, version + "_removed");
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");
         deleteButton.setOnAction(e -> {
-            Task.supplyAsync(Schedulers.io(), () -> GameDirectoryManager.getRepository(profile).removeVersionFromDisk(version))
+            Task.supplyAsync(Schedulers.io(), () -> repository.removeVersionFromDisk(version))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null || !Boolean.TRUE.equals(result)) {
                             Controllers.dialog(i18n("version.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -135,18 +135,18 @@ public final class Versions {
         Controllers.confirmAction(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, deleteButton);
     }
 
-    public static CompletableFuture<String> renameVersion(GameDirectoryProfile profile, String version) {
+    public static CompletableFuture<String> renameVersion(HMCLGameRepository repository, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
             if (newName.equals(version)) {
                 handler.resolve();
                 return;
             }
-            if (GameDirectoryManager.getRepository(profile).renameVersion(version, newName)) {
+            if (repository.renameVersion(version, newName)) {
                 handler.resolve();
-                GameDirectoryManager.getRepository(profile).refreshVersionsAsync()
+                repository.refreshVersionsAsync()
                         .thenRunAsync(Schedulers.javafx(), () -> {
-                            if (GameDirectoryManager.getRepository(profile).hasVersion(newName)) {
-                                GameDirectoryManager.setSelectedInstance(profile, newName);
+                            if (repository.hasVersion(newName)) {
+                                GameDirectoryManager.setSelectedInstance(repository.getProfile(), newName);
                             }
                         }).start();
             } else {
@@ -154,21 +154,21 @@ public final class Versions {
             }
         }, version,
             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !GameDirectoryManager.getRepository(profile).versionIdConflicts(newVersionName) || newVersionName.equals(version)));
+            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.versionIdConflicts(newVersionName) || newVersionName.equals(version)));
     }
 
-    public static void exportVersion(GameDirectoryProfile profile, String version) {
-        Controllers.getDecorator().startWizard(new ExportWizardProvider(profile, version), i18n("modpack.wizard"));
+    public static void exportVersion(HMCLGameRepository repository, String version) {
+        Controllers.getDecorator().startWizard(new ExportWizardProvider(repository, version), i18n("modpack.wizard"));
     }
 
-    public static void openFolder(GameDirectoryProfile profile, String version) {
-        FXUtils.openFolder(GameDirectoryManager.getRepository(profile).getRunDirectory(version));
+    public static void openFolder(HMCLGameRepository repository, String version) {
+        FXUtils.openFolder(repository.getRunDirectory(version));
     }
 
-    public static void installFromJson(GameDirectoryProfile profile, Path file) {
+    public static void installFromJson(HMCLGameRepository repository, Path file) {
         Version version;
         try {
-            version = GameDirectoryManager.getRepository(profile).readVersionJson(file);
+            version = repository.readVersionJson(file);
         } catch (Exception e) {
             Controllers.dialog(i18n("install.new_game.malformed_json"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             return;
@@ -177,8 +177,7 @@ public final class Versions {
         Controllers.prompt(i18n("version.manage.duplicate.prompt"), (result, handler) -> {
             handler.resolve();
 
-            DefaultDependencyManager dependencyManager = GameDirectoryManager.getRepository(profile).getDependency();
-            HMCLGameRepository repository = GameDirectoryManager.getRepository(profile);
+            DefaultDependencyManager dependencyManager = repository.getDependency();
             Version newVersion = version.setId(result).setJar(result);
 
             Controllers.taskDialog(
@@ -193,29 +192,29 @@ public final class Versions {
                             .thenRunAsync(repository::refreshVersions)
                             .whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
-                                    GameDirectoryManager.setSelectedInstance(profile, result);
+                                    GameDirectoryManager.setSelectedInstance(repository.getProfile(), result);
                                 } else {
                                     Controllers.dialog(
                                             DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
                                 }
                             }), i18n("install.new_game"), TaskCancellationAction.NORMAL);
-        }, FileUtils.getNameWithoutExtension(file), new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId), new Validator(i18n("install.new_game.already_exists"), newVersionName -> !GameDirectoryManager.getRepository(profile).versionIdConflicts(newVersionName)));
+        }, FileUtils.getNameWithoutExtension(file), new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId), new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.versionIdConflicts(newVersionName)));
     }
 
-    public static void duplicateVersion(GameDirectoryProfile profile, String version) {
+    public static void duplicateVersion(HMCLGameRepository repository, String version) {
         Controllers.prompt(
                 new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
                     String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
-                    Task.runAsync(() -> GameDirectoryManager.getRepository(profile).duplicateVersion(version, newVersionName, copySaves))
-                            .thenComposeAsync(GameDirectoryManager.getRepository(profile).refreshVersionsAsync())
+                    Task.runAsync(() -> repository.duplicateVersion(version, newVersionName, copySaves))
+                            .thenComposeAsync(repository.refreshVersionsAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     handler.resolve();
                                 } else {
                                     handler.reject(StringUtils.getStackTrace(exception));
-                                    if (!GameDirectoryManager.getRepository(profile).versionIdConflicts(newVersionName)) {
-                                        GameDirectoryManager.getRepository(profile).removeVersionFromDisk(newVersionName);
+                                    if (!repository.versionIdConflicts(newVersionName)) {
+                                        repository.removeVersionFromDisk(newVersionName);
                                     }
                                 }
                             }).start();
@@ -223,35 +222,34 @@ public final class Versions {
                         .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("version.manage.duplicate.confirm")))
                         .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, version,
                                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-                                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !GameDirectoryManager.getRepository(profile).versionIdConflicts(newVersionName))))
+                                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.versionIdConflicts(newVersionName))))
                         .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("version.manage.duplicate.duplicate_save"), false)));
     }
 
-    public static void updateVersion(GameDirectoryProfile profile, String version) {
-        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, version));
+    public static void updateVersion(HMCLGameRepository repository, String version) {
+        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(repository, version));
     }
 
-    public static void updateGameAssets(GameDirectoryProfile profile, String version) {
-        TaskExecutor executor = new GameAssetDownloadTask(GameDirectoryManager.getRepository(profile).getDependency(), GameDirectoryManager.getRepository(profile).getVersion(version), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
+    public static void updateGameAssets(HMCLGameRepository repository, String version) {
+        TaskExecutor executor = new GameAssetDownloadTask(repository.getDependency(), repository.getVersion(version), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
                 .executor();
         Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
         executor.start();
     }
 
-    public static void cleanVersion(GameDirectoryProfile profile, String id) {
+    public static void cleanVersion(HMCLGameRepository repository, String id) {
         try {
-            GameDirectoryManager.getRepository(profile).clean(id);
+            repository.clean(id);
         } catch (IOException e) {
             LOG.warning("Unable to clean game directory", e);
         }
     }
 
     @SafeVarargs
-    public static void generateLaunchScript(GameDirectoryProfile profile, String id, Consumer<LauncherHelper>... injecters) {
-        if (!checkVersionForLaunching(profile, id))
+    public static void generateLaunchScript(HMCLGameRepository repository, String id, Consumer<LauncherHelper>... injecters) {
+        if (!checkVersionForLaunching(repository, id))
             return;
         ensureSelectedAccount(account -> {
-            HMCLGameRepository repository = GameDirectoryManager.getRepository(profile);
             FileChooser chooser = new FileChooser();
             if (Files.isDirectory(repository.getRunDirectory(id)))
                 chooser.setInitialDirectory(repository.getRunDirectory(id).toFile());
@@ -297,11 +295,11 @@ public final class Versions {
     }
 
     @SafeVarargs
-    public static void launch(GameDirectoryProfile profile, String id, Consumer<LauncherHelper>... injecters) {
-        if (!checkVersionForLaunching(profile, id))
+    public static void launch(HMCLGameRepository repository, String id, Consumer<LauncherHelper>... injecters) {
+        if (!checkVersionForLaunching(repository, id))
             return;
         ensureSelectedAccount(account -> {
-            LauncherHelper launcherHelper = new LauncherHelper(GameDirectoryManager.getRepository(profile), account, id);
+            LauncherHelper launcherHelper = new LauncherHelper(repository, account, id);
             for (Consumer<LauncherHelper> injecter : injecters) {
                 injecter.accept(launcherHelper);
             }
@@ -309,22 +307,22 @@ public final class Versions {
         });
     }
 
-    public static void testGame(GameDirectoryProfile profile, String id) {
-        launch(profile, id, LauncherHelper::setTestMode);
+    public static void testGame(HMCLGameRepository repository, String id) {
+        launch(repository, id, LauncherHelper::setTestMode);
     }
 
-    public static void launchAndEnterWorld(GameDirectoryProfile profile, String id, String worldFolderName) {
-        launch(profile, id, launcherHelper ->
+    public static void launchAndEnterWorld(HMCLGameRepository repository, String id, String worldFolderName) {
+        launch(repository, id, launcherHelper ->
                 launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
     }
 
-    public static void generateLaunchScriptForQuickEnterWorld(GameDirectoryProfile profile, String id, String worldFolderName) {
-        generateLaunchScript(profile, id, launcherHelper ->
+    public static void generateLaunchScriptForQuickEnterWorld(HMCLGameRepository repository, String id, String worldFolderName) {
+        generateLaunchScript(repository, id, launcherHelper ->
                 launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
     }
 
-    private static boolean checkVersionForLaunching(GameDirectoryProfile profile, String id) {
-        if (id == null || !GameDirectoryManager.getRepository(profile).isLoaded() || !GameDirectoryManager.getRepository(profile).hasVersion(id)) {
+    private static boolean checkVersionForLaunching(HMCLGameRepository repository, String id) {
+        if (id == null || !repository.isLoaded() || !repository.hasVersion(id)) {
             JFXButton gotoDownload = new JFXButton(i18n("version.empty.launch.goto_download"));
             gotoDownload.getStyleClass().add("dialog-accept");
             gotoDownload.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
@@ -374,8 +372,8 @@ public final class Versions {
         Controllers.navigate(Controllers.getSettingsPage());
     }
 
-    public static void modifyGameSettings(GameDirectoryProfile profile, String version) {
-        Controllers.getVersionPage().setVersion(version, profile);
+    public static void modifyGameSettings(HMCLGameRepository repository, String version) {
+        Controllers.getVersionPage().setVersion(version, repository);
         Controllers.getVersionPage().showInstanceSettings();
         // VersionPage.loadVersion will be invoked after navigation
         Controllers.navigate(Controllers.getVersionPage());

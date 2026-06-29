@@ -35,9 +35,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -67,7 +66,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
     private Path savesDir;
     private List<World> worlds;
-    private GameDirectoryProfile profile;
+    private HMCLGameRepository repository;
     private String instanceId;
     private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
 
@@ -87,10 +86,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     @Override
-    public void loadVersion(GameDirectoryProfile profile, String id) {
-        this.profile = profile;
+    public void loadVersion(HMCLGameRepository repository, String id) {
+        this.repository = repository;
         this.instanceId = id;
-        this.savesDir = GameDirectoryManager.getRepository(profile).getSavesDirectory(id);
+        this.savesDir = repository.getSavesDirectory(id);
         refresh();
     }
 
@@ -100,7 +99,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         } else if (showAll.get()) {
             getItems().setAll(worlds);
         } else {
-            GameVersionNumber gameVersion = GameDirectoryManager.getRepository(profile).getGameVersion(instanceId).map(GameVersionNumber::asGameVersion).orElse(null);
+            GameVersionNumber gameVersion = repository.getGameVersion(instanceId).map(GameVersionNumber::asGameVersion).orElse(null);
             getItems().setAll(worlds.stream()
                     .filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
                     .toList());
@@ -108,7 +107,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void refresh() {
-        if (profile == null || instanceId == null)
+        if (repository == null || instanceId == null)
             return;
 
         int currentRefresh = ++refreshCount;
@@ -116,7 +115,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             // Ensure the game version number is parsed
-            GameDirectoryManager.getRepository(profile).getGameVersion(instanceId);
+            repository.getGameVersion(instanceId);
             return World.getWorlds(savesDir);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
@@ -124,7 +123,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 return;
             }
 
-            Optional<String> gameVersion = GameDirectoryManager.getRepository(profile).getGameVersion(instanceId);
+            Optional<String> gameVersion = repository.getGameVersion(instanceId);
             supportQuickPlay.set(World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
 
             worlds = result;
@@ -178,7 +177,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     private void showManagePage(World world) {
-        Controllers.navigate(new WorldManagePage(world, profile, instanceId));
+        Controllers.navigate(new WorldManagePage(world, repository, instanceId));
     }
 
     public void export(World world) {
@@ -198,11 +197,11 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void launch(World world) {
-        Versions.launchAndEnterWorld(profile, instanceId, world.getFileName());
+        Versions.launchAndEnterWorld(repository, instanceId, world.getFileName());
     }
 
     public void generateLaunchScript(World world) {
-        Versions.generateLaunchScriptForQuickEnterWorld(profile, instanceId, world.getFileName());
+        Versions.generateLaunchScriptForQuickEnterWorld(repository, instanceId, world.getFileName());
     }
 
     public BooleanProperty showAllProperty() {

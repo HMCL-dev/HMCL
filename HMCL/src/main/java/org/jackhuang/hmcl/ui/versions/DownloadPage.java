@@ -37,9 +37,6 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -72,14 +69,14 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final ModTranslations translations;
     private final RemoteAddon addon;
     private final ModTranslations.Mod mod;
-    private final GameDirectoryProfile.ProfileVersion version;
+    private final HMCLGameRepository.RepositoryVersion version;
     private final DownloadCallback callback;
     private final DownloadListPage page;
     private final RemoteAddonRepository.Type type;
 
     private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
 
-    public DownloadPage(DownloadListPage page, RemoteAddon addon, GameDirectoryProfile.ProfileVersion version, @Nullable DownloadCallback callback) {
+    public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.RepositoryVersion version, @Nullable DownloadCallback callback) {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
@@ -133,7 +130,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         return addon;
     }
 
-    public GameDirectoryProfile.ProfileVersion getVersion() {
+    public HMCLGameRepository.RepositoryVersion getVersion() {
         return version;
     }
 
@@ -165,7 +162,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         if (this.callback == null) {
             saveAs(file);
         } else {
-            this.callback.download(page.getDownloadProvider(), version.profile(), version.version(), addon, file);
+            this.callback.download(page.getDownloadProvider(), version.repository(), version.version(), addon, file);
         }
     }
 
@@ -274,8 +271,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
 
-                    if (control.version.profile() != null && control.version.version() != null) {
-                        HMCLGameRepository repository = GameDirectoryManager.getRepository(control.version.profile());
+                    if (control.version.repository() != null && control.version.version() != null) {
+                        HMCLGameRepository repository = control.version.repository();
                         Version game = repository.getResolvedPreservingPatchesVersion(control.version.version());
                         String gameVersion = repository.getGameVersion(game).orElse(null);
 
@@ -376,7 +373,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 Pair.pair(RemoteAddon.DependencyType.BROKEN, "addon.dependency.broken")
         ));
 
-        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, GameDirectoryProfile.ProfileVersion version) {
+        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.RepositoryVersion version) {
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -613,6 +610,6 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     @FunctionalInterface
     public interface DownloadCallback {
-        void download(DownloadProvider downloadProvider, GameDirectoryProfile profile, @Nullable String version, RemoteAddon addon, RemoteAddon.Version file);
+        void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon addon, RemoteAddon.Version file);
     }
 }

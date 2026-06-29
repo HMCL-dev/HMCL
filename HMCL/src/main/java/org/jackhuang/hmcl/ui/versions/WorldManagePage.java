@@ -24,9 +24,8 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -54,7 +53,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     private final World world;
     private final Path backupsDir;
-    private final GameDirectoryProfile profile;
+    private final HMCLGameRepository repository;
     private final String instanceId;
     private final boolean supportQuickPlay;
     private FileChannel sessionLockChannel;
@@ -70,10 +69,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
 
-    public WorldManagePage(World world, GameDirectoryProfile profile, String instanceId) {
+    public WorldManagePage(World world, HMCLGameRepository repository, String instanceId) {
         this.world = world;
-        this.backupsDir = GameDirectoryManager.getRepository(profile).getBackupsDirectory(instanceId);
-        this.profile = profile;
+        this.backupsDir = repository.getBackupsDirectory(instanceId);
+        this.repository = repository;
         this.instanceId = instanceId;
 
         updateSessionLockChannel();
@@ -91,7 +90,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
-        Optional<String> gameVersion = GameDirectoryManager.getRepository(profile).getGameVersion(instanceId);
+        Optional<String> gameVersion = repository.getGameVersion(instanceId);
         supportQuickPlay = World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
@@ -151,11 +150,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public void launch() {
         fireEvent(new PageCloseEvent());
-        Versions.launchAndEnterWorld(profile, instanceId, world.getFileName());
+        Versions.launchAndEnterWorld(repository, instanceId, world.getFileName());
     }
 
     public void generateLaunchScript() {
-        Versions.generateLaunchScriptForQuickEnterWorld(profile, instanceId, world.getFileName());
+        Versions.generateLaunchScriptForQuickEnterWorld(repository, instanceId, world.getFileName());
     }
 
     @Override

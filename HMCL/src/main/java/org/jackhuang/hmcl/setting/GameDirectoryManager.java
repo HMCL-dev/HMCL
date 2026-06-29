@@ -185,7 +185,7 @@ public final class GameDirectoryManager {
 
             settings().selectedGameDirectoryProperty().set(newValue.getId());
             selectedInstance.set(settings().getSelectedInstance(newValue.getId()));
-            HMCLGameRepository repository = getRepository(newValue);
+            HMCLGameRepository repository = getOrCreateRepository(newValue);
             selectedRepository.set(repository);
             repository.refreshVersionsAsync().start();
         });
@@ -256,8 +256,8 @@ public final class GameDirectoryManager {
         return mergedProfilesUnmodifiable;
     }
 
-    /// Returns the repository for the given game directory profile.
-    public static HMCLGameRepository getRepository(GameDirectoryProfile profile) {
+    /// Returns the repository for the given game directory profile, creating it when needed.
+    private static HMCLGameRepository getOrCreateRepository(GameDirectoryProfile profile) {
         Objects.requireNonNull(profile);
         return repositories.computeIfAbsent(profile, HMCLGameRepository::new);
     }

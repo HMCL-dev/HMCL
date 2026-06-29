@@ -38,12 +38,12 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -72,7 +72,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean versionSelection;
-    private final ObjectProperty<GameDirectoryProfile.ProfileVersion> version = new SimpleObjectProperty<>();
+    private final ObjectProperty<HMCLGameRepository.RepositoryVersion> version = new SimpleObjectProperty<>();
     private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
     private final IntegerProperty pageCount = new SimpleIntegerProperty(-1);
     private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
@@ -111,8 +111,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     @Override
-    public void loadVersion(GameDirectoryProfile profile, String version) {
-        this.version.set(new GameDirectoryProfile.ProfileVersion(profile, version));
+    public void loadVersion(HMCLGameRepository repository, String version) {
+        this.version.set(new HMCLGameRepository.RepositoryVersion(repository, version));
 
         setLoading(false);
         setFailed(false);
@@ -123,10 +123,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
 
         if (versionSelection) {
-            versions.setAll(GameDirectoryManager.getRepository(profile).getDisplayVersions()
+            versions.setAll(repository.getDisplayVersions()
                     .map(Version::getId)
                     .collect(Collectors.toList()));
-            selectedVersion.set(GameDirectoryManager.getSelectedInstance(profile));
+            selectedVersion.set(GameDirectoryManager.getSelectedInstance(repository.getProfile()));
         }
     }
 
@@ -165,12 +165,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
         int currentSearchID = searchID = searchID + 1;
         Task.supplyAsync(() -> {
-            GameDirectoryProfile.ProfileVersion version = this.version.get();
+            HMCLGameRepository.RepositoryVersion version = this.version.get();
             if (StringUtils.isBlank(version.version())) {
                 return userGameVersion;
             } else {
                 return StringUtils.isNotBlank(version.version())
-                        ? GameDirectoryManager.getRepository(version.profile()).getGameVersion(version.version()).orElse("")
+                        ? version.repository().getGameVersion(version.version()).orElse("")
                         : "";
             }
         }).thenApplyAsync(
@@ -218,9 +218,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
     }
 
-    protected GameDirectoryProfile.ProfileVersion getProfileVersion() {
+    protected HMCLGameRepository.RepositoryVersion getRepositoryVersion() {
         if (versionSelection) {
-            return new GameDirectoryProfile.ProfileVersion(version.get().profile(), selectedVersion.get());
+            return new HMCLGameRepository.RepositoryVersion(version.get().repository(), selectedVersion.get());
         } else {
             return version.get();
         }
@@ -561,7 +561,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         FXUtils.onClicked(wrapper, () -> {
                             RemoteAddon item = getItem();
                             if (item != null)
-                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getProfileVersion(), getSkinnable().callback));
+                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getRepositoryVersion(), getSkinnable().callback));
                         });
 
                         setPrefWidth(0);

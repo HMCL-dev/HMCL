@@ -24,8 +24,6 @@ import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackInstallTask;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -46,9 +44,9 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public HMCLModpackInstallTask(GameDirectoryProfile profile, Path zipFile, Modpack modpack, String name) {
-        dependency = GameDirectoryManager.getRepository(profile).getDependency();
-        repository = GameDirectoryManager.getRepository(profile);
+    public HMCLModpackInstallTask(HMCLGameRepository repository, Path zipFile, Modpack modpack, String name) {
+        this.repository = repository;
+        dependency = repository.getDependency();
         this.zipFile = zipFile;
         this.name = name;
         this.modpack = modpack;

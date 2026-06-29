@@ -116,9 +116,9 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             Path file = files.get(0);
 
             if (ModpackHelper.isFileModpackByExtension(file)) {
-                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(GameDirectoryManager.getSelectedProfile(), file), i18n("install.modpack"));
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(GameDirectoryManager.getSelectedRepository(), file), i18n("install.modpack"));
             } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
-                Versions.installFromJson(GameDirectoryManager.getSelectedProfile(), file);
+                Versions.installFromJson(GameDirectoryManager.getSelectedRepository(), file);
             }
         });
     }
@@ -148,12 +148,11 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
         @FXThread
         private void loadVersions(HMCLGameRepository repository) {
-            GameDirectoryProfile profile = repository.getProfile();
             listenerHolder.clear();
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> versionItems = repository.getDisplayVersions().map(instance -> new GameListItem(profile, instance.getId())).toList();
+            List<GameListItem> versionItems = repository.getDisplayVersions().map(instance -> new GameListItem(repository, instance.getId())).toList();
 
             sourceList.setAll(versionItems);
 

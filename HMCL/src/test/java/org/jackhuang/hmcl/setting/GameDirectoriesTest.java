@@ -397,7 +397,7 @@ public final class GameDirectoriesTest {
         try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
             GameDirectoryManager.init();
 
-            HMCLGameRepository repository = GameDirectoryManager.getRepository(profile);
+            HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
             assertSame(profile, repository.getProfile());
             assertEquals(profile.getPath().toPath(), repository.getBaseDirectory());
 

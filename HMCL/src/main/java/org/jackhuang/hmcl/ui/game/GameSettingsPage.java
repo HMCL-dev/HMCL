@@ -95,6 +95,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// The selected profile.
     private @Nullable GameDirectoryProfile profile;
 
+    /// The selected repository for instance settings, or `null` for preset settings.
+    private @Nullable HMCLGameRepository repository;
+
     /// The current instance ID.
     private @Nullable String instanceId;
 
@@ -1780,16 +1783,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     private boolean isCurrentInstanceModpack() {
-        return profile != null && instanceId != null && GameDirectoryManager.getRepository(profile).isModpack(instanceId);
+        return repository != null && instanceId != null && repository.isModpack(instanceId);
     }
 
     /// Returns the current instance version root displayed for modpack running directories.
     private String getCurrentInstanceVersionRoot() {
-        if (profile == null || instanceId == null) {
+        if (repository == null || instanceId == null) {
             return "";
         }
 
-        return GameDirectoryManager.getRepository(profile).getVersionRoot(instanceId).toString();
+        return repository.getVersionRoot(instanceId).toString();
     }
 
     /// Keeps a listener attached to the current instance's parent preset property.
@@ -2389,8 +2392,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Returns the runtime parent preset for an instance, including profile-level legacy migration fallback.
     private GameSettings.Preset getEffectiveParentGameSettings(GameSettings.Instance instance) {
-        if (profile != null) {
-            return GameDirectoryManager.getRepository(profile).getParentGameSettings(instance);
+        if (repository != null) {
+            return repository.getParentGameSettings(instance);
         }
 
         return getExplicitParentGameSettings(instance);
@@ -2430,14 +2433,27 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     @SuppressWarnings("unchecked")
     @Override
+    public void loadVersion(HMCLGameRepository repository, @Nullable String instanceId) {
+        loadVersion(repository.getProfile(), repository, instanceId);
+    }
+
+    @SuppressWarnings("unchecked")
     public void loadVersion(GameDirectoryProfile profile, @Nullable String instanceId) {
+        loadVersion(profile, null, instanceId);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void loadVersion(GameDirectoryProfile profile, @Nullable HMCLGameRepository repository, @Nullable String instanceId) {
         this.profile = profile;
+        this.repository = repository;
         this.instanceId = instanceId;
 
         assert isPresetSetting == (instanceId == null);
 
         if (instanceId != null) {
-            HMCLGameRepository repository = GameDirectoryManager.getRepository(profile);
+            if (repository == null) {
+                throw new IllegalArgumentException("Repository is required for instance settings");
+            }
             @Nullable GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(instanceId);
             this.currentSetting.set((S) setting);
             setSettingsReadOnly(
@@ -2493,12 +2509,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Backs up and overwrites the current instance's `instance-game-settings.json`.
     private void forceOverwriteInstanceGameSettings() {
-        if (profile == null || instanceId == null) {
+        if (repository == null || instanceId == null) {
             return;
         }
 
         Controllers.confirmBackupAndOverwrite(i18n("settings.game.instance_settings.unsupported"), () -> {
-            GameDirectoryManager.getRepository(profile).forceOverwriteInstanceGameSettings(instanceId);
+            repository.forceOverwriteInstanceGameSettings(instanceId);
             setSettingsReadOnly(false, "");
         });
     }
@@ -2512,10 +2528,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     private void loadIcon() {
-        if (profile == null || instanceId == null)
+        if (repository == null || instanceId == null)
             return;
 
-        iconPickerItem.setImage(GameDirectoryManager.getRepository(profile).getVersionIconImage(instanceId));
+        iconPickerItem.setImage(repository.getVersionIconImage(instanceId));
     }
 
     /// Refreshes Java selection controls and keeps inherited parent Java properties observed.
@@ -2583,9 +2599,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return;
         initializeSelectedJava();
 
-        HMCLGameRepository repository = GameDirectoryManager.getRepository(this.profile);
         JavaVersionType javaVersionType = setting.javaTypeProperty().getValue();
-        GameSettings.Effective effectiveSetting = this.instanceId != null ? repository.getEffectiveGameSettings(this.instanceId) : null;
+        GameSettings.Effective effectiveSetting = this.instanceId != null && repository != null ? repository.getEffectiveGameSettings(this.instanceId) : null;
         JavaVersionType effectiveJavaVersionType = effectiveSetting != null ? effectiveSetting.getInheritable(GameSettings::javaTypeProperty) : javaVersionType;
         boolean autoSelected = effectiveJavaVersionType == JavaVersionType.AUTO || effectiveJavaVersionType == JavaVersionType.VERSION;
 
@@ -2607,8 +2622,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 gameVersionNumber = GameVersionNumber.unknown();
                 version = null;
             } else {
-                gameVersionNumber = GameVersionNumber.asGameVersion(repository.getGameVersion(this.instanceId));
-                version = repository.getResolvedVersion(this.instanceId);
+                gameVersionNumber = repository != null ? GameVersionNumber.asGameVersion(repository.getGameVersion(this.instanceId)) : GameVersionNumber.unknown();
+                version = repository != null ? repository.getResolvedVersion(this.instanceId) : null;
             }
 
             try {
@@ -2630,22 +2645,22 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     private void editSpecificSettings() {
         if (profile != null)
-            Versions.modifyGameSettings(profile, GameDirectoryManager.getSelectedInstance(profile));
+            Versions.modifyGameSettings(GameDirectoryManager.getSelectedRepository(), GameDirectoryManager.getSelectedInstance(profile));
     }
 
     private void onExploreIcon() {
-        if (profile == null || instanceId == null)
+        if (repository == null || instanceId == null)
             return;
 
-        Controllers.dialog(new VersionIconDialog(profile, instanceId, this::loadIcon));
+        Controllers.dialog(new VersionIconDialog(repository, instanceId, this::loadIcon));
     }
 
     private void onDeleteIcon() {
-        if (profile == null || instanceId == null)
+        if (repository == null || instanceId == null)
             return;
 
-        GameDirectoryManager.getRepository(profile).deleteIconFile(instanceId);
-        GameSettings.Instance localGameSettings = GameDirectoryManager.getRepository(profile).getInstanceGameSettingsOrCreate(instanceId);
+        repository.deleteIconFile(instanceId);
+        GameSettings.Instance localGameSettings = repository.getInstanceGameSettingsOrCreate(instanceId);
         if (localGameSettings != null) {
             localGameSettings.iconProperty().setValue(VersionIconType.DEFAULT);
         }

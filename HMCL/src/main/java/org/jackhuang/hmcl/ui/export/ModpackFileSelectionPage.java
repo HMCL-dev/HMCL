@@ -27,9 +27,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModAdviser;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -60,13 +59,13 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     private final ModAdviser adviser;
     private final CheckBoxTreeItem<String> rootNode;
 
-    public ModpackFileSelectionPage(WizardController controller, GameDirectoryProfile profile, String version, ModAdviser adviser) {
+    public ModpackFileSelectionPage(WizardController controller, HMCLGameRepository repository, String version, ModAdviser adviser) {
         this.controller = controller;
         this.version = version;
         this.adviser = adviser;
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
-        rootNode = getTreeItem(GameDirectoryManager.getRepository(profile).getRunDirectory(version), "minecraft");
+        rootNode = getTreeItem(repository.getRunDirectory(version), "minecraft");
         treeView.setRoot(rootNode);
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         onEscPressed(treeView, () -> controller.onPrev(true));

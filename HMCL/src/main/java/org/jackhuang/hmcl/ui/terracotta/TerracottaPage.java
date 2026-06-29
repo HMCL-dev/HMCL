@@ -78,8 +78,8 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         AdvancedListBox toolbar = new AdvancedListBox()
                 .add(accountListItem)
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
-                    GameDirectoryProfile profile = GameDirectoryManager.getSelectedProfile();
-                    Versions.launch(profile, GameDirectoryManager.getSelectedInstance(profile), launcherHelper -> {
+                    var repository = GameDirectoryManager.getSelectedRepository();
+                    Versions.launch(repository, GameDirectoryManager.getSelectedInstance(repository.getProfile()), launcherHelper -> {
                         launcherHelper.setKeep();
                         launcherHelper.setDisableOfflineSkin();
                     });
@@ -99,7 +99,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                             JFXPopup.PopupHPosition.LEFT,
                             item.getWidth(),
                             0,
-                            mainPage.getProfile(), mainPage.getVersions()));
+                            mainPage.getRepository(), mainPage.getVersions()));
                 })
                 .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
