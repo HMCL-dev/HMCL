@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
@@ -123,13 +122,11 @@ public final class ExportWizardProvider implements WizardProvider {
                 if (!packWithLauncher) return;
                 try (Zipper zip = new Zipper(modpackFile)) {
                     LauncherSettings exported = new LauncherSettings();
+                    LauncherSettings current = settings();
 
-                    exported.backgroundTypeProperty().set(settings().backgroundTypeProperty().get());
-                    exported.backgroundImageProperty().set(settings().backgroundImageProperty().get());
-                    exported.themeColorProperty().set(settings().themeColorProperty().get());
-                    exported.versionListSourceProperty().set(settings().versionListSourceProperty().get());
-                    exported.fileDownloadSourceProperty().set(settings().fileDownloadSourceProperty().get());
-                    exported.preferredLoginTypeProperty().set(settings().preferredLoginTypeProperty().get());
+                    exported.versionListSourceProperty().set(current.versionListSourceProperty().get());
+                    exported.fileDownloadSourceProperty().set(current.fileDownloadSourceProperty().get());
+                    exported.preferredLoginTypeProperty().set(current.preferredLoginTypeProperty().get());
 
                     zip.putTextFile(exported.toJson(), ".hmcl/config/launcher-settings.json");
                     AuthlibInjectorServerList exportedServers = new AuthlibInjectorServerList();
@@ -140,21 +137,6 @@ public final class ExportWizardProvider implements WizardProvider {
                     zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
                             ? "modpack.mrpack"
                             : "modpack.zip");
-
-                    Path bg = Metadata.HMCL_LOCAL_HOME.resolve("background");
-                    if (!Files.isDirectory(bg))
-                        bg = Metadata.CURRENT_DIRECTORY.resolve("bg");
-                    if (Files.isDirectory(bg))
-                        zip.putDirectory(bg, ".hmcl/bg");
-
-                    for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-                        String fileName = "background." + extension;
-                        Path background = Metadata.HMCL_LOCAL_HOME.resolve(fileName);
-                        if (!Files.isRegularFile(background))
-                            background = Metadata.CURRENT_DIRECTORY.resolve(fileName);
-                        if (Files.isRegularFile(background))
-                            zip.putFile(background, ".hmcl/" + fileName);
-                    }
 
                     for (String extension : FontManager.FONT_EXTENSIONS) {
                         String fileName = "font." + extension;
