@@ -79,7 +79,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                 .add(accountListItem)
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     var repository = GameDirectoryManager.getSelectedRepository();
-                    Versions.launch(repository, GameDirectoryManager.getSelectedInstance(repository.getProfile()), launcherHelper -> {
+                    Versions.launch(repository, GameDirectoryManager.getSelectedInstance(repository.getGameDirectory()), launcherHelper -> {
                         launcherHelper.setKeep();
                         launcherHelper.setDisableOfflineSkin();
                     });
@@ -92,7 +92,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                     FXUtils.onScroll(item, mainPage.getVersions(), list -> {
                         String currentId = mainPage.getCurrentGame();
                         return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-                    }, it -> GameDirectoryManager.setSelectedInstance(mainPage.getProfile(), it.getId()));
+                    }, it -> GameDirectoryManager.setSelectedInstance(mainPage.getGameDirectory(), it.getId()));
 
                     FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
                             JFXPopup.PopupVPosition.BOTTOM,

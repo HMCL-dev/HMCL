@@ -590,7 +590,7 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Returns the selected game directory ID property.
     ///
     /// This property is exposed for persistence and [GameDirectoryManager] integration. Code outside [GameDirectoryManager]
-    /// should use `GameDirectoryManager.setSelectedProfile` instead of modifying this property directly.
+    /// should use `GameDirectoryManager.setSelectedGameDirectory` instead of modifying this property directly.
     public ObjectProperty<@Nullable GameDirectoryID> selectedGameDirectoryProperty() {
         return selectedGameDirectory;
     }

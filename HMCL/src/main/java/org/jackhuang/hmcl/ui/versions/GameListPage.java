@@ -41,7 +41,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -76,7 +76,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     private final ObservableList<ProfileListItem> profileListItems;
 
     public GameListPage() {
-        profileListItems = MappedObservableList.create(GameDirectoryManager.getProfiles(), profile -> {
+        profileListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), profile -> {
             ProfileListItem item = new ProfileListItem(profile);
             FXUtils.setLimitWidth(item, 200);
             return item;
@@ -86,11 +86,11 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             ScrollPane pane = new ScrollPane();
             VBox.setVgrow(pane, Priority.ALWAYS);
             {
-                AdvancedListItem addProfileItem = new AdvancedListItem();
-                addProfileItem.getStyleClass().add("navigation-drawer-item");
-                addProfileItem.setTitle(i18n("profile.new"));
-                addProfileItem.setLeftIcon(SVG.ADD_CIRCLE);
-                addProfileItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
+                AdvancedListItem addGameDirectoryItem = new AdvancedListItem();
+                addGameDirectoryItem.getStyleClass().add("navigation-drawer-item");
+                addGameDirectoryItem.setTitle(i18n("profile.new"));
+                addGameDirectoryItem.setLeftIcon(SVG.ADD_CIRCLE);
+                addGameDirectoryItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
 
                 pane.setFitToWidth(true);
                 VBox wrapper = new VBox();
@@ -98,7 +98,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 VBox box = new VBox();
                 box.setFillWidth(true);
                 Bindings.bindContent(box.getChildren(), profileListItems);
-                wrapper.getChildren().setAll(box, addProfileItem);
+                wrapper.getChildren().setAll(box, addGameDirectoryItem);
                 pane.setContent(wrapper);
             }
 
@@ -124,7 +124,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public void modifyGlobalGameSettings() {
-        Versions.modifyGlobalSettings(GameDirectoryManager.getSelectedProfile());
+        Versions.modifyGlobalSettings(GameDirectoryManager.getSelectedGameDirectory());
     }
 
     @Override

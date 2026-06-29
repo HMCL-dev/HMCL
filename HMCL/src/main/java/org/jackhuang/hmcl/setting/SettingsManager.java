@@ -1011,7 +1011,7 @@ public final class SettingsManager {
         gameSettingsAccess = SettingFileAccess.READ_WRITE;
     }
 
-    /// Backs up and overwrites local `config/game-directories.json` with the currently loaded game directory profiles.
+    /// Backs up and overwrites local `config/game-directories.json` with the currently loaded game directories.
     public static void forceOverwriteLocalGameDirectories() {
         boolean installAutoSave = !localGameDirectories().isSavable();
         LOCAL_GAME_DIRECTORIES_FILE.backupAndOverwrite(localGameDirectories());
@@ -1021,7 +1021,7 @@ public final class SettingsManager {
         localGameDirectoriesAccess = SettingFileAccess.READ_WRITE;
     }
 
-    /// Backs up and overwrites user `config/user-game-directories.json` with the currently loaded game directory profiles.
+    /// Backs up and overwrites user `config/user-game-directories.json` with the currently loaded game directories.
     public static void forceOverwriteUserGameDirectories() {
         boolean installAutoSave = !userGameDirectories().isSavable();
         USER_GAME_DIRECTORIES_FILE.backupAndOverwrite(userGameDirectories());

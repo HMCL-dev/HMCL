@@ -146,7 +146,7 @@ public final class Versions {
                 repository.refreshVersionsAsync()
                         .thenRunAsync(Schedulers.javafx(), () -> {
                             if (repository.hasVersion(newName)) {
-                                GameDirectoryManager.setSelectedInstance(repository.getProfile(), newName);
+                                GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), newName);
                             }
                         }).start();
             } else {
@@ -192,7 +192,7 @@ public final class Versions {
                             .thenRunAsync(repository::refreshVersions)
                             .whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
-                                    GameDirectoryManager.setSelectedInstance(repository.getProfile(), result);
+                                    GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), result);
                                 } else {
                                     Controllers.dialog(
                                             DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
@@ -367,7 +367,7 @@ public final class Versions {
         }
     }
 
-    public static void modifyGlobalSettings(GameDirectoryProfile profile) {
+    public static void modifyGlobalSettings(GameDirectory profile) {
         Controllers.getSettingsPage().showGameSettings(profile);
         Controllers.navigate(Controllers.getSettingsPage());
     }

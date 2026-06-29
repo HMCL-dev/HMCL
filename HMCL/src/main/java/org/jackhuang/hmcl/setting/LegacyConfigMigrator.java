@@ -1254,7 +1254,7 @@ public final class LegacyConfigMigrator {
             return;
         }
 
-        for (GameDirectoryProfile profile : gameDirectories.getGameDirectories()) {
+        for (GameDirectory profile : gameDirectories.getGameDirectories()) {
             @Nullable GameSettingsPresetID legacyGameSettings = profile.getLegacyGameSettings();
             if (legacyGameSettings == null) {
                 continue;
@@ -1279,14 +1279,14 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns the legacy profile name used in `configurations`.
-    private static @Nullable String getLegacyProfileName(GameDirectoryProfile profile) {
+    private static @Nullable String getLegacyProfileName(GameDirectory profile) {
         if (LEGACY_DEFAULT_PROFILE_ID.equals(profile.getId())) {
             return LEGACY_DEFAULT_PROFILE;
         }
         if (LEGACY_HOME_PROFILE_ID.equals(profile.getId())) {
             return LEGACY_HOME_PROFILE;
         }
-        return GameDirectoryManager.getProfileCustomName(profile);
+        return GameDirectoryManager.getGameDirectoryCustomName(profile);
     }
 
     /// Detached settings migrated out of an old config file.

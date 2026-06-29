@@ -102,14 +102,14 @@ public final class GameDirectories extends ObservableSetting implements JsonSche
 
     /// Game directories stored in this file.
     @SerializedName("directories")
-    private final ObservableList<GameDirectoryProfile> gameDirectories =
+    private final ObservableList<GameDirectory> gameDirectories =
             FXCollections.observableArrayList(profile -> new Observable[] { profile });
 
     /// Whether this store represents `HMCL_USER_HOME/config/user-game-directories.json`.
     private transient boolean userFile;
 
     /// Returns the game directories stored in this file.
-    public ObservableList<GameDirectoryProfile> getGameDirectories() {
+    public ObservableList<GameDirectory> getGameDirectories() {
         return gameDirectories;
     }
 

@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.game;
 
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
-
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
@@ -53,7 +51,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.VersionIconDialog;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.ServerAddress;
@@ -93,7 +90,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
     /// The selected profile.
-    private @Nullable GameDirectoryProfile profile;
+    private @Nullable GameDirectory profile;
 
     /// The selected repository for instance settings, or `null` for preset settings.
     private @Nullable HMCLGameRepository repository;
@@ -2434,16 +2431,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     @SuppressWarnings("unchecked")
     @Override
     public void loadVersion(HMCLGameRepository repository, @Nullable String instanceId) {
-        loadVersion(repository.getProfile(), repository, instanceId);
+        loadVersion(repository.getGameDirectory(), repository, instanceId);
     }
 
     @SuppressWarnings("unchecked")
-    public void loadVersion(GameDirectoryProfile profile, @Nullable String instanceId) {
+    public void loadVersion(GameDirectory profile, @Nullable String instanceId) {
         loadVersion(profile, null, instanceId);
     }
 
     @SuppressWarnings("unchecked")
-    private void loadVersion(GameDirectoryProfile profile, @Nullable HMCLGameRepository repository, @Nullable String instanceId) {
+    private void loadVersion(GameDirectory profile, @Nullable HMCLGameRepository repository, @Nullable String instanceId) {
         this.profile = profile;
         this.repository = repository;
         this.instanceId = instanceId;
@@ -2641,11 +2638,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
 
         javaSublist.setDescription("");
-    }
-
-    private void editSpecificSettings() {
-        if (profile != null)
-            Versions.modifyGameSettings(GameDirectoryManager.getSelectedRepository(), GameDirectoryManager.getSelectedInstance(profile));
     }
 
     private void onExploreIcon() {

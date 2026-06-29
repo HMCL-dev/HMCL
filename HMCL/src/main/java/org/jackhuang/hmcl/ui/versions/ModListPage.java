@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -290,8 +290,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         this.modded.set(modded);
     }
 
-    public GameDirectoryProfile getProfile() {
-        return this.repository.getProfile();
+    public GameDirectory getGameDirectory() {
+        return this.repository.getGameDirectory();
     }
 
     public HMCLGameRepository getRepository() {

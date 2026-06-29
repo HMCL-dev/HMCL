@@ -47,7 +47,7 @@ import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -210,7 +210,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.onScroll(launchPane, versions, list -> {
             String currentId = getCurrentGame();
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-        }, it -> GameDirectoryManager.setSelectedInstance(repository.getProfile(), it.getId()));
+        }, it -> GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), it.getId()));
 
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
@@ -317,7 +317,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launch() {
         HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-        Versions.launch(repository, GameDirectoryManager.getSelectedInstance(repository.getProfile()));
+        Versions.launch(repository, GameDirectoryManager.getSelectedInstance(repository.getGameDirectory()));
     }
 
     private void launchNoGame() {
@@ -345,7 +345,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refreshVersions())
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        GameDirectoryManager.setSelectedInstance(GameDirectoryManager.getSelectedProfile(), gameVersionHolder.value);
+                        GameDirectoryManager.setSelectedInstance(GameDirectoryManager.getSelectedGameDirectory(), gameVersionHolder.value);
                         launch();
                     } else if (exception instanceof CancellationException) {
                         Controllers.showToast(i18n("message.cancelled"));
@@ -377,8 +377,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return state;
     }
 
-    public GameDirectoryProfile getProfile() {
-        return repository.getProfile();
+    public GameDirectory getGameDirectory() {
+        return repository.getGameDirectory();
     }
 
     public HMCLGameRepository getRepository() {

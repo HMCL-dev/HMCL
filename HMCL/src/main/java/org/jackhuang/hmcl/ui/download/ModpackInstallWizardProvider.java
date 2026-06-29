@@ -80,7 +80,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
         if (StringUtils.isNotBlank(iconUrl))
             settings.put(LocalModpackPage.MODPACK_ICON_URL, iconUrl);
-        settings.put(ModpackPage.PROFILE, repository.getProfile());
+        settings.put(ModpackPage.GAME_DIRECTORY, repository.getGameDirectory());
         settings.put(ModpackPage.REPOSITORY, repository);
         hasSource = settings.containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
     }
@@ -122,10 +122,10 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         } else {
             if (serverModpackManifest != null) {
                 return ModpackHelper.getInstallTask(repository, serverModpackManifest, name, modpack)
-                        .thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(repository.getProfile(), name));
+                        .thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), name));
             } else {
                 return ModpackHelper.getInstallTask(repository, selected, name, modpack, iconUrl)
-                        .thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(repository.getProfile(), name));
+                        .thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), name));
             }
         }
     }

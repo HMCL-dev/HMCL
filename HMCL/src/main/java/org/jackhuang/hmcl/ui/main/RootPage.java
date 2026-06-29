@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -123,7 +123,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
 
             GameDirectoryManager.registerVersionsListener(repository -> {
-                GameDirectoryProfile profile = repository.getProfile();
+                GameDirectory profile = repository.getGameDirectory();
                 List<Version> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
@@ -131,7 +131,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                 .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {
-                    if (profile == GameDirectoryManager.getSelectedProfile())
+                    if (profile == GameDirectoryManager.getSelectedGameDirectory())
                         mainPage.initVersions(repository, children);
                 });
             });
@@ -154,7 +154,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // second item in left sidebar
             GameAdvancedListItem gameListItem = new GameAdvancedListItem();
             gameListItem.setOnAction(e -> {
-                GameDirectoryProfile profile = GameDirectoryManager.getSelectedProfile();
+                GameDirectory profile = GameDirectoryManager.getSelectedGameDirectory();
                 String version = GameDirectoryManager.getSelectedInstance();
                 if (version == null) {
                     Controllers.navigate(Controllers.getGameListPage());
@@ -165,7 +165,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
                 String currentId = getSkinnable().getMainPage().getCurrentGame();
                 return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-            }, it -> GameDirectoryManager.setSelectedInstance(getSkinnable().getMainPage().getProfile(), it.getId()));
+            }, it -> GameDirectoryManager.setSelectedInstance(getSkinnable().getMainPage().getGameDirectory(), it.getId()));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
             }
@@ -195,7 +195,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> {
-                Controllers.getSettingsPage().showGameSettings(GameDirectoryManager.getSelectedProfile());
+                Controllers.getSettingsPage().showGameSettings(GameDirectoryManager.getSelectedGameDirectory());
                 Controllers.navigate(Controllers.getSettingsPage());
             });
             if (AnimationUtils.isAnimationEnabled()) {

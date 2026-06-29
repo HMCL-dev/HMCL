@@ -23,26 +23,26 @@ import javafx.beans.property.StringProperty;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
 
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.Controllers;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ProfileListItem extends RadioButton {
-    private final GameDirectoryProfile profile;
+    private final GameDirectory profile;
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
 
-    public ProfileListItem(GameDirectoryProfile profile) {
+    public ProfileListItem(GameDirectory profile) {
         this.profile = profile;
         getStyleClass().setAll("profile-list-item", "navigation-drawer-item");
         setUserData(profile);
 
-        title.set(GameDirectoryManager.getProfileDisplayName(profile));
+        title.set(GameDirectoryManager.getGameDirectoryDisplayName(profile));
         subtitle.set(profile.getPath().toString());
 
-        this.selectedProperty().bind(Bindings.equal(profile, GameDirectoryManager.selectedProfileProperty()));
+        this.selectedProperty().bind(Bindings.equal(profile, GameDirectoryManager.selectedGameDirectoryProperty()));
     }
 
     @Override
@@ -51,18 +51,18 @@ public class ProfileListItem extends RadioButton {
     }
 
     public void remove() {
-        if (!GameDirectoryManager.canRemoveProfile(profile)) {
+        if (!GameDirectoryManager.canRemoveGameDirectory(profile)) {
             Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                GameDirectoryManager.forceOverwriteProfileFiles(profile);
-                GameDirectoryManager.removeProfile(profile);
+                GameDirectoryManager.forceOverwriteGameDirectoryFiles(profile);
+                GameDirectoryManager.removeGameDirectory(profile);
             });
             return;
         }
 
-        GameDirectoryManager.removeProfile(profile);
+        GameDirectoryManager.removeGameDirectory(profile);
     }
 
-    public GameDirectoryProfile getProfile() {
+    public GameDirectory getGameDirectory() {
         return profile;
     }
 

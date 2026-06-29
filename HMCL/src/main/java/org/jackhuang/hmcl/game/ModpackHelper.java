@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.JavaVersionType;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -191,12 +191,12 @@ public final class ModpackHelper {
 
         return new ManuallyCreatedModpackInstallTask(zipFile, charset, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
-                    GameDirectoryProfile newProfile = new GameDirectoryProfile(
-                            GameDirectoryManager.newProfileId(),
+                    GameDirectory newProfile = new GameDirectory(
+                            GameDirectoryManager.newGameDirectoryId(),
                             LocalizedText.plain(name),
                             PortablePath.fromPath(location));
-                    GameDirectoryManager.addLocalProfile(newProfile);
-                    GameDirectoryManager.setSelectedProfile(newProfile);
+                    GameDirectoryManager.addLocalGameDirectory(newProfile);
+                    GameDirectoryManager.setSelectedGameDirectory(newProfile);
                 });
     }
 

@@ -46,7 +46,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
 
     @Override
     public void start(SettingsMap settings) {
-        settings.put(ModpackPage.PROFILE, repository.getProfile());
+        settings.put(ModpackPage.GAME_DIRECTORY, repository.getGameDirectory());
         settings.put(ModpackPage.REPOSITORY, repository);
     }
 
@@ -66,7 +66,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
             repository.refreshVersions();
             repository.applyDefaultIsolationSetting(name);
         })
-                .thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(repository.getProfile(), name));
+                .thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), name));
     }
 
     @Override

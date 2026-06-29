@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.setting.SettingFileUtils;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
@@ -71,7 +71,7 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// HMCL game repository implementation backed by a GameDirectoryProfile and per-instance game settings.
+/// HMCL game repository implementation backed by a GameDirectory and per-instance game settings.
 @NotNullByDefault
 public final class HMCLGameRepository extends DefaultGameRepository {
     /// Identifies a version by its owning repository and version ID.
@@ -94,8 +94,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Current file name for instance-specific game settings.
     private static final String INSTANCE_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
 
-    /// The persistent game directory profile for this repository.
-    private final GameDirectoryProfile profile;
+    /// The persistent game directory for this repository.
+    private final GameDirectory gameDirectory;
 
     // instance game settings
     private final Map<String, GameSettings.Instance> instanceGameSettings = new HashMap<>();
@@ -106,16 +106,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public final EventManager<Event> onVersionIconChanged = new EventManager<>();
 
-    /// Creates a repository backed by the given game directory profile.
-    public HMCLGameRepository(GameDirectoryProfile profile) {
-        super(profile.getPath().toPath());
-        this.profile = profile;
-        profile.pathProperty().addListener((a, b, newValue) -> changeDirectory(newValue.toPath()));
+    /// Creates a repository backed by the given game directory.
+    public HMCLGameRepository(GameDirectory gameDirectory) {
+        super(gameDirectory.getPath().toPath());
+        this.gameDirectory = gameDirectory;
+        gameDirectory.pathProperty().addListener((a, b, newValue) -> changeDirectory(newValue.toPath()));
     }
 
-    /// Returns the persistent game directory profile for this repository.
-    public GameDirectoryProfile getProfile() {
-        return profile;
+    /// Returns the persistent game directory for this repository.
+    public GameDirectory getGameDirectory() {
+        return gameDirectory;
     }
 
     /// Returns a dependency manager using the currently selected download provider.
@@ -319,8 +319,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
-        GameSettings.Preset profilePreset = SettingsManager.getGameSettings(profile.getLegacyGameSettings());
-        if (profilePreset != null && profilePreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
+        GameSettings.Preset gameDirectoryPreset = SettingsManager.getGameSettings(gameDirectory.getLegacyGameSettings());
+        if (gameDirectoryPreset != null && gameDirectoryPreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             GameSettings.Instance setting = new GameSettings.Instance();
             setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
             initInstanceGameSettings(id, setting);
@@ -486,7 +486,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
         @Nullable GameSettingsPresetID parent = instance != null && instance.parentProperty().getValue() != null
                 ? instance.parentProperty().getValue()
-                : profile.getLegacyGameSettings();
+                : gameDirectory.getLegacyGameSettings();
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }

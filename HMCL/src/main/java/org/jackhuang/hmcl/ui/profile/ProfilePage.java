@@ -33,7 +33,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -56,7 +56,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final StringProperty location;
-    private final @Nullable GameDirectoryProfile profile;
+    private final @Nullable GameDirectory profile;
     private final JFXTextField txtProfileName;
     private final LineFileChooserButton gameDir;
     private final LineToggleButton toggleUseRelativePath;
@@ -64,15 +64,15 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
     /**
      * @param profile null if creating a new profile.
      */
-    public ProfilePage(@Nullable GameDirectoryProfile profile) {
+    public ProfilePage(@Nullable GameDirectory profile) {
         getStyleClass().add("gray-background");
 
         this.profile = profile;
-        String profileDisplayName = Optional.ofNullable(profile).map(GameDirectoryManager::getProfileDisplayName).orElse("");
+        String profileDisplayName = Optional.ofNullable(profile).map(GameDirectoryManager::getGameDirectoryDisplayName).orElse("");
 
         state.set(State.fromTitle(profile == null ? i18n("profile.new") : i18n("profile") + " - " + profileDisplayName));
         location = new SimpleStringProperty(this, "location",
-                Optional.ofNullable(profile).map(GameDirectoryProfile::getPath).map(PortablePath::toPath).map(FileUtils::getAbsolutePath).orElse(".minecraft"));
+                Optional.ofNullable(profile).map(GameDirectory::getPath).map(PortablePath::toPath).map(FileUtils::getAbsolutePath).orElse(".minecraft"));
 
         ScrollPane scroll = new ScrollPane();
         this.setCenter(scroll);
@@ -106,9 +106,9 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                             @Override
                             protected void eval() {
                                 JFXTextField control = (JFXTextField) this.getSrcControl();
-                                hasErrors.set(GameDirectoryManager.getProfiles().stream()
+                                hasErrors.set(GameDirectoryManager.getGameDirectories().stream()
                                         .anyMatch(profile -> Objects.equals(
-                                                GameDirectoryManager.getProfileCustomName(profile), control.getText())));
+                                                GameDirectoryManager.getGameDirectoryCustomName(profile), control.getText())));
                             }
                         });
                     }
@@ -190,44 +190,44 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
         if (profile != null) {
             LocalizedText name = LocalizedText.plain(txtProfileName.getText());
             PortablePath path = StringUtils.isNotBlank(getLocation()) ? createPortableLocation() : profile.getPath();
-            if (!GameDirectoryManager.canUpdateProfile(profile, path)) {
+            if (!GameDirectoryManager.canUpdateGameDirectory(profile, path)) {
                 Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                    GameDirectoryManager.forceOverwriteProfileFiles(profile, path);
-                    GameDirectoryManager.updateProfile(profile, name, path);
+                    GameDirectoryManager.forceOverwriteGameDirectoryFiles(profile, path);
+                    GameDirectoryManager.updateGameDirectory(profile, name, path);
                     fireEvent(new PageCloseEvent());
                 });
                 return;
             }
 
-            GameDirectoryManager.updateProfile(profile, name, path);
+            GameDirectoryManager.updateGameDirectory(profile, name, path);
         } else {
             if (StringUtils.isBlank(getLocation())) {
                 gameDir.fire();
             }
-            GameDirectoryProfile newProfile = new GameDirectoryProfile(
-                    GameDirectoryManager.newProfileId(),
+            GameDirectory newProfile = new GameDirectory(
+                    GameDirectoryManager.newGameDirectoryId(),
                     LocalizedText.plain(txtProfileName.getText()),
                     createPortableLocation());
             if (newProfile.getPath().isAbsolute()) {
                 if (SettingsManager.isUserGameDirectoriesReadOnly()) {
                     Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
                         SettingsManager.forceOverwriteUserGameDirectories();
-                        GameDirectoryManager.addUserProfile(newProfile);
+                        GameDirectoryManager.addUserGameDirectory(newProfile);
                         fireEvent(new PageCloseEvent());
                     });
                     return;
                 }
-                GameDirectoryManager.addUserProfile(newProfile);
+                GameDirectoryManager.addUserGameDirectory(newProfile);
             } else {
                 if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
                     Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
                         SettingsManager.forceOverwriteLocalGameDirectories();
-                        GameDirectoryManager.addLocalProfile(newProfile);
+                        GameDirectoryManager.addLocalGameDirectory(newProfile);
                         fireEvent(new PageCloseEvent());
                     });
                     return;
                 }
-                GameDirectoryManager.addLocalProfile(newProfile);
+                GameDirectoryManager.addLocalGameDirectory(newProfile);
             }
         }
 

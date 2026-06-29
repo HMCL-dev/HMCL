@@ -37,9 +37,9 @@ import java.util.Objects;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 
 /// Persistent configuration for a game directory.
-@JsonAdapter(GameDirectoryProfile.Serializer.class)
+@JsonAdapter(GameDirectory.Serializer.class)
 @NotNullByDefault
-public final class GameDirectoryProfile implements Observable {
+public final class GameDirectory implements Observable {
     /// The stable game directory ID.
     private final GameDirectoryID id;
 
@@ -66,25 +66,25 @@ public final class GameDirectoryProfile implements Observable {
         this.path.set(Objects.requireNonNull(path));
     }
 
-    /// The custom localized game directory profile name, or `null` for profiles without a stored name.
+    /// The custom localized game directory name, or `null` when no name is stored.
     private final ObjectProperty<@Nullable LocalizedText> name;
 
-    /// Returns the custom localized game directory profile name property.
+    /// Returns the custom localized game directory name property.
     public ObjectProperty<@Nullable LocalizedText> nameProperty() {
         return name;
     }
 
-    /// Returns the custom localized game directory profile name, or `null` when no name is stored.
+    /// Returns the custom localized game directory name, or `null` when no name is stored.
     public @Nullable LocalizedText getName() {
         return name.get();
     }
 
-    /// Sets the custom localized game directory profile name.
+    /// Sets the custom localized game directory name.
     public void setName(@Nullable LocalizedText name) {
         this.name.set(name);
     }
 
-    /// The migrated legacy game settings preset ID, or `null` when this profile uses the default preset.
+    /// The migrated legacy game settings preset ID, or `null` when this game directory uses the default preset.
     private final ObjectProperty<@Nullable GameSettingsPresetID> legacyGameSettings;
 
     /// Returns the migrated legacy game settings preset ID property.
@@ -92,7 +92,7 @@ public final class GameDirectoryProfile implements Observable {
         return legacyGameSettings;
     }
 
-    /// Returns the migrated legacy game settings preset ID, or `null` when this profile uses the default preset.
+    /// Returns the migrated legacy game settings preset ID, or `null` when this game directory uses the default preset.
     public @Nullable GameSettingsPresetID getLegacyGameSettings() {
         return legacyGameSettings.get();
     }
@@ -102,13 +102,13 @@ public final class GameDirectoryProfile implements Observable {
         this.legacyGameSettings.set(legacyGameSettings);
     }
 
-    /// Creates a game directory profile.
-    public GameDirectoryProfile(GameDirectoryID id, @Nullable LocalizedText name, PortablePath path) {
+    /// Creates a game directory.
+    public GameDirectory(GameDirectoryID id, @Nullable LocalizedText name, PortablePath path) {
         this(id, name, path, null);
     }
 
-    /// Creates a game directory profile.
-    public GameDirectoryProfile(
+    /// Creates a game directory.
+    public GameDirectory(
             GameDirectoryID id,
             @Nullable LocalizedText name,
             PortablePath path,
@@ -121,7 +121,7 @@ public final class GameDirectoryProfile implements Observable {
         addPropertyChangedListener(onInvalidating(this::invalidate));
     }
 
-    /// Returns a debug string containing the profile path and display metadata.
+    /// Returns a debug string containing the game directory path and display metadata.
     @Override
     public String toString() {
         return new ToStringBuilder(this)
@@ -130,14 +130,14 @@ public final class GameDirectoryProfile implements Observable {
                 .toString();
     }
 
-    /// Registers a listener that invalidates this profile when any stored property changes.
+    /// Registers a listener that invalidates this game directory when any stored property changes.
     private void addPropertyChangedListener(InvalidationListener listener) {
         name.addListener(listener);
         path.addListener(listener);
         legacyGameSettings.addListener(listener);
     }
 
-    /// Helper that stores and dispatches invalidation listeners for this profile.
+    /// Helper that stores and dispatches invalidation listeners for this game directory.
     private final ObservableHelper observableHelper = new ObservableHelper(this);
 
     /// Adds an invalidation listener.
@@ -152,7 +152,7 @@ public final class GameDirectoryProfile implements Observable {
         observableHelper.removeListener(listener);
     }
 
-    /// Notifies profile observers on the JavaFX thread when the toolkit is available.
+    /// Notifies game directory observers on the JavaFX thread when the toolkit is available.
     private void invalidate() {
         try {
             Platform.runLater(observableHelper::invalidate);
@@ -161,12 +161,12 @@ public final class GameDirectoryProfile implements Observable {
         }
     }
 
-    /// Serializes and deserializes game directory profiles.
+    /// Serializes and deserializes game directories.
     @NotNullByDefault
-    public static final class Serializer implements JsonSerializer<GameDirectoryProfile>, JsonDeserializer<GameDirectoryProfile> {
-        /// Serializes a game directory profile to JSON.
+    public static final class Serializer implements JsonSerializer<GameDirectory>, JsonDeserializer<GameDirectory> {
+        /// Serializes a game directory to JSON.
         @Override
-        public JsonElement serialize(@Nullable GameDirectoryProfile src, Type typeOfSrc, JsonSerializationContext context) {
+        public JsonElement serialize(@Nullable GameDirectory src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null)
                 return JsonNull.INSTANCE;
 
@@ -186,9 +186,9 @@ public final class GameDirectoryProfile implements Observable {
             return jsonObject;
         }
 
-        /// Deserializes a game directory profile from JSON.
+        /// Deserializes a game directory from JSON.
         @Override
-        public @Nullable GameDirectoryProfile deserialize(@Nullable JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        public @Nullable GameDirectory deserialize(@Nullable JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject obj)) return null;
             GameDirectoryID id = context.deserialize(obj.get("id"), GameDirectoryID.class);
             if (id == null) {
@@ -198,11 +198,11 @@ public final class GameDirectoryProfile implements Observable {
             }
             PortablePath path = context.deserialize(obj.get("path"), PortablePath.class);
             if (path == null) {
-                throw new JsonParseException("Game directory profile path cannot be null");
+                throw new JsonParseException("Game directory path cannot be null");
             }
             @Nullable LocalizedText name = context.deserialize(obj.get("name"), LocalizedText.class);
 
-            return new GameDirectoryProfile(id,
+            return new GameDirectory(id,
                     name,
                     path,
                     context.deserialize(obj.get("legacyGameSettings"), GameSettingsPresetID.class));

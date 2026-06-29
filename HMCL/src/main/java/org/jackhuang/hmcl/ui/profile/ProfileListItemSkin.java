@@ -45,7 +45,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
             skinnable.pseudoClassStateChanged(SELECTED, active);
         });
 
-        FXUtils.onClicked(getSkinnable(), () -> GameDirectoryManager.setSelectedProfile(skinnable.getProfile()));
+        FXUtils.onClicked(getSkinnable(), () -> GameDirectoryManager.setSelectedGameDirectory(skinnable.getGameDirectory()));
 
         Node left = SVG.FOLDER.createIcon(20);
         left.setMouseTransparent(true);

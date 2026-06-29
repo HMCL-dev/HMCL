@@ -142,7 +142,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon.Version file, String subdirectoryName) {
-        if (version == null) version = GameDirectoryManager.getSelectedInstance(repository.getProfile());
+        if (version == null) version = GameDirectoryManager.getSelectedInstance(repository.getGameDirectory());
 
         Path runDirectory = repository.hasVersion(version) ? repository.getRunDirectory(version) : repository.getBaseDirectory();
 
@@ -185,7 +185,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private void loadVersions(HMCLGameRepository repository) {
         listenerHolder = new WeakListenerHolder();
         runInFX(() -> {
-            if (repository.getProfile() == GameDirectoryManager.getSelectedProfile()) {
+            if (repository.getGameDirectory() == GameDirectoryManager.getSelectedGameDirectory()) {
                 listenerHolder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), version -> {
                     if (modTab.isInitialized()) {
                         modTab.getNode().loadVersion(repository, null);
@@ -300,7 +300,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         @Override
         public void start(SettingsMap settings) {
-            settings.put(ModpackPage.PROFILE, repository.getProfile());
+            settings.put(ModpackPage.GAME_DIRECTORY, repository.getGameDirectory());
             settings.put(ModpackPage.REPOSITORY, repository);
             settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion);
         }
@@ -321,7 +321,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             return builder.buildAsync().whenComplete(any -> {
                 repository.refreshVersions();
                 repository.applyDefaultIsolationSetting(name);
-            }).thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(repository.getProfile(), name));
+            }).thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(repository.getGameDirectory(), name));
         }
 
         @Override

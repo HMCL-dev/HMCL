@@ -22,7 +22,7 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
-import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.Nullable;
@@ -56,8 +56,8 @@ public class GameItem {
         this.id = id;
     }
 
-    public GameDirectoryProfile getProfile() {
-        return repository.getProfile();
+    public GameDirectory getGameDirectory() {
+        return repository.getGameDirectory();
     }
 
     public HMCLGameRepository getRepository() {
