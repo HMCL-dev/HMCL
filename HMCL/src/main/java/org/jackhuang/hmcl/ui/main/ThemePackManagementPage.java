@@ -44,6 +44,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.*;
+import org.jackhuang.hmcl.theme.ThemePackManager.InstalledThemePack;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -673,28 +674,36 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Updates this cell for one installed theme pack.
         @Override
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
-            super.updateItem(themePack, empty);
+            InstalledThemePack oldThemePack = getItem();
 
-            content.getTags().clear();
-            iconImage.setImage(null);
-            iconFallback.setVisible(false);
+            super.updateItem(themePack, empty);
+            
             if (empty || themePack == null) {
                 setGraphic(null);
                 return;
             }
 
+            ThemePackManifest manifest = themePack.manifest();
+            @Nullable String description = manifest.displayDescription();
+
+            if (oldThemePack != themePack) {
+                content.getTags().clear();
+
+                if (themePack.builtin()) {
+                    content.addTag(i18n("theme_pack.builtin"));
+                }
+                content.addTag(i18n("theme_pack.version", manifest.version()));
+                content.addTag(i18n("theme_pack.themes", manifest.themes().size()));
+            }
+
+            iconImage.setImage(null);
+            iconFallback.setVisible(false);
+
             setGraphic(graphic);
 
-            ThemePackManifest manifest = themePack.manifest();
             page.updateIcon(iconImage, iconFallback, themePack, manifest.icon());
             content.setTitle(manifest.displayName());
-            @Nullable String description = manifest.displayDescription();
             content.setSubtitle(StringUtils.isBlank(description) ? manifest.id() : description);
-            if (themePack.builtin()) {
-                content.addTag(i18n("theme_pack.builtin"));
-            }
-            content.addTag(i18n("theme_pack.version", manifest.version()));
-            content.addTag(i18n("theme_pack.themes", manifest.themes().size()));
 
             if (themePack.builtin()) {
                 right.getChildren().clear();
