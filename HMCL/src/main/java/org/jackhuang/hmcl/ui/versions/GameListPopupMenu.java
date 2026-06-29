@@ -34,8 +34,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -51,10 +51,10 @@ public final class GameListPopupMenu extends StackPane {
 
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY,
-                            Profile profile, List<Version> versions) {
+                            GameDirectoryProfile profile, List<Version> versions) {
         GameListPopupMenu menu = new GameListPopupMenu();
         menu.getItems().setAll(versions.stream()
-                .filter(it -> profile.getRepository().hasVersion(it.getId()))
+                .filter(it -> GameDirectoryManager.getRepository(profile).hasVersion(it.getId()))
                 .map(it -> new GameItem(profile, it.getId()))
                 .toList());
         JFXPopup popup = new JFXPopup(menu);
@@ -128,7 +128,7 @@ public final class GameListPopupMenu extends StackPane {
             FXUtils.onClicked(rootPane, () -> {
                 GameItem item = getItem();
                 if (item != null) {
-                    Profiles.setSelectedInstance(item.getProfile(), item.getId());
+                    GameDirectoryManager.setSelectedInstance(item.getProfile(), item.getId());
                     if (getScene().getWindow() instanceof JFXPopup popup)
                         popup.hide();
                 }

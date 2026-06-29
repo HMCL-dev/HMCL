@@ -23,7 +23,7 @@ import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LinePane;
@@ -37,7 +37,7 @@ import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class ModpackPage extends SpinnerPane implements WizardPage {
-    public static final SettingsMap.Key<Profile> PROFILE = new SettingsMap.Key<>("PROFILE");
+    public static final SettingsMap.Key<GameDirectoryProfile> PROFILE = new SettingsMap.Key<>("PROFILE");
 
     protected final WizardController controller;
 

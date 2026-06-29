@@ -35,7 +35,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.schematic.LitematicFile;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -87,8 +88,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     @Override
-    public void loadVersion(Profile profile, String version) {
-        this.schematicsDirectory = profile.getRepository().getSchematicsDirectory(version);
+    public void loadVersion(GameDirectoryProfile profile, String version) {
+        this.schematicsDirectory = GameDirectoryManager.getRepository(profile).getSchematicsDirectory(version);
 
         refresh();
     }

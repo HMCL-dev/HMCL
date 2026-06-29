@@ -46,8 +46,8 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.Themes;
@@ -94,7 +94,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final BooleanProperty showUpdateDialog = new SimpleBooleanProperty(this, "showUpdateDialog");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
     private final ObservableList<Version> versions = FXCollections.observableArrayList();
-    private Profile profile;
+    private GameDirectoryProfile profile;
 
     private TransitionPane announcementPane;
     private final StackPane updatePane;
@@ -209,7 +209,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.onScroll(launchPane, versions, list -> {
             String currentId = getCurrentGame();
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-        }, it -> Profiles.setSelectedInstance(profile, it.getId()));
+        }, it -> GameDirectoryManager.setSelectedInstance(profile, it.getId()));
 
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
@@ -315,8 +315,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void launch() {
-        Profile profile = Profiles.getSelectedProfile();
-        Versions.launch(profile, Profiles.getSelectedInstance(profile));
+        GameDirectoryProfile profile = GameDirectoryManager.getSelectedProfile();
+        Versions.launch(profile, GameDirectoryManager.getSelectedInstance(profile));
     }
 
     private void launchNoGame() {
@@ -332,8 +332,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
                 .thenComposeAsync(version -> {
-                    Profile profile = Profiles.getSelectedProfile();
-                    DefaultDependencyManager dependency = profile.getDependency();
+                    GameDirectoryProfile profile = GameDirectoryManager.getSelectedProfile();
+                    DefaultDependencyManager dependency = GameDirectoryManager.getRepository(profile).getDependency();
                     String gameVersion = gameVersionHolder.value = version.getGameVersion();
 
                     return dependency.gameBuilder()
@@ -341,10 +341,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             .gameVersion(gameVersion)
                             .buildAsync();
                 })
-                .whenComplete(any -> profile.getRepository().refreshVersions())
+                .whenComplete(any -> GameDirectoryManager.getRepository(profile).refreshVersions())
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        Profiles.setSelectedInstance(profile, gameVersionHolder.value);
+                        GameDirectoryManager.setSelectedInstance(profile, gameVersionHolder.value);
                         launch();
                     } else if (exception instanceof CancellationException) {
                         Controllers.showToast(i18n("message.cancelled"));
@@ -376,7 +376,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return state;
     }
 
-    public Profile getProfile() {
+    public GameDirectoryProfile getProfile() {
         return profile;
     }
 
@@ -432,7 +432,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         this.latestVersion.set(latestVersion);
     }
 
-    public void initVersions(Profile profile, List<Version> versions) {
+    public void initVersions(GameDirectoryProfile profile, List<Version> versions) {
         FXUtils.checkFxUserThread();
         this.profile = profile;
         this.versions.setAll(versions);

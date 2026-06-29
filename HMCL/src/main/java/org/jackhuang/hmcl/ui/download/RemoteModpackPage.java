@@ -21,7 +21,8 @@ import javafx.application.Platform;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.WebPage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -57,7 +58,7 @@ public final class RemoteModpackPage extends ModpackPage {
         versionProperty.set(manifest.getVersion());
         authorProperty.set(manifest.getAuthor());
 
-        Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
+        GameDirectoryProfile profile = controller.getSettings().get(ModpackPage.PROFILE);
         String name = controller.getSettings().get(MODPACK_NAME);
         if (name != null) {
             txtModpackName.setText(name);
@@ -67,7 +68,7 @@ public final class RemoteModpackPage extends ModpackPage {
             txtModpackName.setText(manifest.getName().trim());
             txtModpackName.getValidators().addAll(
                     new RequiredValidator(),
-                    new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
+                    new Validator(i18n("install.new_game.already_exists"), str -> !GameDirectoryManager.getRepository(profile).versionIdConflicts(str)),
                     new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         }
 

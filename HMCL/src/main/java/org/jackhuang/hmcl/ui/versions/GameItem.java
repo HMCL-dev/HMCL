@@ -21,7 +21,8 @@ import javafx.beans.property.*;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class GameItem {
     private static final ThreadPoolExecutor POOL_VERSION_RESOLVE = threadPool("VersionResolve", true, 1, 10, TimeUnit.SECONDS);
 
-    protected final Profile profile;
+    protected final GameDirectoryProfile profile;
     protected final String id;
 
     private boolean initialized = false;
@@ -50,12 +51,12 @@ public class GameItem {
     private StringProperty subtitle;
     private ObjectProperty<Image> image;
 
-    public GameItem(Profile profile, String id) {
+    public GameItem(GameDirectoryProfile profile, String id) {
         this.profile = profile;
         this.id = id;
     }
 
-    public Profile getProfile() {
+    public GameDirectoryProfile getProfile() {
         return profile;
     }
 
@@ -78,10 +79,10 @@ public class GameItem {
 
         CompletableFuture.supplyAsync(() -> {
             // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
-            Optional<String> gameVersion = profile.getRepository().getGameVersion(id);
+            Optional<String> gameVersion = GameDirectoryManager.getRepository(profile).getGameVersion(id);
             String modPackVersion = null;
             try {
-                ModpackConfiguration<?> config = profile.getRepository().readModpackConfiguration(id);
+                ModpackConfiguration<?> config = GameDirectoryManager.getRepository(profile).readModpackConfiguration(id);
                 modPackVersion = config != null ? config.getVersion() : null;
             } catch (IOException e) {
                 LOG.warning("Failed to read modpack configuration from " + id, e);
@@ -94,7 +95,7 @@ public class GameItem {
                 }
 
                 StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
-                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id), result.gameVersion);
+                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(GameDirectoryManager.getRepository(profile).getResolvedPreservingPatchesVersion(id), result.gameVersion);
                 for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                     String libraryId = mark.getLibraryId();
                     String libraryVersion = mark.getLibraryVersion();
@@ -113,7 +114,7 @@ public class GameItem {
         }, Schedulers.javafx());
 
         title.set(id);
-        image.set(profile.getRepository().getVersionIconImage(id));
+        image.set(GameDirectoryManager.getRepository(profile).getVersionIconImage(id));
     }
 
     public ReadOnlyStringProperty titleProperty() {

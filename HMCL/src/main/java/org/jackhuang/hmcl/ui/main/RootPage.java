@@ -27,8 +27,8 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
@@ -77,9 +77,9 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
                 .register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
 
-        Profile profile = Profiles.getSelectedProfile();
-        if (profile != null && profile.getRepository().isLoaded())
-            onRefreshedVersions(Profiles.selectedProfileProperty().get().getRepository());
+        GameDirectoryProfile profile = GameDirectoryManager.getSelectedProfile();
+        if (profile != null && GameDirectoryManager.getRepository(profile).isLoaded())
+            onRefreshedVersions(GameDirectoryManager.getSelectedRepository());
 
         getStyleClass().remove("gray-background");
         getLeft().getStyleClass().add("gray-background");
@@ -104,7 +104,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         Path file = modpacks.get(0);
                         if (ModpackHelper.isFileModpackByExtension(file)) {
                             Controllers.getDecorator().startWizard(
-                                    new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file),
+                                    new ModpackInstallWizardProvider(GameDirectoryManager.getSelectedProfile(), file),
                                     i18n("install.modpack"));
                         } else if (NBTFileType.isNBTFileByExtension(file)) {
                             try {
@@ -115,15 +115,15 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                         i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
                         } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
-                            Versions.installFromJson(Profiles.getSelectedProfile(), file);
+                            Versions.installFromJson(GameDirectoryManager.getSelectedProfile(), file);
                         }
                     });
 
-            FXUtils.onChangeAndOperate(Profiles.selectedInstanceProperty(), mainPage::setCurrentGame);
+            FXUtils.onChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), mainPage::setCurrentGame);
             mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
 
-            Profiles.registerVersionsListener(profile -> {
-                HMCLGameRepository repository = profile.getRepository();
+            GameDirectoryManager.registerVersionsListener(repository -> {
+                GameDirectoryProfile profile = repository.getProfile();
                 List<Version> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
@@ -131,7 +131,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                 .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {
-                    if (profile == Profiles.getSelectedProfile())
+                    if (profile == GameDirectoryManager.getSelectedProfile())
                         mainPage.initVersions(profile, children);
                 });
             });
@@ -154,8 +154,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // second item in left sidebar
             GameAdvancedListItem gameListItem = new GameAdvancedListItem();
             gameListItem.setOnAction(e -> {
-                Profile profile = Profiles.getSelectedProfile();
-                String version = Profiles.getSelectedInstance();
+                GameDirectoryProfile profile = GameDirectoryManager.getSelectedProfile();
+                String version = GameDirectoryManager.getSelectedInstance();
                 if (version == null) {
                     Controllers.navigate(Controllers.getGameListPage());
                 } else {
@@ -165,7 +165,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
                 String currentId = getSkinnable().getMainPage().getCurrentGame();
                 return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-            }, it -> Profiles.setSelectedInstance(getSkinnable().getMainPage().getProfile(), it.getId()));
+            }, it -> GameDirectoryManager.setSelectedInstance(getSkinnable().getMainPage().getProfile(), it.getId()));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
             }
@@ -195,7 +195,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> {
-                Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
+                Controllers.getSettingsPage().showGameSettings(GameDirectoryManager.getSelectedProfile());
                 Controllers.navigate(Controllers.getSettingsPage());
             });
             if (AnimationUtils.isAnimationEnabled()) {

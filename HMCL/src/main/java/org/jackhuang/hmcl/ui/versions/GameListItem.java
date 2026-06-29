@@ -21,8 +21,8 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 
 import java.util.Objects;
 
@@ -30,13 +30,13 @@ public class GameListItem extends GameItem {
     private final boolean isModpack;
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
 
-    public GameListItem(Profile profile, String id) {
+    public GameListItem(GameDirectoryProfile profile, String id) {
         super(profile, id);
-        this.isModpack = profile.getRepository().isModpack(id);
+        this.isModpack = GameDirectoryManager.getRepository(profile).isModpack(id);
         selected.bind(Bindings.createBooleanBinding(
-                () -> profile == Profiles.getSelectedProfile() && Objects.equals(Profiles.getSelectedInstance(profile), id),
-                Profiles.selectedProfileProperty(),
-                Profiles.selectedInstanceProperty()));
+                () -> profile == GameDirectoryManager.getSelectedProfile() && Objects.equals(GameDirectoryManager.getSelectedInstance(profile), id),
+                GameDirectoryManager.selectedProfileProperty(),
+                GameDirectoryManager.selectedInstanceProperty()));
     }
 
     public ReadOnlyBooleanProperty selectedProperty() {

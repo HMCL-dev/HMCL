@@ -24,10 +24,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.HMCLCacheRepository;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -40,15 +36,13 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 
-/**
- *
- * @author huangyuhui
- */
-@JsonAdapter(Profile.Serializer.class)
+/// Persistent configuration for a game directory.
+///
+/// A profile stores only identity, display metadata, path, and migrated preset state.
+/// Runtime services for the directory are owned by [org.jackhuang.hmcl.game.HMCLGameRepository].
+@JsonAdapter(GameDirectoryProfile.Serializer.class)
 @NotNullByDefault
-public final class Profile implements Observable {
-    private final HMCLGameRepository repository;
-
+public final class GameDirectoryProfile implements Observable {
     /// The stable game directory ID.
     private final GameDirectoryID id;
 
@@ -75,20 +69,20 @@ public final class Profile implements Observable {
         this.path.set(Objects.requireNonNull(path));
     }
 
-    /// The custom localized profile name, or `null` for profiles without a stored name.
+    /// The custom localized game directory profile name, or `null` for profiles without a stored name.
     private final ObjectProperty<@Nullable LocalizedText> name;
 
-    /// Returns the custom localized profile name property.
+    /// Returns the custom localized game directory profile name property.
     public ObjectProperty<@Nullable LocalizedText> nameProperty() {
         return name;
     }
 
-    /// Returns the custom localized profile name, or `null` when no name is stored.
+    /// Returns the custom localized game directory profile name, or `null` when no name is stored.
     public @Nullable LocalizedText getName() {
         return name.get();
     }
 
-    /// Sets the custom localized profile name.
+    /// Sets the custom localized game directory profile name.
     public void setName(@Nullable LocalizedText name) {
         this.name.set(name);
     }
@@ -111,13 +105,13 @@ public final class Profile implements Observable {
         this.legacyGameSettings.set(legacyGameSettings);
     }
 
-    /// Creates a profile.
-    public Profile(GameDirectoryID id, @Nullable LocalizedText name, PortablePath path) {
+    /// Creates a game directory profile.
+    public GameDirectoryProfile(GameDirectoryID id, @Nullable LocalizedText name, PortablePath path) {
         this(id, name, path, null);
     }
 
-    /// Creates a profile.
-    public Profile(
+    /// Creates a game directory profile.
+    public GameDirectoryProfile(
             GameDirectoryID id,
             @Nullable LocalizedText name,
             PortablePath path,
@@ -126,25 +120,11 @@ public final class Profile implements Observable {
         this.name = new SimpleObjectProperty<>(this, "name", name);
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
         this.legacyGameSettings = new SimpleObjectProperty<>(this, "legacyGameSettings", legacyGameSettings);
-        repository = new HMCLGameRepository(this, path.toPath());
-
-        this.path.addListener((a, b, newValue) -> repository.changeDirectory(newValue.toPath()));
 
         addPropertyChangedListener(onInvalidating(this::invalidate));
     }
 
-    public HMCLGameRepository getRepository() {
-        return repository;
-    }
-
-    public DefaultDependencyManager getDependency() {
-        return getDependency(DownloadProviders.getDownloadProvider());
-    }
-
-    public DefaultDependencyManager getDependency(DownloadProvider downloadProvider) {
-        return new DefaultDependencyManager(repository, downloadProvider, HMCLCacheRepository.REPOSITORY);
-    }
-
+    /// Returns a debug string containing the profile path and display metadata.
     @Override
     public String toString() {
         return new ToStringBuilder(this)
@@ -153,19 +133,23 @@ public final class Profile implements Observable {
                 .toString();
     }
 
+    /// Registers a listener that invalidates this profile when any stored property changes.
     private void addPropertyChangedListener(InvalidationListener listener) {
         name.addListener(listener);
         path.addListener(listener);
         legacyGameSettings.addListener(listener);
     }
 
+    /// Helper that stores and dispatches invalidation listeners for this profile.
     private final ObservableHelper observableHelper = new ObservableHelper(this);
 
+    /// Adds an invalidation listener.
     @Override
     public void addListener(InvalidationListener listener) {
         observableHelper.addListener(listener);
     }
 
+    /// Removes an invalidation listener.
     @Override
     public void removeListener(InvalidationListener listener) {
         observableHelper.removeListener(listener);
@@ -180,12 +164,20 @@ public final class Profile implements Observable {
         }
     }
 
-    public record ProfileVersion(Profile profile, @Nullable String version) {
+    /// Identifies a version by its owning game directory profile and version ID.
+    ///
+    /// @param profile the owning game directory profile
+    /// @param version the version ID, or `null` when no version is selected
+    @NotNullByDefault
+    public record ProfileVersion(GameDirectoryProfile profile, @Nullable String version) {
     }
 
-    public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {
+    /// Serializes and deserializes game directory profiles.
+    @NotNullByDefault
+    public static final class Serializer implements JsonSerializer<GameDirectoryProfile>, JsonDeserializer<GameDirectoryProfile> {
+        /// Serializes a game directory profile to JSON.
         @Override
-        public JsonElement serialize(@Nullable Profile src, Type typeOfSrc, JsonSerializationContext context) {
+        public JsonElement serialize(@Nullable GameDirectoryProfile src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null)
                 return JsonNull.INSTANCE;
 
@@ -205,8 +197,9 @@ public final class Profile implements Observable {
             return jsonObject;
         }
 
+        /// Deserializes a game directory profile from JSON.
         @Override
-        public @Nullable Profile deserialize(@Nullable JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        public @Nullable GameDirectoryProfile deserialize(@Nullable JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject obj)) return null;
             GameDirectoryID id = context.deserialize(obj.get("id"), GameDirectoryID.class);
             if (id == null) {
@@ -216,11 +209,11 @@ public final class Profile implements Observable {
             }
             PortablePath path = context.deserialize(obj.get("path"), PortablePath.class);
             if (path == null) {
-                throw new JsonParseException("Profile path cannot be null");
+                throw new JsonParseException("Game directory profile path cannot be null");
             }
             @Nullable LocalizedText name = context.deserialize(obj.get("name"), LocalizedText.class);
 
-            return new Profile(id,
+            return new GameDirectoryProfile(id,
                     name,
                     path,
                     context.deserialize(obj.get("legacyGameSettings"), GameSettingsPresetID.class));

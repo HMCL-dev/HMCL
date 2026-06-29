@@ -31,7 +31,8 @@ import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -64,7 +65,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
-    private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
+    private final ObjectProperty<GameDirectoryProfile.ProfileVersion> version = new SimpleObjectProperty<>();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private String preferredVersionName = null;
@@ -111,7 +112,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private void checkSelectedVersion() {
         runInFX(() -> {
             if (this.version.get() == null) return;
-            GameRepository repository = this.version.get().profile().getRepository();
+            GameRepository repository = GameDirectoryManager.getRepository(this.version.get().profile());
             if (!repository.hasVersion(this.version.get().version())) {
                 if (preferredVersionName != null) {
                     loadVersion(preferredVersionName, this.version.get().profile());
@@ -138,15 +139,15 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         tab.select(versionSettingsTab, false);
     }
 
-    public void setVersion(String version, Profile profile) {
-        this.version.set(new Profile.ProfileVersion(profile, version));
+    public void setVersion(String version, GameDirectoryProfile profile) {
+        this.version.set(new GameDirectoryProfile.ProfileVersion(profile, version));
     }
 
-    public void loadVersion(String version, Profile profile) {
+    public void loadVersion(String version, GameDirectoryProfile profile) {
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
-        if (this.version.get() != null && (!getProfile().getRepository().isLoaded() ||
-                !getProfile().getRepository().hasVersion(version))) {
+        if (this.version.get() != null && (!GameDirectoryManager.getRepository(getProfile()).isLoaded() ||
+                !GameDirectoryManager.getRepository(getProfile()).hasVersion(version))) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }
@@ -166,7 +167,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             worldListTab.getNode().loadVersion(profile, version);
         if (schematicsTab.isInitialized())
             schematicsTab.getNode().loadVersion(profile, version);
-        currentVersionUpgradable.set(profile.getRepository().isModpack(version));
+        currentVersionUpgradable.set(GameDirectoryManager.getRepository(profile).isModpack(version));
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
@@ -175,8 +176,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
-        if (!getProfile().getRepository().isLoaded() ||
-                !getProfile().getRepository().hasVersion(getVersion())) {
+        if (!GameDirectoryManager.getRepository(getProfile()).isLoaded() ||
+                !GameDirectoryManager.getRepository(getProfile()).hasVersion(getVersion())) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }
@@ -185,7 +186,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void onBrowse(String sub) {
-        FXUtils.openFolder(getProfile().getRepository().getRunDirectory(getVersion()).resolve(sub));
+        FXUtils.openFolder(GameDirectoryManager.getRepository(getProfile()).getRunDirectory(getVersion()).resolve(sub));
     }
 
     private void redownloadAssetIndex() {
@@ -193,7 +194,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearLibraries() {
-        var libraries = getProfile().getRepository().getBaseDirectory().resolve("libraries");
+        var libraries = GameDirectoryManager.getRepository(getProfile()).getBaseDirectory().resolve("libraries");
         Task.runAsync(Schedulers.io(), () -> {
             FileUtils.deleteDirectoryQuietly(libraries);
         }).whenComplete(Schedulers.javafx(), (exception) -> {
@@ -204,11 +205,11 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearAssets() {
-        Path assetsDir = getProfile().getRepository().getBaseDirectory().resolve("assets");
+        Path assetsDir = GameDirectoryManager.getRepository(getProfile()).getBaseDirectory().resolve("assets");
 
-        Profile.ProfileVersion currentVersion = version.get();
+        GameDirectoryProfile.ProfileVersion currentVersion = version.get();
         Path resourcesDir = currentVersion != null
-                ? getProfile().getRepository().getRunDirectory(currentVersion.version()).resolve("resources")
+                ? GameDirectoryManager.getRepository(getProfile()).getRunDirectory(currentVersion.version()).resolve("resources")
                 : null;
 
         Task.runAsync(Schedulers.io(), () -> {
@@ -256,12 +257,12 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         Versions.duplicateVersion(getProfile(), getVersion());
     }
 
-    public Profile getProfile() {
-        return Optional.ofNullable(version.get()).map(Profile.ProfileVersion::profile).orElse(null);
+    public GameDirectoryProfile getProfile() {
+        return Optional.ofNullable(version.get()).map(GameDirectoryProfile.ProfileVersion::profile).orElse(null);
     }
 
     public String getVersion() {
-        return Optional.ofNullable(version.get()).map(Profile.ProfileVersion::version).orElse(null);
+        return Optional.ofNullable(version.get()).map(GameDirectoryProfile.ProfileVersion::version).orElse(null);
     }
 
     @Override
@@ -354,6 +355,6 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     public interface VersionLoadable {
-        void loadVersion(Profile profile, String version);
+        void loadVersion(GameDirectoryProfile profile, String version);
     }
 }

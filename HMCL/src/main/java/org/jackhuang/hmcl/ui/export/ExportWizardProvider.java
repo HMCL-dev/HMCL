@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.export;
 
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
+
 import javafx.scene.Node;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.modpack.ModAdviser;
@@ -45,10 +47,10 @@ import java.util.List;
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 public final class ExportWizardProvider implements WizardProvider {
-    private final Profile profile;
+    private final GameDirectoryProfile profile;
     private final String version;
 
-    public ExportWizardProvider(Profile profile, String version) {
+    public ExportWizardProvider(GameDirectoryProfile profile, String version) {
         this.profile = profile;
         this.version = version;
     }
@@ -163,7 +165,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new McbbsModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
+                dependency = new McbbsModpackExportTask(GameDirectoryManager.getRepository(profile), version, exportInfo, modpackFile);
             }
 
             @Override
@@ -183,8 +185,8 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                GameSettings.Effective setting = profile.getRepository().getEffectiveGameSettings(version);
-                dependency = new MultiMCModpackExportTask(profile.getRepository(), version, exportInfo.getWhitelist(),
+                GameSettings.Effective setting = GameDirectoryManager.getRepository(profile).getEffectiveGameSettings(version);
+                dependency = new MultiMCModpackExportTask(GameDirectoryManager.getRepository(profile), version, exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",
                                 exportInfo.getName() + "-" + exportInfo.getVersion(),
@@ -231,7 +233,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new ServerModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
+                dependency = new ServerModpackExportTask(GameDirectoryManager.getRepository(profile), version, exportInfo, modpackFile);
             }
 
             @Override
@@ -252,7 +254,7 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
             public void execute() {
                 dependency = new ModrinthModpackExportTask(
-                        profile.getRepository(),
+                        GameDirectoryManager.getRepository(profile),
                         version,
                         exportInfo,
                         modpackFile
@@ -270,7 +272,7 @@ public final class ExportWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
         return switch (step) {
             case 0 -> new ModpackTypeSelectionPage(controller);
-            case 1 -> new ModpackInfoPage(controller, profile.getRepository(), version);
+            case 1 -> new ModpackInfoPage(controller, GameDirectoryManager.getRepository(profile), version);
             case 2 -> new ModpackFileSelectionPage(controller, profile, version, ModAdviser::suggestMod);
             default -> throw new IllegalArgumentException("step");
         };

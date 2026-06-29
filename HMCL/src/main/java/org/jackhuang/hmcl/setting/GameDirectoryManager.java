@@ -23,6 +23,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +53,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// callers should use this API instead of mutating the profile-related fields in
 /// [LauncherSettings] directly.
 @NotNullByDefault
-public final class Profiles {
+public final class GameDirectoryManager {
 
     /// The default current-workspace game directory path.
     private static final PortablePath CURRENT_PROFILE_PATH = PortablePath.of(".minecraft");
@@ -59,7 +61,8 @@ public final class Profiles {
     /// The default user-home game directory path.
     private static final PortablePath HOME_PROFILE_PATH = PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY);
 
-    private Profiles() {
+    /// Prevents instantiation.
+    private GameDirectoryManager() {
     }
 
     /// Creates a profile ID that does not collide with existing profiles.
@@ -80,7 +83,7 @@ public final class Profiles {
     }
 
     /// Returns the display name for the given profile.
-    public static String getProfileDisplayName(Profile profile) {
+    public static String getProfileDisplayName(GameDirectoryProfile profile) {
         String name = getProfileCustomName(profile);
         if (name != null) {
             return name;
@@ -97,13 +100,13 @@ public final class Profiles {
     }
 
     /// Returns the custom profile name in the current locale.
-    public static @Nullable String getProfileCustomName(Profile profile) {
+    public static @Nullable String getProfileCustomName(GameDirectoryProfile profile) {
         @Nullable LocalizedText name = profile.getName();
         return name != null ? name.getText(I18n.getLocale().getCandidateLocales()) : null;
     }
 
     /// Returns whether the profile uses the given path.
-    private static boolean isProfilePath(Profile profile, PortablePath expectedPath) {
+    private static boolean isProfilePath(GameDirectoryProfile profile, PortablePath expectedPath) {
         PortablePath actualPath = profile.getPath();
         return actualPath.isAbsolute() == expectedPath.isAbsolute()
                 && actualPath.getPath().equals(expectedPath.getPath());
@@ -112,16 +115,25 @@ public final class Profiles {
     /// True if [#init()] hasn't been called.
     private static boolean initialized = false;
 
-    private static final ObservableList<Profile> mergedProfiles =
+    /// The mutable merged profile list used by UI bindings and profile selection.
+    private static final ObservableList<GameDirectoryProfile> mergedProfiles =
             FXCollections.observableArrayList(profile -> new javafx.beans.Observable[]{profile});
 
-    private static final @UnmodifiableView ObservableList<Profile> mergedProfilesUnmodifiable =
+    /// Read-only view of [#mergedProfiles] exposed to callers.
+    private static final @UnmodifiableView ObservableList<GameDirectoryProfile> mergedProfilesUnmodifiable =
             FXCollections.unmodifiableObservableList(mergedProfiles);
 
-    /// The selected profile, or `null` before the fallback profile is resolved.
-    private static final ObjectProperty<@UnknownNullability Profile> selectedProfile = new SimpleObjectProperty<>(Profiles.class, "selectedProfile");
+    /// Runtime repositories keyed by profile object identity.
+    private static final Map<GameDirectoryProfile, HMCLGameRepository> repositories = new IdentityHashMap<>();
 
-    private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper(Profiles.class, "selectedInstance");
+    /// The selected profile, or `null` before the fallback profile is resolved.
+    private static final ObjectProperty<@UnknownNullability GameDirectoryProfile> selectedProfile = new SimpleObjectProperty<>(GameDirectoryManager.class, "selectedProfile");
+
+    /// The selected game repository, or `null` before the fallback profile is resolved.
+    private static final ObjectProperty<@UnknownNullability HMCLGameRepository> selectedRepository = new SimpleObjectProperty<>(GameDirectoryManager.class, "selectedRepository");
+
+    /// The selected instance ID for the selected profile.
+    private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper(GameDirectoryManager.class, "selectedInstance");
 
     /// Initializes profile state from the game directory stores loaded by [SettingsManager].
     ///
@@ -139,12 +151,12 @@ public final class Profiles {
         if (localGameDirectories().isNewlyCreated() && localGameDirectories().getGameDirectories().isEmpty()) {
             needRebuildProfiles = true;
             GameDirectories gameDirectories = localGameDirectories();
-            gameDirectories.getGameDirectories().add(new Profile(newProfileId(), null, CURRENT_PROFILE_PATH));
+            gameDirectories.getGameDirectories().add(new GameDirectoryProfile(newProfileId(), null, CURRENT_PROFILE_PATH));
         }
         if (userGameDirectories().isNewlyCreated() && userGameDirectories().getGameDirectories().isEmpty()) {
             needRebuildProfiles = true;
             GameDirectories gameDirectories = userGameDirectories();
-            gameDirectories.getGameDirectories().add(new Profile(newProfileId(), null, HOME_PROFILE_PATH));
+            gameDirectories.getGameDirectories().add(new GameDirectoryProfile(newProfileId(), null, HOME_PROFILE_PATH));
         }
 
         needRebuildProfiles |= createDefaultProfilesIfEmpty();
@@ -155,10 +167,10 @@ public final class Profiles {
         assert !mergedProfiles.isEmpty();
 
         @Nullable GameDirectoryID selectedId = settings().selectedGameDirectoryProperty().get();
-        Profile currentProfile = null;
+        GameDirectoryProfile currentProfile = null;
 
         if (selectedId != null) {
-            for (Profile profile : mergedProfiles) {
+            for (GameDirectoryProfile profile : mergedProfiles) {
                 if (profile.getId().equals(selectedId)) {
                     currentProfile = profile;
                     break;
@@ -173,26 +185,30 @@ public final class Profiles {
 
             settings().selectedGameDirectoryProperty().set(newValue.getId());
             selectedInstance.set(settings().getSelectedInstance(newValue.getId()));
-            newValue.getRepository().refreshVersionsAsync().start();
+            HMCLGameRepository repository = getRepository(newValue);
+            selectedRepository.set(repository);
+            repository.refreshVersionsAsync().start();
         });
         selectedProfile.set(currentProfile != null ? currentProfile : mergedProfiles.get(0));
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
             runInFX(() -> {
-                @Nullable Profile profile = selectedProfile.get();
-                if (profile != null && profile.getRepository() == event.getSource()) {
-                    refreshSelectedVersion(profile);
-                    for (Consumer<Profile> listener : versionsListeners)
-                        listener.accept(profile);
+                @Nullable HMCLGameRepository repository = selectedRepository.get();
+                if (repository != null && repository == event.getSource()) {
+                    refreshSelectedVersion(repository);
+                    for (Consumer<HMCLGameRepository> listener : versionsListeners)
+                        listener.accept(repository);
                 }
             });
         });
     }
 
-    private static void refreshSelectedVersion(Profile profile) {
+    /// Refreshes selected instance state after the selected repository finishes loading versions.
+    private static void refreshSelectedVersion(HMCLGameRepository repository) {
+        GameDirectoryProfile profile = repository.getProfile();
         String version = settings().getSelectedInstance(profile.getId());
-        if (!profile.getRepository().hasVersion(version)) {
-            Optional<String> fallback = profile.getRepository().getVersions().stream()
+        if (!repository.hasVersion(version)) {
+            Optional<String> fallback = repository.getVersions().stream()
                     .findFirst()
                     .map(Version::getId);
             version = fallback.orElse(null);
@@ -208,9 +224,9 @@ public final class Profiles {
         if (localGameDirectories().getGameDirectories().isEmpty()
                 && userGameDirectories().getGameDirectories().isEmpty()) {
             localGameDirectories().getGameDirectories()
-                    .add(new Profile(newProfileId(), null, CURRENT_PROFILE_PATH));
+                    .add(new GameDirectoryProfile(newProfileId(), null, CURRENT_PROFILE_PATH));
             userGameDirectories().getGameDirectories()
-                    .add(new Profile(newProfileId(), null, HOME_PROFILE_PATH));
+                    .add(new GameDirectoryProfile(newProfileId(), null, HOME_PROFILE_PATH));
             return true;
         } else {
             return false;
@@ -221,13 +237,13 @@ public final class Profiles {
     private static void rebuildProfiles() {
         GameDirectories userGameDirectories = userGameDirectories();
         GameDirectories localGameDirectories = localGameDirectories();
-        Map<GameDirectoryID, Profile> visibleProfiles = new LinkedHashMap<>();
+        Map<GameDirectoryID, GameDirectoryProfile> visibleProfiles = new LinkedHashMap<>();
 
-        for (Profile profile : localGameDirectories.getGameDirectories()) {
+        for (GameDirectoryProfile profile : localGameDirectories.getGameDirectories()) {
             GameDirectoryID id = profile.getId();
             visibleProfiles.put(id, profile);
         }
-        for (Profile profile : userGameDirectories.getGameDirectories()) {
+        for (GameDirectoryProfile profile : userGameDirectories.getGameDirectories()) {
             GameDirectoryID id = profile.getId();
             visibleProfiles.putIfAbsent(id, profile);
         }
@@ -236,12 +252,18 @@ public final class Profiles {
     }
 
     /// Returns the read-only merged profile list.
-    public static @UnmodifiableView ObservableList<Profile> getProfiles() {
+    public static @UnmodifiableView ObservableList<GameDirectoryProfile> getProfiles() {
         return mergedProfilesUnmodifiable;
     }
 
+    /// Returns the repository for the given game directory profile.
+    public static HMCLGameRepository getRepository(GameDirectoryProfile profile) {
+        Objects.requireNonNull(profile);
+        return repositories.computeIfAbsent(profile, HMCLGameRepository::new);
+    }
+
     /// Adds a profile to the per-workspace game directory store.
-    public static void addLocalProfile(Profile profile) {
+    public static void addLocalProfile(GameDirectoryProfile profile) {
         if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
             throw new IllegalStateException("Local game directories are read-only");
         }
@@ -249,7 +271,7 @@ public final class Profiles {
     }
 
     /// Adds a profile to the user game directory store.
-    public static void addUserProfile(Profile profile) {
+    public static void addUserProfile(GameDirectoryProfile profile) {
         if (SettingsManager.isUserGameDirectoriesReadOnly()) {
             throw new IllegalStateException("User game directories are read-only");
         }
@@ -261,7 +283,7 @@ public final class Profiles {
     /// @param profile the profile to update
     /// @param path the new profile path
     /// @return whether both the current and target stores may be edited
-    public static boolean canUpdateProfile(Profile profile, PortablePath path) {
+    public static boolean canUpdateProfile(GameDirectoryProfile profile, PortablePath path) {
         GameDirectories source = requireProfileStore(profile);
         GameDirectories target = getProfileStore(path);
         return !isGameDirectoriesReadOnly(source) && !isGameDirectoriesReadOnly(target);
@@ -271,7 +293,7 @@ public final class Profiles {
     ///
     /// @param profile the profile to update
     /// @param path the new profile path
-    public static void forceOverwriteProfileFiles(Profile profile, PortablePath path) {
+    public static void forceOverwriteProfileFiles(GameDirectoryProfile profile, PortablePath path) {
         GameDirectories source = requireProfileStore(profile);
         GameDirectories target = getProfileStore(path);
         forceOverwriteGameDirectoriesIfReadOnly(source);
@@ -285,7 +307,7 @@ public final class Profiles {
     /// @param profile the profile to update
     /// @param name the new custom profile name, or `null` for an unnamed profile
     /// @param path the new profile path
-    public static void updateProfile(Profile profile, @Nullable LocalizedText name, PortablePath path) {
+    public static void updateProfile(GameDirectoryProfile profile, @Nullable LocalizedText name, PortablePath path) {
         GameDirectories source = requireProfileStore(profile);
         GameDirectories target = getProfileStore(path);
         if (isGameDirectoriesReadOnly(source) || isGameDirectoriesReadOnly(target)) {
@@ -308,7 +330,7 @@ public final class Profiles {
     ///
     /// @param profile the profile to remove
     /// @return whether all containing stores may be edited
-    public static boolean canRemoveProfile(Profile profile) {
+    public static boolean canRemoveProfile(GameDirectoryProfile profile) {
         boolean localContains = localGameDirectories().getGameDirectories().contains(profile);
         boolean userContains = userGameDirectories().getGameDirectories().contains(profile);
         return (!localContains || !SettingsManager.isLocalGameDirectoriesReadOnly())
@@ -318,7 +340,7 @@ public final class Profiles {
     /// Backs up and overwrites read-only game directory files required to remove a profile.
     ///
     /// @param profile the profile to remove
-    public static void forceOverwriteProfileFiles(Profile profile) {
+    public static void forceOverwriteProfileFiles(GameDirectoryProfile profile) {
         if (localGameDirectories().getGameDirectories().contains(profile)) {
             forceOverwriteGameDirectoriesIfReadOnly(localGameDirectories());
         }
@@ -328,12 +350,13 @@ public final class Profiles {
     }
 
     /// Adds a profile to the given game directory store, replacing a profile with the same ID in that store.
-    private static void addProfile(GameDirectories gameDirectories, Profile profile) {
+    private static void addProfile(GameDirectories gameDirectories, GameDirectoryProfile profile) {
         Objects.requireNonNull(profile);
-        ObservableList<Profile> profiles = gameDirectories.getGameDirectories();
+        ObservableList<GameDirectoryProfile> profiles = gameDirectories.getGameDirectories();
         GameDirectoryID id = profile.getId();
         for (int i = 0; i < profiles.size(); i++) {
             if (profiles.get(i).getId().equals(id)) {
+                repositories.remove(profiles.get(i));
                 profiles.set(i, profile);
                 rebuildProfiles();
                 return;
@@ -345,13 +368,14 @@ public final class Profiles {
     }
 
     /// Removes a profile and recreates the built-in game directories when the list becomes empty.
-    public static void removeProfile(Profile profile) {
+    public static void removeProfile(GameDirectoryProfile profile) {
         if (!canRemoveProfile(profile)) {
             throw new IllegalStateException("Game directories are read-only");
         }
 
         userGameDirectories().getGameDirectories().remove(profile);
         localGameDirectories().getGameDirectories().remove(profile);
+        repositories.remove(profile);
         createDefaultProfilesIfEmpty();
         rebuildProfiles();
 
@@ -367,7 +391,7 @@ public final class Profiles {
     }
 
     /// Returns the store currently containing the profile.
-    private static @Nullable GameDirectories findProfileStore(Profile profile) {
+    private static @Nullable GameDirectories findProfileStore(GameDirectoryProfile profile) {
         Objects.requireNonNull(profile);
         if (localGameDirectories().getGameDirectories().contains(profile)) {
             return localGameDirectories();
@@ -379,10 +403,10 @@ public final class Profiles {
     }
 
     /// Returns the store currently containing the profile, or throws when it is detached.
-    private static GameDirectories requireProfileStore(Profile profile) {
+    private static GameDirectories requireProfileStore(GameDirectoryProfile profile) {
         @Nullable GameDirectories gameDirectories = findProfileStore(profile);
         if (gameDirectories == null) {
-            throw new IllegalArgumentException("Profile does not belong to a game directory store");
+            throw new IllegalArgumentException("GameDirectoryProfile does not belong to a game directory store");
         }
         return gameDirectories;
     }
@@ -408,16 +432,25 @@ public final class Profiles {
     }
 
     /// Returns the selected profile, creating built-in profiles first if the profile list is empty.
-    public static Profile getSelectedProfile() {
-        Profile profile = selectedProfile.get();
+    public static GameDirectoryProfile getSelectedProfile() {
+        GameDirectoryProfile profile = selectedProfile.get();
         if (profile == null) {
             throw new IllegalStateException("Selected profile cannot be null");
         }
         return profile;
     }
 
+    /// Returns the selected game repository.
+    public static HMCLGameRepository getSelectedRepository() {
+        HMCLGameRepository repository = selectedRepository.get();
+        if (repository == null) {
+            throw new IllegalStateException("Selected repository cannot be null");
+        }
+        return repository;
+    }
+
     /// Sets the selected profile.
-    public static void setSelectedProfile(Profile profile) {
+    public static void setSelectedProfile(GameDirectoryProfile profile) {
         Objects.requireNonNull(profile);
         if (!mergedProfiles.contains(profile)) {
             throw new IllegalArgumentException("Unknown profile: " + profile);
@@ -428,10 +461,15 @@ public final class Profiles {
     /// Returns the selected profile property.
     ///
     /// The property is exposed for UI binding. Values should be changed through
-    /// [#setSelectedProfile(Profile)] or by bidirectional bindings that only select
+    /// [#setSelectedProfile(GameDirectoryProfile)] or by bidirectional bindings that only select
     /// profiles from [#getProfiles()].
-    public static ObjectProperty<Profile> selectedProfileProperty() {
+    public static ObjectProperty<GameDirectoryProfile> selectedProfileProperty() {
         return selectedProfile;
+    }
+
+    /// Returns the selected game repository property.
+    public static ObjectProperty<HMCLGameRepository> selectedRepositoryProperty() {
+        return selectedRepository;
     }
 
     /// Returns the selected instance property for the selected profile.
@@ -445,33 +483,34 @@ public final class Profiles {
     }
 
     /// Returns the selected instance ID for the given profile.
-    public static @Nullable String getSelectedInstance(Profile profile) {
+    public static @Nullable String getSelectedInstance(GameDirectoryProfile profile) {
         return settings().getSelectedInstance(profile.getId());
     }
 
     /// Sets the selected instance ID for the currently selected profile.
     public static void setSelectedInstance(@Nullable String instance) {
-        @Nullable Profile profile = selectedProfile.get();
+        @Nullable GameDirectoryProfile profile = selectedProfile.get();
         if (profile != null) {
             setSelectedInstance(profile, instance);
         }
     }
 
     /// Sets the selected instance ID for the given profile.
-    public static void setSelectedInstance(Profile profile, @Nullable String instance) {
+    public static void setSelectedInstance(GameDirectoryProfile profile, @Nullable String instance) {
         settings().setSelectedInstance(profile.getId(), instance);
         if (profile == selectedProfile.get()) {
             selectedInstance.set(settings().getSelectedInstance(profile.getId()));
         }
     }
 
-    private static final List<Consumer<Profile>> versionsListeners = new ArrayList<>(4);
+    /// Listeners notified after the selected repository has loaded versions.
+    private static final List<Consumer<HMCLGameRepository>> versionsListeners = new ArrayList<>(4);
 
-    /// Registers a listener that is notified when the selected profile's versions are available.
-    public static void registerVersionsListener(Consumer<Profile> listener) {
-        Profile profile = getSelectedProfile();
-        if (profile.getRepository().isLoaded())
-            listener.accept(profile);
+    /// Registers a listener that is notified when the selected repository's versions are available.
+    public static void registerVersionsListener(Consumer<HMCLGameRepository> listener) {
+        HMCLGameRepository repository = getSelectedRepository();
+        if (repository.isLoaded())
+            listener.accept(repository);
         versionsListeners.add(listener);
     }
 }

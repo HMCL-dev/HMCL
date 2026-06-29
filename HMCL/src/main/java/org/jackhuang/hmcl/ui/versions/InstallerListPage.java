@@ -23,7 +23,8 @@ import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -43,7 +44,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallerListPage extends ListPageBase<InstallerItem> implements VersionPage.VersionLoadable {
-    private Profile profile;
+    private GameDirectoryProfile profile;
     private String versionId;
     private Version version;
     private String gameVersion;
@@ -61,16 +62,16 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     }
 
     @Override
-    public void loadVersion(Profile profile, String versionId) {
+    public void loadVersion(GameDirectoryProfile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
-        this.version = profile.getRepository().getVersion(versionId);
+        this.version = GameDirectoryManager.getRepository(profile).getVersion(versionId);
         this.gameVersion = null;
 
         CompletableFuture.supplyAsync(() -> {
-            gameVersion = profile.getRepository().getGameVersion(version).orElse(null);
+            gameVersion = GameDirectoryManager.getRepository(profile).getGameVersion(version).orElse(null);
 
-            return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId), gameVersion);
+            return LibraryAnalyzer.analyze(GameDirectoryManager.getRepository(profile).getResolvedPreservingPatchesVersion(versionId), gameVersion);
         }).thenAcceptAsync(analyzer -> {
             itemsProperty().clear();
 
@@ -101,9 +102,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                     Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
                 });
 
-                item.setOnRemove(() -> profile.getDependency().removeLibraryAsync(version, libraryId)
-                        .thenComposeAsync(profile.getRepository()::saveAsync)
-                        .withComposeAsync(profile.getRepository().refreshVersionsAsync())
+                item.setOnRemove(() -> GameDirectoryManager.getRepository(profile).getDependency().removeLibraryAsync(version, libraryId)
+                        .thenComposeAsync(GameDirectoryManager.getRepository(profile)::saveAsync)
+                        .withComposeAsync(GameDirectoryManager.getRepository(profile).refreshVersionsAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
                         .start());
 
@@ -123,9 +124,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
                 InstallerItem installerItem = new InstallerItem(libraryId, InstallerItem.Style.LIST_ITEM);
                 installerItem.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
-                installerItem.setOnRemove(() -> profile.getDependency().removeLibraryAsync(version, libraryId)
-                        .thenComposeAsync(profile.getRepository()::saveAsync)
-                        .withComposeAsync(profile.getRepository().refreshVersionsAsync())
+                installerItem.setOnRemove(() -> GameDirectoryManager.getRepository(profile).getDependency().removeLibraryAsync(version, libraryId)
+                        .thenComposeAsync(GameDirectoryManager.getRepository(profile)::saveAsync)
+                        .withComposeAsync(GameDirectoryManager.getRepository(profile).refreshVersionsAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
                         .start());
 
@@ -142,9 +143,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     }
 
     private void doInstallOffline(Path file) {
-        Task<?> task = profile.getDependency().installLibraryAsync(version, file)
-                .thenComposeAsync(profile.getRepository()::saveAsync)
-                .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
+        Task<?> task = GameDirectoryManager.getRepository(profile).getDependency().installLibraryAsync(version, file)
+                .thenComposeAsync(GameDirectoryManager.getRepository(profile)::saveAsync)
+                .thenComposeAsync(GameDirectoryManager.getRepository(profile).refreshVersionsAsync());
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override

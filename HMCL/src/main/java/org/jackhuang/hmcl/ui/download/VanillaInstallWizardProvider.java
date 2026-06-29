@@ -23,8 +23,8 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -34,14 +34,14 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VanillaInstallWizardProvider implements WizardProvider {
-    private final Profile profile;
+    private final GameDirectoryProfile profile;
     private final DefaultDependencyManager dependencyManager;
     private final DownloadProvider downloadProvider;
 
-    public VanillaInstallWizardProvider(Profile profile) {
+    public VanillaInstallWizardProvider(GameDirectoryProfile profile) {
         this.profile = profile;
         this.downloadProvider = DownloadProviders.getDownloadProvider();
-        this.dependencyManager = profile.getDependency(downloadProvider);
+        this.dependencyManager = GameDirectoryManager.getRepository(profile).getDependency(downloadProvider);
     }
 
     @Override
@@ -62,10 +62,10 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         });
 
         return builder.buildAsync().whenComplete(any -> {
-            profile.getRepository().refreshVersions();
-            profile.getRepository().applyDefaultIsolationSetting(name);
+            GameDirectoryManager.getRepository(profile).refreshVersions();
+            GameDirectoryManager.getRepository(profile).applyDefaultIsolationSetting(name);
         })
-                .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
+                .thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(profile, name));
     }
 
     @Override
@@ -82,7 +82,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         switch (step) {
             case 0:
                 return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.game")), "", downloadProvider, "game",
-                        () -> controller.onNext(new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider)));
+                        () -> controller.onNext(new InstallersPage(controller, GameDirectoryManager.getRepository(profile), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider)));
             default:
                 throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
         }

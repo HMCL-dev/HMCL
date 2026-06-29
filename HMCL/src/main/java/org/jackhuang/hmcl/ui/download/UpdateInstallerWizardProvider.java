@@ -23,7 +23,8 @@ import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -46,7 +47,7 @@ import java.util.zip.ZipException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class UpdateInstallerWizardProvider implements WizardProvider {
-    private final Profile profile;
+    private final GameDirectoryProfile profile;
     private final DefaultDependencyManager dependencyManager;
     private final String gameVersion;
     private final Version version;
@@ -54,14 +55,14 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     private final String oldLibraryVersion;
     private final DownloadProvider downloadProvider;
 
-    public UpdateInstallerWizardProvider(@NotNull Profile profile, @NotNull String gameVersion, @NotNull Version version, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
+    public UpdateInstallerWizardProvider(@NotNull GameDirectoryProfile profile, @NotNull String gameVersion, @NotNull Version version, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
         this.profile = profile;
         this.gameVersion = gameVersion;
         this.version = version;
         this.libraryId = libraryId;
         this.oldLibraryVersion = oldLibraryVersion;
         this.downloadProvider = DownloadProviders.getDownloadProvider();
-        this.dependencyManager = profile.getDependency(downloadProvider);
+        this.dependencyManager = GameDirectoryManager.getRepository(profile).getDependency(downloadProvider);
     }
 
     @Override
@@ -91,7 +92,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             }
         }
 
-        return ret.thenComposeAsync(profile.getRepository()::saveAsync).thenComposeAsync(profile.getRepository().refreshVersionsAsync()).withStagesHints(hints);
+        return ret.thenComposeAsync(GameDirectoryManager.getRepository(profile)::saveAsync).thenComposeAsync(GameDirectoryManager.getRepository(profile).refreshVersionsAsync()).withStagesHints(hints);
     }
 
     @Override
@@ -103,7 +104,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                         controller.onFinish();
                     } else if ("game".equals(libraryId)) {
                         String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
-                        controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, profile.getRepository(), downloadProvider));
+                        controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, GameDirectoryManager.getRepository(profile), downloadProvider));
                     } else {
                         Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);

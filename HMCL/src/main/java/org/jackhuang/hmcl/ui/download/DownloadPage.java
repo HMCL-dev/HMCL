@@ -25,9 +25,10 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -112,7 +113,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteAddonRepository.WORLDS)));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 
-        Profiles.registerVersionsListener(this::loadVersions);
+        GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
         tab.select(newGameTab);
 
@@ -135,16 +136,16 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         return () -> {
             T node = nodeSupplier.get();
             if (node instanceof VersionPage.VersionLoadable) {
-                ((VersionPage.VersionLoadable) node).loadVersion(Profiles.getSelectedProfile(), null);
+                ((VersionPage.VersionLoadable) node).loadVersion(GameDirectoryManager.getSelectedProfile(), null);
             }
             return node;
         };
     }
 
-    public static void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteAddon.Version file, String subdirectoryName) {
-        if (version == null) version = Profiles.getSelectedInstance(profile);
+    public static void download(DownloadProvider downloadProvider, GameDirectoryProfile profile, @Nullable String version, RemoteAddon.Version file, String subdirectoryName) {
+        if (version == null) version = GameDirectoryManager.getSelectedInstance(profile);
 
-        Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
+        Path runDirectory = GameDirectoryManager.getRepository(profile).hasVersion(version) ? GameDirectoryManager.getRepository(profile).getRunDirectory(version) : GameDirectoryManager.getRepository(profile).getBaseDirectory();
 
         Set<String> existingFiles;
 
@@ -182,11 +183,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     }
 
-    private void loadVersions(Profile profile) {
+    private void loadVersions(HMCLGameRepository repository) {
+        GameDirectoryProfile profile = repository.getProfile();
         listenerHolder = new WeakListenerHolder();
         runInFX(() -> {
-            if (profile == Profiles.getSelectedProfile()) {
-                listenerHolder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedInstanceProperty(), version -> {
+            if (profile == GameDirectoryManager.getSelectedProfile()) {
+                listenerHolder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), version -> {
                     if (modTab.isInitialized()) {
                         modTab.getNode().loadVersion(profile, null);
                     }
@@ -277,8 +279,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         public void onGameSelected() {
-            Profile profile = Profiles.getSelectedProfile();
-            if (profile.getRepository().isLoaded()) {
+            GameDirectoryProfile profile = GameDirectoryManager.getSelectedProfile();
+            if (GameDirectoryManager.getRepository(profile).isLoaded()) {
                 Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(profile, (GameRemoteVersion) settings.get("game")), i18n("install.new_game"));
             }
         }
@@ -286,16 +288,16 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     private static class VanillaInstallWizardProvider implements WizardProvider {
-        private final Profile profile;
+        private final GameDirectoryProfile profile;
         private final DefaultDependencyManager dependencyManager;
         private final DownloadProvider downloadProvider;
         private final GameRemoteVersion gameVersion;
 
-        public VanillaInstallWizardProvider(Profile profile, GameRemoteVersion gameVersion) {
+        public VanillaInstallWizardProvider(GameDirectoryProfile profile, GameRemoteVersion gameVersion) {
             this.profile = profile;
             this.gameVersion = gameVersion;
             this.downloadProvider = DownloadProviders.getDownloadProvider();
-            this.dependencyManager = profile.getDependency(downloadProvider);
+            this.dependencyManager = GameDirectoryManager.getRepository(profile).getDependency(downloadProvider);
         }
 
         @Override
@@ -318,9 +320,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             });
 
             return builder.buildAsync().whenComplete(any -> {
-                profile.getRepository().refreshVersions();
-                profile.getRepository().applyDefaultIsolationSetting(name);
-            }).thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
+                GameDirectoryManager.getRepository(profile).refreshVersions();
+                GameDirectoryManager.getRepository(profile).applyDefaultIsolationSetting(name);
+            }).thenRunAsync(Schedulers.javafx(), () -> GameDirectoryManager.setSelectedInstance(profile, name));
         }
 
         @Override
@@ -336,7 +338,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public Node createPage(WizardController controller, int step, SettingsMap settings) {
             switch (step) {
                 case 0:
-                    return new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
+                    return new InstallersPage(controller, GameDirectoryManager.getRepository(profile), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
                 default:
                     throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
             }

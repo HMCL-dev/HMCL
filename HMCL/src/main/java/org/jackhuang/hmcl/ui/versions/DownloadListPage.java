@@ -43,8 +43,8 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -72,7 +72,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean versionSelection;
-    private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
+    private final ObjectProperty<GameDirectoryProfile.ProfileVersion> version = new SimpleObjectProperty<>();
     private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
     private final IntegerProperty pageCount = new SimpleIntegerProperty(-1);
     private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
@@ -111,8 +111,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     @Override
-    public void loadVersion(Profile profile, String version) {
-        this.version.set(new Profile.ProfileVersion(profile, version));
+    public void loadVersion(GameDirectoryProfile profile, String version) {
+        this.version.set(new GameDirectoryProfile.ProfileVersion(profile, version));
 
         setLoading(false);
         setFailed(false);
@@ -123,10 +123,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
 
         if (versionSelection) {
-            versions.setAll(profile.getRepository().getDisplayVersions()
+            versions.setAll(GameDirectoryManager.getRepository(profile).getDisplayVersions()
                     .map(Version::getId)
                     .collect(Collectors.toList()));
-            selectedVersion.set(Profiles.getSelectedInstance(profile));
+            selectedVersion.set(GameDirectoryManager.getSelectedInstance(profile));
         }
     }
 
@@ -165,12 +165,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
         int currentSearchID = searchID = searchID + 1;
         Task.supplyAsync(() -> {
-            Profile.ProfileVersion version = this.version.get();
+            GameDirectoryProfile.ProfileVersion version = this.version.get();
             if (StringUtils.isBlank(version.version())) {
                 return userGameVersion;
             } else {
                 return StringUtils.isNotBlank(version.version())
-                        ? version.profile().getRepository().getGameVersion(version.version()).orElse("")
+                        ? GameDirectoryManager.getRepository(version.profile()).getGameVersion(version.version()).orElse("")
                         : "";
             }
         }).thenApplyAsync(
@@ -218,9 +218,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
     }
 
-    protected Profile.ProfileVersion getProfileVersion() {
+    protected GameDirectoryProfile.ProfileVersion getProfileVersion() {
         if (versionSelection) {
-            return new Profile.ProfileVersion(version.get().profile(), selectedVersion.get());
+            return new GameDirectoryProfile.ProfileVersion(version.get().profile(), selectedVersion.get());
         } else {
             return version.get();
         }

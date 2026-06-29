@@ -25,6 +25,7 @@ import com.google.gson.JsonParser;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
@@ -39,6 +40,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
@@ -67,7 +69,7 @@ public final class GameDirectoriesTest {
         assertFalse(settings.has("configurations"));
         assertEquals(1, gameDirectories.getGameDirectories().size());
         assertEquals(id, gameDirectories.getGameDirectories().get(0).getId());
-        assertEquals("Dev", Profiles.getProfileCustomName(gameDirectories.getGameDirectories().get(0)));
+        assertEquals("Dev", GameDirectoryManager.getProfileCustomName(gameDirectories.getGameDirectories().get(0)));
         assertEquals(".minecraft", gameDirectories.getGameDirectories().get(0).getPath().getPath());
         assertNull(gameDirectories.getGameDirectories().get(0).getLegacyGameSettings());
     }
@@ -95,22 +97,22 @@ public final class GameDirectoriesTest {
 
         GameDirectoryID defaultProfileId = LegacyConfigMigrator.getLegacyProfileID("Default");
         GameDirectoryID homeProfileId = LegacyConfigMigrator.getLegacyProfileID("Home");
-        Profile defaultProfile = gameDirectories.getGameDirectories().stream()
+        GameDirectoryProfile defaultProfile = gameDirectories.getGameDirectories().stream()
                 .filter(profile -> defaultProfileId.equals(profile.getId()))
                 .findFirst()
                 .orElseThrow();
-        Profile homeProfile = gameDirectories.getGameDirectories().stream()
+        GameDirectoryProfile homeProfile = gameDirectories.getGameDirectories().stream()
                 .filter(profile -> homeProfileId.equals(profile.getId()))
                 .findFirst()
                 .orElseThrow();
-        Profile devProfile = gameDirectories.getGameDirectories().stream()
-                .filter(profile -> "Dev".equals(Profiles.getProfileCustomName(profile)))
+        GameDirectoryProfile devProfile = gameDirectories.getGameDirectories().stream()
+                .filter(profile -> "Dev".equals(GameDirectoryManager.getProfileCustomName(profile)))
                 .findFirst()
                 .orElseThrow();
 
         assertNull(defaultProfile.getName());
         assertNull(homeProfile.getName());
-        assertEquals("Dev", Profiles.getProfileCustomName(devProfile));
+        assertEquals("Dev", GameDirectoryManager.getProfileCustomName(devProfile));
     }
 
     /// Tests migrating legacy selected version fields into the main config.
@@ -172,10 +174,10 @@ public final class GameDirectoriesTest {
     @Test
     public void storesProfilePath() {
         GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
-        Profile profile = new Profile(id, LocalizedText.plain("Dev"), PortablePath.of("versions\\Dev"));
+        GameDirectoryProfile profile = new GameDirectoryProfile(id, LocalizedText.plain("Dev"), PortablePath.of("versions\\Dev"));
 
-        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
-        Profile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, Profile.class));
+        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, GameDirectoryProfile.class).getAsJsonObject();
+        GameDirectoryProfile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, GameDirectoryProfile.class));
 
         assertEquals("versions/Dev", serialized.get("path").getAsString());
         assertEquals("Dev", serialized.get("name").getAsString());
@@ -191,14 +193,14 @@ public final class GameDirectoriesTest {
         GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
         GameSettingsPresetID legacyGameSettings =
                 GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
-        Profile profile = new Profile(
+        GameDirectoryProfile profile = new GameDirectoryProfile(
                 id,
                 LocalizedText.plain("Dev"),
                 PortablePath.of("versions\\Dev"),
                 legacyGameSettings);
 
-        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, Profile.class).getAsJsonObject();
-        Profile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, Profile.class));
+        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, GameDirectoryProfile.class).getAsJsonObject();
+        GameDirectoryProfile deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, GameDirectoryProfile.class));
 
         assertEquals(legacyGameSettings.toString(), serialized.get("legacyGameSettings").getAsString());
         assertEquals(legacyGameSettings, deserialized.getLegacyGameSettings());
@@ -208,9 +210,9 @@ public final class GameDirectoriesTest {
     @Test
     public void keepsShadowedUserProfileInBackingStore() throws ReflectiveOperationException {
         GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
-        Profile userProfile = new Profile(id, LocalizedText.plain("User"), PortablePath.of("user/Dev"));
-        Profile localProfile = new Profile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
-        Profile addedProfile = new Profile(
+        GameDirectoryProfile userProfile = new GameDirectoryProfile(id, LocalizedText.plain("User"), PortablePath.of("user/Dev"));
+        GameDirectoryProfile localProfile = new GameDirectoryProfile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
+        GameDirectoryProfile addedProfile = new GameDirectoryProfile(
                 GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174001"),
                 LocalizedText.plain("Added"),
                 PortablePath.of("local/Added"));
@@ -222,30 +224,30 @@ public final class GameDirectoriesTest {
         localDirectories.setUserFile(false);
 
         try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
-            Profiles.init();
-            ObservableList<Profile> gameDirectories = Profiles.getProfiles();
+            GameDirectoryManager.init();
+            ObservableList<GameDirectoryProfile> gameDirectories = GameDirectoryManager.getProfiles();
 
             assertEquals(List.of(localProfile), gameDirectories);
             assertThrows(UnsupportedOperationException.class, () -> gameDirectories.add(addedProfile));
-            assertSame(localProfile, Profiles.getSelectedProfile());
+            assertSame(localProfile, GameDirectoryManager.getSelectedProfile());
             assertEquals(localProfile.getId(), settings().selectedGameDirectoryProperty().get());
             assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
             assertEquals(List.of(localProfile), localDirectories.getGameDirectories());
 
-            Profiles.removeProfile(localProfile);
-            assertEquals(List.of(userProfile), Profiles.getProfiles());
-            assertSame(userProfile, Profiles.getSelectedProfile());
+            GameDirectoryManager.removeProfile(localProfile);
+            assertEquals(List.of(userProfile), GameDirectoryManager.getProfiles());
+            assertSame(userProfile, GameDirectoryManager.getSelectedProfile());
             assertEquals(userProfile.getId(), settings().selectedGameDirectoryProperty().get());
             assertEquals(List.of(userProfile), userDirectories.getGameDirectories());
             assertTrue(localDirectories.getGameDirectories().isEmpty());
 
-            Profiles.addLocalProfile(addedProfile);
-            assertEquals(List.of(addedProfile, userProfile), Profiles.getProfiles());
+            GameDirectoryManager.addLocalProfile(addedProfile);
+            assertEquals(List.of(addedProfile, userProfile), GameDirectoryManager.getProfiles());
             assertEquals(List.of(addedProfile), localDirectories.getGameDirectories());
-            assertSame(userProfile, Profiles.getSelectedProfile());
+            assertSame(userProfile, GameDirectoryManager.getSelectedProfile());
 
-            Profiles.setSelectedProfile(addedProfile);
-            assertSame(addedProfile, Profiles.getSelectedProfile());
+            GameDirectoryManager.setSelectedProfile(addedProfile);
+            assertSame(addedProfile, GameDirectoryManager.getSelectedProfile());
             assertEquals(addedProfile.getId(), settings().selectedGameDirectoryProperty().get());
         }
     }
@@ -254,7 +256,7 @@ public final class GameDirectoriesTest {
     @Test
     public void movesProfileBetweenStoresWhenPathTypeChanges() throws ReflectiveOperationException {
         GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
-        Profile profile = new Profile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
+        GameDirectoryProfile profile = new GameDirectoryProfile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
         GameDirectories userDirectories = new GameDirectories();
         userDirectories.setUserFile(true);
         GameDirectories localDirectories = new GameDirectories();
@@ -262,29 +264,29 @@ public final class GameDirectoriesTest {
         localDirectories.setUserFile(false);
 
         try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
-            Profiles.init();
+            GameDirectoryManager.init();
 
             PortablePath absolutePath = PortablePath.of("/workspace/Dev");
-            Profiles.updateProfile(profile, LocalizedText.plain("Moved"), absolutePath);
+            GameDirectoryManager.updateProfile(profile, LocalizedText.plain("Moved"), absolutePath);
 
             assertTrue(localDirectories.getGameDirectories().isEmpty());
             assertEquals(List.of(profile), userDirectories.getGameDirectories());
-            assertEquals(List.of(profile), Profiles.getProfiles());
-            assertSame(profile, Profiles.getSelectedProfile());
+            assertEquals(List.of(profile), GameDirectoryManager.getProfiles());
+            assertSame(profile, GameDirectoryManager.getSelectedProfile());
             assertEquals(absolutePath.getPath(), profile.getPath().getPath());
             assertEquals(absolutePath.isAbsolute(), profile.getPath().isAbsolute());
-            assertEquals("Moved", Profiles.getProfileCustomName(profile));
+            assertEquals("Moved", GameDirectoryManager.getProfileCustomName(profile));
 
             PortablePath relativePath = PortablePath.of("local/Dev");
-            Profiles.updateProfile(profile, LocalizedText.plain("Back"), relativePath);
+            GameDirectoryManager.updateProfile(profile, LocalizedText.plain("Back"), relativePath);
 
             assertEquals(List.of(profile), localDirectories.getGameDirectories());
             assertTrue(userDirectories.getGameDirectories().isEmpty());
-            assertEquals(List.of(profile), Profiles.getProfiles());
-            assertSame(profile, Profiles.getSelectedProfile());
+            assertEquals(List.of(profile), GameDirectoryManager.getProfiles());
+            assertSame(profile, GameDirectoryManager.getSelectedProfile());
             assertEquals(relativePath.getPath(), profile.getPath().getPath());
             assertEquals(relativePath.isAbsolute(), profile.getPath().isAbsolute());
-            assertEquals("Back", Profiles.getProfileCustomName(profile));
+            assertEquals("Back", GameDirectoryManager.getProfileCustomName(profile));
         }
     }
 
@@ -292,7 +294,7 @@ public final class GameDirectoriesTest {
     @Test
     public void rejectsProfileMutationsWithReadOnlyStores() throws ReflectiveOperationException {
         GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
-        Profile profile = new Profile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
+        GameDirectoryProfile profile = new GameDirectoryProfile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
         GameDirectories userDirectories = new GameDirectories();
         userDirectories.setUserFile(true);
         GameDirectories localDirectories = new GameDirectories();
@@ -301,22 +303,22 @@ public final class GameDirectoriesTest {
 
         try (ProfileEnvironment environment = new ProfileEnvironment(localDirectories, userDirectories)) {
             environment.setLocalGameDirectoriesAccess(SettingFileAccess.READ_ONLY);
-            Profiles.init();
+            GameDirectoryManager.init();
 
             PortablePath newPath = PortablePath.of("local/Renamed");
-            assertFalse(Profiles.canUpdateProfile(profile, newPath));
+            assertFalse(GameDirectoryManager.canUpdateProfile(profile, newPath));
             assertThrows(IllegalStateException.class,
-                    () -> Profiles.updateProfile(profile, LocalizedText.plain("Renamed"), newPath));
-            assertFalse(Profiles.canRemoveProfile(profile));
-            assertThrows(IllegalStateException.class, () -> Profiles.removeProfile(profile));
+                    () -> GameDirectoryManager.updateProfile(profile, LocalizedText.plain("Renamed"), newPath));
+            assertFalse(GameDirectoryManager.canRemoveProfile(profile));
+            assertThrows(IllegalStateException.class, () -> GameDirectoryManager.removeProfile(profile));
             assertEquals(List.of(profile), localDirectories.getGameDirectories());
             assertTrue(userDirectories.getGameDirectories().isEmpty());
             assertEquals("local/Dev", profile.getPath().getPath());
             assertFalse(profile.getPath().isAbsolute());
-            assertEquals("Local", Profiles.getProfileCustomName(profile));
+            assertEquals("Local", GameDirectoryManager.getProfileCustomName(profile));
         }
 
-        Profile targetProfile = new Profile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
+        GameDirectoryProfile targetProfile = new GameDirectoryProfile(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
         GameDirectories targetUserDirectories = new GameDirectories();
         targetUserDirectories.setUserFile(true);
         GameDirectories targetLocalDirectories = new GameDirectories();
@@ -325,17 +327,17 @@ public final class GameDirectoriesTest {
 
         try (ProfileEnvironment environment = new ProfileEnvironment(targetLocalDirectories, targetUserDirectories)) {
             environment.setUserGameDirectoriesAccess(SettingFileAccess.READ_ONLY);
-            Profiles.init();
+            GameDirectoryManager.init();
 
             PortablePath absolutePath = PortablePath.of("/workspace/Dev");
-            assertFalse(Profiles.canUpdateProfile(targetProfile, absolutePath));
+            assertFalse(GameDirectoryManager.canUpdateProfile(targetProfile, absolutePath));
             assertThrows(IllegalStateException.class,
-                    () -> Profiles.updateProfile(targetProfile, LocalizedText.plain("Moved"), absolutePath));
+                    () -> GameDirectoryManager.updateProfile(targetProfile, LocalizedText.plain("Moved"), absolutePath));
             assertEquals(List.of(targetProfile), targetLocalDirectories.getGameDirectories());
             assertTrue(targetUserDirectories.getGameDirectories().isEmpty());
             assertEquals("local/Dev", targetProfile.getPath().getPath());
             assertFalse(targetProfile.getPath().isAbsolute());
-            assertEquals("Local", Profiles.getProfileCustomName(targetProfile));
+            assertEquals("Local", GameDirectoryManager.getProfileCustomName(targetProfile));
         }
     }
 
@@ -348,15 +350,15 @@ public final class GameDirectoriesTest {
         localDirectories.setUserFile(false);
 
         try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
-            Profiles.init();
+            GameDirectoryManager.init();
 
-            Profile localProfile = assertSingleDefaultProfile(localDirectories, PortablePath.of(".minecraft"));
-            Profile userProfile = assertSingleDefaultProfile(
+            GameDirectoryProfile localProfile = assertSingleDefaultProfile(localDirectories, PortablePath.of(".minecraft"));
+            GameDirectoryProfile userProfile = assertSingleDefaultProfile(
                     userDirectories,
                     PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
-            assertEquals(2, Profiles.getProfiles().size());
-            assertTrue(Profiles.getProfiles().contains(localProfile));
-            assertTrue(Profiles.getProfiles().contains(userProfile));
+            assertEquals(2, GameDirectoryManager.getProfiles().size());
+            assertTrue(GameDirectoryManager.getProfiles().contains(localProfile));
+            assertTrue(GameDirectoryManager.getProfiles().contains(userProfile));
         }
     }
 
@@ -369,13 +371,39 @@ public final class GameDirectoriesTest {
         localDirectories.setUserFile(false);
 
         try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
-            Profiles.init();
+            GameDirectoryManager.init();
 
-            Profile selected = Profiles.getSelectedProfile();
+            GameDirectoryProfile selected = GameDirectoryManager.getSelectedProfile();
             assertNotNull(selected);
-            assertSame(selected, Profiles.getSelectedProfile());
-            assertTrue(Profiles.getProfiles().contains(selected));
+            assertSame(selected, GameDirectoryManager.getSelectedProfile());
+            assertTrue(GameDirectoryManager.getProfiles().contains(selected));
             assertEquals(selected.getId(), settings().selectedGameDirectoryProperty().get());
+        }
+    }
+
+    /// Tests that a repository follows changes to its owning profile path.
+    @Test
+    public void repositoryDirectoryFollowsProfilePath() throws ReflectiveOperationException {
+        GameDirectories userDirectories = new GameDirectories();
+        userDirectories.setUserFile(true);
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.setUserFile(false);
+        GameDirectoryProfile profile = new GameDirectoryProfile(
+                GameDirectoryID.generate(),
+                LocalizedText.plain("Local"),
+                PortablePath.of("local/Dev"));
+        localDirectories.getGameDirectories().add(profile);
+
+        try (ProfileEnvironment ignored = new ProfileEnvironment(localDirectories, userDirectories)) {
+            GameDirectoryManager.init();
+
+            HMCLGameRepository repository = GameDirectoryManager.getRepository(profile);
+            assertSame(profile, repository.getProfile());
+            assertEquals(profile.getPath().toPath(), repository.getBaseDirectory());
+
+            PortablePath newPath = PortablePath.of("local/Renamed");
+            profile.setPath(newPath);
+            assertEquals(newPath.toPath(), repository.getBaseDirectory());
         }
     }
 
@@ -396,14 +424,20 @@ public final class GameDirectoriesTest {
         /// The reflected SettingsManager user game directories access field.
         private final Field userGameDirectoriesAccessField;
 
-        /// The reflected Profiles initialized field.
+        /// The reflected GameDirectoryManager initialized field.
         private final Field initializedField;
 
-        /// The reflected Profiles selected profile property.
-        private final ObjectProperty<Profile> selectedProfile;
+        /// The reflected GameDirectoryManager selected profile property.
+        private final ObjectProperty<GameDirectoryProfile> selectedProfile;
 
-        /// The merged profile list used by Profiles.
-        private final ObservableList<Profile> mergedProfiles;
+        /// The reflected GameDirectoryManager selected repository property.
+        private final ObjectProperty<HMCLGameRepository> selectedRepository;
+
+        /// The merged profile list used by GameDirectoryManager.
+        private final ObservableList<GameDirectoryProfile> mergedProfiles;
+
+        /// The repositories mapped by GameDirectoryManager.
+        private final Map<GameDirectoryProfile, HMCLGameRepository> repositories;
 
         /// The previous local game directories instance.
         private final Object previousLocalGameDirectories;
@@ -420,14 +454,20 @@ public final class GameDirectoriesTest {
         /// The previous user game directories access.
         private final SettingFileAccess previousUserGameDirectoriesAccess;
 
-        /// The previous Profiles initialization state.
+        /// The previous GameDirectoryManager initialization state.
         private final boolean previousInitialized;
 
         /// The previous selected profile.
-        private final Profile previousSelectedProfile;
+        private final GameDirectoryProfile previousSelectedProfile;
+
+        /// The previous selected repository.
+        private final HMCLGameRepository previousSelectedRepository;
 
         /// The previous merged profiles.
-        private final List<Profile> previousMergedProfiles;
+        private final List<GameDirectoryProfile> previousMergedProfiles;
+
+        /// The previous repository map entries.
+        private final Map<GameDirectoryProfile, HMCLGameRepository> previousRepositories;
 
         /// Replaces profile-related static state with the given stores.
         private ProfileEnvironment(GameDirectories localDirectories, GameDirectories userDirectories)
@@ -437,9 +477,11 @@ public final class GameDirectoriesTest {
             launcherSettingsField = SettingsManager.class.getDeclaredField("launcherSettings");
             localGameDirectoriesAccessField = SettingsManager.class.getDeclaredField("localGameDirectoriesAccess");
             userGameDirectoriesAccessField = SettingsManager.class.getDeclaredField("userGameDirectoriesAccess");
-            initializedField = Profiles.class.getDeclaredField("initialized");
-            Field selectedProfileField = Profiles.class.getDeclaredField("selectedProfile");
-            Field mergedProfilesField = Profiles.class.getDeclaredField("mergedProfiles");
+            initializedField = GameDirectoryManager.class.getDeclaredField("initialized");
+            Field selectedProfileField = GameDirectoryManager.class.getDeclaredField("selectedProfile");
+            Field selectedRepositoryField = GameDirectoryManager.class.getDeclaredField("selectedRepository");
+            Field mergedProfilesField = GameDirectoryManager.class.getDeclaredField("mergedProfiles");
+            Field repositoriesField = GameDirectoryManager.class.getDeclaredField("repositories");
             localGameDirectoriesField.setAccessible(true);
             userGameDirectoriesField.setAccessible(true);
             launcherSettingsField.setAccessible(true);
@@ -447,7 +489,9 @@ public final class GameDirectoriesTest {
             userGameDirectoriesAccessField.setAccessible(true);
             initializedField.setAccessible(true);
             selectedProfileField.setAccessible(true);
+            selectedRepositoryField.setAccessible(true);
             mergedProfilesField.setAccessible(true);
+            repositoriesField.setAccessible(true);
 
             previousLocalGameDirectories = localGameDirectoriesField.get(null);
             previousUserGameDirectories = userGameDirectoriesField.get(null);
@@ -457,16 +501,28 @@ public final class GameDirectoriesTest {
             previousInitialized = initializedField.getBoolean(null);
 
             @SuppressWarnings("unchecked")
-            ObjectProperty<Profile> selectedProfile =
-                    (ObjectProperty<Profile>) selectedProfileField.get(null);
+            ObjectProperty<GameDirectoryProfile> selectedProfile =
+                    (ObjectProperty<GameDirectoryProfile>) selectedProfileField.get(null);
             this.selectedProfile = selectedProfile;
             previousSelectedProfile = selectedProfile.get();
 
             @SuppressWarnings("unchecked")
-            ObservableList<Profile> mergedProfiles =
-                    (ObservableList<Profile>) mergedProfilesField.get(null);
+            ObjectProperty<HMCLGameRepository> selectedRepository =
+                    (ObjectProperty<HMCLGameRepository>) selectedRepositoryField.get(null);
+            this.selectedRepository = selectedRepository;
+            previousSelectedRepository = selectedRepository.get();
+
+            @SuppressWarnings("unchecked")
+            ObservableList<GameDirectoryProfile> mergedProfiles =
+                    (ObservableList<GameDirectoryProfile>) mergedProfilesField.get(null);
             this.mergedProfiles = mergedProfiles;
             previousMergedProfiles = List.copyOf(mergedProfiles);
+
+            @SuppressWarnings("unchecked")
+            Map<GameDirectoryProfile, HMCLGameRepository> repositories =
+                    (Map<GameDirectoryProfile, HMCLGameRepository>) repositoriesField.get(null);
+            this.repositories = repositories;
+            previousRepositories = Map.copyOf(repositories);
 
             localGameDirectoriesField.set(null, localDirectories);
             userGameDirectoriesField.set(null, userDirectories);
@@ -475,6 +531,8 @@ public final class GameDirectoriesTest {
             userGameDirectoriesAccessField.set(null, SettingFileAccess.READ_WRITE);
             initializedField.setBoolean(null, false);
             mergedProfiles.clear();
+            repositories.clear();
+            selectedRepository.set(null);
         }
 
         /// Sets the local game directories access used by [SettingsManager].
@@ -493,7 +551,10 @@ public final class GameDirectoriesTest {
             if (previousSelectedProfile != null) {
                 selectedProfile.set(previousSelectedProfile);
             }
+            selectedRepository.set(previousSelectedRepository);
             mergedProfiles.setAll(previousMergedProfiles);
+            repositories.clear();
+            repositories.putAll(previousRepositories);
             localGameDirectoriesField.set(null, previousLocalGameDirectories);
             userGameDirectoriesField.set(null, previousUserGameDirectories);
             launcherSettingsField.set(null, previousLauncherSettings);
@@ -504,9 +565,9 @@ public final class GameDirectoriesTest {
     }
 
     /// Returns the only default profile in the given store, asserting its path.
-    private static Profile assertSingleDefaultProfile(GameDirectories gameDirectories, PortablePath path) {
+    private static GameDirectoryProfile assertSingleDefaultProfile(GameDirectories gameDirectories, PortablePath path) {
         assertEquals(1, gameDirectories.getGameDirectories().size());
-        Profile profile = gameDirectories.getGameDirectories().get(0);
+        GameDirectoryProfile profile = gameDirectories.getGameDirectories().get(0);
         assertEquals(path.isAbsolute(), profile.getPath().isAbsolute());
         assertEquals(path.getPath(), profile.getPath().getPath());
         return profile;
@@ -521,7 +582,7 @@ public final class GameDirectoriesTest {
                   "name": "Dev",
                   "path": "versions/Dev"
                 }
-                """, Profile.class));
+                """, GameDirectoryProfile.class));
     }
 
     /// Tests that newer minor-version schemas are reported as unsupported.

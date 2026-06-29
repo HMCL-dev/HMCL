@@ -36,7 +36,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -66,7 +67,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
     private Path savesDir;
     private List<World> worlds;
-    private Profile profile;
+    private GameDirectoryProfile profile;
     private String instanceId;
     private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
 
@@ -86,10 +87,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     @Override
-    public void loadVersion(Profile profile, String id) {
+    public void loadVersion(GameDirectoryProfile profile, String id) {
         this.profile = profile;
         this.instanceId = id;
-        this.savesDir = profile.getRepository().getSavesDirectory(id);
+        this.savesDir = GameDirectoryManager.getRepository(profile).getSavesDirectory(id);
         refresh();
     }
 
@@ -99,7 +100,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         } else if (showAll.get()) {
             getItems().setAll(worlds);
         } else {
-            GameVersionNumber gameVersion = profile.getRepository().getGameVersion(instanceId).map(GameVersionNumber::asGameVersion).orElse(null);
+            GameVersionNumber gameVersion = GameDirectoryManager.getRepository(profile).getGameVersion(instanceId).map(GameVersionNumber::asGameVersion).orElse(null);
             getItems().setAll(worlds.stream()
                     .filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
                     .toList());
@@ -115,7 +116,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             // Ensure the game version number is parsed
-            profile.getRepository().getGameVersion(instanceId);
+            GameDirectoryManager.getRepository(profile).getGameVersion(instanceId);
             return World.getWorlds(savesDir);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
@@ -123,7 +124,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 return;
             }
 
-            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+            Optional<String> gameVersion = GameDirectoryManager.getRepository(profile).getGameVersion(instanceId);
             supportQuickPlay.set(World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
 
             worlds = result;

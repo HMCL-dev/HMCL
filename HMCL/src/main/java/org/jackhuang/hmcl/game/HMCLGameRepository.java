@@ -22,6 +22,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
@@ -33,10 +35,11 @@ import org.jackhuang.hmcl.modpack.ModpackProvider;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DefaultIsolationType;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
 import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.setting.SettingFileUtils;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
@@ -68,7 +71,7 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// HMCL game repository implementation backed by a profile and per-instance game settings.
+/// HMCL game repository implementation backed by a GameDirectoryProfile and per-instance game settings.
 @NotNullByDefault
 public final class HMCLGameRepository extends DefaultGameRepository {
     /// Directory under the version root that stores HMCL-managed instance metadata.
@@ -83,7 +86,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Current file name for instance-specific game settings.
     private static final String INSTANCE_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
 
-    private final Profile profile;
+    /// The persistent game directory profile that owns this repository.
+    private final GameDirectoryProfile profile;
 
     // instance game settings
     private final Map<String, GameSettings.Instance> instanceGameSettings = new HashMap<>();
@@ -94,13 +98,26 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public final EventManager<Event> onVersionIconChanged = new EventManager<>();
 
-    public HMCLGameRepository(Profile profile, Path baseDirectory) {
-        super(baseDirectory);
-        this.profile = profile;
+    /// Creates a repository backed by the given game directory profile.
+    public HMCLGameRepository(GameDirectoryProfile profile) {
+        super(profile.getPath().toPath());
+        this.profile = Objects.requireNonNull(profile);
+        profile.pathProperty().addListener((a, b, newValue) -> changeDirectory(newValue.toPath()));
     }
 
-    public Profile getProfile() {
+    /// Returns the persistent game directory profile that owns this repository.
+    public GameDirectoryProfile getProfile() {
         return profile;
+    }
+
+    /// Returns a dependency manager using the currently selected download provider.
+    public DefaultDependencyManager getDependency() {
+        return getDependency(DownloadProviders.getDownloadProvider());
+    }
+
+    /// Returns a dependency manager using the given download provider.
+    public DefaultDependencyManager getDependency(DownloadProvider downloadProvider) {
+        return new DefaultDependencyManager(this, downloadProvider, HMCLCacheRepository.REPOSITORY);
     }
 
     @Override

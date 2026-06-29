@@ -25,7 +25,7 @@ import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -45,7 +45,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
             skinnable.pseudoClassStateChanged(SELECTED, active);
         });
 
-        FXUtils.onClicked(getSkinnable(), () -> Profiles.setSelectedProfile(skinnable.getProfile()));
+        FXUtils.onClicked(getSkinnable(), () -> GameDirectoryManager.setSelectedProfile(skinnable.getProfile()));
 
         Node left = SVG.FOLDER.createIcon(20);
         left.setMouseTransparent(true);

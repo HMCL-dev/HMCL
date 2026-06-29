@@ -44,7 +44,8 @@ import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -88,7 +89,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         };
     }
 
-    private Profile profile;
+    private GameDirectoryProfile profile;
     private String instanceId;
 
     private Path resourcePackDirectory;
@@ -106,10 +107,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     @Override
-    public void loadVersion(Profile profile, String version) {
+    public void loadVersion(GameDirectoryProfile profile, String version) {
         this.profile = profile;
         this.instanceId = version;
-        this.resourcePackManager = new ResourcePackManager(profile.getRepository(), version);
+        this.resourcePackManager = new ResourcePackManager(GameDirectoryManager.getRepository(profile), version);
         this.resourcePackDirectory = this.resourcePackManager.getDirectory();
 
         refresh();
@@ -232,7 +233,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+                            Optional<String> gameVersion = GameDirectoryManager.getRepository(profile).getGameVersion(instanceId);
                             return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, resourcePacks)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -247,7 +248,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         .withStagesHints("update.checking"),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (profile.getRepository().isModpack(instanceId)) {
+        if (GameDirectoryManager.getRepository(profile).isModpack(instanceId)) {
             Controllers.confirm(
                     i18n("resourcepack.update_in_modpack.warning"), null,
                     MessageDialogPane.MessageType.WARNING,
@@ -619,7 +620,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                                 ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
                                                 : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
                                         remoteAddon,
-                                        new Profile.ProfileVersion(page.profile, page.instanceId),
+                                        new GameDirectoryProfile.ProfileVersion(page.profile, page.instanceId),
                                         org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
                                 ));
                             });

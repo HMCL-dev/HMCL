@@ -582,15 +582,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The selected game directory ID.
     ///
-    /// This field is owned by [Profiles]. Code outside [Profiles] should not modify it directly.
+    /// This field is owned by [GameDirectoryManager]. Code outside [GameDirectoryManager] should not modify it directly.
     @SerializedName(PROPERTY_SELECTED_GAME_DIRECTORY)
     private final ObjectProperty<@Nullable GameDirectoryID> selectedGameDirectory =
             new SimpleObjectProperty<>(this, PROPERTY_SELECTED_GAME_DIRECTORY);
 
     /// Returns the selected game directory ID property.
     ///
-    /// This property is exposed for persistence and [Profiles] integration. Code outside [Profiles]
-    /// should use `Profiles.setSelectedProfile` instead of modifying this property directly.
+    /// This property is exposed for persistence and [GameDirectoryManager] integration. Code outside [GameDirectoryManager]
+    /// should use `GameDirectoryManager.setSelectedProfile` instead of modifying this property directly.
     public ObjectProperty<@Nullable GameDirectoryID> selectedGameDirectoryProperty() {
         return selectedGameDirectory;
     }
@@ -607,28 +607,28 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// Selected instance IDs keyed by game directory ID.
     ///
-    /// This field is owned by [Profiles]. Code outside [Profiles] should not modify it directly.
+    /// This field is owned by [GameDirectoryManager]. Code outside [GameDirectoryManager] should not modify it directly.
     @SerializedName(PROPERTY_SELECTED_INSTANCE)
     private final ObservableMap<GameDirectoryID, String> selectedInstance = FXCollections.observableHashMap();
 
     /// Returns selected instance IDs keyed by game directory ID.
     ///
-    /// This map is exposed for persistence and migration code. Runtime code outside [Profiles] should
-    /// use `Profiles.getSelectedInstance` and `Profiles.setSelectedInstance` instead of mutating it.
+    /// This map is exposed for persistence and migration code. Runtime code outside [GameDirectoryManager] should
+    /// use `GameDirectoryManager.getSelectedInstance` and `GameDirectoryManager.setSelectedInstance` instead of mutating it.
     public ObservableMap<GameDirectoryID, String> getSelectedInstance() {
         return selectedInstance;
     }
 
     /// Returns the selected instance ID for the given game directory ID.
     ///
-    /// This method is intended for [Profiles].
+    /// This method is intended for [GameDirectoryManager].
     @Nullable String getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.
     ///
-    /// This method is intended for [Profiles].
+    /// This method is intended for [GameDirectoryManager].
     void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable String selectedInstance) {
         if (gameDirectoryId == null) {
             return;

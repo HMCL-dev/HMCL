@@ -39,9 +39,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryProfile;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -75,7 +76,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     private final ObservableList<ProfileListItem> profileListItems;
 
     public GameListPage() {
-        profileListItems = MappedObservableList.create(Profiles.getProfiles(), profile -> {
+        profileListItems = MappedObservableList.create(GameDirectoryManager.getProfiles(), profile -> {
             ProfileListItem item = new ProfileListItem(profile);
             FXUtils.setLimitWidth(item, 200);
             return item;
@@ -115,15 +116,15 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             Path file = files.get(0);
 
             if (ModpackHelper.isFileModpackByExtension(file)) {
-                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file), i18n("install.modpack"));
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(GameDirectoryManager.getSelectedProfile(), file), i18n("install.modpack"));
             } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
-                Versions.installFromJson(Profiles.getSelectedProfile(), file);
+                Versions.installFromJson(GameDirectoryManager.getSelectedProfile(), file);
             }
         });
     }
 
     public void modifyGlobalGameSettings() {
-        Versions.modifyGlobalSettings(Profiles.getSelectedProfile());
+        Versions.modifyGlobalSettings(GameDirectoryManager.getSelectedProfile());
     }
 
     @Override
@@ -140,18 +141,19 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         public GameList() {
             setItems(filteredList);
 
-            Profiles.registerVersionsListener(this::loadVersions);
+            GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
             setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
         }
 
         @FXThread
-        private void loadVersions(Profile profile) {
+        private void loadVersions(HMCLGameRepository repository) {
+            GameDirectoryProfile profile = repository.getProfile();
             listenerHolder.clear();
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> versionItems = profile.getRepository().getDisplayVersions().map(instance -> new GameListItem(profile, instance.getId())).toList();
+            List<GameListItem> versionItems = repository.getDisplayVersions().map(instance -> new GameListItem(profile, instance.getId())).toList();
 
             sourceList.setAll(versionItems);
 
@@ -181,7 +183,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         public void refreshList() {
-            Profiles.getSelectedProfile().getRepository().refreshVersionsAsync().start();
+            GameDirectoryManager.getSelectedRepository().refreshVersionsAsync().start();
         }
 
         @Override
