@@ -693,14 +693,14 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 }
                 content.addTag(i18n("theme_pack.version", manifest.version()));
                 content.addTag(i18n("theme_pack.themes", manifest.themes().size()));
-            }
 
-            iconImage.setImage(null);
-            iconFallback.setVisible(false);
+                iconImage.setImage(null);
+                iconFallback.setVisible(false);
+                page.updateIcon(iconImage, iconFallback, themePack, manifest.icon());
+            }
 
             setGraphic(graphic);
 
-            page.updateIcon(iconImage, iconFallback, themePack, manifest.icon());
             content.setTitle(manifest.displayName());
             content.setSubtitle(StringUtils.isBlank(description) ? manifest.id() : description);
 
