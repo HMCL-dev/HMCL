@@ -21,6 +21,11 @@
     {
       "id" : "2021-08-26",
       "name" : "HMCL 3.15",
+      "description" : {
+        "default" : "HMCL 3.15 classic appearance",
+        "zh-Hans" : "HMCL 3.15 经典外观",
+        "zh-Hant" : "HMCL 3.15 經典外觀"
+      },
       "color" : "#5C6BC0",
       "brightness" : "light",
       "colorStyle" : "fidelity",
@@ -36,6 +41,11 @@
     {
       "id" : "2016-02-25",
       "name" : "HMCL 3.3",
+      "description" : {
+        "default" : "HMCL 3.3 classic appearance",
+        "zh-Hans" : "HMCL 3.3 经典外观",
+        "zh-Hant" : "HMCL 3.3 經典外觀"
+      },
       "color" : "#5C6BC0",
       "brightness" : "light",
       "colorStyle" : "fidelity",
@@ -52,6 +62,11 @@
       "id" : "2015-06-22",
       "name" : {
         "default" : "HMCL 2.3"
+      },
+      "description" : {
+        "default" : "HMCL 2.3 classic appearance",
+        "zh-Hans" : "HMCL 2.3 经典外观",
+        "zh-Hant" : "HMCL 2.3 經典外觀"
       },
       "color" : "#E67E22",
       "brightness" : "light",
