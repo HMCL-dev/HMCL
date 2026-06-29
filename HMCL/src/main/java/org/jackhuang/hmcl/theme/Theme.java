@@ -43,7 +43,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @param name        the localized display name, or `null` for an unnamed single-theme pack
 /// @param authors     authors of this specific theme
 /// @param description the optional localized description
-/// @param thumbnail   the optional theme-pack relative thumbnail path
+/// @param icon        the optional theme-pack relative icon path
 /// @param appearance  the default appearance fields
 /// @param overrides   conditional appearance patches applied in declaration order
 @NotNullByDefault
@@ -52,7 +52,7 @@ public record Theme(
         @Nullable LocalizedText name,
         @Unmodifiable List<ThemePackAuthor> authors,
         @Nullable LocalizedText description,
-        @Nullable String thumbnail,
+        @Nullable String icon,
         ThemeAppearance appearance,
         @Unmodifiable List<ThemeOverride> overrides) {
 
@@ -62,7 +62,7 @@ public record Theme(
     /// @param name        the localized display name, or `null` for an unnamed single-theme pack
     /// @param authors     authors of this specific theme
     /// @param description the optional localized description
-    /// @param thumbnail   the optional theme-pack relative thumbnail path
+    /// @param icon        the optional theme-pack relative icon path
     /// @param appearance  the default appearance fields
     /// @param overrides   conditional appearance patches applied in declaration order
     public Theme {
@@ -72,8 +72,8 @@ public record Theme(
         if (name != null && name.mayBeEmpty()) {
             throw new IllegalArgumentException("Theme name is empty: " + name);
         }
-        if (thumbnail != null) {
-            thumbnail = ThemePackAsset.normalizeEntryName(thumbnail);
+        if (icon != null) {
+            icon = ThemePackAsset.normalizeEntryName(icon);
         }
         authors = List.copyOf(authors);
         Objects.requireNonNull(appearance);
@@ -166,18 +166,18 @@ public record Theme(
             overrides = List.of();
         }
 
-        @Nullable String thumbnail = JsonUtils.getString(object, "thumbnail");
-        if (thumbnail != null) {
+        @Nullable String icon = JsonUtils.getString(object, "icon");
+        if (icon != null) {
             try {
-                thumbnail = ThemePackAsset.normalizeEntryName(thumbnail);
+                icon = ThemePackAsset.normalizeEntryName(icon);
             } catch (IllegalArgumentException e) {
-                LOG.warning("Ignored invalid theme thumbnail: " + thumbnail, e);
-                thumbnail = null;
+                LOG.warning("Ignored invalid theme icon: " + icon, e);
+                icon = null;
             }
         }
 
         return new Theme(id, name, authors, description,
-                thumbnail,
+                icon,
                 appearance, overrides);
     }
 
@@ -226,8 +226,8 @@ public record Theme(
         if (description != null) {
             object.add("description", JsonUtils.GSON.toJsonTree(description, LocalizedText.class));
         }
-        if (thumbnail != null) {
-            object.addProperty("thumbnail", thumbnail);
+        if (icon != null) {
+            object.addProperty("icon", icon);
         }
         appearance.addToJsonObject(object);
 

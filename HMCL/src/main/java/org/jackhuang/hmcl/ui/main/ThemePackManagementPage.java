@@ -95,11 +95,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Shows installed theme packs and common theme-pack actions.
 @NotNullByDefault
 public final class ThemePackManagementPage extends ListPageBase<ThemePackManager.InstalledThemePack> implements DecoratorPage {
-    /// The thumbnail container size used by theme-pack icons.
-    private static final double THUMBNAIL_SIZE = 40;
+    /// The icon container size used by theme-pack icons.
+    private static final double ICON_SIZE = 40;
 
-    /// The requested decoded thumbnail image size used for HiDPI displays.
-    private static final int THUMBNAIL_IMAGE_SIZE = (int) (THUMBNAIL_SIZE * 2);
+    /// The requested decoded icon image size used for HiDPI displays.
+    private static final int ICON_IMAGE_SIZE = (int) (ICON_SIZE * 2);
 
     /// The decorator title state for this page.
     private final ObjectProperty<State> state = new SimpleObjectProperty<>(State.fromTitle(i18n("theme_pack.manage")));
@@ -111,8 +111,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     /// Filtered list shown by the current search query.
     private final FilteredList<ThemePackManager.InstalledThemePack> filteredList = new FilteredList<>(sourceList);
 
-    /// Page-scoped thumbnail image cache cleared when installed theme packs are reloaded.
-    private final ThumbnailCache thumbnailCache = new ThumbnailCache();
+    /// Page-scoped icon image cache cleared when installed theme packs are reloaded.
+    private final IconCache iconCache = new IconCache();
 
     /// Callback invoked after the installed theme-pack set changes.
     private final Runnable onThemePacksChanged;
@@ -141,7 +141,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
     /// Reloads installed theme packs from disk.
     private void refreshThemePacks() {
-        thumbnailCache.clear();
+        iconCache.clear();
         try {
             List<ThemePackManager.InstalledThemePack> themePacks = ThemePackManager.listInstalled();
             sourceList.setAll(themePacks);
@@ -309,14 +309,14 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         return value != null && value.toLowerCase(Locale.ROOT).contains(query);
     }
 
-    /// Creates a thumbnail node for a theme-pack asset path.
-    private Node createThumbnailNode(
+    /// Creates an icon node for a theme-pack asset path.
+    private Node createIconNode(
             ThemePackManager.InstalledThemePack themePack,
-            @Nullable String thumbnail,
+            @Nullable String icon,
             SVG fallback) {
-        ImageContainer imageContainer = new ImageContainer(THUMBNAIL_SIZE);
-        SVGContainer fallbackIcon = createFallbackThumbnailIcon(fallback);
-        updateThumbnail(imageContainer, fallbackIcon, themePack, thumbnail);
+        ImageContainer imageContainer = new ImageContainer(ICON_SIZE);
+        SVGContainer fallbackIcon = createFallbackIcon(fallback);
+        updateIcon(imageContainer, fallbackIcon, themePack, icon);
 
         StackPane container = new StackPane(imageContainer, fallbackIcon);
         container.setMouseTransparent(true);
@@ -324,101 +324,101 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     }
 
     /// Creates a vector fallback icon.
-    private static SVGContainer createFallbackThumbnailIcon(SVG fallback) {
-        SVGContainer fallbackIcon = new SVGContainer(fallback, THUMBNAIL_SIZE);
+    private static SVGContainer createFallbackIcon(SVG fallback) {
+        SVGContainer fallbackIcon = new SVGContainer(fallback, ICON_SIZE);
         fallbackIcon.setMouseTransparent(true);
         return fallbackIcon;
     }
 
-    /// Updates reusable thumbnail nodes for the supplied theme pack.
-    private void updateThumbnail(
+    /// Updates reusable icon nodes for the supplied theme pack.
+    private void updateIcon(
             ImageContainer imageContainer,
             SVGContainer fallbackIcon,
             ThemePackManager.InstalledThemePack themePack,
-            @Nullable String thumbnail) {
-        @Nullable Image image = getThumbnailImage(themePack, thumbnail);
+            @Nullable String icon) {
+        @Nullable Image image = getIconImage(themePack, icon);
         imageContainer.setImage(image);
         fallbackIcon.setVisible(image == null);
     }
 
-    /// Returns the thumbnail image for a fixed-size thumbnail container.
-    private @Nullable Image getThumbnailImage(
+    /// Returns the icon image for a fixed-size icon container.
+    private @Nullable Image getIconImage(
             ThemePackManager.InstalledThemePack themePack,
-            @Nullable String thumbnail) {
+            @Nullable String icon) {
         @Nullable Image image = null;
-        if (!StringUtils.isBlank(thumbnail)) {
-            image = thumbnailCache.getThemePackThumbnail(themePack.location(), thumbnail);
+        if (!StringUtils.isBlank(icon)) {
+            image = iconCache.getThemePackIcon(themePack.location(), icon);
         }
-        return image != null || !themePack.builtin() ? image : thumbnailCache.getDefaultBuiltinThumbnail();
+        return image != null || !themePack.builtin() ? image : iconCache.getDefaultBuiltinIcon();
     }
 
-    /// Cache key for one decoded thumbnail image.
+    /// Cache key for one decoded icon image.
     ///
-    /// @param location  the source theme-pack location
-    /// @param thumbnail the theme-pack asset path
+    /// @param location the source theme-pack location
+    /// @param icon     the theme-pack asset path
     @NotNullByDefault
-    private record ThumbnailCacheKey(
+    private record IconCacheKey(
             ThemePackManager.ThemePackLocation location,
-            String thumbnail) {
-        /// Creates a thumbnail cache key.
+            String icon) {
+        /// Creates an icon cache key.
         ///
-        /// @param location  the source theme-pack location
-        /// @param thumbnail the theme-pack asset path
-        private ThumbnailCacheKey {
+        /// @param location the source theme-pack location
+        /// @param icon     the theme-pack asset path
+        private IconCacheKey {
             Objects.requireNonNull(location);
-            Objects.requireNonNull(thumbnail);
+            Objects.requireNonNull(icon);
         }
     }
 
-    /// Page-scoped cache for decoded thumbnail images.
+    /// Page-scoped cache for decoded icon images.
     @NotNullByDefault
-    private static final class ThumbnailCache {
-        /// Decoded theme-pack thumbnails keyed by location and asset path.
-        private final Map<ThumbnailCacheKey, Optional<Image>> thumbnails = new HashMap<>();
+    private static final class IconCache {
+        /// Decoded theme-pack icons keyed by location and asset path.
+        private final Map<IconCacheKey, Optional<Image>> icons = new HashMap<>();
 
-        /// Decoded built-in fallback thumbnail.
-        private @Nullable Image defaultBuiltinThumbnail;
+        /// Decoded built-in fallback icon.
+        private @Nullable Image defaultBuiltinIcon;
 
         /// Clears all decoded images held by this cache.
         private void clear() {
-            thumbnails.clear();
-            defaultBuiltinThumbnail = null;
+            icons.clear();
+            defaultBuiltinIcon = null;
         }
 
-        /// Returns a theme-pack thumbnail image, or `null` when it cannot be loaded.
-        private @Nullable Image getThemePackThumbnail(
+        /// Returns a theme-pack icon image, or `null` when it cannot be loaded.
+        private @Nullable Image getThemePackIcon(
                 ThemePackManager.ThemePackLocation location,
-                String thumbnail) {
-            ThumbnailCacheKey key = new ThumbnailCacheKey(location, thumbnail);
-            return thumbnails.computeIfAbsent(key, this::loadThemePackThumbnail).orElse(null);
+                String icon) {
+            IconCacheKey key = new IconCacheKey(location, icon);
+            return icons.computeIfAbsent(key, this::loadThemePackIcon).orElse(null);
         }
 
-        /// Returns the built-in default thumbnail for built-in theme packs.
-        private Image getDefaultBuiltinThumbnail() {
-            if (defaultBuiltinThumbnail == null) {
-                defaultBuiltinThumbnail = FXUtils.newBuiltinImage(
+        /// Returns the built-in default icon for built-in theme packs.
+        private Image getDefaultBuiltinIcon() {
+            if (defaultBuiltinIcon == null) {
+                defaultBuiltinIcon = FXUtils.newBuiltinImage(
                         "/assets/img/icon@8x.png",
-                        THUMBNAIL_IMAGE_SIZE,
-                        THUMBNAIL_IMAGE_SIZE,
+                        ICON_IMAGE_SIZE,
+                        ICON_IMAGE_SIZE,
                         true,
                         true);
             }
-            return defaultBuiltinThumbnail;
+            return defaultBuiltinIcon;
         }
 
-        /// Loads and decodes one theme-pack thumbnail image.
-        private Optional<Image> loadThemePackThumbnail(ThumbnailCacheKey key) {
+        /// Loads and decodes one theme-pack icon image.
+        private Optional<Image> loadThemePackIcon(IconCacheKey key) {
             try {
-                ThemePackResource resource = ThemePackManager.resolveInstalledAsset(key.location(), key.thumbnail());
+                ThemePackResource resource = ThemePackManager.resolveInstalledAsset(key.location(), key.icon());
                 return Optional.of(FXUtils.loadImage(
                         resource.openStream(),
                         resource.name(),
-                        THUMBNAIL_IMAGE_SIZE,
-                        THUMBNAIL_IMAGE_SIZE,
+                        ICON_IMAGE_SIZE,
+                        ICON_IMAGE_SIZE,
                         true,
                         true));
             } catch (Exception e) {
-                LOG.warning("Failed to load theme-pack thumbnail: " + key.thumbnail(), e);
+                LOG.warning("Failed to load theme-pack icon: " + key.icon(), e);
                 return Optional.empty();
             }
         }
@@ -438,7 +438,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             HBox heading = new HBox(8);
             heading.setAlignment(Pos.CENTER_LEFT);
 
-            Node icon = page.createThumbnailNode(themePack, manifest.thumbnail(), SVG.PACKAGE2);
+            Node icon = page.createIconNode(themePack, manifest.icon(), SVG.PACKAGE2);
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(manifest.displayName());
             title.setSubtitle(manifest.id());
@@ -472,10 +472,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 HBox row = new HBox(8);
                 row.setAlignment(Pos.CENTER_LEFT);
                 row.setCursor(Cursor.HAND);
-                Node thumbnail = page.createThumbnailNode(themePack, theme.thumbnail(), SVG.STYLE);
+                Node themeIcon = page.createIconNode(themePack, theme.icon(), SVG.STYLE);
                 HBox.setHgrow(item, Priority.ALWAYS);
                 item.setMouseTransparent(true);
-                row.getChildren().setAll(thumbnail, item);
+                row.getChildren().setAll(themeIcon, item);
                 FXUtils.onClicked(row, () -> {
                     fireEvent(new DialogCloseEvent());
                     page.confirmApplyTheme(themePack, theme);
@@ -623,14 +623,14 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// The text content shown for the current theme pack.
         private final TwoLineListItem content = new TwoLineListItem();
 
-        /// Left-side package thumbnail container.
-        private final StackPane thumbnail = new StackPane();
+        /// Left-side package icon container.
+        private final StackPane icon = new StackPane();
 
-        /// Reused thumbnail image node.
-        private final ImageContainer thumbnailImage = new ImageContainer(THUMBNAIL_SIZE);
+        /// Reused icon image node.
+        private final ImageContainer iconImage = new ImageContainer(ICON_SIZE);
 
-        /// Reused fallback thumbnail icon.
-        private final SVGContainer thumbnailFallback = createFallbackThumbnailIcon(SVG.PACKAGE2);
+        /// Reused fallback icon.
+        private final SVGContainer iconFallback = createFallbackIcon(SVG.PACKAGE2);
 
         /// Right-side action container.
         private final HBox right = new HBox();
@@ -657,11 +657,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             center.setAlignment(Pos.CENTER_LEFT);
             root.setCenter(center);
 
-            thumbnail.setMouseTransparent(true);
-            thumbnail.getChildren().setAll(thumbnailImage, thumbnailFallback);
+            icon.setMouseTransparent(true);
+            icon.getChildren().setAll(iconImage, iconFallback);
             BorderPane.setAlignment(content, Pos.CENTER);
             content.setMouseTransparent(true);
-            center.getChildren().setAll(thumbnail, content);
+            center.getChildren().setAll(icon, content);
             HBox.setHgrow(content, Priority.ALWAYS);
             center.setCursor(Cursor.HAND);
             FXUtils.onClicked(center, () -> {
@@ -699,8 +699,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             super.updateItem(themePack, empty);
 
             content.getTags().clear();
-            thumbnailImage.setImage(null);
-            thumbnailFallback.setVisible(false);
+            iconImage.setImage(null);
+            iconFallback.setVisible(false);
             if (empty || themePack == null) {
                 setGraphic(null);
                 return;
@@ -709,7 +709,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             setGraphic(graphic);
 
             ThemePackManifest manifest = themePack.manifest();
-            page.updateThumbnail(thumbnailImage, thumbnailFallback, themePack, manifest.thumbnail());
+            page.updateIcon(iconImage, iconFallback, themePack, manifest.icon());
             content.setTitle(manifest.displayName());
             @Nullable String description = manifest.displayDescription();
             content.setSubtitle(StringUtils.isBlank(description) ? manifest.id() : description);

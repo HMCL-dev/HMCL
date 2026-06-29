@@ -44,7 +44,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @param version     the package version string
 /// @param name        the localized display name
 /// @param authors     the package authors
-/// @param thumbnail   the optional theme-pack relative thumbnail path
+/// @param icon        the optional theme-pack relative icon path
 /// @param description the optional localized package description
 /// @param themes      selectable themes declared by the package
 @NotNullByDefault
@@ -55,7 +55,7 @@ public record ThemePackManifest(
         String version,
         LocalizedText name,
         @Unmodifiable List<ThemePackAuthor> authors,
-        @Nullable String thumbnail,
+        @Nullable String icon,
         @Nullable LocalizedText description,
         @Unmodifiable List<Theme> themes) {
 
@@ -74,7 +74,7 @@ public record ThemePackManifest(
     /// @param version     the package version string
     /// @param name        the localized display name
     /// @param authors     the package authors
-    /// @param thumbnail   the optional theme-pack relative thumbnail path
+    /// @param icon        the optional theme-pack relative icon path
     /// @param description the optional localized package description
     /// @param themes      selectable themes declared by the package
     public ThemePackManifest {
@@ -82,8 +82,8 @@ public record ThemePackManifest(
         version = requireNonBlank(version, "version");
         name = requireLocalizedText(name, "name");
         authors = List.copyOf(authors);
-        if (thumbnail != null) {
-            thumbnail = ThemePackAsset.normalizeEntryName(thumbnail);
+        if (icon != null) {
+            icon = ThemePackAsset.normalizeEntryName(icon);
         }
         if (description != null) {
             description = requireLocalizedText(description, "description");
@@ -305,13 +305,13 @@ public record ThemePackManifest(
                 authors = List.of();
             }
 
-            @Nullable String thumbnail = JsonUtils.getString(object, "thumbnail");
-            if (thumbnail != null) {
+            @Nullable String icon = JsonUtils.getString(object, "icon");
+            if (icon != null) {
                 try {
-                    thumbnail = ThemePackAsset.normalizeEntryName(thumbnail);
+                    icon = ThemePackAsset.normalizeEntryName(icon);
                 } catch (IllegalArgumentException e) {
-                    LOG.warning("Ignored invalid theme-pack thumbnail: " + thumbnail, e);
-                    thumbnail = null;
+                    LOG.warning("Ignored invalid theme-pack icon: " + icon, e);
+                    icon = null;
                 }
             }
 
@@ -320,7 +320,7 @@ public record ThemePackManifest(
                     version,
                     name,
                     authors,
-                    thumbnail,
+                    icon,
                     description,
                     readThemes(object));
         }
@@ -341,8 +341,8 @@ public record ThemePackManifest(
             if (src.description != null) {
                 object.add("description", src.description.toJsonElement());
             }
-            if (src.thumbnail != null) {
-                object.addProperty("thumbnail", src.thumbnail);
+            if (src.icon != null) {
+                object.addProperty("icon", src.icon);
             }
 
             if (src.isSimpleThemePack()) {

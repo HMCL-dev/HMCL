@@ -44,25 +44,25 @@ public final class ThemePackManifestTest {
                   "name": "Example",
                   "authors": "invalid",
                   "description": "",
-                  "thumbnail": "../bad.png",
+                  "icon": "../bad.png",
                   "theme": {
                     "id": "../bad",
                     "name": "",
                     "description": [],
-                    "thumbnail": "../theme.png"
+                    "icon": "../theme.png"
                   }
                 }
                 """, ThemePackManifest.class));
 
         assertTrue(manifest.authors().isEmpty());
         assertNull(manifest.description());
-        assertNull(manifest.thumbnail());
+        assertNull(manifest.icon());
 
         Theme theme = manifest.themes().get(0);
         assertNull(theme.id());
         assertNull(theme.name());
         assertNull(theme.description());
-        assertNull(theme.thumbnail());
+        assertNull(theme.icon());
     }
 
     /// Applying a theme without a background should resolve to the launcher default background.
