@@ -100,7 +100,7 @@ public final class LegacyGameSettingsMigrator {
     private LegacyGameSettingsMigrator() {
     }
 
-    /// Converts a legacy GameDirectoryProfile-level setting JSON object into a preset with the given ID.
+    /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
     public static GameSettings.Preset toPreset(GameSettingsPresetID id, String name, @Nullable JsonObject source) {
         GameSettings.Preset target = new GameSettings.Preset(id);
         target.nameProperty().setValue(LocalizedText.plain(name));
@@ -115,7 +115,7 @@ public final class LegacyGameSettingsMigrator {
 
     /// Migrates a legacy per-version game setting file into an instance setting.
     ///
-    /// @param parent the migrated parent preset ID for the GameDirectoryProfile
+    /// @param parent the migrated parent preset ID for the profile
     /// @return the migrated instance setting, or `null` when no legacy file can be migrated
     public static @Nullable InstanceMigrationResult migrateInstanceGameSettings(
             HMCLGameRepository repository,

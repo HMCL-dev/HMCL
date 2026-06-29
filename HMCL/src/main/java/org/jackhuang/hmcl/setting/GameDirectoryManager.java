@@ -406,7 +406,7 @@ public final class GameDirectoryManager {
     private static GameDirectories requireProfileStore(GameDirectoryProfile profile) {
         @Nullable GameDirectories gameDirectories = findProfileStore(profile);
         if (gameDirectories == null) {
-            throw new IllegalArgumentException("GameDirectoryProfile does not belong to a game directory store");
+            throw new IllegalArgumentException("Profile does not belong to a game directory store");
         }
         return gameDirectories;
     }

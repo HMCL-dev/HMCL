@@ -94,7 +94,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Current file name for instance-specific game settings.
     private static final String INSTANCE_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
 
-    /// The persistent game directory profile that owns this repository.
+    /// The persistent game directory profile for this repository.
     private final GameDirectoryProfile profile;
 
     // instance game settings
@@ -113,7 +113,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         profile.pathProperty().addListener((a, b, newValue) -> changeDirectory(newValue.toPath()));
     }
 
-    /// Returns the persistent game directory profile that owns this repository.
+    /// Returns the persistent game directory profile for this repository.
     public GameDirectoryProfile getProfile() {
         return profile;
     }
