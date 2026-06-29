@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.theme;
 
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /// A readable resource contributed by a theme pack.
 @NotNullByDefault
@@ -114,10 +114,10 @@ public sealed interface ThemePackResource
         /// Opens the zip entry and closes the zip file when the returned stream is closed.
         @Override
         public InputStream openStream() throws IOException {
-            ZipFile zip = new ZipFile(zipFile.toFile(), StandardCharsets.UTF_8);
+            ZipArchiveReader zip = new ZipArchiveReader(zipFile, StandardCharsets.UTF_8);
             boolean success = false;
             try {
-                ZipEntry entry = zip.getEntry(entryName);
+                ZipArchiveEntry entry = zip.getEntry(entryName);
                 if (entry == null || entry.isDirectory()) {
                     throw new IOException("Theme-pack asset is missing: " + entryName);
                 }
@@ -168,7 +168,7 @@ public sealed interface ThemePackResource
     @NotNullByDefault
     final class ZipEntryInputStream extends FilterInputStream {
         /// The zip file that must stay open while this stream is read.
-        private final ZipFile zipFile;
+        private final ZipArchiveReader zipFile;
 
         /// Whether this stream has already been closed.
         private boolean closed;
@@ -177,7 +177,7 @@ public sealed interface ThemePackResource
         ///
         /// @param input   the zip entry input stream
         /// @param zipFile the owning zip file
-        private ZipEntryInputStream(InputStream input, ZipFile zipFile) {
+        private ZipEntryInputStream(InputStream input, ZipArchiveReader zipFile) {
             super(input);
             this.zipFile = Objects.requireNonNull(zipFile);
         }

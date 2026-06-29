@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.theme;
 import com.google.gson.JsonParseException;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
@@ -54,7 +55,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -62,8 +62,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -1197,8 +1195,8 @@ public final class ThemePackManager {
             throw new IOException("Installed theme-pack file is missing: " + installedFile);
         }
 
-        try (ZipFile zipFile = new ZipFile(installedFile.toFile(), StandardCharsets.UTF_8)) {
-            ZipEntry entry = zipFile.getEntry(normalizedEntryName);
+        try (ZipArchiveReader zipFile = new ZipArchiveReader(installedFile, StandardCharsets.UTF_8)) {
+            ZipArchiveEntry entry = zipFile.getEntry(normalizedEntryName);
             if (entry == null || entry.isDirectory()) {
                 throw new IOException("Installed theme-pack asset is missing: " + normalizedEntryName);
             }
@@ -1335,10 +1333,8 @@ public final class ThemePackManager {
         Set<String> entries = new HashSet<>();
         boolean hasManifest = false;
 
-        try (ZipFile zipFile = new ZipFile(themePackFile.toFile(), StandardCharsets.UTF_8)) {
-            Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
-            while (zipEntries.hasMoreElements()) {
-                ZipEntry entry = zipEntries.nextElement();
+        try (ZipArchiveReader zipFile = new ZipArchiveReader(themePackFile, StandardCharsets.UTF_8)) {
+            for (ZipArchiveEntry entry : zipFile.getEntries()) {
                 String entryName = normalizeThemePackEntryName(entry.getName());
                 checkSupportedThemePackEntry(entryName);
 
