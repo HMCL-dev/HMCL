@@ -109,7 +109,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Creates a repository backed by the given game directory profile.
     public HMCLGameRepository(GameDirectoryProfile profile) {
         super(profile.getPath().toPath());
-        this.profile = Objects.requireNonNull(profile);
+        this.profile = profile;
         profile.pathProperty().addListener((a, b, newValue) -> changeDirectory(newValue.toPath()));
     }
 
