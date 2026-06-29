@@ -44,7 +44,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.*;
-import org.jackhuang.hmcl.theme.ThemePackManager.InstalledThemePack;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -674,7 +673,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Updates this cell for one installed theme pack.
         @Override
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
-            InstalledThemePack oldThemePack = getItem();
+            ThemePackManager.@Nullable InstalledThemePack oldThemePack = getItem();
 
             super.updateItem(themePack, empty);
             
