@@ -138,7 +138,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                         .map(AddonUpdateObject::getData)
                         .toList()
         );
-        Controllers.taskDialog(
+        Controllers.downloadTaskDialog(
                 task.whenComplete(Schedulers.javafx(), exception -> {
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedAddons().isEmpty()) {
@@ -153,7 +153,8 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                     }
                 }),
                 i18n("addon.check_update"),
-                TaskCancellationAction.NORMAL);
+                TaskCancellationAction.NORMAL,
+                i18n("task.detail.mod_update"));
     }
 
     private void exportList() {

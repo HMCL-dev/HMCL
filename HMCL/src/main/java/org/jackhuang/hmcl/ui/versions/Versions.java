@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
@@ -88,7 +89,7 @@ public final class Versions {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
-        Controllers.taskDialog(
+        Controllers.downloadTaskDialog(
                 new FileDownloadTask(downloadURLs, modpack)
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
@@ -109,7 +110,8 @@ public final class Versions {
                             }
                         }),
                 i18n("message.downloading"),
-                TaskCancellationAction.NORMAL
+                TaskCancellationAction.NORMAL,
+                i18n("task.detail.install_modpack", modpack.getFileName().toString())
         );
     }
 
@@ -152,7 +154,10 @@ public final class Versions {
             }
         }, version,
             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
+            new Validator(i18n("install.new_game.already_exists"), newVersionName ->
+                    (!profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version))
+                    && !TaskCenter.getInstance().hasQueuedInstallName(TaskCenter.TaskKind.GAME_INSTALL, newVersionName)
+                    && !TaskCenter.getInstance().hasQueuedInstallName(TaskCenter.TaskKind.MODPACK_INSTALL, newVersionName)));
     }
 
     public static void exportVersion(Profile profile, String version) {
@@ -221,7 +226,10 @@ public final class Versions {
                         .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("version.manage.duplicate.confirm")))
                         .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, version,
                                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-                                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName))))
+                                new Validator(i18n("install.new_game.already_exists"), newVersionName ->
+                                        !profile.getRepository().versionIdConflicts(newVersionName)
+                                        && !TaskCenter.getInstance().hasQueuedInstallName(TaskCenter.TaskKind.GAME_INSTALL, newVersionName)
+                                        && !TaskCenter.getInstance().hasQueuedInstallName(TaskCenter.TaskKind.MODPACK_INSTALL, newVersionName))))
                         .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("version.manage.duplicate.duplicate_save"), false)));
     }
 
@@ -232,8 +240,8 @@ public final class Versions {
     public static void updateGameAssets(Profile profile, String version) {
         TaskExecutor executor = new GameAssetDownloadTask(profile.getDependency(), profile.getRepository().getVersion(version), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
                 .executor();
-        Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
-        executor.start();
+        Controllers.downloadTaskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL,
+                i18n("task.detail.redownload_assets", version));
     }
 
     public static void cleanVersion(Profile profile, String id) {

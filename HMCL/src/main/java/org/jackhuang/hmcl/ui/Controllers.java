@@ -58,6 +58,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
@@ -682,6 +683,47 @@ public final class Controllers {
         return pane;
     }
 
+    public static TaskExecutorDialogPane downloadTaskDialog(Task<?> task, String title, TaskCancellationAction onCancel, String detail) {
+        return downloadTaskDialog(task.executor(), title, onCancel, detail);
+    }
+
+    public static TaskExecutorDialogPane downloadTaskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel, String detail) {
+        TaskCenter.Entry entry = TaskCenter.getInstance().submit(executor, title, detail, TaskCenter.TaskKind.OTHER, null);
+        return showManagedTaskDialog(entry, onCancel);
+    }
+
+    /// Presents a foreground dialog for a managed {@link TaskCenter} entry.
+    ///
+    /// The task's lifecycle is owned by the TaskCenter, not by this dialog: the background button
+    /// simply detaches the view (the task keeps running/queued), while cancel routes through the
+    /// TaskCenter so a still-queued task is dropped correctly.
+    public static TaskExecutorDialogPane showManagedTaskDialog(TaskCenter.Entry entry, TaskCancellationAction onCancel) {
+        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
+        pane.setTitle(entry.getTitle());
+        pane.setExecutor(entry.getExecutor());
+
+        pane.setBackgroundAction(() -> {
+            entry.setForegroundShown(false);
+            pane.fireEvent(new DialogCloseEvent());
+        });
+        pane.setCancelAction(() -> {
+            TaskCenter.getInstance().cancel(entry);
+            pane.fireEvent(new DialogCloseEvent());
+        });
+
+        // Reflect queued vs. running: a queued task shows a "waiting" placeholder until it starts.
+        pane.setWaitingForBackground(entry.getStatus() == TaskCenter.Status.QUEUED);
+        entry.statusProperty().addListener((obs, old, now) ->
+                pane.setWaitingForBackground(now == TaskCenter.Status.QUEUED));
+
+        entry.setForegroundShown(true);
+        pane.addEventHandler(DialogCloseEvent.CLOSE, e -> entry.setForegroundShown(false));
+
+        dialog(pane);
+        pane.refreshTaskList();
+        return pane;
+    }
+
     public static void navigate(Node node) {
         decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4, Motion.EASE);
     }
@@ -709,6 +751,12 @@ public final class Controllers {
         } else {
             FXUtils.openLink(href);
         }
+    }
+
+    public static boolean isDialogShowing() {
+        if (decorator == null) return false;
+        return decorator.getDecorator().getDrawerWrapper() != null
+                && decorator.getDecorator().getDrawerWrapper().getProperties().get(DialogUtils.PROPERTY_DIALOG_INSTANCE) != null;
     }
 
     public static boolean isStopped() {

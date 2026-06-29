@@ -693,7 +693,7 @@ public final class LauncherHelper {
                 MessageType.QUESTION)
                 .yesOrNo(() -> {
                     DownloadProvider downloadProvider = profile.getDependency().getDownloadProvider();
-                    Controllers.taskDialog(JavaManager.getDownloadJavaTask(downloadProvider, SYSTEM_PLATFORM, javaVersion)
+                    Controllers.downloadTaskDialog(JavaManager.getDownloadJavaTask(downloadProvider, SYSTEM_PLATFORM, javaVersion)
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     future.complete(result);
@@ -705,7 +705,8 @@ public final class LauncherHelper {
                                     }
                                     future.completeExceptionally(new CancellationException());
                                 }
-                            }), i18n("download.java"), new TaskCancellationAction(() -> future.completeExceptionally(new CancellationException())));
+                            }), i18n("download.java"), new TaskCancellationAction(() -> future.completeExceptionally(new CancellationException())),
+                            i18n("task.detail.java_download"));
                 }, () -> future.completeExceptionally(new CancellationException())).build());
 
         return future;

@@ -204,6 +204,14 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
+                    LineToggleButton autoBackgroundTaskPane = new LineToggleButton();
+                    autoBackgroundTaskPane.setTitle(i18n("settings.launcher.auto_background_task"));
+                    autoBackgroundTaskPane.setSubtitle(i18n("settings.launcher.auto_background_task.subtitle"));
+                    autoBackgroundTaskPane.selectedProperty().bindBidirectional(settings().autoBackgroundTaskProperty());
+                    miscPaneList.getContent().add(autoBackgroundTaskPane);
+                }
+
+                {
                     BorderPane debugPane = new BorderPane();
 
                     Label left = new Label(i18n("settings.launcher.debug"));
@@ -313,7 +321,24 @@ public final class SettingsPage extends ScrollPane {
         }
     }
 
-    private CompletableFuture<Path> onExportLogs() {
+    /// Exports recent logs and shows the result dialog. Used as a standalone action (e.g. from the task center).
+    public static void exportLogs() {
+        onExportLogs().whenCompleteAsync((result, exception) -> {
+            if (exception == null) {
+                Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", result));
+                FXUtils.showFileInExplorer(result);
+            } else {
+                LOG.warning("Failed to export logs", exception);
+                Controllers.dialog(
+                        i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception),
+                        null,
+                        MessageType.ERROR
+                );
+            }
+        }, Schedulers.javafx());
+    }
+
+    private static CompletableFuture<Path> onExportLogs() {
         return CompletableFuture.supplyAsync(Lang.wrap(() -> {
             String nameBase = "hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             List<Path> recentLogFiles = LOG.findRecentLogFiles(5);

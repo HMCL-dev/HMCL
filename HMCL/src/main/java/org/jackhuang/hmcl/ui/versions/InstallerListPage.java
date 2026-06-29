@@ -161,8 +161,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                 });
             }
         });
-        Controllers.taskDialog(executor, i18n("install.installer.install_offline"), TaskCancellationAction.NO_CANCEL);
-        executor.start();
+        Controllers.downloadTaskDialog(executor, i18n("install.installer.install_offline"), TaskCancellationAction.NO_CANCEL,
+                i18n("task.detail.install_offline"));
     }
 
     private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerItem, InstallerListPage> {

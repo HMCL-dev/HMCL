@@ -159,8 +159,11 @@ public final class TaskListPane extends StackPane {
 
             @Override
             public void onRunning(Task<?> task) {
-                if (!task.getSignificance().shouldShow() || task.getName() == null)
+                if (!task.getSignificance().shouldShow())
                     return;
+                if (task.getName() == null) {
+                    task.setName(i18n("task.unnamed"));
+                }
 
                 if (task instanceof GameAssetDownloadTask) {
                     task.setName(i18n("assets.download_all"));
@@ -521,5 +524,15 @@ public final class TaskListPane extends StackPane {
             message.set(throwable.getLocalizedMessage());
             progress.set(0.);
         }
+    }
+
+    public void refresh() {
+        if (executor == null) return;
+        Platform.runLater(() -> {
+            stageNodes.clear();
+            listView.getItems().clear();
+            addStagesHints(executor.getHints());
+            updateProgressNodePadding();
+        });
     }
 }
