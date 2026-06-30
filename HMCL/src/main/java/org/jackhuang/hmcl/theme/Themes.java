@@ -31,9 +31,10 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.SetChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -941,10 +942,11 @@ public final class Themes {
 
     /// Creates a JavaFX image background with the requested opacity.
     private static Background createBackgroundWithOpacity(Image image, double opacity) {
-        PixelReader pixelReader = image.getPixelReader();
+        if (image == null) return null;
+
         if (opacity <= 0) {
             return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
-        } else if (opacity >= 1. || pixelReader == null) {
+        } else if (opacity >= 1.0) {
             return new Background(new BackgroundImage(
                     image,
                     BackgroundRepeat.NO_REPEAT,
@@ -953,15 +955,19 @@ public final class Themes {
                     new BackgroundSize(800, 480, false, false, true, true)
             ));
         } else {
-            WritableImage tempImage = new WritableImage((int) image.getWidth(), (int) image.getHeight());
-            PixelWriter pixelWriter = tempImage.getPixelWriter();
-            for (int y = 0; y < image.getHeight(); y++) {
-                for (int x = 0; x < image.getWidth(); x++) {
-                    Color color = pixelReader.getColor(x, y);
-                    Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity);
-                    pixelWriter.setColor(x, y, newColor);
-                }
-            }
+            Canvas canvas = new Canvas(800, 480);
+            GraphicsContext gc = canvas.getGraphicsContext2D();
+
+            double imageWidth = image.getWidth();
+            double imageHeight = image.getHeight();
+            double scale = Math.max(800 / imageWidth, 480 / imageHeight); 
+            
+            gc.setGlobalAlpha(opacity);
+            gc.drawImage(image, 0, 0, imageWidth * scale, imageHeight * scale);
+
+            SnapshotParameters params = new SnapshotParameters();
+            params.setFill(Color.TRANSPARENT);
+            WritableImage tempImage = canvas.snapshot(params, null);
 
             return new Background(new BackgroundImage(
                     tempImage,
