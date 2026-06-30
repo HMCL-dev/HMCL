@@ -102,6 +102,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         setItems(filteredList);
         setOnFailedAction(event -> refreshThemePacks());
         refreshThemePacks();
+
+        FXUtils.applyDragListener(this, it -> "hmcl-theme".equals(FileUtils.getExtension(it)), paths -> paths.forEach(this::importThemePackImpl));
     }
 
     /// Creates the default list skin for the management page.
@@ -162,6 +164,10 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             return;
         }
 
+        importThemePackImpl(file);
+    }
+
+    private void importThemePackImpl(Path file) {
         ThemePackManager.InstalledThemePack themePack;
         try {
             themePack = ThemePackManager.install(file);
