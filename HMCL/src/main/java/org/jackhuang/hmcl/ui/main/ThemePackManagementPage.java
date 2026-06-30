@@ -429,6 +429,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             setHeading(heading);
 
             ComponentList themes = new ComponentList();
+            themes.getStyleClass().add("no-padding");
             for (Theme theme : manifest.themes()) {
                 TwoLineListItem item = new TwoLineListItem();
                 item.setTitle(getThemeDisplayName(manifest, theme));
@@ -448,16 +449,23 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
                 HBox row = new HBox(8);
                 row.setAlignment(Pos.CENTER_LEFT);
-                row.setCursor(Cursor.HAND);
+                row.setPadding(new Insets(10, 16, 10, 16));
+
                 Node themeIcon = page.createIconNode(themePack, theme.icon(), SVG.STYLE);
                 HBox.setHgrow(item, Priority.ALWAYS);
                 item.setMouseTransparent(true);
                 row.getChildren().setAll(themeIcon, item);
-                FXUtils.onClicked(row, () -> {
+
+                var rowRippler = new RipplerContainer(row);
+                rowRippler.setCursor(Cursor.HAND);
+                ComponentList.setNoPadding(rowRippler);
+
+                FXUtils.onClicked(rowRippler, () -> {
                     fireEvent(new DialogCloseEvent());
                     page.confirmApplyTheme(themePack, theme);
                 });
-                themes.getContent().add(row);
+
+                themes.getContent().add(rowRippler);
             }
 
             ScrollPane scrollPane = new ScrollPane(themes);
