@@ -73,4 +73,16 @@ public class Translator {
             return supportedLocale.i18n("download.speed.megabyte_per_second", (double) bytes / (1024 * 1024));
         }
     }
+
+    public String formatSize(long bytes) {
+        if (bytes < 1024) {
+            return supportedLocale.i18n("download.size.byte", bytes);
+        } else if (bytes < 1024 * 1024) {
+            return supportedLocale.i18n("download.size.kibibyte", (double) bytes / 1024);
+        } else if (bytes < 1024 * 1024 * 1024) {
+            return supportedLocale.i18n("download.size.megabyte", (double) bytes / (1024 * 1024));
+        } else {
+            return supportedLocale.i18n("download.size.gigabyte", (double) bytes / (1024 * 1024 * 1024));
+        }
+    }
 }

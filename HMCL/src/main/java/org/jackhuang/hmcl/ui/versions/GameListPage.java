@@ -184,6 +184,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             Profiles.getSelectedProfile().getRepository().refreshVersionsAsync().start();
         }
 
+        public void clean() {
+            Versions.cleanGameFiles(Profiles.getSelectedProfile());
+        }
+
         @Override
         protected Skin<?> createDefaultSkin() {
             return new GameListSkin(this);
@@ -234,7 +238,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                     searchBar.getChildren().setAll(searchField, closeSearchBar);
 
-                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
+                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)), createToolbarButton2(i18n("game.clean"), SVG.CLEAN, skinnable::clean));
 
                     toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
 
