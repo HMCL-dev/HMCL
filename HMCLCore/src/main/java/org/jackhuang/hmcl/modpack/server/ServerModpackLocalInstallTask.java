@@ -58,8 +58,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name);
-        for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
-            builder.version(addon.getId(), addon.getVersion());
+        for (ServerModpackManifest.Addon addon : manifest.addons()) {
+            builder.version(addon.id(), addon.version());
         }
 
         dependents.add(builder.buildAsync());
@@ -73,7 +73,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
-                if (!ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (!ServerModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Version " + name + " is not a Server modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {

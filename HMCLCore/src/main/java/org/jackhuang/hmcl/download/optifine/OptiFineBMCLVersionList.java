@@ -79,17 +79,17 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
                 versions.clear();
                 Set<String> duplicates = new HashSet<>();
                 for (OptiFineVersion element : root) {
-                    String version = element.getType() + "_" + element.getPatch();
-                    String mirror = apiRoot + "/optifine/" + toLookupVersion(element.getGameVersion()) + "/" + element.getType() + "/" + element.getPatch();
+                    String version = element.type() + "_" + element.patch();
+                    String mirror = apiRoot + "/optifine/" + toLookupVersion(element.gameVersion()) + "/" + element.type() + "/" + element.patch();
                     if (!duplicates.add(mirror))
                         continue;
 
-                    boolean isPre = element.getPatch() != null && (element.getPatch().startsWith("pre") || element.getPatch().startsWith("alpha"));
+                    boolean isPre = element.patch() != null && (element.patch().startsWith("pre") || element.patch().startsWith("alpha"));
 
-                    if (StringUtils.isBlank(element.getGameVersion()))
+                    if (StringUtils.isBlank(element.gameVersion()))
                         continue;
 
-                    String gameVersion = VersionNumber.normalize(fromLookupVersion(element.getGameVersion()));
+                    String gameVersion = VersionNumber.normalize(fromLookupVersion(element.gameVersion()));
                     versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
                 }
             } finally {
@@ -101,69 +101,13 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
     /**
      * @author huangyuhui
      */
-    private static final class OptiFineVersion {
-
-        @SerializedName("dl")
-        private final String downloadLink;
-
-        @SerializedName("ver")
-        private final String version;
-
-        @SerializedName("date")
-        private final String date;
-
-        @SerializedName("type")
-        private final String type;
-
-        @SerializedName("patch")
-        private final String patch;
-
-        @SerializedName("mirror")
-        private final String mirror;
-
-        @SerializedName("mcversion")
-        private final String gameVersion;
+    private record OptiFineVersion(@SerializedName("dl") String downloadLink, @SerializedName("ver") String version,
+                                   @SerializedName("date") String date, @SerializedName("type") String type,
+                                   @SerializedName("patch") String patch, @SerializedName("mirror") String mirror,
+                                   @SerializedName("mcversion") String gameVersion) {
 
         public OptiFineVersion() {
             this(null, null, null, null, null, null, null);
-        }
-
-        public OptiFineVersion(String downloadLink, String version, String date, String type, String patch, String mirror, String gameVersion) {
-            this.downloadLink = downloadLink;
-            this.version = version;
-            this.date = date;
-            this.type = type;
-            this.patch = patch;
-            this.mirror = mirror;
-            this.gameVersion = gameVersion;
-        }
-
-        public String getDownloadLink() {
-            return downloadLink;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public String getDate() {
-            return date;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public String getPatch() {
-            return patch;
-        }
-
-        public String getMirror() {
-            return mirror;
-        }
-
-        public String getGameVersion() {
-            return gameVersion;
         }
     }
 }

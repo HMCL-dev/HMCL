@@ -26,10 +26,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * Parser for mod_data.txt
@@ -40,13 +43,13 @@ public enum ModTranslations {
     MOD("/assets/mod_data.txt") {
         @Override
         public String getMcmodUrl(Mod mod) {
-            return String.format("https://www.mcmod.cn/class/%s.html", mod.getMcmod());
+            return String.format("https://www.mcmod.cn/class/%s.html", mod.mcmod());
         }
     },
     MODPACK("/assets/modpack_data.txt") {
         @Override
         public String getMcmodUrl(Mod mod) {
-            return String.format("https://www.mcmod.cn/modpack/%s.html", mod.getMcmod());
+            return String.format("https://www.mcmod.cn/modpack/%s.html", mod.mcmod());
         }
     },
     EMPTY("") {
@@ -118,7 +121,7 @@ public enum ModTranslations {
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(
                             ModTranslations.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8))) {
-                return this.mods = reader.lines().filter(line -> !line.startsWith("#")).map(Mod::new).toList();
+                return this.mods = reader.lines().filter(line -> !line.startsWith("#")).map(Mod::fromLine).toList();
             } catch (Exception e) {
                 LOG.warning("Failed to load " + resourceName, e);
                 return this.mods = List.of();
@@ -138,7 +141,7 @@ public enum ModTranslations {
             List<Mod> mods = getMods();
             modIdMap = new HashMap<>(mods.size());
             for (Mod mod : mods) {
-                for (String id : mod.getModIds()) {
+                for (String id : mod.modIds()) {
                     if (StringUtils.isNotBlank(id)) {
                         modIdMap.putIfAbsent(id, mod);
                     }
@@ -162,7 +165,7 @@ public enum ModTranslations {
 
             List<Mod> mods = getMods();
             for (Mod mod : mods) {
-                String subname = cleanSubname(mod.getSubname());
+                String subname = cleanSubname(mod.subname());
                 if (StringUtils.isNotBlank(subname)) {
                     subnameMap.putIfAbsent(subname, mod);
                 }
@@ -185,8 +188,8 @@ public enum ModTranslations {
             List<Mod> mods = getMods();
             curseForgeMap = new HashMap<>(mods.size());
             for (Mod mod : mods) {
-                if (StringUtils.isNotBlank(mod.getCurseforge())) {
-                    curseForgeMap.putIfAbsent(mod.getCurseforge(), mod);
+                if (StringUtils.isNotBlank(mod.curseforge())) {
+                    curseForgeMap.putIfAbsent(mod.curseforge(), mod);
                 }
             }
 
@@ -209,17 +212,17 @@ public enum ModTranslations {
             keywords = new ArrayList<>();
             int maxKeywordLength = -1;
             for (Mod mod : mods) {
-                if (StringUtils.isNotBlank(mod.getName())) {
-                    keywords.add(pair(mod.getName(), mod));
-                    maxKeywordLength = Math.max(maxKeywordLength, mod.getName().length());
+                if (StringUtils.isNotBlank(mod.name())) {
+                    keywords.add(pair(mod.name(), mod));
+                    maxKeywordLength = Math.max(maxKeywordLength, mod.name().length());
                 }
-                if (StringUtils.isNotBlank(mod.getSubname())) {
-                    keywords.add(pair(mod.getSubname(), mod));
-                    maxKeywordLength = Math.max(maxKeywordLength, mod.getSubname().length());
+                if (StringUtils.isNotBlank(mod.subname())) {
+                    keywords.add(pair(mod.subname(), mod));
+                    maxKeywordLength = Math.max(maxKeywordLength, mod.subname().length());
                 }
-                if (StringUtils.isNotBlank(mod.getAbbr())) {
-                    keywords.add(pair(mod.getAbbr(), mod));
-                    maxKeywordLength = Math.max(maxKeywordLength, mod.getAbbr().length());
+                if (StringUtils.isNotBlank(mod.abbr())) {
+                    keywords.add(pair(mod.abbr(), mod));
+                    maxKeywordLength = Math.max(maxKeywordLength, mod.abbr().length());
                 }
             }
 
@@ -250,7 +253,7 @@ public enum ModTranslations {
         subname = cleanSubname(subname);
         if (StringUtils.isNotBlank(subname)) {
             Mod mod = getSubnameMap().get(subname);
-            if (mod != null && (StringUtils.isBlank(id) || mod.getModIds().contains(id)))
+            if (mod != null && (StringUtils.isBlank(id) || mod.modIds().contains(id)))
                 return mod;
         }
 
@@ -282,35 +285,14 @@ public enum ModTranslations {
                 .toList();
     }
 
-    public static final class Mod {
-        private final String curseforge;
-        private final String mcmod;
-        private final List<String> modIds;
-        private final String name;
-        private final String subname;
-        private final String abbr;
+    public record Mod(String curseforge, String mcmod, List<String> modIds, String name, String subname, String abbr) {
 
-        public Mod(String line) {
+        public static Mod fromLine(String line) {
             String[] items = line.split(";", -1);
             if (items.length != 6) {
                 throw new IllegalArgumentException("Illegal mod data line, 6 items expected " + line);
             }
-
-            curseforge = items[0];
-            mcmod = items[1];
-            modIds = List.of(items[2].split(","));
-            name = items[3];
-            subname = items[4];
-            abbr = items[5];
-        }
-
-        public Mod(String curseforge, String mcmod, List<String> modIds, String name, String subname, String abbr) {
-            this.curseforge = curseforge;
-            this.mcmod = mcmod;
-            this.modIds = modIds;
-            this.name = name;
-            this.subname = subname;
-            this.abbr = abbr;
+            return new Mod(items[0], items[1], List.of(items[2].split(",")), items[3], items[4], items[5]);
         }
 
         public String getDisplayName() {
@@ -323,30 +305,6 @@ public enum ModTranslations {
                 builder.append(" (").append(subname).append(")");
             }
             return builder.toString();
-        }
-
-        public String getCurseforge() {
-            return curseforge;
-        }
-
-        public String getMcmod() {
-            return mcmod;
-        }
-
-        public List<String> getModIds() {
-            return modIds;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getSubname() {
-            return subname;
-        }
-
-        public String getAbbr() {
-            return abbr;
         }
     }
 }

@@ -81,8 +81,8 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
     @Override
     public void preExecute() throws Exception {
-        if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        dependent = new GetTask(manifest.getManifest().getFileApi() + "/server-manifest.json");
+        if (manifest == null || StringUtils.isBlank(manifest.manifest().fileApi())) return;
+        dependent = new GetTask(manifest.manifest().fileApi() + "/server-manifest.json");
     }
 
     @Override
@@ -96,12 +96,12 @@ public class ServerModpackCompletionTask extends Task<Void> {
     }
 
     private Map<String, String> toMap(Collection<ServerModpackManifest.Addon> addons) {
-        return addons.stream().collect(Collectors.toMap(ServerModpackManifest.Addon::getId, ServerModpackManifest.Addon::getVersion));
+        return addons.stream().collect(Collectors.toMap(ServerModpackManifest.Addon::id, ServerModpackManifest.Addon::version));
     }
 
     @Override
     public void execute() throws Exception {
-        if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
+        if (manifest == null || StringUtils.isBlank(manifest.manifest().fileApi())) return;
 
         try {
             remoteManifest = JsonUtils.fromNonNullJson(dependent.getResult(), ServerModpackManifest.class);
@@ -109,23 +109,23 @@ public class ServerModpackCompletionTask extends Task<Void> {
             throw new IOException(e);
         }
 
-        Map<String, String> oldAddons = toMap(manifest.getManifest().getAddons());
-        Map<String, String> newAddons = toMap(remoteManifest.getAddons());
+        Map<String, String> oldAddons = toMap(manifest.manifest().addons());
+        Map<String, String> newAddons = toMap(remoteManifest.addons());
         if (!Objects.equals(oldAddons, newAddons)) {
             GameBuilder builder = dependencyManager.gameBuilder().name(version);
-            for (ServerModpackManifest.Addon addon : remoteManifest.getAddons()) {
-                builder.version(addon.getId(), addon.getVersion());
+            for (ServerModpackManifest.Addon addon : remoteManifest.addons()) {
+                builder.version(addon.id(), addon.version());
             }
 
             dependencies.add(builder.buildAsync());
         }
 
         Path rootPath = repository.getVersionRoot(version).toAbsolutePath().normalize();
-        Map<String, ModpackConfiguration.FileInformation> files = manifest.getManifest().getFiles().stream()
-                .collect(Collectors.toMap(ModpackConfiguration.FileInformation::getPath,
+        Map<String, ModpackConfiguration.FileInformation> files = manifest.manifest().files().stream()
+                .collect(Collectors.toMap(ModpackConfiguration.FileInformation::path,
                         Function.identity()));
 
-        Set<String> remoteFiles = remoteManifest.getFiles().stream().map(ModpackConfiguration.FileInformation::getPath)
+        Set<String> remoteFiles = remoteManifest.files().stream().map(ModpackConfiguration.FileInformation::path)
                 .collect(Collectors.toSet());
 
         Path runDirectory = repository.getRunDirectory(version).toAbsolutePath().normalize();
@@ -133,12 +133,12 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
         int total = 0;
         // for files in new modpack
-        for (ModpackConfiguration.FileInformation file : remoteManifest.getFiles()) {
-            Path actualPath = rootPath.resolve(file.getPath()).toAbsolutePath().normalize();
+        for (ModpackConfiguration.FileInformation file : remoteManifest.files()) {
+            Path actualPath = rootPath.resolve(file.path()).toAbsolutePath().normalize();
             String fileName = actualPath.getFileName().toString();
 
             if (!actualPath.startsWith(rootPath)) {
-                throw new IOException("Unsecure path: " + file.getPath());
+                throw new IOException("Unsecure path: " + file.path());
             }
 
             boolean download;
@@ -149,7 +149,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
             if (isModDisabled) {
                 download = false;
-            } else if (!files.containsKey(file.getPath())) {
+            } else if (!files.containsKey(file.path())) {
                 // If old modpack does not have this entry, download it
                 download = true;
             } else if (!Files.exists(actualPath)) {
@@ -159,24 +159,24 @@ public class ServerModpackCompletionTask extends Task<Void> {
             } else {
                 // If user modified this entry file, we will not replace this file since this modified file is that user expects.
                 String fileHash = DigestUtils.digestToString("SHA-1", actualPath);
-                String oldHash = files.get(file.getPath()).getHash();
-                download = !Objects.equals(oldHash, file.getHash()) && Objects.equals(oldHash, fileHash);
+                String oldHash = files.get(file.path()).hash();
+                download = !Objects.equals(oldHash, file.hash()) && Objects.equals(oldHash, fileHash);
             }
 
             if (download) {
                 total++;
                 dependencies.add(new FileDownloadTask(
-                        remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
+                        remoteManifest.fileApi() + "/overrides/" + file.path(),
                         actualPath,
-                        new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
+                        new FileDownloadTask.IntegrityCheck("SHA-1", file.hash()))
                         .withCounter("hmcl.modpack.download"));
             }
         }
 
         // If old modpack have this entry, and new modpack deleted it. Delete this file.
-        for (ModpackConfiguration.FileInformation file : manifest.getManifest().getFiles()) {
-            Path actualPath = rootPath.resolve(file.getPath());
-            if (Files.exists(actualPath) && !remoteFiles.contains(file.getPath()))
+        for (ModpackConfiguration.FileInformation file : manifest.manifest().files()) {
+            Path actualPath = rootPath.resolve(file.path());
+            if (Files.exists(actualPath) && !remoteFiles.contains(file.path()))
                 Files.deleteIfExists(actualPath);
         }
 
@@ -191,9 +191,9 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
     @Override
     public void postExecute() throws Exception {
-        if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
+        if (manifest == null || StringUtils.isBlank(manifest.manifest().fileApi())) return;
         Path manifestFile = repository.getModpackConfiguration(version);
         Files.createDirectories(manifestFile.getParent());
-        JsonUtils.writeToJsonFile(manifestFile, new ModpackConfiguration<>(remoteManifest, this.manifest.getType(), this.manifest.getName(), this.manifest.getVersion(), remoteManifest.getFiles()));
+        JsonUtils.writeToJsonFile(manifestFile, new ModpackConfiguration<>(remoteManifest, this.manifest.type(), this.manifest.name(), this.manifest.version(), remoteManifest.files()));
     }
 }

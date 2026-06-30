@@ -66,8 +66,8 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
 
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name);
-        for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
-            builder.version(addon.getId(), addon.getVersion());
+        for (McbbsModpackManifest.Addon addon : manifest.addons()) {
+            builder.version(addon.id(), addon.version());
         }
 
         dependents.add(builder.buildAsync());
@@ -81,7 +81,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
-                if (!McbbsModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (!McbbsModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Version " + name + " is not a Mcbbs modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
@@ -106,11 +106,11 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         Version version = repository.readVersionJson(name);
         Optional<Version> mcbbsPatch = version.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.getId())).findFirst();
         if (!update) {
-            Version patch = new Version(PATCH_NAME).setLibraries(manifest.getLibraries());
+            Version patch = new Version(PATCH_NAME).setLibraries(manifest.libraries());
             dependencies.add(repository.saveAsync(version.addPatch(patch)));
         } else if (mcbbsPatch.isPresent()) {
             // This mcbbs modpack was installed by HMCL.
-            Version patch = mcbbsPatch.get().setLibraries(manifest.getLibraries());
+            Version patch = mcbbsPatch.get().setLibraries(manifest.libraries());
             dependencies.add(repository.saveAsync(version.addPatch(patch)));
         } else {
             // This mcbbs modpack was installed by other launchers.

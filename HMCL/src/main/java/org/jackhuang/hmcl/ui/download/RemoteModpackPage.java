@@ -53,9 +53,9 @@ public final class RemoteModpackPage extends ModpackPage {
             return;
         }
 
-        nameProperty.set(manifest.getName());
-        versionProperty.set(manifest.getVersion());
-        authorProperty.set(manifest.getAuthor());
+        nameProperty.set(manifest.name());
+        versionProperty.set(manifest.version());
+        authorProperty.set(manifest.author());
 
         Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
         String name = controller.getSettings().get(MODPACK_NAME);
@@ -64,14 +64,14 @@ public final class RemoteModpackPage extends ModpackPage {
             txtModpackName.setDisable(true);
         } else {
             // trim: https://github.com/HMCL-dev/HMCL/issues/962
-            txtModpackName.setText(manifest.getName().trim());
+            txtModpackName.setText(manifest.name().trim());
             txtModpackName.getValidators().addAll(
                     new RequiredValidator(),
                     new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
                     new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         }
 
-        btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));
+        btnDescription.setVisible(StringUtils.isNotBlank(manifest.description()));
     }
 
     @Override
@@ -86,7 +86,7 @@ public final class RemoteModpackPage extends ModpackPage {
     }
 
     protected void onDescribe() {
-        Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
+        Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.description()));
     }
 
     public static final SettingsMap.Key<ServerModpackManifest> MODPACK_SERVER_MANIFEST = new SettingsMap.Key<>("MODPACK_SERVER_MANIFEST");

@@ -80,19 +80,8 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
     }
 
     @Immutable
-    private static final class NeoForgeVersion implements Validation {
-        private final String rawVersion;
-
-        private final String version;
-
-        @SerializedName("mcversion")
-        private final String mcVersion;
-
-        public NeoForgeVersion(String rawVersion, String version, String mcVersion) {
-            this.rawVersion = rawVersion;
-            this.version = version;
-            this.mcVersion = mcVersion;
-        }
+    private record NeoForgeVersion(String rawVersion, String version,
+                                   @SerializedName("mcversion") String mcVersion) implements Validation {
 
         @Override
         public void validate() throws JsonParseException {

@@ -71,7 +71,7 @@ public final class LegacyFabricVersionList extends VersionList<LegacyFabricRemot
     private List<String> getGameVersions(String metaUrl) throws IOException {
         String json = NetworkUtils.doGet(downloadProvider.injectURLWithCandidates(metaUrl));
         return JsonUtils.GSON.fromJson(json, listTypeOf(GameVersion.class))
-                .stream().map(GameVersion::getVersion).collect(Collectors.toList());
+                .stream().map(GameVersion::version).collect(Collectors.toList());
     }
 
     private static String normalizeVersion(String version) {
@@ -84,32 +84,9 @@ public final class LegacyFabricVersionList extends VersionList<LegacyFabricRemot
         return String.format("https://meta.legacyfabric.net/v2/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
-    private static class GameVersion {
-        private final String version;
-        private final String maven;
-        private final boolean stable;
-
+    private record GameVersion(String version, @Nullable String maven, boolean stable) {
         public GameVersion() {
             this("", null, false);
-        }
-
-        public GameVersion(String version, String maven, boolean stable) {
-            this.version = version;
-            this.maven = maven;
-            this.stable = stable;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        @Nullable
-        public String getMaven() {
-            return maven;
-        }
-
-        public boolean isStable() {
-            return stable;
         }
     }
 }

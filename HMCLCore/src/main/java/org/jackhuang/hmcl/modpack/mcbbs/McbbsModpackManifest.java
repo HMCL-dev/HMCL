@@ -26,7 +26,10 @@ import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackManifest;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.*;
+import org.jackhuang.hmcl.util.gson.JsonSubtype;
+import org.jackhuang.hmcl.util.gson.JsonType;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
+import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -39,109 +42,17 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 
-public class McbbsModpackManifest implements ModpackManifest, Validation {
+public record McbbsModpackManifest(String manifestType, int manifestVersion, String name, String version, String author,
+                                   String description, @Nullable String fileApi, String url, boolean forceUpdate,
+                                   @SerializedName("origin") List<Origin> origins, List<Addon> addons,
+                                   List<Library> libraries, List<File> files, Settings settings,
+                                   LaunchInfo launchInfo) implements ModpackManifest, Validation {
     public static final String MANIFEST_TYPE = "minecraftModpack";
 
-    private final String manifestType;
-    private final int manifestVersion;
-    private final String name;
-    private final String version;
-    private final String author;
-    private final String description;
-
-    @Nullable
-    private final String fileApi;
-    private final String url;
-    private final boolean forceUpdate;
-    @SerializedName("origin")
-    private final List<Origin> origins;
-    private final List<Addon> addons;
-    private final List<Library> libraries;
-    private final List<File> files;
-    private final Settings settings;
-    private final LaunchInfo launchInfo;
     // sandbox and antiCheating are both not supported.
 
     public McbbsModpackManifest() {
         this(MANIFEST_TYPE, 1, "", "", "", "", null, "", false, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), new Settings(), new LaunchInfo());
-    }
-
-    public McbbsModpackManifest(String manifestType, int manifestVersion, String name, String version, String author, String description, @Nullable String fileApi, String url, boolean forceUpdate, List<Origin> origins, List<Addon> addons, List<Library> libraries, List<File> files, Settings settings, LaunchInfo launchInfo) {
-        this.manifestType = manifestType;
-        this.manifestVersion = manifestVersion;
-        this.name = name;
-        this.version = version;
-        this.author = author;
-        this.description = description;
-        this.fileApi = fileApi;
-        this.url = url;
-        this.forceUpdate = forceUpdate;
-        this.origins = origins;
-        this.addons = addons;
-        this.libraries = libraries;
-        this.files = files;
-        this.settings = settings;
-        this.launchInfo = launchInfo;
-    }
-
-    public String getManifestType() {
-        return manifestType;
-    }
-
-    public int getManifestVersion() {
-        return manifestVersion;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getFileApi() {
-        return fileApi;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public boolean isForceUpdate() {
-        return forceUpdate;
-    }
-
-    public List<Origin> getOrigins() {
-        return origins;
-    }
-
-    public List<Addon> getAddons() {
-        return addons;
-    }
-
-    public List<Library> getLibraries() {
-        return libraries;
-    }
-
-    public List<File> getFiles() {
-        return files;
-    }
-
-    public Settings getSettings() {
-        return settings;
-    }
-
-    public LaunchInfo getLaunchInfo() {
-        return launchInfo;
     }
 
     public McbbsModpackManifest setFiles(List<File> files) {
@@ -165,71 +76,33 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
             throw new JsonParseException("McbbsModpackManifest.addons cannot be null");
     }
 
-    public static final class Origin {
-        private final String type;
-        private final int id;
-
+    public record Origin(String type, int id) {
         public Origin() {
             this("", 0);
         }
 
-        public Origin(String type, int id) {
-            this.type = type;
-            this.id = id;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public int getId() {
-            return id;
-        }
     }
 
-    public static final class Addon {
-        private final String id;
-        private final String version;
-
+    public record Addon(String id, String version) {
         public Addon() {
             this("", "");
         }
 
-        public Addon(String id, String version) {
-            this.id = id;
-            this.version = version;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getVersion() {
-            return version;
-        }
     }
 
-    public static final class Settings {
-        @SerializedName("install_mods")
-        private final boolean installMods;
-
-        @SerializedName("install_resourcepack")
-        private final boolean installResourcepack;
-
+    public record Settings(@SerializedName("install_mods") boolean installMods,
+                           @SerializedName("install_resourcepack") boolean installResourcepack) {
         public Settings() {
             this(true, true);
         }
 
-        public Settings(boolean installMods, boolean installResourcepack) {
-            this.installMods = installMods;
-            this.installResourcepack = installResourcepack;
-        }
-
-        public boolean isInstallMods() {
+        @Override
+        public boolean installMods() {
             return installMods;
         }
 
-        public boolean isInstallResourcepack() {
+        @Override
+        public boolean installResourcepack() {
             return installResourcepack;
         }
     }
@@ -365,63 +238,33 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
         }
     }
 
-    public static final class LaunchInfo {
-        private final int minMemory;
-        private final List<Integer> supportJava;
-        @SerializedName("launchArgument")
-        private final List<String> launchArguments;
-        @SerializedName("javaArgument")
-        private final List<String> javaArguments;
-
+    public record LaunchInfo(int minMemory, @Nullable List<Integer> supportJava,
+                             @SerializedName("launchArgument") List<String> launchArguments,
+                             @SerializedName("javaArgument") List<String> javaArguments) {
         public LaunchInfo() {
             this(0, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         }
 
-        public LaunchInfo(int minMemory, List<Integer> supportJava, List<String> launchArguments, List<String> javaArguments) {
-            this.minMemory = minMemory;
-            this.supportJava = supportJava;
-            this.launchArguments = launchArguments;
-            this.javaArguments = javaArguments;
-        }
-
-        public int getMinMemory() {
-            return minMemory;
-        }
-
-        @Nullable
-        public List<Integer> getSupportJava() {
-            return supportJava;
-        }
-
-        public List<String> getLaunchArguments() {
+        @Override
+        public List<String> launchArguments() {
             return Optional.ofNullable(launchArguments).orElseGet(Collections::emptyList);
         }
 
-        public List<String> getJavaArguments() {
+        @Override
+        public List<String> javaArguments() {
             return Optional.ofNullable(javaArguments).orElseGet(Collections::emptyList);
         }
     }
 
-    public static class ServerInfo {
-        private final String authlibInjectorServer;
-
+    public record ServerInfo(@Nullable String authlibInjectorServer) {
         public ServerInfo() {
             this(null);
-        }
-
-        public ServerInfo(String authlibInjectorServer) {
-            this.authlibInjectorServer = authlibInjectorServer;
-        }
-
-        @Nullable
-        public String getAuthlibInjectorServer() {
-            return authlibInjectorServer;
         }
     }
 
     public Modpack toModpack(Charset encoding) throws IOException {
         String gameVersion = addons.stream().filter(x -> MINECRAFT.getPatchId().equals(x.id)).findAny()
-                .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
+                .orElseThrow(() -> new IOException("Cannot find game version")).version();
         return new Modpack(name, author, version, gameVersion, description, encoding, this) {
             @Override
             public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl) {
@@ -431,8 +274,8 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
     }
 
     public void injectLaunchOptions(LaunchOptions.Builder launchOptions) {
-        launchOptions.getGameArguments().addAll(launchInfo.getLaunchArguments());
-        launchOptions.getJavaArguments().addAll(launchInfo.getJavaArguments());
+        launchOptions.getGameArguments().addAll(launchInfo.launchArguments());
+        launchOptions.getJavaArguments().addAll(launchInfo.javaArguments());
     }
 
 }

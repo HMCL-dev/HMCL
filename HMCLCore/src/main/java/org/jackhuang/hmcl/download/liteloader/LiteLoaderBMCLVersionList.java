@@ -43,15 +43,7 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
         return false;
     }
 
-    private static final class LiteLoaderBMCLVersion {
-
-        private final LiteLoaderVersion build;
-        private final String version;
-
-        public LiteLoaderBMCLVersion(LiteLoaderVersion build, String version) {
-            this.build = build;
-            this.version = version;
-        }
+    private record LiteLoaderBMCLVersion(LiteLoaderVersion build, String version) {
     }
 
     @Override
@@ -78,7 +70,7 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
                                         downloadProvider.getApiRoot() + "/liteloader/download",
                                         Collections.singletonMap("version", v.version)
                                 )),
-                                v.build.getTweakClass(), v.build.getLibraries()
+                                v.build.tweakClass(), v.build.libraries()
                         ));
                     } finally {
                         lock.writeLock().unlock();

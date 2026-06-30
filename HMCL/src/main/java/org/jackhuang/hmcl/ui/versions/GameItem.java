@@ -82,7 +82,7 @@ public class GameItem {
             String modPackVersion = null;
             try {
                 ModpackConfiguration<?> config = profile.getRepository().readModpackConfiguration(id);
-                modPackVersion = config != null ? config.getVersion() : null;
+                modPackVersion = config != null ? config.version() : null;
             } catch (IOException e) {
                 LOG.warning("Failed to read modpack configuration from " + id, e);
             }
