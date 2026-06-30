@@ -84,7 +84,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
         this.gameDirectory = gameDirectory;
         String gameDirectoryDisplayName = Optional.ofNullable(gameDirectory).map(GameDirectoryManager::getGameDirectoryDisplayName).orElse("");
 
-        state.set(State.fromTitle(gameDirectory == null ? i18n("profile.new") : i18n("profile") + " - " + gameDirectoryDisplayName));
+        state.set(State.fromTitle(gameDirectory == null ? i18n("game_directory.new") : i18n("game_directory") + " - " + gameDirectoryDisplayName));
         location = new SimpleStringProperty(this, "location",
                 Optional.ofNullable(gameDirectory).map(GameDirectory::getPath).map(PortablePath::toPath).map(FileUtils::getAbsolutePath).orElse(".minecraft"));
 
@@ -100,7 +100,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                 {
                     BorderPane gameDirectoryNamePane = new BorderPane();
                     {
-                        Label label = new Label(i18n("profile.name"));
+                        Label label = new Label(i18n("game_directory.name"));
                         gameDirectoryNamePane.setLeft(label);
                         BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
@@ -114,7 +114,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                         txtGameDirectoryName.setText(gameDirectoryDisplayName);
                         txtGameDirectoryName.getValidators().add(new ValidatorBase() {
                             {
-                                setMessage(i18n("profile.already_exists"));
+                                setMessage(i18n("game_directory.already_exists"));
                             }
 
                             @Override
@@ -128,13 +128,13 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                     }
 
                     gameDir = new LineFileChooserButton();
-                    gameDir.setTitle(i18n("profile.instance_directory"));
-                    gameDir.setFileChooserTitle(i18n("profile.instance_directory.choose"));
+                    gameDir.setTitle(i18n("game_directory.instance_directory"));
+                    gameDir.setFileChooserTitle(i18n("game_directory.instance_directory.choose"));
                     gameDir.setType(LineFileChooserButton.Type.OPEN_DIRECTORY);
                     gameDir.locationProperty().bindBidirectional(location);
 
                     toggleUseRelativePath = new LineToggleButton();
-                    toggleUseRelativePath.setTitle(i18n("profile.use_relative_path"));
+                    toggleUseRelativePath.setTitle(i18n("game_directory.use_relative_path"));
 
                     gameDir.convertToRelativePathProperty().bind(toggleUseRelativePath.selectedProperty());
                     if (gameDirectory != null) {

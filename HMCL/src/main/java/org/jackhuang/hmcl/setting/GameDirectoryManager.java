@@ -89,10 +89,10 @@ public final class GameDirectoryManager {
         }
 
         if (isGameDirectoryPath(gameDirectory, CURRENT_GAME_DIRECTORY_PATH)) {
-            return i18n("profile.default");
+            return i18n("game_directory.default");
         }
         if (isGameDirectoryPath(gameDirectory, HOME_GAME_DIRECTORY_PATH)) {
-            return i18n("profile.home");
+            return i18n("game_directory.home");
         }
 
         return gameDirectory.getId().toString();
