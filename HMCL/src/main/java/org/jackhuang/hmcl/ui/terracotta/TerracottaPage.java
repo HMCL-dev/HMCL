@@ -78,13 +78,13 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         AdvancedListBox toolbar = new AdvancedListBox()
                 .add(accountListItem)
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
-                    Profile profile = Profiles.getSelectedProfile();
-                    Versions.launch(profile, Profiles.getSelectedInstance(profile), launcherHelper -> {
+                    var repository = GameDirectoryManager.getSelectedRepository();
+                    Versions.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
                         launcherHelper.setKeep();
                         launcherHelper.setDisableOfflineSkin();
                     });
                 }, item -> {
-                    instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(Profiles.selectedInstanceProperty(),
+                    instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(),
                             instanceName -> item.setSubtitle(StringUtils.isNotBlank(instanceName) ? instanceName : i18n("version.empty"))
                     );
 
@@ -92,14 +92,14 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                     FXUtils.onScroll(item, mainPage.getVersions(), list -> {
                         String currentId = mainPage.getCurrentGame();
                         return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-                    }, it -> Profiles.setSelectedInstance(mainPage.getProfile(), it.getId()));
+                    }, it -> mainPage.getRepository().setSelectedInstance(it.getId()));
 
                     FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
                             JFXPopup.PopupVPosition.BOTTOM,
                             JFXPopup.PopupHPosition.LEFT,
                             item.getWidth(),
                             0,
-                            mainPage.getProfile(), mainPage.getVersions()));
+                            mainPage.getRepository(), mainPage.getVersions()));
                 })
                 .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));

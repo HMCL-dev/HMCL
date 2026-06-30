@@ -32,12 +32,13 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaManager;
@@ -211,8 +212,8 @@ public class TerracottaControllerPage extends StackPane {
                                 i18n("terracotta.status.waiting.host.launch.title"),
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("version.launch"), () -> {
-                            Profile profile = Profiles.getSelectedProfile();
-                            Versions.launch(profile, Profiles.getSelectedInstance(profile), launcherHelper -> {
+                            var repository = GameDirectoryManager.getSelectedRepository();
+                            Versions.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
                                 launcherHelper.setKeep();
                                 launcherHelper.setDisableOfflineSkin();
                             });
@@ -554,6 +555,7 @@ public class TerracottaControllerPage extends StackPane {
         header.getStyleClass().add("no-padding");
         header.setLargeTitle(true);
         header.setMinHeight(LinePane.USE_COMPUTED_SIZE);
+        HBox.setHgrow(header, Priority.ALWAYS);
         header.setMouseTransparent(true);
         header.setLeading(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
         header.setTitle(i18n("terracotta.from_local.title"));

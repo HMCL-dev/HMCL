@@ -44,6 +44,7 @@ import javafx.scene.text.Text;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.schematic.Schematic;
 import org.jackhuang.hmcl.schematic.SchematicType;
@@ -78,7 +79,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable {
+public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.GameInstanceLoadable {
 
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
@@ -132,10 +133,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     @Override
-    public void loadVersion(Profile profile, String version) {
-        this.profile = profile;
-        this.instanceId = version;
-        this.schematicsDirectory = profile.getRepository().getSchematicsDirectory(version);
+    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+        this.schematicsDirectory = repository.getSchematicsDirectory(instanceId);
 
         refresh();
     }
