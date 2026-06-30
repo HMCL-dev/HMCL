@@ -946,7 +946,7 @@ public final class Themes {
 
         if (opacity <= 0) {
             return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
-        } else if (opacity >= 1.0) {
+        } else if (opacity >= 1.0 || image.getPixelReader() == null) {
             return new Background(new BackgroundImage(
                     image,
                     BackgroundRepeat.NO_REPEAT,
