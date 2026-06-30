@@ -59,7 +59,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         tab = new TabHeader(transitionPane, gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
 
         tab.select(gameTab);
-        addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadVersion(GameDirectoryManager.getSelectedRepository(), null));
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadInstance(GameDirectoryManager.getSelectedRepository(), null));
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
@@ -89,7 +89,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     }
 
     public void showGameSettings(HMCLGameRepository repository) {
-        gameTab.getNode().loadVersion(repository, null);
+        gameTab.getNode().loadInstance(repository, null);
         tab.select(gameTab, false);
     }
 

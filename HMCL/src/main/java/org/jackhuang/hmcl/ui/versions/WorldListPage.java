@@ -86,10 +86,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     @Override
-    public void loadVersion(HMCLGameRepository repository, String id) {
+    public void loadInstance(HMCLGameRepository repository, String instanceId) {
         this.repository = repository;
-        this.instanceId = id;
-        this.savesDir = repository.getSavesDirectory(id);
+        this.instanceId = instanceId;
+        this.savesDir = repository.getSavesDirectory(instanceId);
         refresh();
     }
 

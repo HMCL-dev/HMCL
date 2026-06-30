@@ -111,8 +111,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     @Override
-    public void loadVersion(HMCLGameRepository repository, @Nullable String version) {
-        this.version.set(new HMCLGameRepository.RepositoryVersion(repository, version));
+    public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
+        this.version.set(new HMCLGameRepository.RepositoryVersion(repository, instanceId));
 
         setLoading(false);
         setFailed(false);

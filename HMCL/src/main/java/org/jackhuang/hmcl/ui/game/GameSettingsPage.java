@@ -2430,7 +2430,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     @SuppressWarnings("unchecked")
     @Override
-    public void loadVersion(HMCLGameRepository repository, @Nullable String instanceId) {
+    public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
         this.gameDirectory = repository.getGameDirectory();
         this.repository = repository;
         this.instanceId = instanceId;

@@ -93,15 +93,15 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         addEventHandler(WorkingDirChangedEvent.EVENT_TYPE, event -> {
             if (this.version.get() != null) {
                 if (installerListTab.isInitialized())
-                    installerListTab.getNode().loadVersion(getRepository(), getVersion());
+                    installerListTab.getNode().loadInstance(getRepository(), getVersion());
                 if (modListTab.isInitialized())
-                    modListTab.getNode().loadVersion(getRepository(), getVersion());
+                    modListTab.getNode().loadInstance(getRepository(), getVersion());
                 if (resourcePackTab.isInitialized())
-                    resourcePackTab.getNode().loadVersion(getRepository(), getVersion());
+                    resourcePackTab.getNode().loadInstance(getRepository(), getVersion());
                 if (worldListTab.isInitialized())
-                    worldListTab.getNode().loadVersion(getRepository(), getVersion());
+                    worldListTab.getNode().loadInstance(getRepository(), getVersion());
                 if (schematicsTab.isInitialized())
-                    schematicsTab.getNode().loadVersion(getRepository(), getVersion());
+                    schematicsTab.getNode().loadInstance(getRepository(), getVersion());
             }
         });
 
@@ -127,7 +127,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             T node = nodeSupplier.get();
             if (version.get() != null) {
                 if (node instanceof VersionPage.GameInstanceLoadable) {
-                    ((GameInstanceLoadable) node).loadVersion(version.get().repository(), version.get().version());
+                    ((GameInstanceLoadable) node).loadInstance(version.get().repository(), version.get().version());
                 }
             }
             return node;
@@ -155,17 +155,17 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         preferredVersionName = version;
 
         if (versionSettingsTab.isInitialized())
-            versionSettingsTab.getNode().loadVersion(repository, version);
+            versionSettingsTab.getNode().loadInstance(repository, version);
         if (installerListTab.isInitialized())
-            installerListTab.getNode().loadVersion(repository, version);
+            installerListTab.getNode().loadInstance(repository, version);
         if (modListTab.isInitialized())
-            modListTab.getNode().loadVersion(repository, version);
+            modListTab.getNode().loadInstance(repository, version);
         if (resourcePackTab.isInitialized())
-            resourcePackTab.getNode().loadVersion(repository, version);
+            resourcePackTab.getNode().loadInstance(repository, version);
         if (worldListTab.isInitialized())
-            worldListTab.getNode().loadVersion(repository, version);
+            worldListTab.getNode().loadInstance(repository, version);
         if (schematicsTab.isInitialized())
-            schematicsTab.getNode().loadVersion(repository, version);
+            schematicsTab.getNode().loadInstance(repository, version);
         currentVersionUpgradable.set(repository.isModpack(version));
     }
 
@@ -358,7 +358,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         /// Loads page content for the given repository and game instance.
         ///
         /// @param repository the repository containing the game instance
-        /// @param version the game instance ID, or `null` when only repository context is available
-        void loadVersion(HMCLGameRepository repository, @Nullable String version);
+        /// @param instanceId the game instance ID, or `null` when only repository context is available
+        void loadInstance(HMCLGameRepository repository, @Nullable String instanceId);
     }
 }

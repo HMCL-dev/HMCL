@@ -134,8 +134,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
-            if (node instanceof VersionPage.GameInstanceLoadable) {
-                ((VersionPage.GameInstanceLoadable) node).loadVersion(GameDirectoryManager.getSelectedRepository(), null);
+            if (node instanceof VersionPage.GameInstanceLoadable loadable) {
+                loadable.loadInstance(GameDirectoryManager.getSelectedRepository(), null);
             }
             return node;
         };
@@ -188,19 +188,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             if (repository.getGameDirectory() == GameDirectoryManager.getSelectedGameDirectory()) {
                 listenerHolder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), version -> {
                     if (modTab.isInitialized()) {
-                        modTab.getNode().loadVersion(repository, null);
+                        modTab.getNode().loadInstance(repository, null);
                     }
                     if (modpackTab.isInitialized()) {
-                        modpackTab.getNode().loadVersion(repository, null);
+                        modpackTab.getNode().loadInstance(repository, null);
                     }
                     if (resourcePackTab.isInitialized()) {
-                        resourcePackTab.getNode().loadVersion(repository, null);
+                        resourcePackTab.getNode().loadInstance(repository, null);
                     }
                     if (shaderTab.isInitialized()) {
-                        shaderTab.getNode().loadVersion(repository, null);
+                        shaderTab.getNode().loadInstance(repository, null);
                     }
                     if (worldTab.isInitialized()) {
-                        worldTab.getNode().loadVersion(repository, null);
+                        worldTab.getNode().loadInstance(repository, null);
                     }
                 }));
             }

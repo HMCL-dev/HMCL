@@ -86,15 +86,15 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     @Override
-    public void loadVersion(HMCLGameRepository repository, String id) {
+    public void loadInstance(HMCLGameRepository repository, String instanceId) {
         this.repository = repository;
-        this.instanceId = id;
+        this.instanceId = instanceId;
 
-        Version resolved = repository.getResolvedPreservingPatchesVersion(id);
+        Version resolved = repository.getResolvedPreservingPatchesVersion(instanceId);
         this.gameVersion = repository.getGameVersion(resolved).orElse(null);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         modded.set(analyzer.hasModLoader());
-        loadMods(repository.getModManager(id));
+        loadMods(repository.getModManager(instanceId));
     }
 
     private void loadMods(ModManager modManager) {
