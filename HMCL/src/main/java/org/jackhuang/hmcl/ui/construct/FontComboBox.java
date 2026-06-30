@@ -28,6 +28,10 @@ import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListCell;
 
 import javafx.beans.binding.Bindings;
+import javafx.scene.Node;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.scene.text.Font;
 
 public final class FontComboBox extends JFXComboBox<String> {
@@ -60,6 +64,26 @@ public final class FontComboBox extends JFXComboBox<String> {
             itemsProperty().unbind();
             setItems(observableList(Font.getFamilies()));
             loaded = true;
+        });
+
+        skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            if (!(newSkin instanceof ComboBoxListViewSkin<?> skin)) {
+                return;
+            }
+
+            skin.setHideOnClick(false);
+
+            if (skin.getPopupContent() instanceof ListView<?> listView) {
+                listView.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_CLICKED, e -> {
+                    Node target = e.getTarget() instanceof Node ? (Node) e.getTarget() : null;
+                    while (target != null && !(target instanceof ListCell)) {
+                        target = target.getParent();
+                    }
+                    if (target instanceof ListCell<?> cell && !cell.isEmpty()) {
+                        hide();
+                    }
+                });
+            }
         });
     }
 }
