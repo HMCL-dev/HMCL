@@ -93,7 +93,7 @@ public class DownloadSettingsPage extends StackPane {
 
                 var defaultAddonSourcePane = new LineSelectButton<String>();
                 defaultAddonSourcePane.setTitle(i18n("settings.launcher.default_addon_source"));
-                defaultAddonSourcePane.setNullSafeConverter(key -> I18n.i18n("mods." + key));
+                defaultAddonSourcePane.setNullSafeConverter(key -> I18n.i18n("addon." + key));
                 defaultAddonSourcePane.setItems("modrinth", "curseforge");
                 defaultAddonSourcePane.valueProperty().bindBidirectional(settings().defaultAddonSourceProperty());
 

@@ -73,6 +73,10 @@ public class ComponentList extends Control implements NoPaddingComponent {
                 }
 
                 wrapper.getStyleClass().add("options-list-item");
+                wrapper.visibleProperty().bind(node.visibleProperty());
+                wrapper.managedProperty().bind(node.managedProperty());
+                wrapper.visibleProperty().addListener(ignored -> updateStyle());
+                wrapper.managedProperty().addListener(ignored -> updateStyle());
 
                 if (node.getProperties().get("ComponentList.vgrow") instanceof Priority priority) {
                     VBox.setVgrow(wrapper, priority);
@@ -100,12 +104,17 @@ public class ComponentList extends Control implements NoPaddingComponent {
             Node firstItem;
             Node lastItem;
 
-            if (list.isEmpty()) {
-                firstItem = null;
-                lastItem = null;
-            } else {
-                firstItem = list.get(0);
-                lastItem = list.get(list.size() - 1);
+            firstItem = null;
+            lastItem = null;
+            for (Node item : list) {
+                if (!item.isVisible() || !item.isManaged()) {
+                    continue;
+                }
+
+                if (firstItem == null) {
+                    firstItem = item;
+                }
+                lastItem = item;
             }
 
             if (firstItem != prevFirstItem) {

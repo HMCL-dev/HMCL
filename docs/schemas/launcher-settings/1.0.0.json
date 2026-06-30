@@ -39,10 +39,95 @@
     "logLines": {
       "type": "integer"
     },
-    "themeBrightness": {
+    "selectedTheme": {
+      "$ref": "#/$defs/themeSelection"
+    },
+    "themeAppearanceOverrides": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "themeBrightnessMode",
+          "themeColor",
+          "themeColorStyle",
+          "titleBarTransparent",
+          "background",
+          "backgroundOpacity"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "themeBrightnessMode": {
       "type": "string"
     },
-    "themeColor": true,
+    "customThemeColor": true,
+    "themeColorType": {
+      "enum": [
+        "DEFAULT",
+        "CUSTOM",
+        "BACKGROUND"
+      ]
+    },
+    "themeColorStyle": {
+      "enum": [
+        "TONAL_SPOT",
+        "FIDELITY",
+        "MONOCHROME",
+        "NEUTRAL",
+        "VIBRANT",
+        "EXPRESSIVE",
+        "CONTENT",
+        "RAINBOW",
+        "FRUIT_SALAD"
+      ]
+    },
+    "titleBarTransparent": {
+      "type": "boolean"
+    },
+    "backgroundType": {
+      "enum": [
+        "DEFAULT",
+        "BUILTIN",
+        "CUSTOM",
+        "NETWORK",
+        "PAINT",
+        "THEME_COLOR"
+      ]
+    },
+    "builtinBackgroundId": {
+      "type": "string"
+    },
+    "customBackgroundImagePath": {
+      "type": "string"
+    },
+    "networkBackgroundImageUrl": {
+      "type": "string"
+    },
+    "customBackgroundPaint": true,
+    "backgroundOpacity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "networkBackgroundImageCachePolicy": {
+      "enum": [
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "backgroundFallbackType": {
+      "enum": [
+        "BUILTIN",
+        "PAINT",
+        "THEME_COLOR"
+      ]
+    },
+    "backgroundFallbackPaint": true,
+    "backgroundLoadPolicy": {
+      "enum": [
+        "WAIT_FOR_BACKGROUND",
+        "SHOW_FALLBACK_WHILE_LOADING"
+      ]
+    },
     "logFontFamily": {
       "type": "string"
     },
@@ -54,30 +139,6 @@
     },
     "animationDisabled": {
       "type": "boolean"
-    },
-    "titleTransparent": {
-      "type": "boolean"
-    },
-    "backgroundType": {
-      "enum": [
-        "DEFAULT",
-        "CUSTOM",
-        "CLASSIC",
-        "NETWORK",
-        "PAINT"
-      ]
-    },
-    "backgroundImage": {
-      "type": "string"
-    },
-    "backgroundImageUrl": {
-      "type": "string"
-    },
-    "backgroundPaint": true,
-    "backgroundOpacity": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1
     },
     "autoDownloadThreads": {
       "type": "boolean"
@@ -140,12 +201,31 @@
     }
   },
   "$defs": {
+    "packageId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(\\.[A-Za-z0-9][A-Za-z0-9_-]*)*$"
+    },
     "downloadSource": {
       "enum": [
         "DEFAULT",
         "OFFICIAL",
         "MIRROR"
       ]
+    },
+    "themeSelection": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "packId"
+      ],
+      "properties": {
+        "packId": {
+          "$ref": "#/$defs/packageId"
+        },
+        "themeId": {
+          "$ref": "#/$defs/packageId"
+        }
+      }
     },
     "accountID": {
       "type": "string",
