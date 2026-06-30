@@ -379,7 +379,8 @@ public final class JavaDownloadDialog extends StackPane {
                             throw new IOException("Illegal result: " + json);
 
                         DiscoRemoteFileInfo fileInfo = result.getResult().get(0);
-                        if (!fileInfo.getChecksumType().isBlank() && !fileInfo.getChecksumType().equals("sha1") && !fileInfo.getChecksumType().equals("sha256") && !fileInfo.getChecksumType().equals("md5"))
+                        if (StringUtils.isNotBlank(fileInfo.getChecksumType())
+                                && !fileInfo.getChecksumType().equals("sha1") && !fileInfo.getChecksumType().equals("sha256") && !fileInfo.getChecksumType().equals("md5"))
                             throw new IOException("Unsupported checksum type: " + fileInfo.getChecksumType());
                         if (StringUtils.isBlank(fileInfo.getDirectDownloadUri()))
                             throw new IOException("Missing download URI: " + json);
