@@ -178,6 +178,12 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 || mainClass.startsWith("cpw.mods"));
     }
 
+    public Set<LibraryType> getLibraries() {
+        return Arrays.stream(LibraryType.values())
+                .filter(this::has)
+                .collect(Collectors.toSet());
+    }
+
     public Set<ModLoaderType> getModLoaders() {
         return Arrays.stream(LibraryType.values())
                 .filter(LibraryType::isModLoader)
