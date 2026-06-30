@@ -144,10 +144,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         @Nullable String selectedInstance = settings().getSelectedInstance(gameDirectory.getId());
         @Nullable String refreshedInstance = selectedInstance;
         if (!hasVersion(refreshedInstance)) {
-            refreshedInstance = getVersions().stream()
-                    .findFirst()
-                    .map(Version::getId)
-                    .orElse(null);
+            refreshedInstance = getVersions().isEmpty() ? null : getVersions().iterator().next().getId();
         }
         if (!Objects.equals(selectedInstance, refreshedInstance)) {
             setSelectedInstance(refreshedInstance);
