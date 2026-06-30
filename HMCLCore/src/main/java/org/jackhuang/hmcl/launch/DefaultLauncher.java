@@ -374,12 +374,12 @@ public class DefaultLauncher extends Launcher {
                 ServerAddress parsed = ServerAddress.parse(address);
                 if (World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
                     res.add("--quickPlayMultiplayer");
-                    res.add(parsed.getPort() >= 0 ? address : parsed.getHost() + ":25565");
+                    res.add(parsed.port() >= 0 ? address : parsed.host() + ":25565");
                 } else {
                     res.add("--server");
-                    res.add(parsed.getHost());
+                    res.add(parsed.host());
                     res.add("--port");
-                    res.add(parsed.getPort() >= 0 ? String.valueOf(parsed.getPort()) : "25565");
+                    res.add(parsed.port() >= 0 ? String.valueOf(parsed.port()) : "25565");
                 }
             } catch (IllegalArgumentException e) {
                 LOG.warning("Invalid server address: " + address, e);

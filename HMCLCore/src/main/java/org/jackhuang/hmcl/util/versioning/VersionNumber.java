@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.util.versioning;
 
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNull;
+
 import java.math.BigInteger;
 import java.util.*;
 
@@ -109,14 +112,8 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         void appendTo(StringBuilder buffer);
     }
 
-    private static final class LongItem implements Item {
-        private final long value;
-
+    private record LongItem(long value) implements Item {
         public static final LongItem ZERO = new LongItem(0L);
-
-        LongItem(long value) {
-            this.value = value;
-        }
 
         public int getType() {
             return LONG_ITEM;
@@ -131,22 +128,18 @@ public final class VersionNumber implements Comparable<VersionNumber> {
                 return value == 0L ? 0 : 1; // 1.0 == 1, 1.1 > 1
             }
 
-            switch (item.getType()) {
-                case LONG_ITEM:
+            return switch (item.getType()) {
+                case LONG_ITEM -> {
                     long itemValue = ((LongItem) item).value;
-                    return Long.compare(value, itemValue);
-                case BIGINTEGER_ITEM:
-                    return -1;
+                    yield Long.compare(value, itemValue);
+                }
+                case BIGINTEGER_ITEM -> -1;
+                case STRING_ITEM -> 1; // 1.1 > 1-sp
 
-                case STRING_ITEM:
-                    return 1; // 1.1 > 1-sp
+                case LIST_ITEM -> 1; // 1.1 > 1-1
 
-                case LIST_ITEM:
-                    return 1; // 1.1 > 1-1
-
-                default:
-                    throw new AssertionError("invalid item: " + item.getClass());
-            }
+                default -> throw new AssertionError("invalid item: " + item.getClass());
+            };
         }
 
         @Override
@@ -154,7 +147,7 @@ public final class VersionNumber implements Comparable<VersionNumber> {
             buffer.append(value);
         }
 
-        public String toString() {
+        public @NotNull String toString() {
             return Long.toString(value);
         }
     }
@@ -162,11 +155,10 @@ public final class VersionNumber implements Comparable<VersionNumber> {
     /**
      * Represents a numeric item in the version item list.
      */
-    private static final class BigIntegerItem implements Item {
-        private final BigInteger value;
+    private record BigIntegerItem(BigInteger value) implements Item {
 
-        BigIntegerItem(String str) {
-            this.value = new BigInteger(str);
+        private BigIntegerItem(String value) {
+            this(new BigInteger(value));
         }
 
         public int getType() {
@@ -185,21 +177,15 @@ public final class VersionNumber implements Comparable<VersionNumber> {
                 return 1;
             }
 
-            switch (item.getType()) {
-                case LONG_ITEM:
-                    return 1;
-                case BIGINTEGER_ITEM:
-                    return value.compareTo(((BigIntegerItem) item).value);
+            return switch (item.getType()) {
+                case LONG_ITEM -> 1;
+                case BIGINTEGER_ITEM -> value.compareTo(((BigIntegerItem) item).value);
+                case STRING_ITEM -> 1; // 1.1 > 1-sp
 
-                case STRING_ITEM:
-                    return 1; // 1.1 > 1-sp
+                case LIST_ITEM -> 1; // 1.1 > 1-1
 
-                case LIST_ITEM:
-                    return 1; // 1.1 > 1-1
-
-                default:
-                    throw new AssertionError("invalid item: " + item.getClass());
-            }
+                default -> throw new AssertionError("invalid item: " + item.getClass());
+            };
         }
 
         @Override
@@ -207,7 +193,7 @@ public final class VersionNumber implements Comparable<VersionNumber> {
             buffer.append(value);
         }
 
-        public String toString() {
+        public @NotNull String toString() {
             return value.toString();
         }
     }
@@ -215,19 +201,9 @@ public final class VersionNumber implements Comparable<VersionNumber> {
     /**
      * Represents a string in the version item list, usually a qualifier.
      */
-    private static final class StringItem implements Item {
-        private final String value;
-        private final boolean pre;
-
-        StringItem(String value) {
-            this.value = value;
-
-            String lower = value.trim().toLowerCase(Locale.ROOT);
-            this.pre = lower.startsWith("alpha")
-                    || lower.startsWith("beta")
-                    || lower.startsWith("pre")
-                    || lower.startsWith("rc")
-                    || lower.startsWith("experimental");
+    private record StringItem(String value, boolean pre) implements Item {
+        private StringItem(String value) {
+            this(value, StringUtils.startsWithAny(value.trim().toLowerCase(Locale.ROOT), Set.of("alpha", "beta", "pre", "rc", "experimental")));
         }
 
         public int getType() {
@@ -243,20 +219,14 @@ public final class VersionNumber implements Comparable<VersionNumber> {
                 // 1-beta < 1 < 1-string
                 return pre ? -1 : 1;
             }
-            switch (item.getType()) {
-                case LONG_ITEM:
-                case BIGINTEGER_ITEM:
-                    return -1; // 1.any < 1.1 ?
+            return switch (item.getType()) {
+                case LONG_ITEM, BIGINTEGER_ITEM -> -1; // 1.any < 1.1 ?
 
-                case STRING_ITEM:
-                    return value.compareTo(((StringItem) item).value);
+                case STRING_ITEM -> value.compareTo(((StringItem) item).value);
+                case LIST_ITEM -> -1; // 1.any < 1-1
 
-                case LIST_ITEM:
-                    return -1; // 1.any < 1-1
-
-                default:
-                    throw new AssertionError("invalid item: " + item.getClass());
-            }
+                default -> throw new AssertionError("invalid item: " + item.getClass());
+            };
         }
 
         @Override
@@ -264,7 +234,8 @@ public final class VersionNumber implements Comparable<VersionNumber> {
             buffer.append(value);
         }
 
-        public String toString() {
+        @Override
+        public @NotNull String toString() {
             return value;
         }
     }
