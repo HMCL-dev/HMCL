@@ -106,7 +106,7 @@ public final class CurseInstallTask extends Task<Void> {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(CurseManifest.class));
 
-                if (!CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (!CurseModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Version " + name + " is not a Curse modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
@@ -140,7 +140,7 @@ public final class CurseInstallTask extends Task<Void> {
     public void execute() throws Exception {
         if (config != null) {
             // For update, remove mods not listed in new manifest
-            for (CurseManifestFile oldCurseManifestFile : config.getManifest().files()) {
+            for (CurseManifestFile oldCurseManifestFile : config.manifest().files()) {
                 if (StringUtils.isBlank(oldCurseManifestFile.fileName())) continue;
                 Path oldFile = run.resolve("mods/" + oldCurseManifestFile.fileName());
                 if (Files.notExists(oldFile)) continue;

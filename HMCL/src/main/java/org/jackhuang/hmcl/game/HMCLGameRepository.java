@@ -757,7 +757,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             try {
                 String jsonText = Files.readString(json);
                 ModpackConfiguration<?> modpackConfiguration = JsonUtils.GSON.fromJson(jsonText, ModpackConfiguration.class);
-                ModpackProvider provider = ModpackHelper.getProviderByType(modpackConfiguration.getType());
+                ModpackProvider provider = ModpackHelper.getProviderByType(modpackConfiguration.type());
                 if (provider != null) provider.injectLaunchOptions(jsonText, builder);
             } catch (IOException | JsonParseException e) {
                 LOG.warning("Failed to parse modpack configuration file " + json, e);

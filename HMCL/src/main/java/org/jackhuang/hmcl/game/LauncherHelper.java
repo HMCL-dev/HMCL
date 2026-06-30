@@ -163,7 +163,7 @@ public final class LauncherHelper {
                             Task.composeAsync(() -> {
                                 try {
                                     ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
-                                    ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
+                                    ModpackProvider provider = ModpackHelper.getProviderByType(configuration.type());
                                     if (provider == null) return null;
                                     else return provider.createCompletionTask(dependencyManager, selectedVersion);
                                 } catch (IOException e) {

@@ -67,8 +67,8 @@ public class ModrinthInstallTask extends Task<Void> {
         if (repository.hasVersion(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
-        GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.getGameVersion());
-        for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
+        GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.gameVersion());
+        for (Map.Entry<String, String> modLoader : manifest.dependencies().entrySet()) {
             switch (modLoader.getKey()) {
                 case "minecraft":
                     break;
@@ -106,7 +106,7 @@ public class ModrinthInstallTask extends Task<Void> {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ModrinthManifest.class));
 
-                if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Version " + name + " is not a Modrinth modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
@@ -115,7 +115,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.config = config;
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.name(), manifest.versionId(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
 
         URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
         if (iconUri != null) {
@@ -143,10 +143,10 @@ public class ModrinthInstallTask extends Task<Void> {
     public void execute() throws Exception {
         if (config != null) {
             // For update, remove mods not listed in new manifest
-            for (ModrinthManifest.File oldManifestFile : config.getManifest().getFiles()) {
-                Path oldFile = run.resolve(oldManifestFile.getPath());
+            for (ModrinthManifest.File oldManifestFile : config.manifest().files()) {
+                Path oldFile = run.resolve(oldManifestFile.path());
                 if (!Files.exists(oldFile)) continue;
-                if (manifest.getFiles().stream().noneMatch(oldManifestFile::equals)) {
+                if (manifest.files().stream().noneMatch(oldManifestFile::equals)) {
                     Files.deleteIfExists(oldFile);
                 }
             }

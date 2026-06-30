@@ -28,26 +28,8 @@ import org.jackhuang.hmcl.util.gson.Validation;
  * @author huangyuhui
  */
 @Immutable
-public final class ForgeInstallProfile implements Validation {
-
-    @SerializedName("install")
-    private final ForgeInstall install;
-
-    @SerializedName("versionInfo")
-    private final Version versionInfo;
-
-    public ForgeInstallProfile(ForgeInstall install, Version versionInfo) {
-        this.install = install;
-        this.versionInfo = versionInfo;
-    }
-
-    public ForgeInstall getInstall() {
-        return install;
-    }
-
-    public Version getVersionInfo() {
-        return versionInfo;
-    }
+public record ForgeInstallProfile(@SerializedName("install") ForgeInstall install,
+                                  @SerializedName("versionInfo") Version versionInfo) implements Validation {
 
     @Override
     public void validate() throws JsonParseException {

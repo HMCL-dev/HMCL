@@ -236,7 +236,7 @@ public final class ModpackHelper {
     }
 
     public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
-        switch (configuration.getType()) {
+        switch (configuration.type()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
                 return new ModpackUpdateTask(repository, name, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, name))
                         .thenComposeAsync(repository.refreshVersionsAsync())
@@ -248,7 +248,7 @@ public final class ModpackHelper {
 
     public static Task<?> getUpdateTask(HMCLGameRepository repository, Path zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
-        ModpackProvider provider = getProviderByType(configuration.getType());
+        ModpackProvider provider = getProviderByType(configuration.type());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
@@ -350,7 +350,7 @@ public final class ModpackHelper {
     private static Task<Void> createMcbbsPostInstallTask(HMCLGameRepository repository, McbbsModpackManifest manifest, String version) {
         return Task.runAsync(Schedulers.javafx(), () -> {
             GameSettings.Effective effective = repository.getEffectiveGameSettings(version);
-            if (manifest.getLaunchInfo().getMinMemory() > effective.getMaxMemory()) {
+            if (manifest.launchInfo().minMemory() > effective.getMaxMemory()) {
                 GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(version));
                 setting.getOverrideProperties().addAll(List.of(
                         GameSettings.PROPERTY_AUTO_MEMORY,
@@ -360,7 +360,7 @@ public final class ModpackHelper {
                 ));
                 setting.autoMemoryProperty().setValue(effective.get(GameSettings::autoMemoryProperty));
                 setting.minMemoryProperty().setValue(effective.get(GameSettings::minMemoryProperty));
-                setting.maxMemoryProperty().setValue(manifest.getLaunchInfo().getMinMemory());
+                setting.maxMemoryProperty().setValue(manifest.launchInfo().minMemory());
                 setting.permSizeProperty().setValue(effective.get(GameSettings::permSizeProperty));
             }
         });

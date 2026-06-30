@@ -28,18 +28,13 @@ import java.util.Collections;
 import java.util.List;
 
 @Immutable
-public final class ModpackConfiguration<T> implements Validation {
+public record ModpackConfiguration<T>(T manifest, String type, String name, @Nullable String version,
+                                      List<FileInformation> overrides) implements Validation {
 
     @SuppressWarnings("unchecked")
     public static <T> TypeToken<ModpackConfiguration<T>> typeOf(Class<T> clazz) {
         return (TypeToken<ModpackConfiguration<T>>) TypeToken.getParameterized(ModpackConfiguration.class, clazz);
     }
-
-    private final T manifest;
-    private final String type;
-    private final String name;
-    private final String version;
-    private final List<FileInformation> overrides;
 
     public ModpackConfiguration() {
         this(null, null, "", null, Collections.emptyList());
@@ -51,23 +46,6 @@ public final class ModpackConfiguration<T> implements Validation {
         this.name = name;
         this.version = version;
         this.overrides = new ArrayList<>(overrides);
-    }
-
-    public T getManifest() {
-        return manifest;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    @Nullable
-    public String getVersion() {
-        return version;
     }
 
     public ModpackConfiguration<T> setManifest(T manifest) {
@@ -82,7 +60,8 @@ public final class ModpackConfiguration<T> implements Validation {
         return new ModpackConfiguration<>(manifest, type, name, version, overrides);
     }
 
-    public List<FileInformation> getOverrides() {
+    @Override
+    public List<FileInformation> overrides() {
         return Collections.unmodifiableList(overrides);
     }
 
@@ -94,11 +73,11 @@ public final class ModpackConfiguration<T> implements Validation {
             throw new JsonParseException("MinecraftInstanceConfiguration missing `type`");
     }
 
+    /**
+     * @param path the relative path to Minecraft run directory
+     */
     @Immutable
-    public static class FileInformation implements Validation {
-        private final String path; // relative
-        private final String hash;
-        private final String downloadURL;
+    public record FileInformation(String path, String hash, String downloadURL) implements Validation {
 
         public FileInformation() {
             this(null, null);
@@ -106,29 +85,6 @@ public final class ModpackConfiguration<T> implements Validation {
 
         public FileInformation(String path, String hash) {
             this(path, hash, null);
-        }
-
-        public FileInformation(String path, String hash, String downloadURL) {
-            this.path = path;
-            this.hash = hash;
-            this.downloadURL = downloadURL;
-        }
-
-        /**
-         * The relative path to Minecraft run directory
-         *
-         * @return the relative path to Minecraft run directory.
-         */
-        public String getPath() {
-            return path;
-        }
-
-        public String getDownloadURL() {
-            return downloadURL;
-        }
-
-        public String getHash() {
-            return hash;
         }
 
         @Override

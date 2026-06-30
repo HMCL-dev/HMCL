@@ -72,8 +72,8 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
 
         instanceType = readValue(p, "InstanceType");
         autoCloseConsole = Boolean.parseBoolean(readValue(p, "AutoCloseConsole"));
-        gameVersion = mmcPack != null ? mmcPack.getComponents().stream().filter(e -> "net.minecraft".equals(e.getUid())).findAny()
-                .orElseThrow(() -> new IOException("Malformed mmc-pack.json")).getVersion() : readValue(p, "IntendedVersion");
+        gameVersion = mmcPack != null ? mmcPack.components().stream().filter(e -> "net.minecraft".equals(e.uid())).findAny()
+                .orElseThrow(() -> new IOException("Malformed mmc-pack.json")).version() : readValue(p, "IntendedVersion");
         javaPath = readValue(p, "JavaPath");
         jvmArgs = readValue(p, "JvmArgs");
         fullscreen = Boolean.parseBoolean(readValue(p, "LaunchMaximized"));

@@ -35,31 +35,9 @@ import java.util.stream.Collectors;
 
 @Immutable
 public final class QuiltModMetadata {
-    private static final class QuiltLoader {
-        private static final class Metadata {
-            private final String name;
-            private final String description;
-            private final JsonObject contributors;
-            private final String icon;
-            private final JsonObject contact;
 
-            public Metadata(String name, String description, JsonObject contributors, String icon, JsonObject contact) {
-                this.name = name;
-                this.description = description;
-                this.contributors = contributors;
-                this.icon = icon;
-                this.contact = contact;
-            }
-        }
-
-        private final String id;
-        private final String version;
-        private final Metadata metadata;
-
-        public QuiltLoader(String id, String version, Metadata metadata) {
-            this.id = id;
-            this.version = version;
-            this.metadata = metadata;
+    private record QuiltLoader(String id, String version, Metadata metadata) {
+        private record Metadata(String name, String description, JsonObject contributors, String icon, JsonObject contact) {
         }
     }
 

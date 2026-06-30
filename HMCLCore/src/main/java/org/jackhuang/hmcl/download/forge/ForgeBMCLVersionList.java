@@ -91,20 +91,20 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                                 continue;
                             List<String> urls = new ArrayList<>();
                             for (ForgeVersion.File file : version.getFiles())
-                                if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
+                                if ("installer".equals(file.category()) && "jar".equals(file.format())) {
                                     String branch = toLookupBranch(gameVersion, version.getBranch());
 
                                     String classifier = lookupVersion + "-" + version.getVersion() + (branch.isEmpty() ? "" : '-' + branch);
-                                    String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
-                                    String fileName2 = "forge-" + classifier + "-" + lookupVersion + "-" + file.getCategory() + "." + file.getFormat();
+                                    String fileName1 = "forge-" + classifier + "-" + file.category() + "." + file.format();
+                                    String fileName2 = "forge-" + classifier + "-" + lookupVersion + "-" + file.category() + "." + file.format();
                                     urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
                                     urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "-" + lookupVersion + "/" + fileName2);
                                     urls.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
                                             pair("mcversion", version.getGameVersion()),
                                             pair("version", version.getVersion()),
                                             pair("branch", branch),
-                                            pair("category", file.getCategory()),
-                                            pair("format", file.getFormat())
+                                            pair("category", file.category()),
+                                            pair("format", file.format())
                                     )));
                                 }
 
@@ -202,31 +202,9 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
         }
 
         @Immutable
-        public static final class File {
-            private final String format;
-            private final String category;
-            private final String hash;
-
+        public record File(String format, String category, String hash) {
             public File() {
                 this("", "", "");
-            }
-
-            public File(String format, String category, String hash) {
-                this.format = format;
-                this.category = category;
-                this.hash = hash;
-            }
-
-            public String getFormat() {
-                return format;
-            }
-
-            public String getCategory() {
-                return category;
-            }
-
-            public String getHash() {
-                return hash;
             }
         }
     }

@@ -28,29 +28,16 @@ import java.util.Map;
  * @author huangyuhui
  */
 @Immutable
-public final class LiteLoaderVersionsRoot {
-
-    @SerializedName("versions")
-    private final Map<String, LiteLoaderGameVersions> versions;
-
-    @SerializedName("meta")
-    private final LiteLoaderVersionsMeta meta;
+public record LiteLoaderVersionsRoot(@SerializedName("versions") Map<String, LiteLoaderGameVersions> versions,
+                                     @SerializedName("meta") LiteLoaderVersionsMeta meta) {
 
     public LiteLoaderVersionsRoot() {
         this(Collections.emptyMap(), null);
     }
 
-    public LiteLoaderVersionsRoot(Map<String, LiteLoaderGameVersions> versions, LiteLoaderVersionsMeta meta) {
-        this.versions = versions;
-        this.meta = meta;
-    }
-
-    public Map<String, LiteLoaderGameVersions> getVersions() {
+    @Override
+    public Map<String, LiteLoaderGameVersions> versions() {
         return Collections.unmodifiableMap(versions);
-    }
-
-    public LiteLoaderVersionsMeta getMeta() {
-        return meta;
     }
 
 }

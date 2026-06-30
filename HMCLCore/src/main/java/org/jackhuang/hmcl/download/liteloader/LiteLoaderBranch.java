@@ -24,38 +24,31 @@ import org.jackhuang.hmcl.util.Immutable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
  * @author huangyuhui
  */
 @Immutable
-public final class LiteLoaderBranch {
-
-    @SerializedName("libraries")
-    private final Collection<Library> libraries;
-
-    @SerializedName("com.mumfrey:liteloader")
-    private final Map<String, LiteLoaderVersion> liteLoader;
+public record LiteLoaderBranch(@SerializedName("libraries") Collection<Library> libraries,
+                               @SerializedName("com.mumfrey:liteloader") Map<String, LiteLoaderVersion> liteLoader) {
 
     /**
      * No-arg constructor for Gson.
      */
     @SuppressWarnings("unused")
     public LiteLoaderBranch() {
-        this(Collections.emptySet(), Collections.emptyMap());
+        this(Set.of(), Map.of());
     }
 
-    public LiteLoaderBranch(Collection<Library> libraries, Map<String, LiteLoaderVersion> liteLoader) {
-        this.libraries = libraries;
-        this.liteLoader = liteLoader;
-    }
-
-    public Collection<Library> getLibraries() {
+    @Override
+    public Collection<Library> libraries() {
         return Collections.unmodifiableCollection(libraries);
     }
 
-    public Map<String, LiteLoaderVersion> getLiteLoader() {
+    @Override
+    public Map<String, LiteLoaderVersion> liteLoader() {
         return Collections.unmodifiableMap(liteLoader);
     }
 
