@@ -37,19 +37,4 @@ public record LiteLoaderGameVersions(@SerializedName("repo") LiteLoaderRepositor
         this(null, null, null);
     }
 
-    @Override
-    public LiteLoaderRepository repoitory() {
-        return repoitory;
-    }
-
-    @Override
-    public LiteLoaderBranch artifacts() {
-        return artifacts;
-    }
-
-    @Override
-    public LiteLoaderBranch snapshots() {
-        return snapshots;
-    }
-
 }

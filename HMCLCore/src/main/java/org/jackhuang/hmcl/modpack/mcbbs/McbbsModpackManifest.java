@@ -95,16 +95,6 @@ public record McbbsModpackManifest(String manifestType, int manifestVersion, Str
         public Settings() {
             this(true, true);
         }
-
-        @Override
-        public boolean installMods() {
-            return installMods;
-        }
-
-        @Override
-        public boolean installResourcepack() {
-            return installResourcepack;
-        }
     }
 
     @JsonType(

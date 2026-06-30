@@ -32,16 +32,6 @@ public record ForgeInstallProfile(@SerializedName("install") ForgeInstall instal
                                   @SerializedName("versionInfo") Version versionInfo) implements Validation {
 
     @Override
-    public ForgeInstall install() {
-        return install;
-    }
-
-    @Override
-    public Version versionInfo() {
-        return versionInfo;
-    }
-
-    @Override
     public void validate() throws JsonParseException {
         if (install == null)
             throw new JsonParseException("InstallProfile install cannot be null");
