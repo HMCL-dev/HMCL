@@ -42,7 +42,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class InstallerListPage extends ListPageBase<InstallerItem> implements VersionPage.VersionLoadable {
+public class InstallerListPage extends ListPageBase<InstallerItem> implements VersionPage.GameInstanceLoadable {
     private HMCLGameRepository repository;
     private String versionId;
     private Version version;

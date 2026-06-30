@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.game.GameSettingsPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -125,8 +126,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         return () -> {
             T node = nodeSupplier.get();
             if (version.get() != null) {
-                if (node instanceof VersionPage.VersionLoadable) {
-                    ((VersionLoadable) node).loadVersion(version.get().repository(), version.get().version());
+                if (node instanceof VersionPage.GameInstanceLoadable) {
+                    ((GameInstanceLoadable) node).loadVersion(version.get().repository(), version.get().version());
                 }
             }
             return node;
@@ -352,7 +353,12 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         }
     }
 
-    public interface VersionLoadable {
-        void loadVersion(HMCLGameRepository repository, String version);
+    /// Loads page content for a game instance in a repository.
+    public interface GameInstanceLoadable {
+        /// Loads page content for the given repository and game instance.
+        ///
+        /// @param repository the repository containing the game instance
+        /// @param version the game instance ID, or `null` when only repository context is available
+        void loadVersion(HMCLGameRepository repository, @Nullable String version);
     }
 }

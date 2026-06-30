@@ -74,7 +74,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.VersionLoadable {
+public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.GameInstanceLoadable {
 
     private static final String TIP_KEY = "resourcePackWarning";
     private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {

@@ -62,7 +62,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable {
+public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.GameInstanceLoadable {
 
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {

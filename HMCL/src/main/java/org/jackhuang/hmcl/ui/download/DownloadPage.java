@@ -134,8 +134,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
-            if (node instanceof VersionPage.VersionLoadable) {
-                ((VersionPage.VersionLoadable) node).loadVersion(GameDirectoryManager.getSelectedRepository(), null);
+            if (node instanceof VersionPage.GameInstanceLoadable) {
+                ((VersionPage.GameInstanceLoadable) node).loadVersion(GameDirectoryManager.getSelectedRepository(), null);
             }
             return node;
         };

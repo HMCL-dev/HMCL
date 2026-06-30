@@ -61,7 +61,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class WorldListPage extends ListPageBase<World> implements VersionPage.VersionLoadable {
+public final class WorldListPage extends ListPageBase<World> implements VersionPage.GameInstanceLoadable {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
 
     private Path savesDir;

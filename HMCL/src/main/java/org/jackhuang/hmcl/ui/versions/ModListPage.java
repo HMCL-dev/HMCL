@@ -51,7 +51,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware {
+public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.GameInstanceLoadable, PageAware {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
     private final ReentrantLock lock = new ReentrantLock();

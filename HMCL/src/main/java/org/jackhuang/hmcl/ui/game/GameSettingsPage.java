@@ -77,7 +77,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Glavo
 @NotNullByDefault
 public final class GameSettingsPage<S extends GameSettings> extends StackPane
-        implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
+        implements DecoratorPage, VersionPage.GameInstanceLoadable, PageAware {
 
     private static final Object INHERIT_BUTTON_TOOLTIP_KEY = new Object();
     private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");

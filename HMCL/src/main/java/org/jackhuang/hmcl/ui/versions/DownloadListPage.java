@@ -56,6 +56,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.*;
@@ -66,7 +67,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
-public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
+public class DownloadListPage extends Control implements DecoratorPage, VersionPage.GameInstanceLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
@@ -110,7 +111,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     @Override
-    public void loadVersion(HMCLGameRepository repository, String version) {
+    public void loadVersion(HMCLGameRepository repository, @Nullable String version) {
         this.version.set(new HMCLGameRepository.RepositoryVersion(repository, version));
 
         setLoading(false);
