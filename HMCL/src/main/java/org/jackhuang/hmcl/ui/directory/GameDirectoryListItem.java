@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.ui.directory;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
 
@@ -36,12 +34,6 @@ public class GameDirectoryListItem extends RadioButton {
     /// Game directory represented by this item.
     private final GameDirectory gameDirectory;
 
-    /// Primary text displayed by the item.
-    private final StringProperty title = new SimpleStringProperty();
-
-    /// Secondary text displayed by the item.
-    private final StringProperty subtitle = new SimpleStringProperty();
-
     /// Creates a list item for the given game directory.
     ///
     /// @param gameDirectory the represented game directory
@@ -49,9 +41,6 @@ public class GameDirectoryListItem extends RadioButton {
         this.gameDirectory = gameDirectory;
         getStyleClass().setAll("game-directory-list-item", "navigation-drawer-item");
         setUserData(gameDirectory);
-
-        title.set(GameDirectoryManager.getGameDirectoryDisplayName(gameDirectory));
-        subtitle.set(gameDirectory.getPath().toString());
 
         this.selectedProperty().bind(Bindings.equal(gameDirectory, GameDirectoryManager.selectedGameDirectoryProperty()));
     }
@@ -80,37 +69,4 @@ public class GameDirectoryListItem extends RadioButton {
         return gameDirectory;
     }
 
-    /// Returns the displayed title.
-    public String getTitle() {
-        return title.get();
-    }
-
-    /// Updates the displayed title.
-    ///
-    /// @param title the displayed title
-    public void setTitle(String title) {
-        this.title.set(title);
-    }
-
-    /// Returns the displayed title property.
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    /// Returns the displayed subtitle.
-    public String getSubtitle() {
-        return subtitle.get();
-    }
-
-    /// Updates the displayed subtitle.
-    ///
-    /// @param subtitle the displayed subtitle
-    public void setSubtitle(String subtitle) {
-        this.subtitle.set(subtitle);
-    }
-
-    /// Returns the displayed subtitle property.
-    public StringProperty subtitleProperty() {
-        return subtitle;
-    }
 }

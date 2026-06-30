@@ -74,8 +74,9 @@ public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
         right.getChildren().add(btnRemove);
         root.setRight(right);
 
-        item.titleProperty().bind(skinnable.titleProperty());
-        item.subtitleProperty().bind(skinnable.subtitleProperty());
+
+        item.titleProperty().set(GameDirectoryManager.getGameDirectoryDisplayName(skinnable.getGameDirectory()));
+        item.subtitleProperty().set(skinnable.getGameDirectory().getPath().toString());
 
         getChildren().setAll(container);
     }
