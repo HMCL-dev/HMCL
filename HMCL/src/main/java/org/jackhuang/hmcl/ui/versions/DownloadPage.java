@@ -26,7 +26,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -37,7 +36,6 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -54,7 +52,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -71,21 +68,21 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final ModTranslations translations;
     private final RemoteAddon addon;
     private final ModTranslations.Mod mod;
-    private final Profile.ProfileVersion version;
+    private final HMCLGameRepository.InstanceReference instanceReference;
     private final DownloadCallback callback;
     private final DownloadListPage page;
     private final RemoteAddonRepository.Type type;
 
     private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
 
-    public DownloadPage(DownloadListPage page, RemoteAddon addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
+    public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.InstanceReference instanceReference, @Nullable DownloadCallback callback) {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
         this.type = Objects.requireNonNullElse(addon.repoType(), repository.getType());
         this.translations = ModTranslations.getTranslationsByRepositoryType(this.type);
         this.mod = translations.getModByCurseForgeId(addon.slug());
-        this.version = version;
+        this.instanceReference = instanceReference;
         this.callback = callback;
         loadAddonVersions();
 
@@ -132,8 +129,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         return addon;
     }
 
-    public Profile.ProfileVersion getVersion() {
-        return version;
+    public HMCLGameRepository.InstanceReference getInstanceReference() {
+        return instanceReference;
     }
 
     public boolean isLoading() {
@@ -164,7 +161,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         if (this.callback == null) {
             saveAs(file);
         } else {
-            this.callback.download(page.getDownloadProvider(), version.profile(), version.version(), addon, file);
+            this.callback.download(page.getDownloadProvider(), instanceReference.repository(), instanceReference.instanceId(), addon, file);
         }
     }
 
@@ -273,9 +270,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
 
-                    if (control.version.profile() != null && control.version.version() != null) {
-                        HMCLGameRepository repository = control.version.profile().getRepository();
-                        Version game = repository.getResolvedPreservingPatchesVersion(control.version.version());
+                    if (control.instanceReference.repository() != null && control.instanceReference.instanceId() != null) {
+                        HMCLGameRepository repository = control.instanceReference.repository();
+                        Version game = repository.getResolvedPreservingPatchesVersion(control.instanceReference.instanceId());
                         String gameVersion = repository.getGameVersion(game).orElse(null);
 
                         if (gameVersion != null && control.versions.containsKey(gameVersion)) {
@@ -375,7 +372,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                 Pair.pair(RemoteAddon.DependencyType.BROKEN, "addon.dependency.broken")
         ));
 
-        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, Profile.ProfileVersion version) {
+        public final RemoteAddon addon;
+
+        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.InstanceReference instanceReference) {
+            this.addon = addon;
+
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -395,7 +396,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             };
             setOnAction((e) -> {
                 fireEvent(new DialogCloseEvent());
-                Controllers.navigate(new DownloadPage(page, addon, version, callback));
+                Controllers.navigate(new DownloadPage(page, addon, instanceReference, callback));
             });
             setNode(IDX_LEADING, pane);
 
@@ -578,7 +579,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             spinnerPane.setLoading(true);
             Task.composeAsync(() -> {
                 // TODO: Massive tasks may cause OOM.
-                EnumMap<RemoteAddon.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
+                EnumMap<RemoteAddon.DependencyType, Pair<Label, List<DependencyAddonItem>>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
                 List<Task<?>> queue = new ArrayList<>(version.dependencies().size());
                 for (RemoteAddon.Dependency dependency : version.dependencies()) {
                     if (dependency.getType() == RemoteAddon.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteAddon.DependencyType.BROKEN) {
@@ -586,11 +587,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     if (!dependencies.containsKey(dependency.getType())) {
-                        List<Node> list = new ArrayList<>();
                         Label title = new Label(i18n(DependencyAddonItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
-                        list.add(title);
-                        dependencies.put(dependency.getType(), list);
+                        List<DependencyAddonItem> list = new ArrayList<>();
+                        dependencies.put(dependency.getType(), Pair.pair(title, list));
                     }
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
@@ -599,14 +599,18 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 if (dep == RemoteAddon.BROKEN) {
                                     return;
                                 }
-                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.version);
-                                dependencies.get(dependency.getType()).add(dependencyAddonItem);
+                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.instanceReference);
+                                dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
                 return Task.allOf(queue).thenSupplyAsync(() ->
-                        dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList())
+                        dependencies.values().stream().flatMap(types ->
+                                Stream.concat(
+                                        Stream.of(types.key()),
+                                        types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)))
+                        ).toList()
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
@@ -689,6 +693,6 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     @FunctionalInterface
     public interface DownloadCallback {
-        void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteAddon addon, RemoteAddon.Version file);
+        void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon addon, RemoteAddon.Version file);
     }
 }

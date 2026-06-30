@@ -22,8 +22,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -39,16 +39,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class VersionIconDialog extends DialogPane {
-    private final Profile profile;
+    private final HMCLGameRepository repository;
     private final String versionId;
     private final Runnable onFinish;
     private final GameSettings.Instance setting;
 
-    public VersionIconDialog(Profile profile, String versionId, Runnable onFinish) {
-        this.profile = profile;
+    public VersionIconDialog(HMCLGameRepository repository, String versionId, Runnable onFinish) {
+        this.repository = repository;
         this.versionId = versionId;
         this.onFinish = onFinish;
-        this.setting = profile.getRepository().getInstanceGameSettingsOrCreate(versionId);
+        this.setting = repository.getInstanceGameSettingsOrCreate(versionId);
 
         setTitle(i18n("settings.icon"));
         FlowPane pane = new FlowPane();
@@ -79,7 +79,7 @@ public class VersionIconDialog extends DialogPane {
         Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile != null) {
             try {
-                profile.getRepository().setVersionIconFile(versionId, selectedFile);
+                repository.setVersionIconFile(versionId, selectedFile);
 
                 if (setting != null) {
                     setting.iconProperty().setValue(VersionIconType.DEFAULT);
@@ -119,7 +119,7 @@ public class VersionIconDialog extends DialogPane {
 
     @Override
     protected void onAccept() {
-        profile.getRepository().onVersionIconChanged.fireEvent(new Event(this));
+        repository.onVersionIconChanged.fireEvent(new Event(this));
         onFinish.run();
         super.onAccept();
     }

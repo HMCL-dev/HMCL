@@ -51,7 +51,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.VersionIconDialog;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.ServerAddress;
@@ -78,7 +77,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Glavo
 @NotNullByDefault
 public final class GameSettingsPage<S extends GameSettings> extends StackPane
-        implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
+        implements DecoratorPage, VersionPage.GameInstanceLoadable, PageAware {
 
     private static final Object INHERIT_BUTTON_TOOLTIP_KEY = new Object();
     private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");
@@ -90,8 +89,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final ObjectProperty<State> state = new SimpleObjectProperty<>(this, "state", new State("", null, false, false, false));
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
-    /// The selected profile.
-    private @Nullable Profile profile;
+    /// The selected game directory.
+    private @Nullable GameDirectory gameDirectory;
+
+    /// The selected repository.
+    private @Nullable HMCLGameRepository repository;
 
     /// The current instance ID.
     private @Nullable String instanceId;
@@ -651,7 +653,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 {
                     var txtMinMemory = new JFXTextField();
                     txtMinMemory.setPrefWidth(160);
-                    minMemoryPane.setRight(new HBox(8, txtMinMemory, new Label(i18n("settings.memory.unit.mib"))));
+
+                    var rightBox = new HBox(8, txtMinMemory, new Label(i18n("settings.memory.unit.mib")));
+                    rightBox.setAlignment(Pos.CENTER_RIGHT);
+
+                    minMemoryPane.setRight(rightBox);
                     bindIndependentIntegerTextField(minMemoryPane, txtMinMemory, GameSettings::minMemoryProperty);
                 }
 
@@ -659,9 +665,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 metaspacePane.setTitle(i18n("settings.advanced.java_permanent_generation_space"));
                 {
                     var txtMetaspace = new JFXTextField();
-                    txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
                     txtMetaspace.setPrefWidth(160);
-                    metaspacePane.setRight(new HBox(8, txtMetaspace, new Label(i18n("settings.memory.unit.mib"))));
+
+                    var rightBox = new HBox(8, txtMetaspace, new Label(i18n("settings.memory.unit.mib")));
+                    rightBox.setAlignment(Pos.CENTER_RIGHT);
+
+                    metaspacePane.setRight(rightBox);
                     bindIndependentTextField(metaspacePane, txtMetaspace, GameSettings::permSizeProperty);
                 }
 
@@ -837,7 +846,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
     }
 
-    /// Refreshes parent preset display text because the implicit parent depends on the current profile.
+    /// Refreshes parent preset display text because the implicit parent depends on the current game directory.
     private void refreshInstanceParentSettingConverter(LineSelectButton<GameSettings.@Nullable Preset> button) {
         button.setConverter(setting -> setting != null
                 ? PresetManagementPane.getPresetDisplayName(setting)
@@ -846,19 +855,19 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Returns the label for the implicit parent preset selected by a null instance parent.
     private String getImplicitParentGameSettingsDisplayName() {
-        GameSettings.Preset legacyParent = getProfileLegacyGameSettings();
+        GameSettings.Preset legacyParent = getGameDirectoryLegacyGameSettings();
         return legacyParent != null
                 ? PresetManagementPane.getPresetDisplayName(legacyParent)
                 : i18n("settings.type.global.preset.default");
     }
 
-    /// Returns the migrated profile-level parent preset, or null when this profile uses the default preset.
-    private @Nullable GameSettings.Preset getProfileLegacyGameSettings() {
-        if (profile == null || profile.getLegacyGameSettings() == null) {
+    /// Returns the migrated game-directory-level parent preset, or `null` when this game directory uses the default preset.
+    private @Nullable GameSettings.Preset getGameDirectoryLegacyGameSettings() {
+        if (gameDirectory == null || gameDirectory.getLegacyGameSettings() == null) {
             return null;
         }
 
-        return SettingsManager.getGameSettings(profile.getLegacyGameSettings());
+        return SettingsManager.getGameSettings(gameDirectory.getLegacyGameSettings());
     }
 
     /// Adds the title-line inheritance button for the Java selection sublist.
@@ -1771,16 +1780,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     private boolean isCurrentInstanceModpack() {
-        return profile != null && instanceId != null && profile.getRepository().isModpack(instanceId);
+        return repository != null && instanceId != null && repository.isModpack(instanceId);
     }
 
     /// Returns the current instance version root displayed for modpack running directories.
     private String getCurrentInstanceVersionRoot() {
-        if (profile == null || instanceId == null) {
+        if (repository == null || instanceId == null) {
             return "";
         }
 
-        return profile.getRepository().getVersionRoot(instanceId).toString();
+        return repository.getVersionRoot(instanceId).toString();
     }
 
     /// Keeps a listener attached to the current instance's parent preset property.
@@ -2378,10 +2387,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         return getEffectiveParentGameSettings(instance);
     }
 
-    /// Returns the runtime parent preset for an instance, including profile-level legacy migration fallback.
+    /// Returns the runtime parent preset for an instance, including the game directory's migrated preset fallback.
     private GameSettings.Preset getEffectiveParentGameSettings(GameSettings.Instance instance) {
-        if (profile != null) {
-            return profile.getRepository().getParentGameSettings(instance);
+        if (repository != null) {
+            return repository.getParentGameSettings(instance);
         }
 
         return getExplicitParentGameSettings(instance);
@@ -2421,14 +2430,14 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     @SuppressWarnings("unchecked")
     @Override
-    public void loadVersion(Profile profile, @Nullable String instanceId) {
-        this.profile = profile;
+    public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
+        this.gameDirectory = repository.getGameDirectory();
+        this.repository = repository;
         this.instanceId = instanceId;
 
         assert isPresetSetting == (instanceId == null);
 
         if (instanceId != null) {
-            HMCLGameRepository repository = profile.getRepository();
             @Nullable GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(instanceId);
             this.currentSetting.set((S) setting);
             setSettingsReadOnly(
@@ -2484,12 +2493,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Backs up and overwrites the current instance's `instance-game-settings.json`.
     private void forceOverwriteInstanceGameSettings() {
-        if (profile == null || instanceId == null) {
+        if (repository == null || instanceId == null) {
             return;
         }
 
         Controllers.confirmBackupAndOverwrite(i18n("settings.game.instance_settings.unsupported"), () -> {
-            profile.getRepository().forceOverwriteInstanceGameSettings(instanceId);
+            repository.forceOverwriteInstanceGameSettings(instanceId);
             setSettingsReadOnly(false, "");
         });
     }
@@ -2503,10 +2512,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     private void loadIcon() {
-        if (profile == null || instanceId == null)
+        if (repository == null || instanceId == null)
             return;
 
-        iconPickerItem.setImage(profile.getRepository().getVersionIconImage(instanceId));
+        iconPickerItem.setImage(repository.getVersionIconImage(instanceId));
     }
 
     /// Refreshes Java selection controls and keeps inherited parent Java properties observed.
@@ -2570,13 +2579,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private void initJavaSubtitle() {
         S setting = currentSetting.get();
 
-        if (setting == null || profile == null)
+        if (setting == null || gameDirectory == null)
             return;
         initializeSelectedJava();
 
-        HMCLGameRepository repository = this.profile.getRepository();
         JavaVersionType javaVersionType = setting.javaTypeProperty().getValue();
-        GameSettings.Effective effectiveSetting = this.instanceId != null ? repository.getEffectiveGameSettings(this.instanceId) : null;
+        GameSettings.Effective effectiveSetting = this.instanceId != null && repository != null ? repository.getEffectiveGameSettings(this.instanceId) : null;
         JavaVersionType effectiveJavaVersionType = effectiveSetting != null ? effectiveSetting.getInheritable(GameSettings::javaTypeProperty) : javaVersionType;
         boolean autoSelected = effectiveJavaVersionType == JavaVersionType.AUTO || effectiveJavaVersionType == JavaVersionType.VERSION;
 
@@ -2598,8 +2606,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 gameVersionNumber = GameVersionNumber.unknown();
                 version = null;
             } else {
-                gameVersionNumber = GameVersionNumber.asGameVersion(repository.getGameVersion(this.instanceId));
-                version = repository.getResolvedVersion(this.instanceId);
+                gameVersionNumber = repository != null ? GameVersionNumber.asGameVersion(repository.getGameVersion(this.instanceId)) : GameVersionNumber.unknown();
+                version = repository != null ? repository.getResolvedVersion(this.instanceId) : null;
             }
 
             try {
@@ -2619,24 +2627,19 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         javaSublist.setDescription("");
     }
 
-    private void editSpecificSettings() {
-        if (profile != null)
-            Versions.modifyGameSettings(profile, Profiles.getSelectedInstance(profile));
-    }
-
     private void onExploreIcon() {
-        if (profile == null || instanceId == null)
+        if (repository == null || instanceId == null)
             return;
 
-        Controllers.dialog(new VersionIconDialog(profile, instanceId, this::loadIcon));
+        Controllers.dialog(new VersionIconDialog(repository, instanceId, this::loadIcon));
     }
 
     private void onDeleteIcon() {
-        if (profile == null || instanceId == null)
+        if (repository == null || instanceId == null)
             return;
 
-        profile.getRepository().deleteIconFile(instanceId);
-        GameSettings.Instance localGameSettings = profile.getRepository().getInstanceGameSettingsOrCreate(instanceId);
+        repository.deleteIconFile(instanceId);
+        GameSettings.Instance localGameSettings = repository.getInstanceGameSettingsOrCreate(instanceId);
         if (localGameSettings != null) {
             localGameSettings.iconProperty().setValue(VersionIconType.DEFAULT);
         }
