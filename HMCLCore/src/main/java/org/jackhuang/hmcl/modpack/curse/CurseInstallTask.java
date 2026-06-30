@@ -139,13 +139,24 @@ public final class CurseInstallTask extends Task<Void> {
     @Override
     public void execute() throws Exception {
         if (config != null) {
-            // For update, remove mods not listed in new manifest
-            for (CurseManifestFile oldCurseManifestFile : config.getManifest().files()) {
-                if (StringUtils.isBlank(oldCurseManifestFile.fileName())) continue;
-                Path oldFile = run.resolve("mods/" + oldCurseManifestFile.fileName());
-                if (Files.notExists(oldFile)) continue;
-                if (manifest.files().stream().noneMatch(oldCurseManifestFile::equals))
-                    Files.deleteIfExists(oldFile);
+            // For update, remove mods not listed in new manifest.
+            // The old file names are read from the previous manifest.json rather than the modpack
+            // configuration: the configuration only records project/file IDs and leaves fileName blank,
+            // which made the isBlank check below skip every mod, so outdated mods were never removed.
+            try {
+                Path oldManifestFile = repository.getVersionRoot(name).resolve("manifest.json");
+                if (Files.exists(oldManifestFile)) {
+                    CurseManifest oldManifest = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class);
+                    for (CurseManifestFile oldCurseManifestFile : oldManifest.files()) {
+                        if (StringUtils.isBlank(oldCurseManifestFile.fileName())) continue;
+                        Path oldFile = run.resolve("mods/" + oldCurseManifestFile.fileName());
+                        if (Files.notExists(oldFile)) continue;
+                        if (manifest.files().stream().noneMatch(oldCurseManifestFile::equals))
+                            Files.deleteIfExists(oldFile);
+                    }
+                }
+            } catch (JsonParseException | IOException e) {
+                LOG.warning("Failed to read the previous CurseForge manifest while updating " + name, e);
             }
         }
 
