@@ -191,12 +191,12 @@ public final class ModpackHelper {
 
         return new ManuallyCreatedModpackInstallTask(zipFile, charset, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
-                    GameDirectory newProfile = new GameDirectory(
+                    GameDirectory newGameDirectory = new GameDirectory(
                             GameDirectoryManager.newGameDirectoryId(),
                             LocalizedText.plain(name),
                             PortablePath.fromPath(location));
-                    GameDirectoryManager.addLocalGameDirectory(newProfile);
-                    GameDirectoryManager.setSelectedGameDirectory(newProfile);
+                    GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
+                    GameDirectoryManager.setSelectedGameDirectory(newGameDirectory);
                 });
     }
 

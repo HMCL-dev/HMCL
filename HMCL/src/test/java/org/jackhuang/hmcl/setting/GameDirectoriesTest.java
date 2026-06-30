@@ -98,15 +98,15 @@ public final class GameDirectoriesTest {
         GameDirectoryID defaultGameDirectoryId = LegacyConfigMigrator.getLegacyProfileID("Default");
         GameDirectoryID homeGameDirectoryId = LegacyConfigMigrator.getLegacyProfileID("Home");
         GameDirectory defaultGameDirectory = gameDirectories.getGameDirectories().stream()
-                .filter(profile -> defaultGameDirectoryId.equals(profile.getId()))
+                .filter(gameDirectory -> defaultGameDirectoryId.equals(gameDirectory.getId()))
                 .findFirst()
                 .orElseThrow();
         GameDirectory homeGameDirectory = gameDirectories.getGameDirectories().stream()
-                .filter(profile -> homeGameDirectoryId.equals(profile.getId()))
+                .filter(gameDirectory -> homeGameDirectoryId.equals(gameDirectory.getId()))
                 .findFirst()
                 .orElseThrow();
         GameDirectory devGameDirectory = gameDirectories.getGameDirectories().stream()
-                .filter(profile -> "Dev".equals(GameDirectoryManager.getGameDirectoryCustomName(profile)))
+                .filter(gameDirectory -> "Dev".equals(GameDirectoryManager.getGameDirectoryCustomName(gameDirectory)))
                 .findFirst()
                 .orElseThrow();
 
@@ -174,9 +174,9 @@ public final class GameDirectoriesTest {
     @Test
     public void storesGameDirectoryPath() {
         GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
-        GameDirectory profile = new GameDirectory(id, LocalizedText.plain("Dev"), PortablePath.of("versions\\Dev"));
+        GameDirectory gameDirectory = new GameDirectory(id, LocalizedText.plain("Dev"), PortablePath.of("versions\\Dev"));
 
-        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, GameDirectory.class).getAsJsonObject();
+        JsonObject serialized = JsonUtils.GSON.toJsonTree(gameDirectory, GameDirectory.class).getAsJsonObject();
         GameDirectory deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, GameDirectory.class));
 
         assertEquals("versions/Dev", serialized.get("path").getAsString());
@@ -193,13 +193,13 @@ public final class GameDirectoriesTest {
         GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
         GameSettingsPresetID legacyGameSettings =
                 GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
-        GameDirectory profile = new GameDirectory(
+        GameDirectory gameDirectory = new GameDirectory(
                 id,
                 LocalizedText.plain("Dev"),
                 PortablePath.of("versions\\Dev"),
                 legacyGameSettings);
 
-        JsonObject serialized = JsonUtils.GSON.toJsonTree(profile, GameDirectory.class).getAsJsonObject();
+        JsonObject serialized = JsonUtils.GSON.toJsonTree(gameDirectory, GameDirectory.class).getAsJsonObject();
         GameDirectory deserialized = Objects.requireNonNull(JsonUtils.GSON.fromJson(serialized, GameDirectory.class));
 
         assertEquals(legacyGameSettings.toString(), serialized.get("legacyGameSettings").getAsString());
@@ -256,37 +256,37 @@ public final class GameDirectoriesTest {
     @Test
     public void movesGameDirectoryBetweenStoresWhenPathTypeChanges() throws ReflectiveOperationException {
         GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
-        GameDirectory profile = new GameDirectory(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
+        GameDirectory gameDirectory = new GameDirectory(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
         GameDirectories userDirectories = new GameDirectories();
         userDirectories.setUserFile(true);
         GameDirectories localDirectories = new GameDirectories();
-        localDirectories.getGameDirectories().add(profile);
+        localDirectories.getGameDirectories().add(gameDirectory);
         localDirectories.setUserFile(false);
 
         try (GameDirectoryEnvironment ignored = new GameDirectoryEnvironment(localDirectories, userDirectories)) {
             GameDirectoryManager.init();
 
             PortablePath absolutePath = PortablePath.of("/workspace/Dev");
-            GameDirectoryManager.updateGameDirectory(profile, LocalizedText.plain("Moved"), absolutePath);
+            GameDirectoryManager.updateGameDirectory(gameDirectory, LocalizedText.plain("Moved"), absolutePath);
 
             assertTrue(localDirectories.getGameDirectories().isEmpty());
-            assertEquals(List.of(profile), userDirectories.getGameDirectories());
-            assertEquals(List.of(profile), GameDirectoryManager.getGameDirectories());
-            assertSame(profile, GameDirectoryManager.getSelectedGameDirectory());
-            assertEquals(absolutePath.getPath(), profile.getPath().getPath());
-            assertEquals(absolutePath.isAbsolute(), profile.getPath().isAbsolute());
-            assertEquals("Moved", GameDirectoryManager.getGameDirectoryCustomName(profile));
+            assertEquals(List.of(gameDirectory), userDirectories.getGameDirectories());
+            assertEquals(List.of(gameDirectory), GameDirectoryManager.getGameDirectories());
+            assertSame(gameDirectory, GameDirectoryManager.getSelectedGameDirectory());
+            assertEquals(absolutePath.getPath(), gameDirectory.getPath().getPath());
+            assertEquals(absolutePath.isAbsolute(), gameDirectory.getPath().isAbsolute());
+            assertEquals("Moved", GameDirectoryManager.getGameDirectoryCustomName(gameDirectory));
 
             PortablePath relativePath = PortablePath.of("local/Dev");
-            GameDirectoryManager.updateGameDirectory(profile, LocalizedText.plain("Back"), relativePath);
+            GameDirectoryManager.updateGameDirectory(gameDirectory, LocalizedText.plain("Back"), relativePath);
 
-            assertEquals(List.of(profile), localDirectories.getGameDirectories());
+            assertEquals(List.of(gameDirectory), localDirectories.getGameDirectories());
             assertTrue(userDirectories.getGameDirectories().isEmpty());
-            assertEquals(List.of(profile), GameDirectoryManager.getGameDirectories());
-            assertSame(profile, GameDirectoryManager.getSelectedGameDirectory());
-            assertEquals(relativePath.getPath(), profile.getPath().getPath());
-            assertEquals(relativePath.isAbsolute(), profile.getPath().isAbsolute());
-            assertEquals("Back", GameDirectoryManager.getGameDirectoryCustomName(profile));
+            assertEquals(List.of(gameDirectory), GameDirectoryManager.getGameDirectories());
+            assertSame(gameDirectory, GameDirectoryManager.getSelectedGameDirectory());
+            assertEquals(relativePath.getPath(), gameDirectory.getPath().getPath());
+            assertEquals(relativePath.isAbsolute(), gameDirectory.getPath().isAbsolute());
+            assertEquals("Back", GameDirectoryManager.getGameDirectoryCustomName(gameDirectory));
         }
     }
 
@@ -294,11 +294,11 @@ public final class GameDirectoriesTest {
     @Test
     public void rejectsGameDirectoryMutationsWithReadOnlyStores() throws ReflectiveOperationException {
         GameDirectoryID id = GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
-        GameDirectory profile = new GameDirectory(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
+        GameDirectory gameDirectory = new GameDirectory(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
         GameDirectories userDirectories = new GameDirectories();
         userDirectories.setUserFile(true);
         GameDirectories localDirectories = new GameDirectories();
-        localDirectories.getGameDirectories().add(profile);
+        localDirectories.getGameDirectories().add(gameDirectory);
         localDirectories.setUserFile(false);
 
         try (GameDirectoryEnvironment environment = new GameDirectoryEnvironment(localDirectories, userDirectories)) {
@@ -306,16 +306,16 @@ public final class GameDirectoriesTest {
             GameDirectoryManager.init();
 
             PortablePath newPath = PortablePath.of("local/Renamed");
-            assertFalse(GameDirectoryManager.canUpdateGameDirectory(profile, newPath));
+            assertFalse(GameDirectoryManager.canUpdateGameDirectory(gameDirectory, newPath));
             assertThrows(IllegalStateException.class,
-                    () -> GameDirectoryManager.updateGameDirectory(profile, LocalizedText.plain("Renamed"), newPath));
-            assertFalse(GameDirectoryManager.canRemoveGameDirectory(profile));
-            assertThrows(IllegalStateException.class, () -> GameDirectoryManager.removeGameDirectory(profile));
-            assertEquals(List.of(profile), localDirectories.getGameDirectories());
+                    () -> GameDirectoryManager.updateGameDirectory(gameDirectory, LocalizedText.plain("Renamed"), newPath));
+            assertFalse(GameDirectoryManager.canRemoveGameDirectory(gameDirectory));
+            assertThrows(IllegalStateException.class, () -> GameDirectoryManager.removeGameDirectory(gameDirectory));
+            assertEquals(List.of(gameDirectory), localDirectories.getGameDirectories());
             assertTrue(userDirectories.getGameDirectories().isEmpty());
-            assertEquals("local/Dev", profile.getPath().getPath());
-            assertFalse(profile.getPath().isAbsolute());
-            assertEquals("Local", GameDirectoryManager.getGameDirectoryCustomName(profile));
+            assertEquals("local/Dev", gameDirectory.getPath().getPath());
+            assertFalse(gameDirectory.getPath().isAbsolute());
+            assertEquals("Local", GameDirectoryManager.getGameDirectoryCustomName(gameDirectory));
         }
 
         GameDirectory targetGameDirectory = new GameDirectory(id, LocalizedText.plain("Local"), PortablePath.of("local/Dev"));
@@ -388,21 +388,21 @@ public final class GameDirectoriesTest {
         userDirectories.setUserFile(true);
         GameDirectories localDirectories = new GameDirectories();
         localDirectories.setUserFile(false);
-        GameDirectory profile = new GameDirectory(
+        GameDirectory gameDirectory = new GameDirectory(
                 GameDirectoryID.generate(),
                 LocalizedText.plain("Local"),
                 PortablePath.of("local/Dev"));
-        localDirectories.getGameDirectories().add(profile);
+        localDirectories.getGameDirectories().add(gameDirectory);
 
         try (GameDirectoryEnvironment ignored = new GameDirectoryEnvironment(localDirectories, userDirectories)) {
             GameDirectoryManager.init();
 
             HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-            assertSame(profile, repository.getGameDirectory());
-            assertEquals(profile.getPath().toPath(), repository.getBaseDirectory());
+            assertSame(gameDirectory, repository.getGameDirectory());
+            assertEquals(gameDirectory.getPath().toPath(), repository.getBaseDirectory());
 
             PortablePath newPath = PortablePath.of("local/Renamed");
-            profile.setPath(newPath);
+            gameDirectory.setPath(newPath);
             assertEquals(newPath.toPath(), repository.getBaseDirectory());
         }
     }
@@ -567,10 +567,10 @@ public final class GameDirectoriesTest {
     /// Returns the only default game directory in the given store, asserting its path.
     private static GameDirectory assertSingleDefaultGameDirectory(GameDirectories gameDirectories, PortablePath path) {
         assertEquals(1, gameDirectories.getGameDirectories().size());
-        GameDirectory profile = gameDirectories.getGameDirectories().get(0);
-        assertEquals(path.isAbsolute(), profile.getPath().isAbsolute());
-        assertEquals(path.getPath(), profile.getPath().getPath());
-        return profile;
+        GameDirectory gameDirectory = gameDirectories.getGameDirectories().get(0);
+        assertEquals(path.isAbsolute(), gameDirectory.getPath().isAbsolute());
+        assertEquals(path.getPath(), gameDirectory.getPath().getPath());
+        return gameDirectory;
     }
 
     /// Tests that game directories must be deserialized with a non-nil ID.

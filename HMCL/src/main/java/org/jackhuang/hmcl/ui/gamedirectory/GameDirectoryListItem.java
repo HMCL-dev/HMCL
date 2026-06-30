@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.profile;
+package org.jackhuang.hmcl.ui.gamedirectory;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
@@ -26,66 +26,90 @@ import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ProfileListItem extends RadioButton {
-    private final GameDirectory profile;
+/// Navigation drawer item for one game directory entry.
+@NotNullByDefault
+public class GameDirectoryListItem extends RadioButton {
+    /// Game directory represented by this item.
+    private final GameDirectory gameDirectory;
+
+    /// Primary text displayed by the item.
     private final StringProperty title = new SimpleStringProperty();
+
+    /// Secondary text displayed by the item.
     private final StringProperty subtitle = new SimpleStringProperty();
 
-    public ProfileListItem(GameDirectory profile) {
-        this.profile = profile;
-        getStyleClass().setAll("profile-list-item", "navigation-drawer-item");
-        setUserData(profile);
+    /// Creates a list item for the given game directory.
+    ///
+    /// @param gameDirectory the represented game directory
+    public GameDirectoryListItem(GameDirectory gameDirectory) {
+        this.gameDirectory = gameDirectory;
+        getStyleClass().setAll("game-directory-list-item", "navigation-drawer-item");
+        setUserData(gameDirectory);
 
-        title.set(GameDirectoryManager.getGameDirectoryDisplayName(profile));
-        subtitle.set(profile.getPath().toString());
+        title.set(GameDirectoryManager.getGameDirectoryDisplayName(gameDirectory));
+        subtitle.set(gameDirectory.getPath().toString());
 
-        this.selectedProperty().bind(Bindings.equal(profile, GameDirectoryManager.selectedGameDirectoryProperty()));
+        this.selectedProperty().bind(Bindings.equal(gameDirectory, GameDirectoryManager.selectedGameDirectoryProperty()));
     }
 
+    /// Creates the JavaFX skin for this item.
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new ProfileListItemSkin(this);
+        return new GameDirectoryListItemSkin(this);
     }
 
+    /// Removes the represented game directory after handling read-only storage.
     public void remove() {
-        if (!GameDirectoryManager.canRemoveGameDirectory(profile)) {
+        if (!GameDirectoryManager.canRemoveGameDirectory(gameDirectory)) {
             Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                GameDirectoryManager.forceOverwriteGameDirectoryFiles(profile);
-                GameDirectoryManager.removeGameDirectory(profile);
+                GameDirectoryManager.forceOverwriteGameDirectoryFiles(gameDirectory);
+                GameDirectoryManager.removeGameDirectory(gameDirectory);
             });
             return;
         }
 
-        GameDirectoryManager.removeGameDirectory(profile);
+        GameDirectoryManager.removeGameDirectory(gameDirectory);
     }
 
+    /// Returns the represented game directory.
     public GameDirectory getGameDirectory() {
-        return profile;
+        return gameDirectory;
     }
 
+    /// Returns the displayed title.
     public String getTitle() {
         return title.get();
     }
 
+    /// Updates the displayed title.
+    ///
+    /// @param title the displayed title
     public void setTitle(String title) {
         this.title.set(title);
     }
 
+    /// Returns the displayed title property.
     public StringProperty titleProperty() {
         return title;
     }
 
+    /// Returns the displayed subtitle.
     public String getSubtitle() {
         return subtitle.get();
     }
 
+    /// Updates the displayed subtitle.
+    ///
+    /// @param subtitle the displayed subtitle
     public void setSubtitle(String subtitle) {
         this.subtitle.set(subtitle);
     }
 
+    /// Returns the displayed subtitle property.
     public StringProperty subtitleProperty() {
         return subtitle;
     }

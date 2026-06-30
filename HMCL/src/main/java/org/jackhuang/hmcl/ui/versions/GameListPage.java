@@ -52,8 +52,8 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
-import org.jackhuang.hmcl.ui.profile.ProfileListItem;
-import org.jackhuang.hmcl.ui.profile.ProfilePage;
+import org.jackhuang.hmcl.ui.gamedirectory.GameDirectoryListItem;
+import org.jackhuang.hmcl.ui.gamedirectory.GameDirectoryPage;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -71,12 +71,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("version.manage")));
+    /// Navigation drawer items for configured game directories.
     @SuppressWarnings("FieldCanBeLocal")
-    private final ObservableList<ProfileListItem> profileListItems;
+    private final ObservableList<GameDirectoryListItem> gameDirectoryListItems;
 
     public GameListPage() {
-        profileListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
-            ProfileListItem item = new ProfileListItem(gameDirectory);
+        gameDirectoryListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
+            GameDirectoryListItem item = new GameDirectoryListItem(gameDirectory);
             FXUtils.setLimitWidth(item, 200);
             return item;
         });
@@ -89,14 +90,14 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 addGameDirectoryItem.getStyleClass().add("navigation-drawer-item");
                 addGameDirectoryItem.setTitle(i18n("profile.new"));
                 addGameDirectoryItem.setLeftIcon(SVG.ADD_CIRCLE);
-                addGameDirectoryItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
+                addGameDirectoryItem.setOnAction(e -> Controllers.navigate(new GameDirectoryPage(null)));
 
                 pane.setFitToWidth(true);
                 VBox wrapper = new VBox();
                 wrapper.getStyleClass().add("advanced-list-box-content");
                 VBox box = new VBox();
                 box.setFillWidth(true);
-                Bindings.bindContent(box.getChildren(), profileListItems);
+                Bindings.bindContent(box.getChildren(), gameDirectoryListItems);
                 wrapper.getChildren().setAll(box, addGameDirectoryItem);
                 pane.setContent(wrapper);
             }
