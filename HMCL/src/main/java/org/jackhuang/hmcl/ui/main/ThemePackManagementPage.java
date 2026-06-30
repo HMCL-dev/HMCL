@@ -459,6 +459,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
                 var rowRippler = new RipplerContainer(row);
                 rowRippler.setCursor(Cursor.HAND);
+                ComponentList.setNoPadding(rowRippler);
 
                 FXUtils.onClicked(rowRippler, () -> {
                     fireEvent(new DialogCloseEvent());
