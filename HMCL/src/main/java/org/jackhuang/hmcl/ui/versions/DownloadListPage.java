@@ -38,13 +38,12 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -57,6 +56,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.*;
@@ -67,12 +67,12 @@ import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
-public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
+public class DownloadListPage extends Control implements DecoratorPage, VersionPage.GameInstanceLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean versionSelection;
-    private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
+    private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
     private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
     private final IntegerProperty pageCount = new SimpleIntegerProperty(-1);
     private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
@@ -111,8 +111,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     @Override
-    public void loadVersion(Profile profile, String version) {
-        this.version.set(new Profile.ProfileVersion(profile, version));
+    public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
+        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId));
 
         setLoading(false);
         setFailed(false);
@@ -123,10 +123,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
 
         if (versionSelection) {
-            versions.setAll(profile.getRepository().getDisplayVersions()
+            versions.setAll(repository.getDisplayVersions()
                     .map(Version::getId)
                     .collect(Collectors.toList()));
-            selectedVersion.set(Profiles.getSelectedInstance(profile));
+            selectedVersion.set(repository.getSelectedInstance());
         }
     }
 
@@ -165,12 +165,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
         int currentSearchID = searchID = searchID + 1;
         Task.supplyAsync(() -> {
-            Profile.ProfileVersion version = this.version.get();
-            if (StringUtils.isBlank(version.version())) {
+            HMCLGameRepository.InstanceReference instanceReference = this.instanceReference.get();
+            if (StringUtils.isBlank(instanceReference.instanceId())) {
                 return userGameVersion;
             } else {
-                return StringUtils.isNotBlank(version.version())
-                        ? version.profile().getRepository().getGameVersion(version.version()).orElse("")
+                return StringUtils.isNotBlank(instanceReference.instanceId())
+                        ? instanceReference.repository().getGameVersion(instanceReference.instanceId()).orElse("")
                         : "";
             }
         }).thenApplyAsync(
@@ -218,11 +218,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
     }
 
-    protected Profile.ProfileVersion getProfileVersion() {
+    protected HMCLGameRepository.InstanceReference getInstanceReference() {
         if (versionSelection) {
-            return new Profile.ProfileVersion(version.get().profile(), selectedVersion.get());
+            return new HMCLGameRepository.InstanceReference(instanceReference.get().repository(), selectedVersion.get());
         } else {
-            return version.get();
+            return instanceReference.get();
         }
     }
 
@@ -320,16 +320,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 Label lblGameVersion = new Label(i18n("world.game_version"));
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 
-                ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().version)
-                        .map(version -> version.version() == null);
+                ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().instanceReference)
+                        .map(instanceReference -> instanceReference.instanceId() == null);
                 lblGameVersion.managedProperty().bind(hasVersion);
                 lblGameVersion.visibleProperty().bind(hasVersion);
                 gameVersionField.managedProperty().bind(hasVersion);
                 gameVersionField.visibleProperty().bind(hasVersion);
                 FXUtils.installFastTooltip(gameVersionField, i18n("search.enter"));
 
-                FXUtils.onChangeAndOperate(getSkinnable().version, version -> {
-                    if (StringUtils.isNotBlank(version.version())) {
+                FXUtils.onChangeAndOperate(getSkinnable().instanceReference, instanceReference -> {
+                    if (StringUtils.isNotBlank(instanceReference.instanceId())) {
                         GridPane.setColumnSpan(nameField, 3);
                     } else {
                         GridPane.setColumnSpan(nameField, 1);
@@ -561,7 +561,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         FXUtils.onClicked(wrapper, () -> {
                             RemoteAddon item = getItem();
                             if (item != null)
-                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getProfileVersion(), getSkinnable().callback));
+                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getInstanceReference(), getSkinnable().callback));
                         });
 
                         setPrefWidth(0);

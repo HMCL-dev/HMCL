@@ -17,6 +17,7 @@ NVIDIA
 minecraft-exported-crash-info*
 hmcl-exported-logs-*
 terracotta-log-*
+*.hmcl-theme
 /.java/
 /.local/
 /.cache/
@@ -44,6 +45,7 @@ language-subtag-registry
 # eclipse
 /bin/
 /HMCL/bin/
+/HMCLBoot/bin/
 /HMCLCore/bin/
 /minecraft/libraries/HMCLTransformerDiscoveryService/bin/
 /minecraft/libraries/HMCLMultiMCBootstrap/bin/
