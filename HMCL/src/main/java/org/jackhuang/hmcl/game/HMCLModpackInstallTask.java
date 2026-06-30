@@ -46,7 +46,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
 
     public HMCLModpackInstallTask(HMCLGameRepository repository, Path zipFile, Modpack modpack, String name) {
         this.repository = repository;
-        dependency = repository.getDependency();
+        this.dependency = repository.getDependency();
         this.zipFile = zipFile;
         this.name = name;
         this.modpack = modpack;
