@@ -37,6 +37,7 @@ public class YggdrasilSession {
     private final String accessToken;
     private final GameProfile selectedProfile;
     private final List<GameProfile> availableProfiles;
+
     @Nullable
     private final Map<String, String> userProperties;
 

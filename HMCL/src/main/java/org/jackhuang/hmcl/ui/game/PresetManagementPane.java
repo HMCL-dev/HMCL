@@ -180,6 +180,13 @@ final class PresetManagementPane extends ComponentSublist {
         setDescription(setting != null ? getPresetDisplayName(setting) : "");
     }
 
+    // Used to check the preset name.
+    private boolean isPresetNameExists(String name, @Nullable GameSettings.Preset excludeSetting) {
+        return SettingsManager.getGameSettings().stream()
+                .filter(setting -> excludeSetting == null || setting != excludeSetting)
+                .anyMatch(setting -> Objects.equals(name, getPresetDisplayName(setting)));
+    }
+
     /// Creates a new preset and selects it for editing.
     private void createPreset() {
         int number = createDefaultPresetNumber();
@@ -188,6 +195,15 @@ final class PresetManagementPane extends ComponentSublist {
                         .setPromptText(i18n("settings.type.global.preset.auto_name", number));
         Controllers.prompt(new PromptDialogPane.Builder(i18n("settings.type.global.preset.create"), (questions, handler) -> {
             String name = (String) questions.get(0).getValue();
+
+            if (StringUtils.isNotBlank(name)) {
+                String trimmedName = name.trim();
+                if (isPresetNameExists(trimmedName, null)) {
+                    handler.reject(i18n("settings.type.global.preset.duplicate_name"));
+                    return;
+                }
+            }
+
             GameSettings.Preset setting = new GameSettings.Preset(SettingsManager.gameSettingsPresets().newPresetId());
             if (StringUtils.isBlank(name)) {
                 setting.autoNameNumberProperty().setValue(number);
@@ -233,7 +249,13 @@ final class PresetManagementPane extends ComponentSublist {
                 return;
             }
 
-            setting.nameProperty().setValue(LocalizedText.plain(name.trim()));
+            String trimmedName = name.trim();
+            if (isPresetNameExists(trimmedName, setting)) {
+                handler.reject(i18n("settings.type.global.preset.duplicate_name"));
+                return;
+            }
+
+            setting.nameProperty().setValue(LocalizedText.plain(trimmedName));
             setting.autoNameNumberProperty().setValue(null);
             handler.resolve();
         }).addQuestion(nameQuestion));

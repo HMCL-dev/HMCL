@@ -132,10 +132,10 @@ public final class GameSettingsPresetsTest {
         LegacyConfigMigrator.migrateLegacyPresetSettings(gameDirectories, presets, configurations);
 
         assertEquals(1, presets.getPresets().size());
-        Profile profile = gameDirectories.getGameDirectories().get(0);
+        GameDirectory gameDirectory = gameDirectories.getGameDirectories().get(0);
         GameSettings.Preset preset = presets.getPresets().get(0);
-        assertEquals(profile.getLegacyGameSettings(), preset.idProperty().getValue());
-        assertNotEquals(profile.getId(), preset.idProperty().getValue());
+        assertEquals(gameDirectory.getLegacyGameSettings(), preset.idProperty().getValue());
+        assertNotEquals(gameDirectory.getId(), preset.idProperty().getValue());
         assertEquals(2048, preset.maxMemoryProperty().getValue());
     }
 }
