@@ -20,8 +20,12 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
@@ -33,10 +37,11 @@ import org.jackhuang.hmcl.modpack.ModpackProvider;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DefaultIsolationType;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.setting.SettingFileUtils;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
@@ -68,9 +73,17 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// HMCL game repository implementation backed by a profile and per-instance game settings.
+/// HMCL game repository implementation backed by a GameDirectory and per-instance game settings.
 @NotNullByDefault
 public final class HMCLGameRepository extends DefaultGameRepository {
+    /// References an optional game instance in a repository.
+    ///
+    /// @param repository the owning game repository
+    /// @param instanceId the game instance ID, or `null` when only repository context is available
+    @NotNullByDefault
+    public record InstanceReference(HMCLGameRepository repository, @Nullable String instanceId) {
+    }
+
     /// Directory under the version root that stores HMCL-managed instance metadata.
     private static final String INSTANCE_METADATA_DIRECTORY = ".hmcl";
 
@@ -83,7 +96,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Current file name for instance-specific game settings.
     private static final String INSTANCE_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
 
-    private final Profile profile;
+    /// The persistent game directory for this repository.
+    private final GameDirectory gameDirectory;
+
+    /// The selected instance ID persisted for this repository's game directory.
+    private final StringBinding selectedInstance;
 
     // instance game settings
     private final Map<String, GameSettings.Instance> instanceGameSettings = new HashMap<>();
@@ -94,13 +111,54 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public final EventManager<Event> onVersionIconChanged = new EventManager<>();
 
-    public HMCLGameRepository(Profile profile, Path baseDirectory) {
-        super(baseDirectory);
-        this.profile = profile;
+    /// Creates a repository backed by the given game directory.
+    public HMCLGameRepository(GameDirectory gameDirectory) {
+        super(gameDirectory.getPath().toPath());
+        this.gameDirectory = gameDirectory;
+        this.selectedInstance = Bindings.stringValueAt(settings().getSelectedInstance(), gameDirectory.getId());
+        gameDirectory.pathProperty().addListener((a, b, newValue) -> changeDirectory(newValue.toPath()));
     }
 
-    public Profile getProfile() {
-        return profile;
+    /// Returns the persistent game directory for this repository.
+    public GameDirectory getGameDirectory() {
+        return gameDirectory;
+    }
+
+    /// Returns the selected instance ID property for this repository's game directory.
+    public StringBinding selectedInstanceProperty() {
+        return selectedInstance;
+    }
+
+    /// Returns the selected instance ID for this repository's game directory.
+    public @Nullable String getSelectedInstance() {
+        return selectedInstance.get();
+    }
+
+    /// Sets the selected instance ID for this repository's game directory.
+    public void setSelectedInstance(@Nullable String instance) {
+        settings().setSelectedInstance(gameDirectory.getId(), instance);
+    }
+
+    /// Refreshes the selected instance ID after versions are loaded.
+    public void refreshSelectedInstance() {
+        @Nullable String selectedInstance = settings().getSelectedInstance(gameDirectory.getId());
+        @Nullable String refreshedInstance = selectedInstance;
+        if (!hasVersion(refreshedInstance)) {
+            refreshedInstance = getVersions().isEmpty() ? null : getVersions().iterator().next().getId();
+        }
+        if (!Objects.equals(selectedInstance, refreshedInstance)) {
+            setSelectedInstance(refreshedInstance);
+        }
+    }
+
+    /// Returns a dependency manager using the currently selected download provider.
+    public DefaultDependencyManager getDependency() {
+        return getDependency(DownloadProviders.getDownloadProvider());
+    }
+
+    /// Returns a dependency manager using the given download provider.
+    public DefaultDependencyManager getDependency(DownloadProvider downloadProvider) {
+        return new DefaultDependencyManager(this, downloadProvider, HMCLCacheRepository.REPOSITORY);
     }
 
     @Override
@@ -294,8 +352,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
-        GameSettings.Preset profilePreset = SettingsManager.getGameSettings(profile.getLegacyGameSettings());
-        if (profilePreset != null && profilePreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
+        GameSettings.Preset gameDirectoryPreset = SettingsManager.getGameSettings(gameDirectory.getLegacyGameSettings());
+        if (gameDirectoryPreset != null && gameDirectoryPreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
             GameSettings.Instance setting = new GameSettings.Instance();
             setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
             initInstanceGameSettings(id, setting);
@@ -461,7 +519,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
         @Nullable GameSettingsPresetID parent = instance != null && instance.parentProperty().getValue() != null
                 ? instance.parentProperty().getValue()
-                : profile.getLegacyGameSettings();
+                : gameDirectory.getLegacyGameSettings();
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }

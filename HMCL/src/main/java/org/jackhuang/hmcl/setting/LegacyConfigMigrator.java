@@ -1245,7 +1245,7 @@ public final class LegacyConfigMigrator {
         return changed;
     }
 
-    /// Migrates profile-global game settings from config files used before HMCL 3.16.
+    /// Migrates global game settings stored under legacy profile entries before HMCL 3.16.
     static void migrateLegacyPresetSettings(
             GameDirectories gameDirectories,
             GameSettingsPresets gameSettingsPresets,
@@ -1254,15 +1254,15 @@ public final class LegacyConfigMigrator {
             return;
         }
 
-        for (Profile profile : gameDirectories.getGameDirectories()) {
-            @Nullable GameSettingsPresetID legacyGameSettings = profile.getLegacyGameSettings();
+        for (GameDirectory gameDirectory : gameDirectories.getGameDirectories()) {
+            @Nullable GameSettingsPresetID legacyGameSettings = gameDirectory.getLegacyGameSettings();
             if (legacyGameSettings == null) {
                 continue;
             }
 
             GameSettings.Preset legacyParent = gameSettingsPresets.getPreset(legacyGameSettings);
             if (legacyParent == null) {
-                @Nullable String profileName = getLegacyProfileName(profile);
+                @Nullable String profileName = getLegacyProfileName(gameDirectory);
                 if (profileName == null) {
                     continue;
                 }
@@ -1279,14 +1279,14 @@ public final class LegacyConfigMigrator {
     }
 
     /// Returns the legacy profile name used in `configurations`.
-    private static @Nullable String getLegacyProfileName(Profile profile) {
-        if (LEGACY_DEFAULT_PROFILE_ID.equals(profile.getId())) {
+    private static @Nullable String getLegacyProfileName(GameDirectory gameDirectory) {
+        if (LEGACY_DEFAULT_PROFILE_ID.equals(gameDirectory.getId())) {
             return LEGACY_DEFAULT_PROFILE;
         }
-        if (LEGACY_HOME_PROFILE_ID.equals(profile.getId())) {
+        if (LEGACY_HOME_PROFILE_ID.equals(gameDirectory.getId())) {
             return LEGACY_HOME_PROFILE;
         }
-        return Profiles.getProfileCustomName(profile);
+        return GameDirectoryManager.getGameDirectoryCustomName(gameDirectory);
     }
 
     /// Detached settings migrated out of an old config file.
