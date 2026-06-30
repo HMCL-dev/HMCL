@@ -502,7 +502,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                     Controllers.navigate(new DownloadPage(
                                             repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteAddon,
-                                            new HMCLGameRepository.RepositoryVersion(ModListPageSkin.this.getSkinnable().getRepository(), ModListPageSkin.this.getSkinnable().getInstanceId()),
+                                            new HMCLGameRepository.InstanceReference(ModListPageSkin.this.getSkinnable().getRepository(), ModListPageSkin.this.getSkinnable().getInstanceId()),
                                             org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
                                     ));
                                 });

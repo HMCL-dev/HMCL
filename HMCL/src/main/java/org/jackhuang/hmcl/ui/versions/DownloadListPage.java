@@ -72,7 +72,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean versionSelection;
-    private final ObjectProperty<HMCLGameRepository.RepositoryVersion> version = new SimpleObjectProperty<>();
+    private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
     private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
     private final IntegerProperty pageCount = new SimpleIntegerProperty(-1);
     private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
@@ -112,7 +112,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     @Override
     public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
-        this.version.set(new HMCLGameRepository.RepositoryVersion(repository, instanceId));
+        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId));
 
         setLoading(false);
         setFailed(false);
@@ -165,12 +165,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
         int currentSearchID = searchID = searchID + 1;
         Task.supplyAsync(() -> {
-            HMCLGameRepository.RepositoryVersion version = this.version.get();
-            if (StringUtils.isBlank(version.version())) {
+            HMCLGameRepository.InstanceReference instanceReference = this.instanceReference.get();
+            if (StringUtils.isBlank(instanceReference.instanceId())) {
                 return userGameVersion;
             } else {
-                return StringUtils.isNotBlank(version.version())
-                        ? version.repository().getGameVersion(version.version()).orElse("")
+                return StringUtils.isNotBlank(instanceReference.instanceId())
+                        ? instanceReference.repository().getGameVersion(instanceReference.instanceId()).orElse("")
                         : "";
             }
         }).thenApplyAsync(
@@ -218,11 +218,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
     }
 
-    protected HMCLGameRepository.RepositoryVersion getRepositoryVersion() {
+    protected HMCLGameRepository.InstanceReference getInstanceReference() {
         if (versionSelection) {
-            return new HMCLGameRepository.RepositoryVersion(version.get().repository(), selectedVersion.get());
+            return new HMCLGameRepository.InstanceReference(instanceReference.get().repository(), selectedVersion.get());
         } else {
-            return version.get();
+            return instanceReference.get();
         }
     }
 
@@ -320,16 +320,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 Label lblGameVersion = new Label(i18n("world.game_version"));
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 
-                ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().version)
-                        .map(version -> version.version() == null);
+                ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().instanceReference)
+                        .map(instanceReference -> instanceReference.instanceId() == null);
                 lblGameVersion.managedProperty().bind(hasVersion);
                 lblGameVersion.visibleProperty().bind(hasVersion);
                 gameVersionField.managedProperty().bind(hasVersion);
                 gameVersionField.visibleProperty().bind(hasVersion);
                 FXUtils.installFastTooltip(gameVersionField, i18n("search.enter"));
 
-                FXUtils.onChangeAndOperate(getSkinnable().version, version -> {
-                    if (StringUtils.isNotBlank(version.version())) {
+                FXUtils.onChangeAndOperate(getSkinnable().instanceReference, instanceReference -> {
+                    if (StringUtils.isNotBlank(instanceReference.instanceId())) {
                         GridPane.setColumnSpan(nameField, 3);
                     } else {
                         GridPane.setColumnSpan(nameField, 1);
@@ -561,7 +561,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         FXUtils.onClicked(wrapper, () -> {
                             RemoteAddon item = getItem();
                             if (item != null)
-                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getRepositoryVersion(), getSkinnable().callback));
+                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getInstanceReference(), getSkinnable().callback));
                         });
 
                         setPrefWidth(0);

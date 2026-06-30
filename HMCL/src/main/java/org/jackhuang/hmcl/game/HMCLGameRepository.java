@@ -76,12 +76,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// HMCL game repository implementation backed by a GameDirectory and per-instance game settings.
 @NotNullByDefault
 public final class HMCLGameRepository extends DefaultGameRepository {
-    /// Identifies a version by its owning repository and version ID.
+    /// References an optional game instance in a repository.
     ///
     /// @param repository the owning game repository
-    /// @param version the version ID, or `null` when no version is selected
+    /// @param instanceId the game instance ID, or `null` when only repository context is available
     @NotNullByDefault
-    public record RepositoryVersion(HMCLGameRepository repository, @Nullable String version) {
+    public record InstanceReference(HMCLGameRepository repository, @Nullable String instanceId) {
     }
 
     /// Directory under the version root that stores HMCL-managed instance metadata.

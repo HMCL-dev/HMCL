@@ -64,7 +64,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
-    private final ObjectProperty<HMCLGameRepository.RepositoryVersion> version = new SimpleObjectProperty<>();
+    private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private String preferredVersionName = null;
@@ -91,7 +91,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
         addEventHandler(WorkingDirChangedEvent.EVENT_TYPE, event -> {
-            if (this.version.get() != null) {
+            if (this.instanceReference.get() != null) {
                 if (installerListTab.isInitialized())
                     installerListTab.getNode().loadInstance(getRepository(), getVersion());
                 if (modListTab.isInitialized())
@@ -110,9 +110,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
     private void checkSelectedVersion() {
         runInFX(() -> {
-            if (this.version.get() == null) return;
-            HMCLGameRepository repository = this.version.get().repository();
-            if (!repository.hasVersion(this.version.get().version())) {
+            if (this.instanceReference.get() == null) return;
+            HMCLGameRepository repository = this.instanceReference.get().repository();
+            if (!repository.hasVersion(this.instanceReference.get().instanceId())) {
                 if (preferredVersionName != null) {
                     loadVersion(preferredVersionName, repository);
                 } else {
@@ -125,9 +125,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
-            if (version.get() != null) {
+            if (instanceReference.get() != null) {
                 if (node instanceof VersionPage.GameInstanceLoadable) {
-                    ((GameInstanceLoadable) node).loadInstance(version.get().repository(), version.get().version());
+                    ((GameInstanceLoadable) node).loadInstance(instanceReference.get().repository(), instanceReference.get().instanceId());
                 }
             }
             return node;
@@ -139,13 +139,13 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     public void setVersion(String version, HMCLGameRepository repository) {
-        this.version.set(new HMCLGameRepository.RepositoryVersion(repository, version));
+        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, version));
     }
 
     public void loadVersion(String version, HMCLGameRepository repository) {
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
-        if (this.version.get() != null && (!getRepository().isLoaded() ||
+        if (this.instanceReference.get() != null && (!getRepository().isLoaded() ||
                 !getRepository().hasVersion(version))) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
@@ -170,7 +170,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
-        if (this.version.get() == null)
+        if (this.instanceReference.get() == null)
             throw new IllegalStateException();
 
         // If we jumped to game list page and deleted this version
@@ -206,9 +206,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private void clearAssets() {
         Path assetsDir = getRepository().getBaseDirectory().resolve("assets");
 
-        HMCLGameRepository.RepositoryVersion currentVersion = version.get();
-        Path resourcesDir = currentVersion != null
-                ? getRepository().getRunDirectory(currentVersion.version()).resolve("resources")
+        HMCLGameRepository.InstanceReference currentInstanceReference = instanceReference.get();
+        Path resourcesDir = currentInstanceReference != null
+                ? getRepository().getRunDirectory(currentInstanceReference.instanceId()).resolve("resources")
                 : null;
 
         Task.runAsync(Schedulers.io(), () -> {
@@ -257,11 +257,11 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     public HMCLGameRepository getRepository() {
-        return Optional.ofNullable(version.get()).map(HMCLGameRepository.RepositoryVersion::repository).orElse(null);
+        return Optional.ofNullable(instanceReference.get()).map(HMCLGameRepository.InstanceReference::repository).orElse(null);
     }
 
     public String getVersion() {
-        return Optional.ofNullable(version.get()).map(HMCLGameRepository.RepositoryVersion::version).orElse(null);
+        return Optional.ofNullable(instanceReference.get()).map(HMCLGameRepository.InstanceReference::instanceId).orElse(null);
     }
 
     @Override
@@ -345,7 +345,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
             control.state.bind(Bindings.createObjectBinding(() ->
                             State.fromTitle(i18n("version.manage.manage.title", getSkinnable().getVersion()), -1),
-                    getSkinnable().version));
+                    getSkinnable().instanceReference));
 
             //control.transitionPane.getStyleClass().add("gray-background");
             //FXUtils.setOverflowHidden(control.transitionPane, 8);

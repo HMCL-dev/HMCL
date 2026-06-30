@@ -619,7 +619,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                                 ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
                                                 : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
                                         remoteAddon,
-                                        new HMCLGameRepository.RepositoryVersion(page.repository, page.instanceId),
+                                        new HMCLGameRepository.InstanceReference(page.repository, page.instanceId),
                                         org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
                                 ));
                             });
