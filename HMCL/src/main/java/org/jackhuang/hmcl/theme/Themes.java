@@ -29,12 +29,11 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.SetChangeListener;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.scene.SnapshotParameters;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -79,6 +78,9 @@ import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -955,26 +957,43 @@ public final class Themes {
                     new BackgroundSize(800, 480, false, false, true, true)
             ));
         } else {
-            Canvas canvas = new Canvas(800, 480);
-            GraphicsContext gc = canvas.getGraphicsContext2D();
+            int targetWidth = 800;
+            int targetHeight = 480;
 
             double imageWidth = image.getWidth();
             double imageHeight = image.getHeight();
-            double scale = Math.max(800 / imageWidth, 480 / imageHeight); 
-            
-            gc.setGlobalAlpha(opacity);
-            gc.drawImage(image, 0, 0, imageWidth * scale, imageHeight * scale);
 
-            SnapshotParameters params = new SnapshotParameters();
-            params.setFill(Color.TRANSPARENT);
-            WritableImage tempImage = canvas.snapshot(params, null);
+            double scale = Math.max(targetWidth / imageWidth, targetHeight / imageHeight); 
+
+            BufferedImage srcBuffered = SwingFXUtils.fromFXImage(image, null);
+
+            BufferedImage destBuffered = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = destBuffered.createGraphics();
+            
+            AffineTransform at = new AffineTransform();
+            at.scale(scale, scale);
+            g2d.drawImage(srcBuffered, at, null);
+            g2d.dispose();
+
+            WritableImage tempImage = SwingFXUtils.toFXImage(destBuffered, null);
+
+            int[] buffer = new int[targetWidth * targetHeight];
+            tempImage.getPixelReader().getPixels(0, 0, targetWidth, targetHeight, PixelFormat.getIntArgbInstance(), buffer, 0, targetWidth);
+
+            int alphaMultiplier = (int) (opacity * 255);
+            for (int i = 0; i < buffer.length; i++) {
+                int argb = buffer[i];
+                int a = ((argb >>> 24) * alphaMultiplier) / 255;
+                buffer[i] = (a << 24) | (argb & 0x00FFFFFF);
+            }
+
+            tempImage.getPixelWriter().setPixels(0, 0, targetWidth, targetHeight, PixelFormat.getIntArgbInstance(), buffer, 0, targetWidth);
 
             return new Background(new BackgroundImage(
                     tempImage,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
                     BackgroundPosition.DEFAULT,
-                    new BackgroundSize(800, 480, false, false, true, true)
+                    new BackgroundSize(targetWidth, targetHeight, false, false, true, true)
             ));
         }
     }
