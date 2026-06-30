@@ -449,7 +449,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
                 HBox row = new HBox(8);
                 row.setAlignment(Pos.CENTER_LEFT);
-                row.setCursor(Cursor.HAND);
                 row.setPadding(new Insets(10, 16, 10, 16));
 
                 Node themeIcon = page.createIconNode(themePack, theme.icon(), SVG.STYLE);
