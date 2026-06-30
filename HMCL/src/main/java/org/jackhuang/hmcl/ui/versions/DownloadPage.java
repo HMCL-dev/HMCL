@@ -594,10 +594,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                 }
 
                 return Task.allOf(queue).thenSupplyAsync(() ->
-                        dependencies.values().stream().flatMap(nodes ->
+                        dependencies.values().stream().flatMap(types ->
                                 Stream.concat(
-                                        Stream.of(nodes.key()),
-                                        nodes.value().stream().sorted(Comparator.comparing(item -> item.addon.slug())))
+                                        Stream.of(types.key()),
+                                        types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)))
                         ).toList()
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
