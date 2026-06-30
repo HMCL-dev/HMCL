@@ -52,8 +52,8 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -110,7 +110,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             // A mod id may have several files (versions); it counts as enabled while ANY is enabled.
             boolean anyActive = mod.getMod().getFiles().stream().anyMatch(LocalModFile::isActive);
             DownloadPage.setModActive(
-                    new Profile.ProfileVersion(getSkinnable().getProfile(), getSkinnable().getInstanceId()),
+                    new HMCLGameRepository.InstanceReference(getSkinnable().getRepository(), getSkinnable().getInstanceId()),
                     mod.getId(), anyActive);
         }
     };
@@ -607,7 +607,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                     Controllers.navigate(new DownloadPage(
                                             repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteAddon,
-                                            new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
+                                            new HMCLGameRepository.InstanceReference(ModListPageSkin.this.getSkinnable().getRepository(), ModListPageSkin.this.getSkinnable().getInstanceId()),
                                             org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
                                     ));
                                 });

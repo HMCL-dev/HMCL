@@ -26,7 +26,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -39,7 +38,6 @@ import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -57,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -73,27 +70,27 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final ModTranslations translations;
     private final RemoteAddon addon;
     private final ModTranslations.Mod mod;
-    private final Profile.ProfileVersion version;
+    private final HMCLGameRepository.InstanceReference instanceReference;
     private final DownloadCallback callback;
     private final DownloadListPage page;
     private final RemoteAddonRepository.Type type;
 
     private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
 
-    public DownloadPage(DownloadListPage page, RemoteAddon addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
+    public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.InstanceReference instanceReference, @Nullable DownloadCallback callback) {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
         this.type = Objects.requireNonNullElse(addon.repoType(), repository.getType());
         this.translations = ModTranslations.getTranslationsByRepositoryType(this.type);
         this.mod = translations.getModByCurseForgeId(addon.slug());
-        this.version = version;
+        this.instanceReference = instanceReference;
         this.callback = callback;
 
         // Warm up the installed-mods cache for this instance as soon as its download page is opened,
         // so dependency installation status is ready without reading the mods on every page.
-        if (version != null && version.version() != null) {
-            Task.supplyAsync(Schedulers.io(), () -> AddonVersion.getInstalledMods(version)).start();
+        if (instanceReference != null && instanceReference.instanceId() != null) {
+            Task.supplyAsync(Schedulers.io(), () -> AddonVersion.getInstalledMods(instanceReference)).start();
         }
 
         loadAddonVersions();
@@ -141,8 +138,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         return addon;
     }
 
-    public Profile.ProfileVersion getVersion() {
-        return version;
+    public HMCLGameRepository.InstanceReference getInstanceReference() {
+        return instanceReference;
     }
 
     public boolean isLoading() {
@@ -173,7 +170,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         if (this.callback == null) {
             saveAs(file);
         } else {
-            this.callback.download(page.getDownloadProvider(), version.profile(), version.version(), addon, file);
+            this.callback.download(page.getDownloadProvider(), instanceReference.repository(), instanceReference.instanceId(), addon, file);
         }
     }
 
@@ -183,7 +180,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     // Thread-safety: the cached map is only structurally mutated here and in setModActive, both of
     // which are invoked on the JavaFX thread; background code only builds fresh maps / clears the
     // reference under INSTALLED_CACHE_LOCK. Keep these mutators on the FX thread.
-    public static void markModInstalled(Profile.ProfileVersion version, RemoteAddon addon) {
+    public static void markModInstalled(HMCLGameRepository.InstanceReference version, RemoteAddon addon) {
         if (version == null || addon == null)
             return;
         Set<String> ids = new HashSet<>();
@@ -200,7 +197,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     // Called when a mod is enabled/disabled in the instance, to keep the cached installed-mods map
     // in sync so the download page's dependency status reflects it without a re-scan.
-    public static void setModActive(Profile.ProfileVersion version, String modId, boolean active) {
+    public static void setModActive(HMCLGameRepository.InstanceReference version, String modId, boolean active) {
         if (version == null || StringUtils.isBlank(modId))
             return;
         synchronized (AddonVersion.INSTALLED_CACHE_LOCK) {
@@ -323,9 +320,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
 
-                    if (control.version.profile() != null && control.version.version() != null) {
-                        HMCLGameRepository repository = control.version.profile().getRepository();
-                        Version game = repository.getResolvedPreservingPatchesVersion(control.version.version());
+                    if (control.instanceReference.repository() != null && control.instanceReference.instanceId() != null) {
+                        HMCLGameRepository repository = control.instanceReference.repository();
+                        Version game = repository.getResolvedPreservingPatchesVersion(control.instanceReference.instanceId());
                         String gameVersion = repository.getGameVersion(game).orElse(null);
 
                         if (gameVersion != null && control.versions.containsKey(gameVersion)) {
@@ -425,7 +422,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                 Pair.pair(RemoteAddon.DependencyType.BROKEN, "addon.dependency.broken")
         ));
 
-        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, Profile.ProfileVersion version, Map<String, Boolean> installedMods) {
+        public final RemoteAddon addon;
+
+        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.InstanceReference instanceReference, Map<String, Boolean> installedMods) {
+            this.addon = addon;
+
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -445,7 +446,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             };
             setOnAction((e) -> {
                 fireEvent(new DialogCloseEvent());
-                Controllers.navigate(new DownloadPage(page, addon, version, callback));
+                Controllers.navigate(new DownloadPage(page, addon, instanceReference, callback));
             });
             setNode(IDX_LEADING, pane);
 
@@ -636,10 +637,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             Task.composeAsync(() -> {
                 // Which mods are already installed in the current instance (cached per instance),
                 // so required dependencies can show their installation status in real time.
-                Map<String, Boolean> installedMods = getInstalledMods(selfPage.version);
+                Map<String, Boolean> installedMods = getInstalledMods(selfPage.instanceReference);
 
                 // TODO: Massive tasks may cause OOM.
-                EnumMap<RemoteAddon.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
+                EnumMap<RemoteAddon.DependencyType, Pair<Label, List<DependencyAddonItem>>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
                 List<Task<?>> queue = new ArrayList<>(version.dependencies().size());
                 for (RemoteAddon.Dependency dependency : version.dependencies()) {
                     if (dependency.getType() == RemoteAddon.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteAddon.DependencyType.BROKEN) {
@@ -647,11 +648,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     if (!dependencies.containsKey(dependency.getType())) {
-                        List<Node> list = new ArrayList<>();
                         Label title = new Label(i18n(DependencyAddonItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
-                        list.add(title);
-                        dependencies.put(dependency.getType(), list);
+                        List<DependencyAddonItem> list = new ArrayList<>();
+                        dependencies.put(dependency.getType(), Pair.pair(title, list));
                     }
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
@@ -663,14 +663,18 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 // Only required dependencies need the installation-status hint.
                                 Map<String, Boolean> statusSource = dependency.getType() == RemoteAddon.DependencyType.REQUIRED
                                         ? installedMods : null;
-                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.version, statusSource);
-                                dependencies.get(dependency.getType()).add(dependencyAddonItem);
+                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.instanceReference, statusSource);
+                                dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
                 return Task.allOf(queue).thenSupplyAsync(() ->
-                        dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList())
+                        dependencies.values().stream().flatMap(types ->
+                                Stream.concat(
+                                        Stream.of(types.key()),
+                                        types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)))
+                        ).toList()
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 spinnerPane.setLoading(false);
@@ -688,11 +692,11 @@ public class DownloadPage extends Control implements DecoratorPage {
         // when entering an instance's download page (or switching instances) instead of every time
         // a mod's dependency list is shown.
         private static final Object INSTALLED_CACHE_LOCK = new Object();
-        private static Profile.ProfileVersion installedCacheKey;
+        private static HMCLGameRepository.InstanceReference installedCacheKey;
         private static Map<String, Boolean> installedCache;
 
-        private static Map<String, Boolean> getInstalledMods(Profile.ProfileVersion version) {
-            if (version == null || version.version() == null)
+        private static Map<String, Boolean> getInstalledMods(HMCLGameRepository.InstanceReference version) {
+            if (version == null || version.instanceId() == null)
                 return null;
 
             synchronized (INSTALLED_CACHE_LOCK) {
@@ -712,7 +716,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         // Targeted cache update: mark the given mod ids as installed-and-enabled for the instance,
         // so a freshly downloaded mod's dependency status updates without re-reading every mod.
-        static void markInstalled(Profile.ProfileVersion version, Collection<String> modIds) {
+        static void markInstalled(HMCLGameRepository.InstanceReference version, Collection<String> modIds) {
             if (version == null)
                 return;
             synchronized (INSTALLED_CACHE_LOCK) {
@@ -727,11 +731,11 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         // Builds a map of installed mod id (lower-cased) -> whether any of its files is enabled,
         // for the given instance. Returns null when there is no instance to check against.
-        private static Map<String, Boolean> resolveInstalledMods(Profile.ProfileVersion version) {
-            if (version == null || version.version() == null)
+        private static Map<String, Boolean> resolveInstalledMods(HMCLGameRepository.InstanceReference version) {
+            if (version == null || version.instanceId() == null)
                 return null;
             try {
-                ModManager modManager = version.profile().getRepository().getModManager(version.version());
+                ModManager modManager = version.repository().getModManager(version.instanceId());
                 Map<String, Boolean> installed = new HashMap<>();
                 for (LocalModFile file : modManager.getLocalFiles()) {
                     String id = file.getId();
@@ -749,6 +753,6 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     @FunctionalInterface
     public interface DownloadCallback {
-        void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteAddon addon, RemoteAddon.Version file);
+        void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon addon, RemoteAddon.Version file);
     }
 }

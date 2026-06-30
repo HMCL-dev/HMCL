@@ -25,9 +25,9 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -69,11 +69,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
     public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_MOD =
-            (downloadProvider, profile, version, mod, file) -> download(downloadProvider, profile, version, file, "mods", mod);
+            (downloadProvider, repository, version, mod, file) -> download(downloadProvider, repository, version, file, "mods", mod);
     public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_RESOURCE_PACK =
-            (downloadProvider, profile, version, pack, file) -> download(downloadProvider, profile, version, file, "resourcepacks", null);
+            (downloadProvider, repository, version, pack, file) -> download(downloadProvider, repository, version, file, "resourcepacks", null);
     public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_SHADER =
-            (downloadProvider, profile, version, shader, file) -> download(downloadProvider, profile, version, file, "shaderpacks", null);
+            (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks", null);
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
@@ -96,8 +96,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
-            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, profile, __, modpack, file) -> {
-                Versions.downloadModpackImpl(downloadProvider, profile, uploadVersion, modpack, file);
+            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, repository, __, modpack, file) -> {
+                Versions.downloadModpackImpl(downloadProvider, repository, uploadVersion, modpack, file);
             }, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
@@ -112,7 +112,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteAddonRepository.WORLDS)));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 
-        Profiles.registerVersionsListener(this::loadVersions);
+        GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
         tab.select(newGameTab);
 
@@ -134,19 +134,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
-            if (node instanceof VersionPage.VersionLoadable) {
-                ((VersionPage.VersionLoadable) node).loadVersion(Profiles.getSelectedProfile(), null);
+            if (node instanceof VersionPage.GameInstanceLoadable loadable) {
+                loadable.loadInstance(GameDirectoryManager.getSelectedRepository(), null);
             }
             return node;
         };
     }
 
-    public static void download(DownloadProvider downloadProvider, Profile profile, @Nullable String version, RemoteAddon.Version file, String subdirectoryName, @Nullable RemoteAddon mod) {
-        if (version == null) version = Profiles.getSelectedInstance(profile);
+    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon.Version file, String subdirectoryName, @Nullable RemoteAddon mod) {
+        if (version == null) version = repository.getSelectedInstance();
 
         String finalVersion = version;
 
-        Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
+        Path runDirectory = repository.hasVersion(version) ? repository.getRunDirectory(version) : repository.getBaseDirectory();
 
         Set<String> existingFiles;
 
@@ -179,33 +179,33 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     Controllers.showToast(i18n("install.success"));
                     if (mod != null)
                         org.jackhuang.hmcl.ui.versions.DownloadPage.markModInstalled(
-                                new Profile.ProfileVersion(profile, finalVersion), mod);
+                                new HMCLGameRepository.InstanceReference(repository, finalVersion), mod);
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
             handler.resolve();
-        }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("profile.already_exists"), (it) -> !finalExistingFiles.contains(it)));
+        }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), (it) -> !finalExistingFiles.contains(it)));
 
     }
 
-    private void loadVersions(Profile profile) {
+    private void loadVersions(HMCLGameRepository repository) {
         listenerHolder = new WeakListenerHolder();
         runInFX(() -> {
-            if (profile == Profiles.getSelectedProfile()) {
-                listenerHolder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedInstanceProperty(), version -> {
+            if (repository.getGameDirectory() == GameDirectoryManager.getSelectedGameDirectory()) {
+                listenerHolder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), version -> {
                     if (modTab.isInitialized()) {
-                        modTab.getNode().loadVersion(profile, null);
+                        modTab.getNode().loadInstance(repository, null);
                     }
                     if (modpackTab.isInitialized()) {
-                        modpackTab.getNode().loadVersion(profile, null);
+                        modpackTab.getNode().loadInstance(repository, null);
                     }
                     if (resourcePackTab.isInitialized()) {
-                        resourcePackTab.getNode().loadVersion(profile, null);
+                        resourcePackTab.getNode().loadInstance(repository, null);
                     }
                     if (shaderTab.isInitialized()) {
-                        shaderTab.getNode().loadVersion(profile, null);
+                        shaderTab.getNode().loadInstance(repository, null);
                     }
                     if (worldTab.isInitialized()) {
-                        worldTab.getNode().loadVersion(profile, null);
+                        worldTab.getNode().loadInstance(repository, null);
                     }
                 }));
             }
@@ -282,30 +282,31 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         public void onGameSelected() {
-            Profile profile = Profiles.getSelectedProfile();
-            if (profile.getRepository().isLoaded()) {
-                Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(profile, (GameRemoteVersion) settings.get("game")), i18n("install.new_game"));
+            HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+            if (repository.isLoaded()) {
+                Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(repository, (GameRemoteVersion) settings.get("game")), i18n("install.new_game"));
             }
         }
 
     }
 
     private static class VanillaInstallWizardProvider implements WizardProvider {
-        private final Profile profile;
+        private final HMCLGameRepository repository;
         private final DefaultDependencyManager dependencyManager;
         private final DownloadProvider downloadProvider;
         private final GameRemoteVersion gameVersion;
 
-        public VanillaInstallWizardProvider(Profile profile, GameRemoteVersion gameVersion) {
-            this.profile = profile;
+        public VanillaInstallWizardProvider(HMCLGameRepository repository, GameRemoteVersion gameVersion) {
+            this.repository = repository;
             this.gameVersion = gameVersion;
             this.downloadProvider = DownloadProviders.getDownloadProvider();
-            this.dependencyManager = profile.getDependency(downloadProvider);
+            this.dependencyManager = repository.getDependency(downloadProvider);
         }
 
         @Override
         public void start(SettingsMap settings) {
-            settings.put(ModpackPage.PROFILE, profile);
+            settings.put(ModpackPage.GAME_DIRECTORY, repository.getGameDirectory());
+            settings.put(ModpackPage.REPOSITORY, repository);
             settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion);
         }
 
@@ -323,9 +324,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             });
 
             return builder.buildAsync().whenComplete(any -> {
-                profile.getRepository().refreshVersions();
-                profile.getRepository().applyDefaultIsolationSetting(name);
-            }).thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
+                repository.refreshVersions();
+                repository.applyDefaultIsolationSetting(name);
+            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
         }
 
         @Override
@@ -341,7 +342,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public Node createPage(WizardController controller, int step, SettingsMap settings) {
             switch (step) {
                 case 0:
-                    return new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
+                    return new InstallersPage(controller, repository, ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
                 default:
                     throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
             }

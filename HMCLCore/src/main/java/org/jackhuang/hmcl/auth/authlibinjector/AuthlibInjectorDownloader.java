@@ -91,7 +91,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         AuthlibInjectorVersionInfo latest = getLatestArtifactInfo();
 
         Optional<AuthlibInjectorArtifactInfo> local = getLocalArtifact();
-        if (local.isPresent() && local.get().getBuildNumber() >= latest.buildNumber) {
+        if (local.isPresent() && local.get().buildNumber() >= latest.buildNumber) {
             return;
         }
 
