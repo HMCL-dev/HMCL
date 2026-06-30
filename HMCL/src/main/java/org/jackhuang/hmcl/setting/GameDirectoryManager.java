@@ -349,6 +349,7 @@ public final class GameDirectoryManager {
         for (int i = 0; i < entries.size(); i++) {
             if (entries.get(i).getId().equals(id)) {
                 repositories.remove(entries.get(i));
+                settings().setSelectedInstance(id, null);
                 entries.set(i, gameDirectory);
                 rebuildGameDirectories();
                 return;

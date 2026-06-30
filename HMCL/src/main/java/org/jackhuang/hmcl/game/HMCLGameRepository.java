@@ -141,14 +141,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Refreshes the selected instance ID after versions are loaded.
     public void refreshSelectedInstance() {
-        @Nullable String version = settings().getSelectedInstance(gameDirectory.getId());
-        if (!hasVersion(version)) {
-            version = getVersions().stream()
+        @Nullable String selectedInstance = settings().getSelectedInstance(gameDirectory.getId());
+        @Nullable String refreshedInstance = selectedInstance;
+        if (!hasVersion(refreshedInstance)) {
+            refreshedInstance = getVersions().stream()
                     .findFirst()
                     .map(Version::getId)
                     .orElse(null);
         }
-        setSelectedInstance(version);
+        if (!Objects.equals(selectedInstance, refreshedInstance)) {
+            setSelectedInstance(refreshedInstance);
+        }
     }
 
     /// Returns a dependency manager using the currently selected download provider.
