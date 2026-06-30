@@ -89,10 +89,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final ObjectProperty<State> state = new SimpleObjectProperty<>(this, "state", new State("", null, false, false, false));
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
-    /// The selected profile.
-    private @Nullable GameDirectory profile;
+    /// The selected game directory.
+    private @Nullable GameDirectory gameDirectory;
 
-    /// The selected repository for instance settings, or `null` for preset settings.
+    /// The selected repository.
     private @Nullable HMCLGameRepository repository;
 
     /// The current instance ID.
@@ -846,7 +846,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
     }
 
-    /// Refreshes parent preset display text because the implicit parent depends on the current profile.
+    /// Refreshes parent preset display text because the implicit parent depends on the current game directory.
     private void refreshInstanceParentSettingConverter(LineSelectButton<GameSettings.@Nullable Preset> button) {
         button.setConverter(setting -> setting != null
                 ? PresetManagementPane.getPresetDisplayName(setting)
@@ -855,19 +855,19 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Returns the label for the implicit parent preset selected by a null instance parent.
     private String getImplicitParentGameSettingsDisplayName() {
-        GameSettings.Preset legacyParent = getProfileLegacyGameSettings();
+        GameSettings.Preset legacyParent = getGameDirectoryLegacyGameSettings();
         return legacyParent != null
                 ? PresetManagementPane.getPresetDisplayName(legacyParent)
                 : i18n("settings.type.global.preset.default");
     }
 
-    /// Returns the migrated profile-level parent preset, or null when this profile uses the default preset.
-    private @Nullable GameSettings.Preset getProfileLegacyGameSettings() {
-        if (profile == null || profile.getLegacyGameSettings() == null) {
+    /// Returns the migrated game-directory-level parent preset, or `null` when this game directory uses the default preset.
+    private @Nullable GameSettings.Preset getGameDirectoryLegacyGameSettings() {
+        if (gameDirectory == null || gameDirectory.getLegacyGameSettings() == null) {
             return null;
         }
 
-        return SettingsManager.getGameSettings(profile.getLegacyGameSettings());
+        return SettingsManager.getGameSettings(gameDirectory.getLegacyGameSettings());
     }
 
     /// Adds the title-line inheritance button for the Java selection sublist.
@@ -2387,7 +2387,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         return getEffectiveParentGameSettings(instance);
     }
 
-    /// Returns the runtime parent preset for an instance, including profile-level legacy migration fallback.
+    /// Returns the runtime parent preset for an instance, including the game directory's migrated preset fallback.
     private GameSettings.Preset getEffectiveParentGameSettings(GameSettings.Instance instance) {
         if (repository != null) {
             return repository.getParentGameSettings(instance);
@@ -2431,26 +2431,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     @SuppressWarnings("unchecked")
     @Override
     public void loadVersion(HMCLGameRepository repository, @Nullable String instanceId) {
-        loadVersion(repository.getGameDirectory(), repository, instanceId);
-    }
-
-    @SuppressWarnings("unchecked")
-    public void loadVersion(GameDirectory profile, @Nullable String instanceId) {
-        loadVersion(profile, null, instanceId);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void loadVersion(GameDirectory profile, @Nullable HMCLGameRepository repository, @Nullable String instanceId) {
-        this.profile = profile;
+        this.gameDirectory = repository.getGameDirectory();
         this.repository = repository;
         this.instanceId = instanceId;
 
         assert isPresetSetting == (instanceId == null);
 
         if (instanceId != null) {
-            if (repository == null) {
-                throw new IllegalArgumentException("Repository is required for instance settings");
-            }
             @Nullable GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(instanceId);
             this.currentSetting.set((S) setting);
             setSettingsReadOnly(
@@ -2592,7 +2579,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private void initJavaSubtitle() {
         S setting = currentSetting.get();
 
-        if (setting == null || profile == null)
+        if (setting == null || gameDirectory == null)
             return;
         initializeSelectedJava();
 

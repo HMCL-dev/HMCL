@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.ui.main;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -59,7 +59,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         tab = new TabHeader(transitionPane, gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
 
         tab.select(gameTab);
-        addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadVersion(GameDirectoryManager.getSelectedGameDirectory(), null));
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadVersion(GameDirectoryManager.getSelectedRepository(), null));
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
@@ -88,8 +88,8 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         tab.onPageHidden();
     }
 
-    public void showGameSettings(GameDirectory profile) {
-        gameTab.getNode().loadVersion(profile, null);
+    public void showGameSettings(HMCLGameRepository repository) {
+        gameTab.getNode().loadVersion(repository, null);
         tab.select(gameTab, false);
     }
 

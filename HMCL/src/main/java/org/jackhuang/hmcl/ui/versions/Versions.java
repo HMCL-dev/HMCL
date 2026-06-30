@@ -367,8 +367,8 @@ public final class Versions {
         }
     }
 
-    public static void modifyGlobalSettings(GameDirectory profile) {
-        Controllers.getSettingsPage().showGameSettings(profile);
+    public static void modifyGlobalSettings(HMCLGameRepository repository) {
+        Controllers.getSettingsPage().showGameSettings(repository);
         Controllers.navigate(Controllers.getSettingsPage());
     }
 

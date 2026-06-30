@@ -123,7 +123,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
 
             GameDirectoryManager.registerVersionsListener(repository -> {
-                GameDirectory profile = repository.getGameDirectory();
+                GameDirectory gameDirectory = repository.getGameDirectory();
                 List<Version> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
@@ -131,7 +131,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                 .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {
-                    if (profile == GameDirectoryManager.getSelectedGameDirectory())
+                    if (gameDirectory == GameDirectoryManager.getSelectedGameDirectory())
                         mainPage.initVersions(repository, children);
                 });
             });
@@ -194,7 +194,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> {
-                Controllers.getSettingsPage().showGameSettings(GameDirectoryManager.getSelectedGameDirectory());
+                Controllers.getSettingsPage().showGameSettings(GameDirectoryManager.getSelectedRepository());
                 Controllers.navigate(Controllers.getSettingsPage());
             });
             if (AnimationUtils.isAnimationEnabled()) {

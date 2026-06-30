@@ -474,19 +474,9 @@ public final class GameDirectoryManager {
         return getSelectedRepository().getSelectedInstance();
     }
 
-    /// Returns the selected instance ID for the repository of the given game directory.
-    public static @Nullable String getSelectedInstance(GameDirectory gameDirectory) {
-        return getOrCreateRepository(gameDirectory).getSelectedInstance();
-    }
-
     /// Sets the selected instance ID for the selected repository.
     public static void setSelectedInstance(@Nullable String instance) {
         getSelectedRepository().setSelectedInstance(instance);
-    }
-
-    /// Sets the selected instance ID for the repository of the given game directory.
-    public static void setSelectedInstance(GameDirectory gameDirectory, @Nullable String instance) {
-        getOrCreateRepository(gameDirectory).setSelectedInstance(instance);
     }
 
     /// Listeners notified after the selected repository has loaded versions.

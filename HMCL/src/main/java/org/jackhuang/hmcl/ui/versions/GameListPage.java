@@ -41,7 +41,6 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -76,8 +75,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     private final ObservableList<ProfileListItem> profileListItems;
 
     public GameListPage() {
-        profileListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), profile -> {
-            ProfileListItem item = new ProfileListItem(profile);
+        profileListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
+            ProfileListItem item = new ProfileListItem(gameDirectory);
             FXUtils.setLimitWidth(item, 200);
             return item;
         });
@@ -124,7 +123,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public void modifyGlobalGameSettings() {
-        Versions.modifyGlobalSettings(GameDirectoryManager.getSelectedGameDirectory());
+        Versions.modifyGlobalSettings(GameDirectoryManager.getSelectedRepository());
     }
 
     @Override
