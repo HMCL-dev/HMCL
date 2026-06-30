@@ -574,21 +574,4 @@ public final class FileUtils {
         return permissions;
     }
 
-    /// @param fileName must be "rel_path_to_dir/" for directories or "rel_path_to_file" for files, regardless of the operating system
-    public static boolean match(List<String> l, String fileName, boolean isDirectory) {
-        for (String s : l)
-            if (isDirectory) {
-                if (fileName.startsWith(s + '/'))
-                    return true;
-            } else {
-                if (s.startsWith("regex:")) {
-                    if (fileName.matches(s.substring("regex:".length())))
-                        return true;
-                } else {
-                    if (fileName.equals(s))
-                        return true;
-                }
-            }
-        return false;
-    }
 }

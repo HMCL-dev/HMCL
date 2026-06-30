@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.modpack;
 
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.util.List;
 
@@ -77,11 +76,29 @@ public interface ModAdviser {
             "mods/VoxelMods");
 
     static ModAdviser.ModSuggestion suggestMod(String fileName, boolean isDirectory) {
-        if (FileUtils.match(MODPACK_BLACK_LIST, fileName, isDirectory))
+        if (match(MODPACK_BLACK_LIST, fileName, isDirectory))
             return ModAdviser.ModSuggestion.HIDDEN;
-        if (FileUtils.match(MODPACK_SUGGESTED_BLACK_LIST, fileName, isDirectory))
+        if (match(MODPACK_SUGGESTED_BLACK_LIST, fileName, isDirectory))
             return ModAdviser.ModSuggestion.NORMAL;
         else
             return ModAdviser.ModSuggestion.SUGGESTED;
+    }
+
+    /// @param fileName must be "rel_path_to_dir/" for directories or "rel_path_to_file" for files, regardless of the operating system
+    static boolean match(List<String> l, String fileName, boolean isDirectory) {
+        for (String s : l)
+            if (isDirectory) {
+                if (fileName.startsWith(s + '/'))
+                    return true;
+            } else {
+                if (s.startsWith("regex:")) {
+                    if (fileName.matches(s.substring("regex:".length())))
+                        return true;
+                } else {
+                    if (fileName.equals(s))
+                        return true;
+                }
+            }
+        return false;
     }
 }
