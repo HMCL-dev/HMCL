@@ -61,7 +61,6 @@ public class DownloadSettingsPage extends StackPane {
 
         {
             var downloadSource = new ComponentList();
-            downloadSource.getStyleClass().add("card-non-transparent");
             {
                 Function<DownloadSource, String> converter = source -> switch (source) {
                         case DEFAULT -> i18n("settings.launcher.download_source.auto");
