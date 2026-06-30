@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -122,6 +123,37 @@ public final class ModpackHelper {
         }
 
         throw new UnsupportedModpackException(file.toString());
+    }
+
+    /// Detects whether [file] is an HMCL launcher wrapper ZIP that embeds
+    /// the actual modpack as [modpack.zip] or [modpack.mrpack].
+    /// Returns a [Pair] of the inner entry [Path] and the wrapper
+    /// [FileSystem], or [null] if this is not a wrapper.
+    /// The caller must close the wrapper filesystem when done.
+    @Nullable
+    public static Pair<Path, FileSystem> unwrapIfLauncherWrapper(Path file, Charset charset) {
+        FileSystem outerFs = null;
+        try {
+            outerFs = CompressingUtils.createReadOnlyZipFileSystem(file, charset);
+            for (String innerName : new String[]{"modpack.zip", "modpack.mrpack"}) {
+                Path entryPath = outerFs.getPath("/" + innerName);
+                if (Files.isRegularFile(entryPath)) {
+                    FileSystem fs = outerFs;
+                    outerFs = null;
+                    return pair(entryPath, fs);
+                }
+            }
+        } catch (IOException ignored) {
+        } finally {
+            if (outerFs != null) {
+                try {
+                    outerFs.close();
+                } catch (IOException ignored) {
+                    // Ignore close errors for wrapper filesystem
+                }
+            }
+        }
+        return null;
     }
 
     public static Path findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, FileSystem fs) throws IOException, UnsupportedModpackException {
