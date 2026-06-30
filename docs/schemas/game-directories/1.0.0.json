@@ -18,12 +18,12 @@
     "directories": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/profile"
+        "$ref": "#/$defs/gameDirectory"
       }
     }
   },
   "$defs": {
-    "profile": {
+    "gameDirectory": {
       "type": "object",
       "additionalProperties": true,
       "required": [
