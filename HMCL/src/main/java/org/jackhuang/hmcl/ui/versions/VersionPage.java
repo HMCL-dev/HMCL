@@ -189,7 +189,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void onBrowseSchematics() {
-        FXUtils.openFolder(getProfile().getRepository().getSchematicsDirectory(getVersion()));
+        FXUtils.openFolder(getRepository().getSchematicsDirectory(getVersion()));
     }
 
     private void redownloadAssetIndex() {

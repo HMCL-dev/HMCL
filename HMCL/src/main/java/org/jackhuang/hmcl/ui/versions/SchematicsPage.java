@@ -49,7 +49,6 @@ import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.schematic.Schematic;
 import org.jackhuang.hmcl.schematic.SchematicType;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -96,7 +95,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         };
     }
 
-    private Profile profile;
+    private HMCLGameRepository repository;
     private String instanceId;
     private Path schematicsDirectory;
 
@@ -134,6 +133,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     @Override
     public void loadInstance(HMCLGameRepository repository, String instanceId) {
+        this.repository = repository;
+        this.instanceId = instanceId;
         this.schematicsDirectory = repository.getSchematicsDirectory(instanceId);
 
         refresh();
@@ -160,7 +161,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             Controllers.navigate(new DownloadPage(
                     modDownloads,
                     downloadTarget.get(),
-                    modDownloads.getProfileVersion(),
+                    modDownloads.getInstanceReference(),
                     modDownloads.getCallback())
             );
         }
@@ -205,7 +206,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         var oldRes = fetchResult.get();
         Task.supplyAsync(Schedulers.io(), () -> {
-            var modManager = profile.getRepository().getModManager(instanceId);
+            var modManager = repository.getModManager(instanceId);
             modManager.analyze();
             var analyzer = modManager.getLibraryAnalyzer();
             if (analyzer == null) return LitematicaFetchResult.EMPTY;
