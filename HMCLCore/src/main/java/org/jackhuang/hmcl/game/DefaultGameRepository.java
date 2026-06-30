@@ -68,24 +68,24 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public boolean hasVersion(String id) {
-        return id != null && versions.containsKey(id);
+        return id != null && versions != null && versions.containsKey(id);
     }
 
     @Override
     public Version getVersion(String id) {
         if (!hasVersion(id))
-            throw new VersionNotFoundException("Version '" + id + "' does not exist in " + versions.keySet() + ".");
+            throw new VersionNotFoundException("Version '" + id + "' does not exist in " + (versions == null ? "[]" : versions.keySet()) + ".");
         return versions.get(id);
     }
 
     @Override
     public int getVersionCount() {
-        return versions.size();
+        return versions == null ? 0 : versions.size();
     }
 
     @Override
     public Collection<Version> getVersions() {
-        return versions.values();
+        return versions == null ? Collections.emptySet() : versions.values();
     }
 
     @Override
