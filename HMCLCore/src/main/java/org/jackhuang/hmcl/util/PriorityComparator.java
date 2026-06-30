@@ -34,6 +34,7 @@ public final class PriorityComparator<T> implements Comparator<T> {
     /// Creates a new `PriorityComparator` with a priority map and a fallback comparator.
     /// Elements with a defined priority are ordered before those without.
     public static <T extends Comparable<T>> PriorityComparator<T> of(List<T> values) {
+        Objects.requireNonNull(values);
         return of(values, Comparator.naturalOrder(), true);
     }
 
