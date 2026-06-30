@@ -39,9 +39,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -52,8 +52,8 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
-import org.jackhuang.hmcl.ui.profile.ProfileListItem;
-import org.jackhuang.hmcl.ui.profile.ProfilePage;
+import org.jackhuang.hmcl.ui.directory.GameDirectoryListItem;
+import org.jackhuang.hmcl.ui.directory.GameDirectoryPage;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -71,12 +71,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("version.manage")));
+    /// Navigation drawer items for configured game directories.
     @SuppressWarnings("FieldCanBeLocal")
-    private final ObservableList<ProfileListItem> profileListItems;
+    private final ObservableList<GameDirectoryListItem> gameDirectoryListItems;
 
     public GameListPage() {
-        profileListItems = MappedObservableList.create(Profiles.getProfiles(), profile -> {
-            ProfileListItem item = new ProfileListItem(profile);
+        gameDirectoryListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
+            GameDirectoryListItem item = new GameDirectoryListItem(gameDirectory);
             FXUtils.setLimitWidth(item, 200);
             return item;
         });
@@ -85,19 +86,19 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             ScrollPane pane = new ScrollPane();
             VBox.setVgrow(pane, Priority.ALWAYS);
             {
-                AdvancedListItem addProfileItem = new AdvancedListItem();
-                addProfileItem.getStyleClass().add("navigation-drawer-item");
-                addProfileItem.setTitle(i18n("profile.new"));
-                addProfileItem.setLeftIcon(SVG.ADD_CIRCLE);
-                addProfileItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
+                AdvancedListItem addGameDirectoryItem = new AdvancedListItem();
+                addGameDirectoryItem.getStyleClass().add("navigation-drawer-item");
+                addGameDirectoryItem.setTitle(i18n("game_directory.new"));
+                addGameDirectoryItem.setLeftIcon(SVG.ADD_CIRCLE);
+                addGameDirectoryItem.setOnAction(e -> Controllers.navigate(new GameDirectoryPage(null)));
 
                 pane.setFitToWidth(true);
                 VBox wrapper = new VBox();
                 wrapper.getStyleClass().add("advanced-list-box-content");
                 VBox box = new VBox();
                 box.setFillWidth(true);
-                Bindings.bindContent(box.getChildren(), profileListItems);
-                wrapper.getChildren().setAll(box, addProfileItem);
+                Bindings.bindContent(box.getChildren(), gameDirectoryListItems);
+                wrapper.getChildren().setAll(box, addGameDirectoryItem);
                 pane.setContent(wrapper);
             }
 
@@ -115,15 +116,15 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             Path file = files.get(0);
 
             if (ModpackHelper.isFileModpackByExtension(file)) {
-                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file), i18n("install.modpack"));
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(GameDirectoryManager.getSelectedRepository(), file), i18n("install.modpack"));
             } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
-                Versions.installFromJson(Profiles.getSelectedProfile(), file);
+                Versions.installFromJson(GameDirectoryManager.getSelectedRepository(), file);
             }
         });
     }
 
     public void modifyGlobalGameSettings() {
-        Versions.modifyGlobalSettings(Profiles.getSelectedProfile());
+        Versions.modifyGlobalSettings(GameDirectoryManager.getSelectedRepository());
     }
 
     @Override
@@ -140,18 +141,18 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         public GameList() {
             setItems(filteredList);
 
-            Profiles.registerVersionsListener(this::loadVersions);
+            GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
             setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
         }
 
         @FXThread
-        private void loadVersions(Profile profile) {
+        private void loadVersions(HMCLGameRepository repository) {
             listenerHolder.clear();
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> versionItems = profile.getRepository().getDisplayVersions().map(instance -> new GameListItem(profile, instance.getId())).toList();
+            List<GameListItem> versionItems = repository.getDisplayVersions().map(instance -> new GameListItem(repository, instance.getId())).toList();
 
             sourceList.setAll(versionItems);
 
@@ -181,7 +182,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         public void refreshList() {
-            Profiles.getSelectedProfile().getRepository().refreshVersionsAsync().start();
+            GameDirectoryManager.getSelectedRepository().refreshVersionsAsync().start();
         }
 
         @Override
