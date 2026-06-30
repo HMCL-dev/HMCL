@@ -257,7 +257,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             AnchorPane.setTopAnchor(buttonsContainer, 0.0);
             AnchorPane.setRightAnchor(buttonsContainer, 0.0);
             buttonsContainerPlaceHolder.widthProperty().bind(buttonsContainer.widthProperty());
-            parent.getChildren().add(layer);
+            wrapper.getChildren().add(layer);
         }
 
         getChildren().add(root);
