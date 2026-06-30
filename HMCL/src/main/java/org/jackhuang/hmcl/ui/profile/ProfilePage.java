@@ -21,8 +21,12 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.RequiredFieldValidator;
 import com.jfoenix.validation.base.ValidatorBase;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
@@ -187,51 +191,57 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
     }
 
     private void onSave() {
-        if (profile != null) {
-            LocalizedText name = LocalizedText.plain(txtProfileName.getText());
-            PortablePath path = StringUtils.isNotBlank(getLocation()) ? createPortableLocation() : profile.getPath();
-            if (!Profiles.canUpdateProfile(profile, path)) {
-                Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                    Profiles.forceOverwriteProfileFiles(profile, path);
-                    Profiles.updateProfile(profile, name, path);
-                    fireEvent(new PageCloseEvent());
-                });
-                return;
-            }
+        if (Objects.equals(Path.of(getLocation()).getRoot(), Path.of(getLocation()))) {
+            Platform.runLater(() -> Controllers.confirm(i18n("profile.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING,
+                    () -> {
+                        if (profile != null) {
+                            LocalizedText name = LocalizedText.plain(txtProfileName.getText());
+                            PortablePath path = StringUtils.isNotBlank(getLocation()) ? createPortableLocation() : profile.getPath();
+                            if (!Profiles.canUpdateProfile(profile, path)) {
+                                Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                                    Profiles.forceOverwriteProfileFiles(profile, path);
+                                    Profiles.updateProfile(profile, name, path);
+                                    fireEvent(new PageCloseEvent());
+                                });
+                                return;
+                            }
 
-            Profiles.updateProfile(profile, name, path);
-        } else {
-            if (StringUtils.isBlank(getLocation())) {
-                gameDir.fire();
-            }
-            Profile newProfile = new Profile(
-                    Profiles.newProfileId(),
-                    LocalizedText.plain(txtProfileName.getText()),
-                    createPortableLocation());
-            if (newProfile.getPath().isAbsolute()) {
-                if (SettingsManager.isUserGameDirectoriesReadOnly()) {
-                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                        SettingsManager.forceOverwriteUserGameDirectories();
-                        Profiles.addUserProfile(newProfile);
+                            Profiles.updateProfile(profile, name, path);
+                        } else {
+                            if (StringUtils.isBlank(getLocation())) {
+                                gameDir.fire();
+                            }
+                            Profile newProfile = new Profile(
+                                    Profiles.newProfileId(),
+                                    LocalizedText.plain(txtProfileName.getText()),
+                                    createPortableLocation());
+                            if (newProfile.getPath().isAbsolute()) {
+                                if (SettingsManager.isUserGameDirectoriesReadOnly()) {
+                                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                                        SettingsManager.forceOverwriteUserGameDirectories();
+                                        Profiles.addUserProfile(newProfile);
+                                        fireEvent(new PageCloseEvent());
+                                    });
+                                    return;
+                                }
+                                Profiles.addUserProfile(newProfile);
+                            } else {
+                                if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
+                                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                                        SettingsManager.forceOverwriteLocalGameDirectories();
+                                        Profiles.addLocalProfile(newProfile);
+                                        fireEvent(new PageCloseEvent());
+                                    });
+                                    return;
+                                }
+                                Profiles.addLocalProfile(newProfile);
+                            }
+                        }
+
                         fireEvent(new PageCloseEvent());
-                    });
-                    return;
-                }
-                Profiles.addUserProfile(newProfile);
-            } else {
-                if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
-                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                        SettingsManager.forceOverwriteLocalGameDirectories();
-                        Profiles.addLocalProfile(newProfile);
-                        fireEvent(new PageCloseEvent());
-                    });
-                    return;
-                }
-                Profiles.addLocalProfile(newProfile);
-            }
+                    }, null));
+
         }
-
-        fireEvent(new PageCloseEvent());
     }
 
     /// Creates the portable path for the current location according to the relative-path toggle.
