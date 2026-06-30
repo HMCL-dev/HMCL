@@ -5199,6 +5199,83 @@
         }
       }
     },
+    "org.lwjgl:lwjgl:3.3.1:natives-macos": {
+      "name": "org.lwjgl:lwjgl:3.3.1:natives-macos-arm64",
+      "downloads": {
+        "artifact": {
+        "path": "org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1-natives-macos-arm64.jar",
+        "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1-natives-macos-arm64.jar",
+        "sha1": "71d0d5e469c9c95351eb949064497e3391616ac9",
+        "size": 42693
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.3.1:natives-macos": {
+      "name": "org.lwjgl:lwjgl-jemalloc:3.3.1:natives-macos-arm64",
+      "downloads": {
+        "artifact": {
+        "path": "org/lwjgl/lwjgl-jemalloc/3.3.1/lwjgl-jemalloc-3.3.1-natives-macos-arm64.jar",
+        "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-jemalloc/3.3.1/lwjgl-jemalloc-3.3.1-natives-macos-arm64.jar",
+        "sha1": "e577b87d8ad2ade361aaea2fcf226c660b15dee8",
+        "size": 103475
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-openal:3.3.1:natives-macos": {
+      "name": "org.lwjgl:lwjgl-openal:3.3.1:natives-macos-arm64",
+      "downloads": {
+        "artifact": {
+        "path": "org/lwjgl/lwjgl-openal/3.3.1/lwjgl-openal-3.3.1-natives-macos-arm64.jar",
+        "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-openal/3.3.1/lwjgl-openal-3.3.1-natives-macos-arm64.jar",
+        "sha1": "23d55e7490b57495320f6c9e1936d78fd72c4ef8",
+        "size": 346125
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-opengl:3.3.1:natives-macos": {
+      "name": "org.lwjgl:lwjgl-opengl:3.3.1:natives-macos-arm64",
+      "downloads": {
+        "artifact": {
+        "path": "org/lwjgl/lwjgl-opengl/3.3.1/lwjgl-opengl-3.3.1-natives-macos-arm64.jar",
+        "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-opengl/3.3.1/lwjgl-opengl-3.3.1-natives-macos-arm64.jar",
+        "sha1": "eafe34b871d966292e8db0f1f3d6b8b110d4e91d",
+        "size": 41665
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-glfw:3.3.1:natives-macos": {
+      "name": "org.lwjgl:lwjgl-glfw:3.3.1:natives-macos-arm64",
+      "downloads": {
+        "artifact": {
+        "path": "org/lwjgl/lwjgl-glfw/3.3.1/lwjgl-glfw-3.3.1-natives-macos-arm64.jar",
+        "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-glfw/3.3.1/lwjgl-glfw-3.3.1-natives-macos-arm64.jar",
+        "sha1": "cac0d3f712a3da7641fa174735a5f315de7ffe0a",
+        "size": 129077
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-stb:3.3.1:natives-macos": {
+      "name": "org.lwjgl:lwjgl-stb:3.3.1:natives-macos-arm64",
+      "downloads": {
+        "artifact": {
+        "path": "org/lwjgl/lwjgl-stb/3.3.1/lwjgl-stb-3.3.1-natives-macos-arm64.jar",
+        "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-stb/3.3.1/lwjgl-stb-3.3.1-natives-macos-arm64.jar",
+        "sha1": "fcf073ed911752abdca5f0b00a53cfdf17ff8e8b",
+        "size": 178408
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-tinyfd:3.3.1:natives-macos": {
+      "name": "org.lwjgl:lwjgl-tinyfd:3.3.1:natives-macos-arm64",
+      "downloads": {
+        "artifact": {
+        "path": "org/lwjgl/lwjgl-tinyfd/3.3.1/lwjgl-tinyfd-3.3.1-natives-macos-arm64.jar",
+        "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl-tinyfd/3.3.1/lwjgl-tinyfd-3.3.1-natives-macos-arm64.jar",
+        "sha1": "972ecc17bad3571e81162153077b4d47b7b9eaa9",
+        "size": 41380
+        }
+      }
+    },
     "ca.weblite:java-objc-bridge:1.0.0": {
       "name": "org.glavo.hmcl.mmachina:java-objc-bridge:1.1.0-mmachina.1",
       "downloads": {
