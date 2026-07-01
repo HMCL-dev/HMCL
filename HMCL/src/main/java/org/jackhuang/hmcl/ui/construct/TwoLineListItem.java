@@ -23,10 +23,13 @@ import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 
@@ -46,9 +49,41 @@ public class TwoLineListItem extends VBox {
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
 
-        this.firstLine = new HBox(lblTitle);
+        // Custom layout for the title row: when there isn't enough room, the tags shrink (and clip)
+        // first; only once they are gone does the title itself start to ellipsize. The preferred
+        // width stays the natural title+tags width (no width bindings), so this works in any parent
+        // without circular layout dependencies.
+        this.firstLine = new HBox(lblTitle) {
+            @Override
+            protected void layoutChildren() {
+                var managed = getManagedChildren();
+                if (managed.size() != 2) {
+                    super.layoutChildren();
+                    return;
+                }
+
+                Insets insets = getInsets();
+                double x = insets.getLeft();
+                double y = insets.getTop();
+                double availableWidth = Math.max(0, getWidth() - x - insets.getRight());
+                double availableHeight = Math.max(0, getHeight() - y - insets.getBottom());
+
+                Node title = managed.get(0);
+                Node tagsNode = managed.get(1);
+                double spacing = getSpacing();
+
+                double titleWidth = Math.min(title.prefWidth(availableHeight), availableWidth);
+                double tagsWidth = Math.min(tagsNode.prefWidth(availableHeight),
+                        Math.max(0, availableWidth - titleWidth - spacing));
+
+                layoutInArea(title, x, y, titleWidth, availableHeight, 0, HPos.LEFT, VPos.CENTER);
+                layoutInArea(tagsNode, x + titleWidth + spacing, y, tagsWidth, availableHeight, 0, HPos.LEFT, VPos.CENTER);
+            }
+        };
         firstLine.getStyleClass().add("first-line");
         firstLine.setAlignment(Pos.CENTER_LEFT);
+        // Safety net: never let the row's content render past its own right edge.
+        FXUtils.setOverflowHidden(firstLine);
 
         this.getChildren().setAll(firstLine);
     }
@@ -168,15 +203,13 @@ public class TwoLineListItem extends VBox {
             tagsBox.getStyleClass().add("tags");
             tagsBox.setAlignment(Pos.CENTER_LEFT);
             tagsBox.setMinWidth(0);
-            HBox.setHgrow(tagsBox, Priority.ALWAYS);
             Bindings.bindContent(tagsBox.getChildren(), tags);
             var isNotEmpty = Bindings.isNotEmpty(tags);
             tagsBox.managedProperty().bind(isNotEmpty);
             tagsBox.visibleProperty().bind(isNotEmpty);
-
             FXUtils.setOverflowHidden(tagsBox);
 
-            lblTitle.setMinWidth(Label.USE_PREF_SIZE);
+            // The title/tags shrink priority is handled by firstLine's custom layout (see constructor).
             firstLine.getChildren().setAll(lblTitle, tagsBox);
         }
         return tags;

@@ -18,11 +18,17 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -30,11 +36,15 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.*;
@@ -50,7 +60,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.FXThread;
@@ -89,6 +101,19 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
     private final JFXListView<ModInfoObject> listView;
     private final JFXTextField searchField;
+
+    // Keeps the download page's cached installed-mods map in sync when a mod is enabled/disabled,
+    // so dependency installation status there stays correct without a re-scan. Fires on the FX
+    // thread (active changes come from user toggles), matching DownloadPage's cache-mutation contract.
+    private final InvalidationListener activeChangeListener = observable -> {
+        if (observable instanceof BooleanProperty property && property.getBean() instanceof LocalModFile mod) {
+            // A mod id may have several files (versions); it counts as enabled while ANY is enabled.
+            boolean anyActive = mod.getMod().getFiles().stream().anyMatch(LocalModFile::isActive);
+            DownloadPage.setModActive(
+                    new HMCLGameRepository.InstanceReference(getSkinnable().getRepository(), getSkinnable().getInstanceId()),
+                    mod.getId(), anyActive);
+        }
+    };
 
     @FXThread
     private boolean isSearching = false;
@@ -169,14 +194,54 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             toolbarSelecting.getChildren().setAll(
                     createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                            skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                        }, null);
+                        var selected = listView.getSelectionModel().getSelectedItems();
+                        List<LocalModFile> targets = new ArrayList<>();
+                        for (ModInfoObject item : selected)
+                            if (item != null) targets.add(item.getModInfo());
+                        List<ModInfoObject> dependents = findActiveDependents(targets);
+                        if (dependents.isEmpty()) {
+                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
+                                    () -> skinnable.removeSelected(selected), null);
+                        } else {
+                            List<ModInfoObject> selectedSnapshot = new ArrayList<>(selected);
+                            Controllers.dialog(new DependencyWarningDialog(dependents, i18n("button.remove"), List.of(
+                                    new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
+                                            () -> skinnable.removeSelected(FXCollections.observableArrayList(selectedSnapshot))),
+                                    new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
+                                        for (ModInfoObject dependent : dependents)
+                                            dependent.getModInfo().setActive(false);
+                                        skinnable.removeSelected(FXCollections.observableArrayList(selectedSnapshot));
+                                    }),
+                                    new CascadeOption(i18n("addon.dependencies.warning.cascade.delete"), () -> {
+                                        List<ModInfoObject> all = new ArrayList<>(selectedSnapshot);
+                                        all.addAll(dependents);
+                                        skinnable.removeSelected(FXCollections.observableArrayList(all));
+                                    })
+                            )));
+                        }
                     }),
                     createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
                             skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                            skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
+                    createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () -> {
+                        var selected = listView.getSelectionModel().getSelectedItems();
+                        List<LocalModFile> targets = new ArrayList<>();
+                        for (ModInfoObject item : selected)
+                            if (item != null) targets.add(item.getModInfo());
+                        List<ModInfoObject> dependents = findActiveDependents(targets);
+                        if (dependents.isEmpty()) {
+                            skinnable.disableSelected(selected);
+                        } else {
+                            Controllers.dialog(new DependencyWarningDialog(dependents, i18n("mods.disable"), List.of(
+                                    new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
+                                            () -> skinnable.disableSelected(selected)),
+                                    new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
+                                        skinnable.disableSelected(selected);
+                                        for (ModInfoObject dependent : dependents)
+                                            dependent.getModInfo().setActive(false);
+                                    })
+                            )));
+                        }
+                    }),
                     createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                             skinnable.checkUpdates(
                                     listView.getSelectionModel().getSelectedItems().stream()
@@ -221,6 +286,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
+                while (c.next()) {
+                    for (ModInfoObject removed : c.getRemoved())
+                        removed.active.removeListener(activeChangeListener);
+                    for (ModInfoObject added : c.getAddedSubList())
+                        added.active.addListener(activeChangeListener);
+                }
                 if (isSearching) {
                     search();
                 }
@@ -291,15 +362,45 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         || predicate.test(modInfo.getGameVersion())
                         || predicate.test(modInfo.getId())
                         || predicate.test(Objects.toString(modInfo.getModLoaderType()))
-                        || predicate.test((item.getModTranslations() != null ? item.getModTranslations().getDisplayName() : null))) {
+                        || predicate.test((item.getModTranslations() != null ? item.getModTranslations().getDisplayName() : null))
+                        || modInfo.getBundledMods().stream().anyMatch(predicate)) {
                     listView.getItems().add(item);
                 }
             }
         }
     }
 
+    // Finds enabled mods (other than the targets themselves) that declare a dependency on any of
+    // the targets — i.e. mods that may break if the targets are disabled.
+    //
+    // Matching is by exact mod id. A mod that satisfies a dependency under a different "provides"
+    // alias (we don't parse "provides") won't be matched, so this errs on the side of fewer
+    // warnings rather than false ones.
+    private List<ModInfoObject> findActiveDependents(Collection<LocalModFile> targets) {
+        Set<String> targetIds = new HashSet<>();
+        for (LocalModFile target : targets) {
+            if (StringUtils.isNotBlank(target.getId()))
+                targetIds.add(target.getId());
+        }
+        if (targetIds.isEmpty())
+            return List.of();
+
+        List<ModInfoObject> dependents = new ArrayList<>();
+        for (ModInfoObject item : getSkinnable().getItems()) {
+            LocalModFile mod = item.getModInfo();
+            if (targets.contains(mod) || !mod.isActive())
+                continue;
+            if (mod.getDependencies().stream().anyMatch(targetIds::contains))
+                dependents.add(item);
+        }
+        return dependents;
+    }
+
     static final class ModInfoObject {
         private final BooleanProperty active;
+        // Whether the nested (Jar-in-Jar) mods of this entry are expanded in the list.
+        // Stored on the data object so the state survives ListCell recycling.
+        private final BooleanProperty expanded = new SimpleBooleanProperty(this, "expanded", false);
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
 
@@ -314,6 +415,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         LocalModFile getModInfo() {
             return localModFile;
+        }
+
+        BooleanProperty expandedProperty() {
+            return expanded;
         }
 
         public @Nullable ModTranslations.Mod getModTranslations() {
@@ -555,6 +660,84 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
+    // A selectable "what to do with the dependent mods" choice. action performs the full operation
+    // (always acting on the target mods, plus optionally on the dependents).
+    private record CascadeOption(String label, Runnable action) {
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    final class DependencyWarningDialog extends JFXDialogLayout {
+
+        DependencyWarningDialog(List<ModInfoObject> dependents, String confirmText, List<CascadeOption> options) {
+            setHeading(new Label(i18n("addon.dependencies.warning.title")));
+
+            Label message = new Label(i18n("addon.dependencies.warning"));
+            message.setWrapText(true);
+
+            ComponentList list = new ComponentList();
+            list.getStyleClass().add("no-padding");
+            for (ModInfoObject dependent : dependents) {
+                HBox row = new HBox(8);
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.setPadding(new Insets(8));
+                row.setMouseTransparent(true);
+
+                ImageContainer icon = new ImageContainer(32);
+                dependent.loadIcon(icon, null);
+
+                TwoLineListItem content = new TwoLineListItem();
+                HBox.setHgrow(content, Priority.ALWAYS);
+                content.setTitle(dependent.getModTranslations() != null && I18n.isUseChinese()
+                        ? dependent.getModTranslations().getDisplayName()
+                        : dependent.getModInfo().getName());
+                StringJoiner subtitle = new StringJoiner(" | ");
+                if (StringUtils.isNotBlank(dependent.getModInfo().getId()))
+                    subtitle.add(dependent.getModInfo().getId());
+                subtitle.add(FileUtils.getName(dependent.getModInfo().getFile()));
+                content.setSubtitle(subtitle.toString());
+
+                row.getChildren().setAll(icon, content);
+                list.getContent().add(row);
+            }
+
+            ScrollPane scrollPane = new ScrollPane(list);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setMaxHeight(300);
+            FXUtils.smoothScrolling(scrollPane);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+            setBody(new VBox(10, message, scrollPane));
+
+            JFXComboBox<CascadeOption> cascade = new JFXComboBox<>();
+            cascade.getItems().setAll(options);
+            cascade.getSelectionModel().selectFirst();
+
+            HBox cascadeBox = new HBox(8, new Label(i18n("addon.dependencies.warning.cascade.label")), cascade);
+            cascadeBox.setAlignment(Pos.CENTER_LEFT);
+
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            JFXButton confirmButton = new JFXButton(confirmText);
+            confirmButton.getStyleClass().add("dialog-accept");
+            confirmButton.setOnAction(e -> {
+                fireEvent(new DialogCloseEvent());
+                CascadeOption selected = cascade.getValue();
+                if (selected != null)
+                    selected.action().run();
+            });
+
+            getActions().setAll(cascadeBox, spacer, cancelButton, confirmButton);
+            onEscPressed(this, cancelButton::fire);
+        }
+    }
+
     private static final Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
     private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
@@ -567,7 +750,17 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
+        JFXButton expandButton = FXUtils.newToggleButton4(SVG.KEYBOARD_ARROW_DOWN);
+        VBox nestedBox = new VBox();
+        private final Rectangle nestedClip = new Rectangle();
+        private Timeline nestedAnimation;
+        // Suppresses the expand animation while a cell is being recycled to another item.
+        private boolean suppressExpandAnimation;
         BooleanProperty booleanProperty;
+        // Mirrors the bound ModInfoObject's expanded state, so the chevron and the
+        // nested list react to it while this cell is showing that item.
+        private final BooleanProperty expanded = new SimpleBooleanProperty(this, "expanded", false);
+        private BooleanProperty expandedBinding;
 
         Tooltip warningTooltip;
 
@@ -576,21 +769,229 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             this.getStyleClass().add("mod-info-list-cell");
 
-            HBox container = new HBox(8);
-            container.setPickOnBounds(false);
-            container.setAlignment(Pos.CENTER_LEFT);
+            HBox header = new HBox(8);
+            header.setPickOnBounds(false);
+            header.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
+            // Allow the title to shrink/ellipsize instead of pushing the buttons out of view.
+            content.setMinWidth(0);
             content.setMouseTransparent(true);
             setSelectable();
 
             imageContainer.setImage(VersionIconType.COMMAND.getIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
+            FXUtils.installFastTooltip(expandButton, i18n("addon.relations"));
+            // Don't reserve layout space for the restore button when it is hidden,
+            // otherwise it leaves a gap between the expand button and the other buttons.
+            restoreButton.managedProperty().bind(restoreButton.visibleProperty());
 
-            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
+            // The chevron rotation is animated together with the expansion (see animateExpansion);
+            // its angle is set directly in snapExpansion when a cell is recycled.
+            expandButton.getGraphic().setRotate(0);
+            // Toggle on press. Use a bubbling handler (not a filter) so the button's own ripple
+            // (triggered deeper/earlier) still plays for click feedback, then consume the event so
+            // it never reaches the ListView's selection handler — expanding must not select the row.
+            expandButton.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+                expanded.set(!expanded.get());
+                e.consume();
+            });
 
+            // Warn before disabling a mod that other enabled mods depend on.
+            checkBox.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
+                ModInfoObject item = getItem();
+                if (item == null || !checkBox.isSelected())
+                    return; // enabling (or empty) — nothing to warn about
+                List<LocalModFile> targets = List.of(item.getModInfo());
+                List<ModInfoObject> dependents = findActiveDependents(targets);
+                if (!dependents.isEmpty()) {
+                    e.consume(); // block the immediate toggle; let the user confirm first
+                    LocalModFile target = item.getModInfo();
+                    Controllers.dialog(new DependencyWarningDialog(dependents, i18n("mods.disable"), List.of(
+                            new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
+                                    () -> target.setActive(false)),
+                            new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
+                                target.setActive(false);
+                                for (ModInfoObject dependent : dependents)
+                                    dependent.getModInfo().setActive(false);
+                            })
+                    )));
+                }
+            });
+
+            nestedBox.getStyleClass().add("mod-nested-list");
+            nestedBox.setVisible(false);
+            nestedBox.setManaged(false);
+            // Crop overflow while the box height is animating, so rows don't spill out.
+            nestedClip.widthProperty().bind(nestedBox.widthProperty());
+            nestedClip.heightProperty().bind(nestedBox.heightProperty());
+            nestedBox.setClip(nestedClip);
+            // Animate open/close on real user toggles; recycling snaps without animation.
+            expanded.addListener((obs, was, now) -> {
+                if (!suppressExpandAnimation)
+                    animateExpansion(now);
+            });
+
+            header.getChildren().setAll(checkBox, imageContainer, content, expandButton, restoreButton, revealButton, infoButton);
+
+            VBox container = new VBox(header, nestedBox);
+            container.setPickOnBounds(false);
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
+        }
+
+        private Node createNestedRow(String path) {
+            String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
+
+            Label label = new Label(name);
+            HBox.setHgrow(label, Priority.ALWAYS);
+            if (!name.equals(path))
+                label.setTooltip(new Tooltip(path));
+
+            HBox row = new HBox(8, SVG.STACKS.createIcon(16), label);
+            row.getStyleClass().add("mod-nested-item");
+            row.setAlignment(Pos.CENTER_LEFT);
+            return row;
+        }
+
+        private Node createSectionLabel(String text) {
+            Label label = new Label(text);
+            label.getStyleClass().add("mod-nested-section");
+            return label;
+        }
+
+        private Node createDependencyRow(LocalModFile modInfo, String depId) {
+            Label name = new Label(depId);
+
+            var modManager = modInfo.getModManager();
+            var loaderType = modInfo.getModLoaderType();
+            // Only call getLocalMod() when the mod actually exists — it creates an entry otherwise.
+            Set<LocalModFile> installedFiles = modManager.hasMod(depId, loaderType)
+                    ? modManager.getLocalMod(depId, loaderType).getFiles()
+                    : Set.of();
+            String statusText;
+            if (installedFiles.isEmpty()) {
+                // Not installed separately — it may instead be bundled inside this mod via Jar-in-Jar.
+                statusText = isBundledDependency(depId, modInfo.getBundledMods())
+                        ? i18n("addon.dependencies.bundled")
+                        : i18n("addon.dependencies.missing");
+            } else if (installedFiles.stream().anyMatch(LocalModFile::isActive)) {
+                statusText = i18n("addon.dependencies.installed");
+            } else {
+                statusText = i18n("addon.dependencies.disabled");
+            }
+            Label status = new Label("(" + statusText + ")");
+
+            HBox row = new HBox(8, SVG.EXTENSION.createIcon(16), name, status);
+            row.getStyleClass().add("mod-nested-item");
+            row.setAlignment(Pos.CENTER_LEFT);
+            return row;
+        }
+
+        // Heuristic: a dependency may be shipped inside the mod's own Jar-in-Jar payload,
+        // in which case it won't show up as a separately installed mod. Match the dependency
+        // id against the bundled jar file names.
+        private boolean isBundledDependency(String depId, List<String> bundledMods) {
+            if (bundledMods.isEmpty())
+                return false;
+
+            String id = depId.toLowerCase(Locale.ROOT);
+            String idAlt = id.replace("-", "").replace("_", "");
+            for (String path : bundledMods) {
+                String fileName = (path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path)
+                        .toLowerCase(Locale.ROOT);
+                if (fileName.contains(id) || fileName.replace("-", "").replace("_", "").contains(idAlt))
+                    return true;
+            }
+            return false;
+        }
+
+        private void rebuildNested(ModInfoObject item) {
+            nestedBox.getChildren().clear();
+            if (item == null)
+                return;
+            LocalModFile modInfo = item.getModInfo();
+            if (modInfo.hasBundledMods()) {
+                nestedBox.getChildren().add(createSectionLabel(i18n("addon.bundled")));
+                for (String path : modInfo.getBundledMods())
+                    nestedBox.getChildren().add(createNestedRow(path));
+            }
+            if (modInfo.hasDependencies()) {
+                nestedBox.getChildren().add(createSectionLabel(i18n("addon.dependencies")));
+                for (String depId : modInfo.getDependencies())
+                    nestedBox.getChildren().add(createDependencyRow(modInfo, depId));
+            }
+        }
+
+        // Snap to the given state without animating — used when a cell is recycled to another item.
+        private void snapExpansion(boolean expand) {
+            if (nestedAnimation != null) {
+                nestedAnimation.stop();
+                nestedAnimation = null;
+            }
+            nestedBox.setMinHeight(Region.USE_COMPUTED_SIZE);
+            nestedBox.setMaxHeight(Region.USE_COMPUTED_SIZE);
+            expandButton.getGraphic().setRotate(expand ? 180 : 0);
+            if (expand) {
+                rebuildNested(getItem());
+                nestedBox.setManaged(true);
+                nestedBox.setVisible(true);
+            } else {
+                nestedBox.setManaged(false);
+                nestedBox.setVisible(false);
+                nestedBox.getChildren().clear();
+            }
+        }
+
+        // Smoothly slide the nested list open/closed on a real user toggle.
+        private void animateExpansion(boolean expand) {
+            if (nestedAnimation != null) {
+                nestedAnimation.stop();
+                nestedAnimation = null;
+            }
+            if (!AnimationUtils.isAnimationEnabled()) {
+                snapExpansion(expand);
+                return;
+            }
+            if (expand) {
+                rebuildNested(getItem());
+                nestedBox.setManaged(true);
+                nestedBox.setVisible(true);
+                nestedBox.applyCss();
+                nestedBox.layout();
+                double target = nestedBox.prefHeight(-1);
+                nestedBox.setMinHeight(0);
+                nestedBox.setMaxHeight(0);
+                Timeline timeline = new Timeline(new KeyFrame(Duration.millis(200),
+                        new KeyValue(nestedBox.minHeightProperty(), target, Motion.EASE_IN_OUT_CUBIC),
+                        new KeyValue(nestedBox.maxHeightProperty(), target, Motion.EASE_IN_OUT_CUBIC),
+                        new KeyValue(expandButton.getGraphic().rotateProperty(), 180, Motion.EASE_IN_OUT_CUBIC)));
+                timeline.setOnFinished(e -> {
+                    nestedBox.setMinHeight(Region.USE_COMPUTED_SIZE);
+                    nestedBox.setMaxHeight(Region.USE_COMPUTED_SIZE);
+                    nestedAnimation = null;
+                });
+                nestedAnimation = timeline;
+                timeline.play();
+            } else {
+                double current = nestedBox.getHeight();
+                nestedBox.setMinHeight(current);
+                nestedBox.setMaxHeight(current);
+                Timeline timeline = new Timeline(new KeyFrame(Duration.millis(200),
+                        new KeyValue(nestedBox.minHeightProperty(), 0, Motion.EASE_IN_OUT_CUBIC),
+                        new KeyValue(nestedBox.maxHeightProperty(), 0, Motion.EASE_IN_OUT_CUBIC),
+                        new KeyValue(expandButton.getGraphic().rotateProperty(), 0, Motion.EASE_IN_OUT_CUBIC)));
+                timeline.setOnFinished(e -> {
+                    nestedBox.setManaged(false);
+                    nestedBox.setVisible(false);
+                    nestedBox.getChildren().clear();
+                    nestedBox.setMinHeight(Region.USE_COMPUTED_SIZE);
+                    nestedBox.setMaxHeight(Region.USE_COMPUTED_SIZE);
+                    nestedAnimation = null;
+                });
+                nestedAnimation = timeline;
+                timeline.play();
+            }
         }
 
         @Override
@@ -681,6 +1082,25 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             });
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
+
+            // Nested (Jar-in-Jar) mods & dependencies. Bind to this item's expanded state without
+            // triggering the animation (the cell is being recycled, not toggled by the user).
+            suppressExpandAnimation = true;
+            if (expandedBinding != null) {
+                expanded.unbindBidirectional(expandedBinding);
+            }
+            expanded.bindBidirectional(expandedBinding = dataItem.expandedProperty());
+            suppressExpandAnimation = false;
+
+            boolean expandable = modInfo.hasBundledMods() || modInfo.hasDependencies();
+            expandButton.setVisible(expandable);
+            expandButton.setManaged(expandable);
+            if (modInfo.hasBundledMods())
+                content.addTag(i18n("addon.bundled") + ": " + modInfo.getBundledMods().size());
+
+            // Build the nested rows lazily — only when expanded — so collapsed rows don't create
+            // nodes or compute dependency status on every render/scroll.
+            snapExpansion(dataItem.expandedProperty().get());
 
             if (!warning.isEmpty()) {
                 pseudoClassStateChanged(WARNING, true);

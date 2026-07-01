@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -32,7 +34,9 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -73,6 +77,100 @@ public final class LogExporter {
                 zipper.putTextFile(LOG.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
                 zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
+
+                try {
+                    ModManager modManager = gameRepository.getModManager(versionId);
+                    modManager.refresh();
+
+                    List<LocalModFile> activeMods = modManager.getLocalFiles().stream()
+                            .filter(LocalModFile::isActive)
+                            .sorted((m1, m2) -> String.CASE_INSENSITIVE_ORDER.compare(m1.getName(), m2.getName()))
+                            .toList();
+
+                    StringBuilder infoBuilder = new StringBuilder();
+
+                    // Mods that exist both as a standalone file and inside another active mod's
+                    // Jar-in-Jar payload. Such duplicates can conflict and crash the game, so list
+                    // them at the very top of the report.
+                    LinkedHashSet<String> duplicates = new LinkedHashSet<>();
+                    for (LocalModFile host : activeMods) {
+                        if (!host.hasBundledMods()) continue;
+                        for (String bundled : host.getBundledMods()) {
+                            String bundledName = bundled.contains("/") ? bundled.substring(bundled.lastIndexOf('/') + 1) : bundled;
+                            String bundledLower = bundledName.toLowerCase(Locale.ROOT);
+                            String bundledNorm = bundledLower.replace("-", "").replace("_", "");
+                            for (LocalModFile other : activeMods) {
+                                if (other == host) continue;
+                                String id = other.getId();
+                                if (id == null || id.length() < 3) continue;
+                                String idLower = id.toLowerCase(Locale.ROOT);
+                                if (bundledLower.contains(idLower)
+                                        || bundledNorm.contains(idLower.replace("-", "").replace("_", ""))) {
+                                    duplicates.add(other.getName() + " [" + other.getFileName() + "] <-> bundled in " + host.getName() + " (" + bundledName + ")");
+                                }
+                            }
+                        }
+                    }
+
+                    infoBuilder.append("=== Potential Duplicate Mods (installed separately AND bundled via Jar-in-Jar) ===").append(System.lineSeparator());
+                    if (duplicates.isEmpty()) {
+                        infoBuilder.append("None").append(System.lineSeparator());
+                    } else {
+                        infoBuilder.append("These mods may conflict with their bundled copies and cause crashes:").append(System.lineSeparator());
+                        infoBuilder.append("(Heuristic: matched by mod id appearing in the bundled jar file name; may include false positives.)").append(System.lineSeparator());
+                        for (String line : duplicates) {
+                            infoBuilder.append("\t|-> ").append(line).append(System.lineSeparator());
+                        }
+                    }
+                    infoBuilder.append(System.lineSeparator())
+                            .append("----------------------------").append(System.lineSeparator())
+                            .append(System.lineSeparator());
+
+                    infoBuilder.append("=== Mod List ===").append(System.lineSeparator());
+                    infoBuilder.append("Filesystem structure of: ").append(runDirectory.resolve("mods")).append(System.lineSeparator());
+                    infoBuilder.append("|-> mods").append(System.lineSeparator());
+
+                    for (LocalModFile mod : activeMods) {
+                        infoBuilder.append("|  |-> ").append(mod.getName());
+                        if (StringUtils.isNotBlank(mod.getVersion()) && !"${version}".equals(mod.getVersion())) {
+                            infoBuilder.append(" (").append(mod.getVersion()).append(")");
+                        }
+                        if (!mod.getName().equals(mod.getFileName())) {
+                            infoBuilder.append(" [").append(mod.getFileName()).append("]");
+                        }
+                        infoBuilder.append(System.lineSeparator());
+                    }
+
+                    infoBuilder.append(System.lineSeparator())
+                            .append("----------------------------").append(System.lineSeparator())
+                            .append(System.lineSeparator())
+                            .append("=== Jar-in-Jar Info List (active mods only) ===").append(System.lineSeparator());
+
+                    boolean hasJij = false;
+                    for (LocalModFile mod : activeMods) {
+                        if (mod.hasBundledMods()) {
+                            hasJij = true;
+                            infoBuilder.append(mod.getName());
+                            if (!mod.getName().equals(mod.getFileName())) {
+                                infoBuilder.append(" [").append(mod.getFileName()).append("]");
+                            }
+                            infoBuilder.append(System.lineSeparator());
+                            for (String bundled : mod.getBundledMods()) {
+                                String name = bundled.contains("/") ? bundled.substring(bundled.lastIndexOf('/') + 1) : bundled;
+                                infoBuilder.append("\t|-> ").append(name).append(System.lineSeparator());
+                            }
+                            infoBuilder.append(System.lineSeparator());
+                        }
+                    }
+
+                    if (!hasJij) {
+                        infoBuilder.append("No Jar-in-Jar info found").append(System.lineSeparator());
+                    }
+
+                    zipper.putTextFile(infoBuilder.toString(), "mods_info.txt");
+                } catch (Exception e) {
+                    LOG.warning("Failed to export mod info to crash report package", e);
+                }
 
                 for (String id : versions) {
                     Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");

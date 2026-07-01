@@ -50,6 +50,8 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String url;
     private final String fileName;
     private final String logoPath;
+    private final List<String> bundledMods;
+    private final List<String> dependencies;
     private final BooleanProperty activeProperty;
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
@@ -57,6 +59,10 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+        this(modManager, mod, file, name, description, authors, version, gameVersion, url, logoPath, List.of(), List.of());
+    }
+
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath, List<String> bundledMods, List<String> dependencies) {
         super();
         this.modManager = modManager;
         this.mod = mod;
@@ -68,6 +74,8 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         this.gameVersion = gameVersion;
         this.url = url;
         this.logoPath = logoPath;
+        this.bundledMods = bundledMods == null ? List.of() : List.copyOf(bundledMods);
+        this.dependencies = dependencies == null ? List.of() : List.copyOf(dependencies);
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
@@ -143,6 +151,22 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     public String getLogoPath() {
         return logoPath;
+    }
+
+    public List<String> getBundledMods() {
+        return bundledMods;
+    }
+
+    public boolean hasBundledMods() {
+        return !bundledMods.isEmpty();
+    }
+
+    public List<String> getDependencies() {
+        return dependencies;
+    }
+
+    public boolean hasDependencies() {
+        return !dependencies.isEmpty();
     }
 
     public BooleanProperty activeProperty() {

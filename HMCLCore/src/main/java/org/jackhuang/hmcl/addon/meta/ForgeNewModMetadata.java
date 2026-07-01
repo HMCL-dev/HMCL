@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -56,6 +57,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @Immutable
 public final class ForgeNewModMetadata {
+    // Loader/runtime ids that are not user-installable mods, excluded from the dependency list.
+    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "forge", "neoforge");
+
     private final String modLoader;
 
     private final String loaderVersion;
@@ -235,10 +239,43 @@ public final class ForgeNewModMetadata {
 
         ModLoaderType type = analyzeLoader(tomlParseResult, mod.getModId(), modLoaderType);
 
+        List<String> bundledMods = new ArrayList<>();
+        ZipArchiveEntry jarInJar = tree.getEntry("META-INF/jarjar/metadata.json");
+        if (jarInJar != null) {
+            try {
+                JarInJarMetadata jarInJarMetadata = JsonUtils.fromJsonFully(tree.getInputStream(jarInJar), JarInJarMetadata.class);
+                if (jarInJarMetadata != null && jarInJarMetadata.jars() != null) {
+                    for (EmbeddedJarMetadata jar : jarInJarMetadata.jars()) {
+                        bundledMods.add(jar.path());
+                    }
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to parse Jar-in-Jar metadata for " + modFile, e);
+            }
+        }
+
+        List<String> dependencies = new ArrayList<>();
+        for (Map<String, Object> dependency : parseDependencies(tomlParseResult, mod.getModId())) {
+            if (!(dependency.get("modId") instanceof String depId) || IGNORED_DEPENDENCIES.contains(depId)) {
+                continue;
+            }
+            boolean required;
+            if (dependency.get("mandatory") instanceof Boolean mandatory) {
+                required = mandatory;
+            } else if (dependency.get("type") instanceof String depType) {
+                required = depType.equalsIgnoreCase("required");
+            } else {
+                required = true;
+            }
+            if (required) {
+                dependencies.add(depId);
+            }
+        }
+
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalAddonFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
-                metadata.getLogoFile());
+                metadata.getLogoFile(), bundledMods, dependencies);
     }
 
     private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
@@ -302,39 +339,40 @@ public final class ForgeNewModMetadata {
         throw new IOException();
     }
 
-    private static ModLoaderType analyzeLoader(TomlParseResult toml, String modID, ModLoaderType loader) {
-        List<Map<String, Object>> dependencies = null;
+    private static List<Map<String, Object>> parseDependencies(TomlParseResult toml, String modID) {
         try {
             TomlArray tomlArray = toml.getArray("dependencies." + modID);
             if (tomlArray != null) {
-                dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
+                return tomlArray.toList().stream().map(o -> ((TomlTable) o).toMap()).toList();
             }
         } catch (ClassCastException ignored) { // https://github.com/HMCL-dev/HMCL/issues/5068
         }
 
-        if (dependencies == null) {
+        try {
+            TomlArray tomlArray = toml.getArray("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
+            if (tomlArray != null) {
+                return tomlArray.toList().stream().map(o -> ((TomlTable) o).toMap()).toList();
+            }
+        } catch (ClassCastException e) {
             try {
-                TomlArray tomlArray = toml.getArray("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
-                if (tomlArray != null) {
-                    dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
-                }
-            } catch (ClassCastException e) {
-                try {
-                    TomlTable table = toml.getTable("dependencies");
-                    if (table == null)
-                        return loader;
-
+                TomlTable table = toml.getTable("dependencies");
+                if (table != null) {
                     TomlArray tomlArray = table.getArray(modID);
                     if (tomlArray != null) {
-                        dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
+                        return tomlArray.toList().stream().map(o -> ((TomlTable) o).toMap()).toList();
                     }
-                } catch (Throwable ignored) {
                 }
+            } catch (Throwable ignored) {
             }
+        }
 
-            if (dependencies == null) {
-                return loader;
-            }
+        return List.of();
+    }
+
+    private static ModLoaderType analyzeLoader(TomlParseResult toml, String modID, ModLoaderType loader) {
+        List<Map<String, Object>> dependencies = parseDependencies(toml, modID);
+        if (dependencies.isEmpty()) {
+            return loader;
         }
 
         ModLoaderType result = null;
