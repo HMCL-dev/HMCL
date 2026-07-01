@@ -337,10 +337,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
+        @Nullable GameSettingsPresetID legacyParent = gameDirectory.getLegacyGameSettings();
+        GameSettings.Preset gameDirectoryPreset = SettingsManager.getGameSettings(legacyParent);
+        if (gameDirectoryPreset == null) {
+            legacyParent = null;
+        }
+
         LegacyGameSettingsMigrator.InstanceMigrationResult migrationResult =
                 LegacyGameSettingsMigrator.migrateInstanceGameSettings(
                         this, id,
-                        getGameDirectoryLegacyParentGameSettings().idProperty().getValue());
+                        legacyParent);
         if (migrationResult != null) {
             initInstanceGameSettings(id, migrationResult.setting());
             try {
@@ -352,7 +358,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
-        GameSettings.Preset gameDirectoryPreset = SettingsManager.getGameSettings(gameDirectory.getLegacyGameSettings());
         if (gameDirectoryPreset != null) {
             GameSettings.Instance setting = new GameSettings.Instance();
             setting.parentProperty().setValue(gameDirectoryPreset.idProperty().getValue());
@@ -523,12 +528,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
         @Nullable GameSettingsPresetID parent = instance != null ? instance.parentProperty().getValue() : null;
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
-        return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
-    }
-
-    /// Returns the migrated game-directory parent preset, falling back to the default preset.
-    private GameSettings.Preset getGameDirectoryLegacyParentGameSettings() {
-        GameSettings.Preset parentSetting = SettingsManager.getGameSettings(gameDirectory.getLegacyGameSettings());
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }
 
