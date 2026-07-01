@@ -709,7 +709,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.get(GameSettings::jvmOptionsProperty)))
                 .setMaxMemory(noJVMOptions && autoMemory ? null : (int) (getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
-                        SystemInfo.getPhysicalMemoryStatus().getAvailable(),
+                        SystemInfo.getPhysicalMemoryStatus().available(),
                         autoMemory
                 ) / 1024 / 1024))
                 .setMinMemory(vs.get(GameSettings::minMemoryProperty))
