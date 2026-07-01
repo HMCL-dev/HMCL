@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -407,6 +408,110 @@ public final class GameDirectoriesTest {
         }
     }
 
+    /// Tests that instance settings without an explicit parent use the default preset.
+    @Test
+    public void nullInstanceParentUsesDefaultPresetInsteadOfLegacyGameDirectoryPreset()
+            throws ReflectiveOperationException {
+        GameSettingsPresetID defaultPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000");
+        GameSettingsPresetID legacyPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
+        GameSettings.Preset defaultPreset = new GameSettings.Preset(defaultPresetId);
+        GameSettings.Preset legacyPreset = new GameSettings.Preset(legacyPresetId);
+        GameSettingsPresets presets = new GameSettingsPresets();
+        presets.getPresets().setAll(defaultPreset, legacyPreset);
+
+        GameDirectory gameDirectory = new GameDirectory(
+                GameDirectoryID.generate(),
+                LocalizedText.plain("Dev"),
+                PortablePath.of("local/Dev"),
+                legacyPresetId);
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(gameDirectory);
+        GameDirectories userDirectories = new GameDirectories();
+
+        try (GameDirectoryEnvironment ignored =
+                     new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
+            settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
+            HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
+
+            assertSame(defaultPreset, repository.getParentGameSettings(new GameSettings.Instance()));
+        }
+    }
+
+    /// Tests that legacy per-version settings migration stores the game directory preset as an explicit parent.
+    @Test
+    public void legacyInstanceSettingsMigrationStoresLegacyGameDirectoryPresetAsParent(@TempDir Path tempDirectory)
+            throws IOException, ReflectiveOperationException {
+        GameSettingsPresetID defaultPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000");
+        GameSettingsPresetID legacyPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
+        GameSettingsPresets presets = new GameSettingsPresets();
+        presets.getPresets().setAll(
+                new GameSettings.Preset(defaultPresetId),
+                new GameSettings.Preset(legacyPresetId));
+
+        GameDirectory gameDirectory = new GameDirectory(
+                GameDirectoryID.generate(),
+                LocalizedText.plain("Dev"),
+                PortablePath.of(tempDirectory.toString()),
+                legacyPresetId);
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(gameDirectory);
+        GameDirectories userDirectories = new GameDirectories();
+
+        try (GameDirectoryEnvironment ignored =
+                     new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
+            settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
+            HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
+            Path versionRoot = repository.getVersionRoot("1.20.1");
+            Files.createDirectories(versionRoot);
+            Files.writeString(versionRoot.resolve("hmclversion.cfg"), """
+                    {
+                      "usesGlobal": true
+                    }
+                    """);
+
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
+
+            assertEquals(legacyPresetId, setting.parentProperty().getValue());
+        }
+    }
+
+    /// Tests that absent instance settings still create an explicit legacy game directory parent.
+    @Test
+    public void absentInstanceSettingsStoreLegacyGameDirectoryPresetAsParent(@TempDir Path tempDirectory)
+            throws ReflectiveOperationException {
+        GameSettingsPresetID defaultPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000");
+        GameSettingsPresetID legacyPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
+        GameSettingsPresets presets = new GameSettingsPresets();
+        presets.getPresets().setAll(
+                new GameSettings.Preset(defaultPresetId),
+                new GameSettings.Preset(legacyPresetId));
+
+        GameDirectory gameDirectory = new GameDirectory(
+                GameDirectoryID.generate(),
+                LocalizedText.plain("Dev"),
+                PortablePath.of(tempDirectory.toString()),
+                legacyPresetId);
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(gameDirectory);
+        GameDirectories userDirectories = new GameDirectories();
+
+        try (GameDirectoryEnvironment ignored =
+                     new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
+            settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
+            HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
+
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
+
+            assertEquals(legacyPresetId, setting.parentProperty().getValue());
+        }
+    }
+
     /// Temporary static state override for game directory tests.
     private static final class GameDirectoryEnvironment implements AutoCloseable {
         /// The reflected SettingsManager local game directories field.
@@ -417,6 +522,9 @@ public final class GameDirectoriesTest {
 
         /// The reflected SettingsManager launcher settings field.
         private final Field launcherSettingsField;
+
+        /// The reflected SettingsManager game settings presets field.
+        private final Field gameSettingsPresetsField;
 
         /// The reflected SettingsManager local game directories access field.
         private final Field localGameDirectoriesAccessField;
@@ -448,6 +556,9 @@ public final class GameDirectoriesTest {
         /// The previous launcher settings instance.
         private final Object previousLauncherSettings;
 
+        /// The previous game settings presets instance.
+        private final Object previousGameSettingsPresets;
+
         /// The previous local game directories access.
         private final SettingFileAccess previousLocalGameDirectoriesAccess;
 
@@ -469,12 +580,22 @@ public final class GameDirectoriesTest {
         /// The previous repository map entries.
         private final Map<GameDirectory, HMCLGameRepository> previousRepositories;
 
-        /// Replaces game-directory-related static state with the given stores.
+        /// Replaces game-directory-related static state with the given stores and an empty preset store.
         private GameDirectoryEnvironment(GameDirectories localDirectories, GameDirectories userDirectories)
+                throws ReflectiveOperationException {
+            this(localDirectories, userDirectories, new GameSettingsPresets());
+        }
+
+        /// Replaces game-directory-related static state with the given stores.
+        private GameDirectoryEnvironment(
+                GameDirectories localDirectories,
+                GameDirectories userDirectories,
+                GameSettingsPresets gameSettingsPresets)
                 throws ReflectiveOperationException {
             localGameDirectoriesField = SettingsManager.class.getDeclaredField("localGameDirectories");
             userGameDirectoriesField = SettingsManager.class.getDeclaredField("userGameDirectories");
             launcherSettingsField = SettingsManager.class.getDeclaredField("launcherSettings");
+            gameSettingsPresetsField = SettingsManager.class.getDeclaredField("gameSettingsPresets");
             localGameDirectoriesAccessField = SettingsManager.class.getDeclaredField("localGameDirectoriesAccess");
             userGameDirectoriesAccessField = SettingsManager.class.getDeclaredField("userGameDirectoriesAccess");
             initializedField = GameDirectoryManager.class.getDeclaredField("initialized");
@@ -485,6 +606,7 @@ public final class GameDirectoriesTest {
             localGameDirectoriesField.setAccessible(true);
             userGameDirectoriesField.setAccessible(true);
             launcherSettingsField.setAccessible(true);
+            gameSettingsPresetsField.setAccessible(true);
             localGameDirectoriesAccessField.setAccessible(true);
             userGameDirectoriesAccessField.setAccessible(true);
             initializedField.setAccessible(true);
@@ -496,6 +618,7 @@ public final class GameDirectoriesTest {
             previousLocalGameDirectories = localGameDirectoriesField.get(null);
             previousUserGameDirectories = userGameDirectoriesField.get(null);
             previousLauncherSettings = launcherSettingsField.get(null);
+            previousGameSettingsPresets = gameSettingsPresetsField.get(null);
             previousLocalGameDirectoriesAccess = (SettingFileAccess) localGameDirectoriesAccessField.get(null);
             previousUserGameDirectoriesAccess = (SettingFileAccess) userGameDirectoriesAccessField.get(null);
             previousInitialized = initializedField.getBoolean(null);
@@ -527,6 +650,7 @@ public final class GameDirectoriesTest {
             localGameDirectoriesField.set(null, localDirectories);
             userGameDirectoriesField.set(null, userDirectories);
             launcherSettingsField.set(null, new LauncherSettings());
+            gameSettingsPresetsField.set(null, gameSettingsPresets);
             localGameDirectoriesAccessField.set(null, SettingFileAccess.READ_WRITE);
             userGameDirectoriesAccessField.set(null, SettingFileAccess.READ_WRITE);
             initializedField.setBoolean(null, false);
@@ -558,6 +682,7 @@ public final class GameDirectoriesTest {
             localGameDirectoriesField.set(null, previousLocalGameDirectories);
             userGameDirectoriesField.set(null, previousUserGameDirectories);
             launcherSettingsField.set(null, previousLauncherSettings);
+            gameSettingsPresetsField.set(null, previousGameSettingsPresets);
             localGameDirectoriesAccessField.set(null, previousLocalGameDirectoriesAccess);
             userGameDirectoriesAccessField.set(null, previousUserGameDirectoriesAccess);
             initializedField.setBoolean(null, previousInitialized);

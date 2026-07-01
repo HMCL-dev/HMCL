@@ -340,7 +340,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         LegacyGameSettingsMigrator.InstanceMigrationResult migrationResult =
                 LegacyGameSettingsMigrator.migrateInstanceGameSettings(
                         this, id,
-                        getParentGameSettings(null).idProperty().getValue());
+                        getGameDirectoryLegacyParentGameSettings().idProperty().getValue());
         if (migrationResult != null) {
             initInstanceGameSettings(id, migrationResult.setting());
             try {
@@ -353,9 +353,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
 
         GameSettings.Preset gameDirectoryPreset = SettingsManager.getGameSettings(gameDirectory.getLegacyGameSettings());
-        if (gameDirectoryPreset != null && gameDirectoryPreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
+        if (gameDirectoryPreset != null) {
             GameSettings.Instance setting = new GameSettings.Instance();
-            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+            setting.parentProperty().setValue(gameDirectoryPreset.idProperty().getValue());
+            if (gameDirectoryPreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
+                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+            }
             initInstanceGameSettings(id, setting);
             saveGameSettings(id);
         }
@@ -516,11 +519,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
+    /// Returns the explicit parent preset of the instance, falling back to the default preset.
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
-        @Nullable GameSettingsPresetID parent = instance != null && instance.parentProperty().getValue() != null
-                ? instance.parentProperty().getValue()
-                : gameDirectory.getLegacyGameSettings();
+        @Nullable GameSettingsPresetID parent = instance != null ? instance.parentProperty().getValue() : null;
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
+        return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
+    }
+
+    /// Returns the migrated game-directory parent preset, falling back to the default preset.
+    private GameSettings.Preset getGameDirectoryLegacyParentGameSettings() {
+        GameSettings.Preset parentSetting = SettingsManager.getGameSettings(gameDirectory.getLegacyGameSettings());
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }
 
@@ -534,7 +542,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
-        GameSettings.Preset preset = getParentGameSettings(null);
+        GameSettings.Instance instanceSetting = getInstanceGameSettings(id);
+        GameSettings.Preset preset = getParentGameSettings(instanceSetting);
         DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
         boolean isolated = switch (type) {
             case NEVER -> false;
@@ -543,7 +552,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         };
 
         if (isolated) {
-            GameSettings.Instance setting = getInstanceGameSettingsOrCreate(id);
+            GameSettings.Instance setting = instanceSetting != null ? instanceSetting : getInstanceGameSettingsOrCreate(id);
             if (setting != null) {
                 setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
             }

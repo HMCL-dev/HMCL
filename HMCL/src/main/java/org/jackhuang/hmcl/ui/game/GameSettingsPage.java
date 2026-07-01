@@ -188,7 +188,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var parentGameSettingsPane = new LineSelectButton<GameSettings.@Nullable Preset>();
                 basicSettings.getContent().add(parentGameSettingsPane);
                 parentGameSettingsPane.setTitle(i18n("settings.type.global.preset"));
-                parentGameSettingsPane.setConverter(setting -> setting != null ? PresetManagementPane.getPresetDisplayName(setting) : i18n("settings.type.global.preset.default"));
+                parentGameSettingsPane.setConverter(setting -> setting != null
+                        ? PresetManagementPane.getPresetDisplayName(setting)
+                        : i18n("settings.type.global.preset.default"));
                 bindInstanceParentSetting(parentGameSettingsPane);
             }
 
@@ -844,9 +846,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
     }
 
-    /// Refreshes parent preset display text because the implicit parent depends on the current game directory.
+    /// Refreshes parent preset display text after the preset list changes.
     private void refreshInstanceParentSettingConverter(LineSelectButton<GameSettings.@Nullable Preset> button) {
-        button.setConverter(setting -> setting != null ? PresetManagementPane.getPresetDisplayName(setting) : i18n("settings.type.global.preset.default"));
+        button.setConverter(setting -> setting != null
+                ? PresetManagementPane.getPresetDisplayName(setting)
+                : i18n("settings.type.global.preset.default"));
     }
 
     /// Adds the title-line inheritance button for the Java selection sublist.
