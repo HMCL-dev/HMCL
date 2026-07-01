@@ -17,6 +17,16 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.ext.ins.InsExtension;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.safety.Safelist;
+
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
@@ -573,11 +583,7 @@ public final class StringUtils {
     }
 
     public static String repeats(char ch, int repeat) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < repeat; i++) {
-            result.append(ch);
-        }
-        return result.toString();
+        return String.valueOf(ch).repeat(Math.max(0, repeat));
     }
 
     public static String truncate(String str, int limit) {
@@ -620,6 +626,37 @@ public final class StringUtils {
     public static List<String> deserializeStringList(String json) {
         if (json == null || json.isBlank()) return List.of();
         return JsonUtils.fromNonNullJson(json, JsonUtils.listTypeOf(String.class));
+    }
+
+    private static final Safelist all = Safelist.relaxed()
+            .addAttributes("a", "rel", "target");
+
+    private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().extensions(List.of(
+            InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
+    )).build();
+
+    private static final Parser MD_PARSER = Parser.builder().extensions(List.of(
+            AutolinkExtension.create(), InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
+    )).build();
+
+    public static String convertToHtml(String str) {
+        if (str == null) return null;
+        if (isBlank(str)) return "";
+
+        /*
+        Firstly, we check if the string could be seen as HTML.
+
+        If so, we convert it to HTML document, then re-print it to a string to normalize spaces
+        (otherwise the parser may parse the HTML code as code blocks, which is not intended).
+        This will (hopefully) not break Markdown formats.
+
+        If not, we assume that the string is pure Markdown.
+         */
+        String either = Jsoup.isValid(str, all)
+                ? Jsoup.parse(str).outputSettings(new Document.OutputSettings().prettyPrint(false)).body().html()
+                : str;
+
+        return HTML_RENDERER.render(MD_PARSER.parse(either));
     }
 
     public static class LevCalculator {

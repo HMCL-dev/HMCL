@@ -101,7 +101,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
                 .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), false);
+        return new AddonUpdate(source, RemoteAddonRepository.Type.RESOURCE_PACK, this, currentVersion.get(), remoteVersions.get(0), false);
     }
 }
 
