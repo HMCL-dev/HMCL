@@ -30,6 +30,7 @@ import javafx.css.*;
 import javafx.css.converter.BooleanConverter;
 import javafx.css.converter.PaintConverter;
 import javafx.css.converter.SizeConverter;
+import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.scene.CacheHint;
 import javafx.scene.Group;
@@ -45,6 +46,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -76,6 +79,8 @@ public class JFXRippler extends StackPane {
     protected RippleGenerator rippler;
     protected Pane ripplerPane;
     protected Node control;
+    private Animation coverAnimation;
+    private Rectangle hoverOverlay;
 
     protected static final double RIPPLE_MAX_RADIUS = 300;
     private static final Interpolator RIPPLE_INTERPOLATOR = Interpolator.SPLINE(0.0825,
@@ -128,6 +133,31 @@ public class JFXRippler extends StackPane {
         setCache(true);
         setCacheHint(CacheHint.SPEED);
         setCacheShape(true);
+
+        EventHandler<MouseEvent> mouseEventHandler;
+        if (AnimationUtils.isAnimationEnabled()) {
+            mouseEventHandler = event -> {
+                if (coverAnimation != null) {
+                    coverAnimation.stop();
+                }
+
+                boolean isEntered = event.getEventType() == MouseEvent.MOUSE_ENTERED;
+                coverAnimation = new Timeline(new KeyFrame(Motion.SHORT4,
+                        new KeyValue(hoverOverlay.opacityProperty(), isEntered ? 1 : 0, isEntered ? Motion.EASE_IN : Motion.EASE_OUT)));
+                coverAnimation.play();
+            };
+        } else {
+            mouseEventHandler = event ->
+                    interpolateBackground(event.getEventType() == MouseEvent.MOUSE_ENTERED ? 1 : 0);
+        }
+
+        addEventHandler(MouseEvent.MOUSE_ENTERED, mouseEventHandler);
+        addEventHandler(MouseEvent.MOUSE_EXITED, mouseEventHandler);
+    }
+
+    private void interpolateBackground(double frac) {
+        if (hoverOverlay == null) return;
+        hoverOverlay.setOpacity(frac);
     }
 
     protected final void createRippleUI() {
@@ -135,7 +165,23 @@ public class JFXRippler extends StackPane {
         rippler = new RippleGenerator();
         ripplerPane = new StackPane();
         ripplerPane.setMouseTransparent(true);
-        ripplerPane.getChildren().add(rippler);
+
+        hoverOverlay = new Rectangle();
+        hoverOverlay.setManaged(false);
+        hoverOverlay.setCache(true);
+        hoverOverlay.setCacheHint(CacheHint.SPEED);
+        hoverOverlay.setOpacity(0);
+
+        hoverOverlay.fillProperty().bind(Bindings.createObjectBinding(() -> {
+            Paint currentFill = getRipplerFill();
+            if (currentFill instanceof Color fill) {
+                return Color.color(fill.getRed(), fill.getGreen(), fill.getBlue(), 0.15);
+            } else {
+                return currentFill;
+            }
+        }, ripplerFillProperty()));
+
+        ripplerPane.getChildren().addAll(hoverOverlay, rippler);
         getChildren().add(ripplerPane);
     }
 
@@ -561,6 +607,17 @@ public class JFXRippler extends StackPane {
     protected void resetRippler() {
         resetOverLay();
         resetClip();
+
+        if (hoverOverlay != null && control != null) {
+            Bounds bounds = control.getBoundsInParent();
+            double diffMinX = Math.abs(control.getBoundsInLocal().getMinX() - control.getLayoutBounds().getMinX());
+            double diffMinY = Math.abs(control.getBoundsInLocal().getMinY() - control.getLayoutBounds().getMinY());
+            hoverOverlay.setX(bounds.getMinX() + diffMinX - snappedLeftInset());
+            hoverOverlay.setY(bounds.getMinY() + diffMinY - snappedTopInset());
+            hoverOverlay.setWidth(control.getLayoutBounds().getWidth());
+            hoverOverlay.setHeight(control.getLayoutBounds().getHeight());
+            hoverOverlay.setClip(getMask());
+        }
     }
 
     /***************************************************************************

@@ -22,7 +22,6 @@ import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
@@ -52,7 +51,6 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         super(skinnable);
 
         BorderPane root = new BorderPane();
-        root.setCursor(Cursor.HAND);
         FXUtils.onClicked(root, skinnable::fire);
 
         JFXRadioButton chkSelected = new JFXRadioButton();
