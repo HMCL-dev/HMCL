@@ -390,7 +390,27 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         list = new JFXListView<>();
                         list.getStyleClass().add("jfx-list-view-float");
 
-                        list.setFixedCellSize(65);
+                        list.skinProperty().addListener((obs, oldSkin, newSkin) -> {
+                            if (newSkin != null) {
+                                javafx.application.Platform.runLater(() -> {
+                                    list.lookupAll(".list-cell").stream()
+                                        .filter(node -> node instanceof RemoteVersionListCell)
+                                        .map(node -> (RemoteVersionListCell) node)
+                                        .findFirst()
+                                        .ifPresent(cell -> {
+                                            if (cell.getHeight() > 0) {
+                                                list.setFixedCellSize(cell.getHeight());
+                                            } else {
+                                                cell.heightProperty().addListener((o, oldHeight, newHeight) -> {
+                                                    if (newHeight.doubleValue() > 0 && list.getFixedCellSize() <= 0) {
+                                                        list.setFixedCellSize(newHeight.doubleValue());
+                                                    }
+                                                });
+                                            }
+                                        });
+                                });
+                            }
+                        });
 
                         VBox.setVgrow(list, Priority.ALWAYS);
 
