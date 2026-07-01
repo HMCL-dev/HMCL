@@ -32,9 +32,11 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.*;
@@ -184,6 +186,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                             .toList()
                             )
                     ),
+                    createToolbarButton2(i18n("mods.export"), SVG.DOWNLOAD, this::showExportDialog),
                     selectAll,
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
                             listView.getSelectionModel().clearSelection())
@@ -296,6 +299,184 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             }
         }
+    }
+
+    private void showExportDialog() {
+        ToggleGroup formatGroup = new ToggleGroup();
+        JFXRadioButton csvRadio = new JFXRadioButton("CSV");
+        JFXRadioButton jsonRadio = new JFXRadioButton("JSON");
+        JFXRadioButton customRadio = new JFXRadioButton(i18n("mods.export.format.custom"));
+        csvRadio.setToggleGroup(formatGroup);
+        jsonRadio.setToggleGroup(formatGroup);
+        customRadio.setToggleGroup(formatGroup);
+        csvRadio.setSelected(true);
+
+        JFXCheckBox chkName = new JFXCheckBox(i18n("mods.export.field.name"));
+        JFXCheckBox chkVersion = new JFXCheckBox(i18n("mods.export.field.version"));
+        JFXCheckBox chkId = new JFXCheckBox(i18n("mods.export.field.modid"));
+        JFXCheckBox chkGameVersion = new JFXCheckBox(i18n("mods.export.field.game_version"));
+        JFXCheckBox chkAuthors = new JFXCheckBox(i18n("mods.export.field.authors"));
+        JFXCheckBox chkDescription = new JFXCheckBox(i18n("mods.export.field.description"));
+        JFXCheckBox chkUrl = new JFXCheckBox(i18n("mods.export.field.url"));
+        JFXCheckBox chkActive = new JFXCheckBox(i18n("mods.export.field.active"));
+        JFXCheckBox chkModLoaderType = new JFXCheckBox(i18n("mods.export.field.mod_loader_type"));
+        JFXCheckBox chkMcmodId = new JFXCheckBox(i18n("mods.export.field.mcmod_id"));
+        JFXCheckBox chkAbbr = new JFXCheckBox(i18n("mods.export.field.abbr"));
+        JFXCheckBox chkChineseName = new JFXCheckBox(i18n("mods.export.field.chinese_name"));
+        JFXCheckBox chkSha1 = new JFXCheckBox("SHA1");
+        JFXCheckBox chkSha512 = new JFXCheckBox("SHA512");
+        JFXCheckBox chkCurseForgeUrl = new JFXCheckBox(i18n("mods.export.field.curseforge_url"));
+        JFXCheckBox chkCurseForgeFileUrl = new JFXCheckBox(i18n("mods.export.field.curseforge_file_url"));
+        JFXCheckBox chkCurseForgeDownloadPage = new JFXCheckBox(i18n("mods.export.field.curseforge_download_page"));
+        JFXCheckBox chkModrinthUrl = new JFXCheckBox(i18n("mods.export.field.modrinth_url"));
+        JFXCheckBox chkModrinthFileUrl = new JFXCheckBox(i18n("mods.export.field.modrinth_file_url"));
+
+        chkName.setSelected(true);
+        chkVersion.setSelected(true);
+        chkId.setSelected(true);
+        chkGameVersion.setSelected(false);
+        chkAuthors.setSelected(false);
+        chkDescription.setSelected(false);
+        chkUrl.setSelected(false);
+        chkActive.setSelected(false);
+        chkModLoaderType.setSelected(false);
+        chkMcmodId.setSelected(false);
+        chkAbbr.setSelected(false);
+        chkChineseName.setSelected(false);
+        chkSha1.setSelected(false);
+        chkSha512.setSelected(false);
+        chkCurseForgeUrl.setSelected(false);
+        chkCurseForgeFileUrl.setSelected(false);
+        chkCurseForgeDownloadPage.setSelected(false);
+        chkModrinthUrl.setSelected(false);
+        chkModrinthFileUrl.setSelected(false);
+
+        Label formatLabel = new Label(i18n("mods.export.format"));
+        Label fieldsLabel = new Label(i18n("mods.export.fields"));
+        Label templateLabel = new Label(i18n("mods.export.template"));
+
+        JFXTextField templateTextField = new JFXTextField("- {name}, {version}, {modid}");
+
+        // Create clickable placeholder buttons
+        Label placeholdersLabel = new Label(i18n("mods.export.placeholders"));
+        FlowPane placeholdersPane = new FlowPane(5, 5);
+        placeholdersPane.setAlignment(Pos.CENTER_LEFT);
+        String[] placeholders = {"name", "version", "modid", "gameVersion", "authors", 
+                "description", "url", "active", "modLoaderType", "mcmodId", "abbr", "chineseName", "sha1", "sha512",
+                "curseForgeUrl", "curseForgeFileUrl", "curseForgeDownloadPage", "modrinthUrl", "modrinthFileUrl"};
+        for (String placeholder : placeholders) {
+            String placeholderText = "{" + placeholder + "}";
+            JFXButton btn = FXUtils.newBorderButton(placeholderText);
+            btn.setOnAction(ev -> FXUtils.copyText(placeholderText));
+            placeholdersPane.getChildren().add(btn);
+        }
+
+        HBox formatBox = new HBox(10, csvRadio, jsonRadio, customRadio);
+        formatBox.setAlignment(Pos.CENTER_LEFT);
+
+        VBox fieldsBox = new VBox(8,
+                chkName, chkVersion, chkId, chkGameVersion, chkAuthors,
+                chkDescription, chkUrl, chkActive, chkModLoaderType,
+                chkMcmodId, chkAbbr, chkChineseName,
+                chkSha1, chkSha512,
+                chkCurseForgeUrl, chkCurseForgeFileUrl, chkCurseForgeDownloadPage,
+                chkModrinthUrl, chkModrinthFileUrl);
+        fieldsBox.setAlignment(Pos.CENTER_LEFT);
+
+        VBox templateBox = new VBox(5, templateLabel, templateTextField, placeholdersLabel, placeholdersPane);
+        templateBox.setAlignment(Pos.CENTER_LEFT);
+        templateBox.setMaxWidth(360);
+        templateBox.setVisible(false);
+        templateBox.setManaged(false);
+
+        // Toggle visibility of fields vs template based on format selection
+        csvRadio.setOnAction(e -> {
+            fieldsLabel.setVisible(true);
+            fieldsLabel.setManaged(true);
+            fieldsBox.setVisible(true);
+            fieldsBox.setManaged(true);
+            templateBox.setVisible(false);
+            templateBox.setManaged(false);
+        });
+        jsonRadio.setOnAction(e -> {
+            fieldsLabel.setVisible(true);
+            fieldsLabel.setManaged(true);
+            fieldsBox.setVisible(true);
+            fieldsBox.setManaged(true);
+            templateBox.setVisible(false);
+            templateBox.setManaged(false);
+        });
+        customRadio.setOnAction(e -> {
+            fieldsLabel.setVisible(false);
+            fieldsLabel.setManaged(false);
+            fieldsBox.setVisible(false);
+            fieldsBox.setManaged(false);
+            templateBox.setVisible(true);
+            templateBox.setManaged(true);
+        });
+
+        VBox contentBox = new VBox(12, formatLabel, formatBox, fieldsLabel, fieldsBox, templateBox);
+        contentBox.setAlignment(Pos.CENTER_LEFT);
+        contentBox.setMaxWidth(380);
+        contentBox.setPadding(new Insets(0, 0, 12, 0));
+
+        ScrollPane scrollPane = new ScrollPane(contentBox);
+        FXUtils.smoothScrolling(scrollPane);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setMaxHeight(400);
+        scrollPane.setPrefHeight(350);
+
+        JFXDialogLayout dialogLayout = new JFXDialogLayout();
+        dialogLayout.setHeading(new Label(i18n("mods.export.title")));
+        dialogLayout.setBody(scrollPane);
+
+        JFXButton exportButton = new JFXButton(i18n("button.export"));
+        exportButton.getStyleClass().add("dialog-accept");
+        exportButton.setOnAction(e -> {
+            String format;
+            Set<String> fields = new LinkedHashSet<>();
+            String customTemplate = null;
+
+            if (customRadio.isSelected()) {
+                format = "custom";
+                customTemplate = templateTextField.getText();
+            } else {
+                format = csvRadio.isSelected() ? "csv" : "json";
+                if (chkName.isSelected()) fields.add("name");
+                if (chkVersion.isSelected()) fields.add("version");
+                if (chkId.isSelected()) fields.add("modid");
+                if (chkGameVersion.isSelected()) fields.add("gameVersion");
+                if (chkAuthors.isSelected()) fields.add("authors");
+                if (chkDescription.isSelected()) fields.add("description");
+                if (chkUrl.isSelected()) fields.add("url");
+                if (chkActive.isSelected()) fields.add("active");
+                if (chkModLoaderType.isSelected()) fields.add("modLoaderType");
+                if (chkMcmodId.isSelected()) fields.add("mcmodId");
+                if (chkAbbr.isSelected()) fields.add("abbr");
+                if (chkChineseName.isSelected()) fields.add("chineseName");
+                if (chkSha1.isSelected()) fields.add("sha1");
+                if (chkSha512.isSelected()) fields.add("sha512");
+                if (chkCurseForgeUrl.isSelected()) fields.add("curseForgeUrl");
+                if (chkCurseForgeFileUrl.isSelected()) fields.add("curseForgeFileUrl");
+                if (chkCurseForgeDownloadPage.isSelected()) fields.add("curseForgeDownloadPage");
+                if (chkModrinthUrl.isSelected()) fields.add("modrinthUrl");
+                if (chkModrinthFileUrl.isSelected()) fields.add("modrinthFileUrl");
+            }
+
+            dialogLayout.fireEvent(new DialogCloseEvent());
+            getSkinnable().exportMods(listView.getSelectionModel().getSelectedItems(), format, fields, customTemplate);
+        });
+
+        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        cancelButton.setButtonType(JFXButton.ButtonType.FLAT);
+        cancelButton.getStyleClass().add("dialog-cancel");
+        cancelButton.setOnAction(ev -> dialogLayout.fireEvent(new DialogCloseEvent()));
+
+        dialogLayout.setActions(exportButton, cancelButton);
+
+        Controllers.dialog(dialogLayout);
     }
 
     static final class ModInfoObject {
@@ -618,16 +799,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             if (modTranslations != null && I18n.isUseChinese()) {
                 String chineseName = modTranslations.getName();
                 if (StringUtils.containsChinese(chineseName)) {
-                    if (StringUtils.containsEmoji(chineseName)) {
-                        StringBuilder builder = new StringBuilder();
-
-                        chineseName.codePoints().forEach(ch -> {
-                            if (ch < 0x1F300 || ch > 0x1FAFF)
-                                builder.appendCodePoint(ch);
-                        });
-
-                        chineseName = builder.toString().trim();
-                    }
+                    chineseName = StringUtils.removeEmoji(chineseName);
 
                     if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName)) {
                         displayName = displayName + " (" + chineseName + ")";

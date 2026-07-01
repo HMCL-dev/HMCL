@@ -294,6 +294,27 @@ public final class StringUtils {
         return false;
     }
 
+    /// Removes emoji characters from the given string.
+    /// Emoji characters are defined as code points in the range 0x1F300 to 0x1FAFF.
+    /// @param str the input string
+    /// @return the string with emoji characters removed, or the original string if no emoji was found
+    @Contract("null -> null")
+    public static String removeEmoji(String str) {
+        if (str == null) {
+            return null;
+        }
+        if (!containsEmoji(str)) {
+            return str;
+        }
+        StringBuilder builder = new StringBuilder();
+        str.codePoints().forEach(cp -> {
+            if (cp < 0x1F300 || cp > 0x1FAFF) {
+                builder.appendCodePoint(cp);
+            }
+        });
+        return builder.toString().trim();
+    }
+
     /// Check if the code point is a full-width character.
     public static boolean isFullWidth(int codePoint) {
         return codePoint >= '\uff10' && codePoint <= '\uff19'       // full-width digits

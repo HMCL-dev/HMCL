@@ -28,6 +28,12 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -38,14 +44,22 @@ import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -62,6 +76,26 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
+
+    private static final class RemoteModInfo {
+        final String curseForgeUrl;
+        final String curseForgeFileUrl;
+        final String curseForgeDownloadPage;
+        final String modrinthUrl;
+        final String modrinthFileUrl;
+
+        RemoteModInfo(String curseForgeUrl, String curseForgeFileUrl, String curseForgeDownloadPage, String modrinthUrl, String modrinthFileUrl) {
+            this.curseForgeUrl = curseForgeUrl;
+            this.curseForgeFileUrl = curseForgeFileUrl;
+            this.curseForgeDownloadPage = curseForgeDownloadPage;
+            this.modrinthUrl = modrinthUrl;
+            this.modrinthFileUrl = modrinthFileUrl;
+        }
+    }
+
+    private final Map<Path, RemoteModInfo> remoteModInfoCache = new ConcurrentHashMap<>();
+    private final Map<Path, String> sha1Cache = new ConcurrentHashMap<>();
+    private final Map<Path, String> sha512Cache = new ConcurrentHashMap<>();
 
     public ModListPage() {
         FXUtils.applyDragListener(this, it -> ModManager.MOD_EXTENSIONS.contains(FileUtils.getExtension(it).toLowerCase(Locale.ROOT)), mods -> {
@@ -267,6 +301,457 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     public void download() {
         Controllers.getDownloadPage().showModDownloads().selectVersion(instanceId);
         Controllers.navigate(Controllers.getDownloadPage());
+    }
+
+    /// Exports the mod list to a file asynchronously to avoid blocking the UI thread.
+    /// @param selectedMods The list of selected mods to export
+    /// @param format The export format: "csv", "json", or "custom"
+    /// @param fields The set of field names to export (used for csv/json)
+    /// @param customTemplate The custom format template string (used when format is "custom")
+    public void exportMods(List<ModListPageSkin.ModInfoObject> selectedMods, String format, Set<String> fields, String customTemplate) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(i18n("mods.export.title"));
+        String extension;
+        if (format.equals("csv")) {
+            extension = ".csv";
+        } else if (format.equals("json")) {
+            extension = ".json";
+        } else {
+            extension = ".txt";
+        }
+        FileChooser.ExtensionFilter filter = format.equals("csv")
+                ? new FileChooser.ExtensionFilter(i18n("extension.csv"), "*" + extension)
+                : format.equals("json")
+                        ? new FileChooser.ExtensionFilter(i18n("extension.json"), "*" + extension)
+                        : new FileChooser.ExtensionFilter(i18n("extension.txt"), "*" + extension);
+        chooser.getExtensionFilters().setAll(filter);
+        chooser.setInitialFileName(instanceId + "-mods" + extension);
+        Path targetPath = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
+        if (targetPath == null) return;
+
+        final List<ModListPageSkin.ModInfoObject> modsSnapshot = new ArrayList<>(selectedMods);
+        final Path outputPath = targetPath;
+        final String exportFormat = format;
+        final String template = customTemplate;
+        final Set<String> fieldsSnapshot = new HashSet<>(fields);
+
+        Controllers.taskDialog(
+                new ExportTask(modsSnapshot, fieldsSnapshot, exportFormat, template, outputPath)
+                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            if (exception == null) {
+                                Controllers.dialog(i18n("mods.export.success"), i18n("mods.export.title"));
+                            } else {
+                                LOG.warning("Failed to export mods", exception);
+                                String errorMessage = StringUtils.isBlank(exception.getMessage()) ? exception.toString() : exception.getMessage();
+                                Controllers.dialog(errorMessage, i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                            }
+                        }),
+                i18n("mods.export.title"), TaskCancellationAction.NORMAL);
+    }
+
+    /// Custom Task class for exporting mods with progress updates.
+    private class ExportTask extends Task<Void> {
+        private final List<ModListPageSkin.ModInfoObject> mods;
+        private final Set<String> fields;
+        private final String format;
+        private final String template;
+        private final Path targetPath;
+
+        ExportTask(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields, String format, String template, Path targetPath) {
+            this.mods = mods;
+            this.fields = fields;
+            this.format = format;
+            this.template = template;
+            this.targetPath = targetPath;
+            setName(i18n("mods.export.exporting"));
+        }
+
+        @Override
+        public void execute() throws Exception {
+            // Prefetch data with progress updates
+            prefetchDataWithProgress();
+
+            // Export based on format with progress updates
+            if (format.equals("csv")) {
+                exportToCSVWithProgress();
+            } else if (format.equals("json")) {
+                exportToJSONWithProgress();
+            } else {
+                exportToCustomTextWithProgress();
+            }
+        }
+
+        private void prefetchDataWithProgress() {
+            boolean needsRemoteInfo = fields.stream().anyMatch(f ->
+                    f.equals("curseForgeUrl") || f.equals("curseForgeFileUrl") ||
+                            f.equals("curseForgeDownloadPage") || f.equals("modrinthUrl") ||
+                            f.equals("modrinthFileUrl"));
+            boolean needsSha1 = fields.contains("sha1");
+            boolean needsSha512 = fields.contains("sha512");
+
+            if (!needsRemoteInfo && !needsSha1 && !needsSha512) {
+                return; // No prefetch needed
+            }
+
+            final int totalTasks;
+            {
+                int temp = 0;
+                if (needsRemoteInfo) temp += mods.size();
+                if (needsSha1) temp += mods.size();
+                if (needsSha512) temp += mods.size();
+                totalTasks = temp;
+            }
+
+            if (totalTasks == 0) return;
+
+            AtomicInteger completedTasks = new AtomicInteger(0);
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+            for (ModListPageSkin.ModInfoObject modInfo : mods) {
+                LocalModFile mod = modInfo.getModInfo();
+                Path filePath = mod.getFile();
+
+                // Prefetch remote info in parallel
+                if (needsRemoteInfo) {
+                    futures.add(CompletableFuture.runAsync(() -> {
+                        try {
+                            getRemoteModInfo(mod);
+                        } catch (Exception e) {
+                            LOG.warning("Failed to prefetch remote info for " + filePath, e);
+                        } finally {
+                            updateProgress(completedTasks.incrementAndGet(), totalTasks);
+                        }
+                    }, Schedulers.io()));
+                }
+
+                // Prefetch SHA1 in parallel
+                if (needsSha1) {
+                    futures.add(CompletableFuture.runAsync(() -> {
+                        try {
+                            computeSha1Cached(filePath);
+                        } catch (Exception e) {
+                            LOG.warning("Failed to prefetch SHA1 for " + filePath, e);
+                        } finally {
+                            updateProgress(completedTasks.incrementAndGet(), totalTasks);
+                        }
+                    }, Schedulers.io()));
+                }
+
+                // Prefetch SHA512 in parallel
+                if (needsSha512) {
+                    futures.add(CompletableFuture.runAsync(() -> {
+                        try {
+                            computeSha512Cached(filePath);
+                        } catch (Exception e) {
+                            LOG.warning("Failed to prefetch SHA512 for " + filePath, e);
+                        } finally {
+                            updateProgress(completedTasks.incrementAndGet(), totalTasks);
+                        }
+                    }, Schedulers.io()));
+                }
+            }
+
+            // Wait for all prefetch tasks to complete
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        }
+
+        private void exportToCustomTextWithProgress() throws IOException {
+            StringBuilder sb = new StringBuilder();
+            int totalMods = mods.size();
+            for (int i = 0; i < totalMods; i++) {
+                ModListPageSkin.ModInfoObject modInfo = mods.get(i);
+                sb.append(applyTemplate(modInfo, template));
+                sb.append(System.lineSeparator());
+                updateProgress(i + 1, totalMods);
+            }
+            Files.writeString(targetPath, sb.toString(), StandardCharsets.UTF_8);
+        }
+
+        private void exportToCSVWithProgress() throws IOException {
+            CSVTable table = new CSVTable();
+
+            List<String> fieldOrder = List.of(
+                    "name", "version", "modid", "gameVersion", "authors", "description",
+                    "url", "active", "modLoaderType", "mcmodId", "abbr", "chineseName",
+                    "sha1", "sha512", "curseForgeUrl", "curseForgeFileUrl", "curseForgeDownloadPage",
+                    "modrinthUrl", "modrinthFileUrl"
+            );
+
+            List<String> orderedFields = fieldOrder.stream()
+                    .filter(fields::contains)
+                    .toList();
+
+            // Header row
+            List<String> headers = getFieldHeaders(orderedFields);
+            for (int col = 0; col < headers.size(); col++) {
+                table.set(col, 0, headers.get(col));
+            }
+
+            // Data rows with progress updates
+            int totalMods = mods.size();
+            for (int row = 0; row < totalMods; row++) {
+                ModListPageSkin.ModInfoObject mod = mods.get(row);
+                List<String> values = getFieldValues(mod, orderedFields);
+                for (int col = 0; col < values.size(); col++) {
+                    table.set(col, row + 1, values.get(col));
+                }
+                updateProgress(row + 1, totalMods);
+            }
+
+            table.write(targetPath);
+        }
+
+        private void exportToJSONWithProgress() throws IOException {
+            List<Map<String, String>> jsonData = new ArrayList<>();
+            int totalMods = mods.size();
+            for (int i = 0; i < totalMods; i++) {
+                ModListPageSkin.ModInfoObject mod = mods.get(i);
+                Map<String, String> modData = new LinkedHashMap<>();
+                for (String field : fields) {
+                    modData.put(field, getFieldValue(mod, field));
+                }
+                jsonData.add(modData);
+                updateProgress(i + 1, totalMods);
+            }
+
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String json = gson.toJson(jsonData);
+            Files.writeString(targetPath, json, StandardCharsets.UTF_8);
+        }
+    }
+
+    private String applyTemplate(ModListPageSkin.ModInfoObject modInfo, String template) {
+        // Parse template with {field} placeholders
+        StringBuilder result = new StringBuilder();
+        int i = 0;
+        while (i < template.length()) {
+            if (template.charAt(i) == '{') {
+                int end = template.indexOf('}', i);
+                if (end != -1) {
+                    String field = template.substring(i + 1, end);
+                    result.append(getFieldValue(modInfo, field));
+                    i = end + 1;
+                } else {
+                    result.append(template.charAt(i));
+                    i++;
+                }
+            } else {
+                result.append(template.charAt(i));
+                i++;
+            }
+        }
+        return result.toString();
+    }
+
+    private List<String> getFieldHeaders(List<String> fields) {
+        List<String> headers = new ArrayList<>();
+        for (String field : fields) {
+            headers.add(switch (field) {
+                case "name" -> "Name";
+                case "version" -> "Version";
+                case "modid" -> "Mod ID";
+                case "gameVersion" -> "Game Version";
+                case "authors" -> "Authors";
+                case "description" -> "Description";
+                case "url" -> "URL";
+                case "active" -> "Active";
+                case "modLoaderType" -> "Mod Loader Type";
+                case "mcmodId" -> "MCMod ID";
+                case "abbr" -> "Abbreviation";
+                case "chineseName" -> "Chinese Name";
+                case "sha1" -> "SHA1";
+                case "sha512" -> "SHA512";
+                case "curseForgeUrl" -> "CurseForge URL";
+                case "curseForgeFileUrl" -> "CurseForge File URL";
+                case "curseForgeDownloadPage" -> "CurseForge Download Page";
+                case "modrinthUrl" -> "Modrinth URL";
+                case "modrinthFileUrl" -> "Modrinth File URL";
+                default -> field;
+            });
+        }
+        return headers;
+    }
+
+    private List<String> getFieldValues(ModListPageSkin.ModInfoObject modInfo, List<String> fields) {
+        List<String> values = new ArrayList<>();
+        for (String field : fields) {
+            values.add(getFieldValue(modInfo, field));
+        }
+        return values;
+    }
+
+    private String getFieldValue(ModListPageSkin.ModInfoObject modInfo, String field) {
+        LocalModFile mod = modInfo.getModInfo();
+        ModTranslations.Mod modTranslations = modInfo.getModTranslations();
+
+        return switch (field) {
+            case "name" -> mod.getName() != null ? mod.getName() : "";
+            case "version" -> mod.getVersion() != null ? mod.getVersion() : "";
+            case "modid" -> mod.getId() != null ? mod.getId() : "";
+            case "gameVersion" -> mod.getGameVersion() != null ? mod.getGameVersion() : "";
+            case "authors" -> mod.getAuthors() != null ? mod.getAuthors() : "";
+            case "description" -> mod.getDescription() != null ? mod.getDescription().toStringSingleLine() : "";
+            case "url" -> mod.getUrl() != null ? mod.getUrl() : "";
+            case "active" -> String.valueOf(mod.isActive());
+            case "modLoaderType" -> mod.getModLoaderType() != null ? mod.getModLoaderType().name() : "";
+            case "mcmodId" -> modTranslations != null ? modTranslations.getMcmod() : "";
+            case "abbr" -> modTranslations != null ? modTranslations.getAbbr() : "";
+            case "chineseName" -> {
+                if (modTranslations == null) {
+                    yield "";
+                }
+                String chineseName = modTranslations.getName();
+                if (chineseName == null || !StringUtils.containsChinese(chineseName)) {
+                    yield "";
+                }
+                chineseName = StringUtils.removeEmoji(chineseName);
+                yield chineseName;
+            }
+            case "sha1" -> {
+                String sha1 = computeSha1Cached(mod.getFile());
+                yield sha1 != null ? sha1 : "";
+            }
+            case "sha512" -> {
+                String sha512 = computeSha512Cached(mod.getFile());
+                yield sha512 != null ? sha512 : "";
+            }
+            case "curseForgeUrl" -> {
+                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                yield remoteInfo.curseForgeUrl;
+            }
+            case "curseForgeFileUrl" -> {
+                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                yield remoteInfo.curseForgeFileUrl;
+            }
+            case "curseForgeDownloadPage" -> {
+                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                yield remoteInfo.curseForgeDownloadPage;
+            }
+            case "modrinthUrl" -> {
+                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                yield remoteInfo.modrinthUrl;
+            }
+            case "modrinthFileUrl" -> {
+                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                yield remoteInfo.modrinthFileUrl;
+            }
+            default -> "";
+        };
+    }
+
+    private @Nullable String computeSha1(Path path) {
+        try {
+            return DigestUtils.digestToString("SHA-1", path);
+        } catch (IOException e) {
+            LOG.warning("Failed to compute SHA1 for " + path, e);
+            return null;
+        }
+    }
+
+    private @Nullable String computeSha512(Path path) {
+        try {
+            return DigestUtils.digestToString("SHA-512", path);
+        } catch (IOException e) {
+            LOG.warning("Failed to compute SHA512 for " + path, e);
+            return null;
+        }
+    }
+
+    /// Computes SHA1 hash with caching to avoid redundant computation.
+    /// @param path The file path to compute hash for
+    /// @return The SHA1 hash string, or null if computation failed
+    private @Nullable String computeSha1Cached(Path path) {
+        return sha1Cache.computeIfAbsent(path, p -> computeSha1(p));
+    }
+
+    /// Computes SHA512 hash with caching to avoid redundant computation.
+    /// @param path The file path to compute hash for
+    /// @return The SHA512 hash string, or null if computation failed
+    private @Nullable String computeSha512Cached(Path path) {
+        return sha512Cache.computeIfAbsent(path, p -> computeSha512(p));
+    }
+
+    private RemoteModInfo getRemoteModInfo(LocalModFile mod) {
+        Path filePath = mod.getFile();
+        RemoteModInfo cached = remoteModInfoCache.get(filePath);
+        if (cached != null) {
+            return cached;
+        }
+
+        // Use ConcurrentHashMap to safely collect results from parallel operations
+        Map<String, String> results = new ConcurrentHashMap<>();
+        results.put("curseForgeUrl", "");
+        results.put("curseForgeFileUrl", "");
+        results.put("curseForgeDownloadPage", "");
+        results.put("modrinthUrl", "");
+        results.put("modrinthFileUrl", "");
+
+        DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
+
+        // Fetch CurseForge and Modrinth info in parallel
+        CompletableFuture<Void> curseForgeFuture = CompletableFuture.runAsync(() -> {
+            try {
+                if (CurseForgeRemoteAddonRepository.isAvailable()) {
+                    RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddonRepository.Type.MOD);
+                    if (curseForgeRepo != null) {
+                        Optional<RemoteAddon.Version> curseForgeVersion = curseForgeRepo.getRemoteVersionByLocalFile(filePath);
+                        if (curseForgeVersion.isPresent()) {
+                            RemoteAddon.Version version = curseForgeVersion.get();
+                            results.put("curseForgeFileUrl", version.file() != null && version.file().url() != null ? version.file().url() : "");
+                            try {
+                                RemoteAddon addon = curseForgeRepo.getModById(downloadProvider, version.modid());
+                                if (addon != null) {
+                                    String url = addon.pageUrl() != null ? addon.pageUrl() : "";
+                                    results.put("curseForgeUrl", url);
+                                    if (version.self() instanceof CurseForgeRemoteAddonRepository.CurseAddon.LatestFile latestFile) {
+                                        results.put("curseForgeDownloadPage", url + "/download/" + latestFile.id());
+                                    }
+                                }
+                            } catch (IOException e) {
+                                LOG.warning("Failed to get CurseForge mod info for " + filePath, e);
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to lookup CurseForge version for " + filePath, e);
+            }
+        }, Schedulers.io());
+
+        CompletableFuture<Void> modrinthFuture = CompletableFuture.runAsync(() -> {
+            try {
+                RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddonRepository.Type.MOD);
+                if (modrinthRepo != null) {
+                    Optional<RemoteAddon.Version> modrinthVersion = modrinthRepo.getRemoteVersionByLocalFile(filePath);
+                    if (modrinthVersion.isPresent()) {
+                        RemoteAddon.Version version = modrinthVersion.get();
+                        results.put("modrinthFileUrl", version.file() != null && version.file().url() != null ? version.file().url() : "");
+                        try {
+                            RemoteAddon addon = modrinthRepo.getModById(downloadProvider, version.modid());
+                            if (addon != null) {
+                                results.put("modrinthUrl", addon.pageUrl() != null ? addon.pageUrl() : "");
+                            }
+                        } catch (IOException e) {
+                            LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to lookup Modrinth version for " + filePath, e);
+            }
+        }, Schedulers.io());
+
+        // Wait for both futures to complete
+        CompletableFuture.allOf(curseForgeFuture, modrinthFuture).join();
+
+        RemoteModInfo result = new RemoteModInfo(
+                results.get("curseForgeUrl"),
+                results.get("curseForgeFileUrl"),
+                results.get("curseForgeDownloadPage"),
+                results.get("modrinthUrl"),
+                results.get("modrinthFileUrl"));
+        remoteModInfoCache.put(filePath, result);
+        return result;
     }
 
     public void rollback(LocalModFile from, LocalModFile to) {
