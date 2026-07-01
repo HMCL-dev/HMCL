@@ -22,7 +22,10 @@ import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.*;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -762,6 +765,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             graphicsSettings.getContent().add(vulkanRendererPane);
             vulkanRendererPane.setTitle(i18n("settings.advanced.renderer.vulkan"));
 
+            var highPerformancePane = createInheritableBooleanButton(GameSettings::highPerformanceProperty);
+            graphicsSettings.getContent().add(highPerformancePane);
+            highPerformancePane.setTitle(i18n("settings.advanced.renderer.gpu_preferences"));
+            highPerformancePane.setSubtitle(i18n("settings.advanced.windows_only"));
         }
 
         var nativeLibrarySettings = new ComponentList();
@@ -2457,15 +2464,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Updates the page read-only state used when settings cannot be saved safely.
     ///
     /// @param readOnly whether the current settings should be displayed read-only
-    /// @param message the warning message shown when the page is read-only
+    /// @param message  the warning message shown when the page is read-only
     private void setSettingsReadOnly(boolean readOnly, String message) {
         setSettingsReadOnly(readOnly, message, null);
     }
 
     /// Updates the page read-only state used when settings cannot be saved safely.
     ///
-    /// @param readOnly whether the current settings should be displayed read-only
-    /// @param message the warning message shown when the page is read-only
+    /// @param readOnly       whether the current settings should be displayed read-only
+    /// @param message        the warning message shown when the page is read-only
     /// @param forceOverwrite the action used to back up and overwrite the read-only file
     private void setSettingsReadOnly(boolean readOnly, String message, @Nullable Runnable forceOverwrite) {
         if (readOnly && forceOverwrite != null) {
