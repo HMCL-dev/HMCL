@@ -278,7 +278,7 @@ public abstract class CreateDeb extends DefaultTask {
                 if [ -z "${HMCL_DEPENDENCIES_DIR:-}" ]; then
                     export HMCL_DEPENDENCIES_DIR="$HMCL_USER_HOME/dependencies"
                 fi
-                exec %s "$@"
+                exec %s "$@" -Dhmcl.update.packageManager=apt
                 """.formatted(getCurrentTypeName(), getTargetPath());
     }
 

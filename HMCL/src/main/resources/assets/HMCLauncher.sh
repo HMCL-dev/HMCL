@@ -60,6 +60,10 @@ else
   _HMCL_VM_OPTIONS="-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"
 fi
 
+if [ $# -gt 0 ]; then
+  _HMCL_VM_OPTIONS="$_HMCL_VM_OPTIONS $*"
+fi
+
 function show_warning_console() {
     echo -e "\033[1;31m$1\033[0m" >&2
 }
