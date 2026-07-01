@@ -32,8 +32,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
@@ -550,17 +549,10 @@ public class TerracottaControllerPage extends StackPane {
 
     private ComponentSublist getThirdPartyDownloadNodes() {
         ComponentSublist locals = new ComponentSublist();
-
-        var header = new LinePane();
-        header.getStyleClass().add("no-padding");
-        header.setLargeTitle(true);
-        header.setMinHeight(LinePane.USE_COMPUTED_SIZE);
-        HBox.setHgrow(header, Priority.ALWAYS);
-        header.setMouseTransparent(true);
-        header.setLeading(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
-        header.setTitle(i18n("terracotta.from_local.title"));
-        header.setSubtitle(i18n("terracotta.from_local.desc"));
-        locals.setHeaderLeft(header);
+        locals.setLargeTitle(true);
+        locals.setLeading(new ImageView(FXUtils.newBuiltinImage("/assets/img/terracotta.png")));
+        locals.setTitle(i18n("terracotta.from_local.title"));
+        locals.setSubtitle(i18n("terracotta.from_local.desc"));
 
         for (TerracottaMetadata.Link link : TerracottaMetadata.PACKAGE_LINKS) {
             LineButton item = new LineButton();
