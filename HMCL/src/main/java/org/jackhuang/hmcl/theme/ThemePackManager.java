@@ -619,9 +619,21 @@ public final class ThemePackManager {
     /// @param authorName the exported package author name
     /// @throws IOException if the current appearance cannot be exported
     public static void exportCurrent(Path outputFile, String packId, String packName, String authorName) throws IOException {
+        exportCurrent(outputFile, packId, CURRENT_THEME_PACK_VERSION, packName, authorName);
+    }
+
+    /// Exports the current launcher appearance to a theme-pack file.
+    ///
+    /// @param outputFile the target theme-pack file
+    /// @param packId     the exported package identifier
+    /// @param version    the exported package version
+    /// @param packName   the exported package display name
+    /// @param authorName the exported package author name
+    /// @throws IOException if the current appearance cannot be exported
+    public static void exportCurrent(Path outputFile, String packId, String version, String packName, String authorName) throws IOException {
         Objects.requireNonNull(outputFile);
 
-        ExportedThemePack themePack = createCurrent(packId, packName, authorName);
+        ExportedThemePack themePack = createCurrent(packId, version, packName, authorName);
         try {
             ThemePackExporter.export(themePack.manifest(), themePack.assets(), outputFile);
         } finally {
@@ -643,7 +655,20 @@ public final class ThemePackManager {
     /// @return the exportable theme-pack descriptor
     /// @throws IOException if the current appearance cannot be represented as a theme pack
     public static ExportedThemePack createCurrent(String packId, String packName, String authorName) throws IOException {
+        return createCurrent(packId, CURRENT_THEME_PACK_VERSION, packName, authorName);
+    }
+
+    /// Creates an exportable theme pack from the current launcher appearance.
+    ///
+    /// @param packId     the exported package identifier
+    /// @param version    the exported package version
+    /// @param packName   the exported package display name
+    /// @param authorName the exported package author name
+    /// @return the exportable theme-pack descriptor
+    /// @throws IOException if the current appearance cannot be represented as a theme pack
+    public static ExportedThemePack createCurrent(String packId, String version, String packName, String authorName) throws IOException {
         packId = ThemePackManifest.requirePackageId(packId);
+        version = requireNonBlank(version, "version");
         packName = requireNonBlank(packName, "packName");
         authorName = requireNonBlank(authorName, "authorName");
 
@@ -668,7 +693,7 @@ public final class ThemePackManager {
                     List.of());
             ThemePackManifest manifest = new ThemePackManifest(
                     packId,
-                    CURRENT_THEME_PACK_VERSION,
+                    version,
                     LocalizedText.plain(packName),
                     List.of(new ThemePackAuthor(LocalizedText.plain(authorName))),
                     background.source() instanceof ThemeBackground.Image image ? image.path() : null,

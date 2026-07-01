@@ -302,6 +302,10 @@ public class PersonalizationPage extends StackPane {
                 i18n("theme_pack.export.name"),
                 "")
                 .setPromptText(defaultPackName);
+        PromptDialogPane.Builder.StringQuestion versionQuestion = new PromptDialogPane.Builder.StringQuestion(
+                i18n("theme_pack.export.version"),
+                "")
+                .setPromptText("1.0.0");
         PromptDialogPane.Builder.StringQuestion authorNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.author"),
                 "")
@@ -310,14 +314,16 @@ public class PersonalizationPage extends StackPane {
         Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
                 .addQuestion(packIdQuestion)
                 .addQuestion(packNameQuestion)
+                .addQuestion(versionQuestion)
                 .addQuestion(authorNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
                 StringUtils.isBlank(packIdQuestion.getValue()) ? defaultPackId : packIdQuestion.getValue().trim(),
+                StringUtils.isBlank(versionQuestion.getValue()) ? "1.0.0" : versionQuestion.getValue().trim(),
                 StringUtils.isBlank(packNameQuestion.getValue()) ? defaultPackName : packNameQuestion.getValue().trim(),
                 StringUtils.isBlank(authorNameQuestion.getValue()) ? defaultAuthorName : authorNameQuestion.getValue().trim()));
     }
 
     /// Saves current launcher appearance as a theme-pack file with the given package metadata.
-    private void exportCurrentThemePack(String packId, String packName, String authorName) {
+    private void exportCurrentThemePack(String packId, String version, String packName, String authorName) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("theme_pack.export.title"));
         String initialFileName = sanitizeThemePackFileName(packName) + ThemePackExporter.FILE_EXTENSION;
@@ -340,6 +346,7 @@ public class PersonalizationPage extends StackPane {
             ThemePackManager.exportCurrent(
                     output,
                     packId,
+                    version,
                     packName,
                     authorName);
             Controllers.dialog(
