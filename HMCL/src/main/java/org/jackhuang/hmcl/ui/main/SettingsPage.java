@@ -37,10 +37,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.upgrade.RemoteVersion;
-import org.jackhuang.hmcl.upgrade.UpdateChannel;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.upgrade.*;
 import org.jackhuang.hmcl.util.AprilFools;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -114,7 +111,7 @@ public final class SettingsPage extends ScrollPane {
 
                     final StringProperty lblUpdateSubProperty = updatePane.subtitleProperty();
 
-                    {
+                    if (IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK || IntegrityChecker.isSelfVerified()) {
                         updateListener = any -> {
                             boolean outdated = UpdateChecker.isOutdated();
 
@@ -134,6 +131,11 @@ public final class SettingsPage extends ScrollPane {
                         UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
                         UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
                         updateListener.invalidated(null);
+                    } else {
+                        updateButton.setVisible(false);
+                        updateButton.setManaged(false);
+                        lblUpdateSubProperty.set(i18n("update.unverified"));
+                        updateListener = null;
                     }
 
                     updatePaneList.getContent().add(updatePane);
