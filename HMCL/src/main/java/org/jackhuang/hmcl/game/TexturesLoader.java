@@ -45,7 +45,10 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -65,21 +68,10 @@ public final class TexturesLoader {
     }
 
     // ==== Texture Loading ====
-    public static class LoadedTexture {
-        private final Image image;
-        private final Map<String, String> metadata;
-
-        public LoadedTexture(Image image, Map<String, String> metadata) {
-            this.image = requireNonNull(image);
-            this.metadata = requireNonNull(metadata);
-        }
-
-        public Image getImage() {
-            return image;
-        }
-
-        public Map<String, String> getMetadata() {
-            return metadata;
+    public record LoadedTexture(Image image, Map<String, String> metadata) {
+        public LoadedTexture {
+            requireNonNull(image);
+            requireNonNull(metadata);
         }
     }
 
@@ -158,7 +150,7 @@ public final class TexturesLoader {
     }
 
     public static TextureModel getDefaultModel(UUID uuid) {
-        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).getMetadata().get("model"))
+        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).metadata().get("model"))
                 ? TextureModel.WIDE
                 : TextureModel.SLIM;
     }

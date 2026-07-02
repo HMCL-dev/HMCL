@@ -371,7 +371,7 @@ public final class JavaDownloadDialog extends StackPane {
             if (version == null)
                 return;
 
-            Controllers.taskDialog(new GetTask(downloadProvider.injectURLWithCandidates(version.getLinks().getPkgInfoUri()))
+            Controllers.taskDialog(new GetTask(downloadProvider.injectURLWithCandidates(version.getLinks().pkgInfoUri()))
                     .setExecutor(Schedulers.io())
                     .thenComposeAsync(json -> {
                         DiscoResult<DiscoRemoteFileInfo> result = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoRemoteFileInfo.class));
@@ -379,20 +379,20 @@ public final class JavaDownloadDialog extends StackPane {
                             throw new IOException("Illegal result: " + json);
 
                         DiscoRemoteFileInfo fileInfo = result.getResult().get(0);
-                        if (StringUtils.isNotBlank(fileInfo.getChecksumType())
-                                && !fileInfo.getChecksumType().equals("sha1") && !fileInfo.getChecksumType().equals("sha256") && !fileInfo.getChecksumType().equals("md5"))
-                            throw new IOException("Unsupported checksum type: " + fileInfo.getChecksumType());
-                        if (StringUtils.isBlank(fileInfo.getDirectDownloadUri()))
+                        if (StringUtils.isNotBlank(fileInfo.checksumType())
+                                && !fileInfo.checksumType().equals("sha1") && !fileInfo.checksumType().equals("sha256") && !fileInfo.checksumType().equals("md5"))
+                            throw new IOException("Unsupported checksum type: " + fileInfo.checksumType());
+                        if (StringUtils.isBlank(fileInfo.directDownloadUri()))
                             throw new IOException("Missing download URI: " + json);
 
                         Path targetFile = Files.createTempFile("hmcl-java-", "." + version.getArchiveType());
                         targetFile.toFile().deleteOnExit();
 
                         Task<FileDownloadTask.IntegrityCheck> getIntegrityCheck;
-                        if (StringUtils.isNotBlank(fileInfo.getChecksum()))
-                            getIntegrityCheck = Task.completed(new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), fileInfo.getChecksum()));
-                        else if (StringUtils.isNotBlank(fileInfo.getChecksumUri()))
-                            getIntegrityCheck = new GetTask(downloadProvider.injectURLWithCandidates(fileInfo.getChecksumUri()))
+                        if (StringUtils.isNotBlank(fileInfo.checksum()))
+                            getIntegrityCheck = Task.completed(new FileDownloadTask.IntegrityCheck(fileInfo.checksumType(), fileInfo.checksum()));
+                        else if (StringUtils.isNotBlank(fileInfo.checksumUri()))
+                            getIntegrityCheck = new GetTask(downloadProvider.injectURLWithCandidates(fileInfo.checksumUri()))
                                     .thenApplyAsync(checksum -> {
                                         checksum = checksum.trim();
 
@@ -400,15 +400,15 @@ public final class JavaDownloadDialog extends StackPane {
                                         if (idx > 0)
                                             checksum = checksum.substring(0, idx);
 
-                                        return new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), checksum);
+                                        return new FileDownloadTask.IntegrityCheck(fileInfo.checksumType(), checksum);
                                     });
                         else
                             getIntegrityCheck = Task.completed(null);
 
                         return getIntegrityCheck
                                 .thenComposeAsync(integrityCheck ->
-                                        new FileDownloadTask(downloadProvider.injectURLWithCandidates(fileInfo.getDirectDownloadUri()),
-                                                targetFile, integrityCheck).setName(fileInfo.getFileName()))
+                                        new FileDownloadTask(downloadProvider.injectURLWithCandidates(fileInfo.directDownloadUri()),
+                                                targetFile, integrityCheck).setName(fileInfo.fileName()))
                                 .thenSupplyAsync(() -> targetFile);
                     })
                     .whenComplete(Schedulers.javafx(), ((result, exception) -> {

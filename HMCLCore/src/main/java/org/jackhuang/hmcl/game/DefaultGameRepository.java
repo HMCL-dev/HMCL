@@ -454,7 +454,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getLoggingObject(String version, String assetId, LoggingInfo loggingInfo) {
-        return getAssetDirectory(version, assetId).resolve("log_configs").resolve(loggingInfo.getFile().getId());
+        return getAssetDirectory(version, assetId).resolve("log_configs").resolve(loggingInfo.file().getId());
     }
 
     protected Path reconstructAssets(String version, String assetId) throws IOException, JsonParseException {
