@@ -35,6 +35,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -653,6 +654,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 {
                     var txtMinMemory = new JFXTextField();
                     txtMinMemory.setPrefWidth(160);
+                    txtMinMemory.setTextFormatter(new TextFormatter<>(change -> {
+                        change.setText(change.getText().replaceAll("[^0-9]", ""));
+                        return change;
+                    }));
 
                     var rightBox = new HBox(8, txtMinMemory, new Label(i18n("settings.memory.unit.mib")));
                     rightBox.setAlignment(Pos.CENTER_RIGHT);
@@ -666,6 +671,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 {
                     var txtMetaspace = new JFXTextField();
                     txtMetaspace.setPrefWidth(160);
+                    txtMetaspace.setTextFormatter(new TextFormatter<>(change -> {
+                        change.setText(change.getText().replaceAll("[^0-9]", ""));
+                        return change;
+                    }));
 
                     var rightBox = new HBox(8, txtMetaspace, new Label(i18n("settings.memory.unit.mib")));
                     rightBox.setAlignment(Pos.CENTER_RIGHT);
