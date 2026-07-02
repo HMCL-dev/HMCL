@@ -33,9 +33,11 @@ public sealed abstract class Either<L, R> {
     }
 
     public abstract boolean hasLeft();
+
     public abstract boolean hasRight();
 
     public abstract L left();
+
     public abstract R right();
 
     private static final class Left<L, R> extends Either<L, R> {
