@@ -34,8 +34,6 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.JavaVersionType;
-import org.jackhuang.hmcl.setting.GameDirectory;
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
