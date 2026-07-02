@@ -17,22 +17,83 @@
  */
 package org.jackhuang.hmcl.util;
 
-public record Either<T, U>(T left, U right) {
+import org.jetbrains.annotations.NotNull;
 
-    public static <T, U> Either<T, U> left(T left) {
-        return new Either<>(left, null);
+import java.util.Objects;
+
+/// @author Calboot
+public sealed abstract class Either<L, R> {
+
+    public static <L, R> Either<L, R> left(@NotNull L left) {
+        return new Left<>(left);
     }
 
-    public static <T, U> Either<T, U> right(U right) {
-        return new Either<>(null, right);
+    public static <L, R> Either<L, R> right(@NotNull R right) {
+        return new Right<>(right);
     }
 
-    public boolean hasLeft() {
-        return left != null;
+    public abstract boolean hasLeft();
+    public abstract boolean hasRight();
+
+    public abstract L left();
+    public abstract R right();
+
+    private static final class Left<L, R> extends Either<L, R> {
+
+        private final L value;
+
+        private Left(L value) {
+            this.value = Objects.requireNonNull(value);
+        }
+
+        @Override
+        public boolean hasLeft() {
+            return true;
+        }
+
+        @Override
+        public boolean hasRight() {
+            return false;
+        }
+
+        @Override
+        public L left() {
+            return value;
+        }
+
+        @Override
+        public R right() {
+            return null;
+        }
     }
 
-    public boolean hasRight() {
-        return right != null;
+    private static final class Right<L, R> extends Either<L, R> {
+
+        private final R value;
+
+        private Right(R value) {
+            this.value = Objects.requireNonNull(value);
+        }
+
+        @Override
+        public boolean hasLeft() {
+            return false;
+        }
+
+        @Override
+        public boolean hasRight() {
+            return true;
+        }
+
+        @Override
+        public L left() {
+            return null;
+        }
+
+        @Override
+        public R right() {
+            return value;
+        }
     }
 
 }
