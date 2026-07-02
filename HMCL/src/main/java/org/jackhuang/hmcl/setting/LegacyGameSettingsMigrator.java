@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -101,9 +100,9 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
-    public static GameSettings.Preset toPreset(GameSettingsPresetID id, String name, @Nullable JsonObject source) {
+    public static GameSettings.Preset toPreset(GameSettingsPresetID id, int autoNameNumber, @Nullable JsonObject source) {
         GameSettings.Preset target = new GameSettings.Preset(id);
-        target.nameProperty().setValue(LocalizedText.plain(name));
+        target.autoNameNumberProperty().setValue(autoNameNumber);
         if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
         }

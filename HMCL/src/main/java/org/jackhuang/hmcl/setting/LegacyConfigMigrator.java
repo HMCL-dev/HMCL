@@ -1272,7 +1272,7 @@ public final class LegacyConfigMigrator {
                     continue;
                 }
 
-                legacyParent = LegacyGameSettingsMigrator.toPreset(legacyGameSettings, profileName, legacySettingObject);
+                legacyParent = LegacyGameSettingsMigrator.toPreset(legacyGameSettings, gameSettingsPresets.newPresetAutoNameNumber(), legacySettingObject);
                 gameSettingsPresets.getPresets().add(legacyParent);
             }
         }
