@@ -294,10 +294,6 @@ public class PersonalizationPage extends StackPane {
         String userName = System.getProperty("user.name").trim();
         String defaultAuthorName = StringUtils.isBlank(userName) ? "Unknown" : userName;
 
-        PromptDialogPane.Builder.StringQuestion packIdQuestion = new PromptDialogPane.Builder.StringQuestion(
-                i18n("theme_pack.export.id"),
-                "")
-                .setPromptText(defaultPackId);
         PromptDialogPane.Builder.StringQuestion packNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.name"),
                 "")
@@ -312,11 +308,10 @@ public class PersonalizationPage extends StackPane {
                 .setPromptText(defaultAuthorName);
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
-                .addQuestion(packIdQuestion)
                 .addQuestion(packNameQuestion)
                 .addQuestion(versionQuestion)
                 .addQuestion(authorNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
-                StringUtils.isBlank(packIdQuestion.getValue()) ? defaultPackId : packIdQuestion.getValue().trim(),
+                defaultPackId,
                 StringUtils.isBlank(versionQuestion.getValue()) ? "1.0.0" : versionQuestion.getValue().trim(),
                 StringUtils.isBlank(packNameQuestion.getValue()) ? defaultPackName : packNameQuestion.getValue().trim(),
                 StringUtils.isBlank(authorNameQuestion.getValue()) ? defaultAuthorName : authorNameQuestion.getValue().trim()));
