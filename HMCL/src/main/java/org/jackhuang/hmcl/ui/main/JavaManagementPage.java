@@ -288,6 +288,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         @Override
         protected void updateItem(JavaRuntime item, boolean empty) {
+            JavaRuntime oldItem = getItem();
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setGraphic(null);
@@ -295,11 +296,13 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 content.setTitle((item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
 
-                content.getTags().clear();
-                content.addTag(i18n("java.info.architecture") + ": " + item.getArchitecture().getDisplayName());
-                String vendor = JavaInfo.normalizeVendor(item.getVendor());
-                if (vendor != null)
-                    content.addTag(i18n("java.info.vendor") + ": " + vendor);
+                if (oldItem != item) {
+                    content.getTags().clear();
+                    content.addTag(i18n("java.info.architecture") + ": " + item.getArchitecture().getDisplayName());
+                    String vendor = JavaInfo.normalizeVendor(item.getVendor());
+                    if (vendor != null)
+                        content.addTag(i18n("java.info.vendor") + ": " + vendor);
+                }
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;
                 if (removeIcon != newRemoveIcon) {

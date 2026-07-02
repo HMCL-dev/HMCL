@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.profile;
+package org.jackhuang.hmcl.ui.directory;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.css.PseudoClass;
@@ -25,16 +25,23 @@ import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jetbrains.annotations.NotNullByDefault;
 
-public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
+/// Skin for [GameDirectoryListItem].
+@NotNullByDefault
+public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
+    /// Pseudo class applied to the selected item.
     private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
-    public ProfileListItemSkin(ProfileListItem skinnable) {
+    /// Creates the skin for a game directory list item.
+    ///
+    /// @param skinnable the list item controlled by this skin
+    public GameDirectoryListItemSkin(GameDirectoryListItem skinnable) {
         super(skinnable);
 
         BorderPane root = new BorderPane();
@@ -45,7 +52,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
             skinnable.pseudoClassStateChanged(SELECTED, active);
         });
 
-        FXUtils.onClicked(getSkinnable(), () -> Profiles.setSelectedProfile(skinnable.getProfile()));
+        FXUtils.onClicked(getSkinnable(), () -> GameDirectoryManager.setSelectedGameDirectory(skinnable.getGameDirectory()));
 
         Node left = SVG.FOLDER.createIcon(20);
         left.setMouseTransparent(true);
@@ -67,8 +74,8 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         right.getChildren().add(btnRemove);
         root.setRight(right);
 
-        item.titleProperty().bind(skinnable.titleProperty());
-        item.subtitleProperty().bind(skinnable.subtitleProperty());
+        item.titleProperty().set(GameDirectoryManager.getGameDirectoryDisplayName(skinnable.getGameDirectory()));
+        item.subtitleProperty().set(skinnable.getGameDirectory().getPath().toString());
 
         getChildren().setAll(container);
     }
