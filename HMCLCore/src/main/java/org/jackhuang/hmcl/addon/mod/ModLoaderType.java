@@ -17,6 +17,10 @@
  */
 package org.jackhuang.hmcl.addon.mod;
 
+import org.jackhuang.hmcl.util.Either;
+
+import java.util.Locale;
+
 public enum ModLoaderType {
     UNKNOWN,
     FORGE,
@@ -25,5 +29,17 @@ public enum ModLoaderType {
     FABRIC,
     QUILT,
     LITE_LOADER,
-    LEGACY_FABRIC
+    LEGACY_FABRIC;
+
+    public static Either<ModLoaderType, String> fromString(String loader) {
+        return switch (loader.toLowerCase(Locale.ROOT)) {
+            case "fabric" -> Either.left(ModLoaderType.FABRIC);
+            case "forge" -> Either.left(ModLoaderType.FORGE);
+            case "neoforge" -> Either.left(ModLoaderType.NEO_FORGE);
+            case "quilt" -> Either.left(ModLoaderType.QUILT);
+            case "liteloader" -> Either.left(ModLoaderType.LITE_LOADER);
+            case "legacy-fabric" -> Either.left(ModLoaderType.LEGACY_FABRIC);
+            default -> Either.right(loader);
+        };
+    }
 }

@@ -417,14 +417,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                         return RemoteAddon.Dependency.ofGeneral(DEPENDENCY_TYPE.get(dependency.dependencyType), MODS, dependency.projectId);
                     }).filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions,
-                    loaders.stream().flatMap(loader -> {
-                        if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
-                        else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
-                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGE);
-                        else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
-                        else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
-                        else return Stream.empty();
-                    }).collect(Collectors.toList())
+                    loaders.stream().flatMap(loader -> Stream.of(ModLoaderType.fromString(loader))).toList()
             ));
         }
     }

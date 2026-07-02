@@ -53,10 +53,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.FXThread;
-import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -477,25 +474,26 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         if (versionOptional.isPresent()) {
                             RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                             FXUtils.runInFX(() -> {
-                                for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
-                                    String loaderName = switch (modLoaderType) {
-                                        case FORGE -> i18n("install.installer.forge");
-                                        case CLEANROOM -> i18n("install.installer.cleanroom");
-                                        case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                                        case NEO_FORGE -> i18n("install.installer.neoforge");
-                                        case FABRIC -> i18n("install.installer.fabric");
-                                        case LITE_LOADER -> i18n("install.installer.liteloader");
-                                        case QUILT -> i18n("install.installer.quilt");
-                                        default -> null;
-                                    };
-                                    if (loaderName == null)
-                                        continue;
-                                    if (title.getTags()
-                                            .stream()
-                                            .noneMatch(it -> it.getText().equals(loaderName))) {
-                                        title.addTag(loaderName);
-                                    }
+                                Set<String> tags = new LinkedHashSet<>();
+                                for (Either<ModLoaderType, String> loader : versionOptional.get().loaders()) {
+                                    String loaderName;
+                                    if (loader.hasLeft()) {
+                                        loaderName = switch (loader.left()) {
+                                            case FORGE -> i18n("install.installer.forge");
+                                            case CLEANROOM -> i18n("install.installer.cleanroom");
+                                            case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
+                                            case NEO_FORGE -> i18n("install.installer.neoforge");
+                                            case FABRIC -> i18n("install.installer.fabric");
+                                            case LITE_LOADER -> i18n("install.installer.liteloader");
+                                            case QUILT -> i18n("install.installer.quilt");
+                                            default -> null;
+                                        };
+                                    } else if (loader.hasRight()) {
+                                        loaderName = StringUtils.removeDashAndCapitalizeWords(loader.right());
+                                    } else continue;
+                                    if (loaderName != null) tags.add(loaderName);
                                 }
+                                title.addTags(tags);
 
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());

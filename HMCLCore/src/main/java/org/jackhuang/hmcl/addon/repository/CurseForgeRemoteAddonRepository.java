@@ -22,10 +22,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.MurmurHash2;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -482,13 +479,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                             return RemoteAddon.Dependency.ofGeneral(RELATION_TYPE.get(dependency.relationType()), MODS, Integer.toString(dependency.modId()));
                         }).distinct().filter(Objects::nonNull).collect(Collectors.toList()),
                         gameVersions.stream().filter(GameVersionNumber::isKnown).toList(),
-                        gameVersions.stream().flatMap(version -> {
-                            if ("fabric".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FABRIC);
-                            else if ("forge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FORGE);
-                            else if ("quilt".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.QUILT);
-                            else if ("neoforge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.NEO_FORGE);
-                            else return Stream.empty();
-                        }).collect(Collectors.toList())
+                        gameVersions.stream().flatMap(loader -> Stream.of(ModLoaderType.fromString(loader))).toList()
                 );
             }
         }

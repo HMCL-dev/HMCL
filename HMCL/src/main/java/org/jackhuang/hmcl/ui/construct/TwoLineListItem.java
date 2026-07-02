@@ -30,6 +30,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 
+import java.util.Collection;
+
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
 
@@ -158,6 +160,15 @@ public class TwoLineListItem extends VBox {
         return lblSubtitle;
     }
 
+    private static Label createTag(String tag, PseudoClass pseudoClass) {
+        var tagLabel = new Label(tag);
+        tagLabel.getStyleClass().add("tag");
+        tagLabel.setMinWidth(Label.USE_PREF_SIZE);
+        if (pseudoClass != null)
+            tagLabel.pseudoClassStateChanged(pseudoClass, true);
+        return tagLabel;
+    }
+
     private ObservableList<Label> tags;
 
     public ObservableList<Label> getTags() {
@@ -183,16 +194,15 @@ public class TwoLineListItem extends VBox {
     }
 
     public void addTag(String tag, PseudoClass pseudoClass) {
-        var tagLabel = new Label(tag);
-        tagLabel.getStyleClass().add("tag");
-        tagLabel.setMinWidth(Label.USE_PREF_SIZE);
-        if (pseudoClass != null)
-            tagLabel.pseudoClassStateChanged(pseudoClass, true);
-        getTags().add(tagLabel);
+        getTags().add(createTag(tag, pseudoClass));
     }
 
     public void addTag(String tag) {
         addTag(tag, null);
+    }
+
+    public void addTags(Collection<String> tags) {
+        getTags().addAll(tags.stream().map(tag -> createTag(tag, null)).toList());
     }
 
     private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");
