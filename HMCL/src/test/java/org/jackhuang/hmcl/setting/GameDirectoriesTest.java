@@ -479,10 +479,10 @@ public final class GameDirectoriesTest {
         }
     }
 
-    /// Tests that absent instance settings do not apply legacy game directory presets.
+    /// Tests that existing versions without instance settings store the legacy game directory parent.
     @Test
-    public void absentInstanceSettingsDoNotApplyLegacyGameDirectoryPreset(@TempDir Path tempDirectory)
-            throws ReflectiveOperationException {
+    public void absentInstanceSettingsStoreLegacyGameDirectoryPresetAsParent(@TempDir Path tempDirectory)
+            throws IOException, ReflectiveOperationException {
         GameSettingsPresetID defaultPresetId =
                 GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000");
         GameSettingsPresetID legacyPresetId =
@@ -507,6 +507,50 @@ public final class GameDirectoriesTest {
                      new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
             settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
+            writeVersionJson(repository, "1.20.1");
+            LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
+            repository.refreshVersions();
+
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
+
+            assertEquals(legacyPresetId, setting.parentProperty().getValue());
+            assertTrue(setting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY));
+        }
+    }
+
+    /// Tests that versions created after migration do not inherit the legacy game directory parent.
+    @Test
+    public void newInstanceAfterMigrationDoesNotUseLegacyGameDirectoryParent(@TempDir Path tempDirectory)
+            throws IOException, ReflectiveOperationException {
+        GameSettingsPresetID defaultPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000");
+        GameSettingsPresetID legacyPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
+        GameSettings.Preset defaultPreset = new GameSettings.Preset(defaultPresetId);
+        defaultPreset.defaultIsolationTypeProperty().setValue(DefaultIsolationType.NEVER);
+        GameSettings.Preset legacyPreset = new GameSettings.Preset(legacyPresetId);
+        legacyPreset.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
+        GameSettingsPresets presets = new GameSettingsPresets();
+        presets.getPresets().setAll(defaultPreset, legacyPreset);
+
+        GameDirectory gameDirectory = new GameDirectory(
+                GameDirectoryID.generate(),
+                LocalizedText.plain("Dev"),
+                PortablePath.of(tempDirectory.toString()),
+                legacyPresetId);
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(gameDirectory);
+        GameDirectories userDirectories = new GameDirectories();
+
+        try (GameDirectoryEnvironment ignored =
+                     new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
+            settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
+            HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
+            LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
+            writeVersionJson(repository, "1.20.1");
+            repository.refreshVersions();
+
+            repository.applyDefaultIsolationSetting("1.20.1");
 
             assertNull(repository.getInstanceGameSettings("1.20.1"));
         }
@@ -687,6 +731,17 @@ public final class GameDirectoriesTest {
             userGameDirectoriesAccessField.set(null, previousUserGameDirectoriesAccess);
             initializedField.setBoolean(null, previousInitialized);
         }
+    }
+
+    /// Writes a minimal valid version json for repository refresh tests.
+    private static void writeVersionJson(HMCLGameRepository repository, String id) throws IOException {
+        Path versionRoot = repository.getVersionRoot(id);
+        Files.createDirectories(versionRoot);
+        Files.writeString(versionRoot.resolve(id + ".json"), """
+                {
+                  "id": "%s"
+                }
+                """.formatted(id));
     }
 
     /// Returns the only default game directory in the given store, asserting its path.
