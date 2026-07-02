@@ -301,7 +301,7 @@ public class PersonalizationPage extends StackPane {
         PromptDialogPane.Builder.StringQuestion versionQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.version"),
                 "")
-                .setPromptText("1.0.0");
+                .setPromptText(ThemePackManager.CURRENT_THEME_PACK_VERSION);
         PromptDialogPane.Builder.StringQuestion authorNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.author"),
                 "")
@@ -312,7 +312,9 @@ public class PersonalizationPage extends StackPane {
                 .addQuestion(versionQuestion)
                 .addQuestion(authorNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
                 defaultPackId,
-                StringUtils.isBlank(versionQuestion.getValue()) ? "1.0.0" : versionQuestion.getValue().trim(),
+                StringUtils.isBlank(versionQuestion.getValue())
+                        ? ThemePackManager.CURRENT_THEME_PACK_VERSION
+                        : versionQuestion.getValue().trim(),
                 StringUtils.isBlank(packNameQuestion.getValue()) ? defaultPackName : packNameQuestion.getValue().trim(),
                 StringUtils.isBlank(authorNameQuestion.getValue()) ? defaultAuthorName : authorNameQuestion.getValue().trim()));
     }

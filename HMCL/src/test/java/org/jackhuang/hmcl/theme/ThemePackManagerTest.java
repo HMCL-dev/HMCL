@@ -87,7 +87,7 @@ public final class ThemePackManagerTest {
             launcherSettingsField.set(null, launcherSettings);
 
             ThemePackManager.ExportedThemePack exported =
-                    ThemePackManager.createCurrent("example.export", "Example", "Tester");
+                    ThemePackManager.createCurrent("example.export", "Example", "1.0", "Tester");
             Theme theme = exported.manifest().themes().get(0);
             ThemeBackgroundSettings background = Objects.requireNonNull(theme.appearance().background());
             ThemeBackground.Image image = assertInstanceOf(ThemeBackground.Image.class, background.source());
@@ -146,7 +146,11 @@ public final class ThemePackManagerTest {
             launcherSettingsField.set(null, launcherSettings);
 
             ThemePackManager.ExportedThemePack exported =
-                    ThemePackManager.createCurrent("example.export", "Example", "Tester");
+                    ThemePackManager.createCurrent(
+                            "example.export",
+                            ThemePackManager.CURRENT_THEME_PACK_VERSION,
+                            "Example",
+                            "Tester");
             try {
                 Theme theme = exported.manifest().themes().get(0);
                 ThemeBackgroundSettings background = Objects.requireNonNull(theme.appearance().background());
