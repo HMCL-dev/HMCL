@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.util;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.function.Function;
 
-/// @author Calboot
 public sealed abstract class Either<L, R> {
 
     public static <L, R> Either<L, R> left(@NotNull L left) {
@@ -39,6 +39,8 @@ public sealed abstract class Either<L, R> {
     public abstract L left();
 
     public abstract R right();
+
+    public abstract <T> T map(Function<L, T> lFunc, Function<R, T> rFunc);
 
     private static final class Left<L, R> extends Either<L, R> {
 
@@ -66,6 +68,11 @@ public sealed abstract class Either<L, R> {
         @Override
         public R right() {
             return null;
+        }
+
+        @Override
+        public <T> T map(Function<L, T> lFunc, Function<R, T> rFunc) {
+            return lFunc.apply(value);
         }
     }
 
@@ -95,6 +102,11 @@ public sealed abstract class Either<L, R> {
         @Override
         public R right() {
             return value;
+        }
+
+        @Override
+        public <T> T map(Function<L, T> lFunc, Function<R, T> rFunc) {
+            return rFunc.apply(value);
         }
     }
 

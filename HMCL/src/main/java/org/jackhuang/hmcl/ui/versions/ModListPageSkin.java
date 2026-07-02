@@ -476,22 +476,20 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             FXUtils.runInFX(() -> {
                                 Set<String> tags = new LinkedHashSet<>();
                                 for (Either<ModLoaderType, String> loader : versionOptional.get().loaders()) {
-                                    String loaderName;
-                                    if (loader.hasLeft()) {
-                                        loaderName = switch (loader.left()) {
-                                            case FORGE -> i18n("install.installer.forge");
-                                            case CLEANROOM -> i18n("install.installer.cleanroom");
-                                            case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                                            case NEO_FORGE -> i18n("install.installer.neoforge");
-                                            case FABRIC -> i18n("install.installer.fabric");
-                                            case LITE_LOADER -> i18n("install.installer.liteloader");
-                                            case QUILT -> i18n("install.installer.quilt");
-                                            default -> null;
-                                        };
-                                    } else if (loader.hasRight()) {
-                                        loaderName = StringUtils.removeDashAndCapitalizeWords(loader.right());
-                                    } else continue;
-                                    if (loaderName != null) tags.add(loaderName);
+                                    String tag = loader.map(
+                                            loaderType -> switch (loaderType) {
+                                                case FORGE -> i18n("install.installer.forge");
+                                                case CLEANROOM -> i18n("install.installer.cleanroom");
+                                                case NEO_FORGE -> i18n("install.installer.neoforge");
+                                                case FABRIC -> i18n("install.installer.fabric");
+                                                case LITE_LOADER -> i18n("install.installer.liteloader");
+                                                case QUILT -> i18n("install.installer.quilt");
+                                                case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
+                                                default -> null;
+                                            },
+                                            StringUtils::removeDashAndCapitalizeWords
+                                    );
+                                    if (tag != null) tags.add(tag);
                                 }
                                 title.addTags(tags);
 

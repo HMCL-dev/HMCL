@@ -454,26 +454,20 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     Set<String> tags = new LinkedHashSet<>();
                     for (Either<ModLoaderType, String> loader : dataItem.loaders()) {
-                        if (loader.hasLeft()) {
-                            var modLoaderType = loader.left();
-                            String tag = switch (modLoaderType) {
-                                case FORGE -> i18n("install.installer.forge");
-                                case CLEANROOM -> i18n("install.installer.cleanroom");
-                                case NEO_FORGE -> i18n("install.installer.neoforge");
-                                case FABRIC -> i18n("install.installer.fabric");
-                                case LITE_LOADER -> i18n("install.installer.liteloader");
-                                case QUILT -> i18n("install.installer.quilt");
-                                case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                                default -> null;
-                            };
-                            if (tag != null) tags.add(tag);
-                        } else if (loader.hasRight()) {
-                            if ("bungeecord".equalsIgnoreCase(loader.right())) {
-                                tags.add("BungeeCord");
-                            } else {
-                                tags.add(StringUtils.removeDashAndCapitalizeWords(loader.right()));
-                            }
-                        }
+                        String tag = loader.map(
+                                loaderType -> switch (loaderType) {
+                                    case FORGE -> i18n("install.installer.forge");
+                                    case CLEANROOM -> i18n("install.installer.cleanroom");
+                                    case NEO_FORGE -> i18n("install.installer.neoforge");
+                                    case FABRIC -> i18n("install.installer.fabric");
+                                    case LITE_LOADER -> i18n("install.installer.liteloader");
+                                    case QUILT -> i18n("install.installer.quilt");
+                                    case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
+                                    default -> null;
+                                },
+                                s -> "bungeecord".equalsIgnoreCase(s) ? "BungeeCord" : StringUtils.removeDashAndCapitalizeWords(s)
+                        );
+                        if (tag != null) tags.add(tag);
                     }
                     content.addTags(tags);
 
