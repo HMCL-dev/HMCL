@@ -230,8 +230,10 @@ public class ComponentSublist extends Control implements NoPaddingComponent {
         this.tip.set(tip);
     }
 
+    /// Whether the sublist header should use a larger title font.
     private static final PseudoClass PSEUDO_LARGE_TITLE = PseudoClass.getPseudoClass("large-title");
 
+    /// The property controlling whether the sublist header uses a larger title font.
     private final BooleanProperty largeTitle = new SimpleBooleanProperty(this, "largeTitle", false) {
         @Override
         protected void invalidated() {
@@ -239,14 +241,17 @@ public class ComponentSublist extends Control implements NoPaddingComponent {
         }
     };
 
+    /// Returns the property controlling whether the sublist header uses a larger title font.
     public BooleanProperty largeTitleProperty() {
         return largeTitle;
     }
 
+    /// Returns whether the sublist header uses a larger title font.
     public final boolean isLargeTitle() {
         return largeTitle.get();
     }
 
+    /// Sets whether the sublist header uses a larger title font.
     public final void setLargeTitle(boolean value) {
         largeTitle.set(value);
     }
