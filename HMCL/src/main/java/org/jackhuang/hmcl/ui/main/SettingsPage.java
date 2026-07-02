@@ -123,6 +123,10 @@ public final class SettingsPage extends ScrollPane {
                                 lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().version()));
                             } else if (UpdateChecker.isCheckingUpdate()) {
                                 lblUpdateSubProperty.set(i18n("update.checking"));
+                            } else if (UpdateChecker.errorProperty().get() != null) {
+                                Throwable t = UpdateChecker.errorProperty().get();
+                                String msg = t.getClass().getSimpleName() + ": " + t.getLocalizedMessage();
+                                lblUpdateSubProperty.set(i18n("update.check_failed", msg));
                             } else {
                                 lblUpdateSubProperty.set(i18n("update.latest"));
                             }
@@ -130,6 +134,7 @@ public final class SettingsPage extends ScrollPane {
                         UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
                         UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
                         UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
+                        UpdateChecker.errorProperty().addListener(new WeakInvalidationListener(updateListener));
                         updateListener.invalidated(null);
                     } else {
                         updateButton.setVisible(false);
