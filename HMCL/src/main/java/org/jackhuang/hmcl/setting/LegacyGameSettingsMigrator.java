@@ -46,7 +46,7 @@ public final class LegacyGameSettingsMigrator {
     static final String LEGACY_INSTANCE_SETTINGS_FILENAME = "hmclversion.cfg";
 
     /// Receipt file name used to record successful legacy per-version settings migration.
-    static final String LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME =
+    private static final String LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME =
             "instance-game-settings.migration-receipt.json";
 
     /// Directory under the version root that stores HMCL-managed instance metadata.
@@ -56,7 +56,7 @@ public final class LegacyGameSettingsMigrator {
     static final String INSTANCE_CONFIG_DIRECTORY = "config";
 
     /// Directory under the instance metadata directory that stores instance state files.
-    static final String INSTANCE_STATE_DIRECTORY = "state";
+    private static final String INSTANCE_STATE_DIRECTORY = "state";
 
     /// Current file name for instance-specific game settings.
     static final String INSTANCE_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
@@ -134,28 +134,11 @@ public final class LegacyGameSettingsMigrator {
             String instanceId,
             @Nullable GameSettingsPresetID parent) {
         Path instanceRoot = repository.getVersionRoot(instanceId);
-        GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
-        return migrateInstanceGameSettings(repository.getBaseDirectory(), instanceRoot, parent, parentSetting);
-    }
-
-    /// Migrates a legacy per-version game setting file into an instance setting.
-    ///
-    /// @param baseDirectory the game directory containing the `versions` directory
-    /// @param instanceRoot the version root containing the legacy setting file
-    /// @param parent the migrated parent preset ID for the profile
-    /// @param parentSetting the migrated parent preset, if available during migration
-    /// @return the migrated instance setting, or `null` when no legacy file can be migrated
-    static @Nullable InstanceMigrationResult migrateInstanceGameSettings(
-            Path baseDirectory,
-            Path instanceRoot,
-            @Nullable GameSettingsPresetID parent,
-            @Nullable GameSettings.Preset parentSetting) {
         Path file = instanceRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
         if (!Files.exists(file)) {
             return null;
         }
-        Path receiptLocation = instanceRoot.resolve(INSTANCE_METADATA_DIRECTORY)
-                .resolve(INSTANCE_STATE_DIRECTORY)
+        Path receiptLocation = repository.getInstanceStateDirectory(instanceId)
                 .resolve(LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME);
         if (MigrationReceipt.matches(receiptLocation, file)) {
             LOG.info("Skipping already migrated legacy version setting " + file);
@@ -169,6 +152,7 @@ public final class LegacyGameSettingsMigrator {
             }
 
             boolean inheritsLegacyParent = JsonUtils.getBoolean(legacySettingJson, "usesGlobal", false);
+            GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
             GameSettings.Instance setting = toInstance(
                     parent,
                     parentSetting,
@@ -176,6 +160,7 @@ public final class LegacyGameSettingsMigrator {
                     inheritsLegacyParent,
                     GameSettings.DetectedJava::ofLegacyPath);
             if (!inheritsLegacyParent) {
+                Path baseDirectory = repository.getBaseDirectory();
                 if (parentSetting != null
                         && getLegacyGameDirType(legacySettingJson, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.ROOT_FOLDER
                         && StringUtils.isNotBlank(parentSetting.runningDirectoryProperty().getValue())) {

@@ -479,6 +479,49 @@ public final class GameDirectoriesTest {
         }
     }
 
+    /// Tests that startup migration leaves legacy per-version settings for lazy migration.
+    @Test
+    public void startupMigrationSkipsLegacyInstanceSettingsFile(@TempDir Path tempDirectory)
+            throws IOException, ReflectiveOperationException {
+        GameSettingsPresetID defaultPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000");
+        GameSettingsPresetID legacyPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
+        GameSettingsPresets presets = new GameSettingsPresets();
+        presets.getPresets().setAll(
+                new GameSettings.Preset(defaultPresetId),
+                new GameSettings.Preset(legacyPresetId));
+
+        GameDirectory gameDirectory = new GameDirectory(
+                GameDirectoryID.generate(),
+                LocalizedText.plain("Dev"),
+                PortablePath.of(tempDirectory.toString()),
+                legacyPresetId);
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(gameDirectory);
+        GameDirectories userDirectories = new GameDirectories();
+
+        try (GameDirectoryEnvironment ignored =
+                     new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
+            settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
+            HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
+            writeVersionJson(repository, "1.20.1");
+            Path versionRoot = repository.getVersionRoot("1.20.1");
+            Files.writeString(versionRoot.resolve(LegacyGameSettingsMigrator.LEGACY_INSTANCE_SETTINGS_FILENAME), """
+                    {
+                      "usesGlobal": true
+                    }
+                    """);
+
+            LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
+
+            assertFalse(Files.exists(repository.getInstanceConfigDirectory("1.20.1")
+                    .resolve(LegacyGameSettingsMigrator.INSTANCE_GAME_SETTINGS_FILENAME)));
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
+            assertEquals(legacyPresetId, setting.parentProperty().getValue());
+        }
+    }
+
     /// Tests that existing versions without instance settings store the legacy game directory parent.
     @Test
     public void absentInstanceSettingsStoreLegacyGameDirectoryPresetAsParent(@TempDir Path tempDirectory)

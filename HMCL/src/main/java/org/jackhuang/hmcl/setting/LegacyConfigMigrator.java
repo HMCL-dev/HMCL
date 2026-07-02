@@ -1314,8 +1314,7 @@ public final class LegacyConfigMigrator {
 
         try (var stream = Files.list(versionsDirectory)) {
             stream.filter(Files::isDirectory)
-                    .forEach(instanceRoot -> migrateLegacyInstanceGameSettings(
-                            gameDirectory,
+                    .forEach(instanceRoot -> migrateLegacyInstanceGameSettingsInVersionRoot(
                             instanceRoot,
                             legacyGameSettings,
                             legacyParent));
@@ -1325,8 +1324,7 @@ public final class LegacyConfigMigrator {
     }
 
     /// Migrates one existing instance to explicit instance settings.
-    private static void migrateLegacyInstanceGameSettings(
-            Path gameDirectory,
+    private static void migrateLegacyInstanceGameSettingsInVersionRoot(
             Path instanceRoot,
             GameSettingsPresetID legacyGameSettings,
             GameSettings.Preset legacyParent) {
@@ -1341,33 +1339,19 @@ public final class LegacyConfigMigrator {
         if (Files.exists(currentSettings)) {
             return;
         }
-
-        @Nullable LegacyGameSettingsMigrator.InstanceMigrationResult migrationResult = null;
-        GameSettings.Instance setting;
         if (Files.exists(instanceRoot.resolve(LegacyGameSettingsMigrator.LEGACY_INSTANCE_SETTINGS_FILENAME))) {
-            migrationResult = LegacyGameSettingsMigrator.migrateInstanceGameSettings(
-                    gameDirectory,
-                    instanceRoot,
-                    legacyGameSettings,
-                    legacyParent);
-            if (migrationResult == null) {
-                return;
-            }
-            setting = migrationResult.setting();
-        } else {
-            setting = new GameSettings.Instance();
-            setting.parentProperty().setValue(legacyGameSettings);
-            if (legacyParent.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS
-                    && StringUtils.isBlank(legacyParent.runningDirectoryProperty().getValue())) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-            }
+            return;
+        }
+
+        GameSettings.Instance setting = new GameSettings.Instance();
+        setting.parentProperty().setValue(legacyGameSettings);
+        if (legacyParent.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS
+                && StringUtils.isBlank(legacyParent.runningDirectoryProperty().getValue())) {
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
         }
 
         try {
             FileUtils.saveSafely(currentSettings, LauncherSettings.SETTINGS_GSON.toJson(setting));
-            if (migrationResult != null) {
-                migrationResult.saveReceipt();
-            }
         } catch (IOException e) {
             LOG.warning("Failed to save migrated instance game settings " + currentSettings, e);
         }
