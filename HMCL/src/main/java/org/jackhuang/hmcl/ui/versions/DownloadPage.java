@@ -282,8 +282,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 resolve:
                                 for (RemoteAddon.Version modVersion : modVersions) {
                                     if (getSkinnable().type == RemoteAddonRepository.Type.MOD) {
-                                        for (ModLoaderType loader : modVersion.loaders()) {
-                                            if (targetLoaders.contains(loader)) {
+                                        for (Either<ModLoaderType, String> loader : modVersion.loaders()) {
+                                            if (loader.hasLeft() && targetLoaders.contains(loader.left())) {
                                                 list.getContent().addAll(
                                                         ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
                                                         new AddonItem(control.addon, modVersion, control)
@@ -452,28 +452,30 @@ public class DownloadPage extends Control implements DecoratorPage {
                             break;
                     }
 
-                    for (ModLoaderType modLoaderType : dataItem.loaders()) {
-                        switch (modLoaderType) {
-                            case FORGE:
-                                content.addTag(i18n("install.installer.forge"));
-                                break;
-                            case CLEANROOM:
-                                content.addTag(i18n("install.installer.cleanroom"));
-                                break;
-                            case NEO_FORGE:
-                                content.addTag(i18n("install.installer.neoforge"));
-                                break;
-                            case FABRIC:
-                                content.addTag(i18n("install.installer.fabric"));
-                                break;
-                            case LITE_LOADER:
-                                content.addTag(i18n("install.installer.liteloader"));
-                                break;
-                            case QUILT:
-                                content.addTag(i18n("install.installer.quilt"));
-                                break;
+                    Set<String> tags = new LinkedHashSet<>();
+                    for (Either<ModLoaderType, String> loader : dataItem.loaders()) {
+                        if (loader.hasLeft()) {
+                            var modLoaderType = loader.left();
+                            String tag = switch (modLoaderType) {
+                                case FORGE -> i18n("install.installer.forge");
+                                case CLEANROOM -> i18n("install.installer.cleanroom");
+                                case NEO_FORGE -> i18n("install.installer.neoforge");
+                                case FABRIC -> i18n("install.installer.fabric");
+                                case LITE_LOADER -> i18n("install.installer.liteloader");
+                                case QUILT -> i18n("install.installer.quilt");
+                                case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
+                                default -> null;
+                            };
+                            if (tag != null) tags.add(tag);
+                        } else if (loader.hasRight()) {
+                            if ("bungeecord".equalsIgnoreCase(loader.right())) {
+                                tags.add("BungeeCord");
+                            } else {
+                                tags.add(StringUtils.removeDashAndCapitalizeWords(loader.right()));
+                            }
                         }
                     }
+                    content.addTags(tags);
 
                     descPane.getChildren().setAll(graphicPane, content);
                 }
