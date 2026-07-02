@@ -31,7 +31,7 @@ public enum ModLoaderType {
     LITE_LOADER,
     LEGACY_FABRIC;
 
-    public static Either<ModLoaderType, String> fromString(String loader) {
+    public static Either<ModLoaderType, String> toEither(String loader) {
         return switch (loader.toLowerCase(Locale.ROOT)) {
             case "fabric" -> Either.left(ModLoaderType.FABRIC);
             case "forge" -> Either.left(ModLoaderType.FORGE);

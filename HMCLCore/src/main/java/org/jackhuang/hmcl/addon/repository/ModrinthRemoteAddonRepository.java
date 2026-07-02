@@ -417,7 +417,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                         return RemoteAddon.Dependency.ofGeneral(DEPENDENCY_TYPE.get(dependency.dependencyType), MODS, dependency.projectId);
                     }).filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions,
-                    loaders.stream().flatMap(loader -> Stream.of(ModLoaderType.fromString(loader))).toList()
+                    loaders.stream().map(ModLoaderType::toEither).toList()
             ));
         }
     }
