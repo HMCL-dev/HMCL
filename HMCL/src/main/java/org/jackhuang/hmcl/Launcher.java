@@ -158,7 +158,7 @@ public final class Launcher extends Application {
         DownloadProviders.init();
         ProxyManager.init();
         Accounts.init();
-        Profiles.init();
+        GameDirectoryManager.init();
         AuthlibInjectorServers.init();
         AnimationUtils.init();
 
