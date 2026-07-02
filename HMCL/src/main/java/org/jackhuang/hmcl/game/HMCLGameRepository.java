@@ -338,8 +338,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
 
         @Nullable GameSettingsPresetID legacyParent = gameDirectory.getLegacyGameSettings();
-        GameSettings.Preset gameDirectoryPreset = SettingsManager.getGameSettings(legacyParent);
-        if (gameDirectoryPreset == null) {
+        if (SettingsManager.getGameSettings(legacyParent) == null) {
             legacyParent = null;
         }
 
@@ -356,16 +355,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 LOG.warning("Failed to save migrated instance game settings for " + id, e);
             }
             return;
-        }
-
-        if (gameDirectoryPreset != null) {
-            GameSettings.Instance setting = new GameSettings.Instance();
-            setting.parentProperty().setValue(gameDirectoryPreset.idProperty().getValue());
-            if (gameDirectoryPreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-            }
-            initInstanceGameSettings(id, setting);
-            saveGameSettings(id);
         }
     }
 

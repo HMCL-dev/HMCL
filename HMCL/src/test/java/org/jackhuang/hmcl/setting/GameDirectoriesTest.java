@@ -479,18 +479,20 @@ public final class GameDirectoriesTest {
         }
     }
 
-    /// Tests that absent instance settings still create an explicit legacy game directory parent.
+    /// Tests that absent instance settings do not apply legacy game directory presets.
     @Test
-    public void absentInstanceSettingsStoreLegacyGameDirectoryPresetAsParent(@TempDir Path tempDirectory)
+    public void absentInstanceSettingsDoNotApplyLegacyGameDirectoryPreset(@TempDir Path tempDirectory)
             throws ReflectiveOperationException {
         GameSettingsPresetID defaultPresetId =
                 GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174000");
         GameSettingsPresetID legacyPresetId =
                 GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
+        GameSettings.Preset legacyPreset = new GameSettings.Preset(legacyPresetId);
+        legacyPreset.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
         GameSettingsPresets presets = new GameSettingsPresets();
         presets.getPresets().setAll(
                 new GameSettings.Preset(defaultPresetId),
-                new GameSettings.Preset(legacyPresetId));
+                legacyPreset);
 
         GameDirectory gameDirectory = new GameDirectory(
                 GameDirectoryID.generate(),
@@ -506,9 +508,7 @@ public final class GameDirectoriesTest {
             settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
 
-            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
-
-            assertEquals(legacyPresetId, setting.parentProperty().getValue());
+            assertNull(repository.getInstanceGameSettings("1.20.1"));
         }
     }
 
