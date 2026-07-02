@@ -391,13 +391,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         list.getStyleClass().add("jfx-list-view-float");
 
                         RemoteVersionListCell dummyCell = new RemoteVersionListCell(control);
-                        dummyCell.setPadding(Insets.EMPTY);
                         dummyCell.twoLineListItem.setTitle("Dummy");
                         dummyCell.twoLineListItem.setSubtitle("Dummy");
                         dummyCell.imageView.setImage(VersionIconType.GRASS.getIcon());
-                        dummyCell.setGraphic(dummyCell.pane);
-                        prepareNode(dummyCell);
-                        list.setFixedCellSize(dummyCell.prefHeight(-1));
+                        prepareNode(dummyCell.pane);
+                        list.setFixedCellSize(dummyCell.pane.prefHeight(-1));
 
                         VBox.setVgrow(list, Priority.ALWAYS);
 
