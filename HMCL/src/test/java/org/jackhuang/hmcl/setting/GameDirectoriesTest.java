@@ -509,7 +509,6 @@ public final class GameDirectoriesTest {
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
             writeVersionJson(repository, "1.20.1");
             LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
-            repository.refreshVersions();
 
             GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
 
@@ -548,9 +547,6 @@ public final class GameDirectoriesTest {
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
             LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
             writeVersionJson(repository, "1.20.1");
-            repository.refreshVersions();
-
-            repository.applyDefaultIsolationSetting("1.20.1");
 
             assertNull(repository.getInstanceGameSettings("1.20.1"));
         }
