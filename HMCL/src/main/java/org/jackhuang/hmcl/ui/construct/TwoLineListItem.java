@@ -31,7 +31,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
 public class TwoLineListItem extends VBox {
@@ -209,7 +209,7 @@ public class TwoLineListItem extends VBox {
 
     public void addTagsIfNotExist(Collection<String> tags) {
         var current = getTags().stream().map(Label::getText).collect(Collectors.toSet());
-        var target = new HashSet<>(tags);
+        var target = new LinkedHashSet<>(tags);
         target.removeAll(current);
         addTags(target);
     }
