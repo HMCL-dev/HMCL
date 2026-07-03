@@ -35,7 +35,7 @@ public enum ModLoaderType {
     public static boolean mightBeModLoader(String str) {
         if (StringUtils.isBlank(str)
                 || !StringUtils.isASCII(str)
-                || "client".equalsIgnoreCase(str) || "server".equalsIgnoreCase(str))
+                || "client".equalsIgnoreCase(str) || "server".equalsIgnoreCase(str) || "minecraft".equalsIgnoreCase(str))
             return false;
         int l = str.length();
         for (int i = 0; i < l; i++) {
