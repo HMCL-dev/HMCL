@@ -166,16 +166,18 @@ public final class NetworkUtils {
 
     private static final Map<String, String> API_KEYS = Map.of(
             "api.curseforge.com", CurseForgeRemoteAddonRepository.API_KEY,
-            "edge.forgecdn.net", CurseForgeRemoteAddonRepository.API_KEY
+            "forgecdn.net", CurseForgeRemoteAddonRepository.API_KEY
     );
+
+    public static Optional<String> getApiKey(URI uri) {
+        var host = uri.getHost();
+        if (host == null) return Optional.empty();
+        return API_KEYS.keySet().stream().filter(host::endsWith).max(Comparator.comparing(String::length)).map(API_KEYS::get).filter(StringUtils::isNotBlank);
+    }
 
     public static java.net.http.HttpRequest.Builder newRequestBuilder(URI uri) {
         var builder = java.net.http.HttpRequest.newBuilder(uri);
-        var host = uri.getHost();
-        if (host == null) return builder;
-        var apiKey = API_KEYS.get(host.toLowerCase(Locale.ROOT));
-        if (StringUtils.isNotBlank(apiKey))
-            builder.header("x-api-key", apiKey);
+        getApiKey(uri).ifPresent(apiKey -> builder.header("x-api-key", apiKey));
         return builder;
     }
 
@@ -192,6 +194,10 @@ public final class NetworkUtils {
             httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
             httpConnection.setRequestProperty("User-Agent", USER_AGENT);
             httpConnection.setInstanceFollowRedirects(false);
+            try {
+                getApiKey(url.toURI()).ifPresent(apiKey -> httpConnection.setRequestProperty("x-api-key", apiKey));
+            } catch (URISyntaxException ignored) {
+            }
         }
         return connection;
     }
