@@ -479,7 +479,11 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                             return RemoteAddon.Dependency.ofGeneral(RELATION_TYPE.get(dependency.relationType()), MODS, Integer.toString(dependency.modId()));
                         }).distinct().filter(Objects::nonNull).collect(Collectors.toList()),
                         gameVersions.stream().filter(GameVersionNumber::isKnown).toList(),
-                        gameVersions.stream().map(ModLoaderType::toEither).toList()
+                        gameVersions.stream().filter(s ->
+                                !"client".equalsIgnoreCase(s)
+                                && !"server".equalsIgnoreCase(s)
+                                && !StringUtils.containsDigit(s)
+                        ).map(ModLoaderType::toEither).toList()
                 );
             }
         }

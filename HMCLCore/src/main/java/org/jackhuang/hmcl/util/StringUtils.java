@@ -126,6 +126,15 @@ public final class StringUtils {
         return String.join(" ", words);
     }
 
+    public static boolean containsDigit(String str) {
+        int l = str.length();
+        for (int i = 0; i < l; i++) {
+            char c = str.charAt(i);
+            if ('0' <= c && c <= '9') return true;
+        }
+        return false;
+    }
+
     public static String substringBeforeLast(String str, char delimiter) {
         return substringBeforeLast(str, delimiter, str);
     }
