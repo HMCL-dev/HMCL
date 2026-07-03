@@ -74,6 +74,19 @@ public sealed abstract class Either<L, R> {
         public <T> T map(Function<L, T> lFunc, Function<R, T> rFunc) {
             return lFunc.apply(value);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof Either.Left<?,?> el) {
+                return this.value.equals(el.value);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return value.hashCode();
+        }
     }
 
     private static final class Right<L, R> extends Either<L, R> {
@@ -107,6 +120,19 @@ public sealed abstract class Either<L, R> {
         @Override
         public <T> T map(Function<L, T> lFunc, Function<R, T> rFunc) {
             return rFunc.apply(value);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof Either.Right<?,?> el) {
+                return this.value.equals(el.value);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return value.hashCode() + 31;
         }
     }
 
