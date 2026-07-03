@@ -76,7 +76,6 @@ final class PresetManagementPane extends ComponentSublist {
         this.holder = Objects.requireNonNull(holder);
 
         setTitle(i18n("settings.type.global.preset.manage_all"));
-        setHasSubtitle(true);
 
         LineButton createButton = new LineButton();
         createButton.setTitle(i18n("settings.type.global.preset.create"));
