@@ -90,8 +90,8 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
             VBox body = new VBox();
             body.setSpacing(8);
 
-            lblCreationWarning.prefWidthProperty().bind(body.widthProperty());
-            lblCreationWarning.setWrapText(true);
+            lblCreationWarning.setPrefWidth(0);
+            lblCreationWarning.maxWidthProperty().bind(body.widthProperty());
 
             body.getChildren().addAll(
                 txtServerUrl,
