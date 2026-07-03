@@ -102,6 +102,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// The current setting.
     private final ObjectProperty<@Nullable S> currentSetting = new SimpleObjectProperty<>(this, "setting");
 
+    private final ObjectProperty<GameVersionNumber> currentGameVersionNumber = new SimpleObjectProperty<>(this, "currentGameVersionNumber");
+
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
     private boolean updatingParentSetting = false;
@@ -340,15 +342,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 defaultIsolationTypePane.setSubtitle(i18n("settings.game.default_isolation.subtitle"));
                 defaultIsolationTypePane.setItems(DefaultIsolationType.values());
                 defaultIsolationTypePane.setNullSafeConverter(type -> switch (type) {
-                        case NEVER -> i18n("settings.game.default_isolation.never");
-                        case ALWAYS -> i18n("settings.game.default_isolation.always");
-                        case MODDED -> i18n("settings.game.default_isolation.modded");
-                    });
+                    case NEVER -> i18n("settings.game.default_isolation.never");
+                    case ALWAYS -> i18n("settings.game.default_isolation.always");
+                    case MODDED -> i18n("settings.game.default_isolation.modded");
+                });
                 defaultIsolationTypePane.setDescriptionConverter(type -> switch (type) {
-                        case NEVER -> i18n("settings.game.default_isolation.never.desc");
-                        case ALWAYS -> i18n("settings.game.default_isolation.always.desc");
-                        case MODDED -> i18n("settings.game.default_isolation.modded.desc");
-                    });
+                    case NEVER -> i18n("settings.game.default_isolation.never.desc");
+                    case ALWAYS -> i18n("settings.game.default_isolation.always.desc");
+                    case MODDED -> i18n("settings.game.default_isolation.modded.desc");
+                });
                 bindPresetBidirectional(defaultIsolationTypePane.valueProperty(), GameSettings.Preset::defaultIsolationTypeProperty);
             } else {
                 var isolationButton = new LineToggleButton();
@@ -749,6 +751,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             graphicsSettings.getContent().add(graphicsBackendPane);
             graphicsBackendPane.setTitle(i18n("settings.advanced.graphics_backend"));
 
+            if (isPresetSetting)
+                graphicsBackendPane.setSubtitle(i18n("settings.advanced.graphics_backend.desc"));
+
             var openGLRendererPane = createInheritableButton(
                     GameSettings::openGLRendererProperty,
                     e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)),
@@ -771,6 +776,21 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             graphicsSettings.getContent().add(vulkanRendererPane);
             vulkanRendererPane.setTitle(i18n("settings.advanced.renderer.vulkan"));
 
+            this.currentGameVersionNumber.addListener((o, oldValue, newValue) -> {
+                if (newValue.compareTo("26.2-snapshot-2") >= 0) {
+                    graphicsBackendPane.setVisible(true);
+                    graphicsBackendPane.setManaged(true);
+
+                    vulkanRendererPane.setVisible(true);
+                    vulkanRendererPane.setManaged(true);
+                } else {
+                    graphicsBackendPane.setVisible(false);
+                    graphicsBackendPane.setManaged(false);
+
+                    vulkanRendererPane.setVisible(false);
+                    vulkanRendererPane.setManaged(false);
+                }
+            });
         }
 
         var nativeLibrarySettings = new ComponentList();
@@ -2430,6 +2450,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         assert isPresetSetting == (instanceId == null);
 
         if (instanceId != null) {
+            this.currentGameVersionNumber.set(GameVersionNumber.asGameVersion(repository.getGameVersion(instanceId)));
+
             @Nullable GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(instanceId);
             this.currentSetting.set((S) setting);
             setSettingsReadOnly(
@@ -2438,6 +2460,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     setting != null ? this::forceOverwriteInstanceGameSettings : null);
             loadIcon();
         } else {
+            this.currentGameVersionNumber.set(GameVersionNumber.unknown());
             this.currentSetting.set((S) SettingsManager.getDefaultGameSettingsPresetOrCreate());
             setSettingsReadOnly(
                     SettingsManager.isGameSettingsReadOnly(),
@@ -2449,15 +2472,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Updates the page read-only state used when settings cannot be saved safely.
     ///
     /// @param readOnly whether the current settings should be displayed read-only
-    /// @param message the warning message shown when the page is read-only
+    /// @param message  the warning message shown when the page is read-only
     private void setSettingsReadOnly(boolean readOnly, String message) {
         setSettingsReadOnly(readOnly, message, null);
     }
 
     /// Updates the page read-only state used when settings cannot be saved safely.
     ///
-    /// @param readOnly whether the current settings should be displayed read-only
-    /// @param message the warning message shown when the page is read-only
+    /// @param readOnly       whether the current settings should be displayed read-only
+    /// @param message        the warning message shown when the page is read-only
     /// @param forceOverwrite the action used to back up and overwrite the read-only file
     private void setSettingsReadOnly(boolean readOnly, String message, @Nullable Runnable forceOverwrite) {
         if (readOnly && forceOverwrite != null) {
@@ -2592,13 +2615,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
 
         if (JavaManager.isInitialized()) {
-            GameVersionNumber gameVersionNumber;
+            GameVersionNumber gameVersionNumber = this.currentGameVersionNumber.get();
             Version version;
             if (this.instanceId == null) {
-                gameVersionNumber = GameVersionNumber.unknown();
                 version = null;
             } else {
-                gameVersionNumber = repository != null ? GameVersionNumber.asGameVersion(repository.getGameVersion(this.instanceId)) : GameVersionNumber.unknown();
                 version = repository != null ? repository.getResolvedVersion(this.instanceId) : null;
             }
 
