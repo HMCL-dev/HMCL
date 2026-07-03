@@ -164,17 +164,35 @@ public final class NetworkUtils {
         }
     }
 
-    private static final Map<String, String> API_KEYS = Map.of(
-            "api.curseforge.com", CurseForgeRemoteAddonRepository.API_KEY,
-            "forgecdn.net", CurseForgeRemoteAddonRepository.API_KEY
-    );
+    private static final List<Pair<String, String>> API_KEYS;
+
+    static {
+        if (CurseForgeRemoteAddonRepository.API_KEY.isEmpty()) {
+            API_KEYS = List.of();
+        } else {
+            API_KEYS = List.of(
+                    pair("api.curseforge.com", CurseForgeRemoteAddonRepository.API_KEY),
+                    pair("forgecdn.net", CurseForgeRemoteAddonRepository.API_KEY)
+            );
+        }
+    }
 
     public static void injectApiKey(WebURL url, URLConnection connection) {
+        if (!(connection instanceof HttpURLConnection))
+            return;
+
         String host = url.getHost();
-        if (host != null && !host.isEmpty()) {
-            String apiKey = API_KEYS.get(host);
-            if (apiKey != null && !apiKey.isEmpty()) {
-                connection.addRequestProperty("x-api-key", apiKey);
+        if (host == null || host.isEmpty())
+            return;
+
+        for (Pair<String, String> pair : API_KEYS) {
+            String hostSuffix = pair.getKey();
+            if (host.endsWith(hostSuffix) && (
+                    host.length() == hostSuffix.length()
+                            || host.charAt(host.length() - hostSuffix.length()) == '.'
+            )) {
+                connection.addRequestProperty("x-api-key", pair.getValue());
+                return;
             }
         }
     }
@@ -313,7 +331,8 @@ public final class NetworkUtils {
                 WebURL redirectedUrl = WebURL.of(conn.getURL()).resolve(newURL);
                 HttpURLConnection redirected = (HttpURLConnection) redirectedUrl.toURL().openConnection();
                 injectApiKey(redirectedUrl, redirected);
-                properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));;
+                properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
+                ;
                 redirected.setRequestMethod(method);
                 conn = redirected;
                 ++redirect;
