@@ -177,6 +177,11 @@ public final class NetworkUtils {
         }
     }
 
+    private static boolean matchDomainSuffix(String domain, String suffix) {
+        return domain.endsWith(suffix)
+                && (domain.length() == suffix.length() || domain.charAt(domain.length() - suffix.length() - 1) == '.');
+    }
+
     public static void injectApiKey(WebURL url, URLConnection connection) {
         if (!(connection instanceof HttpURLConnection))
             return;
@@ -187,10 +192,7 @@ public final class NetworkUtils {
 
         for (Pair<String, String> pair : API_KEYS) {
             String hostSuffix = pair.getKey();
-            if (host.endsWith(hostSuffix) && (
-                    host.length() == hostSuffix.length()
-                            || host.charAt(host.length() - hostSuffix.length()) == '.'
-            )) {
+            if (matchDomainSuffix(host, hostSuffix)) {
                 connection.addRequestProperty("x-api-key", pair.getValue());
                 return;
             }
@@ -332,7 +334,6 @@ public final class NetworkUtils {
                 HttpURLConnection redirected = (HttpURLConnection) redirectedUrl.toURL().openConnection();
                 injectApiKey(redirectedUrl, redirected);
                 properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
-                ;
                 redirected.setRequestMethod(method);
                 conn = redirected;
                 ++redirect;
