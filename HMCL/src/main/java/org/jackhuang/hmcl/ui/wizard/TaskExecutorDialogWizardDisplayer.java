@@ -34,7 +34,6 @@ import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -71,27 +70,22 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
             TaskExecutor executor = task.executor();
             TaskCenter.Entry entry = TaskCenter.getInstance().submit(executor, titleText, detail, kind, taskName);
 
-            // Terminal handling: a foreground completion shows the wizard's rich success/failure
-            // message; a background completion shows a lightweight toast. The two are mutually
-            // exclusive via foregroundShown, so the user is notified exactly once.
+            // Preserve this wizard's rich, actionable failure handling (FailureCallback / friendly
+            // per-exception messages): the Task Center replays it when the user inspects the failed
+            // entry, instead of dumping a raw stack trace.
+            entry.setFailurePresenter(next -> showResult(settings, entry.getExecutor(), next));
+
+            // Backgroundable tasks always run in the Task Center, so completion is reported with a
+            // lightweight toast (the detailed result is inspectable in the Task Center).
             entry.statusProperty().addListener((obs, old, now) -> {
-                if (!now.isTerminal())
-                    return;
-                if (entry.isForegroundShown())
-                    showResult(settings, entry.getExecutor(), endOnce);
-                else
+                if (now.isTerminal())
                     showBackgroundToast(entry);
             });
 
-            // Auto-background: never show a dialog, just enqueue and leave the wizard.
-            if (settings().isAutoBackgroundTask()) {
-                entry.setForegroundShown(false);
-                Controllers.showToast(i18n("task.auto_background.enqueued", entry.getDisplayText()));
-                endOnce.run();
-                return;
-            }
-
-            presentForeground(settings, entry, titleText, endOnce);
+            // No foreground dialog and no manual "move to background" choice: hand off to the Task
+            // Center and just close the confirmation page (endOnce). Don't yank the user anywhere.
+            Controllers.showToast(i18n("task.auto_background.enqueued", entry.getDisplayText()));
+            endOnce.run();
         });
     }
 
@@ -113,42 +107,6 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
         pane.setExecutor(executor);
         Controllers.dialog(pane);
         executor.start();
-        pane.refreshTaskList();
-    }
-
-    /// Foreground presentation of a managed entry.
-    private void presentForeground(SettingsMap settings, TaskCenter.Entry entry, String titleText, Runnable endOnce) {
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(new TaskCancellationAction(it -> {
-            TaskCenter.getInstance().cancel(entry);
-            it.fireEvent(new DialogCloseEvent());
-            endOnce.run();
-        }));
-        bindTitle(pane, settings, titleText);
-        pane.setExecutor(entry.getExecutor());
-
-        pane.setBackgroundAction(() -> {
-            entry.setForegroundShown(false);
-            endOnce.run();
-            pane.fireEvent(new DialogCloseEvent());
-        });
-
-        pane.setWaitingForBackground(entry.getStatus() == TaskCenter.Status.QUEUED);
-        entry.statusProperty().addListener((obs, old, now) ->
-                pane.setWaitingForBackground(now == TaskCenter.Status.QUEUED));
-
-        entry.setForegroundShown(true);
-
-        // Single close handler: detach the foreground flag and, for download-page installs, return
-        // to the download list (fires once per close — background, cancel or completion).
-        pane.addEventHandler(DialogCloseEvent.CLOSE, event -> {
-            entry.setForegroundShown(false);
-            if (Boolean.TRUE.equals(settings.get("return_to_download_list"))) {
-                Controllers.getDownloadPage().showGameDownloads();
-                Controllers.navigate(Controllers.getDownloadPage());
-            }
-        });
-
-        Controllers.dialog(pane);
         pane.refreshTaskList();
     }
 

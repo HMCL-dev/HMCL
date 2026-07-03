@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -243,23 +244,28 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnTask.setOnAction(e -> Controllers.navigate(TaskCenterPage.getInstance()));
                 FXUtils.installFastTooltip(btnTask, i18n("task.manage"));
 
-                Label taskBadge = new Label();
-                taskBadge.setStyle("-fx-font-size: 10px; -fx-text-fill: white; -fx-background-color: #F44336; " +
-                        "-fx-background-radius: 8; -fx-min-width: 16; -fx-min-height: 16; " +
-                        "-fx-alignment: center; -fx-padding: 0 3 0 3;");
+                // Progress ring: determinate fill while a download reports progress, spinning while
+                // the running task is indeterminate (e.g. an install). Bound to the TaskCenter.
+                JFXSpinner taskSpinner = new JFXSpinner();
+                taskSpinner.getStyleClass().add("task-indicator-spinner");
+                taskSpinner.setRadius(11);
+                taskSpinner.progressProperty().bind(TaskCenter.getInstance().runningProgressProperty());
+
+                // Center: the number of active tasks.
+                Label taskCount = new Label();
+                taskCount.getStyleClass().add("task-indicator-count");
+                taskCount.textFillProperty().bind(Themes.titleFillProperty());
 
                 StackPane taskIconPane = new StackPane();
-                taskIconPane.getChildren().add(SVG.CHECKLIST.createIcon(Themes.titleFillProperty()));
-                taskIconPane.getChildren().add(taskBadge);
-                StackPane.setAlignment(taskBadge, Pos.TOP_RIGHT);
-                StackPane.setMargin(taskBadge, new Insets(-4, -6, 0, 0));
+                taskIconPane.getChildren().addAll(taskSpinner, taskCount);
+                StackPane.setAlignment(taskCount, Pos.CENTER);
                 btnTask.setGraphic(taskIconPane);
 
                 Runnable updateTaskIndicator = () -> {
                     int count = TaskCenter.getInstance().getEntries().size();
                     btnTask.setVisible(count > 0);
                     btnTask.setManaged(count > 0);
-                    taskBadge.setText(String.valueOf(count));
+                    taskCount.setText(String.valueOf(count));
                 };
                 updateTaskIndicator.run();
                 TaskCenter.getInstance().getEntries().addListener(

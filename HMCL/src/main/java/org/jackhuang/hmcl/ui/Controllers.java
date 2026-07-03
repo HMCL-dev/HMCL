@@ -702,10 +702,14 @@ public final class Controllers {
         pane.setTitle(entry.getTitle());
         pane.setExecutor(entry.getExecutor());
 
-        pane.setBackgroundAction(() -> {
+        // Closing the dialog (Esc, or the top-right button) only detaches the view — the task keeps
+        // running. Cancelling the task is a separate, explicit action on the Cancel button.
+        Runnable detach = () -> {
             entry.setForegroundShown(false);
             pane.fireEvent(new DialogCloseEvent());
-        });
+        };
+        pane.setBackgroundAction(detach);
+        pane.setEscAction(detach);
         pane.setCancelAction(() -> {
             TaskCenter.getInstance().cancel(entry);
             pane.fireEvent(new DialogCloseEvent());

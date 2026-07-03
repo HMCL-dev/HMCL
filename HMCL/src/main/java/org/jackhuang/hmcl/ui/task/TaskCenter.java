@@ -19,16 +19,22 @@ package org.jackhuang.hmcl.ui.task;
 
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.concurrent.CancellationException;
+import java.util.function.Consumer;
 
 /// Central scheduler for "managed" (backgroundable) tasks.
 ///
@@ -88,10 +94,20 @@ public final class TaskCenter {
         private final String name;
         private final ReadOnlyObjectWrapper<Status> status = new ReadOnlyObjectWrapper<>(Status.QUEUED);
 
+        /// A human-readable line describing what the task is doing right now (the current significant
+        /// sub-task), e.g. "Downloading libraries". Updated by the scheduler while running.
+        private final ReadOnlyStringWrapper statusMessage = new ReadOnlyStringWrapper("");
+
         /// Whether a foreground dialog is currently presenting this task. Read by presenters at
         /// terminal time to decide between an in-dialog message and a background notification.
         /// FX-thread only.
         private boolean foregroundShown;
+
+        /// Optional detailed-failure presenter supplied by the submitter (e.g. a wizard's
+        /// {@code FailureCallback}). When the user inspects a failed entry in the Task Center, this
+        /// is invoked instead of the raw stack trace so the friendly, actionable error dialog is
+        /// preserved. The argument is a continuation run after the dialog is dismissed. FX-thread only.
+        private Consumer<Runnable> failurePresenter;
 
         Entry(TaskExecutor executor, String title, String detail, TaskKind kind, String name) {
             this.executor = executor;
@@ -134,6 +150,14 @@ public final class TaskCenter {
             return status.getReadOnlyProperty();
         }
 
+        public String getStatusMessage() {
+            return statusMessage.get();
+        }
+
+        public ReadOnlyStringProperty statusMessageProperty() {
+            return statusMessage.getReadOnlyProperty();
+        }
+
         public Throwable getException() {
             return executor.getException();
         }
@@ -144,6 +168,14 @@ public final class TaskCenter {
 
         public void setForegroundShown(boolean foregroundShown) {
             this.foregroundShown = foregroundShown;
+        }
+
+        public Consumer<Runnable> getFailurePresenter() {
+            return failurePresenter;
+        }
+
+        public void setFailurePresenter(Consumer<Runnable> failurePresenter) {
+            this.failurePresenter = failurePresenter;
         }
     }
 
@@ -158,6 +190,15 @@ public final class TaskCenter {
             new FilteredList<>(tasks, e -> e.getStatus() == Status.FAILED || e.getStatus() == Status.CANCELLED);
 
     private Entry running;
+
+    /// Progress of the currently running task (bound to its root task), or -1 (indeterminate) when
+    /// nothing is running or the running task reports no aggregate progress. Drives the title-bar
+    /// download indicator.
+    private final ReadOnlyDoubleWrapper runningProgress = new ReadOnlyDoubleWrapper(-1);
+
+    public ReadOnlyDoubleProperty runningProgressProperty() {
+        return runningProgress.getReadOnlyProperty();
+    }
 
     private static void checkFxThread() {
         if (!Platform.isFxApplicationThread())
@@ -226,9 +267,23 @@ public final class TaskCenter {
             running = entry;
             entry.status.set(Status.RUNNING);
 
+            runningProgress.unbind();
+            runningProgress.bind(entry.executor.getRootTask().progressProperty());
+
             // Attach the completion listener BEFORE starting so a fast-finishing task cannot
             // complete before we are listening.
             entry.executor.addTaskListener(new TaskListener() {
+                @Override
+                public void onRunning(Task<?> task) {
+                    // Surface the current significant sub-task name as the entry's status line.
+                    if (!task.getSignificance().shouldShow())
+                        return;
+                    String name = task.getName();
+                    if (name == null || name.equals(task.getClass().getName()))
+                        return;
+                    Platform.runLater(() -> entry.statusMessage.set(name));
+                }
+
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
                     Platform.runLater(() -> onStopped(entry));
@@ -242,8 +297,11 @@ public final class TaskCenter {
     private void onStopped(Entry entry) {
         checkFxThread();
 
-        if (running == entry)
+        if (running == entry) {
             running = null;
+            runningProgress.unbind();
+            runningProgress.set(-1);
+        }
 
         // Idempotent: a cancelled-while-queued entry is already terminal; ignore the late onStop.
         if (!entry.getStatus().isTerminal()) {

@@ -187,25 +187,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return disableAprilFools;
     }
 
-    /// Whether finished tasks are automatically moved to the background.
-    @SerializedName("autoBackgroundTask")
-    private final BooleanProperty autoBackgroundTask = new SimpleBooleanProperty(false);
-
-    /// Returns the auto background task property.
-    public BooleanProperty autoBackgroundTaskProperty() {
-        return autoBackgroundTask;
-    }
-
-    /// Returns whether finished tasks are automatically moved to the background.
-    public boolean isAutoBackgroundTask() {
-        return autoBackgroundTask.get();
-    }
-
-    /// Sets whether finished tasks are automatically moved to the background.
-    public void setAutoBackgroundTask(boolean autoBackgroundTask) {
-        this.autoBackgroundTask.set(autoBackgroundTask);
-    }
-
     /// The common Minecraft directory selection mode.
     @SerializedName("commonDirectoryType")
     private final ObjectProperty<EnumCommonDirectory> commonDirectoryType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);

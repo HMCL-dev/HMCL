@@ -75,7 +75,7 @@ public class TaskExecutorDialogPane extends BorderPane {
             titleBar.setSpacing(8);
 
             lblTitle = new Label();
-            lblTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: BOLD;");
+            lblTitle.getStyleClass().add("title-label");
 
             btnBackground = new JFXButton();
             btnBackground.setGraphic(SVG.DOWNLOAD.createIcon(16)); // TODO: 可替换为更合适的后台图标
@@ -218,7 +218,7 @@ public class TaskExecutorDialogPane extends BorderPane {
         if (waiting) {
             if (lblWaiting == null) {
                 lblWaiting = new Label(i18n("task.waiting_for_background"));
-                lblWaiting.setStyle("-fx-text-fill: -fx-secondary-text-color; -fx-font-size: 13px;");
+                lblWaiting.getStyleClass().add("task-empty-label");
                 lblWaiting.setWrapText(true);
             }
             taskListPane.setVisible(false);

@@ -68,4 +68,10 @@ public abstract class TaskExecutor {
     public List<Task.StagesHint> getHints() {
         return hints;
     }
+
+    /// The root task of this executor. Its {@link Task#progressProperty()} reflects the overall
+    /// progress when the task graph reports one (otherwise it stays at -1, i.e. indeterminate).
+    public Task<?> getRootTask() {
+        return firstTask;
+    }
 }
