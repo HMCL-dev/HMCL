@@ -245,22 +245,14 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
                 JFXButton btnWindow = new JFXButton();
                 btnWindow.setFocusTraversable(false);
-                btnWindow.setGraphic(primaryStage.isMaximized() ? SVG.RESTORE_WINDOW.createIcon(Themes.titleFillProperty()) : SVG.MAXIMIZE_WINDOW.createIcon(Themes.titleFillProperty()));
+                btnWindow.graphicProperty().bind(Bindings.createObjectBinding(
+                    () -> primaryStage.isMaximized()
+                        ? SVG.RESTORE_WINDOW.createIcon(Themes.titleFillProperty())
+                        : SVG.MAXIMIZE_WINDOW.createIcon(Themes.titleFillProperty()),
+                    primaryStage.maximizedProperty()
+                ));
                 btnWindow.getStyleClass().add("jfx-decorator-button");
-                btnWindow.setOnAction(e -> {
-                    if (!primaryStage.isMaximized()) {
-                        primaryStage.setMaximized(true);
-                    } else {
-                        primaryStage.setMaximized(false);
-                    }
-                });
-                primaryStage.maximizedProperty().addListener((obs, oldValue, maximized) -> {
-                    btnWindow.setGraphic(
-                        maximized
-                            ? SVG.RESTORE_WINDOW.createIcon(Themes.titleFillProperty())
-                            : SVG.MAXIMIZE_WINDOW.createIcon(Themes.titleFillProperty())
-                    );
-                });
+                btnWindow.setOnAction(e -> primaryStage.setMaximized(!primaryStage.isMaximized()));
 
                 JFXButton btnClose = new JFXButton();
                 btnClose.setFocusTraversable(false);
