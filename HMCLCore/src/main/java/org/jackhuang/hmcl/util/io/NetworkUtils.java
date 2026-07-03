@@ -169,16 +169,14 @@ public final class NetworkUtils {
             "forgecdn.net", CurseForgeRemoteAddonRepository.API_KEY
     );
 
-    public static Optional<String> getApiKey(URI uri) {
-        var host = uri.getHost();
-        if (host == null) return Optional.empty();
-        return API_KEYS.keySet().stream().filter(host::endsWith).max(Comparator.comparing(String::length)).map(API_KEYS::get).filter(StringUtils::isNotBlank);
-    }
-
-    public static java.net.http.HttpRequest.Builder newRequestBuilder(URI uri) {
-        var builder = java.net.http.HttpRequest.newBuilder(uri);
-        getApiKey(uri).ifPresent(apiKey -> builder.header("x-api-key", apiKey));
-        return builder;
+    public static void injectApiKey(WebURL url, URLConnection connection) {
+        String host = url.getHost();
+        if (host != null && !host.isEmpty()) {
+            String apiKey = API_KEYS.get(host);
+            if (apiKey != null && !apiKey.isEmpty()) {
+                connection.addRequestProperty("x-api-key", apiKey);
+            }
+        }
     }
 
     public static URLConnection createConnection(WebURL url) throws IOException {
@@ -194,10 +192,7 @@ public final class NetworkUtils {
             httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
             httpConnection.setRequestProperty("User-Agent", USER_AGENT);
             httpConnection.setInstanceFollowRedirects(false);
-            try {
-                getApiKey(url.toURI()).ifPresent(apiKey -> httpConnection.setRequestProperty("x-api-key", apiKey));
-            } catch (URISyntaxException ignored) {
-            }
+            injectApiKey(url, connection);
         }
         return connection;
     }
@@ -315,10 +310,10 @@ public final class NetworkUtils {
                     throw new IOException("Too much redirects");
                 }
 
-                HttpURLConnection redirected = (HttpURLConnection) new URL(conn.getURL(), encodeLocation(newURL))
-                        .openConnection();
-                properties
-                        .forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
+                WebURL redirectedUrl = WebURL.of(conn.getURL()).resolve(newURL);
+                HttpURLConnection redirected = (HttpURLConnection) redirectedUrl.toURL().openConnection();
+                injectApiKey(redirectedUrl, redirected);
+                properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));;
                 redirected.setRequestMethod(method);
                 conn = redirected;
                 ++redirect;
