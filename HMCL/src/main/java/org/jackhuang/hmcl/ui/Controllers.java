@@ -694,8 +694,8 @@ public final class Controllers {
                     Controllers.navigate(Controllers.getSettingsPage());
                     break;
                 case "hmcl://game/launch":
-                    Profile profile = Profiles.getSelectedProfile();
-                    Versions.launch(profile, Profiles.getSelectedInstance(profile), LauncherHelper::setKeep);
+                    var repository = GameDirectoryManager.getSelectedRepository();
+                    Versions.launch(repository, repository.getSelectedInstance(), LauncherHelper::setKeep);
                     break;
             }
         } else {

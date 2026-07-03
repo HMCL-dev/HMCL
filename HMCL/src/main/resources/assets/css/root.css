@@ -210,28 +210,28 @@
     -fx-padding: 0 0 0 0;
 }
 
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
     -fx-font-size: 13;
 }
 
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .subtitle {
+.game-directory-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .subtitle {
     -fx-font-size: 10;
 }
 
-.profile-list-item > .rippler-container > BorderPane {
+.game-directory-list-item > .rippler-container > BorderPane {
     -fx-padding: 8 0 8 16;
 }
 
-.profile-list-item:selected > .rippler-container > BorderPane {
+.game-directory-list-item:selected > .rippler-container > BorderPane {
     -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
-.profile-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
 
-.profile-list-item:selected .svg {
+.game-directory-list-item:selected .svg {
     -fx-fill: -monet-on-secondary-container;
 }
 
@@ -1589,7 +1589,7 @@
     -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
     -fx-background-radius: 3px;
     -fx-background-insets: 0px;
-    -fx-min-height: 25px;
+    -fx-min-height: 36px;
 }
 
 .color-palette-region {

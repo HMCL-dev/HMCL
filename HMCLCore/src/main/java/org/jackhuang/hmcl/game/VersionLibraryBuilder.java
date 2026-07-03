@@ -43,8 +43,8 @@ public final class VersionLibraryBuilder {
         this.version = version;
         this.libraries = new ArrayList<>(version.getLibraries());
         this.mcArgs = version.getMinecraftArguments().map(StringUtils::tokenize).map(ArrayList::new).orElse(null);
-        this.game = version.getArguments().map(Arguments::getGame).map(ArrayList::new).orElseGet(ArrayList::new);
-        this.jvm = new ArrayList<>(version.getArguments().map(Arguments::getJvm).orElse(Arguments.DEFAULT_JVM_ARGUMENTS));
+        this.game = version.getArguments().map(Arguments::game).map(ArrayList::new).orElseGet(ArrayList::new);
+        this.jvm = new ArrayList<>(version.getArguments().map(Arguments::jvm).orElse(Arguments.DEFAULT_JVM_ARGUMENTS));
         this.useMcArgs = mcArgs != null;
     }
 

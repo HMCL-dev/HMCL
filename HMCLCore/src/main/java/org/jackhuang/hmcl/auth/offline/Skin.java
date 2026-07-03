@@ -38,9 +38,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
-public class Skin {
+public record Skin(Type type, String cslApi, TextureModel textureModel, String localSkinPath, String localCapePath) {
 
     public enum Type {
         DEFAULT,
@@ -59,73 +61,29 @@ public class Skin {
         YGGDRASIL_API;
 
         public static Type fromStorage(String type) {
-            switch (type) {
-                case "default":
-                    return DEFAULT;
-                case "alex":
-                    return ALEX;
-                case "ari":
-                    return ARI;
-                case "efe":
-                    return EFE;
-                case "kai":
-                    return KAI;
-                case "makena":
-                    return MAKENA;
-                case "noor":
-                    return NOOR;
-                case "steve":
-                    return STEVE;
-                case "sunny":
-                    return SUNNY;
-                case "zuri":
-                    return ZURI;
-                case "local_file":
-                    return LOCAL_FILE;
-                case "little_skin":
-                    return LITTLE_SKIN;
-                case "custom_skin_loader_api":
-                    return CUSTOM_SKIN_LOADER_API;
-                case "yggdrasil_api":
-                    return YGGDRASIL_API;
-                default:
-                    return null;
-            }
+            return switch (type) {
+                case "default" -> DEFAULT;
+                case "alex" -> ALEX;
+                case "ari" -> ARI;
+                case "efe" -> EFE;
+                case "kai" -> KAI;
+                case "makena" -> MAKENA;
+                case "noor" -> NOOR;
+                case "steve" -> STEVE;
+                case "sunny" -> SUNNY;
+                case "zuri" -> ZURI;
+                case "local_file" -> LOCAL_FILE;
+                case "little_skin" -> LITTLE_SKIN;
+                case "custom_skin_loader_api" -> CUSTOM_SKIN_LOADER_API;
+                case "yggdrasil_api" -> YGGDRASIL_API;
+                default -> null;
+            };
         }
     }
 
-    private final Type type;
-    private final String cslApi;
-    private final TextureModel textureModel;
-    private final String localSkinPath;
-    private final String localCapePath;
-
-    public Skin(Type type, String cslApi, TextureModel textureModel, String localSkinPath, String localCapePath) {
-        this.type = type;
-        this.cslApi = cslApi;
-        this.textureModel = textureModel;
-        this.localSkinPath = localSkinPath;
-        this.localCapePath = localCapePath;
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public String getCslApi() {
-        return cslApi;
-    }
-
-    public TextureModel getTextureModel() {
+    @Override
+    public TextureModel textureModel() {
         return textureModel == null ? TextureModel.WIDE : textureModel;
-    }
-
-    public String getLocalSkinPath() {
-        return localSkinPath;
-    }
-
-    public String getLocalCapePath() {
-        return localCapePath;
     }
 
     public Task<LoadedSkin> load(String username) {
@@ -156,7 +114,7 @@ public class Skin {
                     Optional<Path> capePath = FileUtils.tryGetPath(localCapePath);
                     if (skinPath.isPresent()) skin = Texture.loadTexture(Files.newInputStream(skinPath.get()));
                     if (capePath.isPresent()) cape = Texture.loadTexture(Files.newInputStream(capePath.get()));
-                    return new LoadedSkin(getTextureModel(), skin, cape);
+                    return new LoadedSkin(textureModel(), skin, cape);
                 });
             case LITTLE_SKIN:
             case CUSTOM_SKIN_LOADER_API:
@@ -204,7 +162,7 @@ public class Skin {
     public void writeStorage(JsonObject storage) {
         storage.addProperty("type", type.name().toLowerCase(Locale.ROOT));
         storage.addProperty("cslApi", cslApi);
-        storage.addProperty("textureModel", getTextureModel().modelName);
+        storage.addProperty("textureModel", textureModel().modelName);
         storage.addProperty("localSkinPath", localSkinPath);
         storage.addProperty("localCapePath", localCapePath);
     }
@@ -270,46 +228,11 @@ public class Skin {
         }
     }
 
-    public static class LoadedSkin {
-        private final TextureModel model;
-        private final Texture skin;
-        private final Texture cape;
-
-        public LoadedSkin(TextureModel model, Texture skin, Texture cape) {
-            this.model = model;
-            this.skin = skin;
-            this.cape = cape;
-        }
-
-        public TextureModel getModel() {
-            return model;
-        }
-
-        public Texture getSkin() {
-            return skin;
-        }
-
-        public Texture getCape() {
-            return cape;
-        }
+    public record LoadedSkin(TextureModel model, Texture skin, Texture cape) {
     }
 
-    private static class SkinJson {
-        private final String username;
-        private final String skin;
-        private final String cape;
-        private final String elytra;
-
-        @SerializedName(value = "textures", alternate = { "skins" })
-        private final TextureJson textures;
-
-        public SkinJson(String username, String skin, String cape, String elytra, TextureJson textures) {
-            this.username = username;
-            this.skin = skin;
-            this.cape = cape;
-            this.elytra = elytra;
-            this.textures = textures;
-        }
+    private record SkinJson(String username, String skin, String cape, String elytra,
+                            @SerializedName(value = "textures", alternate = {"skins"}) TextureJson textures) {
 
         public boolean hasSkin() {
             return StringUtils.isNotBlank(username);
@@ -356,20 +279,7 @@ public class Skin {
             } else return cape;
         }
 
-        public static class TextureJson {
-            @SerializedName("default")
-            private final String defaultSkin;
-
-            private final String slim;
-            private final String cape;
-            private final String elytra;
-
-            public TextureJson(String defaultSkin, String slim, String cape, String elytra) {
-                this.defaultSkin = defaultSkin;
-                this.slim = slim;
-                this.cape = cape;
-                this.elytra = elytra;
-            }
+        public record TextureJson(@SerializedName("default") String defaultSkin, String slim, String cape, String elytra) {
         }
     }
 }

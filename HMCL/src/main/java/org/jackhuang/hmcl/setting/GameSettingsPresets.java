@@ -129,6 +129,21 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
         return id;
     }
 
+    /// Returns the first automatic preset number that is not used by existing presets.
+    public int newPresetAutoNameNumber() {
+        mainLoop:
+        for (int index = 1; ; index++) {
+            for (GameSettings.Preset setting : getPresets()) {
+                Integer autoNameNumber = setting.autoNameNumberProperty().getValue();
+                if ((autoNameNumber != null && autoNameNumber == index)) {
+                    continue mainLoop;
+                }
+            }
+
+            return index;
+        }
+    }
+
     /// Returns the preset with the given ID.
     public GameSettings.@Nullable Preset getPreset(@Nullable GameSettingsPresetID id) {
         if (id == null) {

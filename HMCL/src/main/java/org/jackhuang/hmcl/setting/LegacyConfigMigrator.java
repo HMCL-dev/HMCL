@@ -23,9 +23,12 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
+import org.jackhuang.hmcl.theme.BuiltinBackground;
+import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -115,7 +118,7 @@ public final class LegacyConfigMigrator {
     private static final String[] LEGACY_BACKGROUND_IMAGE_TYPES = {
             "DEFAULT",
             "CUSTOM",
-            "CLASSIC",
+            "BUILTIN",
             "NETWORK",
             "TRANSLUCENT",
             "PAINT"
@@ -214,19 +217,51 @@ public final class LegacyConfigMigrator {
             migrateLegacySelectedAccount(jsonObject);
             JsonElement legacyAllowAutoAgent = jsonObject.remove("allowAutoAgent");
             JsonElement legacyDisableAutoGameOptions = jsonObject.remove("disableAutoGameOptions");
-            migrateLegacyBackgroundImageType(jsonObject);
+            JsonArray themeAppearanceOverrides = new JsonArray();
+            migrateLegacyBackgroundImageType(jsonObject, themeAppearanceOverrides);
             migrateLegacyProxyType(jsonObject);
             migrateLegacyDownloadSources(jsonObject);
             renameMember(jsonObject, "commonDirType", "commonDirectoryType");
             renameMember(jsonObject, "commonpath", "commonDirectory");
             migrateLegacyLanguage(jsonObject);
-            renameMember(jsonObject, "theme", "themeColor");
+            if (renameMember(jsonObject, "themeBrightness", "themeBrightnessMode")) {
+                addThemeAppearanceOverride(
+                        themeAppearanceOverrides,
+                        LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE);
+            }
+            if (renameMember(jsonObject, "titleTransparent", "titleBarTransparent")) {
+                addThemeAppearanceOverride(
+                        themeAppearanceOverrides,
+                        LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT);
+            }
+            if (renameMember(jsonObject, "theme", "customThemeColor")) {
+                jsonObject.addProperty("themeColorType", ThemeColorType.CUSTOM.name());
+                addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_COLOR);
+            }
             renameMember(jsonObject, "fontFamily", "logFontFamily");
             renameMember(jsonObject, "fontSize", "logFontSize");
-            renameMember(jsonObject, "bgpath", "backgroundImage");
-            renameMember(jsonObject, "bgurl", "backgroundImageUrl");
-            renameMember(jsonObject, "bgpaint", "backgroundPaint");
-            migrateBackgroundOpacity(jsonObject);
+            boolean migratedBackgroundSource = false;
+            boolean migratedNetworkBackgroundSource = false;
+            migratedBackgroundSource |= renameMember(jsonObject, "bgpath", "customBackgroundImagePath");
+            migratedBackgroundSource |= renameMember(jsonObject, "backgroundImage", "customBackgroundImagePath");
+            migratedNetworkBackgroundSource |= renameMember(jsonObject, "bgurl", "networkBackgroundImageUrl");
+            migratedNetworkBackgroundSource |= renameMember(
+                    jsonObject,
+                    "backgroundImageUrl",
+                    "networkBackgroundImageUrl");
+            migratedBackgroundSource |= migratedNetworkBackgroundSource;
+            if (migratedBackgroundSource) {
+                addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+            }
+            if (migratedNetworkBackgroundSource) {
+                jsonObject.addProperty(
+                        "networkBackgroundImageCachePolicy",
+                        NetworkBackgroundImageCachePolicy.DISABLED.name());
+            }
+            renameMember(jsonObject, "bgpaint", "customBackgroundPaint");
+            renameMember(jsonObject, "backgroundPaint", "customBackgroundPaint");
+            migrateBackgroundOpacity(jsonObject, themeAppearanceOverrides);
+            writeThemeAppearanceOverrides(jsonObject, themeAppearanceOverrides);
             renameMember(jsonObject, "proxyUserName", "proxyUser");
             migrateLegacySelectedVersions(jsonObject);
             migrateLegacySelectedGameDirectory(jsonObject);
@@ -242,6 +277,7 @@ public final class LegacyConfigMigrator {
 
             GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
             migrateLegacyPresetSettings(gameDirectories, gameSettingsPresets, legacyConfigurations);
+            migrateLegacyInstanceGameSettings(gameDirectories, gameSettingsPresets);
             migrateLegacyAllowAutoAgent(deserialized, gameSettingsPresets, legacyAllowAutoAgent);
             migrateLegacyDisableAutoGameOptions(deserialized, gameSettingsPresets, legacyDisableAutoGameOptions);
             DetachedSettings detachedSettings = new DetachedSettings(gameDirectories, gameSettingsPresets,
@@ -762,21 +798,25 @@ public final class LegacyConfigMigrator {
     }
 
     /// Renames one JSON member to the current name.
-    private static void renameMember(JsonObject json, String legacyName, String currentName) {
+    private static boolean renameMember(JsonObject json, String legacyName, String currentName) {
         JsonElement legacyValue = json.remove(legacyName);
         if (legacyValue != null) {
             json.add(currentName, legacyValue);
+            return true;
         }
+        return false;
     }
 
     /// Migrates the legacy background opacity percentage into the current opacity value.
-    private static void migrateBackgroundOpacity(JsonObject json) {
+    private static void migrateBackgroundOpacity(JsonObject json, JsonArray themeAppearanceOverrides) {
         JsonElement legacyValue = json.remove("bgImageOpacity");
         if (legacyValue == null) {
             return;
         }
 
-        if (json.has("backgroundOpacity")) {
+        if (hasThemeAppearanceOverride(
+                themeAppearanceOverrides,
+                LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY)) {
             return;
         }
 
@@ -787,6 +827,7 @@ public final class LegacyConfigMigrator {
 
         double opacity = opacityPercent / 100.;
         json.addProperty("backgroundOpacity", Math.max(0., Math.min(opacity, 1.)));
+        addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
     }
 
     /// Migrates the legacy `localization` field into the current `language` field.
@@ -808,17 +849,69 @@ public final class LegacyConfigMigrator {
     /// Migrates the legacy background image type into the current enum values.
     @VisibleForTesting
     static void migrateLegacyBackgroundImageType(JsonObject json) {
+        JsonArray themeAppearanceOverrides = new JsonArray();
+        migrateLegacyBackgroundImageType(json, themeAppearanceOverrides);
+        writeThemeAppearanceOverrides(json, themeAppearanceOverrides);
+    }
+
+    /// Migrates the legacy background image type into the current enum values.
+    private static void migrateLegacyBackgroundImageType(JsonObject json, JsonArray themeAppearanceOverrides) {
         JsonElement legacyValue = json.get("backgroundType");
         @Nullable Integer ordinal = JsonUtils.getInteger(legacyValue);
         if (ordinal != null && ordinal >= 0 && ordinal < LEGACY_BACKGROUND_IMAGE_TYPES.length) {
             json.addProperty("backgroundType", LEGACY_BACKGROUND_IMAGE_TYPES[ordinal]);
+            addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+            if (ordinal == 2) {
+                json.addProperty("builtinBackgroundId", BuiltinBackground.WALLPAPER_2016_02_25.id());
+            }
+        }
+
+        if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "CLASSIC")) {
+            json.addProperty("backgroundType", BackgroundType.BUILTIN.name());
+            json.addProperty("builtinBackgroundId", BuiltinBackground.WALLPAPER_2016_02_25.id());
+            addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
         }
 
         if (Objects.equals(JsonUtils.getString(json, "backgroundType"), "TRANSLUCENT")) {
             json.addProperty("backgroundType", BackgroundType.PAINT.name());
-            json.addProperty("backgroundPaint", "#ffffff");
+            json.addProperty("customBackgroundPaint", "#ffffff");
             json.addProperty("backgroundOpacity", 0.5);
+            addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+            addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND_OPACITY);
             json.remove("bgpaint");
+        }
+
+        @Nullable String backgroundType = JsonUtils.getString(json, "backgroundType");
+        for (BackgroundType type : BackgroundType.values()) {
+            if (type != BackgroundType.DEFAULT && type.name().equals(backgroundType)) {
+                addThemeAppearanceOverride(themeAppearanceOverrides, LauncherSettings.THEME_APPEARANCE_BACKGROUND);
+                break;
+            }
+        }
+    }
+
+    /// Adds one theme appearance override key to the migration result.
+    private static void addThemeAppearanceOverride(JsonArray themeAppearanceOverrides, String key) {
+        if (!hasThemeAppearanceOverride(themeAppearanceOverrides, key)) {
+            themeAppearanceOverrides.add(key);
+        }
+    }
+
+    /// Returns whether the generated theme appearance overrides already contain the given key.
+    private static boolean hasThemeAppearanceOverride(JsonArray themeAppearanceOverrides, String key) {
+        for (JsonElement element : themeAppearanceOverrides) {
+            if (element instanceof JsonPrimitive primitive && primitive.isString()
+                    && key.equals(primitive.getAsString())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Writes generated theme appearance overrides to the migrated launcher settings JSON.
+    private static void writeThemeAppearanceOverrides(JsonObject json, JsonArray themeAppearanceOverrides) {
+        if (themeAppearanceOverrides.size() > 0) {
+            json.add("themeAppearanceOverrides", themeAppearanceOverrides);
         }
     }
 
@@ -1130,9 +1223,7 @@ public final class LegacyConfigMigrator {
             return false;
         }
 
-        JsonObject selectedInstance = json.get(LauncherSettings.PROPERTY_SELECTED_INSTANCE) instanceof JsonObject existingSelectedInstance
-                ? existingSelectedInstance
-                : new JsonObject();
+        JsonObject selectedInstance = new JsonObject();
         boolean changed = false;
 
         for (Map.Entry<String, JsonElement> entry : configurations.entrySet()) {
@@ -1150,13 +1241,13 @@ public final class LegacyConfigMigrator {
             changed = true;
         }
 
-        if (changed && !json.has(LauncherSettings.PROPERTY_SELECTED_INSTANCE)) {
+        if (changed) {
             json.add(LauncherSettings.PROPERTY_SELECTED_INSTANCE, selectedInstance);
         }
         return changed;
     }
 
-    /// Migrates profile-global game settings from config files used before HMCL 3.16.
+    /// Migrates global game settings stored under legacy profile entries before HMCL 3.16.
     static void migrateLegacyPresetSettings(
             GameDirectories gameDirectories,
             GameSettingsPresets gameSettingsPresets,
@@ -1165,15 +1256,15 @@ public final class LegacyConfigMigrator {
             return;
         }
 
-        for (Profile profile : gameDirectories.getGameDirectories()) {
-            @Nullable GameSettingsPresetID legacyGameSettings = profile.getLegacyGameSettings();
+        for (GameDirectory gameDirectory : gameDirectories.getGameDirectories()) {
+            @Nullable GameSettingsPresetID legacyGameSettings = gameDirectory.getLegacyGameSettings();
             if (legacyGameSettings == null) {
                 continue;
             }
 
             GameSettings.Preset legacyParent = gameSettingsPresets.getPreset(legacyGameSettings);
             if (legacyParent == null) {
-                @Nullable String profileName = getLegacyProfileName(profile);
+                @Nullable String profileName = getLegacyProfileName(gameDirectory);
                 if (profileName == null) {
                     continue;
                 }
@@ -1183,21 +1274,98 @@ public final class LegacyConfigMigrator {
                     continue;
                 }
 
-                legacyParent = LegacyGameSettingsMigrator.toPreset(legacyGameSettings, profileName, legacySettingObject);
+                legacyParent = LegacyGameSettingsMigrator.toPreset(legacyGameSettings, gameSettingsPresets.newPresetAutoNameNumber(), legacySettingObject);
                 gameSettingsPresets.getPresets().add(legacyParent);
             }
         }
     }
 
+    /// Migrates existing instances under migrated legacy game directories to explicit instance settings.
+    static void migrateLegacyInstanceGameSettings(
+            GameDirectories gameDirectories,
+            GameSettingsPresets gameSettingsPresets) {
+        Objects.requireNonNull(gameDirectories);
+        Objects.requireNonNull(gameSettingsPresets);
+
+        for (GameDirectory gameDirectory : gameDirectories.getGameDirectories()) {
+            @Nullable GameSettingsPresetID legacyGameSettings = gameDirectory.getLegacyGameSettings();
+            if (legacyGameSettings == null) {
+                continue;
+            }
+
+            GameSettings.Preset legacyParent = gameSettingsPresets.getPreset(legacyGameSettings);
+            if (legacyParent == null) {
+                continue;
+            }
+
+            migrateLegacyInstanceGameSettings(gameDirectory.getPath().toPath(), legacyGameSettings, legacyParent);
+        }
+    }
+
+    /// Migrates existing instances under one game directory to explicit instance settings.
+    private static void migrateLegacyInstanceGameSettings(
+            Path gameDirectory,
+            GameSettingsPresetID legacyGameSettings,
+            GameSettings.Preset legacyParent) {
+        Path versionsDirectory = gameDirectory.resolve("versions");
+        if (!Files.isDirectory(versionsDirectory)) {
+            return;
+        }
+
+        try (var stream = Files.list(versionsDirectory)) {
+            stream.filter(Files::isDirectory)
+                    .forEach(instanceRoot -> migrateLegacyInstanceGameSettingsInVersionRoot(
+                            instanceRoot,
+                            legacyGameSettings,
+                            legacyParent));
+        } catch (IOException e) {
+            LOG.warning("Failed to migrate legacy instance game settings under " + versionsDirectory, e);
+        }
+    }
+
+    /// Migrates one existing instance to explicit instance settings.
+    private static void migrateLegacyInstanceGameSettingsInVersionRoot(
+            Path instanceRoot,
+            GameSettingsPresetID legacyGameSettings,
+            GameSettings.Preset legacyParent) {
+        @Nullable Path instanceId = instanceRoot.getFileName();
+        if (instanceId == null || !Files.isRegularFile(instanceRoot.resolve(instanceId.toString() + ".json"))) {
+            return;
+        }
+
+        Path currentSettings = instanceRoot.resolve(LegacyGameSettingsMigrator.INSTANCE_METADATA_DIRECTORY)
+                .resolve(LegacyGameSettingsMigrator.INSTANCE_CONFIG_DIRECTORY)
+                .resolve(LegacyGameSettingsMigrator.INSTANCE_GAME_SETTINGS_FILENAME);
+        if (Files.exists(currentSettings)) {
+            return;
+        }
+        if (Files.exists(instanceRoot.resolve(LegacyGameSettingsMigrator.LEGACY_INSTANCE_SETTINGS_FILENAME))) {
+            return;
+        }
+
+        GameSettings.Instance setting = new GameSettings.Instance();
+        setting.parentProperty().setValue(legacyGameSettings);
+        if (legacyParent.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS
+                && StringUtils.isBlank(legacyParent.runningDirectoryProperty().getValue())) {
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+        }
+
+        try {
+            FileUtils.saveSafely(currentSettings, LauncherSettings.SETTINGS_GSON.toJson(setting));
+        } catch (IOException e) {
+            LOG.warning("Failed to save migrated instance game settings " + currentSettings, e);
+        }
+    }
+
     /// Returns the legacy profile name used in `configurations`.
-    private static @Nullable String getLegacyProfileName(Profile profile) {
-        if (LEGACY_DEFAULT_PROFILE_ID.equals(profile.getId())) {
+    private static @Nullable String getLegacyProfileName(GameDirectory gameDirectory) {
+        if (LEGACY_DEFAULT_PROFILE_ID.equals(gameDirectory.getId())) {
             return LEGACY_DEFAULT_PROFILE;
         }
-        if (LEGACY_HOME_PROFILE_ID.equals(profile.getId())) {
+        if (LEGACY_HOME_PROFILE_ID.equals(gameDirectory.getId())) {
             return LEGACY_HOME_PROFILE;
         }
-        return Profiles.getProfileCustomName(profile);
+        return GameDirectoryManager.getGameDirectoryCustomName(gameDirectory);
     }
 
     /// Detached settings migrated out of an old config file.

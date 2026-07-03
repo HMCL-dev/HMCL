@@ -38,19 +38,32 @@ HMCL має чудові кросплатформні можливості. Ві
 
 ## Завантаження
 
-Завантажте останню версію з [офіційного сайту](https://hmcl.huangyuhui.net/download).
+Ви можете завантажити HMCL з таких джерел:
 
-Також ви можете знайти останню версію HMCL у [релізах GitHub](https://github.com/HMCL-dev/HMCL/releases).
+- [Офіційний сайт HMCL](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-Хоча це не обовʼязково, рекомендується завантажувати релізи лише з офіційних сайтів, зазначених вище.
+## Внесок
+
+HMCL — це відкритий проект, який розвиває спільнота. Ми раді внескам у код і пропозиціям.
+
+Ви можете допомогти розробці HMCL такими способами:
+
+- Повідомляйте про помилки або пропонуйте нові функції, [створивши issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) на GitHub.
+- Додавайте код, зробивши fork репозиторію на GitHub і [надіславши pull request](https://github.com/HMCL-dev/HMCL/compare).
+
+Перед участю прочитайте [посібник для учасників](./Contributing.md), який містить таке:
+
+- [Як зібрати і запустити HMCL з вихідного коду](./Contributing.md#build-hmcl)
+- [Як змінювати поведінку HMCL за допомогою параметрів налагодження](./Contributing.md#debug-options)
+
+## Учасники
+
+З 2015 року в розробці HMCL взяли участь понад 120 людей. Дякуємо за вашу працю!
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## Ліцензія
 
 Дивіться [README.md](README.md#license).
-
-## Внесок
-
-Якщо ви хочете надіслати pull request, ознайомтеся з наступними вимогами:
-
-* IDE: IntelliJ IDEA
-* Компілятор: Java 17+

@@ -45,11 +45,12 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.EnumUpdateMode;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectory;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.Themes;
@@ -104,7 +105,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final BooleanProperty showUpdateDialog = new SimpleBooleanProperty(this, "showUpdateDialog");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
     private final ObservableList<Version> versions = FXCollections.observableArrayList();
-    private Profile profile;
+    private HMCLGameRepository repository;
 
     private TransitionPane announcementPane;
     private final UpdateBubble updateBubble = new UpdateBubble();
@@ -187,7 +188,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.onScroll(launchPane, versions, list -> {
             String currentId = getCurrentGame();
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-        }, it -> Profiles.setSelectedInstance(profile, it.getId()));
+        }, it -> repository.setSelectedInstance(it.getId()));
 
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
@@ -237,7 +238,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     JFXPopup.PopupHPosition.RIGHT,
                     0,
                     -menuButton.getHeight(),
-                    profile, versions
+                    repository, versions
             ));
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
@@ -323,8 +324,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void launch() {
-        Profile profile = Profiles.getSelectedProfile();
-        Versions.launch(profile, Profiles.getSelectedInstance(profile));
+        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+        Versions.launch(repository, repository.getSelectedInstance());
     }
 
     private void launchNoGame() {
@@ -340,8 +341,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
                 .thenComposeAsync(version -> {
-                    Profile profile = Profiles.getSelectedProfile();
-                    DefaultDependencyManager dependency = profile.getDependency();
+                    HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+                    DefaultDependencyManager dependency = repository.getDependency();
                     String gameVersion = gameVersionHolder.value = version.getGameVersion();
 
                     return dependency.gameBuilder()
@@ -349,10 +350,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             .gameVersion(gameVersion)
                             .buildAsync();
                 })
-                .whenComplete(any -> profile.getRepository().refreshVersions())
+                .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refreshVersions())
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        Profiles.setSelectedInstance(profile, gameVersionHolder.value);
+                        GameDirectoryManager.getSelectedRepository().setSelectedInstance(gameVersionHolder.value);
                         launch();
                     } else if (exception instanceof CancellationException) {
                         Controllers.showToast(i18n("message.cancelled"));
@@ -384,8 +385,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return state;
     }
 
-    public Profile getProfile() {
-        return profile;
+    public GameDirectory getGameDirectory() {
+        return repository.getGameDirectory();
+    }
+
+    public HMCLGameRepository getRepository() {
+        return repository;
     }
 
     public String getCurrentGame() {
@@ -478,8 +483,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     hBox.getChildren().setAll(SVG.ERROR.createIcon(32), item);
                     this.getChildren().setAll(hBox, closeUpdateButton);
                 }
-
-
             };
             invalidationListener.invalidated(null);
             updateState.addListener(invalidationListener);
@@ -513,5 +516,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 Controllers.dialog(e, i18n("update.failed"), MessageDialogPane.MessageType.ERROR);
             }
         }
-    }
+      
+      public void initVersions(HMCLGameRepository repository, List<Version> versions) {
+          FXUtils.checkFxUserThread();
+          this.repository = repository;
+          this.versions.setAll(versions);
+      }
 }
