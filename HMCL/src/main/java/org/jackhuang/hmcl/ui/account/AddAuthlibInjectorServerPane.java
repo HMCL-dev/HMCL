@@ -92,6 +92,8 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
             lblCreationWarning.setPrefWidth(0);
             lblCreationWarning.maxWidthProperty().bind(body.widthProperty());
+            lblCreationWarning.visibleProperty().bind(lblCreationWarning.textProperty().isNotEmpty());
+            lblCreationWarning.managedProperty().bind(lblCreationWarning.visibleProperty());
 
             body.getChildren().addAll(
                 txtServerUrl,
