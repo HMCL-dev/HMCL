@@ -186,6 +186,10 @@ public final class NetworkUtils {
         if (!(connection instanceof HttpURLConnection))
             return;
 
+        if (connection.getRequestProperty("x-api-key") != null) {
+            return;
+        }
+
         String host = url.getHost();
         if (host == null || host.isEmpty())
             return;
@@ -332,8 +336,8 @@ public final class NetworkUtils {
 
                 WebURL redirectedUrl = WebURL.of(conn.getURL()).resolve(newURL);
                 HttpURLConnection redirected = (HttpURLConnection) redirectedUrl.toURL().openConnection();
-                injectApiKey(redirectedUrl, redirected);
                 properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
+                injectApiKey(redirectedUrl, redirected);
                 redirected.setRequestMethod(method);
                 conn = redirected;
                 ++redirect;
