@@ -119,7 +119,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     });
 
             FXUtils.onChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), mainPage::setCurrentGame);
-            mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
 
             GameDirectoryManager.registerVersionsListener(repository -> {
                 GameDirectory gameDirectory = repository.getGameDirectory();

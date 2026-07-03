@@ -112,7 +112,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final JFXButton menuButton;
 
     public static final EnumUpdateMode UPDATE_MODE = settings().updateModeProperty().get();
-    
+
     {
         latestVersion.bind(UpdateChecker.latestVersionProperty());
         FXUtils.onChange(showUpdateProperty(), MainPage.this::doAnimation);
@@ -417,12 +417,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return showUpdate;
     }
 
-    public void initVersions(Profile profile, List<Version> versions) {
-        FXUtils.checkFxUserThread();
-        this.profile = profile;
-        this.versions.setAll(versions);
-    }
-
     private class UpdateBubble extends StackPane {
         public UpdateBubble() {
             this.setVisible(false);
@@ -516,10 +510,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 Controllers.dialog(e, i18n("update.failed"), MessageDialogPane.MessageType.ERROR);
             }
         }
-      
-      public void initVersions(HMCLGameRepository repository, List<Version> versions) {
-          FXUtils.checkFxUserThread();
-          this.repository = repository;
-          this.versions.setAll(versions);
-      }
+    }
+
+    public void initVersions(HMCLGameRepository repository, List<Version> versions) {
+        FXUtils.checkFxUserThread();
+        this.repository = repository;
+        this.versions.setAll(versions);
+    }
 }
