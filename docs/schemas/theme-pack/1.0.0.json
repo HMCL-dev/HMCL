@@ -1,0 +1,448 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+  "title": "HMCL Theme Pack",
+  "type": "object",
+  "required": [
+    "$schema",
+    "id",
+    "version",
+    "name"
+  ],
+  "patternProperties": {
+    "^\\$schema$": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/theme-pack/1.0.0"
+      ]
+    },
+    "^description$": {
+      "$ref": "#/$defs/localizedText"
+    }
+  },
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/packId"
+    },
+    "version": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "name": {
+      "$ref": "#/$defs/localizedText"
+    },
+    "authors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/author"
+      },
+      "uniqueItems": true
+    },
+    "icon": {
+      "$ref": "#/$defs/assetPath"
+    },
+    "theme": {
+      "$ref": "#/$defs/theme"
+    },
+    "themes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/theme"
+          },
+          {
+            "required": [
+              "id",
+              "name"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "theme"
+      ],
+      "not": {
+        "required": [
+          "themes"
+        ]
+      }
+    },
+    {
+      "required": [
+        "themes"
+      ],
+      "not": {
+        "required": [
+          "theme"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "packId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(\\.[A-Za-z0-9][A-Za-z0-9_-]*)*$"
+    },
+    "themeId": {
+      "$ref": "#/$defs/packId"
+    },
+    "assetPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^assets/.+"
+    },
+    "localizedText": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      ]
+    },
+    "author": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/localizedText"
+            }
+          }
+        }
+      ]
+    },
+    "theme": {
+      "type": "object",
+      "patternProperties": {
+        "^description$": {
+          "$ref": "#/$defs/localizedText"
+        }
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/themeId"
+        },
+        "name": {
+          "$ref": "#/$defs/localizedText"
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/author"
+          },
+          "uniqueItems": true
+        },
+        "icon": {
+          "$ref": "#/$defs/assetPath"
+        },
+        "color": {
+          "$ref": "#/$defs/color"
+        },
+        "brightness": {
+          "$ref": "#/$defs/brightness"
+        },
+        "colorStyle": {
+          "$ref": "#/$defs/colorStyle"
+        },
+        "contrast": {
+          "$ref": "#/$defs/contrast"
+        },
+        "background": {
+          "$ref": "#/$defs/background"
+        },
+        "titleBar": {
+          "$ref": "#/$defs/titleBar"
+        },
+        "overrides": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/override"
+          }
+        }
+      }
+    },
+    "override": {
+      "type": "object",
+      "required": [
+        "condition"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "color"
+          ]
+        },
+        {
+          "required": [
+            "brightness"
+          ]
+        },
+        {
+          "required": [
+            "colorStyle"
+          ]
+        },
+        {
+          "required": [
+            "contrast"
+          ]
+        },
+        {
+          "required": [
+            "background"
+          ]
+        },
+        {
+          "required": [
+            "titleBar"
+          ]
+        }
+      ],
+      "properties": {
+        "condition": {
+          "$ref": "#/$defs/condition"
+        },
+        "color": {
+          "$ref": "#/$defs/color"
+        },
+        "brightness": {
+          "$ref": "#/$defs/brightness"
+        },
+        "colorStyle": {
+          "$ref": "#/$defs/colorStyle"
+        },
+        "contrast": {
+          "$ref": "#/$defs/contrast"
+        },
+        "background": {
+          "$ref": "#/$defs/background"
+        },
+        "titleBar": {
+          "$ref": "#/$defs/titleBar"
+        }
+      }
+    },
+    "titleBar": {
+      "type": "object",
+      "properties": {
+        "transparent": {
+          "type": "boolean"
+        }
+      }
+    },
+    "colorValue": {
+      "type": "string",
+      "minLength": 1
+    },
+    "color": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/colorValue"
+        },
+        {
+          "type": "object",
+          "required": [
+            "source"
+          ],
+          "properties": {
+            "source": {
+              "enum": [
+                "default",
+                "wallpaper"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "brightness": {
+      "enum": [
+        "light",
+        "dark"
+      ]
+    },
+    "colorStyle": {
+      "enum": [
+        "tonal_spot",
+        "fidelity",
+        "monochrome",
+        "neutral",
+        "vibrant",
+        "expressive",
+        "content",
+        "rainbow",
+        "fruit_salad",
+        "default"
+      ]
+    },
+    "contrast": {
+      "oneOf": [
+        {
+          "enum": [
+            "low",
+            "standard",
+            "medium",
+            "high"
+          ]
+        },
+        {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        }
+      ]
+    },
+    "background": {
+      "type": "object",
+      "patternProperties": {
+        "^type$": {
+          "enum": [
+            "default",
+            "builtin",
+            "image",
+            "paint",
+            "theme_color"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "id",
+                    "path"
+                  ]
+                },
+                {
+                  "required": [
+                    "id",
+                    "paint"
+                  ]
+                },
+                {
+                  "required": [
+                    "path",
+                    "paint"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "image"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "path"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "paint"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "paint"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/assetPath"
+        },
+        "paint": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/stringOrStringArray"
+      },
+      "properties": {
+        "brightness": {
+          "$ref": "#/$defs/stringOrStringArray"
+        },
+        "os": {
+          "$ref": "#/$defs/stringOrStringArray"
+        },
+        "language": {
+          "$ref": "#/$defs/stringOrStringArray"
+        }
+      }
+    },
+    "stringOrStringArray": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "uniqueItems": true
+        }
+      ]
+    }
+  }
+}

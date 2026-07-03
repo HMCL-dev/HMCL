@@ -163,12 +163,12 @@ public class YggdrasilServer extends HttpServer {
                 String url = rootUrl + "/textures/" + skin.skin().hash();
                 if (skin.model() == TextureModel.SLIM) {
                     realTextures.put("SKIN", mapOf(
-                            pair("url", url),
+                            pair("url", rootUrl + "/textures/" + skin.skin().hash()),
                             pair("metadata", mapOf(
                                     pair("model", "slim")
                             ))));
                 } else {
-                    realTextures.put("SKIN", mapOf(pair("url", url)));
+                    realTextures.put("SKIN", mapOf(pair("url", rootUrl + "/textures/" + skin.skin().hash())));
                 }
             }
             if (skin != null && skin.cape() != null) {

@@ -73,9 +73,9 @@ public final class TexturesLoader {
 
     // ==== Texture Loading ====
     public record LoadedTexture(Image image, Map<String, String> metadata) {
-        public LoadedTexture(Image image, Map<String, String> metadata) {
-            this.image = requireNonNull(image);
-            this.metadata = requireNonNull(metadata);
+        public LoadedTexture {
+            requireNonNull(image);
+            requireNonNull(metadata);
         }
     }
 

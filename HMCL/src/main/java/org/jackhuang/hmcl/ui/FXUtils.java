@@ -95,6 +95,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -1146,18 +1147,35 @@ public final class FXUtils {
     public static Image loadImage(Path path,
                                   int requestedWidth, int requestedHeight,
                                   boolean preserveRatio, boolean smooth) throws Exception {
-        try (var input = new BufferedInputStream(Files.newInputStream(path))) {
-            String ext = FileUtils.getExtension(path).toLowerCase(Locale.ROOT);
+        String fileName = path.getFileName().toString();
+        return loadImage(
+                Files.newInputStream(path),
+                fileName,
+                requestedWidth,
+                requestedHeight,
+                preserveRatio,
+                smooth);
+    }
+
+    public static Image loadImage(InputStream input, String fileName) throws Exception {
+        return loadImage(input, fileName, 0, 0, false, false);
+    }
+
+    public static Image loadImage(InputStream input, String fileName,
+                                  int requestedWidth, int requestedHeight,
+                                  boolean preserveRatio, boolean smooth) throws Exception {
+        try (var bufferedInput = new BufferedInputStream(input)) {
+            String ext = FileUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
             ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
             if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
-                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                input.reset();
+                bufferedInput.mark(ImageUtils.HEADER_BUFFER_SIZE);
+                byte[] headerBuffer = bufferedInput.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
+                bufferedInput.reset();
                 loader = ImageUtils.guessLoader(headerBuffer);
             }
             if (loader == null)
                 loader = ImageUtils.DEFAULT;
-            return loader.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
+            return loader.load(bufferedInput, requestedWidth, requestedHeight, preserveRatio, smooth);
         }
     }
 

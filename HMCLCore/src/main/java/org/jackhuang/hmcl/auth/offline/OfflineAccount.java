@@ -169,7 +169,7 @@ public class OfflineAccount extends Account {
             }
 
             return new Arguments().addJVMArguments(
-                    "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
+                    "-javaagent:" + artifact.location().toString() + "=" + "http://localhost:" + server.getListeningPort(),
                     "-Dauthlibinjector.side=client"
             );
         }
