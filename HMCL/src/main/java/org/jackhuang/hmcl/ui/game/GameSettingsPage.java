@@ -191,7 +191,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 parentGameSettingsPane.setTitle(i18n("settings.type.global.preset"));
                 parentGameSettingsPane.setConverter(setting -> setting != null
                         ? PresetManagementPane.getPresetDisplayName(setting)
-                        : getImplicitParentGameSettingsDisplayName());
+                        : i18n("settings.type.global.preset.default"));
                 bindInstanceParentSetting(parentGameSettingsPane);
             }
 
@@ -855,28 +855,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         });
     }
 
-    /// Refreshes parent preset display text because the implicit parent depends on the current game directory.
+    /// Refreshes parent preset display text after the preset list changes.
     private void refreshInstanceParentSettingConverter(LineSelectButton<GameSettings.@Nullable Preset> button) {
         button.setConverter(setting -> setting != null
                 ? PresetManagementPane.getPresetDisplayName(setting)
-                : getImplicitParentGameSettingsDisplayName());
-    }
-
-    /// Returns the label for the implicit parent preset selected by a null instance parent.
-    private String getImplicitParentGameSettingsDisplayName() {
-        GameSettings.Preset legacyParent = getGameDirectoryLegacyGameSettings();
-        return legacyParent != null
-                ? PresetManagementPane.getPresetDisplayName(legacyParent)
-                : i18n("settings.type.global.preset.default");
-    }
-
-    /// Returns the migrated game-directory-level parent preset, or `null` when this game directory uses the default preset.
-    private @Nullable GameSettings.Preset getGameDirectoryLegacyGameSettings() {
-        if (gameDirectory == null || gameDirectory.getLegacyGameSettings() == null) {
-            return null;
-        }
-
-        return SettingsManager.getGameSettings(gameDirectory.getLegacyGameSettings());
+                : i18n("settings.type.global.preset.default"));
     }
 
     /// Adds the title-line inheritance button for the Java selection sublist.
