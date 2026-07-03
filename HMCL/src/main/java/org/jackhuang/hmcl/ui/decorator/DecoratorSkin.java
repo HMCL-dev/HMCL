@@ -243,13 +243,32 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnMin.getStyleClass().add("jfx-decorator-button");
                 btnMin.setOnAction(e -> skinnable.minimize());
 
+                JFXButton btnWindow = new JFXButton();
+                btnWindow.setFocusTraversable(false);
+                btnWindow.setGraphic(primaryStage.isMaximized() ? SVG.RESTORE_WINDOW.createIcon(Themes.titleFillProperty()) : SVG.MAXIMIZE_WINDOW.createIcon(Themes.titleFillProperty()));
+                btnWindow.getStyleClass().add("jfx-decorator-button");
+                btnWindow.setOnAction(e -> {
+                    if (!primaryStage.isMaximized()) {
+                        primaryStage.setMaximized(true);
+                    } else {
+                        primaryStage.setMaximized(false);
+                    }
+                });
+                primaryStage.maximizedProperty().addListener((obs, oldValue, maximized) -> {
+                    btnWindow.setGraphic(
+                        maximized
+                            ? SVG.RESTORE_WINDOW.createIcon(Themes.titleFillProperty())
+                            : SVG.MAXIMIZE_WINDOW.createIcon(Themes.titleFillProperty())
+                    );
+                });
+
                 JFXButton btnClose = new JFXButton();
                 btnClose.setFocusTraversable(false);
                 btnClose.setGraphic(SVG.CLOSE.createIcon(Themes.titleFillProperty()));
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
-                buttonsContainer.getChildren().setAll(btnHelp, btnMin, btnClose);
+                buttonsContainer.getChildren().setAll(btnHelp, btnMin, btnWindow, btnClose);
             }
             AnchorPane layer = new AnchorPane();
             layer.setPickOnBounds(false);
