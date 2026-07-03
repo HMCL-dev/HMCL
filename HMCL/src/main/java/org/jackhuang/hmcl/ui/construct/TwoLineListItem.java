@@ -31,6 +31,8 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
@@ -203,6 +205,13 @@ public class TwoLineListItem extends VBox {
 
     public void addTags(Collection<String> tags) {
         getTags().addAll(tags.stream().map(tag -> createTag(tag, null)).toList());
+    }
+
+    public void addTagsIfNotExist(Collection<String> tags) {
+        var current = getTags().stream().map(Label::getText).collect(Collectors.toSet());
+        var target = new HashSet<>(tags);
+        target.removeAll(current);
+        addTags(target);
     }
 
     private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");

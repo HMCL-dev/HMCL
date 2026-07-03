@@ -491,7 +491,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                     );
                                     if (tag != null) tags.add(tag);
                                 }
-                                title.addTags(tags);
+                                title.addTagsIfNotExist(tags);
 
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
