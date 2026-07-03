@@ -40,12 +40,15 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -55,6 +58,11 @@ public final class LocalModpackPage extends ModpackPage {
     private final BooleanProperty installAsVersion = new SimpleBooleanProperty(true);
     private Modpack manifest = null;
     private Charset charset;
+
+    private final AtomicReference<FileSystem> wrapperFsRef = new AtomicReference<>();
+    @Nullable
+    private volatile Path resolvedModpackFile;
+    private volatile boolean cleanedUp;
 
     public LocalModpackPage(WizardController controller) {
         super(controller);
@@ -111,31 +119,28 @@ public final class LocalModpackPage extends ModpackPage {
                     if (selectedFile.getFileSystem() == FileSystems.getDefault()) {
                         var wrapper = ModpackHelper.unwrapIfLauncherWrapper(selectedFile, encoding);
                         if (wrapper != null) {
-                            actualFile = wrapper.getKey();
-                            controller.getSettings().put(MODPACK_FILE, wrapper.getKey());
-                            FileSystem oldFs = controller.getSettings().put(MODPACK_WRAPPER_FS, wrapper.getValue());
-                            if (oldFs != null) {
-                                try {
-                                    oldFs.close();
-                                } catch (IOException ignored) {
-                                    // Ignore close errors for wrapper filesystem
-                                }
-                            }
-                        } else {
-                            FileSystem oldFs = controller.getSettings().remove(MODPACK_WRAPPER_FS);
-                            if (oldFs != null) {
-                                try {
-                                    oldFs.close();
-                                } catch (IOException ignored) {
-                                    // Ignore close errors for wrapper filesystem
-                                }
-                            }
+                            actualFile = wrapper.innerPath();
+                            resolvedModpackFile = actualFile;
+                            wrapperFsRef.set(wrapper.wrapperFs());
                         }
                     }
                     manifest = ModpackHelper.readModpackManifest(actualFile, encoding);
                     return manifest;
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
+                    FileSystem fs = wrapperFsRef.getAndSet(null);
+                    if (fs != null) {
+                        if (exception != null || cleanedUp) {
+                            IOUtils.closeQuietly(fs);
+                        } else {
+                            Path innerPath = resolvedModpackFile;
+                            if (innerPath != null) {
+                                controller.getSettings().put(MODPACK_FILE, innerPath);
+                            }
+                            controller.getSettings().put(MODPACK_WRAPPER_FS, fs);
+                        }
+                    }
+
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
                         nameProperty.set(FileUtils.getName(selectedFile));
@@ -174,15 +179,12 @@ public final class LocalModpackPage extends ModpackPage {
 
     @Override
     public void cleanup(SettingsMap settings) {
+        cleanedUp = true;
         settings.remove(MODPACK_FILE);
-        FileSystem wrapperFs = settings.remove(MODPACK_WRAPPER_FS);
-        if (wrapperFs != null) {
-            try {
-                wrapperFs.close();
-            } catch (IOException ignored) {
-                // Ignore close errors for wrapper filesystem
-            }
-        }
+        // 同时从 AtomicReference（后台任务可能尚未转移）
+        // 和 settings（可能已被 whenComplete 转移）中关闭 FS。
+        IOUtils.closeQuietly(wrapperFsRef.getAndSet(null));
+        IOUtils.closeQuietly(settings.remove(MODPACK_WRAPPER_FS));
     }
 
     protected void onInstall() {

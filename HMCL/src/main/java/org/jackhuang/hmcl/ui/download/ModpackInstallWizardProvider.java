@@ -35,6 +35,8 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -146,39 +148,19 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
         });
 
-        FileSystem wrapperFs = settings.get(LocalModpackPage.MODPACK_WRAPPER_FS);
-        Task<?> task;
+        @Nullable FileSystem wrapperFs = settings.remove(LocalModpackPage.MODPACK_WRAPPER_FS);
         try {
-            task = finishModpackInstallingAsync(settings);
-        } catch (Throwable t) {
-            if (wrapperFs != null) {
-                try {
-                    wrapperFs.close();
-                } catch (IOException ignored) {
-                    // Ignore close errors for wrapper filesystem
-                }
+            Task<?> task = finishModpackInstallingAsync(settings);
+            if (task != null && wrapperFs != null) {
+                FileSystem fs = wrapperFs;
+                wrapperFs = null;
+                task = task.whenComplete(Schedulers.defaultScheduler(),
+                        ignored -> IOUtils.closeQuietly(fs));
             }
-            throw t;
+            return task;
+        } finally {
+            IOUtils.closeQuietly(wrapperFs);
         }
-        if (wrapperFs != null) {
-            if (task != null) {
-                settings.remove(LocalModpackPage.MODPACK_WRAPPER_FS);
-                task = task.whenComplete(Schedulers.defaultScheduler(), ignored -> {
-                    try {
-                        wrapperFs.close();
-                    } catch (IOException e) {
-                        // Ignore close errors for wrapper filesystem
-                    }
-                });
-            } else {
-                try {
-                    wrapperFs.close();
-                } catch (IOException ignored) {
-                    // Ignore close errors for wrapper filesystem
-                }
-            }
-        }
-        return task;
     }
 
     private static Node createModpackInstallPage(WizardController controller) {

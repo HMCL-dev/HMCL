@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
+
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -47,9 +47,11 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -125,33 +127,36 @@ public final class ModpackHelper {
         throw new UnsupportedModpackException(file.toString());
     }
 
-    /// Detects whether [file] is an HMCL launcher wrapper ZIP that embeds
-    /// the actual modpack as [modpack.zip] or [modpack.mrpack].
-    /// Returns a [Pair] of the inner entry [Path] and the wrapper
-    /// [FileSystem], or [null] if this is not a wrapper.
-    /// The caller must close the wrapper filesystem when done.
+    /// 存储解析启动器包装 ZIP 后的结果
+    /// @param innerPath 包装文件系统内的整合包条目路径
+    /// @param wrapperFs 包装文件系统；当不再需要 [innerPath] 时必须被关闭
+    public record LauncherWrapper(Path innerPath, FileSystem wrapperFs) implements Closeable {
+        /// 关闭包装的 [FileSystem]。
+        @Override
+        public void close() throws IOException {
+            wrapperFs.close();
+        }
+    }
+
+    /// 检测 [file] 是否为 HMCL 启动器包装 ZIP（其内部嵌入了实际的整合包 `modpack.zip` 或 `modpack.mrpack`）
+    /// 返回一个包含内部条目路径和包装文件系统的 [LauncherWrapper]，
+    /// 如果 [file] 不是包装 ZIP，则返回 `null`
     @Nullable
-    public static Pair<Path, FileSystem> unwrapIfLauncherWrapper(Path file, Charset charset) {
+    public static LauncherWrapper unwrapIfLauncherWrapper(Path file, Charset charset) {
         FileSystem outerFs = null;
         try {
             outerFs = CompressingUtils.createReadOnlyZipFileSystem(file, charset);
             for (String innerName : new String[]{"modpack.zip", "modpack.mrpack"}) {
                 Path entryPath = outerFs.getPath("/" + innerName);
                 if (Files.isRegularFile(entryPath)) {
-                    FileSystem fs = outerFs;
+                    LauncherWrapper result = new LauncherWrapper(entryPath, outerFs);
                     outerFs = null;
-                    return pair(entryPath, fs);
+                    return result;
                 }
             }
         } catch (IOException ignored) {
         } finally {
-            if (outerFs != null) {
-                try {
-                    outerFs.close();
-                } catch (IOException ignored) {
-                    // Ignore close errors for wrapper filesystem
-                }
-            }
+            IOUtils.closeQuietly(outerFs);
         }
         return null;
     }
