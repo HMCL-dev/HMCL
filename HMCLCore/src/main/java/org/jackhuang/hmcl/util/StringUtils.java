@@ -617,11 +617,23 @@ public final class StringUtils {
         return true;
     }
 
+    public static boolean isAlphabetic(char ch) {
+        return ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z';
+    }
+
+    public static boolean isAlphabetic(String str) {
+        int length = str.length();
+        for (int i = 0; i < length; i++) {
+            if (!isAlphabetic(str.charAt(i))) return false;
+        }
+        return true;
+    }
+
     public static boolean isAlphabeticOrNumber(String str) {
         int length = str.length();
         for (int i = 0; i < length; i++) {
             char ch = str.charAt(i);
-            if (!(ch >= '0' && ch <= '9') && !(ch >= 'a' && ch <= 'z') && !(ch >= 'A' && ch <= 'Z'))
+            if (!(ch >= '0' && ch <= '9') && !isAlphabetic(ch))
                 return false;
         }
         return true;
