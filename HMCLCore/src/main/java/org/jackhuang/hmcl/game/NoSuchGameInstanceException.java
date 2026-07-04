@@ -20,20 +20,15 @@ package org.jackhuang.hmcl.game;
 import org.jetbrains.annotations.NotNullByDefault;
 
 @NotNullByDefault
-public record GameInstanceID(String id) implements Comparable<GameInstanceID> {
-    public GameInstanceID {
-        if (id.isEmpty()) {
-            throw new IllegalArgumentException("Game instance id cannot be empty");
-        }
+public class NoSuchGameInstanceException extends Exception {
+    private final GameInstanceID id;
+
+    public NoSuchGameInstanceException(GameInstanceID id) {
+        super(id.id());
+        this.id = id;
     }
 
-    @Override
-    public int compareTo(GameInstanceID that) {
-        return this.id.compareTo(that.id);
-    }
-
-    @Override
-    public String toString() {
+    public GameInstanceID getId() {
         return id;
     }
 }

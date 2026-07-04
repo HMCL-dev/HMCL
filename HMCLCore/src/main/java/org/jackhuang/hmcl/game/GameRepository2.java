@@ -17,23 +17,21 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 
+import java.nio.file.Path;
+
 @NotNullByDefault
-public record GameInstanceID(String id) implements Comparable<GameInstanceID> {
-    public GameInstanceID {
-        if (id.isEmpty()) {
-            throw new IllegalArgumentException("Game instance id cannot be empty");
-        }
-    }
+public interface GameRepository2 {
+    ResolvedGameInstanceManifest resolve(GameInstanceManifest manifest);
 
-    @Override
-    public int compareTo(GameInstanceID that) {
-        return this.id.compareTo(that.id);
-    }
+    void refresh();
 
-    @Override
-    public String toString() {
-        return id;
-    }
+    GameVersionNumber getGameVersion(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+
+    Path getInstanceRoot(GameInstanceID instanceId);
+
+
+
 }
