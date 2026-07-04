@@ -55,6 +55,11 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         super(skinnable);
 
         BorderPane root = new BorderPane();
+        RipplerContainer rootRippler = new RipplerContainer(root);
+
+        rootRippler.setPickOnBounds(true);
+        rootRippler.setCursor(Cursor.HAND);
+        FXUtils.onClicked(rootRippler, skinnable::fire);
 
         JFXRadioButton chkSelected = new JFXRadioButton();
         chkSelected.setMouseTransparent(true);
@@ -80,7 +85,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             Tooltip tooltip = new Tooltip();
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) skinnable.getAccount()).getServer();
             tooltip.textProperty().bind(BindingMapping.of(server, AuthlibInjectorServer::toString));
-            FXUtils.installSlowTooltip(root, tooltip);
+            FXUtils.installSlowTooltip(rootRippler, tooltip);
         }
         VBox item = new VBox(title, subtitle);
         item.getStyleClass().add("two-line-list-item");
@@ -174,11 +179,6 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         root.setRight(right);
 
         root.setStyle("-fx-padding: 8 8 8 0;");
-
-        RipplerContainer rootRippler = new RipplerContainer(root);
-        rootRippler.setPickOnBounds(true);
-        rootRippler.setCursor(Cursor.HAND);
-        FXUtils.onClicked(rootRippler, skinnable::fire);
 
         Region background = new Region();
         background.setMouseTransparent(true);
