@@ -36,21 +36,17 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
-    private final PackMcMeta meta;
-    private final @Nullable Image icon;
-
-    public ResourcePackZipFile(ResourcePackManager manager, Path path) throws IOException {
-        super(manager, path);
-
-        PackMcMeta metaTemp = null;
+    public static @Nullable ResourcePackZipFile load(ResourcePackManager manager, Path path) throws IOException {
+        PackMcMeta meta = null;
         byte[] iconData = null;
 
         try (var zipFileTree = CompressingUtils.openZipTree(path)) {
             try {
-                metaTemp = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
+                meta = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
             } catch (Exception e) {
                 LOG.warning("Failed to parse resource pack meta", e);
             }
+            if (meta == null) return null;
 
             var iconEntry = zipFileTree.getEntry("/pack.png");
             if (iconEntry != null) {
@@ -61,27 +57,20 @@ final class ResourcePackZipFile extends ResourcePackFile {
                 }
             }
         }
-        this.meta = metaTemp;
 
-        Image iconTemp = null;
+        Image icon = null;
         if (iconData != null) {
             try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                iconTemp = new Image(inputStream, 64, 64, true, true);
+                icon = new Image(inputStream, 64, 64, true, true);
             } catch (Exception e) {
                 LOG.warning("Failed to load resource pack icon", e);
             }
         }
-        this.icon = iconTemp;
+        return new ResourcePackZipFile(manager, path, meta, icon);
     }
 
-    @Override
-    public PackMcMeta getMeta() {
-        return meta;
-    }
-
-    @Override
-    public @Nullable Image getIcon() {
-        return icon;
+    private ResourcePackZipFile(ResourcePackManager manager, Path path, PackMcMeta meta, @Nullable Image icon) throws IOException {
+        super(manager, path, meta, icon);
     }
 
     @Override

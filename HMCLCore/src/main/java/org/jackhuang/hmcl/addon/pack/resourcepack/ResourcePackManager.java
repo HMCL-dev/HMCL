@@ -502,7 +502,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     }
 
     public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
-        if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null)
+        if (resourcePack.getMeta().pack() == null)
             return ResourcePackFile.Compatibility.MISSING_PACK_META;
         if (this.getRequiredVersion().isUnspecified())
             return ResourcePackFile.Compatibility.MISSING_GAME_META;
