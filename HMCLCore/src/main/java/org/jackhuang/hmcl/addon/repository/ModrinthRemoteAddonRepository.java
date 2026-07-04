@@ -325,7 +325,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     @Override
     public String getVersionPageUrl(RemoteAddon.Version version) {
-        return "%s/mod/%s/version/%s".formatted(BASE, version.modid(), version.versionId()); // Modrinth will help us redirect
+        return "%s/project/%s/version/%s".formatted(BASE, version.modid(), version.versionId()); // Modrinth will help us redirect
     }
 
     @Override
