@@ -30,12 +30,15 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-import static org.jackhuang.hmcl.util.Lang.*;
+import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class UpdateChecker {
     private UpdateChecker() {
     }
+
+    public static final String DISABLE_UPDATE_PROPERTY = System.getProperty("hmcl.update.disable", "");
+    public static final boolean SHOULD_CHECK_UPDATE = shouldCheckUpdate();
 
     private static final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
     private static final BooleanBinding outdated = Bindings.createBooleanBinding(
@@ -54,6 +57,11 @@ public final class UpdateChecker {
             },
             latestVersion);
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
+
+    private static boolean shouldCheckUpdate() {
+        if (DISABLE_UPDATE_PROPERTY.equalsIgnoreCase("true")) return false;
+        else return IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK || IntegrityChecker.isSelfVerified();
+    }
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get());
@@ -102,6 +110,8 @@ public final class UpdateChecker {
     }
 
     public static void requestCheckUpdate(UpdateChannel channel, boolean preview) {
+        if (!SHOULD_CHECK_UPDATE) return;
+
         Platform.runLater(() -> {
             if (isCheckingUpdate())
                 return;
