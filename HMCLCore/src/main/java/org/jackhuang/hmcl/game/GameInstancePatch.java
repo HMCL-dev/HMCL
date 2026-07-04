@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 @NotNullByDefault
-public record GameInstanceManifest(
-        GameInstanceID id,
+public record GameInstancePatch(
+        @Nullable GameInstanceID id,
         @Nullable String minecraftArguments,
         @Nullable Arguments arguments,
         @Nullable String mainClass,
@@ -50,5 +50,4 @@ public record GameInstanceManifest(
         @Nullable @Unmodifiable List<GameInstancePatch> patches,
         @Unmodifiable Map<String, JsonElement> unknownFields
 ) {
-
 }
