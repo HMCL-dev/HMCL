@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.addon.shader;
 
-public enum ShaderLoaderType {
+import org.jackhuang.hmcl.addon.LoaderType;
+
+public enum ShaderLoaderType implements LoaderType {
 
     OPTI_IRIS,
     APERTURE,

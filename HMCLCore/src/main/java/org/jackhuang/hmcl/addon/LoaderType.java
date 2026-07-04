@@ -15,17 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.mod;
+package org.jackhuang.hmcl.addon;
 
-import org.jackhuang.hmcl.addon.LoaderType;
-
-public enum ModLoaderType implements LoaderType {
-    UNKNOWN,
-    FORGE,
-    CLEANROOM,
-    NEO_FORGE,
-    FABRIC,
-    QUILT,
-    LITE_LOADER,
-    LEGACY_FABRIC
+public interface LoaderType {
 }
