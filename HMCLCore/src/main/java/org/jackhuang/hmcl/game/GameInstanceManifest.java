@@ -37,7 +37,7 @@ public record GameInstanceManifest(
         @Nullable Arguments arguments,
         @Nullable String mainClass,
         @Nullable GameInstanceID inheritsFrom,
-        @Nullable String jar,
+        @Nullable GameInstanceID jar,
         @Nullable AssetIndexInfo assetIndex,
         @Nullable String assets,
         @Nullable Integer complianceLevel,
@@ -152,7 +152,10 @@ public record GameInstanceManifest(
                 }
                 case "jar" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        builder.jar = primitive.getAsString();
+                        try {
+                            builder.jar = new GameInstanceID(primitive.getAsString());
+                        } catch (IllegalArgumentException ignored) {
+                        }
                     }
                 }
                 case "assetIndex" -> {
@@ -288,7 +291,7 @@ public record GameInstanceManifest(
         return builder.toManifest();
     }
 
-    public GameInstanceManifest withJar(String jar) {
+    public GameInstanceManifest withJar(@Nullable GameInstanceID jar) {
         if (Objects.equals(this.jar, jar)) {
             return this;
         }
@@ -319,7 +322,7 @@ public record GameInstanceManifest(
         private @Nullable Arguments arguments;
         private @Nullable String mainClass;
         private @Nullable GameInstanceID inheritsFrom;
-        private @Nullable String jar;
+        private @Nullable GameInstanceID jar;
         private @Nullable AssetIndexInfo assetIndex;
         private @Nullable String assets;
         private @Nullable Integer complianceLevel;
@@ -373,11 +376,11 @@ public record GameInstanceManifest(
             }
         }
 
-        public void setJar(@Nullable String jar) {
+        public void setJar(@Nullable GameInstanceID jar) {
             this.jar = jar;
             if (rawJson != null) {
                 if (jar != null) {
-                    rawJson.addProperty("jar", jar);
+                    rawJson.addProperty("jar", jar.toString());
                 } else {
                     rawJson.remove("jar");
                 }

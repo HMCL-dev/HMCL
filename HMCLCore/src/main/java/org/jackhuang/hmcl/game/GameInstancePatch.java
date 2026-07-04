@@ -35,7 +35,7 @@ public record GameInstancePatch(
         @Nullable Arguments arguments,
         @Nullable String mainClass,
         @Nullable String inheritsFrom,
-        @Nullable String jar,
+        @Nullable GameInstanceID jar,
         @Nullable AssetIndexInfo assetIndex,
         @Nullable String assets,
         @Nullable Integer complianceLevel,

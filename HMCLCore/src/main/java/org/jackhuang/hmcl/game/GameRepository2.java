@@ -17,16 +17,97 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Optional;
+import java.util.Set;
 
 @NotNullByDefault
 public interface GameRepository2 {
-    GameInstanceManifest resolve(GameInstanceManifest manifest)throws NoSuchGameInstanceException;
+    GameInstanceManifest resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException;
+
+    boolean hasInstance(GameInstanceID instanceId);
+
+    GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+
+    GameInstanceManifest getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+
+    default GameInstanceManifest getResolvedPreservingPatchesInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        throw new UnsupportedOperationException(); // TODO
+    }
+
+    int getInstanceCount();
+
+    Collection<GameInstanceManifest> getInstanceManifests();
 
     void refresh();
 
+    default Task<Void> refreshAsync() {
+        return Task.runAsync(this::refresh);
+    }
+
     Path getInstanceRoot(GameInstanceID instanceId);
+
+    Path getRunDirectory(GameInstanceID instanceId);
+
+    Path getLibrariesDirectory(GameInstanceManifest manifest);
+
+    Path getLibraryFile(GameInstanceManifest manifest, Library lib);
+
+    Path getNativeDirectory(GameInstanceID instanceId, Platform platform);
+
+    Path getModsDirectory(GameInstanceID instanceId);
+
+    Path getResourcePackDirectory(GameInstanceID instanceId);
+
+    Path getInstanceJar(GameInstanceManifest manifest);
+
+    Optional<String> getGameVersion(GameInstanceManifest manifest);
+
+    default Optional<String> getGameVersion(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        return getGameVersion(getInstanceManifest(instanceId));
+    }
+
+    default Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        return getInstanceJar(resolve(getInstanceManifest(instanceId)));
+    }
+
+    boolean renameInstance(GameInstanceID from, GameInstanceID to);
+
+    Path getActualAssetDirectory(GameInstanceID instanceId, String assetId);
+
+    Path getAssetDirectory(GameInstanceID instanceId, String assetId);
+
+    Optional<Path> getAssetObject(GameInstanceID instanceId, String assetId, String name) throws IOException;
+
+    Path getAssetObject(GameInstanceID instanceId, String assetId, AssetObject obj);
+
+    AssetIndex getAssetIndex(GameInstanceID instanceId, String assetId) throws IOException;
+
+    Path getIndexFile(GameInstanceID instanceId, String assetId);
+
+    Path getLoggingObject(GameInstanceID instanceId, String assetId, LoggingInfo loggingInfo);
+
+    default Set<String> getClasspath(GameInstanceManifest manifest) {
+        Set<String> classpath = new LinkedHashSet<>();
+        if (manifest.libraries() != null) {
+            for (Library library : manifest.libraries())
+                if (library.appliesToCurrentEnvironment() && !library.isNative()) {
+                    Path f = getLibraryFile(manifest, library);
+                    if (Files.isRegularFile(f))
+                        classpath.add(FileUtils.getAbsolutePath(f));
+                }
+        }
+
+        return classpath;
+    }
 
 }
