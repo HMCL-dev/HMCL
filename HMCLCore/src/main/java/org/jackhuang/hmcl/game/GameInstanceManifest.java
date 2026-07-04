@@ -18,10 +18,35 @@
 package org.jackhuang.hmcl.game;
 
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.List;
+import java.util.Map;
 
 @NotNullByDefault
 public record GameInstanceManifest(
-
+        String id,
+        @Nullable String minecraftArguments,
+        @Nullable Arguments arguments,
+        @Nullable String mainClass,
+        @Nullable String inheritsFrom,
+        @Nullable String jar,
+        @Nullable AssetIndexInfo assetIndex,
+        @Nullable String assets,
+        @Nullable Integer complianceLevel,
+        @Nullable GameJavaVersion javaVersion,
+        @Nullable List<Library> libraries,
+        @Nullable List<CompatibilityRule> compatibilityRules,
+        @Nullable @Unmodifiable Map<DownloadType, DownloadInfo> downloads,
+        @Nullable @Unmodifiable Map<DownloadType, LoggingInfo> logging,
+        @Nullable ReleaseType type,
+        @Nullable String time,
+        @Nullable String releaseTime,
+        @Nullable Integer minimumLauncherVersion,
+        @Nullable Boolean root,
+        @Nullable Boolean hidden,
+        @Nullable @Unmodifiable List<Version> patches
 ) {
 
 }
