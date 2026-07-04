@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
+import com.jfoenix.effects.JFXDepthManager;
+
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -78,7 +80,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             Tooltip tooltip = new Tooltip();
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) skinnable.getAccount()).getServer();
             tooltip.textProperty().bind(BindingMapping.of(server, AuthlibInjectorServer::toString));
-            FXUtils.installSlowTooltip(subtitle, tooltip);
+            FXUtils.installSlowTooltip(root, tooltip);
         }
         VBox item = new VBox(title, subtitle);
         item.getStyleClass().add("two-line-list-item");
@@ -179,7 +181,9 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         FXUtils.onClicked(rootRippler, skinnable::fire);
 
         Region background = new Region();
+        background.setMouseTransparent(true);
         background.setStyle("-fx-background-color: -monet-surface-container-low-transparent-80; -fx-background-radius: 4;");
+        JFXDepthManager.setDepth(background, 1);
 
         getChildren().setAll(background, rootRippler);
     }
