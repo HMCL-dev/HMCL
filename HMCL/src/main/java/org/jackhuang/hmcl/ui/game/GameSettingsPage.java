@@ -102,7 +102,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// The current setting.
     private final ObjectProperty<@Nullable S> currentSetting = new SimpleObjectProperty<>(this, "setting");
 
-    private final ObjectProperty<GameVersionNumber> currentGameVersionNumber = new SimpleObjectProperty<>(this, "currentGameVersionNumber");
+    private final ObjectProperty<GameVersionNumber> currentGameVersionNumber = new SimpleObjectProperty<>(this, "currentGameVersionNumber", GameVersionNumber.unknown());
 
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
