@@ -94,7 +94,7 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
         }
     }
 
-    private Path backupFile(Path file) throws IOException {
+    public static Path backupFile(Path file) throws IOException {
         Path newPath = file.resolveSibling(
                 StringUtils.addSuffix(
                         StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION),
@@ -107,7 +107,7 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
         return newPath;
     }
 
-    private Path restoreFile(Path file) throws IOException {
+    public static Path restoreFile(Path file) throws IOException {
         Path newPath = file.resolveSibling(
                 StringUtils.removeSuffix(FileUtils.getName(file), OLD_EXTENSION)
         );

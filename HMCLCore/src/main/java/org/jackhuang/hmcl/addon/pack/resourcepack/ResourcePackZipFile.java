@@ -36,6 +36,7 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
+
     public static @Nullable ResourcePackZipFile load(ResourcePackManager manager, Path path) throws IOException {
         PackMcMeta meta = null;
         byte[] iconData = null;
@@ -69,7 +70,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
         return new ResourcePackZipFile(manager, path, meta, icon);
     }
 
-    private ResourcePackZipFile(ResourcePackManager manager, Path path, PackMcMeta meta, @Nullable Image icon) throws IOException {
+    private ResourcePackZipFile(ResourcePackManager manager, Path path, PackMcMeta meta, @Nullable Image icon) {
         super(manager, path, meta, icon);
     }
 

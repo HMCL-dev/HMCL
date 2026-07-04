@@ -17,5 +17,57 @@
  */
 package org.jackhuang.hmcl.addon.shader;
 
-public sealed abstract class ShaderFile permits ShaderZipFile, ShaderFolder {
+import org.jackhuang.hmcl.addon.LocalAddonFile;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.file.Path;
+
+public sealed abstract class ShaderFile extends LocalAddonFile permits ShaderZipFile, ShaderFolder {
+
+    protected Path file;
+    protected final String fileNameWithoutExtension;
+    protected final ShaderLoaderType loaderType;
+    protected final @Nullable ApertureData apertureData;
+
+    protected ShaderFile(Path file, ShaderLoaderType loaderType, @Nullable ApertureData apertureData) {
+        this.file = file;
+        this.fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
+        this.loaderType = loaderType;
+        this.apertureData = apertureData;
+    }
+
+    @Override
+    public Path getFile() {
+        return file;
+    }
+
+    @Override
+    public String getFileName() {
+        return fileNameWithoutExtension;
+    }
+
+    @Override
+    public boolean isDisabled() {
+        return false;
+    }
+
+    @Override
+    public void markDisabled() {
+        // NO-OP
+    }
+
+    @Override
+    public boolean keepOldFiles() {
+        return false;
+    }
+
+    @Override
+    public void setOld(boolean old) throws IOException {
+        if (old) file = LocalAddonManager.backupFile(file);
+        else file = LocalAddonManager.restoreFile(file);
+    }
+
 }

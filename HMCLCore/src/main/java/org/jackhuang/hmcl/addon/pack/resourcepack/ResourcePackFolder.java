@@ -59,7 +59,7 @@ final class ResourcePackFolder extends ResourcePackFile {
         return new ResourcePackFolder(manager, path, meta, icon);
     }
 
-    public ResourcePackFolder(ResourcePackManager manager, Path path, PackMcMeta meta, @Nullable Image icon) {
+    private ResourcePackFolder(ResourcePackManager manager, Path path, PackMcMeta meta, @Nullable Image icon) {
         super(manager, path, meta, icon);
     }
 

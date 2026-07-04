@@ -138,7 +138,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     response = withApiKey(HttpRequest.GET(candidate.toString()))
                             .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
                     if (searchFilter.isEmpty()) {
-                        return new SearchResult(response.data().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));
+                        return new SearchResult(response.data().stream().map(addon -> addon.toAddon(type)), calculateTotalPages(response, pageSize));
                     }
                     break;
                 } catch (IOException e) {
@@ -167,7 +167,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
             StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
-            return new SearchResult(response.data().stream().map(addon -> addon.toMod(type)).map(remoteMod -> {
+            return new SearchResult(response.data().stream().map(addon -> addon.toAddon(type)).map(remoteMod -> {
                 String lowerCaseResult = remoteMod.title().toLowerCase(Locale.ROOT);
                 int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
@@ -178,7 +178,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 }
 
                 return pair(remoteMod, diff);
-            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.data().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));
+            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.data().stream().map(addon -> addon.toAddon(type)), calculateTotalPages(response, pageSize));
         } finally {
             SEMAPHORE.release();
         }
@@ -227,7 +227,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
                     .getJson(Response.typeOf(CurseAddon.class));
-            return response.data.toMod(type);
+            return response.data.toAddon(type);
         } finally {
             SEMAPHORE.release();
         }
@@ -379,7 +379,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             return modRepository.getRemoteVersionsById(downloadProvider, Integer.toString(id));
         }
 
-        public RemoteAddon toMod(Type type) {
+        public RemoteAddon toAddon(Type type) {
             String iconUrl = "";
             if (logo != null) {
                 if (StringUtils.isNotBlank(logo.thumbnailUrl()))
@@ -393,7 +393,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     "",
                     name,
                     summary,
-                    categories.stream().map(category -> Integer.toString(category.getId())).collect(Collectors.toList()),
+                    categories.stream().map(category -> Integer.toString(category.getId())).toList(),
                     links.websiteUrl,
                     iconUrl,
                     this,
