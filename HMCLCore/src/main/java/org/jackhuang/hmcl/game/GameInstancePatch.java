@@ -18,16 +18,18 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonElement;
+import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 @NotNullByDefault
 public record GameInstancePatch(
-        @Nullable GameInstanceID id,
+        @Nullable String id,
         Integer priority,
         @Nullable String minecraftArguments,
         @Nullable Arguments arguments,
@@ -54,7 +56,29 @@ public record GameInstancePatch(
         throw new UnsupportedOperationException("TODO");
     }
 
-    GameInstancePatch merge(GameInstancePatch parent) {
-
+    GameInstanceManifest merge(GameInstanceManifest parent) {
+        return new GameInstanceManifest(
+                parent.id(),
+                minecraftArguments == null ? parent.minecraftArguments() : minecraftArguments,
+                Arguments.merge(parent.arguments(), arguments),
+                mainClass == null ? parent.mainClass() : mainClass,
+                null, // inheritsFrom
+                jar == null ? parent.jar() : jar,
+                assetIndex == null ? parent.assetIndex() : assetIndex,
+                assets == null ? parent.assets() : assets,
+                complianceLevel,
+                javaVersion == null ? parent.javaVersion() : javaVersion,
+                Lang.merge(this.libraries, parent.libraries()),
+                Lang.merge(parent.compatibilityRules(), this.compatibilityRules),
+                downloads == null ? parent.downloads() : downloads,
+                logging == null ? parent.logging() : logging,
+                type == null ? parent.type() : type,
+                time == null ? parent.time() : time,
+                releaseTime == null ? parent.releaseTime() : releaseTime,
+                Lang.merge(minimumLauncherVersion, parent.minimumLauncherVersion(), Math::max),
+                hidden,
+                true,
+                parent.patches(),
+                null);
     }
 }

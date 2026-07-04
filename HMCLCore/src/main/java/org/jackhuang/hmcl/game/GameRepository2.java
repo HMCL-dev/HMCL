@@ -23,7 +23,7 @@ import java.nio.file.Path;
 
 @NotNullByDefault
 public interface GameRepository2 {
-    ResolvedGameInstanceManifest resolve(GameInstanceManifest manifest);
+    GameInstanceManifest resolve(GameInstanceManifest manifest)throws NoSuchGameInstanceException;
 
     void refresh();
 

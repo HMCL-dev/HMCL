@@ -144,7 +144,10 @@ public record GameInstanceManifest(
                 }
                 case "inheritsFrom" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        builder.inheritsFrom = primitive.getAsString();
+                        try {
+                            builder.inheritsFrom = new GameInstanceID(primitive.getAsString());
+                        } catch (IllegalArgumentException ignored) {
+                        }
                     }
                 }
                 case "jar" -> {
@@ -315,7 +318,7 @@ public record GameInstanceManifest(
         private @Nullable String minecraftArguments;
         private @Nullable Arguments arguments;
         private @Nullable String mainClass;
-        private @Nullable String inheritsFrom;
+        private @Nullable GameInstanceID inheritsFrom;
         private @Nullable String jar;
         private @Nullable AssetIndexInfo assetIndex;
         private @Nullable String assets;
@@ -364,9 +367,6 @@ public record GameInstanceManifest(
         }
 
         public void setId(GameInstanceID id) {
-            if (Objects.equals(this.id, id))
-                return;
-
             this.id = id;
             if (rawJson != null) {
                 rawJson.addProperty("id", id.toString());
@@ -374,9 +374,6 @@ public record GameInstanceManifest(
         }
 
         public void setJar(@Nullable String jar) {
-            if (Objects.equals(this.jar, jar))
-                return;
-
             this.jar = jar;
             if (rawJson != null) {
                 if (jar != null) {
@@ -387,11 +384,7 @@ public record GameInstanceManifest(
             }
         }
 
-        public void setPatches(@Nullable @Unmodifiable List<GameInstancePatch> patches) {
-            if (patches == this.patches) {
-                return;
-            }
-
+        public void setPatches(@Nullable List<GameInstancePatch> patches) {
             if (patches != null) {
                 this.patches = List.copyOf(patches);
                 if (rawJson != null) {

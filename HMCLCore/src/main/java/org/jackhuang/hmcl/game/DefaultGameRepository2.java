@@ -152,8 +152,8 @@ public class DefaultGameRepository2 implements GameRepository2 {
 
 
     @Override
-    public ResolvedGameInstanceManifest resolve(GameInstanceManifest manifest) {
-        throw new UnsupportedOperationException("TODO");
+    public GameInstanceManifest resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
+        return status.resolve(manifest, new HashSet<>());
     }
 
     protected static class Status {
@@ -193,7 +193,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
             }
 
             if (manifest.patches() == null) {
-                // This is a version from external launcher. NO need to resolve the patches.
+                // This is a version from an external launcher. NO need to resolve the patches.
                 return currentManifest;
             } else if (!manifest.patches().isEmpty()) {
                 // Assume patches themselves do not have patches recursively.
@@ -205,7 +205,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
                 }
             }
 
-            return currentManifest.setId(id);
+            return currentManifest.withId(manifest.id());
         }
 
     }
