@@ -17,16 +17,30 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
-
-import java.nio.file.Path;
+import org.jetbrains.annotations.Nullable;
 
 @NotNullByDefault
-public interface GameRepository2 {
-    ResolvedGameInstanceManifest resolve(GameInstanceManifest manifest);
+public class DefaultGameInstance implements GameInstance {
 
-    void refresh();
+    private final DefaultGameRepository2 repository;
+    private final GameInstanceID id;
 
-    Path getInstanceRoot(GameInstanceID instanceId);
+    protected @Nullable GameVersionNumber version;
 
+    protected DefaultGameInstance(DefaultGameRepository2 repository, GameInstanceID id) {
+        this.repository = repository;
+        this.id = id;
+    }
+
+    @Override
+    public DefaultGameRepository2 repository() {
+        return repository;
+    }
+
+    @Override
+    public GameInstanceID id() {
+        return id;
+    }
 }

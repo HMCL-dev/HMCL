@@ -28,6 +28,7 @@ import java.util.Map;
 @NotNullByDefault
 public record GameInstancePatch(
         @Nullable GameInstanceID id,
+        Integer priority,
         @Nullable String minecraftArguments,
         @Nullable Arguments arguments,
         @Nullable String mainClass,
@@ -45,9 +46,15 @@ public record GameInstancePatch(
         @Nullable String time,
         @Nullable String releaseTime,
         @Nullable Integer minimumLauncherVersion,
-        @Nullable Boolean root,
         @Nullable Boolean hidden,
-        @Nullable @Unmodifiable List<GameInstancePatch> patches,
         @Unmodifiable Map<String, JsonElement> unknownFields
 ) {
+
+    public GameInstancePatch withJar(@Nullable String jar) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    GameInstancePatch merge(GameInstancePatch parent) {
+
+    }
 }

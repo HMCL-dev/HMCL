@@ -15,17 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl;
+package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameRepository;
 import org.jetbrains.annotations.NotNullByDefault;
 
 @NotNullByDefault
 public interface GameInstance {
-    GameRepository repository();
+    GameRepository2 repository();
 
     GameInstanceID id();
-
-
 }

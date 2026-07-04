@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ public record GameInstanceManifest(
         @Nullable String minecraftArguments,
         @Nullable Arguments arguments,
         @Nullable String mainClass,
-        @Nullable String inheritsFrom,
+        @Nullable GameInstanceID inheritsFrom,
         @Nullable String jar,
         @Nullable AssetIndexInfo assetIndex,
         @Nullable String assets,
@@ -54,6 +55,58 @@ public record GameInstanceManifest(
         @Nullable @Unmodifiable List<GameInstancePatch> patches,
         @Nullable @Unmodifiable JsonObject rawJson
 ) {
+
+    GameInstanceManifest merge(GameInstanceManifest parent) {
+        return new GameInstanceManifest(
+                id,
+                minecraftArguments == null ? parent.minecraftArguments : minecraftArguments,
+                Arguments.merge(parent.arguments, arguments),
+                mainClass == null ? parent.mainClass : mainClass,
+                null, // inheritsFrom
+                jar == null ? parent.jar : jar,
+                assetIndex == null ? parent.assetIndex : assetIndex,
+                assets == null ? parent.assets : assets,
+                complianceLevel,
+                javaVersion == null ? parent.javaVersion : javaVersion,
+                Lang.merge(this.libraries, parent.libraries),
+                Lang.merge(parent.compatibilityRules, this.compatibilityRules),
+                downloads == null ? parent.downloads : downloads,
+                logging == null ? parent.logging : logging,
+                type == null ? parent.type : type,
+                time == null ? parent.time : time,
+                releaseTime == null ? parent.releaseTime : releaseTime,
+                Lang.merge(minimumLauncherVersion, parent.minimumLauncherVersion, Math::max),
+                true,
+                hidden,
+                Lang.merge(Lang.merge(parent.patches, Collections.singleton(toPatch())), patches),
+                null
+        );
+    }
+
+    public GameInstanceManifest(GameInstanceID id) {
+        this(id,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                null,
+                null,
+                null);
+    }
 
     public static GameInstanceManifest fromJson(JsonObject json, boolean copyJson) throws JsonParseException {
         if (copyJson) {
@@ -216,6 +269,45 @@ public record GameInstanceManifest(
         return builder.toManifest();
     }
 
+    public boolean isRoot() {
+        return root != null && root;
+    }
+
+    public GameInstanceManifest withId(GameInstanceID id) {
+        Objects.requireNonNull(id);
+
+        if (Objects.equals(this.id, id)) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setId(id);
+        return builder.toManifest();
+    }
+
+    public GameInstanceManifest withJar(String jar) {
+        if (Objects.equals(this.jar, jar)) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setJar(jar);
+        return builder.toManifest();
+    }
+
+    public GameInstanceManifest withPatches(@Nullable List<GameInstancePatch> patches) {
+        if (patches == this.patches) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setPatches(patches);
+        return builder.toManifest();
+    }
+
+    public GameInstancePatch toPatch() {
+        throw new UnsupportedOperationException("TODO");
+    }
 
     private static final class Builder {
         // @formatter:off
@@ -240,9 +332,8 @@ public record GameInstanceManifest(
         private @Nullable Boolean root;
         private @Nullable Boolean hidden;
         private @Nullable @Unmodifiable List<GameInstancePatch> patches;
-        private @Nullable @Unmodifiable JsonObject rawJson;
+        private @Nullable JsonObject rawJson;
         // @formatter:on
-
 
         Builder() {
         }
@@ -270,6 +361,48 @@ public record GameInstanceManifest(
             this.hidden = manifest.hidden;
             this.patches = manifest.patches;
             this.rawJson = manifest.rawJson != null ? manifest.rawJson.deepCopy() : null;
+        }
+
+        public void setId(GameInstanceID id) {
+            if (Objects.equals(this.id, id))
+                return;
+
+            this.id = id;
+            if (rawJson != null) {
+                rawJson.addProperty("id", id.toString());
+            }
+        }
+
+        public void setJar(@Nullable String jar) {
+            if (Objects.equals(this.jar, jar))
+                return;
+
+            this.jar = jar;
+            if (rawJson != null) {
+                if (jar != null) {
+                    rawJson.addProperty("jar", jar);
+                } else {
+                    rawJson.remove("jar");
+                }
+            }
+        }
+
+        public void setPatches(@Nullable @Unmodifiable List<GameInstancePatch> patches) {
+            if (patches == this.patches) {
+                return;
+            }
+
+            if (patches != null) {
+                this.patches = List.copyOf(patches);
+                if (rawJson != null) {
+                    // TODO: set patches
+                }
+            } else {
+                this.patches = null;
+                if (rawJson != null) {
+                    rawJson.remove("patches");
+                }
+            }
         }
 
         GameInstanceManifest toManifest() {

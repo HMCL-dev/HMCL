@@ -17,21 +17,18 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
@@ -76,16 +73,22 @@ public class DefaultGameRepository2 implements GameRepository2 {
 
     protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    private Path baseDirectory;
-    private volatile @Unmodifiable Snapshot snapshot;
+    private volatile Status status;
 
     public DefaultGameRepository2(Path baseDirectory) {
-        this.baseDirectory = baseDirectory;
-        this.snapshot = new Snapshot(baseDirectory);
+        this.status = new Status(baseDirectory);
+    }
+
+    public Lock readLock() {
+        return lock.readLock();
+    }
+
+    public Lock writeLock() {
+        return lock.writeLock();
     }
 
     public Path getBaseDirectory() {
-        return baseDirectory;
+        return status.baseDirectory;
     }
 
     private static boolean hasClassicVersion(Path baseDirectory) {
@@ -96,35 +99,17 @@ public class DefaultGameRepository2 implements GameRepository2 {
                 && Files.exists(bin.resolve("lwjgl_util.jar"));
     }
 
-    public GameInstanceManifest readInstanceManifest(Path file) throws IOException, JsonParseException {
-        JsonObject json = JsonUtils.fromJsonFile(file, JsonObject.class);
-        try {
-            // Try TLauncher version json format
-            // return JsonUtils.GSON.fromJson(json, TLauncherVersion.class).toVersion();
-            throw new UnsupportedOperationException("TODO");
-        } catch (JsonParseException ignored) {
-        }
-
-        try {
-            // Try official version json format
-            return JsonUtils.GSON.fromJson(json, GameInstanceManifest.class); // TODO
-        } catch (JsonParseException ignored) {
-        }
-
-        LOG.warning("Cannot parse game instance manifest json: " + file + "\n" + json);
-        throw new JsonParseException("Game instance manifest incorrect");
-    }
 
     @Override
     public void refresh() {
-        Snapshot newSnapshot = new Snapshot(baseDirectory);
+        Status newStatus = new Status(status.baseDirectory);
 
-        if (hasClassicVersion(newSnapshot.baseDirectory)) {
+        if (hasClassicVersion(newStatus.baseDirectory)) {
             GameInstanceID id = CLASSIC_MANIFEST.id();
-            newSnapshot.instances.put(id, new InstanceHolder(newSnapshot, id, CLASSIC_MANIFEST));
+            newStatus.instances.put(id, new InstanceHolder(newStatus, id, CLASSIC_MANIFEST));
         }
 
-        Path versionsDir = newSnapshot.baseDirectory.resolve("versions");
+        Path versionsDir = newStatus.baseDirectory.resolve("versions");
         if (Files.isDirectory(versionsDir)) {
             try (Stream<Path> stream = Files.list(versionsDir)) {
                 stream.parallel().filter(Files::isDirectory).flatMap(dir -> {
@@ -137,7 +122,9 @@ public class DefaultGameRepository2 implements GameRepository2 {
 
                     GameInstanceManifest manifest;
                     try {
-                        manifest = readInstanceManifest(json);
+                        manifest = JsonUtils.fromJsonFile(json, GameInstanceManifest.class);
+                        if (manifest == null)
+                            throw new JsonParseException("Manifest is null");
                     } catch (Exception e) {
                         LOG.warning("Malformed version json " + id, e);
                         return Stream.empty();
@@ -149,9 +136,9 @@ public class DefaultGameRepository2 implements GameRepository2 {
                     }
 
                     return Stream.of(manifest);
-                }).forEachOrdered(it -> newSnapshot.instances.put(
+                }).forEachOrdered(it -> newStatus.instances.put(
                         it.id(),
-                        new InstanceHolder(newSnapshot, it.id(), it)));
+                        new InstanceHolder(newStatus, it.id(), it)));
             } catch (IOException e) {
                 LOG.warning("Failed to load versions from " + versionsDir, e);
             }
@@ -159,43 +146,79 @@ public class DefaultGameRepository2 implements GameRepository2 {
     }
 
     @Override
-    public GameVersionNumber getGameVersion(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        InstanceHolder instance = snapshot.instances.get(instanceId);
-        if (instance == null) {
-            throw new NoSuchGameInstanceException(instanceId);
-        }
-
-        throw new UnsupportedOperationException("TODO");
-    }
-
-    @Override
     public Path getInstanceRoot(GameInstanceID instanceId) {
         return getBaseDirectory().resolve("versions").resolve(instanceId.id());
     }
+
 
     @Override
     public ResolvedGameInstanceManifest resolve(GameInstanceManifest manifest) {
         throw new UnsupportedOperationException("TODO");
     }
 
-    protected static class Snapshot {
+    protected static class Status {
         private final Path baseDirectory;
         private final Map<GameInstanceID, InstanceHolder> instances = new TreeMap<>();
 
-        protected Snapshot(Path baseDirectory) {
+        protected Status(Path baseDirectory) {
             this.baseDirectory = baseDirectory;
         }
+
+        private GameInstanceManifest resolve(GameInstanceManifest manifest,
+                                             Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
+            GameInstanceManifest currentManifest;
+
+            if (manifest.inheritsFrom() == null) {
+                if (manifest.isRoot()) {
+                    // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
+                    currentManifest = manifest.patches() != null ? new GameInstanceManifest(manifest.id()).withPatches(manifest.patches()) : manifest;
+                } else {
+                    currentManifest = manifest;
+                }
+                currentManifest = manifest.jar() == null ? manifest.withJar(manifest.id().id()) : currentManifest.withJar(manifest.jar());
+            } else {
+                // To maximize the compatibility.
+                if (!resolvedSoFar.add(manifest.id())) {
+                    LOG.warning("Found circular dependency versions: " + resolvedSoFar);
+                    currentManifest = manifest.jar() == null ? manifest.withJar(manifest.id().id()) : manifest;
+                } else {
+                    InstanceHolder parentInstance = instances.get(manifest.inheritsFrom());
+                    if (parentInstance == null) {
+                        throw new NoSuchGameInstanceException(manifest.inheritsFrom());
+                    }
+
+                    // It is supposed to auto-install a version in getVersion.
+                    currentManifest = manifest.merge(resolve(parentInstance.manifest, resolvedSoFar));
+                }
+            }
+
+            if (manifest.patches() == null) {
+                // This is a version from external launcher. NO need to resolve the patches.
+                return currentManifest;
+            } else if (!manifest.patches().isEmpty()) {
+                // Assume patches themselves do not have patches recursively.
+                List<GameInstancePatch> sortedPatches = manifest.patches().stream()
+                        .sorted(Comparator.comparing(GameInstancePatch::priority))
+                        .toList();
+                for (GameInstancePatch patch : sortedPatches) {
+                    currentManifest = patch.withJar(null).merge(currentManifest);
+                }
+            }
+
+            return currentManifest.setId(id);
+        }
+
     }
 
     protected static class InstanceHolder {
-        protected final Snapshot snapshot;
+        protected final Status status;
         protected final GameInstanceID id;
         protected final GameInstanceManifest manifest;
 
         protected @Nullable GameVersionNumber version;
 
-        protected InstanceHolder(Snapshot snapshot, GameInstanceID id, GameInstanceManifest manifest) {
-            this.snapshot = snapshot;
+        protected InstanceHolder(Status status, GameInstanceID id, GameInstanceManifest manifest) {
+            this.status = status;
             this.id = id;
             this.manifest = manifest;
         }
