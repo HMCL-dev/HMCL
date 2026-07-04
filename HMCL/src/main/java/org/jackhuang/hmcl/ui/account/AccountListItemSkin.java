@@ -174,6 +174,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         root.setStyle("-fx-padding: 8 8 8 0;");
 
         RipplerContainer rootRippler = new RipplerContainer(root);
+        rootRippler.setPickOnBounds(true);
         rootRippler.setCursor(Cursor.HAND);
         FXUtils.onClicked(rootRippler, skinnable::fire);
 
