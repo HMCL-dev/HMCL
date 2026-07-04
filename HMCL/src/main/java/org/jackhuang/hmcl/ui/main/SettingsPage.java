@@ -171,7 +171,7 @@ public final class SettingsPage extends ScrollPane {
                 if (UpdateChecker.DISABLE_UPDATE_PROPERTY.equalsIgnoreCase("true")) {
                     alertLineButton.setTitle(i18n("update.disabled.title"));
                     alertLineButton.setSubtitle(i18n("update.disabled.subtitle"));
-                }  else if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
+                } else if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
                     alertLineButton.setLeading(SVG.WARNING, 32);
 
                     alertLineButton.setTitle(i18n("update.unofficial.title"));
