@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.logging.Level;
 
 /**
  *
@@ -84,26 +85,24 @@ public enum Log4jLevel {
             if (m2.find()) {
                 String level2Str = m2.group("category");
                 if (null != level2Str)
-                    switch (level2Str) {
-                        case "STDOUT":
-                            level = INFO;
-                            break;
-                        case "STDERR":
-                            level = ERROR;
-                            break;
-                    }
+                    level = switch (level2Str) {
+                        case "STDOUT" -> INFO;
+                        case "STDERR" -> ERROR;
+                        default -> level;
+                    };
             }
 
             if (line.contains("STDERR]") || line.contains("[STDERR/]")) {
                 level = ERROR;
             }
         } else {
-            if (line.contains("[INFO]") || line.contains("[CONFIG]") || line.contains("[FINE]")
-                    || line.contains("[FINER]") || line.contains("[FINEST]"))
+            if (containsLevelMarker(line, Level.INFO) || containsLevelMarker(line, Level.CONFIG)
+                    || containsLevelMarker(line, Level.FINE) || containsLevelMarker(line, Level.FINER)
+                    || containsLevelMarker(line, Level.FINEST))
                 level = INFO;
-            if (line.contains("[SEVERE]") || line.contains("[STDERR]"))
+            if (containsLevelMarker(line, Level.SEVERE) || line.contains("[STDERR]"))
                 level = ERROR;
-            if (line.contains("[WARNING]"))
+            if (containsLevelMarker(line, Level.WARNING) || line.contains("[WARN]"))
                 level = WARN;
             if (line.contains("[DEBUG]"))
                 level = DEBUG;
@@ -118,6 +117,11 @@ public enum Log4jLevel {
                 || line.matches("... \\d+ more$"))
             return ERROR;*/
         return level;
+    }
+
+    private static boolean containsLevelMarker(String line, Level level) {
+        return line.contains("[" + level.getName() + "]")
+                || line.contains("[" + level.getLocalizedName() + "]");
     }
 
     public static boolean isError(Log4jLevel a) {

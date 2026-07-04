@@ -145,6 +145,7 @@ public final class LauncherHelper {
         DefaultDependencyManager dependencyManager = repository.getDependency();
         AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
         Optional<String> gameVersion = repository.getGameVersion(version.get());
+        boolean legacyForgeStderrLog = isLegacyForgeStderrLog(version.get(), gameVersion);
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
@@ -242,7 +243,7 @@ public final class LauncherHelper {
                             launchOptions,
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                                    : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent(), legacyForgeStderrLog)
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
@@ -684,6 +685,19 @@ public final class LauncherHelper {
         return task.withStage("launch.state.java");
     }
 
+    // https://github.com/HMCL-dev/HMCL/issues/4240
+    private static boolean isLegacyForgeStderrLog(Version version, Optional<String> gameVersion) {
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, gameVersion.orElse(null));
+        Optional<String> minecraftVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT);
+        return analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
+                && (minecraftVersion.filter(LauncherHelper::isMinecraft164).isPresent()
+                || isMinecraft164(version.getId()));
+    }
+
+    private static boolean isMinecraft164(String version) {
+        return version.equals("1.6.4");
+    }
+
     private static CompletableFuture<JavaRuntime> downloadJava(GameJavaVersion javaVersion, HMCLGameRepository repository) {
         CompletableFuture<JavaRuntime> future = new CompletableFuture<>();
         Controllers.dialog(new MessageDialogPane.Builder(
@@ -802,16 +816,18 @@ public final class LauncherHelper {
         private final CircularArrayList<Log> logs;
         private final CountDownLatch launchingLatch;
         private final String forbiddenAccessToken;
+        private final boolean legacyForgeStderrLog;
         private Thread submitLogThread;
         private LinkedBlockingQueue<Log> logBuffer;
 
-        public HMCLProcessListener(HMCLGameRepository repository, Version version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
+        public HMCLProcessListener(HMCLGameRepository repository, Version version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow, boolean legacyForgeStderrLog) {
             this.repository = repository;
             this.version = version;
             this.launchOptions = launchOptions;
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
             this.forbiddenAccessToken = authInfo != null ? authInfo.getAccessToken() : null;
+            this.legacyForgeStderrLog = legacyForgeStderrLog;
             this.logs = new CircularArrayList<>(Log.getLogLines() + 1);
         }
 
@@ -929,7 +945,7 @@ public final class LauncherHelper {
             if (forbiddenAccessToken != null)
                 log = log.replace(forbiddenAccessToken, "<access token>");
 
-            Log4jLevel level = isErrorStream && !log.startsWith("[authlib-injector]") ? Log4jLevel.ERROR : null;
+            Log4jLevel level = isErrorStream && !log.startsWith("[authlib-injector]") && !legacyForgeStderrLog ? Log4jLevel.ERROR : null;
             if (showLogs) {
                 if (level == null)
                     level = Lang.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
