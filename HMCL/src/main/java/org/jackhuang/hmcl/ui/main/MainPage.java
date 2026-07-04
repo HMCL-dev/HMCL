@@ -494,10 +494,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 onUpgrade();
             } else if (updateState.get() == State.DOWNLOADING) {
                 Controllers.dialog(new UpgradeDialog(latestVersion.get(), null));
-            } else if (updateState.get() == State.SUCCESS) {
+            } else if (updateState.get() == State.SUCCESS && !UPDATE_MODE.equals(EnumUpdateMode.SILENT)) {
                 Task.runAsync(() -> {
                     try {
-                        UpdateHandler.finishUpdate(downloadedHmcl, UPDATE_MODE == EnumUpdateMode.SILENT);
+                        UpdateHandler.finishUpdate(downloadedHmcl, false);
                     } catch (IOException e) {
                         LOG.warning("Failed to apply update", e);
                         javafx.application.Platform.runLater(() -> {
