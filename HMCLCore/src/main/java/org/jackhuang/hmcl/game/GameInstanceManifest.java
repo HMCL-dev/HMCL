@@ -56,6 +56,44 @@ public record GameInstanceManifest(
         @Nullable @Unmodifiable JsonObject rawJson
 ) {
 
+    /// A launch-ready manifest view with inheritance and pending patches applied.
+    ///
+    /// @param manifest the final manifest data used by launch-time consumers
+    /// @param appliedPatches patches that have already been applied to produce the final manifest
+    @NotNullByDefault
+    public record Resolved(GameInstanceManifest manifest,
+                           @Unmodifiable List<GameInstancePatch> appliedPatches) {
+
+        /// Creates a resolved manifest view.
+        public Resolved {
+            Objects.requireNonNull(manifest);
+            appliedPatches = List.copyOf(appliedPatches);
+
+            if (manifest.inheritsFrom() != null) {
+                throw new IllegalArgumentException("Resolved manifest cannot inherit from another manifest");
+            }
+            if (manifest.patches() != null && !manifest.patches().isEmpty()) {
+                throw new IllegalArgumentException("Resolved manifest cannot contain pending patches");
+            }
+        }
+    }
+
+    /// A manifest view whose inheritance has been folded while preserving pending patches.
+    ///
+    /// @param manifest the standalone manifest data that can be saved back to disk
+    @NotNullByDefault
+    public record Standalone(GameInstanceManifest manifest) {
+
+        /// Creates a standalone manifest view.
+        public Standalone {
+            Objects.requireNonNull(manifest);
+
+            if (manifest.inheritsFrom() != null) {
+                throw new IllegalArgumentException("Standalone manifest cannot inherit from another manifest");
+            }
+        }
+    }
+
     GameInstanceManifest merge(GameInstanceManifest parent) {
         return new GameInstanceManifest(
                 id,
@@ -311,8 +349,33 @@ public record GameInstanceManifest(
         return builder.toManifest();
     }
 
+    /// Converts this manifest into a hidden patch entry for preserving resolved inheritance.
+    ///
+    /// @return a patch containing this manifest's launch metadata
     public GameInstancePatch toPatch() {
-        throw new UnsupportedOperationException("TODO");
+        return new GameInstancePatch(
+                "resolved." + id,
+                null,
+                Integer.MIN_VALUE,
+                minecraftArguments,
+                arguments,
+                mainClass,
+                inheritsFrom == null ? null : inheritsFrom.toString(),
+                jar,
+                assetIndex,
+                assets,
+                complianceLevel,
+                javaVersion,
+                libraries,
+                compatibilityRules,
+                downloads,
+                logging,
+                type,
+                time,
+                releaseTime,
+                minimumLauncherVersion,
+                true,
+                Map.of());
     }
 
     private static final class Builder {

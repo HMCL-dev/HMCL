@@ -151,13 +151,13 @@ public class DefaultGameRepository2 implements GameRepository2 {
     }
 
     @Override
-    public GameInstanceManifest getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+    public GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
         InstanceHolder instanceHolder = status.instances.get(instanceId);
         if (instanceHolder == null) {
             throw new NoSuchGameInstanceException(instanceId);
         }
 
-        GameInstanceManifest resolvedManifest = instanceHolder.resolvedManifest;
+        GameInstanceManifest.Resolved resolvedManifest = instanceHolder.resolvedManifest;
         if (resolvedManifest == null) {
             resolvedManifest = resolve(instanceHolder.manifest);
             instanceHolder.resolvedManifest = resolvedManifest;
@@ -209,7 +209,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
 
     @Override
     public Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        GameInstanceManifest manifest = getResolvedInstanceManifest(instanceId);
+        GameInstanceManifest manifest = getResolvedInstanceManifest(instanceId).manifest();
 
         GameInstanceID jarID = Objects.requireNonNullElse(manifest.jar(), manifest.id());
         return getInstanceRoot(instanceId).resolve(jarID + ".jar");
@@ -217,7 +217,8 @@ public class DefaultGameRepository2 implements GameRepository2 {
 
     @Override
     public Path getInstanceJar(GameInstanceManifest manifest) {
-        return null;
+        GameInstanceID jarID = Objects.requireNonNullElse(manifest.jar(), manifest.id());
+        return getInstanceRoot(manifest.id()).resolve(jarID + ".jar");
     }
 
     @Override
@@ -396,8 +397,23 @@ public class DefaultGameRepository2 implements GameRepository2 {
     }
 
     @Override
-    public GameInstanceManifest resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        return status.resolve(manifest, new HashSet<>());
+    public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
+        return toResolved(status.resolve(manifest, new HashSet<>()));
+    }
+
+    @Override
+    public GameInstanceManifest.Standalone resolvePreservingPatches(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
+        GameInstanceManifest standaloneManifest = status.resolvePreservingPatches(manifest, new HashSet<>());
+        GameInstanceID jar = resolve(manifest).manifest().jar();
+        if (jar != null) {
+            standaloneManifest = standaloneManifest.withJar(jar);
+        }
+        return new GameInstanceManifest.Standalone(standaloneManifest);
+    }
+
+    private static GameInstanceManifest.Resolved toResolved(GameInstanceManifest manifest) {
+        List<GameInstancePatch> appliedPatches = manifest.patches() == null ? List.of() : manifest.patches();
+        return new GameInstanceManifest.Resolved(manifest.withPatches(null), appliedPatches);
     }
 
     protected static class Status {
@@ -452,13 +468,64 @@ public class DefaultGameRepository2 implements GameRepository2 {
             return currentManifest.withId(manifest.id());
         }
 
+        private GameInstanceManifest resolvePreservingPatches(GameInstanceManifest manifest,
+                                                              Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
+            GameInstanceManifest currentManifest = manifest.isRoot()
+                    ? manifest
+                    : addPatches(
+                            addPatches(new GameInstanceManifest(manifest.id()), Collections.singleton(manifest.toPatch())),
+                            manifest.patches());
+
+            if (manifest.inheritsFrom() != null) {
+                // To maximize the compatibility.
+                if (!resolvedSoFar.add(manifest.id())) {
+                    LOG.warning("Found circular dependency versions: " + resolvedSoFar);
+                } else {
+                    InstanceHolder parentInstance = instances.get(manifest.inheritsFrom());
+                    if (parentInstance == null) {
+                        throw new NoSuchGameInstanceException(manifest.inheritsFrom());
+                    }
+
+                    currentManifest = addPatches(
+                            addPatches(resolvePreservingPatches(parentInstance.manifest, resolvedSoFar), Collections.singleton(manifest.toPatch())),
+                            manifest.patches());
+                }
+            }
+
+            return currentManifest.withId(manifest.id());
+        }
+
+        private static GameInstanceManifest addPatches(GameInstanceManifest manifest, @Nullable Collection<GameInstancePatch> additional) {
+            if (additional == null || additional.isEmpty()) {
+                return manifest;
+            }
+
+            Set<String> patchIds = new HashSet<>();
+            for (GameInstancePatch patch : additional) {
+                if (patch.id() != null) {
+                    patchIds.add(patch.id());
+                }
+            }
+
+            List<GameInstancePatch> patches = new ArrayList<>();
+            if (manifest.patches() != null) {
+                for (GameInstancePatch patch : manifest.patches()) {
+                    if (patch.id() == null || !patchIds.contains(patch.id())) {
+                        patches.add(patch);
+                    }
+                }
+            }
+            patches.addAll(additional);
+            return manifest.withPatches(patches);
+        }
+
     }
 
     protected static class InstanceHolder {
         protected final Status status;
         protected final GameInstanceID id;
         protected final GameInstanceManifest manifest;
-        protected @Nullable GameInstanceManifest resolvedManifest;
+        protected @Nullable GameInstanceManifest.Resolved resolvedManifest;
         protected @Nullable GameVersionNumber version;
 
         protected InstanceHolder(Status status, GameInstanceID id, GameInstanceManifest manifest) {

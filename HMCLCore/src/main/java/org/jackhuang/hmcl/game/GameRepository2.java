@@ -32,16 +32,34 @@ import java.util.Set;
 
 @NotNullByDefault
 public interface GameRepository2 {
-    GameInstanceManifest resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException;
+    /// Resolves inheritance and pending patches into a launch-ready manifest view.
+    ///
+    /// @param manifest the manifest to resolve
+    /// @return the resolved manifest view
+    GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException;
+
+    /// Resolves inheritance while leaving patches as manifest data.
+    ///
+    /// @param manifest the manifest to resolve
+    /// @return the standalone manifest view
+    GameInstanceManifest.Standalone resolvePreservingPatches(GameInstanceManifest manifest) throws NoSuchGameInstanceException;
 
     boolean hasInstance(GameInstanceID instanceId);
 
     GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
 
-    GameInstanceManifest getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+    /// Returns a cached launch-ready manifest view for the instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the resolved manifest view
+    GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
 
-    default GameInstanceManifest getResolvedPreservingPatchesInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        throw new UnsupportedOperationException(); // TODO
+    /// Returns a standalone manifest view for the instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the standalone manifest view
+    default GameInstanceManifest.Standalone getResolvedPreservingPatchesInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        return resolvePreservingPatches(getInstanceManifest(instanceId));
     }
 
     int getInstanceCount();
@@ -77,7 +95,7 @@ public interface GameRepository2 {
     }
 
     default Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getInstanceJar(resolve(getInstanceManifest(instanceId)));
+        return getInstanceJar(getResolvedInstanceManifest(instanceId).manifest());
     }
 
     boolean renameInstance(GameInstanceID from, GameInstanceID to);

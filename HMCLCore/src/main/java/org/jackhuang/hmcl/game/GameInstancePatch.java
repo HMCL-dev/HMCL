@@ -23,9 +23,9 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @NotNullByDefault
 public record GameInstancePatch(
@@ -53,8 +53,38 @@ public record GameInstancePatch(
         @Unmodifiable Map<String, JsonElement> unknownFields
 ) {
 
-    public GameInstancePatch withJar(@Nullable String jar) {
-        throw new UnsupportedOperationException("TODO");
+    /// Returns a patch copy with the given jar target.
+    ///
+    /// @param jar the jar target, or `null` to let the parent manifest supply it
+    /// @return a patch with the requested jar target
+    public GameInstancePatch withJar(@Nullable GameInstanceID jar) {
+        if (Objects.equals(this.jar, jar)) {
+            return this;
+        }
+
+        return new GameInstancePatch(
+                id,
+                version,
+                priority,
+                minecraftArguments,
+                arguments,
+                mainClass,
+                inheritsFrom,
+                jar,
+                assetIndex,
+                assets,
+                complianceLevel,
+                javaVersion,
+                libraries,
+                compatibilityRules,
+                downloads,
+                logging,
+                type,
+                time,
+                releaseTime,
+                minimumLauncherVersion,
+                hidden,
+                unknownFields);
     }
 
     GameInstanceManifest merge(GameInstanceManifest parent) {
