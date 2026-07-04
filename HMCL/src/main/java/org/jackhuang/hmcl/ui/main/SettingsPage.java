@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.upgrade.*;
-import org.jackhuang.hmcl.util.AprilFools;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -202,7 +201,7 @@ public final class SettingsPage extends ScrollPane {
             {
                 ComponentList miscPaneList = new ComponentList();
 
-                if (AprilFools.isShowAprilFoolsSettings()) {
+                {
                     LineToggleButton disableAprilFools = new LineToggleButton();
                     disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
                     disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
