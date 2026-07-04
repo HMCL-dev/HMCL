@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -73,6 +74,8 @@ public class DefaultGameRepository2 implements GameRepository2 {
                 null, null, null, null, null, null);
     }
 
+    protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
     private Path baseDirectory;
     private volatile @Unmodifiable Snapshot snapshot;
 
@@ -80,7 +83,6 @@ public class DefaultGameRepository2 implements GameRepository2 {
         this.baseDirectory = baseDirectory;
         this.snapshot = new Snapshot(baseDirectory);
     }
-
 
     public Path getBaseDirectory() {
         return baseDirectory;
