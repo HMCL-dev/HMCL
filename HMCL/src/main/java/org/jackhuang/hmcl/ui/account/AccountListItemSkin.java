@@ -59,6 +59,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         rootRippler.setPickOnBounds(true);
         rootRippler.setCursor(Cursor.HAND);
+        FXUtils.setOverflowHidden(rootRippler, 8);
         FXUtils.onClicked(rootRippler, skinnable::fire);
 
         JFXRadioButton chkSelected = new JFXRadioButton();
