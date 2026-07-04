@@ -60,7 +60,7 @@ public record GameInstanceManifest(
             json = json.deepCopy();
         }
 
-        Editor editor = new Editor();
+        Builder builder = new Builder();
 
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String memberName = entry.getKey();
@@ -70,7 +70,7 @@ public record GameInstanceManifest(
                 case "id" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
                         try {
-                            editor.id = new GameInstanceID(primitive.getAsString());
+                            builder.id = new GameInstanceID(primitive.getAsString());
                         } catch (IllegalArgumentException e) {
                             throw new JsonParseException(e);
                         }
@@ -78,42 +78,42 @@ public record GameInstanceManifest(
                 }
                 case "minecraftArguments" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        editor.minecraftArguments = primitive.getAsString();
+                        builder.minecraftArguments = primitive.getAsString();
                     }
                 }
                 case "arguments" -> {
-                    editor.arguments = JsonUtils.GSON.fromJson(value, Arguments.class);
+                    builder.arguments = JsonUtils.GSON.fromJson(value, Arguments.class);
                 }
                 case "mainClass" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        editor.mainClass = primitive.getAsString();
+                        builder.mainClass = primitive.getAsString();
                     }
                 }
                 case "inheritsFrom" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        editor.inheritsFrom = primitive.getAsString();
+                        builder.inheritsFrom = primitive.getAsString();
                     }
                 }
                 case "jar" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        editor.jar = primitive.getAsString();
+                        builder.jar = primitive.getAsString();
                     }
                 }
                 case "assetIndex" -> {
-                    editor.assetIndex = JsonUtils.GSON.fromJson(value, AssetIndexInfo.class);
+                    builder.assetIndex = JsonUtils.GSON.fromJson(value, AssetIndexInfo.class);
                 }
                 case "assets" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        editor.assets = primitive.getAsString();
+                        builder.assets = primitive.getAsString();
                     }
                 }
                 case "complianceLevel" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isNumber()) {
-                        editor.complianceLevel = primitive.getAsInt();
+                        builder.complianceLevel = primitive.getAsInt();
                     }
                 }
                 case "javaVersion" -> {
-                    editor.javaVersion = JsonUtils.GSON.fromJson(value, GameJavaVersion.class);
+                    builder.javaVersion = JsonUtils.GSON.fromJson(value, GameJavaVersion.class);
                 }
                 case "libraries" -> {
                     if (value instanceof JsonArray array) {
@@ -121,7 +121,7 @@ public record GameInstanceManifest(
                         for (JsonElement element : array) {
                             list.add(JsonUtils.GSON.fromJson(element, Library.class));
                         }
-                        editor.libraries = Collections.unmodifiableList(list);
+                        builder.libraries = Collections.unmodifiableList(list);
                     }
                 }
                 case "compatibilityRules" -> {
@@ -130,7 +130,7 @@ public record GameInstanceManifest(
                         for (JsonElement element : array) {
                             list.add(JsonUtils.GSON.fromJson(element, CompatibilityRule.class));
                         }
-                        editor.compatibilityRules = Collections.unmodifiableList(list);
+                        builder.compatibilityRules = Collections.unmodifiableList(list);
                     }
                 }
                 case "downloads" -> {
@@ -143,7 +143,7 @@ public record GameInstanceManifest(
                             } catch (IllegalArgumentException ignored) {
                             }
                         }
-                        editor.downloads = Collections.unmodifiableMap(map);
+                        builder.downloads = Collections.unmodifiableMap(map);
                     }
                 }
                 case "logging" -> {
@@ -156,40 +156,40 @@ public record GameInstanceManifest(
                             } catch (IllegalArgumentException ignored) {
                             }
                         }
-                        editor.logging = Map.copyOf(map);
+                        builder.logging = Map.copyOf(map);
                     }
                 }
                 case "type" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
                         try {
-                            editor.type = ReleaseType.valueOf(primitive.getAsString());
+                            builder.type = ReleaseType.valueOf(primitive.getAsString());
                         } catch (IllegalArgumentException ignored) {
                         }
                     }
                 }
                 case "time" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        editor.time = primitive.getAsString();
+                        builder.time = primitive.getAsString();
                     }
                 }
                 case "releaseTime" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        editor.releaseTime = primitive.getAsString();
+                        builder.releaseTime = primitive.getAsString();
                     }
                 }
                 case "minimumLauncherVersion" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isNumber()) {
-                        editor.minimumLauncherVersion = primitive.getAsInt();
+                        builder.minimumLauncherVersion = primitive.getAsInt();
                     }
                 }
                 case "root" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-                        editor.root = primitive.getAsBoolean();
+                        builder.root = primitive.getAsBoolean();
                     }
                 }
                 case "hidden" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-                        editor.hidden = primitive.getAsBoolean();
+                        builder.hidden = primitive.getAsBoolean();
                     }
                 }
                 case "patches" -> {
@@ -198,18 +198,22 @@ public record GameInstanceManifest(
                         for (JsonElement element : array) {
                             // TODO
                         }
-                        editor.patches = List.copyOf(list);
+                        builder.patches = List.copyOf(list);
                     }
                 }
             }
         }
 
-        editor.rawJson = json;
-        return editor.toManifest();
+        builder.rawJson = json;
+        if (builder.id == null) {
+            throw new JsonParseException("Missing instance id");
+        }
+
+        return builder.toManifest();
     }
 
 
-    private static final class Editor {
+    private static final class Builder {
         // @formatter:off
         private @Nullable GameInstanceID id;
         private @Nullable String minecraftArguments;
@@ -236,10 +240,10 @@ public record GameInstanceManifest(
         // @formatter:on
 
 
-        Editor() {
+        Builder() {
         }
 
-        Editor(GameInstanceManifest manifest) {
+        Builder(GameInstanceManifest manifest) {
             this.id = manifest.id;
             this.minecraftArguments = manifest.minecraftArguments;
             this.arguments = manifest.arguments;
