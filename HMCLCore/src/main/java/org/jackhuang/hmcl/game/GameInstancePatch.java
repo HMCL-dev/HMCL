@@ -30,6 +30,7 @@ import java.util.Map;
 @NotNullByDefault
 public record GameInstancePatch(
         @Nullable String id,
+        @Nullable String version,
         Integer priority,
         @Nullable String minecraftArguments,
         @Nullable Arguments arguments,
