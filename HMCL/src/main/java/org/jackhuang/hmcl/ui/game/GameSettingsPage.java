@@ -777,7 +777,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             vulkanRendererPane.setTitle(i18n("settings.advanced.renderer.vulkan"));
 
             this.currentGameVersionNumber.addListener((o, oldValue, newValue) -> {
-                if (newValue.compareTo("26.2-snapshot-2") >= 0) {
+                if (isPresetSetting || newValue.compareTo("26.2-snapshot-2") >= 0) {
                     graphicsBackendPane.setVisible(true);
                     graphicsBackendPane.setManaged(true);
 
