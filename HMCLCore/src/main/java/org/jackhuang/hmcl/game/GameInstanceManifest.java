@@ -119,9 +119,13 @@ public record GameInstanceManifest(
                     if (value instanceof JsonArray array) {
                         List<Library> list = new ArrayList<>(array.size());
                         for (JsonElement element : array) {
-                            list.add(JsonUtils.GSON.fromJson(element, Library.class));
+                            if (element instanceof JsonObject object) {
+                                list.add(Library.fromJson(object));
+                            } else {
+                                // TODO
+                            }
                         }
-                        builder.libraries = Collections.unmodifiableList(list);
+                        builder.libraries = List.copyOf(list);
                     }
                 }
                 case "compatibilityRules" -> {
@@ -130,7 +134,7 @@ public record GameInstanceManifest(
                         for (JsonElement element : array) {
                             list.add(JsonUtils.GSON.fromJson(element, CompatibilityRule.class));
                         }
-                        builder.compatibilityRules = Collections.unmodifiableList(list);
+                        builder.compatibilityRules = List.copyOf(list);
                     }
                 }
                 case "downloads" -> {
