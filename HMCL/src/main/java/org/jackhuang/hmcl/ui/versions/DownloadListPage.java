@@ -78,7 +78,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final ObservableList<String> versions = FXCollections.observableArrayList();
     private final StringProperty selectedVersion = new SimpleStringProperty();
-    private final DownloadPage.DownloadCallback callback;
+    private final DownloadPage.DownloadCallback callback; // ONLY FOR MODPACKS
     private boolean searchInitialized = false;
     protected final BooleanProperty supportChinese = new SimpleBooleanProperty();
     private final ObservableList<Node> actions = FXCollections.observableArrayList();

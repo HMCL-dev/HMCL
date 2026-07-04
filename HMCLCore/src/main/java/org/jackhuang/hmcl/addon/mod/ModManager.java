@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.addon.mod;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
-import org.jackhuang.hmcl.addon.meta.*;
+import org.jackhuang.hmcl.addon.mod.meta.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.util.Pair;
