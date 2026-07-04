@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -29,6 +28,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -52,8 +53,6 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         super(skinnable);
 
         BorderPane root = new BorderPane();
-        root.setCursor(Cursor.HAND);
-        FXUtils.onClicked(root, skinnable::fire);
 
         JFXRadioButton chkSelected = new JFXRadioButton();
         chkSelected.setMouseTransparent(true);
@@ -64,6 +63,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         HBox center = new HBox();
         center.setSpacing(8);
         center.setAlignment(Pos.CENTER_LEFT);
+        center.setMouseTransparent(true);
 
         Canvas canvas = new Canvas(32, 32);
         TexturesLoader.bindAvatar(canvas, skinnable.getAccount());
@@ -171,11 +171,16 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         right.getChildren().add(btnRemove);
         root.setRight(right);
 
-        root.getStyleClass().add("card");
         root.setStyle("-fx-padding: 8 8 8 0;");
-        JFXDepthManager.setDepth(root, 1);
 
-        getChildren().setAll(root);
+        RipplerContainer rootRippler = new RipplerContainer(root);
+        rootRippler.setCursor(Cursor.HAND);
+        FXUtils.onClicked(rootRippler, skinnable::fire);
+
+        Region background = new Region();
+        background.setStyle("-fx-background-color: -monet-surface-container-low-transparent-80; -fx-background-radius: 4;");
+
+        getChildren().setAll(background, rootRippler);
     }
 
     /// Moves the account between local and user account files.
