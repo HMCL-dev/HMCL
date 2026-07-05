@@ -145,8 +145,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             });
         });
 
-        header.setLargeTitle(sublist.isLargeTitle());
-        sublist.largeTitleProperty().addListener((obs, oldVal, newVal) -> header.setLargeTitle(newVal));
+        FXUtils.onChangeAndOperate(sublist.largeTitleProperty(), header::setLargeTitle);
 
         InvalidationListener updateTitleTrailing = observable -> {
             Node titleTrailing = sublist.getTitleTrailing();
