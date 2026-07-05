@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
@@ -130,6 +131,14 @@ public class AccountListItem extends RadioButton {
             }, profile);
         } else if (account instanceof OfflineAccount || account.canUploadSkin()) {
             return createBooleanBinding(() -> true);
+        } else {
+            return createBooleanBinding(() -> false);
+        }
+    }
+
+    public ObservableBooleanValue canAddFriend() {
+        if (account instanceof AuthlibInjectorAccount || account instanceof MicrosoftAccount) {
+             return createBooleanBinding(() -> true);
         } else {
             return createBooleanBinding(() -> false);
         }

@@ -156,6 +156,22 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
 
+        SpinnerPane friendSpinnerPane = new SpinnerPane();
+        JFXButton btnFriend = FXUtils.newToggleButton4(SVG.GROUP);
+        btnFriend.disableProperty().bind(Bindings.not(skinnable.canAddFriend()));
+        FXUtils.installFastTooltip(btnFriend, i18n("account.friend"));
+        friendSpinnerPane.setContent(btnFriend);
+        btnFriend.setOnAction(actionEvent -> {
+            if (skinnable.getAccount() instanceof MicrosoftAccount) {
+                Controllers.navigate(new FriendListPage(skinnable.getAccount(), ((MicrosoftAccount) skinnable.getAccount()).getService()));
+            } else if (skinnable.getAccount() instanceof AuthlibInjectorAccount) {
+                // TODO
+//                Controllers.navigate(new FriendListPage(skinnable.getAccount(), ((AuthlibInjectorAccount) skinnable.getAccount()).getYggdrasilService()));
+            }
+        });
+        right.getChildren().add(friendSpinnerPane);
+
+
         JFXButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
         SpinnerPane spinnerCopyUUID = new SpinnerPane();
         spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
