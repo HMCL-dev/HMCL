@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -86,6 +87,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         center.getChildren().setAll(canvas, item);
         root.setCenter(center);
+        BorderPane.setMargin(center, new Insets(0, 0, 0, 8));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
