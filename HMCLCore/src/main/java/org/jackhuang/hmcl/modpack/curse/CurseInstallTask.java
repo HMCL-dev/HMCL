@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
@@ -136,15 +137,60 @@ public final class CurseInstallTask extends Task<Void> {
         return dependencies;
     }
 
+    private Set<String> getNewOverridesMods() throws IOException {
+        Set<String> result = new HashSet<>();
+        String overridesDir = manifest.overrides();
+        if (StringUtils.isBlank(overridesDir)) {
+            return result;
+        }
+
+        String pathPrefix = StringUtils.addSuffix(FileUtils.normalizePath(overridesDir), "/");
+        try (var reader = CompressingUtils.openZipFileWithPossibleEncoding(zipFile, modpack.getEncoding())) {
+            for (var entry : reader.getEntries()) {
+                String normalizedPath = FileUtils.normalizePath(entry.getName());
+                if (!normalizedPath.startsWith(pathPrefix)) {
+                    continue;
+                }
+                String relativePath = normalizedPath.substring(pathPrefix.length());
+                if (relativePath.startsWith("mods/") && !entry.isDirectory()) {
+                    result.add(relativePath);
+                }
+            }
+        }
+        return result;
+    }
+
     @Override
     public void execute() throws Exception {
         if (config != null) {
-            // For update, remove mods not listed in new manifest
-            for (CurseManifestFile oldCurseManifestFile : config.manifest().files()) {
+            Set<String> newOverridesMods = getNewOverridesMods();
+            Set<CurseManifestFile> newManifestFiles = manifest.files() != null ? new HashSet<>(manifest.files()) : Collections.emptySet();
+
+            // For update, remove mods not listed in new manifest.
+            // ModpackConfiguration stored in modpack.json preserves the raw
+            // CurseForge manifest where fileName is missing. CurseCompletionTask
+            // resolves those file names and writes the enriched manifest to
+            // manifest.json, so read from there when available.
+            Path oldManifestFile = repository.getVersionRoot(name).resolve("manifest.json");
+            List<CurseManifestFile> oldFiles = config.manifest().files();
+            if (Files.exists(oldManifestFile)) {
+                try {
+                    CurseManifest oldManifest = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class);
+                    if (oldManifest != null) {
+                        oldFiles = oldManifest.files();
+                    }
+                } catch (IOException | JsonParseException ignored) {
+                }
+            }
+            if (oldFiles == null) {
+                oldFiles = Collections.emptyList();
+            }
+            for (CurseManifestFile oldCurseManifestFile : oldFiles) {
                 if (StringUtils.isBlank(oldCurseManifestFile.fileName())) continue;
-                Path oldFile = run.resolve("mods/" + oldCurseManifestFile.fileName());
+                String relativePath = "mods/" + oldCurseManifestFile.fileName();
+                Path oldFile = run.resolve(relativePath);
                 if (Files.notExists(oldFile)) continue;
-                if (manifest.files().stream().noneMatch(oldCurseManifestFile::equals))
+                if (!newManifestFiles.contains(oldCurseManifestFile) && !newOverridesMods.contains(relativePath))
                     Files.deleteIfExists(oldFile);
             }
         }

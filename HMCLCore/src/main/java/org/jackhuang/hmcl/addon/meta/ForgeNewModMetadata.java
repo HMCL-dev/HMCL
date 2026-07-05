@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
@@ -54,9 +55,9 @@ public record ForgeNewModMetadata(String modLoader, String loaderVersion, String
                                   List<Mod> mods) {
 
     public record Mod(String modId, String version, String displayName, String side, String displayURL,
-                      @JsonAdapter(AuthorDeserializer.class) String authors, String description) {
+                      @JsonAdapter(AuthorDeserializer.class) String authors, String description, String logoFile) {
         public Mod() {
-            this("", "", "", "", "", "", "");
+            this("", "", "", "", "", "", "", "");
         }
 
         static final class AuthorDeserializer implements JsonDeserializer<String> {
@@ -148,10 +149,12 @@ public record ForgeNewModMetadata(String modLoader, String loaderVersion, String
 
         ModLoaderType type = analyzeLoader(tomlParseResult, mod.modId(), modLoaderType);
 
+        String logoPath = StringUtils.isNotBlank(mod.logoFile()) ? mod.logoFile() : metadata.logoFile();
+
         return new LocalModFile(modManager, modManager.getLocalMod(mod.modId(), type), modFile, mod.displayName(), new LocalAddonFile.Description(mod.description()),
                 mod.authors(), jarVersion == null ? mod.version() : mod.version().replace("${file.jarVersion}", jarVersion), "",
                 mod.displayURL(),
-                metadata.logoFile());
+                logoPath);
     }
 
     private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
