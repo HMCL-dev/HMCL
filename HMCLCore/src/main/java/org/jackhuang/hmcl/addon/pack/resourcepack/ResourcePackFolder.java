@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.addon.pack.resourcepack;
 
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.pack.PackMcMeta;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -61,15 +58,5 @@ final class ResourcePackFolder extends ResourcePackFile {
 
     private ResourcePackFolder(ResourcePackManager manager, Path path, PackMcMeta meta, @Nullable Image icon) {
         super(manager, path, meta, icon);
-    }
-
-    @Override
-    public void delete() throws IOException {
-        FileUtils.deleteDirectory(file);
-    }
-
-    @Override
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) {
-        return null;
     }
 }

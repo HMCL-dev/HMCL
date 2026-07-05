@@ -17,27 +17,13 @@
  */
 package org.jackhuang.hmcl.addon.shader;
 
-import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 final class ShaderFolder extends ShaderFile {
 
     private ShaderFolder(Path file, ShaderLoaderType loaderType, @Nullable ApertureData apertureData) {
         super(file, loaderType, apertureData);
-    }
-
-    @Override
-    public void delete() throws IOException {
-        FileUtils.deleteDirectory(file);
-    }
-
-    @Override
-    public @Nullable AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
-        return null;
     }
 }

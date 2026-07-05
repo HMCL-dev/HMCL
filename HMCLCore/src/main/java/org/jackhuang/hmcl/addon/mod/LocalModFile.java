@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -187,11 +186,6 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     @Override
     public void markDisabled() throws IOException {
         file = modManager.disableMod(file);
-    }
-
-    @Override
-    public void delete() throws IOException {
-        Files.deleteIfExists(file);
     }
 
     @Override

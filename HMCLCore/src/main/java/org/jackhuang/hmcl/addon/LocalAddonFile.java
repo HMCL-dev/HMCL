@@ -50,9 +50,14 @@ public abstract class LocalAddonFile {
 
     public abstract boolean keepOldFiles();
 
-    public abstract void delete() throws IOException;
+    public void delete() throws IOException {
+        FileUtils.forceDeleteIfExists(getFile());
+    }
 
-    public abstract @Nullable AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException;
+    @Nullable
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
+        return null;
+    }
 
     public record AddonUpdate(
             LocalAddonFile localAddonFile,

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
@@ -72,11 +71,6 @@ final class ResourcePackZipFile extends ResourcePackFile {
 
     private ResourcePackZipFile(ResourcePackManager manager, Path path, PackMcMeta meta, @Nullable Image icon) {
         super(manager, path, meta, icon);
-    }
-
-    @Override
-    public void delete() throws IOException {
-        Files.deleteIfExists(file);
     }
 
     @Override

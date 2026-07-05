@@ -20,12 +20,13 @@ package org.jackhuang.hmcl.addon.shader;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-public sealed abstract class ShaderFile extends LocalAddonFile permits ShaderZipFile, ShaderFolder {
+public sealed abstract class ShaderFile extends LocalAddonFile implements Comparable<ShaderFile> permits ShaderZipFile, ShaderFolder {
 
     protected Path file;
     protected final String fileNameWithoutExtension;
@@ -70,4 +71,8 @@ public sealed abstract class ShaderFile extends LocalAddonFile permits ShaderZip
         else file = LocalAddonManager.restoreFile(file);
     }
 
+    @Override
+    public int compareTo(@NotNull ShaderFile other) {
+        return fileNameWithoutExtension.compareTo(other.fileNameWithoutExtension);
+    }
 }

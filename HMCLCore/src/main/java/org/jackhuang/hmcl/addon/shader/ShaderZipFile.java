@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
@@ -33,11 +32,6 @@ final class ShaderZipFile extends ShaderFile {
 
     private ShaderZipFile(Path file, ShaderLoaderType loaderType, @Nullable ApertureData apertureData) {
         super(file, loaderType, apertureData);
-    }
-
-    @Override
-    public void delete() throws IOException {
-        Files.deleteIfExists(file);
     }
 
     @Override

@@ -468,6 +468,14 @@ public final class FileUtils {
             Files.delete(file);
     }
 
+    public static void forceDeleteIfExists(Path file)
+            throws IOException {
+        if (Files.isDirectory(file))
+            deleteDirectory(file);
+        else
+            Files.deleteIfExists(file);
+    }
+
     public static void copyFile(Path srcFile, Path destFile)
             throws IOException {
         Objects.requireNonNull(srcFile, "Source must not be null");
