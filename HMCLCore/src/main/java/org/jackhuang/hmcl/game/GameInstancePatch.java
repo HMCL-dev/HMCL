@@ -17,12 +17,21 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +60,251 @@ public record GameInstancePatch(
         @Nullable Boolean hidden,
         @Unmodifiable Map<String, JsonElement> unknownFields
 ) {
+
+    public static GameInstancePatch fromJson(JsonObject json) throws JsonParseException {
+        @Nullable String id = null;
+        @Nullable String version = null;
+        @Nullable Integer priority = null;
+        @Nullable String minecraftArguments = null;
+        @Nullable Arguments arguments = null;
+        @Nullable String mainClass = null;
+        @Nullable String inheritsFrom = null;
+        @Nullable GameInstanceID jar = null;
+        @Nullable AssetIndexInfo assetIndex = null;
+        @Nullable String assets = null;
+        @Nullable Integer complianceLevel = null;
+        @Nullable GameJavaVersion javaVersion = null;
+        @Nullable List<Library> libraries = null;
+        @Nullable List<CompatibilityRule> compatibilityRules = null;
+        @Nullable Map<DownloadType, DownloadInfo> downloads = null;
+        @Nullable Map<DownloadType, LoggingInfo> logging = null;
+        @Nullable ReleaseType type = null;
+        @Nullable String time = null;
+        @Nullable String releaseTime = null;
+        @Nullable Integer minimumLauncherVersion = null;
+        @Nullable Boolean hidden = null;
+        Map<String, JsonElement> unknownFields = new LinkedHashMap<>();
+
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+            String memberName = entry.getKey();
+            JsonElement value = entry.getValue();
+
+            switch (memberName) {
+                case "id" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+                        id = primitive.getAsString();
+                    }
+                }
+                case "version" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+                        version = primitive.getAsString();
+                    }
+                }
+                case "priority" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isNumber()) {
+                        priority = primitive.getAsInt();
+                    }
+                }
+                case "minecraftArguments" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+                        minecraftArguments = primitive.getAsString();
+                    }
+                }
+                case "arguments" -> arguments = JsonUtils.GSON.fromJson(value, Arguments.class);
+                case "mainClass" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+                        mainClass = primitive.getAsString();
+                    }
+                }
+                case "inheritsFrom" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+                        inheritsFrom = primitive.getAsString();
+                    }
+                }
+                case "jar" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+                        try {
+                            jar = new GameInstanceID(primitive.getAsString());
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                    }
+                }
+                case "assetIndex" -> assetIndex = JsonUtils.GSON.fromJson(value, AssetIndexInfo.class);
+                case "assets" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+                        assets = primitive.getAsString();
+                    }
+                }
+                case "complianceLevel" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isNumber()) {
+                        complianceLevel = primitive.getAsInt();
+                    }
+                }
+                case "javaVersion" -> javaVersion = JsonUtils.GSON.fromJson(value, GameJavaVersion.class);
+                case "libraries" -> {
+                    if (value instanceof JsonArray array) {
+                        List<Library> list = new ArrayList<>(array.size());
+                        for (JsonElement element : array) {
+                            if (element instanceof JsonObject object) {
+                                list.add(Library.fromJson(object));
+                            }
+                        }
+                        libraries = List.copyOf(list);
+                    }
+                }
+                case "compatibilityRules" -> {
+                    if (value instanceof JsonArray array) {
+                        List<CompatibilityRule> list = new ArrayList<>(array.size());
+                        for (JsonElement element : array) {
+                            list.add(JsonUtils.GSON.fromJson(element, CompatibilityRule.class));
+                        }
+                        compatibilityRules = List.copyOf(list);
+                    }
+                }
+                case "downloads" -> {
+                    if (value instanceof JsonObject object) {
+                        Map<DownloadType, DownloadInfo> map = new EnumMap<>(DownloadType.class);
+                        for (Map.Entry<String, JsonElement> downloadEntry : object.entrySet()) {
+                            try {
+                                DownloadType downloadType = DownloadType.valueOf(downloadEntry.getKey());
+                                map.put(downloadType, JsonUtils.GSON.fromJson(downloadEntry.getValue(), DownloadInfo.class));
+                            } catch (IllegalArgumentException ignored) {
+                            }
+                        }
+                        downloads = Collections.unmodifiableMap(map);
+                    }
+                }
+                case "logging" -> {
+                    if (value instanceof JsonObject object) {
+                        Map<DownloadType, LoggingInfo> map = new EnumMap<>(DownloadType.class);
+                        for (Map.Entry<String, JsonElement> loggingEntry : object.entrySet()) {
+                            try {
+                                DownloadType downloadType = DownloadType.valueOf(loggingEntry.getKey());
+                                map.put(downloadType, JsonUtils.GSON.fromJson(loggingEntry.getValue(), LoggingInfo.class));
+                            } catch (IllegalArgumentException ignored) {
+                            }
+                        }
+                        logging = Collections.unmodifiableMap(map);
+                    }
+                }
+                case "type" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+                        try {
+                            type = ReleaseType.valueOf(primitive.getAsString());
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                    }
+                }
+                case "time" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+                        time = primitive.getAsString();
+                    }
+                }
+                case "releaseTime" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+                        releaseTime = primitive.getAsString();
+                    }
+                }
+                case "minimumLauncherVersion" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isNumber()) {
+                        minimumLauncherVersion = primitive.getAsInt();
+                    }
+                }
+                case "hidden" -> {
+                    if (value instanceof JsonPrimitive primitive && primitive.isBoolean()) {
+                        hidden = primitive.getAsBoolean();
+                    }
+                }
+                default -> unknownFields.put(memberName, value.deepCopy());
+            }
+        }
+
+        return new GameInstancePatch(
+                id,
+                version,
+                priority,
+                minecraftArguments,
+                arguments,
+                mainClass,
+                inheritsFrom,
+                jar,
+                assetIndex,
+                assets,
+                complianceLevel,
+                javaVersion,
+                libraries,
+                compatibilityRules,
+                downloads,
+                logging,
+                type,
+                time,
+                releaseTime,
+                minimumLauncherVersion,
+                hidden,
+                Collections.unmodifiableMap(unknownFields));
+    }
+
+    public JsonObject toJsonObject() {
+        JsonObject json = new JsonObject();
+        for (Map.Entry<String, JsonElement> entry : unknownFields.entrySet()) {
+            json.add(entry.getKey(), entry.getValue().deepCopy());
+        }
+
+        if (id != null)
+            json.addProperty("id", id);
+        if (version != null)
+            json.addProperty("version", version);
+        if (priority != null)
+            json.addProperty("priority", priority);
+        if (minecraftArguments != null)
+            json.addProperty("minecraftArguments", minecraftArguments);
+        if (arguments != null)
+            json.add("arguments", JsonUtils.GSON.toJsonTree(arguments));
+        if (mainClass != null)
+            json.addProperty("mainClass", mainClass);
+        if (inheritsFrom != null)
+            json.addProperty("inheritsFrom", inheritsFrom);
+        if (jar != null)
+            json.addProperty("jar", jar.toString());
+        if (assetIndex != null)
+            json.add("assetIndex", JsonUtils.GSON.toJsonTree(assetIndex));
+        if (assets != null)
+            json.addProperty("assets", assets);
+        if (complianceLevel != null)
+            json.addProperty("complianceLevel", complianceLevel);
+        if (javaVersion != null)
+            json.add("javaVersion", JsonUtils.GSON.toJsonTree(javaVersion));
+        if (libraries != null)
+            json.add("libraries", JsonUtils.GSON.toJsonTree(libraries));
+        if (compatibilityRules != null)
+            json.add("compatibilityRules", JsonUtils.GSON.toJsonTree(compatibilityRules));
+        if (downloads != null) {
+            JsonObject downloadsObject = new JsonObject();
+            for (Map.Entry<DownloadType, DownloadInfo> entry : downloads.entrySet()) {
+                downloadsObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+            }
+            json.add("downloads", downloadsObject);
+        }
+        if (logging != null) {
+            JsonObject loggingObject = new JsonObject();
+            for (Map.Entry<DownloadType, LoggingInfo> entry : logging.entrySet()) {
+                loggingObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+            }
+            json.add("logging", loggingObject);
+        }
+        if (type != null)
+            json.addProperty("type", type.name());
+        if (time != null)
+            json.addProperty("time", time);
+        if (releaseTime != null)
+            json.addProperty("releaseTime", releaseTime);
+        if (minimumLauncherVersion != null)
+            json.addProperty("minimumLauncherVersion", minimumLauncherVersion);
+        if (hidden != null)
+            json.addProperty("hidden", hidden);
+
+        return json;
+    }
 
     GameInstanceManifest merge(GameInstanceManifest parent) {
         return new GameInstanceManifest(

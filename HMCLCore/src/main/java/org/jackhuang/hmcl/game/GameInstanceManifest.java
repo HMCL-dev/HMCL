@@ -297,7 +297,9 @@ public record GameInstanceManifest(
                     if (value instanceof JsonArray array) {
                         List<GameInstancePatch> list = new ArrayList<>(array.size());
                         for (JsonElement element : array) {
-                            // TODO
+                            if (element instanceof JsonObject object) {
+                                list.add(GameInstancePatch.fromJson(object));
+                            }
                         }
                         builder.patches = List.copyOf(list);
                     }
@@ -437,65 +439,7 @@ public record GameInstanceManifest(
         if (patches != null) {
             JsonArray patchesArray = new JsonArray(patches.size());
             for (GameInstancePatch patch : patches) {
-                JsonObject patchJson = new JsonObject();
-                for (Map.Entry<String, JsonElement> entry : patch.unknownFields().entrySet()) {
-                    patchJson.add(entry.getKey(), entry.getValue().deepCopy());
-                }
-
-                if (patch.id() != null)
-                    patchJson.addProperty("id", patch.id());
-                if (patch.version() != null)
-                    patchJson.addProperty("version", patch.version());
-                if (patch.priority() != null)
-                    patchJson.addProperty("priority", patch.priority());
-                if (patch.minecraftArguments() != null)
-                    patchJson.addProperty("minecraftArguments", patch.minecraftArguments());
-                if (patch.arguments() != null)
-                    patchJson.add("arguments", JsonUtils.GSON.toJsonTree(patch.arguments()));
-                if (patch.mainClass() != null)
-                    patchJson.addProperty("mainClass", patch.mainClass());
-                if (patch.inheritsFrom() != null)
-                    patchJson.addProperty("inheritsFrom", patch.inheritsFrom());
-                if (patch.jar() != null)
-                    patchJson.addProperty("jar", patch.jar().toString());
-                if (patch.assetIndex() != null)
-                    patchJson.add("assetIndex", JsonUtils.GSON.toJsonTree(patch.assetIndex()));
-                if (patch.assets() != null)
-                    patchJson.addProperty("assets", patch.assets());
-                if (patch.complianceLevel() != null)
-                    patchJson.addProperty("complianceLevel", patch.complianceLevel());
-                if (patch.javaVersion() != null)
-                    patchJson.add("javaVersion", JsonUtils.GSON.toJsonTree(patch.javaVersion()));
-                if (patch.libraries() != null)
-                    patchJson.add("libraries", JsonUtils.GSON.toJsonTree(patch.libraries()));
-                if (patch.compatibilityRules() != null)
-                    patchJson.add("compatibilityRules", JsonUtils.GSON.toJsonTree(patch.compatibilityRules()));
-                if (patch.downloads() != null) {
-                    JsonObject downloadsObject = new JsonObject();
-                    for (Map.Entry<DownloadType, DownloadInfo> entry : patch.downloads().entrySet()) {
-                        downloadsObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
-                    }
-                    patchJson.add("downloads", downloadsObject);
-                }
-                if (patch.logging() != null) {
-                    JsonObject loggingObject = new JsonObject();
-                    for (Map.Entry<DownloadType, LoggingInfo> entry : patch.logging().entrySet()) {
-                        loggingObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
-                    }
-                    patchJson.add("logging", loggingObject);
-                }
-                if (patch.type() != null)
-                    patchJson.addProperty("type", patch.type().name());
-                if (patch.time() != null)
-                    patchJson.addProperty("time", patch.time());
-                if (patch.releaseTime() != null)
-                    patchJson.addProperty("releaseTime", patch.releaseTime());
-                if (patch.minimumLauncherVersion() != null)
-                    patchJson.addProperty("minimumLauncherVersion", patch.minimumLauncherVersion());
-                if (patch.hidden() != null)
-                    patchJson.addProperty("hidden", patch.hidden());
-
-                patchesArray.add(patchJson);
+                patchesArray.add(patch.toJsonObject());
             }
             json.add("patches", patchesArray);
         }
@@ -579,7 +523,11 @@ public record GameInstanceManifest(
             if (patches != null) {
                 this.patches = List.copyOf(patches);
                 if (rawJson != null) {
-                    // TODO: set patches
+                    JsonArray array = new JsonArray(this.patches.size());
+                    for (GameInstancePatch patch : this.patches) {
+                        array.add(patch.toJsonObject());
+                    }
+                    rawJson.add("patches", array);
                 }
             } else {
                 this.patches = null;
