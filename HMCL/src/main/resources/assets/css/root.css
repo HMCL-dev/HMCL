@@ -1410,7 +1410,7 @@
 }
 
 .log-window {
-    -fx-background-color: -monet-surface-container;
+    -fx-background-color: -fixed-log-background;
 }
 
 .log-window .scroll-bar .thumb {
