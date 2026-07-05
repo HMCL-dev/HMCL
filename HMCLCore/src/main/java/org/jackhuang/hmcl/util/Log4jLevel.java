@@ -51,58 +51,33 @@ public enum Log4jLevel {
     public static final Pattern MINECRAFT_LOGGER = Pattern.compile("\\[(?<timestamp>[0-9:]+)] \\[[^/]+/(?<level>[^]]+)]");
     public static final Pattern MINECRAFT_LOGGER_CATEGORY = Pattern.compile("\\[(?<timestamp>[0-9:]+)] \\[[^/]+/(?<level>[^]]+)] \\[(?<category>[^]]+)]");
     public static final String JAVA_SYMBOL = "([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$][a-zA-Z\\d_$]*";
+    private static final String WRAPPED_PRINT_STREAM = "[java.lang.Throwable$WrappedPrintStream:println";
 
     public static Log4jLevel guessLevel(String line) {
         Log4jLevel level = null;
         Matcher m = MINECRAFT_LOGGER.matcher(line);
         if (m.find()) {
-            // New style logs from log4j
-            String levelStr = m.group("level");
-            if (null != levelStr)
-                switch (levelStr) {
-                    case "INFO":
-                        level = INFO;
-                        break;
-                    case "WARN":
-                        level = WARN;
-                        break;
-                    case "ERROR":
-                        level = ERROR;
-                        break;
-                    case "FATAL":
-                        level = FATAL;
-                        break;
-                    case "TRACE":
-                        level = TRACE;
-                        break;
-                    case "DEBUG":
-                        level = DEBUG;
-                        break;
-                    default:
-                        break;
-                }
+            level = parseLevel(m.group("level"));
             Matcher m2 = MINECRAFT_LOGGER_CATEGORY.matcher(line);
             if (m2.find()) {
                 String level2Str = m2.group("category");
                 if (null != level2Str)
                     level = switch (level2Str) {
                         case "STDOUT" -> INFO;
-                        case "STDERR" -> ERROR;
+                        case "STDERR" -> guessStderrLevel(line, level);
                         default -> level;
                     };
-            }
-
-            if (line.contains("STDERR]") || line.contains("[STDERR/]")) {
-                level = ERROR;
+            } else if (line.contains("STDERR]") || line.contains("[STDERR/]")) {
+                level = guessStderrLevel(line, level);
             }
         } else {
             if (containsLevelMarker(line, Level.INFO) || containsLevelMarker(line, Level.CONFIG)
                     || containsLevelMarker(line, Level.FINE) || containsLevelMarker(line, Level.FINER)
                     || containsLevelMarker(line, Level.FINEST))
                 level = INFO;
-            if (containsLevelMarker(line, Level.SEVERE) || line.contains("[STDERR]"))
+            if (containsLevelMarker(line, Level.SEVERE))
                 level = ERROR;
-            if (containsLevelMarker(line, Level.WARNING) || line.contains("[WARN]"))
+            if (containsLevelMarker(line, Level.WARNING))
                 level = WARN;
             if (line.contains("[DEBUG]"))
                 level = DEBUG;
@@ -119,6 +94,31 @@ public enum Log4jLevel {
         return level;
     }
 
+    public static Log4jLevel guessLevel(String line, boolean isErrorStream) {
+        Log4jLevel level = guessLevel(line);
+        return level != null || !isErrorStream ? level : ERROR;
+    }
+
+    private static Log4jLevel parseLevel(String level) {
+        return switch (level) {
+            case "FATAL" -> FATAL;
+            case "ERROR" -> ERROR;
+            case "WARN" -> WARN;
+            case "INFO" -> INFO;
+            case "DEBUG" -> DEBUG;
+            case "TRACE" -> TRACE;
+            case "ALL" -> ALL;
+            default -> null;
+        };
+    }
+
+    private static Log4jLevel guessStderrLevel(String line, Log4jLevel fallback) {
+        if (line.contains(WRAPPED_PRINT_STREAM) && fallback != null) {
+            return fallback;
+        }
+        return ERROR;
+    }
+
     private static boolean containsLevelMarker(String line, Level level) {
         return line.contains("[" + level.getName() + "]")
                 || line.contains("[" + level.getLocalizedName() + "]");
@@ -126,15 +126,6 @@ public enum Log4jLevel {
 
     public static boolean isError(Log4jLevel a) {
         return a != null && a.lessOrEqual(Log4jLevel.ERROR);
-    }
-
-    public static Log4jLevel mergeLevel(Log4jLevel a, Log4jLevel b) {
-        if (a == null)
-            return b;
-        else if (b == null)
-            return a;
-        else
-            return a.level < b.level ? a : b;
     }
 
     public static boolean guessLogLineError(String log) {
