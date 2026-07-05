@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -43,7 +44,10 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+
+import java.io.IOException;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -157,21 +161,42 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
 
-        SpinnerPane friendSpinnerPane = new SpinnerPane();
+        SpinnerPane spinnerFriend = new SpinnerPane();
         JFXButton btnFriend = FXUtils.newToggleButton4(SVG.GROUP);
         btnFriend.disableProperty().bind(Bindings.not(skinnable.canAddFriend()));
         FXUtils.installFastTooltip(btnFriend, i18n("account.friend"));
-        friendSpinnerPane.setContent(btnFriend);
+        spinnerFriend.setContent(btnFriend);
         btnFriend.setOnAction(actionEvent -> {
-            if (skinnable.getAccount() instanceof MicrosoftAccount account) {
-                Controllers.navigate(new FriendListPage(account, account));
-            } else if (skinnable.getAccount() instanceof YggdrasilAccount account) {
-                // TODO
-//                Controllers.navigate(new FriendListPage(skinnable.getAccount(), ((AuthlibInjectorAccount) skinnable.getAccount()).getYggdrasilService()));
-            }
-        });
-        right.getChildren().add(friendSpinnerPane);
+            spinnerFriend.showSpinner();
 
+            var account = skinnable.getAccount();
+
+            Task.runAsync(skinnable::refreshAsync)
+                    .whenComplete(exception -> {
+                        if (exception != null) {
+                            Controllers.showToast(Accounts.localizeErrorMessage(exception));
+                            return;
+                        }
+
+                        if (account instanceof MicrosoftAccount microsoftAccount) {
+                            Platform.runLater(() -> Controllers.navigate(new FriendListPage(account, microsoftAccount)));
+                        } else if (account instanceof YggdrasilAccount yggdrasilAccount) {
+                            try {
+                                yggdrasilAccount.getFriendList();
+                                Platform.runLater(() -> Controllers.navigate(new FriendListPage(account, yggdrasilAccount)));
+                            } catch (IOException e) {
+                                Platform.runLater(() -> {
+                                    if (e instanceof ResponseCodeException responseCodeException && responseCodeException.getResponseCode() == 404) {
+                                        Controllers.dialog(i18n("account.friend.unsupported"));
+                                    }
+
+                                    Controllers.showToast(Accounts.localizeErrorMessage(e));
+                                });
+                            }
+                        }
+                    }).thenRunAsync(Schedulers.javafx(), spinnerFriend::hideSpinner).start();
+        });
+        right.getChildren().add(spinnerFriend);
 
         JFXButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
         SpinnerPane spinnerCopyUUID = new SpinnerPane();

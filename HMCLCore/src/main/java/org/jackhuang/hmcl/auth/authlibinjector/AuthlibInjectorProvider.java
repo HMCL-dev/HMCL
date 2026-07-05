@@ -57,6 +57,6 @@ public record AuthlibInjectorProvider(String apiRoot) implements YggdrasilProvid
 
     @Override
     public URI getFriendsURL() {
-        return URI.create(apiRoot + "api/yggdrasil/minecraftservices/friends");
+        return URI.create(apiRoot + "minecraftservices/friends");
     }
 }

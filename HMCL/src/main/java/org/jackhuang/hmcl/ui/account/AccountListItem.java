@@ -139,7 +139,7 @@ public class AccountListItem extends RadioButton {
 
     public ObservableBooleanValue canAddFriend() {
         if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount) {
-             return createBooleanBinding(() -> true);
+            return createBooleanBinding(() -> true);
         } else {
             return createBooleanBinding(() -> false);
         }
