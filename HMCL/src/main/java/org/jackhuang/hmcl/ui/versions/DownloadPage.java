@@ -676,7 +676,10 @@ public class DownloadPage extends Control implements DecoratorPage {
         private void loadChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() ->
-                    StringUtils.convertToHtml(repo.getAddonChangelog(provider, version.modid(), version.versionId()))
+                    StringUtils.convertToHtml(
+                            repo.getAddonChangelog(provider, version.modid(), version.versionId()),
+                            "238222".equals(version.modid()) // FUCK YOU JEI, FUCK YOU CURSEFORGE
+                    )
             ).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     String changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
