@@ -61,8 +61,8 @@ public class DefaultGameRepository2 implements GameRepository2 {
             null,
             null,
             0,
-            null,
-            null,
+            false,
+            false,
             null,
             null
     );

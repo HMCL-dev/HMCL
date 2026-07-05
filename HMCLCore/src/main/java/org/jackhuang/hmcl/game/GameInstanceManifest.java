@@ -50,15 +50,15 @@ public record GameInstanceManifest(
         @Nullable String time,
         @Nullable String releaseTime,
         @Nullable Integer minimumLauncherVersion,
-        @Nullable Boolean root,
-        @Nullable Boolean hidden,
+        boolean root,
+        boolean hidden,
         @Nullable @Unmodifiable List<GameInstancePatch> patches,
         @Nullable @Unmodifiable JsonObject rawJson
 ) {
 
     /// A launch-ready manifest view with inheritance and pending patches applied.
     ///
-    /// @param manifest the final manifest data used by launch-time consumers
+    /// @param manifest       the final manifest data used by launch-time consumers
     /// @param appliedPatches patches that have already been applied to produce the final manifest
     @NotNullByDefault
     public record Resolved(GameInstanceManifest manifest,
@@ -141,7 +141,7 @@ public record GameInstanceManifest(
                 null,
                 null,
                 true,
-                null,
+                false,
                 null,
                 null);
     }
@@ -316,7 +316,7 @@ public record GameInstanceManifest(
     }
 
     public boolean isRoot() {
-        return root != null && root;
+        return root;
     }
 
     public GameInstanceManifest withId(GameInstanceID id) {
@@ -432,10 +432,10 @@ public record GameInstanceManifest(
             json.addProperty("releaseTime", releaseTime);
         if (minimumLauncherVersion != null)
             json.addProperty("minimumLauncherVersion", minimumLauncherVersion);
-        if (root != null)
-            json.addProperty("root", root);
-        if (hidden != null)
-            json.addProperty("hidden", hidden);
+        if (root)
+            json.addProperty("root", true);
+        if (hidden)
+            json.addProperty("hidden", true);
         if (patches != null) {
             JsonArray patchesArray = new JsonArray(patches.size());
             for (GameInstancePatch patch : patches) {
@@ -467,8 +467,8 @@ public record GameInstanceManifest(
         private @Nullable String time;
         private @Nullable String releaseTime;
         private @Nullable Integer minimumLauncherVersion;
-        private @Nullable Boolean root;
-        private @Nullable Boolean hidden;
+        private boolean root = false;
+        private boolean hidden = false;
         private @Nullable @Unmodifiable List<GameInstancePatch> patches;
         private @Nullable JsonObject rawJson;
         // @formatter:on
