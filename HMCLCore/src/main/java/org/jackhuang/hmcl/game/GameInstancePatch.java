@@ -25,13 +25,12 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @NotNullByDefault
 public record GameInstancePatch(
         @Nullable String id,
         @Nullable String version,
-        Integer priority,
+        @Nullable Integer priority,
         @Nullable String minecraftArguments,
         @Nullable Arguments arguments,
         @Nullable String mainClass,
@@ -52,40 +51,6 @@ public record GameInstancePatch(
         @Nullable Boolean hidden,
         @Unmodifiable Map<String, JsonElement> unknownFields
 ) {
-
-    /// Returns a patch copy with the given jar target.
-    ///
-    /// @param jar the jar target, or `null` to let the parent manifest supply it
-    /// @return a patch with the requested jar target
-    public GameInstancePatch withJar(@Nullable GameInstanceID jar) {
-        if (Objects.equals(this.jar, jar)) {
-            return this;
-        }
-
-        return new GameInstancePatch(
-                id,
-                version,
-                priority,
-                minecraftArguments,
-                arguments,
-                mainClass,
-                inheritsFrom,
-                jar,
-                assetIndex,
-                assets,
-                complianceLevel,
-                javaVersion,
-                libraries,
-                compatibilityRules,
-                downloads,
-                logging,
-                type,
-                time,
-                releaseTime,
-                minimumLauncherVersion,
-                hidden,
-                unknownFields);
-    }
 
     GameInstanceManifest merge(GameInstanceManifest parent) {
         return new GameInstanceManifest(

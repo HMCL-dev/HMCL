@@ -378,6 +378,131 @@ public record GameInstanceManifest(
                 Map.of());
     }
 
+    public JsonObject toJsonObject() {
+        if (rawJson != null) {
+            return rawJson.deepCopy();
+        }
+
+        JsonObject json = new JsonObject();
+        json.addProperty("id", id.toString());
+
+        if (minecraftArguments != null)
+            json.addProperty("minecraftArguments", minecraftArguments);
+        if (arguments != null)
+            json.add("arguments", JsonUtils.GSON.toJsonTree(arguments));
+        if (mainClass != null)
+            json.addProperty("mainClass", mainClass);
+        if (inheritsFrom != null)
+            json.addProperty("inheritsFrom", inheritsFrom.toString());
+        if (jar != null)
+            json.addProperty("jar", jar.toString());
+        if (assetIndex != null)
+            json.add("assetIndex", JsonUtils.GSON.toJsonTree(assetIndex));
+        if (assets != null)
+            json.addProperty("assets", assets);
+        if (complianceLevel != null)
+            json.addProperty("complianceLevel", complianceLevel);
+        if (javaVersion != null)
+            json.add("javaVersion", JsonUtils.GSON.toJsonTree(javaVersion));
+        if (libraries != null)
+            json.add("libraries", JsonUtils.GSON.toJsonTree(libraries));
+        if (compatibilityRules != null)
+            json.add("compatibilityRules", JsonUtils.GSON.toJsonTree(compatibilityRules));
+        if (downloads != null) {
+            JsonObject downloadsObject = new JsonObject();
+            for (Map.Entry<DownloadType, DownloadInfo> entry : downloads.entrySet()) {
+                downloadsObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+            }
+            json.add("downloads", downloadsObject);
+        }
+        if (logging != null) {
+            JsonObject loggingObject = new JsonObject();
+            for (Map.Entry<DownloadType, LoggingInfo> entry : logging.entrySet()) {
+                loggingObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+            }
+            json.add("logging", loggingObject);
+        }
+        if (type != null)
+            json.addProperty("type", type.name());
+        if (time != null)
+            json.addProperty("time", time);
+        if (releaseTime != null)
+            json.addProperty("releaseTime", releaseTime);
+        if (minimumLauncherVersion != null)
+            json.addProperty("minimumLauncherVersion", minimumLauncherVersion);
+        if (root != null)
+            json.addProperty("root", root);
+        if (hidden != null)
+            json.addProperty("hidden", hidden);
+        if (patches != null) {
+            JsonArray patchesArray = new JsonArray(patches.size());
+            for (GameInstancePatch patch : patches) {
+                JsonObject patchJson = new JsonObject();
+                for (Map.Entry<String, JsonElement> entry : patch.unknownFields().entrySet()) {
+                    patchJson.add(entry.getKey(), entry.getValue().deepCopy());
+                }
+
+                if (patch.id() != null)
+                    patchJson.addProperty("id", patch.id());
+                if (patch.version() != null)
+                    patchJson.addProperty("version", patch.version());
+                if (patch.priority() != null)
+                    patchJson.addProperty("priority", patch.priority());
+                if (patch.minecraftArguments() != null)
+                    patchJson.addProperty("minecraftArguments", patch.minecraftArguments());
+                if (patch.arguments() != null)
+                    patchJson.add("arguments", JsonUtils.GSON.toJsonTree(patch.arguments()));
+                if (patch.mainClass() != null)
+                    patchJson.addProperty("mainClass", patch.mainClass());
+                if (patch.inheritsFrom() != null)
+                    patchJson.addProperty("inheritsFrom", patch.inheritsFrom());
+                if (patch.jar() != null)
+                    patchJson.addProperty("jar", patch.jar().toString());
+                if (patch.assetIndex() != null)
+                    patchJson.add("assetIndex", JsonUtils.GSON.toJsonTree(patch.assetIndex()));
+                if (patch.assets() != null)
+                    patchJson.addProperty("assets", patch.assets());
+                if (patch.complianceLevel() != null)
+                    patchJson.addProperty("complianceLevel", patch.complianceLevel());
+                if (patch.javaVersion() != null)
+                    patchJson.add("javaVersion", JsonUtils.GSON.toJsonTree(patch.javaVersion()));
+                if (patch.libraries() != null)
+                    patchJson.add("libraries", JsonUtils.GSON.toJsonTree(patch.libraries()));
+                if (patch.compatibilityRules() != null)
+                    patchJson.add("compatibilityRules", JsonUtils.GSON.toJsonTree(patch.compatibilityRules()));
+                if (patch.downloads() != null) {
+                    JsonObject downloadsObject = new JsonObject();
+                    for (Map.Entry<DownloadType, DownloadInfo> entry : patch.downloads().entrySet()) {
+                        downloadsObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                    }
+                    patchJson.add("downloads", downloadsObject);
+                }
+                if (patch.logging() != null) {
+                    JsonObject loggingObject = new JsonObject();
+                    for (Map.Entry<DownloadType, LoggingInfo> entry : patch.logging().entrySet()) {
+                        loggingObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                    }
+                    patchJson.add("logging", loggingObject);
+                }
+                if (patch.type() != null)
+                    patchJson.addProperty("type", patch.type().name());
+                if (patch.time() != null)
+                    patchJson.addProperty("time", patch.time());
+                if (patch.releaseTime() != null)
+                    patchJson.addProperty("releaseTime", patch.releaseTime());
+                if (patch.minimumLauncherVersion() != null)
+                    patchJson.addProperty("minimumLauncherVersion", patch.minimumLauncherVersion());
+                if (patch.hidden() != null)
+                    patchJson.addProperty("hidden", patch.hidden());
+
+                patchesArray.add(patchJson);
+            }
+            json.add("patches", patchesArray);
+        }
+
+        return json;
+    }
+
     private static final class Builder {
         // @formatter:off
         private @Nullable GameInstanceID id;
