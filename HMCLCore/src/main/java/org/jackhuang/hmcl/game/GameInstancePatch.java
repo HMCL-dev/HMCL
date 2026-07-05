@@ -56,7 +56,7 @@ public record GameInstancePatch(
         @Nullable String time,
         @Nullable String releaseTime,
         @Nullable Integer minimumLauncherVersion,
-        boolean hidden,
+        @Nullable Boolean hidden,
         @Nullable @Unmodifiable JsonObject rawJson
 ) {
 
@@ -298,8 +298,8 @@ public record GameInstancePatch(
             json.addProperty("releaseTime", releaseTime);
         if (minimumLauncherVersion != null)
             json.addProperty("minimumLauncherVersion", minimumLauncherVersion);
-        if (hidden)
-            json.addProperty("hidden", true);
+        if (hidden != null)
+            json.addProperty("hidden", hidden);
 
         return json;
     }

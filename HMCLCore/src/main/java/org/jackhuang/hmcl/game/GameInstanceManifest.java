@@ -17,11 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -50,8 +46,8 @@ public record GameInstanceManifest(
         @Nullable String time,
         @Nullable String releaseTime,
         @Nullable Integer minimumLauncherVersion,
-        boolean root,
-        boolean hidden,
+        @Nullable Boolean root,
+        @Nullable Boolean hidden,
         @Nullable @Unmodifiable List<GameInstancePatch> patches,
         @Nullable @Unmodifiable JsonObject rawJson
 ) {
@@ -219,7 +215,7 @@ public record GameInstanceManifest(
                             if (element instanceof JsonObject object) {
                                 list.add(Library.fromJson(object));
                             } else {
-                                // TODO
+                                throw new JsonParseException("Invalid library element: " + element);
                             }
                         }
                         builder.libraries = List.copyOf(list);
@@ -432,10 +428,10 @@ public record GameInstanceManifest(
             json.addProperty("releaseTime", releaseTime);
         if (minimumLauncherVersion != null)
             json.addProperty("minimumLauncherVersion", minimumLauncherVersion);
-        if (root)
-            json.addProperty("root", true);
-        if (hidden)
-            json.addProperty("hidden", true);
+        if (root != null)
+            json.addProperty("root", root);
+        if (hidden != null)
+            json.addProperty("hidden", hidden);
         if (patches != null) {
             JsonArray patchesArray = new JsonArray(patches.size());
             for (GameInstancePatch patch : patches) {
