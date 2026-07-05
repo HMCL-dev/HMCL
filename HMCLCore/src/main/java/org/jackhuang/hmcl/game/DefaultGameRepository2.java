@@ -18,9 +18,10 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -30,8 +31,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -82,6 +85,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
     }
 
     private volatile Status status;
+    private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
     public DefaultGameRepository2(Path baseDirectory) {
         this.status = new Status(baseDirectory);
@@ -93,6 +97,15 @@ public class DefaultGameRepository2 implements GameRepository2 {
 
     @Override
     public void refresh() {
+        if (EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this)) == Event.Result.DENY) {
+            return;
+        }
+
+        refreshImpl();
+        EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
+    }
+
+    private void refreshImpl() {
         Status newStatus = new Status(status.baseDirectory);
 
         if (hasClassicVersion(newStatus.baseDirectory)) {
@@ -104,26 +117,69 @@ public class DefaultGameRepository2 implements GameRepository2 {
         if (Files.isDirectory(versionsDir)) {
             try (Stream<Path> stream = Files.list(versionsDir)) {
                 stream.parallel().filter(Files::isDirectory).flatMap(dir -> {
-                    GameInstanceID id = new GameInstanceID(FileUtils.getName(dir));
+                    GameInstanceID id;
+                    try {
+                        id = new GameInstanceID(FileUtils.getName(dir));
+                    } catch (IllegalArgumentException e) {
+                        LOG.warning("Ignoring version folder with invalid id " + dir, e);
+                        return Stream.empty();
+                    }
+
                     Path json = dir.resolve(id + ".json");
 
                     if (Files.notExists(json)) {
-                        return Stream.empty();
+                        List<Path> jsons = FileUtils.listFilesByExtension(dir, "json");
+                        if (jsons.size() == 1) {
+                            LOG.info("Renaming json file " + jsons.get(0) + " to " + json);
+
+                            try {
+                                Files.move(jsons.get(0), json);
+                            } catch (IOException e) {
+                                LOG.warning("Cannot rename json file, ignoring version " + id, e);
+                                return Stream.empty();
+                            }
+
+                            Path jar = dir.resolve(FileUtils.getNameWithoutExtension(jsons.get(0)) + ".jar");
+                            if (Files.exists(jar)) {
+                                try {
+                                    Files.move(jar, dir.resolve(id + ".jar"));
+                                } catch (IOException e) {
+                                    LOG.warning("Cannot rename jar file, ignoring version " + id, e);
+                                    return Stream.empty();
+                                }
+                            }
+                        } else {
+                            LOG.info("No available json file found, ignoring version " + id);
+                            return Stream.empty();
+                        }
                     }
 
                     GameInstanceManifest manifest;
                     try {
-                        manifest = JsonUtils.fromJsonFile(json, GameInstanceManifest.class);
-                        if (manifest == null)
-                            throw new JsonParseException("Manifest is null");
+                        manifest = readInstanceManifest(json);
                     } catch (Exception e) {
                         LOG.warning("Malformed version json " + id, e);
-                        return Stream.empty();
+                        if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id.id())) != Event.Result.ALLOW) {
+                            return Stream.empty();
+                        }
+
+                        try {
+                            manifest = readInstanceManifest(json);
+                        } catch (Exception e2) {
+                            LOG.error("User corrected version json is still malformed", e2);
+                            return Stream.empty();
+                        }
                     }
 
                     if (!id.equals(manifest.id())) {
-                        // TODO
-                        return Stream.empty();
+                        try {
+                            moveInstanceFiles(newStatus.baseDirectory, id, manifest.id());
+                        } catch (IOException e) {
+                            LOG.warning("Ignoring version " + manifest.id()
+                                    + " because version id does not match folder name " + id
+                                    + ", and we cannot correct it.", e);
+                            return Stream.empty();
+                        }
                     }
 
                     return Stream.of(manifest);
@@ -133,6 +189,59 @@ public class DefaultGameRepository2 implements GameRepository2 {
             } catch (IOException e) {
                 LOG.warning("Failed to load versions from " + versionsDir, e);
             }
+        }
+
+        Map<GameInstanceID, InstanceHolder> loadedInstances = new TreeMap<>();
+        for (InstanceHolder holder : newStatus.instances.values()) {
+            try {
+                GameInstanceManifest resolved = newStatus.resolve(holder.manifest, new HashSet<>());
+                if (CompatibilityRule.appliesToCurrentEnvironment(resolved.compatibilityRules())) {
+                    loadedInstances.put(holder.id, holder);
+                }
+            } catch (NoSuchGameInstanceException e) {
+                LOG.warning("Ignoring version " + holder.id + " because it inherits from a nonexistent version.");
+            }
+        }
+
+        newStatus.instances.clear();
+        newStatus.instances.putAll(loadedInstances);
+        gameVersions.clear();
+        this.status = newStatus;
+    }
+
+    private static GameInstanceManifest readInstanceManifest(Path json) throws IOException, JsonParseException {
+        GameInstanceManifest manifest = JsonUtils.fromJsonFile(json, GameInstanceManifest.class);
+        if (manifest == null) {
+            throw new JsonParseException("Manifest is null");
+        }
+        return manifest;
+    }
+
+    private static void moveInstanceFiles(Path baseDirectory, GameInstanceID from, GameInstanceID to) throws IOException {
+        Path versionsDir = baseDirectory.resolve("versions");
+        Path fromDir = versionsDir.resolve(from.id());
+        Path toDir = versionsDir.resolve(to.id());
+        Files.move(fromDir, toDir);
+
+        Path fromJson = toDir.resolve(from + ".json");
+        Path fromJar = toDir.resolve(from + ".jar");
+        Path toJson = toDir.resolve(to + ".json");
+        Path toJar = toDir.resolve(to + ".jar");
+
+        boolean hasJarFile = Files.exists(fromJar);
+
+        try {
+            Files.move(fromJson, toJson);
+            if (hasJarFile) {
+                Files.move(fromJar, toJar);
+            }
+        } catch (IOException e) {
+            Lang.ignoringException(() -> Files.move(toJson, fromJson));
+            if (hasJarFile) {
+                Lang.ignoringException(() -> Files.move(toJar, fromJar));
+            }
+            Lang.ignoringException(() -> Files.move(toDir, fromDir));
+            throw e;
         }
     }
 
@@ -198,7 +307,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
         return getLibrariesDirectory(manifest).resolve(lib.getPath());
     }
 
-    public Path getArtifactFile(Version version, Artifact artifact) {
+    public Path getArtifactFile(GameInstanceManifest manifest, Artifact artifact) {
         return artifact.getPath(getBaseDirectory().resolve("libraries"));
     }
 
@@ -209,27 +318,76 @@ public class DefaultGameRepository2 implements GameRepository2 {
 
     @Override
     public Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        GameInstanceManifest manifest = getResolvedInstanceManifest(instanceId).manifest();
-
-        GameInstanceID jarID = Objects.requireNonNullElse(manifest.jar(), manifest.id());
-        return getInstanceRoot(instanceId).resolve(jarID + ".jar");
+        return getInstanceJar(getResolvedInstanceManifest(instanceId).manifest());
     }
 
     @Override
     public Path getInstanceJar(GameInstanceManifest manifest) {
         GameInstanceID jarID = Objects.requireNonNullElse(manifest.jar(), manifest.id());
-        return getInstanceRoot(manifest.id()).resolve(jarID + ".jar");
+        return getInstanceRoot(jarID).resolve(jarID + ".jar");
     }
 
     @Override
     public boolean renameInstance(GameInstanceID from, GameInstanceID to) {
-        return false;
+        if (EventBus.EVENT_BUS.fireEvent(new RenameVersionEvent(this, from.id(), to.id())) == Event.Result.DENY) {
+            return false;
+        }
+
+        try {
+            Status currentStatus = status;
+            InstanceHolder fromHolder = currentStatus.instances.get(from);
+            if (fromHolder == null) {
+                throw new NoSuchGameInstanceException(from);
+            }
+
+            moveInstanceFiles(currentStatus.baseDirectory, from, to);
+
+            GameInstanceManifest renamedManifest = fromHolder.manifest;
+            if (from.equals(renamedManifest.jar())) {
+                renamedManifest = renamedManifest.withJar(null);
+            }
+            renamedManifest = renamedManifest.withId(to);
+            JsonUtils.writeToJsonFile(getInstanceJson(to), renamedManifest);
+
+            Map<GameInstanceID, InstanceHolder> updatedInstances = new TreeMap<>(currentStatus.instances);
+            updatedInstances.remove(from);
+            updatedInstances.put(to, new InstanceHolder(currentStatus, to, renamedManifest));
+
+            for (InstanceHolder holder : currentStatus.instances.values()) {
+                GameInstanceManifest manifest = holder.manifest;
+                if (from.equals(manifest.inheritsFrom())) {
+                    GameInstanceManifest updatedManifest = manifest.withInheritsFrom(to);
+                    Path targetPath = getInstanceJson(updatedManifest.id());
+                    Files.createDirectories(targetPath.getParent());
+                    JsonUtils.writeToJsonFile(targetPath, updatedManifest);
+                    updatedInstances.put(updatedManifest.id(), new InstanceHolder(currentStatus, updatedManifest.id(), updatedManifest));
+                }
+            }
+
+            currentStatus.instances.clear();
+            currentStatus.instances.putAll(updatedInstances);
+            gameVersions.clear();
+            return true;
+        } catch (IOException | JsonParseException | NoSuchGameInstanceException | InvalidPathException e) {
+            LOG.warning("Unable to rename version " + from + " to " + to, e);
+            return false;
+        }
     }
 
     @Override
     public Optional<String> getGameVersion(GameInstanceManifest manifest) {
         try {
-            return getGameVersion(manifest.id());
+            GameInstanceManifest resolved = resolve(manifest).manifest();
+            Path instanceJar = getInstanceJar(resolved);
+            return gameVersions.computeIfAbsent(instanceJar, jar -> {
+                Optional<String> gameVersion = GameVersion.minecraftVersion(jar);
+                if (gameVersion.isEmpty()) {
+                    LOG.warning("Cannot find out game version of " + manifest.id()
+                            + ", primary jar: " + jar
+                            + ", jar exists: " + Files.exists(jar));
+                }
+                return gameVersion;
+            });
         } catch (NoSuchGameInstanceException e) {
             return Optional.empty();
         }
@@ -355,12 +513,16 @@ public class DefaultGameRepository2 implements GameRepository2 {
     }
 
     public Task<GameInstanceManifest> saveAsync(GameInstanceManifest instanceManifest) {
-        throw new UnsupportedOperationException("TODO");
-//        if (instanceManifest.isResolvedPreservingPatches()) {
-//            return new VersionJsonSaveTask(this, MaintainTask.maintainPreservingPatches(this, instanceManifest));
-//        } else {
-//            return new VersionJsonSaveTask(this, instanceManifest);
-//        }
+        return Task.supplyAsync(() -> {
+            Path json = getInstanceJson(instanceManifest.id()).toAbsolutePath();
+            Files.createDirectories(json.getParent());
+            JsonUtils.writeToJsonFile(json, instanceManifest);
+
+            Status currentStatus = status;
+            currentStatus.instances.put(instanceManifest.id(), new InstanceHolder(currentStatus, instanceManifest.id(), instanceManifest));
+            gameVersions.clear();
+            return instanceManifest;
+        });
     }
 
     public Path getModpackConfiguration(GameInstanceID instanceId) {
@@ -377,11 +539,6 @@ public class DefaultGameRepository2 implements GameRepository2 {
 
     public boolean isModpack(GameInstanceID instanceId) {
         return Files.exists(getModpackConfiguration(instanceId));
-    }
-
-    public ModManager getModManager(GameInstanceID instanceId) {
-        throw new UnsupportedOperationException("TODO");
-        // TODO: // return new ModManager(this, instanceId);
     }
 
     public Path getSavesDirectory(GameInstanceID instanceId) {
@@ -435,7 +592,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
                 } else {
                     currentManifest = manifest;
                 }
-                currentManifest = manifest.jar() == null ? manifest.withJar(manifest.id()) : currentManifest.withJar(manifest.jar());
+                currentManifest = currentManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar());
             } else {
                 // To maximize the compatibility.
                 if (!resolvedSoFar.add(manifest.id())) {

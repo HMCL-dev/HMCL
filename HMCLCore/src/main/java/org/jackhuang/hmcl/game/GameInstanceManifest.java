@@ -343,6 +343,20 @@ public record GameInstanceManifest(
         return builder.toManifest();
     }
 
+    /// Returns a manifest copy with the given parent instance id.
+    ///
+    /// @param inheritsFrom the parent instance id, or `null` if this manifest is independent
+    /// @return a manifest with the requested parent instance id
+    public GameInstanceManifest withInheritsFrom(@Nullable GameInstanceID inheritsFrom) {
+        if (Objects.equals(this.inheritsFrom, inheritsFrom)) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setInheritsFrom(inheritsFrom);
+        return builder.toManifest();
+    }
+
     public GameInstanceManifest withPatches(@Nullable List<GameInstancePatch> patches) {
         if (patches == this.patches) {
             return this;
@@ -469,8 +483,8 @@ public record GameInstanceManifest(
         private @Nullable String time;
         private @Nullable String releaseTime;
         private @Nullable Integer minimumLauncherVersion;
-        private boolean root = false;
-        private boolean hidden = false;
+        private @Nullable Boolean root;
+        private @Nullable Boolean hidden;
         private @Nullable @Unmodifiable List<GameInstancePatch> patches;
         private @Nullable JsonObject rawJson;
         // @formatter:on
@@ -517,6 +531,17 @@ public record GameInstanceManifest(
                     rawJson.addProperty("jar", jar.toString());
                 } else {
                     rawJson.remove("jar");
+                }
+            }
+        }
+
+        public void setInheritsFrom(@Nullable GameInstanceID inheritsFrom) {
+            this.inheritsFrom = inheritsFrom;
+            if (rawJson != null) {
+                if (inheritsFrom != null) {
+                    rawJson.addProperty("inheritsFrom", inheritsFrom.toString());
+                } else {
+                    rawJson.remove("inheritsFrom");
                 }
             }
         }

@@ -81,7 +81,7 @@ public record GameInstancePatch(
         @Nullable String time = null;
         @Nullable String releaseTime = null;
         @Nullable Integer minimumLauncherVersion = null;
-        boolean hidden = false;
+        @Nullable Boolean hidden = null;
 
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String memberName = entry.getKey();
@@ -324,8 +324,8 @@ public record GameInstancePatch(
                 time == null ? parent.time() : time,
                 releaseTime == null ? parent.releaseTime() : releaseTime,
                 Lang.merge(minimumLauncherVersion, parent.minimumLauncherVersion(), Math::max),
-                hidden,
                 true,
+                hidden,
                 parent.patches(),
                 null);
     }
