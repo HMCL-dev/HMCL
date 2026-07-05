@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.util;
 
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.logging.Level;
 
 /**
  *
@@ -53,6 +53,16 @@ public enum Log4jLevel {
     public static final String JAVA_SYMBOL = "([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$][a-zA-Z\\d_$]*";
     private static final String WRAPPED_PRINT_STREAM = "[java.lang.Throwable$WrappedPrintStream:println";
 
+    private static final String[] INFO_MARKERS = markers(
+            Level.INFO,
+            Level.CONFIG,
+            Level.FINE,
+            Level.FINER,
+            Level.FINEST
+    );
+    private static final String[] ERROR_MARKERS = markers(Level.SEVERE);
+    private static final String[] WARN_MARKERS = markers(Level.WARNING);
+
     public static Log4jLevel guessLevel(String line) {
         Log4jLevel level = null;
         Matcher m = MINECRAFT_LOGGER.matcher(line);
@@ -61,29 +71,34 @@ public enum Log4jLevel {
             Matcher m2 = MINECRAFT_LOGGER_CATEGORY.matcher(line);
             if (m2.find()) {
                 String level2Str = m2.group("category");
-                if (null != level2Str)
+                if (level2Str != null) {
                     level = switch (level2Str) {
                         case "STDOUT" -> INFO;
                         case "STDERR" -> guessStderrLevel(line, level);
                         default -> level;
                     };
+                }
             } else if (line.contains("STDERR]") || line.contains("[STDERR/]")) {
                 level = guessStderrLevel(line, level);
             }
         } else {
-            if (containsLevelMarker(line, Level.INFO) || containsLevelMarker(line, Level.CONFIG)
-                    || containsLevelMarker(line, Level.FINE) || containsLevelMarker(line, Level.FINER)
-                    || containsLevelMarker(line, Level.FINEST))
+            if (containsAny(line, INFO_MARKERS)) {
                 level = INFO;
-            if (containsLevelMarker(line, Level.SEVERE))
+            }
+            if (containsAny(line, ERROR_MARKERS)) {
                 level = ERROR;
-            if (containsLevelMarker(line, Level.WARNING))
+            }
+            if (containsAny(line, WARN_MARKERS)) {
                 level = WARN;
-            if (line.contains("[DEBUG]"))
+            }
+            if (line.contains("[DEBUG]")) {
                 level = DEBUG;
+            }
         }
-        if (line.contains("overwriting existing"))
+
+        if (line.contains("overwriting existing")) {
             level = FATAL;
+        }
 
         /*if (line.contains("Exception in thread")
                 || line.matches("\\s+at " + JAVA_SYMBOL)
@@ -119,9 +134,23 @@ public enum Log4jLevel {
         return ERROR;
     }
 
-    private static boolean containsLevelMarker(String line, Level level) {
-        return line.contains("[" + level.getName() + "]")
-                || line.contains("[" + level.getLocalizedName() + "]");
+    private static String[] markers(Level... levels) {
+        String[] markers = new String[levels.length * 2];
+        int i = 0;
+        for (Level level : levels) {
+            markers[i++] = '[' + level.getName() + ']';
+            markers[i++] = '[' + level.getLocalizedName() + ']';
+        }
+        return markers;
+    }
+
+    private static boolean containsAny(String line, String[] markers) {
+        for (String marker : markers) {
+            if (line.contains(marker)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean isError(Log4jLevel a) {
