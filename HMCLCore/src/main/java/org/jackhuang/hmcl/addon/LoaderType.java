@@ -21,13 +21,13 @@ import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Either;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /// For mods and shaders
 public interface LoaderType {
 
-    List<String> names();
+    Set<String> names();
 
     static boolean mightBeLoader(String str) {
         if (StringUtils.isBlank(str)

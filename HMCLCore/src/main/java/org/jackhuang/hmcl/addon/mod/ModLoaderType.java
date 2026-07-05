@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.addon.mod;
 
 import org.jackhuang.hmcl.addon.LoaderType;
 
-import java.util.List;
+import java.util.Set;
 
 public enum ModLoaderType implements LoaderType {
     UNKNOWN,
@@ -31,14 +31,14 @@ public enum ModLoaderType implements LoaderType {
     LITE_LOADER("liteloader"),
     LEGACY_FABRIC("legacy-fabric");
 
-    private final List<String> names;
+    private final Set<String> names;
 
     ModLoaderType(String... names) {
-        this.names = List.of(names);
+        this.names = Set.of(names);
     }
 
     @Override
-    public List<String> names() {
+    public Set<String> names() {
         return names;
     }
 
