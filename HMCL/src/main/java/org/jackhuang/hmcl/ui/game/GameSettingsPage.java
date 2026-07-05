@@ -777,19 +777,17 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             vulkanRendererPane.setTitle(i18n("settings.advanced.renderer.vulkan"));
 
             this.currentGameVersionNumber.addListener((o, oldValue, newValue) -> {
-                if (isPresetSetting || newValue.compareTo("26.2-snapshot-2") >= 0) {
-                    graphicsBackendPane.setVisible(true);
-                    graphicsBackendPane.setManaged(true);
+                boolean showBackendChoose = isPresetSetting || newValue.compareTo("26.2-snapshot-2") >= 0;
+                graphicsBackendPane.setVisible(showBackendChoose);
+                graphicsBackendPane.setManaged(showBackendChoose);
 
-                    vulkanRendererPane.setVisible(true);
-                    vulkanRendererPane.setManaged(true);
-                } else {
-                    graphicsBackendPane.setVisible(false);
-                    graphicsBackendPane.setManaged(false);
+                boolean showOpenGL = GraphicsAPI.OPENGL.isSupported(newValue);
+                openGLRendererPane.setVisible(showOpenGL);
+                openGLRendererPane.setManaged(showOpenGL);
 
-                    vulkanRendererPane.setVisible(false);
-                    vulkanRendererPane.setManaged(false);
-                }
+                boolean showVulkan = GraphicsAPI.VULKAN.isSupported(newValue);
+                vulkanRendererPane.setVisible(showVulkan);
+                vulkanRendererPane.setManaged(showVulkan);
             });
         }
 
