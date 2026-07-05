@@ -429,7 +429,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
             GameInstanceManifest currentManifest;
 
             if (manifest.inheritsFrom() == null) {
-                if (manifest.isRoot()) {
+                if (manifest.root()) {
                     // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
                     currentManifest = manifest.patches() != null ? new GameInstanceManifest(manifest.id()).withPatches(manifest.patches()) : manifest;
                 } else {
@@ -470,7 +470,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
 
         private GameInstanceManifest resolvePreservingPatches(GameInstanceManifest manifest,
                                                               Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
-            GameInstanceManifest currentManifest = manifest.isRoot()
+            GameInstanceManifest currentManifest = manifest.root()
                     ? manifest
                     : addPatches(
                             addPatches(new GameInstanceManifest(manifest.id()), Collections.singleton(manifest.toPatch())),

@@ -18,15 +18,20 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.IOException;
 import java.util.*;
 
 @NotNullByDefault
+@JsonAdapter(GameInstanceManifest.Adapter.class)
 public record GameInstanceManifest(
         GameInstanceID id,
         @Nullable String minecraftArguments,
@@ -311,8 +316,9 @@ public record GameInstanceManifest(
         return builder.toManifest();
     }
 
-    public boolean isRoot() {
-        return root;
+    @Override
+    public Boolean root() {
+        return root != null && root;
     }
 
     public GameInstanceManifest withId(GameInstanceID id) {
@@ -562,6 +568,31 @@ public record GameInstanceManifest(
                     patches,
                     rawJson
             );
+        }
+    }
+
+    static final class Adapter extends TypeAdapter<@Nullable GameInstanceManifest> {
+
+        @Override
+        public @Nullable GameInstanceManifest read(JsonReader in) {
+            JsonElement jsonElement = JsonParser.parseReader(in);
+            if (jsonElement.isJsonNull()) {
+                return null;
+            }
+
+            if (jsonElement instanceof JsonObject jsonObject) {
+                return GameInstanceManifest.fromJson(jsonObject, false);
+            }
+
+            throw new JsonParseException("Expected JsonObject but got " + jsonElement.getClass().getName());
+        }
+
+        @Override
+        public void write(JsonWriter out, @Nullable GameInstanceManifest value) throws IOException {
+            if (value != null)
+                JsonUtils.GSON.toJson(value.toJsonObject(), out);
+            else
+                out.nullValue();
         }
     }
 }
