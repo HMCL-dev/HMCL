@@ -17,5 +17,6 @@
  */
 package org.jackhuang.hmcl.addon;
 
+/// For mods and shaders
 public interface LoaderType {
 }
