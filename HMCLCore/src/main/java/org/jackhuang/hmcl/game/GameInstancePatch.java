@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +57,7 @@ public record GameInstancePatch(
         @Nullable String releaseTime,
         @Nullable Integer minimumLauncherVersion,
         boolean hidden,
-        @Unmodifiable Map<String, JsonElement> unknownFields
+        @Nullable @Unmodifiable JsonObject rawJson
 ) {
 
     public static GameInstancePatch fromJson(JsonObject json) throws JsonParseException {
@@ -82,8 +81,7 @@ public record GameInstancePatch(
         @Nullable String time = null;
         @Nullable String releaseTime = null;
         @Nullable Integer minimumLauncherVersion = null;
-        @Nullable Boolean hidden = null;
-        Map<String, JsonElement> unknownFields = new LinkedHashMap<>();
+        boolean hidden = false;
 
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String memberName = entry.getKey();
@@ -215,7 +213,6 @@ public record GameInstancePatch(
                         hidden = primitive.getAsBoolean();
                     }
                 }
-                default -> unknownFields.put(memberName, value.deepCopy());
             }
         }
 
@@ -241,14 +238,15 @@ public record GameInstancePatch(
                 releaseTime,
                 minimumLauncherVersion,
                 hidden,
-                Collections.unmodifiableMap(unknownFields));
+                json.deepCopy());
     }
 
     public JsonObject toJsonObject() {
-        JsonObject json = new JsonObject();
-        for (Map.Entry<String, JsonElement> entry : unknownFields.entrySet()) {
-            json.add(entry.getKey(), entry.getValue().deepCopy());
+        if (rawJson != null) {
+            return rawJson.deepCopy();
         }
+
+        JsonObject json = new JsonObject();
 
         if (id != null)
             json.addProperty("id", id);

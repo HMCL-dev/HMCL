@@ -377,7 +377,7 @@ public record GameInstanceManifest(
                 releaseTime,
                 minimumLauncherVersion,
                 true,
-                Map.of());
+                null);
     }
 
     public JsonObject toJsonObject() {
