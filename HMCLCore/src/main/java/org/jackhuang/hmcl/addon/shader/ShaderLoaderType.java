@@ -19,9 +19,20 @@ package org.jackhuang.hmcl.addon.shader;
 
 import org.jackhuang.hmcl.addon.LoaderType;
 
+import java.util.Set;
+
 public enum ShaderLoaderType implements LoaderType {
+    OPTIFINE_IRIS("optifine", "iris"),
+    APERTURE("aperture");
 
-    OPTI_IRIS,
-    APERTURE
+    private final Set<String> names;
 
+    ShaderLoaderType(String... names) {
+        this.names = Set.of(names);
+    }
+
+    @Override
+    public Set<String> names() {
+        return names;
+    }
 }

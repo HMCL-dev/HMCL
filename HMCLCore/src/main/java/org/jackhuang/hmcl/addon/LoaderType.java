@@ -17,6 +17,11 @@
  */
 package org.jackhuang.hmcl.addon;
 
+import java.util.Set;
+
 /// For mods and shaders
 public interface LoaderType {
+
+    Set<String> names();
+
 }
