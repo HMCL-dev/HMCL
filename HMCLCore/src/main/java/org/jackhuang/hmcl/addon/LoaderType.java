@@ -26,7 +26,7 @@ import java.util.Locale;
 /// For mods and shaders
 public interface LoaderType {
 
-    static boolean mightBeModLoader(String str) {
+    static boolean mightBeLoader(String str) {
         if (StringUtils.isBlank(str)
                 || !StringUtils.isASCII(str)
                 || "client".equalsIgnoreCase(str) || "server".equalsIgnoreCase(str))
