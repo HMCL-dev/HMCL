@@ -205,7 +205,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
     public record Version(IVersion self, String modid, String name, String version, String changelog,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
-                          List<String> gameVersions, List<Either<ModLoaderType, String>> loaders) {
+                          List<String> gameVersions, List<Either<LoaderType, String>> loaders) {
     }
 
     public record File(Map<String, String> hashes, String url, String filename) {

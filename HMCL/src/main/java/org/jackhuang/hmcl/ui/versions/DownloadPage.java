@@ -29,6 +29,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.addon.LoaderType;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -282,8 +283,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 resolve:
                                 for (RemoteAddon.Version modVersion : modVersions) {
                                     if (getSkinnable().type == RemoteAddonRepository.Type.MOD) {
-                                        for (Either<ModLoaderType, String> loader : modVersion.loaders()) {
-                                            if (loader.hasLeft() && targetLoaders.contains(loader.left())) {
+                                        for (Either<LoaderType, String> loader : modVersion.loaders()) {
+                                            //noinspection SuspiciousMethodCalls
+                                            if (loader.left() instanceof ModLoaderType && targetLoaders.contains(loader.left())) {
                                                 list.getContent().addAll(
                                                         ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
                                                         new AddonItem(control.addon, modVersion, control)
@@ -453,20 +455,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     Set<String> tags = new LinkedHashSet<>();
-                    for (Either<ModLoaderType, String> loader : dataItem.loaders()) {
-                        String tag = loader.map(
-                                loaderType -> switch (loaderType) {
-                                    case FORGE -> i18n("install.installer.forge");
-                                    case CLEANROOM -> i18n("install.installer.cleanroom");
-                                    case NEO_FORGE -> i18n("install.installer.neoforge");
-                                    case FABRIC -> i18n("install.installer.fabric");
-                                    case LITE_LOADER -> i18n("install.installer.liteloader");
-                                    case QUILT -> i18n("install.installer.quilt");
-                                    case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                                    default -> null;
-                                },
-                                s -> "bungeecord".equalsIgnoreCase(s) ? "BungeeCord" : StringUtils.removeDashAndCapitalizeWords(s)
-                        );
+                    for (Either<LoaderType, String> loader : dataItem.loaders()) {
+                        String tag = I18n.translateLoaderType(loader);
                         if (tag != null) tags.add(tag);
                     }
                     content.addTags(tags);

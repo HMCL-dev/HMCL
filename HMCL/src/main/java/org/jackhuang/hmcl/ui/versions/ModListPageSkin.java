@@ -475,20 +475,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                             FXUtils.runInFX(() -> {
                                 Set<String> tags = new LinkedHashSet<>();
-                                for (Either<ModLoaderType, String> loader : versionOptional.get().loaders()) {
-                                    String tag = loader.map(
-                                            loaderType -> switch (loaderType) {
-                                                case FORGE -> i18n("install.installer.forge");
-                                                case CLEANROOM -> i18n("install.installer.cleanroom");
-                                                case NEO_FORGE -> i18n("install.installer.neoforge");
-                                                case FABRIC -> i18n("install.installer.fabric");
-                                                case LITE_LOADER -> i18n("install.installer.liteloader");
-                                                case QUILT -> i18n("install.installer.quilt");
-                                                case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                                                default -> null;
-                                            },
-                                            StringUtils::removeDashAndCapitalizeWords
-                                    );
+                                for (Either<LoaderType, String> loader : versionOptional.get().loaders()) {
+                                    String tag = I18n.translateLoaderType(loader);
                                     if (tag != null) tags.add(tag);
                                 }
                                 title.addTagsIfNotExist(tags);

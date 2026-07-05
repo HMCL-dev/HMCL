@@ -17,12 +17,9 @@
  */
 package org.jackhuang.hmcl.addon.mod;
 
-import org.jackhuang.hmcl.util.Either;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.addon.LoaderType;
 
-import java.util.Locale;
-
-public enum ModLoaderType {
+public enum ModLoaderType implements LoaderType {
     UNKNOWN,
     FORGE,
     CLEANROOM,
@@ -30,30 +27,6 @@ public enum ModLoaderType {
     FABRIC,
     QUILT,
     LITE_LOADER,
-    LEGACY_FABRIC;
+    LEGACY_FABRIC
 
-    public static boolean mightBeModLoader(String str) {
-        if (StringUtils.isBlank(str)
-                || !StringUtils.isASCII(str)
-                || "client".equalsIgnoreCase(str) || "server".equalsIgnoreCase(str))
-            return false;
-        int l = str.length();
-        for (int i = 0; i < l; i++) {
-            char c = str.charAt(i);
-            if (c != '-' && c != ' ' && !StringUtils.isAlphabetic(c)) return false;
-        }
-        return true;
-    }
-
-    public static Either<ModLoaderType, String> toEither(String loader) {
-        return switch (loader.toLowerCase(Locale.ROOT)) {
-            case "fabric" -> Either.left(ModLoaderType.FABRIC);
-            case "forge" -> Either.left(ModLoaderType.FORGE);
-            case "neoforge" -> Either.left(ModLoaderType.NEO_FORGE);
-            case "quilt" -> Either.left(ModLoaderType.QUILT);
-            case "liteloader" -> Either.left(ModLoaderType.LITE_LOADER);
-            case "legacy-fabric" -> Either.left(ModLoaderType.LEGACY_FABRIC);
-            default -> Either.right(loader);
-        };
-    }
 }

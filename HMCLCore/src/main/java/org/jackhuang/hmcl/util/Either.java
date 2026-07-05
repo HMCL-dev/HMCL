@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Function;
@@ -36,8 +37,10 @@ public sealed abstract class Either<L, R> {
 
     public abstract boolean hasRight();
 
+    @Nullable
     public abstract L left();
 
+    @Nullable
     public abstract R right();
 
     public abstract <T> T map(Function<L, T> lFunc, Function<R, T> rFunc);
