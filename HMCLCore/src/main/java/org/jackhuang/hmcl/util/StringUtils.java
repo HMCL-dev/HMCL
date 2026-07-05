@@ -116,10 +116,10 @@ public final class StringUtils {
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
-    public static String removeDashAndCapitalizeWords(String str) {
+    public static String capitalizeWords(String str) {
         if (str == null || str.isEmpty())
             return str;
-        String[] words = str.replace('-', ' ').split(" ");
+        String[] words = str.replace('-', ' ').replace('_', ' ').split(" ");
         for (int i = 0; i < words.length; i++) {
             words[i] = capitalizeFirst(words[i]);
         }

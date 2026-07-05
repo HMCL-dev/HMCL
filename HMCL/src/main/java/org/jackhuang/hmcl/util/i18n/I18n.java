@@ -145,7 +145,7 @@ public final class I18n {
                     }
                     return null;
                 },
-                s -> "bungeecord".equalsIgnoreCase(s) ? "BungeeCord" : StringUtils.removeDashAndCapitalizeWords(s)
+                s -> "bungeecord".equalsIgnoreCase(s) ? "BungeeCord" : StringUtils.capitalizeWords(s)
         );
     }
 

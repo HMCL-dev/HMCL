@@ -21,10 +21,13 @@ import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Either;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.util.List;
 import java.util.Locale;
 
 /// For mods and shaders
 public interface LoaderType {
+
+    List<String> names();
 
     static boolean mightBeLoader(String str) {
         if (StringUtils.isBlank(str)
@@ -34,21 +37,17 @@ public interface LoaderType {
         int l = str.length();
         for (int i = 0; i < l; i++) {
             char c = str.charAt(i);
-            if (c != '-' && c != ' ' && !StringUtils.isAlphabetic(c)) return false;
+            if (c != '-' && c != ' ' && c != '_' && !StringUtils.isAlphabetic(c)) return false;
         }
         return true;
     }
 
     static Either<LoaderType, String> toEither(String loader) {
-        return switch (loader.toLowerCase(Locale.ROOT)) {
-            case "fabric" -> Either.left(ModLoaderType.FABRIC);
-            case "forge" -> Either.left(ModLoaderType.FORGE);
-            case "neoforge" -> Either.left(ModLoaderType.NEO_FORGE);
-            case "quilt" -> Either.left(ModLoaderType.QUILT);
-            case "liteloader" -> Either.left(ModLoaderType.LITE_LOADER);
-            case "legacy-fabric" -> Either.left(ModLoaderType.LEGACY_FABRIC);
-            default -> Either.right(loader);
-        };
+        String l = loader.toLowerCase(Locale.ROOT);
+        for (var m : ModLoaderType.values()) {
+            if (m.names().contains(l)) return Either.left(m);
+        }
+        return Either.right(loader);
     }
 
 }

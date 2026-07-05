@@ -19,13 +19,27 @@ package org.jackhuang.hmcl.addon.mod;
 
 import org.jackhuang.hmcl.addon.LoaderType;
 
+import java.util.List;
+
 public enum ModLoaderType implements LoaderType {
     UNKNOWN,
-    FORGE,
-    CLEANROOM,
-    NEO_FORGE,
-    FABRIC,
-    QUILT,
-    LITE_LOADER,
-    LEGACY_FABRIC
+    FORGE("forge"),
+    CLEANROOM("cleanroom"),
+    NEO_FORGE("neoforge"),
+    FABRIC("fabric"),
+    QUILT("quilt"),
+    LITE_LOADER("liteloader"),
+    LEGACY_FABRIC("legacy-fabric");
+
+    private final List<String> names;
+
+    ModLoaderType(String... names) {
+        this.names = List.of(names);
+    }
+
+    @Override
+    public List<String> names() {
+        return names;
+    }
+
 }
