@@ -79,6 +79,16 @@ public final class JsonUtils {
             .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
             .create();
 
+    /// The lenient [Gson] instance.
+    ///
+    /// Configured with:
+    /// - Pretty printing enabled.
+    /// - Complex map key serialization enabled.
+    /// - Type adapters for [java.time.Instant], [java.util.UUID], and [java.nio.file.Path].
+    /// - [ValidationTypeAdapterFactory], [LowerCaseEnumTypeAdapterFactory], and
+    ///   [JsonTypeAdapterFactory].
+    public static final Gson LENIENT_GSON = defaultGsonBuilder().setStrictness(Strictness.LENIENT).create();
+
     /// Not instantiable.
     private JsonUtils() {
     }

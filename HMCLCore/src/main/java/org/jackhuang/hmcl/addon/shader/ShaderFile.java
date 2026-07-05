@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.addon.shader;
 
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -24,20 +25,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public sealed abstract class ShaderFile extends LocalAddonFile implements Comparable<ShaderFile> permits ShaderZipFile, ShaderFolder {
+    public static @Nullable ShaderFile fromFile(Path file) throws IOException {
+        return Files.isRegularFile(file) ? ShaderZipFile.load(file) : ShaderFolder.load(file);
+    }
 
     protected Path file;
     protected final String fileNameWithoutExtension;
     protected final ShaderLoaderType loaderType;
-    protected final @Nullable ApertureData apertureData;
+    protected final @Nullable ApertureMeta apertureMeta;
+    protected final @Nullable Image icon;
 
-    protected ShaderFile(Path file, ShaderLoaderType loaderType, @Nullable ApertureData apertureData) {
+    protected ShaderFile(Path file, ShaderLoaderType loaderType, @Nullable ApertureMeta apertureMeta, @Nullable Image icon) {
         this.file = file;
         this.fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
         this.loaderType = loaderType;
-        this.apertureData = apertureData;
+        this.apertureMeta = apertureMeta;
+        this.icon = icon;
     }
 
     @Override

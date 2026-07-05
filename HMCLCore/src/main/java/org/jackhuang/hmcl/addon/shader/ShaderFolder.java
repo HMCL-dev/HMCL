@@ -17,13 +17,50 @@
  */
 package org.jackhuang.hmcl.addon.shader;
 
+import javafx.scene.image.Image;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ShaderFolder extends ShaderFile {
 
-    private ShaderFolder(Path file, ShaderLoaderType loaderType, @Nullable ApertureData apertureData) {
-        super(file, loaderType, apertureData);
+    public static @Nullable ShaderFolder load(Path file) {
+        Path shadersPath = file.resolve("shaders");
+        if (!Files.isDirectory(shadersPath)) return null;
+
+        if (Files.isRegularFile(shadersPath.resolve("pack.ts"))) { // Aperture
+            ApertureMeta meta = null;
+            try {
+                meta = JsonUtils.fromJsonFile(JsonUtils.LENIENT_GSON, shadersPath.resolve("pack.json"), ApertureMeta.class);
+            } catch (IOException e) {
+                LOG.warning("Failed to load aperture shader metadata", e);
+            }
+            byte[] iconData = null;
+            Image icon = null;
+            try {
+                iconData = Files.readAllBytes(shadersPath.resolve("pack.png"));
+            } catch (IOException e) {
+                LOG.warning("Failed to read aperture shader icon", e);
+            }
+            if (iconData != null) {
+                try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
+                    icon = new Image(inputStream, 64, 64, true, true);
+                } catch (Exception e) {
+                    LOG.warning("Failed to load aperture shader icon", e);
+                }
+            }
+            return new ShaderFolder(file, ShaderLoaderType.APERTURE, meta, icon);
+        }
+        return new ShaderFolder(file, ShaderLoaderType.OPTIFINE_IRIS, null, null);
+    }
+
+    private ShaderFolder(Path file, ShaderLoaderType loaderType, @Nullable ApertureMeta apertureMeta, @Nullable Image icon) {
+        super(file, loaderType, apertureMeta, icon);
     }
 }

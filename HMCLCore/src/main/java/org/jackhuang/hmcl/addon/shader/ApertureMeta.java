@@ -17,15 +17,8 @@
  */
 package org.jackhuang.hmcl.addon.shader;
 
-import javafx.scene.image.Image;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jetbrains.annotations.Nullable;
 
 @JsonSerializable
-public record ApertureData(ApertureMeta meta, @Nullable Image icon) {
-
-    @JsonSerializable
-    public record ApertureMeta(String name, String version){
-    }
-
+public record ApertureMeta(String name, String version) {
 }

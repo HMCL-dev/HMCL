@@ -17,21 +17,70 @@
  */
 package org.jackhuang.hmcl.addon.shader;
 
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ShaderZipFile extends ShaderFile {
 
-    private ShaderZipFile(Path file, ShaderLoaderType loaderType, @Nullable ApertureData apertureData) {
-        super(file, loaderType, apertureData);
+    public static @Nullable ShaderZipFile load(Path file) throws IOException {
+        if (!Files.isRegularFile(file) || !file.toString().toLowerCase(Locale.ROOT).endsWith(".zip")) return null;
+
+        try (var zipSystem = CompressingUtils.createReadOnlyZipFileSystem(file)) {
+            Path root = zipSystem.getRootDirectories().iterator().next();
+            try (Stream<Path> stream = Files.walk(root)) {
+                Path shadersPath = stream.filter(Files::isDirectory)
+                        .filter(path -> path.endsWith("shaders"))
+                        .findFirst().orElse(null);
+                if (shadersPath == null) return null;
+                if (!Files.isDirectory(shadersPath)) return null;
+
+                if (Files.isRegularFile(shadersPath.resolve("pack.ts"))) { // Aperture
+                    ApertureMeta meta = null;
+                    try {
+                        meta = JsonUtils.fromJsonFile(JsonUtils.LENIENT_GSON, shadersPath.resolve("pack.json"), ApertureMeta.class);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to load aperture shader metadata", e);
+                    }
+                    byte[] iconData = null;
+                    Image icon = null;
+                    try {
+                        iconData = Files.readAllBytes(shadersPath.resolve("pack.png"));
+                    } catch (IOException e) {
+                        LOG.warning("Failed to read aperture shader icon", e);
+                    }
+                    if (iconData != null) {
+                        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
+                            icon = new Image(inputStream, 64, 64, true, true);
+                        } catch (Exception e) {
+                            LOG.warning("Failed to load aperture shader icon", e);
+                        }
+                    }
+                    return new ShaderZipFile(file, ShaderLoaderType.APERTURE, meta, icon);
+                }
+                return new ShaderZipFile(file, ShaderLoaderType.OPTIFINE_IRIS, null, null);
+            }
+        }
+    }
+
+    private ShaderZipFile(Path file, ShaderLoaderType loaderType, @Nullable ApertureMeta apertureMeta, @Nullable Image icon) {
+        super(file, loaderType, apertureMeta, icon);
     }
 
     @Override

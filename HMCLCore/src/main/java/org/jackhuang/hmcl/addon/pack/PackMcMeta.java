@@ -40,10 +40,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @JsonSerializable
 public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Validation {
 
-    private static final Gson LENIENT_GSON = JsonUtils.defaultGsonBuilder().setStrictness(Strictness.LENIENT).create();
-
     public static PackMcMeta fromNonNullJson(String jsonString) throws JsonParseException {
-        PackMcMeta parsed = LENIENT_GSON.fromJson(jsonString, PackMcMeta.class);
+        PackMcMeta parsed = JsonUtils.LENIENT_GSON.fromJson(jsonString, PackMcMeta.class);
         if (parsed == null)
             throw new JsonParseException("Json object cannot be null.");
         return parsed;
@@ -51,7 +49,7 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
 
     public static PackMcMeta fromNonNullJsonFile(Path jsonFile) throws JsonParseException, IOException {
         try (var reader = Files.newBufferedReader(jsonFile)) {
-            PackMcMeta parsed = LENIENT_GSON.fromJson(reader, PackMcMeta.class);
+            PackMcMeta parsed = JsonUtils.LENIENT_GSON.fromJson(reader, PackMcMeta.class);
             if (parsed == null)
                 throw new JsonParseException("Json object cannot be null.");
             return parsed;
