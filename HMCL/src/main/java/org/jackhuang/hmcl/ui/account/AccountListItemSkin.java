@@ -157,12 +157,9 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         right.getChildren().add(spinnerUpload);
 
         JFXButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
-        SpinnerPane spinnerCopyUUID = new SpinnerPane();
-        spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
         btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getProfileID().toString()));
         FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid"));
-        spinnerCopyUUID.setContent(btnCopyUUID);
-        right.getChildren().add(spinnerCopyUUID);
+        right.getChildren().add(btnCopyUUID);
 
         JFXButton btnRemove = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
         btnRemove.setOnAction(e -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::remove, null));
