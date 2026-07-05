@@ -24,12 +24,11 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.game.friend.FriendControl;
+import org.jackhuang.hmcl.game.friend.FriendResponse;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
@@ -49,7 +48,7 @@ import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class YggdrasilService implements FriendControl {
+public class YggdrasilService {
 
     private static final ThreadPoolExecutor POOL = threadPool("YggdrasilProfileProperties", true, 2, 10, TimeUnit.SECONDS);
 
@@ -112,8 +111,8 @@ public class YggdrasilService implements FriendControl {
         YggdrasilSession response = handleAuthenticationResponse(request(provider.getRefreshmentURL(), request), clientToken);
 
         if (characterToSelect != null) {
-            if (response.getSelectedProfile() == null ||
-                    !response.getSelectedProfile().getId().equals(characterToSelect.getId())) {
+            if (response.selectedProfile() == null ||
+                    !response.selectedProfile().getId().equals(characterToSelect.getId())) {
                 throw new ServerResponseMalformedException("Failed to select character");
             }
         }
@@ -169,7 +168,7 @@ public class YggdrasilService implements FriendControl {
 
     /**
      * Get complete game profile.
-     *
+     * <p>
      * Game profile provided from authentication is not complete (no skin data in properties).
      *
      * @param uuid the uuid that the character corresponding to.
@@ -226,6 +225,20 @@ public class YggdrasilService implements FriendControl {
         if (!StringUtils.isBlank(response.error)) {
             throw new RemoteAuthenticationException(response.error, response.errorMessage, response.cause);
         }
+    }
+
+    public FriendResponse getFriendList(String accessToken) throws IOException {
+        var url = provider.getFriendsURL().toString();
+        HttpURLConnection request = HttpRequest.GET(url)
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").createConnection();
+
+        if (request.getResponseCode() != 200) {
+            throw new ResponseCodeException(url, request.getResponseCode());
+        }
+
+        return JsonUtils.fromNonNullJson(NetworkUtils.readFullyAsString(request), FriendResponse.class);
     }
 
     private static String request(URI uri, Object payload) throws AuthenticationException {

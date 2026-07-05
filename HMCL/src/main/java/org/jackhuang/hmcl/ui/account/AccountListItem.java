@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -137,7 +138,7 @@ public class AccountListItem extends RadioButton {
     }
 
     public ObservableBooleanValue canAddFriend() {
-        if (account instanceof AuthlibInjectorAccount || account instanceof MicrosoftAccount) {
+        if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount) {
              return createBooleanBinding(() -> true);
         } else {
             return createBooleanBinding(() -> false);

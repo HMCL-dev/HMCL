@@ -23,8 +23,11 @@ import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.game.friend.FriendControl;
+import org.jackhuang.hmcl.game.friend.FriendResponse;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +37,7 @@ import java.util.UUID;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class MicrosoftAccount extends OAuthAccount {
+public final class MicrosoftAccount extends OAuthAccount implements FriendControl {
 
     protected final MicrosoftService service;
     protected UUID profileID;
@@ -169,6 +172,11 @@ public final class MicrosoftAccount extends OAuthAccount {
     public void clearCache() {
         authenticated = false;
         service.getProfileRepository().invalidate(profileID);
+    }
+
+    @Override
+    public FriendResponse getFriendList() throws IOException {
+        return service.getFriendList(session.accessToken());
     }
 
     @Override

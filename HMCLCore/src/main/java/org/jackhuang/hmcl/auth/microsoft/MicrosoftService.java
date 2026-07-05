@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
-import org.jackhuang.hmcl.game.friend.FriendControl;
+import org.jackhuang.hmcl.game.friend.FriendResponse;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
@@ -54,7 +54,7 @@ import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class MicrosoftService implements FriendControl {
+public class MicrosoftService {
     private static final String SCOPE = "XboxLive.signin offline_access";
     private static final ThreadPoolExecutor POOL = threadPool("MicrosoftProfileProperties", true, 2, 10,
             TimeUnit.SECONDS);
@@ -311,6 +311,19 @@ public class MicrosoftService implements FriendControl {
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }
+    }
+
+    public FriendResponse getFriendList(String accessToken) throws IOException {
+        HttpURLConnection request = HttpRequest.GET("https://api.minecraftservices.com/friends")
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").createConnection();
+
+        if (request.getResponseCode() != 200) {
+            throw new ResponseCodeException("https://api.minecraftservices.com/friends", request.getResponseCode());
+        }
+
+        return JsonUtils.fromNonNullJson(NetworkUtils.readFullyAsString(request), FriendResponse.class);
     }
 
     public static class XboxAuthorizationException extends AuthenticationException {

@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.game.friend;
 
+import java.io.IOException;
+
 public interface FriendControl {
-    FriendResponse getFriendList();
+    FriendResponse getFriendList() throws IOException;
 }

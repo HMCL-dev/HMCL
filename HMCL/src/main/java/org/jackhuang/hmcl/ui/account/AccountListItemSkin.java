@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -162,9 +163,9 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         FXUtils.installFastTooltip(btnFriend, i18n("account.friend"));
         friendSpinnerPane.setContent(btnFriend);
         btnFriend.setOnAction(actionEvent -> {
-            if (skinnable.getAccount() instanceof MicrosoftAccount) {
-                Controllers.navigate(new FriendListPage(skinnable.getAccount(), ((MicrosoftAccount) skinnable.getAccount()).getService()));
-            } else if (skinnable.getAccount() instanceof AuthlibInjectorAccount) {
+            if (skinnable.getAccount() instanceof MicrosoftAccount account) {
+                Controllers.navigate(new FriendListPage(account, account));
+            } else if (skinnable.getAccount() instanceof YggdrasilAccount account) {
                 // TODO
 //                Controllers.navigate(new FriendListPage(skinnable.getAccount(), ((AuthlibInjectorAccount) skinnable.getAccount()).getYggdrasilService()));
             }

@@ -18,37 +18,30 @@
 package org.jackhuang.hmcl.auth.authlibinjector;
 
 import org.glavo.uuid.UUIDs;
-import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilProvider;
 
 import java.net.URI;
 import java.util.UUID;
 
-public class AuthlibInjectorProvider implements YggdrasilProvider {
-
-    private final String apiRoot;
-
-    public AuthlibInjectorProvider(String apiRoot) {
-        this.apiRoot = apiRoot;
-    }
+public record AuthlibInjectorProvider(String apiRoot) implements YggdrasilProvider {
 
     @Override
-    public URI getAuthenticationURL() throws AuthenticationException {
+    public URI getAuthenticationURL() {
         return URI.create(apiRoot + "authserver/authenticate");
     }
 
     @Override
-    public URI getRefreshmentURL() throws AuthenticationException {
+    public URI getRefreshmentURL() {
         return URI.create(apiRoot + "authserver/refresh");
     }
 
     @Override
-    public URI getValidationURL() throws AuthenticationException {
+    public URI getValidationURL() {
         return URI.create(apiRoot + "authserver/validate");
     }
 
     @Override
-    public URI getInvalidationURL() throws AuthenticationException {
+    public URI getInvalidationURL() {
         return URI.create(apiRoot + "authserver/invalidate");
     }
 
@@ -58,12 +51,12 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
     }
 
     @Override
-    public URI getProfilePropertiesURL(UUID uuid) throws AuthenticationException {
+    public URI getProfilePropertiesURL(UUID uuid) {
         return URI.create(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDs.toCompactString(uuid));
     }
 
     @Override
-    public String toString() {
-        return apiRoot;
+    public URI getFriendsURL() {
+        return URI.create(apiRoot + "api/yggdrasil/minecraftservices/friends");
     }
 }
