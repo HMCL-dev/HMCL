@@ -28,5 +28,4 @@ public enum ModLoaderType implements LoaderType {
     QUILT,
     LITE_LOADER,
     LEGACY_FABRIC
-
 }
