@@ -94,7 +94,7 @@ public record GameInstancePatch(
                 Arguments.merge(parent.arguments(), arguments),
                 mainClass == null ? parent.mainClass() : mainClass,
                 null, // inheritsFrom
-                jar == null ? parent.jar() : jar,
+                parent.jar(),
                 assetIndex == null ? parent.assetIndex() : assetIndex,
                 assets == null ? parent.assets() : assets,
                 complianceLevel,

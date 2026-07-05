@@ -461,7 +461,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
                         .sorted(Comparator.comparing(GameInstancePatch::priority))
                         .toList();
                 for (GameInstancePatch patch : sortedPatches) {
-                    currentManifest = patch.withJar(null).merge(currentManifest);
+                    currentManifest = patch.merge(currentManifest);
                 }
             }
 
