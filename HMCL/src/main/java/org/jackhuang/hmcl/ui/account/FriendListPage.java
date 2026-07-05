@@ -27,6 +27,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.game.friend.FriendControl;
@@ -38,6 +39,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.ToolbarListPageSkin;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -142,7 +144,16 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
     }
 
     private final class FriendListCell extends ListCell<FriendListItem> {
+        private final Region graphic;
 
+        public FriendListCell() {
+            BorderPane root = new BorderPane();
+            root.getStyleClass().add("md-list-cell");
+            root.setPadding(new Insets(8, 8, 8, 0));
+
+            RipplerContainer container = new RipplerContainer(root);
+            this.graphic = container;
+        }
     }
 
     private record FriendListItem(String profileId, String name, FriendStatus status) {
