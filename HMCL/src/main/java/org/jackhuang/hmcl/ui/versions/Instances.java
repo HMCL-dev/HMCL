@@ -183,8 +183,10 @@ public final class Instances {
         Controllers.prompt(i18n("version.manage.duplicate.prompt"), (result, handler) -> {
             handler.resolve();
 
+            GameInstanceID instanceId = new GameInstanceID(result);
+
             DefaultDependencyManager dependencyManager = repository.getDependency();
-            GameInstanceManifest newVersion = version.setId(result).setJar(result);
+            GameInstanceManifest newVersion = version.withId(instanceId).withJar(instanceId);
 
             Controllers.taskDialog(
                     Task.allOf(new GameDownloadTask(dependencyManager, null, newVersion),

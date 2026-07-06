@@ -497,14 +497,6 @@ public record GameInstanceManifest(
         return repository.resolve(this).launchManifest();
     }
 
-    /// Returns a manifest copy with the given id.
-    ///
-    /// @param id the new instance id
-    /// @return the updated manifest
-    public GameInstanceManifest setId(String id) {
-        return withId(new GameInstanceID(id));
-    }
-
     public GameInstanceManifest withId(GameInstanceID id) {
         Objects.requireNonNull(id);
 
@@ -517,14 +509,6 @@ public record GameInstanceManifest(
         return builder.toManifest();
     }
 
-    /// Returns a manifest copy with the given jar id.
-    ///
-    /// @param jar the jar id, or `null` when absent
-    /// @return the updated manifest
-    public GameInstanceManifest setJar(@Nullable String jar) {
-        return withJar(jar == null ? null : new GameInstanceID(jar));
-    }
-
     public GameInstanceManifest withJar(@Nullable GameInstanceID jar) {
         if (Objects.equals(this.jar, jar)) {
             return this;
@@ -533,14 +517,6 @@ public record GameInstanceManifest(
         Builder builder = new Builder(this);
         builder.setJar(jar);
         return builder.toManifest();
-    }
-
-    /// Returns a manifest copy with the given parent id.
-    ///
-    /// @param inheritsFrom the parent id, or `null` when absent
-    /// @return the updated manifest
-    public GameInstanceManifest setInheritsFrom(@Nullable String inheritsFrom) {
-        return withInheritsFrom(inheritsFrom == null ? null : new GameInstanceID(inheritsFrom));
     }
 
     /// Returns a manifest copy with the given parent instance id.
@@ -636,8 +612,8 @@ public record GameInstanceManifest(
     }
 
     /// Returns a manifest copy with additional patches.
-    public GameInstanceManifest addPatch(GameInstancePatch... additional) {
-        return addPatches(Arrays.asList(additional));
+    public GameInstanceManifest addPatch(GameInstancePatch additional) {
+        return addPatches(List.of(additional));
     }
 
     /// Returns a manifest copy with additional patches.
