@@ -51,36 +51,36 @@ final class ShaderZipFile extends ShaderFile {
                         .findFirst().orElse(null);
                 if (shadersPath == null) return null;
 
+                ShaderPackMeta meta = null;
+                try {
+                    meta = JsonUtils.fromJsonFile(JsonUtils.LENIENT_GSON, shadersPath.resolve("pack.json"), ShaderPackMeta.class);
+                } catch (IOException e) {
+                    LOG.warning("Failed to load aperture shader metadata", e);
+                }
+                byte[] iconData = null;
+                Image icon = null;
+                try {
+                    iconData = Files.readAllBytes(shadersPath.resolve("pack.png"));
+                } catch (IOException e) {
+                    LOG.warning("Failed to read aperture shader icon", e);
+                }
+                if (iconData != null) {
+                    try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
+                        icon = new Image(inputStream, 64, 64, true, true);
+                    } catch (Exception e) {
+                        LOG.warning("Failed to load aperture shader icon", e);
+                    }
+                }
                 if (Files.isRegularFile(shadersPath.resolve("pack.ts"))) { // Aperture
-                    ApertureMeta meta = null;
-                    try {
-                        meta = JsonUtils.fromJsonFile(JsonUtils.LENIENT_GSON, shadersPath.resolve("pack.json"), ApertureMeta.class);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to load aperture shader metadata", e);
-                    }
-                    byte[] iconData = null;
-                    Image icon = null;
-                    try {
-                        iconData = Files.readAllBytes(shadersPath.resolve("pack.png"));
-                    } catch (IOException e) {
-                        LOG.warning("Failed to read aperture shader icon", e);
-                    }
-                    if (iconData != null) {
-                        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                            icon = new Image(inputStream, 64, 64, true, true);
-                        } catch (Exception e) {
-                            LOG.warning("Failed to load aperture shader icon", e);
-                        }
-                    }
                     return new ShaderZipFile(file, ShaderLoaderType.APERTURE, meta, icon);
                 }
-                return new ShaderZipFile(file, ShaderLoaderType.OPTIFINE_IRIS, null, null);
+                return new ShaderZipFile(file, ShaderLoaderType.OPTIFINE_IRIS, meta, icon);
             }
         }
     }
 
-    private ShaderZipFile(Path file, ShaderLoaderType loaderType, @Nullable ApertureMeta apertureMeta, @Nullable Image icon) {
-        super(file, loaderType, apertureMeta, icon);
+    private ShaderZipFile(Path file, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta, @Nullable Image icon) {
+        super(file, loaderType, shaderPackMeta, icon);
     }
 
     @Override

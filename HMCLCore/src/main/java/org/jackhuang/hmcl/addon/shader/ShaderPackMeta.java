@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.addon.shader;
 
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jetbrains.annotations.Nullable;
 
-/// # STILL IN PREVIEW STATUS
-/// [Aperture Example Pack](https://github.com/IrisShaders/Aperture-Example-Pack/blob/slang/shaders/pack.json)
 @JsonSerializable
-public record ApertureMeta(String name, String version) {
+public record ShaderPackMeta(@Nullable String name, @Nullable String version,
+                             @SerializedName(value = "shaderDescription") @Nullable String description) {
 }

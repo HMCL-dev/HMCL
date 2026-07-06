@@ -385,8 +385,10 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionP
 
                 // Do we need to search in the background thread?
                 for (ShaderFile item : getSkinnable().getItems()) {
+                    var meta = item.getMeta();
                     if (predicate.test(item.getFile().getFileName().toString())
-                            || predicate.test(item.getFileName())) {
+                            || predicate.test(item.getName())
+                            || (meta != null && (predicate.test(meta.version()) || predicate.test(meta.description())))) {
                         listView.getItems().add(item);
                     }
                 }
@@ -431,10 +433,13 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionP
 
             content.getTags().clear();
             content.setTitle(item.getFileName());
-            {
-                var apertureMeta = item.getApertureMeta();
-                content.setSubtitle(apertureMeta != null ? apertureMeta.name() + " " + apertureMeta.version() : "");
-            }
+            content.setSubtitle(item.getMeta() == null || item.getMeta().name() == null ? "" : item.getMeta().name());
+            content.addTag(switch (item.getLoaderType()) {
+                case OPTIFINE_IRIS -> i18n("shaderpack.loader.optifine_iris");
+                case APERTURE -> i18n("shaderpack.loader.aperture");
+            });
+            if (item.getMeta() != null && item.getMeta().version() != null)
+                content.addTag(item.getMeta().version());
 
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(item.getFile()));
@@ -467,8 +472,9 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionP
             titleContainer.getChildren().setAll(imageContainer, title);
             setHeading(titleContainer);
 
-            Label description = new Label(shaderFile.getApertureMeta() == null ? ""
-                    : shaderFile.getApertureMeta().name() + " " + shaderFile.getApertureMeta().version());
+            Label description = new Label();
+            if (shaderFile.getMeta() != null && shaderFile.getMeta().description() != null)
+                description.setText(shaderFile.getMeta().description());
             description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
 

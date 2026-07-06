@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -55,14 +56,14 @@ public sealed abstract class ShaderFile extends LocalAddonFile implements Compar
     protected Path file;
     protected final String fileNameWithoutExtension;
     protected final ShaderLoaderType loaderType;
-    protected final @Nullable ApertureMeta apertureMeta;
+    protected final @Nullable ShaderPackMeta shaderPackMeta;
     protected final @Nullable Image icon;
 
-    protected ShaderFile(Path file, ShaderLoaderType loaderType, @Nullable ApertureMeta apertureMeta, @Nullable Image icon) {
+    protected ShaderFile(Path file, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta, @Nullable Image icon) {
         this.file = file;
         this.fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
         this.loaderType = loaderType;
-        this.apertureMeta = apertureMeta;
+        this.shaderPackMeta = shaderPackMeta;
         this.icon = icon;
     }
 
@@ -80,12 +81,16 @@ public sealed abstract class ShaderFile extends LocalAddonFile implements Compar
         return loaderType;
     }
 
-    public @Nullable ApertureMeta getApertureMeta() {
-        return apertureMeta;
+    public @Nullable ShaderPackMeta getMeta() {
+        return shaderPackMeta;
     }
 
     public @Nullable Image getIcon() {
         return icon;
+    }
+
+    public @NotNull String getName() {
+        return Optional.ofNullable(getMeta()).map(ShaderPackMeta::name).orElse(getFile().getFileName().toString());
     }
 
     @Override
