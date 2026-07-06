@@ -154,8 +154,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return version;
     }
 
-    public static LibraryAnalyzer analyze(GameInstanceManifest version, String gameVersion) {
-        if (version.getInheritsFrom() != null)
+    public static LibraryAnalyzer analyze(GameInstanceManifest manifest, String gameVersion) {
+        if (manifest.getInheritsFrom() != null)
             throw new IllegalArgumentException("LibraryAnalyzer can only analyze independent game version");
 
         Map<String, Pair<Library, String>> libraries = new HashMap<>();
@@ -164,22 +164,22 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             libraries.put(LibraryType.MINECRAFT.getPatchId(), pair(null, gameVersion));
         }
 
-        List<Library> rawLibraries = version.getLibraries();
+        List<Library> rawLibraries = manifest.getLibraries();
         for (Library library : rawLibraries) {
             for (LibraryType type : LibraryType.values()) {
                 if (type.matchLibrary(library, rawLibraries)) {
-                    libraries.put(type.getPatchId(), pair(library, type.patchVersion(version, library.getVersion())));
+                    libraries.put(type.getPatchId(), pair(library, type.patchVersion(manifest, library.getVersion())));
                     break;
                 }
             }
         }
 
-        for (GameInstancePatch patch : version.getPatches()) {
+        for (GameInstancePatch patch : manifest.getPatches()) {
             if (patch.isHidden()) continue;
             libraries.put(patch.getId(), pair(null, patch.getVersion()));
         }
 
-        return new LibraryAnalyzer(version, libraries);
+        return new LibraryAnalyzer(manifest, libraries);
     }
 
     public static boolean isModded(GameRepository provider, GameInstanceManifest version) {
