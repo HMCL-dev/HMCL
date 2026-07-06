@@ -30,36 +30,36 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
-    public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.MOD, CurseForgeRemoteAddonRepository.MODS, ModrinthRemoteAddonRepository.MODS);
+    public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddonRepository.Type.MOD, CurseForgeRemoteAddonRepository.MODS, ModrinthRemoteAddonRepository.MODS);
     }
 
-    public static DownloadListPage ofCurseForgeMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.MOD, CurseForgeRemoteAddonRepository.MODS, null);
+    public static DownloadListPage ofCurseForgeMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddonRepository.Type.MOD, CurseForgeRemoteAddonRepository.MODS, null);
     }
 
-    public static DownloadListPage ofModrinthMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.MOD, null, ModrinthRemoteAddonRepository.MODS);
+    public static DownloadListPage ofModrinthMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddonRepository.Type.MOD, null, ModrinthRemoteAddonRepository.MODS);
     }
 
-    public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.MODPACK, CurseForgeRemoteAddonRepository.MODPACKS, ModrinthRemoteAddonRepository.MODPACKS);
+    public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddonRepository.Type.MODPACK, CurseForgeRemoteAddonRepository.MODPACKS, ModrinthRemoteAddonRepository.MODPACKS);
     }
 
-    public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.RESOURCE_PACK, CurseForgeRemoteAddonRepository.RESOURCE_PACKS, ModrinthRemoteAddonRepository.RESOURCE_PACKS);
+    public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddonRepository.Type.RESOURCE_PACK, CurseForgeRemoteAddonRepository.RESOURCE_PACKS, ModrinthRemoteAddonRepository.RESOURCE_PACKS);
     }
 
-    public static DownloadListPage ofCurseForgeResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.RESOURCE_PACK, CurseForgeRemoteAddonRepository.RESOURCE_PACKS, null);
+    public static DownloadListPage ofCurseForgeResourcePack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddonRepository.Type.RESOURCE_PACK, CurseForgeRemoteAddonRepository.RESOURCE_PACKS, null);
     }
 
-    public static DownloadListPage ofModrinthResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.RESOURCE_PACK, null, ModrinthRemoteAddonRepository.RESOURCE_PACKS);
+    public static DownloadListPage ofModrinthResourcePack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddonRepository.Type.RESOURCE_PACK, null, ModrinthRemoteAddonRepository.RESOURCE_PACKS);
     }
 
-    public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        var page = new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteAddonRepository.Type.SHADER_PACK, CurseForgeRemoteAddonRepository.SHADERS, ModrinthRemoteAddonRepository.SHADER_PACKS);
+    public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        var page = new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddonRepository.Type.SHADER_PACK, CurseForgeRemoteAddonRepository.SHADERS, ModrinthRemoteAddonRepository.SHADER_PACKS);
         page.supportChinese.set(false);
         return page;
     }
