@@ -288,12 +288,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 return super.patchVersion(gameVersion, libraryVersion);
             }
 
-            private String scanVersion(GameInstanceManifest version) {
-                Optional<Arguments> optArgument = version.getArguments();
-                if (!optArgument.isPresent()) {
+            private String scanVersion(GameInstanceManifest manifest) {
+                if (manifest.arguments() == null) {
                     return null;
                 }
-                List<Argument> gameArguments = optArgument.get().game();
+                List<Argument> gameArguments = manifest.arguments().game();
                 if (gameArguments == null) {
                     return null;
                 }

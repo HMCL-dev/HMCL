@@ -100,7 +100,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
 
     private static GameInstanceManifest maintainGameWithLaunchWrapper(GameRepository repository, GameInstanceManifest version, boolean reorderTweakClass) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
-        VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
+        GameInstanceLibraryBuilder builder = new GameInstanceLibraryBuilder(version);
         String mainClass = null;
 
         // Installing Forge will override the Minecraft arguments in json, so LiteLoader and OptiFine Tweaker are being re-added.
@@ -149,7 +149,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
 
     private static GameInstanceManifest maintainGameWithCpwModLauncher(GameRepository repository, GameInstanceManifest version) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
-        VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
+        GameInstanceLibraryBuilder builder = new GameInstanceLibraryBuilder(version);
 
         if (!libraryAnalyzer.has(FORGE)) return version;
 
@@ -207,7 +207,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
     // Fix wrong configurations when launching 1.17+ with Forge.
     private static GameInstanceManifest maintainGameWithCpwBoostrapLauncher(GameRepository repository, GameInstanceManifest version) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
-        VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
+        GameInstanceLibraryBuilder builder = new GameInstanceLibraryBuilder(version);
 
         if (!libraryAnalyzer.has(FORGE) && !libraryAnalyzer.has(NEO_FORGE)) return version;
 

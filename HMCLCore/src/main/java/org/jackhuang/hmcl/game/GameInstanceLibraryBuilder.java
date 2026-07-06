@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  *
  * @author huangyuhui
  */
-public final class VersionLibraryBuilder {
+public final class GameInstanceLibraryBuilder {
     private final GameInstanceManifest version;
     private final List<String> mcArgs;
     private final List<Argument> game;
@@ -39,12 +39,12 @@ public final class VersionLibraryBuilder {
     private final boolean useMcArgs;
     private boolean jvmChanged = false;
 
-    public VersionLibraryBuilder(GameInstanceManifest version) {
-        this.version = version;
-        this.libraries = new ArrayList<>(version.getLibraries());
-        this.mcArgs = version.getMinecraftArguments().map(StringUtils::tokenize).map(ArrayList::new).orElse(null);
-        this.game = version.getArguments().map(Arguments::game).map(ArrayList::new).orElseGet(ArrayList::new);
-        this.jvm = new ArrayList<>(version.getArguments().map(Arguments::jvm).orElse(Arguments.DEFAULT_JVM_ARGUMENTS));
+    public GameInstanceLibraryBuilder(GameInstanceManifest manifest) {
+        this.version = manifest;
+        this.libraries = new ArrayList<>(manifest.getLibraries());
+        this.mcArgs = manifest.getMinecraftArguments().map(StringUtils::tokenize).map(ArrayList::new).orElse(null);
+        this.game = manifest.getArguments().map(Arguments::game).map(ArrayList::new).orElseGet(ArrayList::new);
+        this.jvm = new ArrayList<>(manifest.getArguments().map(Arguments::jvm).orElse(Arguments.DEFAULT_JVM_ARGUMENTS));
         this.useMcArgs = mcArgs != null;
     }
 
