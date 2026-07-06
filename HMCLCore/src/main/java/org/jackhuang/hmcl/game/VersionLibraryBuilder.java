@@ -58,7 +58,7 @@ public final class VersionLibraryBuilder {
 
             // Since $ will be escaped in linux, and our maintain of minecraftArgument will not cause escaping,
             // so we regenerate the minecraftArgument without escaping.
-            ret = ret.setMinecraftArguments(new CommandBuilder().addAllWithoutParsing(mcArgs).toString());
+            ret = ret.withMinecraftArguments(new CommandBuilder().addAllWithoutParsing(mcArgs).toString());
         } else {
             ret = ret.setArguments(ret.getArguments()
                     .map(args -> args.withGame(game))

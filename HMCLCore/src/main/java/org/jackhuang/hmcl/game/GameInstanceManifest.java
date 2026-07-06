@@ -534,7 +534,11 @@ public record GameInstanceManifest(
     }
 
     /// Returns a manifest copy with the given legacy game arguments.
-    public GameInstanceManifest setMinecraftArguments(@Nullable String minecraftArguments) {
+    public GameInstanceManifest withMinecraftArguments(@Nullable String minecraftArguments) {
+        if (Objects.equals(this.minecraftArguments, minecraftArguments)) {
+            return this;
+        }
+
         Builder builder = new Builder(this);
         builder.setMinecraftArguments(minecraftArguments);
         return builder.toManifest();
