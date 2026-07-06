@@ -158,7 +158,7 @@ public class DefaultLauncher extends Launcher {
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
 
-            res.addDefault("-Dminecraft.client.jar=", FileUtils.getAbsolutePath(repository.getVersionJar(version)));
+            res.addDefault("-Dminecraft.client.jar=", FileUtils.getAbsolutePath(repository.getInstanceJar(version)));
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                 res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
@@ -287,7 +287,7 @@ public class DefaultLauncher extends Launcher {
             classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
         }
 
-        Path jar = repository.getVersionJar(version);
+        Path jar = repository.getInstanceJar(version);
         if (!Files.isRegularFile(jar))
             throw new IOException("Minecraft jar does not exist");
         classpath.add(FileUtils.getAbsolutePath(jar.toAbsolutePath()));
@@ -494,7 +494,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     public Path getLog4jConfigurationFile() {
-        return repository.getVersionRoot(version.getId()).resolve("log4j2.xml");
+        return repository.getInstanceRoot(version.getId()).resolve("log4j2.xml");
     }
 
     public void extractLog4jConfigurationFile() throws IOException {
@@ -539,7 +539,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${resolution_height}", options.getHeight().toString()),
                 pair("${library_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(version))),
                 pair("${classpath_separator}", File.pathSeparator),
-                pair("${primary_jar}", FileUtils.getAbsolutePath(repository.getVersionJar(version))),
+                pair("${primary_jar}", FileUtils.getAbsolutePath(repository.getInstanceJar(version))),
                 pair("${language}", Locale.getDefault().toLanguageTag()),
 
                 // defined by HMCL
@@ -549,7 +549,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${libraries_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(version))),
                 // file_separator is used in -DignoreList
                 pair("${file_separator}", File.separator),
-                pair("${primary_jar_name}", FileUtils.getName(repository.getVersionJar(version)))
+                pair("${primary_jar_name}", FileUtils.getName(repository.getInstanceJar(version)))
         );
     }
 
@@ -622,7 +622,7 @@ public class DefaultLauncher extends Launcher {
         Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
-        env.put("INST_DIR", FileUtils.getAbsolutePath(repository.getVersionRoot(version.getId())));
+        env.put("INST_DIR", FileUtils.getAbsolutePath(repository.getInstanceRoot(version.getId())));
         env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 

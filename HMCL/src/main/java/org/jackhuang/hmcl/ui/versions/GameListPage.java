@@ -152,7 +152,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> versionItems = repository.getDisplayVersions().map(instance -> new GameListItem(repository, instance.getId())).toList();
+            List<GameListItem> versionItems = repository.getDisplayInstanceManifests().map(instance -> new GameListItem(repository, instance.getId())).toList();
 
             sourceList.setAll(versionItems);
 
@@ -182,7 +182,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         public void refreshList() {
-            GameDirectoryManager.getSelectedRepository().refreshVersionsAsync().start();
+            GameDirectoryManager.getSelectedRepository().refreshAsync().start();
         }
 
         @Override

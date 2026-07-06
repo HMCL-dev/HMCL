@@ -277,7 +277,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         if (requiredVersion == null) {
             lock.lock();
             try {
-                if (requiredVersion == null) requiredVersion = getPackVersion(getMinecraftVersion(), repository.getVersionJar(id));
+                if (requiredVersion == null) requiredVersion = getPackVersion(getMinecraftVersion(), repository.getInstanceJar(id));
             } finally {
                 lock.unlock();
             }

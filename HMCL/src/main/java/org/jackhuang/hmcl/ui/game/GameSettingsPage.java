@@ -1799,7 +1799,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return "";
         }
 
-        return repository.getVersionRoot(instanceId).toString();
+        return repository.getInstanceRoot(instanceId).toString();
     }
 
     /// Keeps a listener attached to the current instance's parent preset property.
@@ -2528,7 +2528,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         if (repository == null || instanceId == null)
             return;
 
-        iconPickerItem.setImage(repository.getVersionIconImage(instanceId));
+        iconPickerItem.setImage(repository.getInstanceIconImage(instanceId));
     }
 
     /// Refreshes Java selection controls and keeps inherited parent Java properties observed.
@@ -2618,7 +2618,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             if (this.instanceId == null) {
                 version = null;
             } else {
-                version = repository != null ? repository.getResolvedVersion(this.instanceId) : null;
+                version = repository != null ? repository.getResolvedInstanceManifest(this.instanceId) : null;
             }
 
             try {

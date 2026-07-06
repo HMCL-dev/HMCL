@@ -53,13 +53,13 @@ public final class HMCLModpackInstallTask extends Task<Void> {
 
         Path run = repository.getRunDirectory(name);
         Path json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && Files.notExists(json))
+        if (repository.hasInstance(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists");
 
         dependents.add(dependency.gameBuilder().name(name).gameVersion(modpack.getGameVersion()).buildAsync());
 
         onDone().register(event -> {
-            if (event.isFailed()) repository.removeVersionFromDisk(name);
+            if (event.isFailed()) repository.removeInstanceFromDisk(name);
         });
 
         ModpackConfiguration<Modpack> config = null;

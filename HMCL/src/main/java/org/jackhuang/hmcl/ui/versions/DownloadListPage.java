@@ -123,7 +123,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
 
         if (versionSelection) {
-            versions.setAll(repository.getDisplayVersions()
+            versions.setAll(repository.getDisplayInstanceManifests()
                     .map(GameInstanceManifest::getId)
                     .collect(Collectors.toList()));
             selectedVersion.set(repository.getSelectedInstance());

@@ -172,7 +172,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
             String gameVersion = repository.getGameVersion(version)
                     .orElseThrow(() -> new IOException("Cannot parse the version of " + version));
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(version), gameVersion);
 
             Map<String, String> dependencies = new HashMap<>();
             dependencies.put("minecraft", gameVersion);

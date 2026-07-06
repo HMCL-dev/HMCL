@@ -62,7 +62,7 @@ public class DefaultGameBuilder extends GameBuilder {
 
         return libraryTask.thenComposeAsync(dependencyManager.getGameRepository()::saveAsync).whenComplete(exception -> {
             if (exception != null)
-                dependencyManager.getGameRepository().removeVersionFromDisk(name);
+                dependencyManager.getGameRepository().removeInstanceFromDisk(name);
         }).withStagesHints(hints);
     }
 

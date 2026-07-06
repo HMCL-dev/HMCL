@@ -48,7 +48,7 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
         this.manifest = manifest;
 
         Path json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && Files.notExists(json))
+        if (repository.hasInstance(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name);
@@ -59,7 +59,7 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
             if (event.isFailed())
-                repository.removeVersionFromDisk(name);
+                repository.removeInstanceFromDisk(name);
         });
 
         ModpackConfiguration<McbbsModpackManifest> config;

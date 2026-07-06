@@ -82,7 +82,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<?> checkGameCompletionAsync(GameInstanceManifest version, boolean integrityCheck) {
         return Task.allOf(
                 Task.composeAsync(() -> {
-                    Path versionJar = repository.getVersionJar(version);
+                    Path versionJar = repository.getInstanceJar(version);
 
                     return Files.notExists(versionJar) || FileUtils.size(versionJar) == 0L
                             ? new GameDownloadTask(this, null, version)
@@ -107,7 +107,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             String gameVersion = repository.getGameVersion(version).orElse(null);
             if (gameVersion == null) return null;
 
-            GameInstanceManifest original = repository.getVersion(version.getId());
+            GameInstanceManifest original = repository.getInstanceManifest(version.getId());
             GameInstanceManifest resolved = original.resolvePreservingPatches(repository);
 
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);

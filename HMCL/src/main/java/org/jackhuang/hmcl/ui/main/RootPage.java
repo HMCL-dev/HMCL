@@ -124,7 +124,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             GameDirectoryManager.registerVersionsListener(repository -> {
                 GameDirectory gameDirectory = repository.getGameDirectory();
-                List<GameInstanceManifest> children = repository.getVersions().parallelStream()
+                List<GameInstanceManifest> children = repository.getInstanceManifests().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
                                 .comparing((GameInstanceManifest version) -> Lang.requireNonNullElse(version.getReleaseTime(), Instant.EPOCH))
@@ -263,7 +263,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             if (!checkedModpack) {
                 checkedModpack = true;
 
-                if (repository.getVersionCount() == 0) {
+                if (repository.getInstanceCount() == 0) {
                     Path zipModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
                     Path mrpackModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.mrpack");
 

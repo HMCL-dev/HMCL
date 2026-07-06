@@ -91,7 +91,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             }
         }
 
-        return ret.thenComposeAsync(repository::saveAsync).thenComposeAsync(repository.refreshVersionsAsync()).withStagesHints(hints);
+        return ret.thenComposeAsync(repository::saveAsync).thenComposeAsync(repository.refreshAsync()).withStagesHints(hints);
     }
 
     @Override

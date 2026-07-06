@@ -148,9 +148,9 @@ public final class LauncherHelper {
         PROCESSES.removeIf(it -> it.get() == null);
 
         DefaultDependencyManager dependencyManager = repository.getDependency();
-        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
+        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedInstanceManifest(selectedVersion)));
         Optional<String> gameVersion = repository.getGameVersion(version.get());
-        boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
+        boolean integrityCheck = repository.unmarkInstanceLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
         List<String> javaArguments = new ArrayList<>(0);
@@ -1000,7 +1000,7 @@ public final class LauncherHelper {
             }
 
             if (exitType != ExitType.NORMAL) {
-                repository.markVersionLaunchedAbnormally(version.getId());
+                repository.markInstanceLaunchedAbnormally(version.getId());
                 runLater(() -> new GameCrashWindow(process, exitType, repository, version, launchOptions, logs).show());
             }
 

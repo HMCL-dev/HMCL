@@ -157,10 +157,10 @@ public final class ModpackHelper {
     }
 
     public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, String name, Modpack modpack) {
-        repository.markVersionAsModpack(name);
+        repository.markInstanceAsModpack(name);
 
         ExceptionalRunnable<?> success = () -> {
-            repository.refreshVersions();
+            repository.refresh();
             GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(name);
             repository.undoMark(name);
             if (setting != null) {
@@ -201,10 +201,10 @@ public final class ModpackHelper {
     }
 
     public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, String name, Modpack modpack, String iconUrl) {
-        repository.markVersionAsModpack(name);
+        repository.markInstanceAsModpack(name);
 
         ExceptionalRunnable<?> success = () -> {
-            repository.refreshVersions();
+            repository.refresh();
             GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(name);
             repository.undoMark(name);
             if (setting != null) {
@@ -239,7 +239,7 @@ public final class ModpackHelper {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
                 return new ModpackUpdateTask(repository, name, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, name))
-                        .thenComposeAsync(repository.refreshVersionsAsync())
+                        .thenComposeAsync(repository.refreshAsync())
                         .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
             default:
                 throw new UnsupportedModpackException();
@@ -255,10 +255,10 @@ public final class ModpackHelper {
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return provider.createUpdateTask(repository.getDependency(), name, zipFile, modpack)
                     .thenComposeAsync(() -> createMultiMCPostUpdateTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
-                    .thenComposeAsync(repository.refreshVersionsAsync());
+                    .thenComposeAsync(repository.refreshAsync());
         else
             return provider.createUpdateTask(repository.getDependency(), name, zipFile, modpack)
-                    .thenComposeAsync(repository.refreshVersionsAsync());
+                    .thenComposeAsync(repository.refreshAsync());
     }
 
     public static void toGameSettings(MultiMCInstanceConfiguration c, GameSettings.Instance setting) {

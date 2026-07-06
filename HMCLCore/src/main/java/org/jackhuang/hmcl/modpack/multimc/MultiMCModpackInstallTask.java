@@ -94,12 +94,12 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         this.repository = dependencyManager.getGameRepository();
 
         Path json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && Files.notExists(json))
+        if (repository.hasInstance(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         onDone().register(event -> {
             if (event.isFailed())
-                repository.removeVersionFromDisk(name);
+                repository.removeInstanceFromDisk(name);
         });
     }
 
@@ -252,7 +252,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             Path libraries = root.resolve("libraries");
             if (Files.exists(libraries))
-                FileUtils.copyDirectory(libraries, repository.getVersionRoot(name).resolve("libraries"));
+                FileUtils.copyDirectory(libraries, repository.getInstanceRoot(name).resolve("libraries"));
 
             for (Library library : artifact.getVersion().getLibraries()) {
                 if ("local".equals(library.getHint())) {
@@ -278,7 +278,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             if (iconKey != null) {
                 Path iconFile = root.resolve(iconKey + ".png");
                 if (Files.exists(iconFile)) {
-                    FileUtils.copyFile(iconFile, repository.getVersionRoot(name).resolve("icon.png"));
+                    FileUtils.copyFile(iconFile, repository.getInstanceRoot(name).resolve("icon.png"));
                 }
             }
         }
@@ -338,7 +338,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             Path root = getRootPath(fs).resolve("jarmods");
 
             try (FileSystem mc = CompressingUtils.writable(
-                    repository.getVersionRoot(name).resolve(name + ".jar")
+                    repository.getInstanceRoot(name).resolve(name + ".jar")
             ).setAutoDetectEncoding(true).build()) {
                 for (String fileName : files) {
                     try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).setAutoDetectEncoding(true).build()) {

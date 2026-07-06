@@ -112,7 +112,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         runInFX(() -> {
             if (this.instanceReference.get() == null) return;
             HMCLGameRepository repository = this.instanceReference.get().repository();
-            if (!repository.hasVersion(this.instanceReference.get().instanceId())) {
+            if (!repository.hasInstance(this.instanceReference.get().instanceId())) {
                 if (preferredVersionName != null) {
                     loadVersion(preferredVersionName, repository);
                 } else {
@@ -146,7 +146,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
         if (this.instanceReference.get() != null && (!getRepository().isLoaded() ||
-                !getRepository().hasVersion(version))) {
+                !getRepository().hasInstance(version))) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }
@@ -176,7 +176,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
         if (!getRepository().isLoaded() ||
-                !getRepository().hasVersion(getVersion())) {
+                !getRepository().hasInstance(getVersion())) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }
@@ -253,7 +253,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void duplicate() {
-        Versions.duplicateVersion(getRepository(), getVersion());
+        Versions.duplicateInstance(getRepository(), getVersion());
     }
 
     public HMCLGameRepository getRepository() {

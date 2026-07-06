@@ -80,7 +80,7 @@ public class MultiMCModpackExportTask extends Task<Void> {
 
             String gameVersion = repository.getGameVersion(versionId)
                     .orElseThrow(() -> new IOException("Cannot parse the version of " + versionId));
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId), gameVersion);
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(versionId), gameVersion);
             List<MultiMCManifest.MultiMCManifestComponent> components = new ArrayList<>();
             components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, MultiMCComponents.getComponent(MINECRAFT), gameVersion));
 

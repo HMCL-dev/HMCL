@@ -342,7 +342,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             .gameVersion(gameVersion)
                             .buildAsync();
                 })
-                .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refreshVersions())
+                .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refresh())
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         GameDirectoryManager.getSelectedRepository().setSelectedInstance(gameVersionHolder.value);

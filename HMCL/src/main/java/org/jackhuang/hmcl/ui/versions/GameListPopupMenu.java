@@ -53,7 +53,7 @@ public final class GameListPopupMenu extends StackPane {
                             HMCLGameRepository repository, List<GameInstanceManifest> versions) {
         GameListPopupMenu menu = new GameListPopupMenu();
         menu.getItems().setAll(versions.stream()
-                .filter(it -> repository.hasVersion(it.getId()))
+                .filter(it -> repository.hasInstance(it.getId()))
                 .map(it -> new GameItem(repository, it.getId()))
                 .toList());
         JFXPopup popup = new JFXPopup(menu);

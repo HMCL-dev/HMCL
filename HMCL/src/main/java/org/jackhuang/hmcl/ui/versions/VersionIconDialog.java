@@ -79,7 +79,7 @@ public class VersionIconDialog extends DialogPane {
         Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile != null) {
             try {
-                repository.setVersionIconFile(versionId, selectedFile);
+                repository.setInstanceIconFile(versionId, selectedFile);
 
                 if (setting != null) {
                     setting.iconProperty().setValue(VersionIconType.DEFAULT);
@@ -119,7 +119,7 @@ public class VersionIconDialog extends DialogPane {
 
     @Override
     protected void onAccept() {
-        repository.onVersionIconChanged.fireEvent(new Event(this));
+        repository.onInstanceIconChanged.fireEvent(new Event(this));
         onFinish.run();
         super.onAccept();
     }

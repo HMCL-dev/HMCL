@@ -389,7 +389,7 @@ public class DefaultGameRepository implements GameRepository {
         }
     }
 
-    public boolean removeVersionFromDisk(String id) {
+    public boolean removeInstanceFromDisk(String id) {
         try {
             return removeInstanceFromDisk(new GameInstanceID(id));
         } catch (IllegalArgumentException e) {

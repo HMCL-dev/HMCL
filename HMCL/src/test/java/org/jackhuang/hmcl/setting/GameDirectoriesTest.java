@@ -465,7 +465,7 @@ public final class GameDirectoriesTest {
                      new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
             settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
-            Path versionRoot = repository.getVersionRoot("1.20.1");
+            Path versionRoot = repository.getInstanceRoot("1.20.1");
             Files.createDirectories(versionRoot);
             Files.writeString(versionRoot.resolve("hmclversion.cfg"), """
                     {
@@ -506,7 +506,7 @@ public final class GameDirectoriesTest {
             settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
             writeVersionJson(repository, "1.20.1");
-            Path versionRoot = repository.getVersionRoot("1.20.1");
+            Path versionRoot = repository.getInstanceRoot("1.20.1");
             Files.writeString(versionRoot.resolve(LegacyGameSettingsMigrator.LEGACY_INSTANCE_SETTINGS_FILENAME), """
                     {
                       "usesGlobal": true
@@ -774,7 +774,7 @@ public final class GameDirectoriesTest {
 
     /// Writes a minimal valid version json for repository refresh tests.
     private static void writeVersionJson(HMCLGameRepository repository, String id) throws IOException {
-        Path versionRoot = repository.getVersionRoot(id);
+        Path versionRoot = repository.getInstanceRoot(id);
         Files.createDirectories(versionRoot);
         Files.writeString(versionRoot.resolve(id + ".json"), """
                 {

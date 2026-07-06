@@ -51,7 +51,7 @@ public interface GameRepository {
     ///
     /// @param id the instance id string
     /// @return whether the instance exists
-    default boolean hasVersion(@Nullable String id) {
+    default boolean hasInstance(@Nullable String id) {
         if (id == null) {
             return false;
         }
@@ -69,7 +69,7 @@ public interface GameRepository {
     ///
     /// @param id the instance id string
     /// @return the instance manifest
-    default GameInstanceManifest getVersion(String id) throws NoSuchGameInstanceException {
+    default GameInstanceManifest getInstanceManifest(String id) throws NoSuchGameInstanceException {
         return getInstanceManifest(new GameInstanceID(id));
     }
 
@@ -83,7 +83,7 @@ public interface GameRepository {
     ///
     /// @param id the instance id string
     /// @return the resolved manifest
-    default GameInstanceManifest getResolvedVersion(String id) throws NoSuchGameInstanceException {
+    default GameInstanceManifest getResolvedInstanceManifest(String id) throws NoSuchGameInstanceException {
         return getResolvedInstanceManifest(new GameInstanceID(id)).manifest();
     }
 
@@ -99,42 +99,18 @@ public interface GameRepository {
     ///
     /// @param id the instance id string
     /// @return the standalone manifest
-    default GameInstanceManifest getResolvedPreservingPatchesVersion(String id) throws NoSuchGameInstanceException {
+    default GameInstanceManifest getResolvedPreservingPatchesManifest(String id) throws NoSuchGameInstanceException {
         return getResolvedPreservingPatchesInstanceManifest(new GameInstanceID(id)).manifest();
     }
 
     int getInstanceCount();
 
-    /// Returns the instance count.
-    ///
-    /// @return the instance count
-    default int getVersionCount() {
-        return getInstanceCount();
-    }
-
     Collection<GameInstanceManifest> getInstanceManifests();
-
-    /// Returns all instance manifests.
-    ///
-    /// @return all instance manifests
-    default Collection<GameInstanceManifest> getVersions() {
-        return getInstanceManifests();
-    }
 
     void refresh();
 
-    /// Refreshes the repository.
-    default void refreshVersions() {
-        refresh();
-    }
-
     default Task<Void> refreshAsync() {
         return Task.runAsync(this::refresh);
-    }
-
-    /// Refreshes the repository asynchronously.
-    default Task<Void> refreshVersionsAsync() {
-        return refreshAsync();
     }
 
     Path getInstanceRoot(GameInstanceID instanceId);
@@ -143,7 +119,7 @@ public interface GameRepository {
     ///
     /// @param id the instance id string
     /// @return the instance root
-    default Path getVersionRoot(String id) {
+    default Path getInstanceRoot(String id) {
         return getInstanceRoot(new GameInstanceID(id));
     }
 
@@ -184,13 +160,8 @@ public interface GameRepository {
 
     Path getInstanceJar(GameInstanceManifest manifest);
 
-    /// Returns the instance jar path.
-    default Path getVersionJar(GameInstanceManifest manifest) {
-        return getInstanceJar(manifest);
-    }
-
     /// Returns the instance jar path by string id.
-    default Path getVersionJar(String id) {
+    default Path getInstanceJar(String id) {
         try {
             return getInstanceJar(new GameInstanceID(id));
         } catch (NoSuchGameInstanceException e) {
@@ -220,7 +191,7 @@ public interface GameRepository {
     boolean renameInstance(GameInstanceID from, GameInstanceID to);
 
     /// Renames an instance by string id.
-    default boolean renameVersion(String from, String to) {
+    default boolean renameInstance(String from, String to) {
         return renameInstance(new GameInstanceID(from), new GameInstanceID(to));
     }
 

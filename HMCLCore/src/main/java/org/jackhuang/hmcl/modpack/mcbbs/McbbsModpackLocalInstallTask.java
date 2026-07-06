@@ -61,9 +61,9 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         Path run = repository.getRunDirectory(name);
 
         Path json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && Files.notExists(json))
+        if (repository.hasInstance(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
-        this.update = repository.hasVersion(name);
+        this.update = repository.hasInstance(name);
 
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name);
@@ -74,7 +74,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
             if (event.isFailed())
-                repository.removeVersionFromDisk(name);
+                repository.removeInstanceFromDisk(name);
         });
 
         ModpackConfiguration<McbbsModpackManifest> config = null;
@@ -104,7 +104,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        GameInstanceManifest version = repository.getVersion(name);
+        GameInstanceManifest version = repository.getInstanceManifest(name);
         Optional<GameInstancePatch> mcbbsPatch = version.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.getId())).findFirst();
         if (!update) {
             GameInstancePatch patch = new GameInstancePatch(PATCH_NAME).setLibraries(manifest.getLibraries());

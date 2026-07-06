@@ -99,7 +99,7 @@ public class GameItem {
                 }
 
                 StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
-                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(id), result.gameVersion);
+                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(id), result.gameVersion);
                 for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                     String libraryId = mark.getLibraryId();
                     String libraryVersion = mark.getLibraryVersion();
@@ -118,7 +118,7 @@ public class GameItem {
         }, Schedulers.javafx());
 
         title.set(id);
-        image.set(repository.getVersionIconImage(id));
+        image.set(repository.getInstanceIconImage(id));
     }
 
     public ReadOnlyStringProperty titleProperty() {

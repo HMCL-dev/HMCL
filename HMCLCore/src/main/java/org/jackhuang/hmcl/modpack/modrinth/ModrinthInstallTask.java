@@ -64,7 +64,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.run = repository.getRunDirectory(name);
 
         Path json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && Files.notExists(json))
+        if (repository.hasInstance(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.getGameVersion());
@@ -96,7 +96,7 @@ public class ModrinthInstallTask extends Task<Void> {
             Exception ex = event.getTask().getException();
             if (event.isFailed()) {
                 if (!(ex instanceof ModpackCompletionException)) {
-                    repository.removeVersionFromDisk(name);
+                    repository.removeInstanceFromDisk(name);
                 }
             }
         });
@@ -152,7 +152,7 @@ public class ModrinthInstallTask extends Task<Void> {
             }
         }
 
-        Path root = repository.getVersionRoot(name);
+        Path root = repository.getInstanceRoot(name);
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("modrinth.index.json"), manifest);
 

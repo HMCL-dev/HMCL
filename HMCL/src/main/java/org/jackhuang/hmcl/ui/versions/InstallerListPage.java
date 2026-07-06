@@ -64,13 +64,13 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     public void loadInstance(HMCLGameRepository repository, String instanceId) {
         this.repository = repository;
         this.versionId = instanceId;
-        this.version = repository.getVersion(instanceId);
+        this.version = repository.getInstanceManifest(instanceId);
         this.gameVersion = null;
 
         CompletableFuture.supplyAsync(() -> {
             gameVersion = repository.getGameVersion(version).orElse(null);
 
-            return LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(instanceId), gameVersion);
+            return LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(instanceId), gameVersion);
         }).thenAcceptAsync(analyzer -> {
             itemsProperty().clear();
 
@@ -103,7 +103,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
                 item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(repository::saveAsync)
-                        .withComposeAsync(repository.refreshVersionsAsync())
+                        .withComposeAsync(repository.refreshAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.versionId))
                         .start());
 
@@ -125,7 +125,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                 installerItem.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
                 installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(repository::saveAsync)
-                        .withComposeAsync(repository.refreshVersionsAsync())
+                        .withComposeAsync(repository.refreshAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.versionId))
                         .start());
 
@@ -144,7 +144,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     private void doInstallOffline(Path file) {
         Task<?> task = repository.getDependency().installLibraryAsync(version, file)
                 .thenComposeAsync(repository::saveAsync)
-                .thenComposeAsync(repository.refreshVersionsAsync());
+                .thenComposeAsync(repository.refreshAsync());
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override

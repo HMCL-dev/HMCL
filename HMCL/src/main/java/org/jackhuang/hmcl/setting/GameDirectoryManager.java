@@ -195,7 +195,7 @@ public final class GameDirectoryManager {
             selectedRepository.set(repository);
             selectedInstance.set(repository.getSelectedInstance());
             repository.selectedInstanceProperty().addListener(selectedRepositoryInstanceListener);
-            repository.refreshVersionsAsync().start();
+            repository.refreshAsync().start();
         });
         selectedGameDirectory.set(currentGameDirectory != null ? currentGameDirectory : mergedGameDirectories.get(0));
 

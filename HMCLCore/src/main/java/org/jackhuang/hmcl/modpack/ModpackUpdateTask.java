@@ -55,7 +55,7 @@ public class ModpackUpdateTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        FileUtils.copyDirectory(repository.getVersionRoot(id), backupFolder);
+        FileUtils.copyDirectory(repository.getInstanceRoot(id), backupFolder);
     }
 
     @Override
@@ -69,11 +69,11 @@ public class ModpackUpdateTask extends Task<Void> {
             // Keep backup game version for further repair.
         } else {
             // Restore backup
-            repository.removeVersionFromDisk(id);
+            repository.removeInstanceFromDisk(id);
 
-            FileUtils.copyDirectory(backupFolder, repository.getVersionRoot(id));
+            FileUtils.copyDirectory(backupFolder, repository.getInstanceRoot(id));
 
-            repository.refreshVersionsAsync().start();
+            repository.refreshAsync().start();
         }
     }
 }

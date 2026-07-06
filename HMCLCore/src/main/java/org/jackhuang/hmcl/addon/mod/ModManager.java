@@ -180,7 +180,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             localMods.clear();
 
             try {
-                analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
+                analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesManifest(id), null);
             } catch (NoSuchGameInstanceException e) {
                 throw new IOException(e);
             }

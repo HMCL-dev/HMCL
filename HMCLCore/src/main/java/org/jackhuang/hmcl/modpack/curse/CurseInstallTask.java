@@ -78,7 +78,7 @@ public final class CurseInstallTask extends Task<Void> {
         this.run = repository.getRunDirectory(name);
 
         Path json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && Files.notExists(json))
+        if (repository.hasInstance(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.minecraft().gameVersion());
@@ -97,7 +97,7 @@ public final class CurseInstallTask extends Task<Void> {
             Exception ex = event.getTask().getException();
             if (event.isFailed()) {
                 if (!(ex instanceof ModpackCompletionException)) {
-                    repository.removeVersionFromDisk(name);
+                    repository.removeInstanceFromDisk(name);
                 }
             }
         });
@@ -171,7 +171,7 @@ public final class CurseInstallTask extends Task<Void> {
             // CurseForge manifest where fileName is missing. CurseCompletionTask
             // resolves those file names and writes the enriched manifest to
             // manifest.json, so read from there when available.
-            Path oldManifestFile = repository.getVersionRoot(name).resolve("manifest.json");
+            Path oldManifestFile = repository.getInstanceRoot(name).resolve("manifest.json");
             List<CurseManifestFile> oldFiles = config.getManifest().files();
             if (Files.exists(oldManifestFile)) {
                 try {
@@ -195,7 +195,7 @@ public final class CurseInstallTask extends Task<Void> {
             }
         }
 
-        Path root = repository.getVersionRoot(name);
+        Path root = repository.getInstanceRoot(name);
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), manifest);
 

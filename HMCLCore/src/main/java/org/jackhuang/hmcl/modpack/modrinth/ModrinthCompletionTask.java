@@ -77,7 +77,7 @@ public class ModrinthCompletionTask extends Task<Void> {
 
         if (manifest == null)
             try {
-                Path manifestFile = repository.getVersionRoot(version).resolve("modrinth.index.json");
+                Path manifestFile = repository.getInstanceRoot(version).resolve("modrinth.index.json");
                 if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
             } catch (Exception e) {

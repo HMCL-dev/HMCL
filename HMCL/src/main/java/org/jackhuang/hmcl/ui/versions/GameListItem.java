@@ -48,7 +48,7 @@ public class GameListItem extends GameItem {
     }
 
     public void duplicate() {
-        Versions.duplicateVersion(repository, id);
+        Versions.duplicateInstance(repository, id);
     }
 
     public void remove() {

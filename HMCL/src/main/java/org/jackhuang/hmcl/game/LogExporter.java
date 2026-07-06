@@ -53,7 +53,7 @@ public final class LogExporter {
         while (true) {
             if (resolvedSoFar.contains(currentVersionId)) break;
             resolvedSoFar.add(currentVersionId);
-            GameInstanceManifest currentVersion = gameRepository.getVersion(currentVersionId);
+            GameInstanceManifest currentVersion = gameRepository.getInstanceManifest(currentVersionId);
             versions.add(currentVersionId);
 
             if (StringUtils.isNotBlank(currentVersion.getInheritsFrom())) {

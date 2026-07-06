@@ -36,7 +36,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
     private final WeakListenerHolder holder = new WeakListenerHolder();
     private HMCLGameRepository repository;
     @SuppressWarnings("unused")
-    private Consumer<Event> onVersionIconChangedListener;
+    private Consumer<Event> onInstanceIconChangedListener;
 
     public GameAdvancedListItem() {
         this.imageContainer = new ImageContainer(LEFT_GRAPHIC_SIZE);
@@ -51,15 +51,15 @@ public class GameAdvancedListItem extends AdvancedListItem {
         if (GameDirectoryManager.getSelectedRepository() != repository) {
             repository = GameDirectoryManager.getSelectedRepository();
             if (repository != null) {
-                onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
+                onInstanceIconChangedListener = repository.onInstanceIconChanged.registerWeak(event -> {
                     this.loadVersion(repository.getSelectedInstance());
                 });
             }
         }
-        if (version != null && repository != null && repository.hasVersion(version)) {
+        if (version != null && repository != null && repository.hasInstance(version)) {
             setTitle(i18n("version.manage.manage"));
             setSubtitle(version);
-            imageContainer.setImage(repository.getVersionIconImage(version));
+            imageContainer.setImage(repository.getInstanceIconImage(version));
         } else {
             setTitle(i18n("version.empty"));
             setSubtitle(i18n("version.empty.add"));

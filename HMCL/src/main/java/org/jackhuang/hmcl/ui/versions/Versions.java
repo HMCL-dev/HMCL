@@ -118,14 +118,14 @@ public final class Versions {
 
     public static void deleteVersion(HMCLGameRepository repository, String version) {
         boolean isIndependent = repository.getRunDirectory(version).toAbsolutePath().normalize()
-                .equals(repository.getVersionRoot(version).toAbsolutePath().normalize());
+                .equals(repository.getInstanceRoot(version).toAbsolutePath().normalize());
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
                 i18n("version.manage.remove.confirm.trash", version, version + "_removed");
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");
         deleteButton.setOnAction(e -> {
-            Task.supplyAsync(Schedulers.io(), () -> repository.removeVersionFromDisk(version))
+            Task.supplyAsync(Schedulers.io(), () -> repository.removeInstanceFromDisk(version))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null || !Boolean.TRUE.equals(result)) {
                             Controllers.dialog(i18n("version.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -142,11 +142,11 @@ public final class Versions {
                 handler.resolve();
                 return;
             }
-            if (repository.renameVersion(version, newName)) {
+            if (repository.renameInstance(version, newName)) {
                 handler.resolve();
-                repository.refreshVersionsAsync()
+                repository.refreshAsync()
                         .thenRunAsync(Schedulers.javafx(), () -> {
-                            if (repository.hasVersion(newName)) {
+                            if (repository.hasInstance(newName)) {
                                 repository.setSelectedInstance(newName);
                             }
                         }).start();
@@ -154,8 +154,8 @@ public final class Versions {
                 handler.reject(i18n("version.manage.rename.fail"));
             }
         }, version,
-            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.versionIdConflicts(newVersionName) || newVersionName.equals(version)));
+            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
+            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName) || newVersionName.equals(version)));
     }
 
     public static void exportVersion(HMCLGameRepository repository, String version) {
@@ -193,7 +193,7 @@ public final class Versions {
                                         // ignore failure
                                     }))
                             .thenComposeAsync(repository.saveAsync(newVersion))
-                            .thenRunAsync(repository::refreshVersions)
+                            .thenRunAsync(repository::refresh)
                             .whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
                                     repository.setSelectedInstance(result);
@@ -202,31 +202,31 @@ public final class Versions {
                                             DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
                                 }
                             }), i18n("install.new_game"), TaskCancellationAction.NORMAL);
-        }, FileUtils.getNameWithoutExtension(file), new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId), new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.versionIdConflicts(newVersionName)));
+        }, FileUtils.getNameWithoutExtension(file), new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId), new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName)));
     }
 
-    public static void duplicateVersion(HMCLGameRepository repository, String version) {
+    public static void duplicateInstance(HMCLGameRepository repository, String version) {
         Controllers.prompt(
                 new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
                     String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
-                    Task.runAsync(() -> repository.duplicateVersion(version, newVersionName, copySaves))
-                            .thenComposeAsync(repository.refreshVersionsAsync())
+                    Task.runAsync(() -> repository.duplicateInstance(version, newVersionName, copySaves))
+                            .thenComposeAsync(repository.refreshAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     handler.resolve();
                                 } else {
                                     handler.reject(StringUtils.getStackTrace(exception));
-                                    if (!repository.versionIdConflicts(newVersionName)) {
-                                        repository.removeVersionFromDisk(newVersionName);
+                                    if (!repository.instanceIdConflicts(newVersionName)) {
+                                        repository.removeInstanceFromDisk(newVersionName);
                                     }
                                 }
                             }).start();
                 })
                         .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("version.manage.duplicate.confirm")))
                         .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, version,
-                                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
-                                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.versionIdConflicts(newVersionName))))
+                                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
+                                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName))))
                         .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("version.manage.duplicate.duplicate_save"), false)));
     }
 
@@ -235,7 +235,7 @@ public final class Versions {
     }
 
     public static void updateGameAssets(HMCLGameRepository repository, String version) {
-        TaskExecutor executor = new GameAssetDownloadTask(repository.getDependency(), repository.getVersion(version), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
+        TaskExecutor executor = new GameAssetDownloadTask(repository.getDependency(), repository.getInstanceManifest(version), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
                 .executor();
         Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
         executor.start();
@@ -326,7 +326,7 @@ public final class Versions {
     }
 
     private static boolean checkVersionForLaunching(HMCLGameRepository repository, String id) {
-        if (id == null || !repository.isLoaded() || !repository.hasVersion(id)) {
+        if (id == null || !repository.isLoaded() || !repository.hasInstance(id)) {
             JFXButton gotoDownload = new JFXButton(i18n("version.empty.launch.goto_download"));
             gotoDownload.getStyleClass().add("dialog-accept");
             gotoDownload.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));

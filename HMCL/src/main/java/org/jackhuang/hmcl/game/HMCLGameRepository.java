@@ -107,9 +107,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Instance IDs whose local game settings file has already been checked.
     private final Set<String> loadedInstanceGameSettings = new HashSet<>();
     private final Set<String> readOnlyInstanceGameSettings = new HashSet<>();
-    private final Set<String> beingModpackVersions = new HashSet<>();
+    private final Set<String> beingModpackInstances = new HashSet<>();
 
-    public final EventManager<Event> onVersionIconChanged = new EventManager<>();
+    public final EventManager<Event> onInstanceIconChanged = new EventManager<>();
 
     /// Creates a repository backed by the given game directory.
     public HMCLGameRepository(GameDirectory gameDirectory) {
@@ -143,8 +143,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public void refreshSelectedInstance() {
         @Nullable String selectedInstance = settings().getSelectedInstance(gameDirectory.getId());
         @Nullable String refreshedInstance = selectedInstance;
-        if (!hasVersion(refreshedInstance)) {
-            refreshedInstance = getVersions().isEmpty() ? null : getVersions().iterator().next().getId();
+        if (!hasInstance(refreshedInstance)) {
+            refreshedInstance = getInstanceManifests().isEmpty() ? null : getInstanceManifests().iterator().next().getId();
         }
         if (!Objects.equals(selectedInstance, refreshedInstance)) {
             setSelectedInstance(refreshedInstance);
@@ -163,8 +163,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public Path getRunDirectory(String id) {
-        if (beingModpackVersions.contains(id) || isModpack(id)) {
-            return getVersionRoot(id);
+        if (beingModpackInstances.contains(id) || isModpack(id)) {
+            return getInstanceRoot(id);
         }
 
         GameSettings.Instance localSetting = getInstanceGameSettings(id);
@@ -173,13 +173,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         String runningDirectory = getSelectedRunningDirectory(localSetting, useInstanceRunningDirectory);
         if (StringUtils.isBlank(runningDirectory)) {
-            return useInstanceRunningDirectory ? getVersionRoot(id) : super.getRunDirectory(id);
+            return useInstanceRunningDirectory ? getInstanceRoot(id) : super.getRunDirectory(id);
         }
 
         try {
             return Path.of(runningDirectory);
         } catch (InvalidPathException ignored) {
-            return getVersionRoot(id);
+            return getInstanceRoot(id);
         }
     }
 
@@ -201,8 +201,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return Objects.requireNonNullElse(parent.runningDirectoryProperty().getValue(), "");
     }
 
-    public Stream<GameInstanceManifest> getDisplayVersions() {
-        return getVersions().stream()
+    public Stream<GameInstanceManifest> getDisplayInstanceManifests() {
+        return getInstanceManifests().stream()
                 .filter(v -> !v.isHidden())
                 .sorted(Comparator.comparing((GameInstanceManifest v) -> Lang.requireNonNullElse(v.getReleaseTime(), Instant.EPOCH))
                         .thenComparing(v -> VersionNumber.asVersion(v.getId())));
@@ -214,11 +214,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         loadedInstanceGameSettings.clear();
         readOnlyInstanceGameSettings.clear();
         super.refreshImpl();
-        getVersions().stream().map(GameInstanceManifest::getId).forEach(this::loadInstanceGameSettings);
+        getInstanceManifests().stream().map(GameInstanceManifest::getId).forEach(this::loadInstanceGameSettings);
 
         try {
             Path file = getBaseDirectory().resolve("launcher_profiles.json");
-            if (!Files.exists(file) && !getVersions().isEmpty()) {
+            if (!Files.exists(file) && !getInstanceManifests().isEmpty()) {
                 Files.createDirectories(file.getParent());
                 Files.writeString(file, PROFILE);
             }
@@ -229,7 +229,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public void changeDirectory(Path newDirectory) {
         setBaseDirectory(newDirectory);
-        refreshVersionsAsync().start();
+        refreshAsync().start();
     }
 
     private void clean(Path directory) throws IOException {
@@ -242,11 +242,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         clean(getRunDirectory(id));
     }
 
-    public void duplicateVersion(String srcId, String dstId, boolean copySaves) throws IOException {
-        Path srcDir = getVersionRoot(srcId);
-        Path dstDir = getVersionRoot(dstId);
+    public void duplicateInstance(String srcId, String dstId, boolean copySaves) throws IOException {
+        Path srcDir = getInstanceRoot(srcId);
+        Path dstDir = getInstanceRoot(dstId);
 
-        GameInstanceManifest fromVersion = getVersion(srcId);
+        GameInstanceManifest fromVersion = getInstanceManifest(srcId);
 
         List<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(srcId + ".jar");
@@ -273,7 +273,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         boolean copyOriginalGameDir;
         try {
-            copyOriginalGameDir = !Files.isSameFile(getRunDirectory(srcId), getVersionRoot(srcId));
+            copyOriginalGameDir = !Files.isSameFile(getRunDirectory(srcId), getInstanceRoot(srcId));
         } catch (IOException e) {
             copyOriginalGameDir = true;
         }
@@ -307,7 +307,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     ///
     /// This directory stores instance-scoped files owned by HMCL.
     public Path getInstanceMetadataDirectory(String id) {
-        return getVersionRoot(id).resolve(INSTANCE_METADATA_DIRECTORY);
+        return getInstanceRoot(id).resolve(INSTANCE_METADATA_DIRECTORY);
     }
 
     /// Returns the HMCL-managed configuration directory under the instance metadata directory.
@@ -417,7 +417,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public @Nullable GameSettings.Instance createInstanceGameSettings(String id) {
-        if (!hasVersion(id)) {
+        if (!hasInstance(id)) {
             return null;
         }
         if (readOnlyInstanceGameSettings.contains(id)) {
@@ -526,7 +526,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public void applyDefaultIsolationSetting(String id) {
-        if (!hasVersion(id)) {
+        if (!hasInstance(id)) {
             return;
         }
 
@@ -536,7 +536,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         boolean isolated = switch (type) {
             case NEVER -> false;
             case ALWAYS -> true;
-            case MODDED -> LibraryAnalyzer.isModded(this, getVersion(id).resolve(this));
+            case MODDED -> LibraryAnalyzer.isModded(this, getInstanceManifest(id).resolve(this));
         };
 
         if (isolated) {
@@ -547,8 +547,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public Optional<Path> getVersionIconFile(String id) {
-        Path root = getVersionRoot(id);
+    public Optional<Path> getInstanceIconFile(String id) {
+        Path root = getInstanceRoot(id);
 
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
             Path file = root.resolve("icon." + extension);
@@ -560,7 +560,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return Optional.empty();
     }
 
-    public void setVersionIconFile(String id, Path iconFile) throws IOException {
+    public void setInstanceIconFile(String id, Path iconFile) throws IOException {
         String ext = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
         if (!FXUtils.IMAGE_EXTENSIONS.contains(ext)) {
             throw new IllegalArgumentException("Unsupported icon file: " + ext);
@@ -568,11 +568,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         deleteIconFile(id);
 
-        FileUtils.copyFile(iconFile, getVersionRoot(id).resolve("icon." + ext));
+        FileUtils.copyFile(iconFile, getInstanceRoot(id).resolve("icon." + ext));
     }
 
     public void deleteIconFile(String id) {
-        Path root = getVersionRoot(id);
+        Path root = getInstanceRoot(id);
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
             Path file = root.resolve("icon." + extension);
             try {
@@ -583,7 +583,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public Image getVersionIconImage(@Nullable String id) {
+    public Image getInstanceIconImage(@Nullable String id) {
         if (id == null || !isLoaded())
             return VersionIconType.DEFAULT.getIcon();
 
@@ -591,8 +591,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         VersionIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
 
         if (iconType == VersionIconType.DEFAULT) {
-            GameInstanceManifest version = getVersion(id).resolve(this);
-            Optional<Path> iconFile = getVersionIconFile(id);
+            GameInstanceManifest version = getInstanceManifest(id).resolve(this);
+            Optional<Path> iconFile = getInstanceIconFile(id);
             if (iconFile.isPresent()) {
                 try {
                     return FXUtils.loadImage(iconFile.get(), 64, 64, true, true);
@@ -770,26 +770,26 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public Path getModpackConfiguration(String version) {
-        return getVersionRoot(version).resolve("modpack.cfg");
+        return getInstanceRoot(version).resolve("modpack.cfg");
     }
 
-    public void markVersionAsModpack(String id) {
-        beingModpackVersions.add(id);
+    public void markInstanceAsModpack(String id) {
+        beingModpackInstances.add(id);
     }
 
     public void undoMark(String id) {
-        beingModpackVersions.remove(id);
+        beingModpackInstances.remove(id);
     }
 
-    public void markVersionLaunchedAbnormally(String id) {
+    public void markInstanceLaunchedAbnormally(String id) {
         try {
-            Files.createFile(getVersionRoot(id).resolve(".abnormal"));
+            Files.createFile(getInstanceRoot(id).resolve(".abnormal"));
         } catch (IOException ignored) {
         }
     }
 
-    public boolean unmarkVersionLaunchedAbnormally(String id) {
-        Path file = getVersionRoot(id).resolve(".abnormal");
+    public boolean unmarkInstanceLaunchedAbnormally(String id) {
+        Path file = getInstanceRoot(id).resolve(".abnormal");
         if (Files.isRegularFile(file)) {
             try {
                 Files.delete(file);
@@ -807,15 +807,15 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
 
     // These version ids are forbidden because they may conflict with modpack configuration filenames
-    private static final Set<String> FORBIDDEN_VERSION_IDS = new HashSet<>(Arrays.asList(
+    private static final Set<String> FORBIDDEN_INSTANCE_IDS = new HashSet<>(Arrays.asList(
             "modpack", "minecraftinstance", "manifest"));
 
-    public static boolean isValidVersionId(String id) {
-        if (FORBIDDEN_VERSION_IDS.contains(id))
+    public static boolean isValidInstanceId(String id) {
+        if (FORBIDDEN_INSTANCE_IDS.contains(id))
             return false;
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS &&
-                FORBIDDEN_VERSION_IDS.contains(id.toLowerCase(Locale.ROOT)))
+                FORBIDDEN_INSTANCE_IDS.contains(id.toLowerCase(Locale.ROOT)))
             return false;
 
         return FileUtils.isNameValidForJar(id);
@@ -824,10 +824,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /**
      * Returns true if the given version id conflicts with an existing version.
      */
-    public boolean versionIdConflicts(String id) {
+    public boolean instanceIdConflicts(String id) {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             // on Windows, filenames are case-insensitive
-            for (GameInstanceManifest manifest : getVersions()) {
+            for (GameInstanceManifest manifest : getInstanceManifests()) {
                 String existingId = manifest.getId();
                 if (existingId.equalsIgnoreCase(id)) {
                     return true;
@@ -835,7 +835,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             }
             return false;
         } else {
-            return hasVersion(id);
+            return hasInstance(id);
         }
     }
 
