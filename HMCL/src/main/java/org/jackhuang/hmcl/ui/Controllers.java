@@ -142,7 +142,7 @@ public final class Controllers {
     }
 
     @FXThread
-    public static GameInstancePage getVersionPage() {
+    public static GameInstancePage getGameInstancePage() {
         if (gameInstancePage == null) {
             gameInstancePage = new GameInstancePage();
         }
@@ -150,9 +150,9 @@ public final class Controllers {
     }
 
     @FXThread
-    public static void prepareVersionPage() {
+    public static void prepareGameInstancePage() {
         if (gameInstancePage == null) {
-            LOG.info("Prepare the version page");
+            LOG.info("Prepare the game instance page");
             gameInstancePage = FXUtils.prepareNode(new GameInstancePage());
         }
     }

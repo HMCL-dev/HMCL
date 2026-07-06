@@ -64,8 +64,8 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         return page;
     }
 
-    private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection, RemoteAddonRepository.Type type, CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
-        super(null, callback, versionSelection);
+    private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean instanceSelection, RemoteAddonRepository.Type type, CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
+        super(null, callback, instanceSelection);
 
         repository = new Repository(type, curseForge, modrinth);
 

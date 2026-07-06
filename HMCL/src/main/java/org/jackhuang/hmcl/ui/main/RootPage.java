@@ -167,7 +167,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
             }, it -> getSkinnable().getMainPage().getRepository().setSelectedInstance(it.id()));
             if (AnimationUtils.isAnimationEnabled()) {
-                FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
+                FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareGameInstancePage);
             }
             FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
 

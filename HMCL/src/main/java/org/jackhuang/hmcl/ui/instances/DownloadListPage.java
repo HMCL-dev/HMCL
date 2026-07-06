@@ -72,7 +72,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
-    private final boolean versionSelection;
+    private final boolean instanceSelection;
     private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
     private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
     private final IntegerProperty pageCount = new SimpleIntegerProperty(-1);
@@ -96,10 +96,10 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
         this(repository, null, false);
     }
 
-    public DownloadListPage(RemoteAddonRepository repository, DownloadPage.DownloadCallback callback, boolean versionSelection) {
+    public DownloadListPage(RemoteAddonRepository repository, DownloadPage.DownloadCallback callback, boolean instanceSelection) {
         this.repository = repository;
         this.callback = callback;
-        this.versionSelection = versionSelection;
+        this.instanceSelection = instanceSelection;
         this.downloadProvider = DownloadProviders.getDownloadProvider();
     }
 
@@ -123,7 +123,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
             search("", null, 0, "", RemoteAddonRepository.SortType.POPULARITY);
         }
 
-        if (versionSelection) {
+        if (instanceSelection) {
             instances.setAll(repository.getDisplayInstanceManifests()
                     .map(GameInstanceManifest::id)
                     .toList());
@@ -218,7 +218,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
     }
 
     protected HMCLGameRepository.InstanceReference getInstanceReference() {
-        if (versionSelection) {
+        if (instanceSelection) {
             @Nullable GameInstanceID instanceId = selectedInstance.get();
             return new HMCLGameRepository.InstanceReference(instanceReference.get().repository(), instanceId);
         } else {
@@ -273,18 +273,18 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
             {
                 int rowIndex = 0;
 
-                if (control.versionSelection || !control.downloadSources.isEmpty()) {
+                if (control.instanceSelection || !control.downloadSources.isEmpty()) {
                     searchPane.addRow(rowIndex);
                     int columns = 0;
                     Node lastNode = null;
-                    if (control.versionSelection) {
-                        JFXComboBox<GameInstanceID> versionsComboBox = new JFXComboBox<>();
-                        versionsComboBox.setMaxWidth(Double.MAX_VALUE);
-                        Bindings.bindContent(versionsComboBox.getItems(), control.instances);
-                        selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedInstance);
+                    if (control.instanceSelection) {
+                        JFXComboBox<GameInstanceID> instancesComboBox = new JFXComboBox<>();
+                        instancesComboBox.setMaxWidth(Double.MAX_VALUE);
+                        Bindings.bindContent(instancesComboBox.getItems(), control.instances);
+                        selectedItemPropertyFor(instancesComboBox).bindBidirectional(control.selectedInstance);
 
                         searchPane.add(new Label(i18n("version")), columns++, rowIndex);
-                        searchPane.add(lastNode = versionsComboBox, columns++, rowIndex);
+                        searchPane.add(lastNode = instancesComboBox, columns++, rowIndex);
                     }
 
                     if (control.downloadSources.getSize() > 1) {
