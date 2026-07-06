@@ -38,6 +38,7 @@ import java.util.List;
 public final class HMCLModpackInstallTask extends Task<Void> {
     private final Path zipFile;
     private final String name;
+    private final GameInstanceID instanceId;
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependency;
     private final Modpack modpack;
@@ -49,17 +50,18 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         this.dependency = repository.getDependency();
         this.zipFile = zipFile;
         this.name = name;
+        this.instanceId = new GameInstanceID(name);
         this.modpack = modpack;
 
-        Path run = repository.getRunDirectory(name);
-        Path json = repository.getModpackConfiguration(name);
-        if (repository.hasInstance(name) && Files.notExists(json))
+        Path run = repository.getRunDirectory(instanceId);
+        Path json = repository.getModpackConfiguration(instanceId);
+        if (repository.hasInstance(instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists");
 
         dependents.add(dependency.gameBuilder().name(name).gameVersion(modpack.getGameVersion()).buildAsync());
 
         onDone().register(event -> {
-            if (event.isFailed()) repository.removeInstanceFromDisk(name);
+            if (event.isFailed()) repository.removeInstanceFromDisk(instanceId);
         });
 
         ModpackConfiguration<Modpack> config = null;
@@ -73,7 +75,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/minecraft"), it -> !"pack.json".equals(it), config));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(instanceId)).withStage("hmcl.modpack"));
     }
 
     @Override

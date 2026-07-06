@@ -24,6 +24,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -477,7 +478,7 @@ public final class GameDirectoryManager {
 
     /// Sets the selected instance ID for the selected repository.
     public static void setSelectedInstance(@Nullable String instance) {
-        getSelectedRepository().setSelectedInstance(instance);
+        getSelectedRepository().setSelectedInstance(instance == null ? null : new GameInstanceID(instance));
     }
 
     /// Listeners notified after the selected repository has loaded versions.

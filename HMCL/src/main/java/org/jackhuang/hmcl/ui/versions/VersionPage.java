@@ -29,6 +29,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -112,7 +113,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         runInFX(() -> {
             if (this.instanceReference.get() == null) return;
             HMCLGameRepository repository = this.instanceReference.get().repository();
-            if (!repository.hasInstance(this.instanceReference.get().instanceId())) {
+            @Nullable GameInstanceID instanceId = this.instanceReference.get().instanceId();
+            if (instanceId == null || !repository.hasInstance(instanceId)) {
                 if (preferredVersionName != null) {
                     loadVersion(preferredVersionName, repository);
                 } else {
@@ -127,7 +129,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             T node = nodeSupplier.get();
             if (instanceReference.get() != null) {
                 if (node instanceof VersionPage.GameInstanceLoadable) {
-                    ((GameInstanceLoadable) node).loadInstance(instanceReference.get().repository(), instanceReference.get().instanceId());
+                    @Nullable GameInstanceID instanceId = instanceReference.get().instanceId();
+                    ((GameInstanceLoadable) node).loadInstance(instanceReference.get().repository(), instanceId == null ? null : instanceId.id());
                 }
             }
             return node;
@@ -139,14 +142,14 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     public void setVersion(String version, HMCLGameRepository repository) {
-        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, version));
+        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, new GameInstanceID(version)));
     }
 
     public void loadVersion(String version, HMCLGameRepository repository) {
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
         if (this.instanceReference.get() != null && (!getRepository().isLoaded() ||
-                !getRepository().hasInstance(version))) {
+                !getRepository().hasInstance(new GameInstanceID(version)))) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }
@@ -166,7 +169,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             worldListTab.getNode().loadInstance(repository, version);
         if (schematicsTab.isInitialized())
             schematicsTab.getNode().loadInstance(repository, version);
-        currentVersionUpgradable.set(repository.isModpack(version));
+        currentVersionUpgradable.set(repository.isModpack(new GameInstanceID(version)));
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
@@ -176,7 +179,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
         if (!getRepository().isLoaded() ||
-                !getRepository().hasInstance(getVersion())) {
+                !getRepository().hasInstance(new GameInstanceID(getVersion()))) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }
@@ -185,7 +188,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void onBrowse(String sub) {
-        FXUtils.openFolder(getRepository().getRunDirectory(getVersion()).resolve(sub));
+        FXUtils.openFolder(getRepository().getRunDirectory(new GameInstanceID(getVersion())).resolve(sub));
     }
 
     private void redownloadAssetIndex() {
@@ -261,7 +264,10 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     public String getVersion() {
-        return Optional.ofNullable(instanceReference.get()).map(HMCLGameRepository.InstanceReference::instanceId).orElse(null);
+        return Optional.ofNullable(instanceReference.get())
+                .map(HMCLGameRepository.InstanceReference::instanceId)
+                .map(GameInstanceID::id)
+                .orElse(null);
     }
 
     @Override

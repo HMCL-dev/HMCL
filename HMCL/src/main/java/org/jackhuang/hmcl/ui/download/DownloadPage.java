@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -141,10 +142,18 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         };
     }
 
-    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon.Version file, String subdirectoryName) {
-        if (version == null) version = repository.getSelectedInstance();
+    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
+        if (instanceId == null) {
+            @Nullable String selectedInstance = repository.getSelectedInstance();
+            if (selectedInstance != null) {
+                try {
+                    instanceId = new GameInstanceID(selectedInstance);
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+        }
 
-        Path runDirectory = repository.hasInstance(version) ? repository.getRunDirectory(version) : repository.getBaseDirectory();
+        Path runDirectory = instanceId != null && repository.hasInstance(instanceId) ? repository.getRunDirectory(instanceId) : repository.getBaseDirectory();
 
         Set<String> existingFiles;
 
@@ -320,8 +329,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             return builder.buildAsync().whenComplete(any -> {
                 repository.refresh();
-                repository.applyDefaultIsolationSetting(name);
-            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
+                repository.applyDefaultIsolationSetting(new GameInstanceID(name));
+            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(new GameInstanceID(name)));
         }
 
         @Override

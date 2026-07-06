@@ -31,6 +31,7 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -271,7 +272,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     if (control.instanceReference.repository() != null && control.instanceReference.instanceId() != null) {
                         HMCLGameRepository repository = control.instanceReference.repository();
-                        GameInstanceManifest game = repository.getResolvedPreservingPatchesManifest(control.instanceReference.instanceId());
+                        GameInstanceManifest game = repository.getResolvedPreservingPatchesInstanceManifest(control.instanceReference.instanceId()).manifest();
                         String gameVersion = repository.getGameVersion(game).orElse(null);
 
                         if (gameVersion != null && control.versions.containsKey(gameVersion)) {
@@ -615,6 +616,6 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     @FunctionalInterface
     public interface DownloadCallback {
-        void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon addon, RemoteAddon.Version file);
+        void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon addon, RemoteAddon.Version file);
     }
 }

@@ -25,6 +25,7 @@ import com.google.gson.JsonParser;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.PortablePath;
@@ -465,7 +466,8 @@ public final class GameDirectoriesTest {
                      new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
             settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
-            Path versionRoot = repository.getInstanceRoot("1.20.1");
+            GameInstanceID instanceId = new GameInstanceID("1.20.1");
+            Path versionRoot = repository.getInstanceRoot(instanceId);
             Files.createDirectories(versionRoot);
             Files.writeString(versionRoot.resolve("hmclversion.cfg"), """
                     {
@@ -473,7 +475,7 @@ public final class GameDirectoriesTest {
                     }
                     """);
 
-            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings(instanceId));
 
             assertEquals(legacyPresetId, setting.parentProperty().getValue());
         }
@@ -506,7 +508,8 @@ public final class GameDirectoriesTest {
             settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
             writeVersionJson(repository, "1.20.1");
-            Path versionRoot = repository.getInstanceRoot("1.20.1");
+            GameInstanceID instanceId = new GameInstanceID("1.20.1");
+            Path versionRoot = repository.getInstanceRoot(instanceId);
             Files.writeString(versionRoot.resolve(LegacyGameSettingsMigrator.LEGACY_INSTANCE_SETTINGS_FILENAME), """
                     {
                       "usesGlobal": true
@@ -515,9 +518,9 @@ public final class GameDirectoriesTest {
 
             LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
 
-            assertFalse(Files.exists(repository.getInstanceConfigDirectory("1.20.1")
+            assertFalse(Files.exists(repository.getInstanceConfigDirectory(instanceId)
                     .resolve(LegacyGameSettingsMigrator.INSTANCE_GAME_SETTINGS_FILENAME)));
-            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings(instanceId));
             assertEquals(legacyPresetId, setting.parentProperty().getValue());
         }
     }
@@ -553,7 +556,7 @@ public final class GameDirectoriesTest {
             writeVersionJson(repository, "1.20.1");
             LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
 
-            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings(new GameInstanceID("1.20.1")));
 
             assertEquals(legacyPresetId, setting.parentProperty().getValue());
             assertTrue(setting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY));
@@ -591,7 +594,7 @@ public final class GameDirectoriesTest {
             LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
             writeVersionJson(repository, "1.20.1");
 
-            assertNull(repository.getInstanceGameSettings("1.20.1"));
+            assertNull(repository.getInstanceGameSettings(new GameInstanceID("1.20.1")));
         }
     }
 
@@ -774,7 +777,7 @@ public final class GameDirectoriesTest {
 
     /// Writes a minimal valid version json for repository refresh tests.
     private static void writeVersionJson(HMCLGameRepository repository, String id) throws IOException {
-        Path versionRoot = repository.getInstanceRoot(id);
+        Path versionRoot = repository.getInstanceRoot(new GameInstanceID(id));
         Files.createDirectories(versionRoot);
         Files.writeString(versionRoot.resolve(id + ".json"), """
                 {

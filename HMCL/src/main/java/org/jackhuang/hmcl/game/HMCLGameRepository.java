@@ -81,7 +81,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// @param repository the owning game repository
     /// @param instanceId the game instance ID, or `null` when only repository context is available
     @NotNullByDefault
-    public record InstanceReference(HMCLGameRepository repository, @Nullable String instanceId) {
+    public record InstanceReference(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
     }
 
     /// Directory under the version root that stores HMCL-managed instance metadata.
@@ -103,11 +103,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private final StringBinding selectedInstance;
 
     // instance game settings
-    private final Map<String, GameSettings.Instance> instanceGameSettings = new HashMap<>();
+    private final Map<GameInstanceID, GameSettings.Instance> instanceGameSettings = new HashMap<>();
     /// Instance IDs whose local game settings file has already been checked.
-    private final Set<String> loadedInstanceGameSettings = new HashSet<>();
-    private final Set<String> readOnlyInstanceGameSettings = new HashSet<>();
-    private final Set<String> beingModpackInstances = new HashSet<>();
+    private final Set<GameInstanceID> loadedInstanceGameSettings = new HashSet<>();
+    private final Set<GameInstanceID> readOnlyInstanceGameSettings = new HashSet<>();
+    private final Set<GameInstanceID> beingModpackInstances = new HashSet<>();
 
     public final EventManager<Event> onInstanceIconChanged = new EventManager<>();
 
@@ -135,8 +135,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     /// Sets the selected instance ID for this repository's game directory.
-    public void setSelectedInstance(@Nullable String instance) {
-        settings().setSelectedInstance(gameDirectory.getId(), instance);
+    public void setSelectedInstance(@Nullable GameInstanceID instanceId) {
+        settings().setSelectedInstance(gameDirectory.getId(), instanceId == null ? null : instanceId.id());
     }
 
     /// Refreshes the selected instance ID after versions are loaded.
@@ -147,7 +147,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             refreshedInstance = getInstanceManifests().isEmpty() ? null : getInstanceManifests().iterator().next().getId();
         }
         if (!Objects.equals(selectedInstance, refreshedInstance)) {
-            setSelectedInstance(refreshedInstance);
+            setSelectedInstance(refreshedInstance == null ? null : new GameInstanceID(refreshedInstance));
         }
     }
 
@@ -162,24 +162,24 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
-    public Path getRunDirectory(String id) {
-        if (beingModpackInstances.contains(id) || isModpack(id)) {
-            return getInstanceRoot(id);
+    public Path getRunDirectory(GameInstanceID instanceId) {
+        if (beingModpackInstances.contains(instanceId) || isModpack(instanceId)) {
+            return getInstanceRoot(instanceId);
         }
 
-        GameSettings.Instance localSetting = getInstanceGameSettings(id);
+        GameSettings.Instance localSetting = getInstanceGameSettings(instanceId);
         boolean useInstanceRunningDirectory =
                 localSetting != null && localSetting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY);
 
         String runningDirectory = getSelectedRunningDirectory(localSetting, useInstanceRunningDirectory);
         if (StringUtils.isBlank(runningDirectory)) {
-            return useInstanceRunningDirectory ? getInstanceRoot(id) : super.getRunDirectory(id);
+            return useInstanceRunningDirectory ? getInstanceRoot(instanceId) : super.getRunDirectory(instanceId);
         }
 
         try {
             return Path.of(runningDirectory);
         } catch (InvalidPathException ignored) {
-            return getInstanceRoot(id);
+            return getInstanceRoot(instanceId);
         }
     }
 
@@ -214,7 +214,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         loadedInstanceGameSettings.clear();
         readOnlyInstanceGameSettings.clear();
         super.refreshImpl();
-        getInstanceManifests().stream().map(GameInstanceManifest::getId).forEach(this::loadInstanceGameSettings);
+        getInstanceManifests().stream().map(GameInstanceManifest::id).forEach(this::loadInstanceGameSettings);
 
         try {
             Path file = getBaseDirectory().resolve("launcher_profiles.json");
@@ -237,20 +237,20 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         FileUtils.deleteDirectory(directory.resolve("logs"));
     }
 
-    public void clean(String id) throws IOException {
+    public void clean(GameInstanceID instanceId) throws IOException {
         clean(getBaseDirectory());
-        clean(getRunDirectory(id));
+        clean(getRunDirectory(instanceId));
     }
 
-    public void duplicateInstance(String srcId, String dstId, boolean copySaves) throws IOException {
+    public void duplicateInstance(GameInstanceID srcId, GameInstanceID dstId, boolean copySaves) throws IOException {
         Path srcDir = getInstanceRoot(srcId);
         Path dstDir = getInstanceRoot(dstId);
 
         GameInstanceManifest fromVersion = getInstanceManifest(srcId);
 
         List<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
-        blackList.add(srcId + ".jar");
-        blackList.add(srcId + ".json");
+        blackList.add(srcId.id() + ".jar");
+        blackList.add(srcId.id() + ".json");
         if (!copySaves)
             blackList.add("saves");
 
@@ -259,17 +259,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         Files.createDirectories(dstDir);
         FileUtils.copyDirectory(srcDir, dstDir, path -> Modpack.acceptFile(path, blackList, null));
 
-        Path fromJson = srcDir.resolve(srcId + ".json");
-        Path fromJar = srcDir.resolve(srcId + ".jar");
-        Path toJson = dstDir.resolve(dstId + ".json");
-        Path toJar = dstDir.resolve(dstId + ".jar");
+        Path fromJson = srcDir.resolve(srcId.id() + ".json");
+        Path fromJar = srcDir.resolve(srcId.id() + ".jar");
+        Path toJson = dstDir.resolve(dstId.id() + ".json");
+        Path toJar = dstDir.resolve(dstId.id() + ".jar");
 
         if (Files.exists(fromJar)) {
             Files.copy(fromJar, toJar);
         }
         Files.copy(fromJson, toJson);
 
-        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId).setJar(dstId));
+        JsonUtils.writeToJsonFile(toJson, fromVersion.withId(dstId).withJar(dstId));
 
         boolean copyOriginalGameDir;
         try {
@@ -292,48 +292,48 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
     }
 
-    private GameSettings.Instance copyInstanceGameSettings(String id) {
-        GameSettings.Instance setting = getInstanceGameSettings(id);
+    private GameSettings.Instance copyInstanceGameSettings(GameInstanceID instanceId) {
+        GameSettings.Instance setting = getInstanceGameSettings(instanceId);
         if (setting != null) {
             return JsonUtils.clone(LauncherSettings.SETTINGS_GSON, setting, TypeToken.get(GameSettings.Instance.class));
         }
 
         GameSettings.Instance copied = new GameSettings.Instance();
-        copied.parentProperty().setValue(getEffectiveGameSettings(id).getPreset().idProperty().getValue());
+        copied.parentProperty().setValue(getEffectiveGameSettings(instanceId).getPreset().idProperty().getValue());
         return copied;
     }
 
     /// Returns the HMCL-managed metadata directory under the version root.
     ///
     /// This directory stores instance-scoped files owned by HMCL.
-    public Path getInstanceMetadataDirectory(String id) {
-        return getInstanceRoot(id).resolve(INSTANCE_METADATA_DIRECTORY);
+    public Path getInstanceMetadataDirectory(GameInstanceID instanceId) {
+        return getInstanceRoot(instanceId).resolve(INSTANCE_METADATA_DIRECTORY);
     }
 
     /// Returns the HMCL-managed configuration directory under the instance metadata directory.
-    public Path getInstanceConfigDirectory(String id) {
-        return getInstanceMetadataDirectory(id).resolve(INSTANCE_CONFIG_DIRECTORY);
+    public Path getInstanceConfigDirectory(GameInstanceID instanceId) {
+        return getInstanceMetadataDirectory(instanceId).resolve(INSTANCE_CONFIG_DIRECTORY);
     }
 
     /// Returns the HMCL-managed state directory under the instance metadata directory.
-    public Path getInstanceStateDirectory(String id) {
-        return getInstanceMetadataDirectory(id).resolve(INSTANCE_STATE_DIRECTORY);
+    public Path getInstanceStateDirectory(GameInstanceID instanceId) {
+        return getInstanceMetadataDirectory(instanceId).resolve(INSTANCE_STATE_DIRECTORY);
     }
 
     /// Returns the current local game settings path under the instance configuration directory.
-    private Path getInstanceGameSettingsFile(String id) {
-        return getInstanceConfigDirectory(id).resolve(INSTANCE_GAME_SETTINGS_FILENAME);
+    private Path getInstanceGameSettingsFile(GameInstanceID instanceId) {
+        return getInstanceConfigDirectory(instanceId).resolve(INSTANCE_GAME_SETTINGS_FILENAME);
     }
 
-    private void loadInstanceGameSettings(String id) {
-        loadedInstanceGameSettings.add(id);
-        InstanceGameSettingsLoadResult result = loadGameSettingsFile(getInstanceGameSettingsFile(id));
+    private void loadInstanceGameSettings(GameInstanceID instanceId) {
+        loadedInstanceGameSettings.add(instanceId);
+        InstanceGameSettingsLoadResult result = loadGameSettingsFile(getInstanceGameSettingsFile(instanceId));
         if (result.setting() != null) {
-            initInstanceGameSettings(id, result.setting(), result.allowSave());
+            initInstanceGameSettings(instanceId, result.setting(), result.allowSave());
             return;
         }
         if (!result.allowSave()) {
-            readOnlyInstanceGameSettings.add(id);
+            readOnlyInstanceGameSettings.add(instanceId);
             return;
         }
 
@@ -344,15 +344,15 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         LegacyGameSettingsMigrator.InstanceMigrationResult migrationResult =
                 LegacyGameSettingsMigrator.migrateInstanceGameSettings(
-                        this, id,
+                        this, instanceId,
                         legacyParent);
         if (migrationResult != null) {
-            initInstanceGameSettings(id, migrationResult.setting());
+            initInstanceGameSettings(instanceId, migrationResult.setting());
             try {
-                saveGameSettingsSync(id);
+                saveGameSettingsSync(instanceId);
                 migrationResult.saveReceipt();
             } catch (IOException e) {
-                LOG.warning("Failed to save migrated instance game settings for " + id, e);
+                LOG.warning("Failed to save migrated instance game settings for " + instanceId, e);
             }
             return;
         }
@@ -416,35 +416,35 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public @Nullable GameSettings.Instance createInstanceGameSettings(String id) {
-        if (!hasInstance(id)) {
+    public @Nullable GameSettings.Instance createInstanceGameSettings(GameInstanceID instanceId) {
+        if (!hasInstance(instanceId)) {
             return null;
         }
-        if (readOnlyInstanceGameSettings.contains(id)) {
+        if (readOnlyInstanceGameSettings.contains(instanceId)) {
             return null;
         }
-        if (instanceGameSettings.containsKey(id)) {
-            return getInstanceGameSettings(id);
+        if (instanceGameSettings.containsKey(instanceId)) {
+            return getInstanceGameSettings(instanceId);
         }
 
         GameSettings.Instance setting = new GameSettings.Instance();
-        return initInstanceGameSettings(id, setting);
+        return initInstanceGameSettings(instanceId, setting);
     }
 
-    private GameSettings.Instance initInstanceGameSettings(String id, GameSettings.Instance setting) {
-        return initInstanceGameSettings(id, setting, true);
+    private GameSettings.Instance initInstanceGameSettings(GameInstanceID instanceId, GameSettings.Instance setting) {
+        return initInstanceGameSettings(instanceId, setting, true);
     }
 
-    private GameSettings.Instance initInstanceGameSettings(String id, GameSettings.Instance setting, boolean allowSave) {
+    private GameSettings.Instance initInstanceGameSettings(GameInstanceID instanceId, GameSettings.Instance setting, boolean allowSave) {
         normalizeRunningDirectoryOverride(setting);
         setting.setSavable(allowSave);
-        loadedInstanceGameSettings.add(id);
-        instanceGameSettings.put(id, setting);
+        loadedInstanceGameSettings.add(instanceId);
+        instanceGameSettings.put(instanceId, setting);
         if (allowSave) {
-            readOnlyInstanceGameSettings.remove(id);
-            setting.addListener(a -> saveGameSettings(id));
+            readOnlyInstanceGameSettings.remove(instanceId);
+            setting.addListener(a -> saveGameSettings(instanceId));
         } else {
-            readOnlyInstanceGameSettings.add(id);
+            readOnlyInstanceGameSettings.add(instanceId);
         }
         return setting;
     }
@@ -457,59 +457,59 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Nullable
-    public GameSettings.Instance getInstanceGameSettings(String id) {
-        if (!loadedInstanceGameSettings.contains(id)) {
-            loadInstanceGameSettings(id);
+    public GameSettings.Instance getInstanceGameSettings(GameInstanceID instanceId) {
+        if (!loadedInstanceGameSettings.contains(instanceId)) {
+            loadInstanceGameSettings(instanceId);
         }
-        return instanceGameSettings.get(id);
+        return instanceGameSettings.get(instanceId);
     }
 
     @Nullable
-    public GameSettings.Instance getInstanceGameSettingsOrCreate(String id) {
-        GameSettings.Instance setting = getInstanceGameSettings(id);
+    public GameSettings.Instance getInstanceGameSettingsOrCreate(GameInstanceID instanceId) {
+        GameSettings.Instance setting = getInstanceGameSettings(instanceId);
         if (setting == null) {
-            setting = createInstanceGameSettings(id);
+            setting = createInstanceGameSettings(instanceId);
         }
         return setting;
     }
 
     /// Returns whether the instance-specific game settings file cannot be overwritten safely.
     ///
-    /// @param id the instance ID
+    /// @param instanceId the instance ID
     /// @return whether the instance settings are loaded in read-only mode
-    public boolean isInstanceGameSettingsReadOnly(String id) {
-        if (!loadedInstanceGameSettings.contains(id)) {
-            loadInstanceGameSettings(id);
+    public boolean isInstanceGameSettingsReadOnly(GameInstanceID instanceId) {
+        if (!loadedInstanceGameSettings.contains(instanceId)) {
+            loadInstanceGameSettings(instanceId);
         }
 
-        return readOnlyInstanceGameSettings.contains(id);
+        return readOnlyInstanceGameSettings.contains(instanceId);
     }
 
     /// Backs up and overwrites the instance-specific game settings file with the currently loaded settings.
     ///
-    /// @param id the instance ID
-    public void forceOverwriteInstanceGameSettings(String id) {
-        if (!loadedInstanceGameSettings.contains(id)) {
-            loadInstanceGameSettings(id);
+    /// @param instanceId the instance ID
+    public void forceOverwriteInstanceGameSettings(GameInstanceID instanceId) {
+        if (!loadedInstanceGameSettings.contains(instanceId)) {
+            loadInstanceGameSettings(instanceId);
         }
 
-        GameSettings.Instance setting = instanceGameSettings.get(id);
+        GameSettings.Instance setting = instanceGameSettings.get(instanceId);
         if (setting == null) {
             setting = new GameSettings.Instance();
-            instanceGameSettings.put(id, setting);
-            loadedInstanceGameSettings.add(id);
+            instanceGameSettings.put(instanceId, setting);
+            loadedInstanceGameSettings.add(instanceId);
         }
 
         boolean installAutoSave = !setting.isSavable();
-        Path file = getInstanceGameSettingsFile(id).toAbsolutePath().normalize();
+        Path file = getInstanceGameSettingsFile(instanceId).toAbsolutePath().normalize();
         SettingFileUtils.backupInvalidConfig(file);
         setting.setSchema(GameSettings.Instance.CURRENT_SCHEMA);
         setting.setSavable(true);
         setting.setBackupOnNextSave(false);
-        readOnlyInstanceGameSettings.remove(id);
-        saveGameSettings(id);
+        readOnlyInstanceGameSettings.remove(instanceId);
+        saveGameSettings(instanceId);
         if (installAutoSave) {
-            setting.addListener(a -> saveGameSettings(id));
+            setting.addListener(a -> saveGameSettings(instanceId));
         }
     }
 
@@ -520,35 +520,35 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }
 
-    public GameSettings.Effective getEffectiveGameSettings(String id) {
-        GameSettings.Instance instance = getInstanceGameSettings(id);
+    public GameSettings.Effective getEffectiveGameSettings(GameInstanceID instanceId) {
+        GameSettings.Instance instance = getInstanceGameSettings(instanceId);
         return GameSettings.resolve(getParentGameSettings(instance), instance);
     }
 
-    public void applyDefaultIsolationSetting(String id) {
-        if (!hasInstance(id)) {
+    public void applyDefaultIsolationSetting(GameInstanceID instanceId) {
+        if (!hasInstance(instanceId)) {
             return;
         }
 
-        GameSettings.Instance instanceSetting = getInstanceGameSettings(id);
+        GameSettings.Instance instanceSetting = getInstanceGameSettings(instanceId);
         GameSettings.Preset preset = getParentGameSettings(instanceSetting);
         DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
         boolean isolated = switch (type) {
             case NEVER -> false;
             case ALWAYS -> true;
-            case MODDED -> LibraryAnalyzer.isModded(this, getInstanceManifest(id).resolve(this));
+            case MODDED -> LibraryAnalyzer.isModded(this, getInstanceManifest(instanceId).resolve(this));
         };
 
         if (isolated) {
-            GameSettings.Instance setting = instanceSetting != null ? instanceSetting : getInstanceGameSettingsOrCreate(id);
+            GameSettings.Instance setting = instanceSetting != null ? instanceSetting : getInstanceGameSettingsOrCreate(instanceId);
             if (setting != null) {
                 setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
             }
         }
     }
 
-    public Optional<Path> getInstanceIconFile(String id) {
-        Path root = getInstanceRoot(id);
+    public Optional<Path> getInstanceIconFile(GameInstanceID instanceId) {
+        Path root = getInstanceRoot(instanceId);
 
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
             Path file = root.resolve("icon." + extension);
@@ -560,19 +560,19 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return Optional.empty();
     }
 
-    public void setInstanceIconFile(String id, Path iconFile) throws IOException {
+    public void setInstanceIconFile(GameInstanceID instanceId, Path iconFile) throws IOException {
         String ext = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
         if (!FXUtils.IMAGE_EXTENSIONS.contains(ext)) {
             throw new IllegalArgumentException("Unsupported icon file: " + ext);
         }
 
-        deleteIconFile(id);
+        deleteIconFile(instanceId);
 
-        FileUtils.copyFile(iconFile, getInstanceRoot(id).resolve("icon." + ext));
+        FileUtils.copyFile(iconFile, getInstanceRoot(instanceId).resolve("icon." + ext));
     }
 
-    public void deleteIconFile(String id) {
-        Path root = getInstanceRoot(id);
+    public void deleteIconFile(GameInstanceID instanceId) {
+        Path root = getInstanceRoot(instanceId);
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
             Path file = root.resolve("icon." + extension);
             try {
@@ -583,21 +583,21 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public Image getInstanceIconImage(@Nullable String id) {
-        if (id == null || !isLoaded())
+    public Image getInstanceIconImage(@Nullable GameInstanceID instanceId) {
+        if (instanceId == null || !isLoaded())
             return VersionIconType.DEFAULT.getIcon();
 
-        GameSettings.Instance setting = getInstanceGameSettings(id);
+        GameSettings.Instance setting = getInstanceGameSettings(instanceId);
         VersionIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
 
         if (iconType == VersionIconType.DEFAULT) {
-            GameInstanceManifest version = getInstanceManifest(id).resolve(this);
-            Optional<Path> iconFile = getInstanceIconFile(id);
+            GameInstanceManifest version = getInstanceManifest(instanceId).resolve(this);
+            Optional<Path> iconFile = getInstanceIconFile(instanceId);
             if (iconFile.isPresent()) {
                 try {
                     return FXUtils.loadImage(iconFile.get(), 64, 64, true, true);
                 } catch (Exception e) {
-                    LOG.warning("Failed to load version icon of " + id, e);
+                    LOG.warning("Failed to load version icon of " + instanceId, e);
                 }
             }
 
@@ -638,14 +638,14 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public void saveGameSettings(String id) {
-        if (!instanceGameSettings.containsKey(id) || readOnlyInstanceGameSettings.contains(id))
+    public void saveGameSettings(GameInstanceID instanceId) {
+        if (!instanceGameSettings.containsKey(instanceId) || readOnlyInstanceGameSettings.contains(instanceId))
             return;
-        GameSettings.Instance setting = instanceGameSettings.get(id);
+        GameSettings.Instance setting = instanceGameSettings.get(instanceId);
         if (setting == null) {
             return;
         }
-        Path file = getInstanceGameSettingsFile(id).toAbsolutePath().normalize();
+        Path file = getInstanceGameSettingsFile(instanceId).toAbsolutePath().normalize();
         try {
             Files.createDirectories(file.getParent());
         } catch (IOException e) {
@@ -661,19 +661,19 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Saves instance-specific game settings synchronously.
     ///
-    /// @param id the instance ID
+    /// @param instanceId the instance ID
     /// @throws IOException if saving the file fails
-    private void saveGameSettingsSync(String id) throws IOException {
-        if (!instanceGameSettings.containsKey(id) || readOnlyInstanceGameSettings.contains(id)) {
+    private void saveGameSettingsSync(GameInstanceID instanceId) throws IOException {
+        if (!instanceGameSettings.containsKey(instanceId) || readOnlyInstanceGameSettings.contains(instanceId)) {
             return;
         }
 
-        GameSettings.Instance setting = instanceGameSettings.get(id);
+        GameSettings.Instance setting = instanceGameSettings.get(instanceId);
         if (setting == null) {
             return;
         }
 
-        Path file = getInstanceGameSettingsFile(id).toAbsolutePath().normalize();
+        Path file = getInstanceGameSettingsFile(instanceId).toAbsolutePath().normalize();
         Files.createDirectories(file.getParent());
         if (setting.isBackupOnNextSave()) {
             setting.setBackupOnNextSave(false);
@@ -691,17 +691,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             boolean allowSave) {
     }
 
-    public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
-        GameSettings.Effective vs = getEffectiveGameSettings(version);
+    public LaunchOptions.Builder getLaunchOptions(GameInstanceID instanceId, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
+        GameSettings.Effective vs = getEffectiveGameSettings(instanceId);
         boolean noJVMOptions = vs.getInheritable(GameSettings::noJVMOptionsProperty);
         boolean autoMemory = vs.get(GameSettings::autoMemoryProperty);
-        GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(getGameVersion(version));
+        GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(getGameVersion(instanceId));
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
                 .setVersionType(Metadata.TITLE)
-                .setVersionName(version)
+                .setVersionName(instanceId.id())
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.get(GameSettings::gameArgumentsProperty)))
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.get(GameSettings::jvmOptionsProperty)))
@@ -750,7 +750,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             builder.setQuickPlayOption(quickPlayOption);
         }
 
-        Path json = getModpackConfiguration(version);
+        Path json = getModpackConfiguration(instanceId);
         if (Files.exists(json)) {
             try {
                 String jsonText = Files.readString(json);
@@ -769,27 +769,27 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
-    public Path getModpackConfiguration(String version) {
-        return getInstanceRoot(version).resolve("modpack.cfg");
+    public Path getModpackConfiguration(GameInstanceID instanceId) {
+        return getInstanceRoot(instanceId).resolve("modpack.cfg");
     }
 
-    public void markInstanceAsModpack(String id) {
-        beingModpackInstances.add(id);
+    public void markInstanceAsModpack(GameInstanceID instanceId) {
+        beingModpackInstances.add(instanceId);
     }
 
-    public void undoMark(String id) {
-        beingModpackInstances.remove(id);
+    public void undoMark(GameInstanceID instanceId) {
+        beingModpackInstances.remove(instanceId);
     }
 
-    public void markInstanceLaunchedAbnormally(String id) {
+    public void markInstanceLaunchedAbnormally(GameInstanceID instanceId) {
         try {
-            Files.createFile(getInstanceRoot(id).resolve(".abnormal"));
+            Files.createFile(getInstanceRoot(instanceId).resolve(".abnormal"));
         } catch (IOException ignored) {
         }
     }
 
-    public boolean unmarkInstanceLaunchedAbnormally(String id) {
-        Path file = getInstanceRoot(id).resolve(".abnormal");
+    public boolean unmarkInstanceLaunchedAbnormally(GameInstanceID instanceId) {
+        Path file = getInstanceRoot(instanceId).resolve(".abnormal");
         if (Files.isRegularFile(file)) {
             try {
                 Files.delete(file);

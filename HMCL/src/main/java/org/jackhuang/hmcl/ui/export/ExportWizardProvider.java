@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.export;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
@@ -48,10 +49,12 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 public final class ExportWizardProvider implements WizardProvider {
     private final HMCLGameRepository repository;
     private final String version;
+    private final GameInstanceID instanceId;
 
     public ExportWizardProvider(HMCLGameRepository repository, String version) {
         this.repository = repository;
         this.version = version;
+        this.instanceId = new GameInstanceID(version);
     }
 
     @Override
@@ -184,7 +187,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                GameSettings.Effective setting = repository.getEffectiveGameSettings(version);
+                GameSettings.Effective setting = repository.getEffectiveGameSettings(instanceId);
                 dependency = new MultiMCModpackExportTask(repository, version, exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",

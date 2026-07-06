@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -210,7 +211,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.onScroll(launchPane, versions, list -> {
             String currentId = getCurrentGame();
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-        }, it -> repository.setSelectedInstance(it.getId()));
+        }, it -> repository.setSelectedInstance(new GameInstanceID(it.getId())));
 
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
@@ -345,7 +346,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refresh())
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        GameDirectoryManager.getSelectedRepository().setSelectedInstance(gameVersionHolder.value);
+                        GameDirectoryManager.getSelectedRepository().setSelectedInstance(new GameInstanceID(gameVersionHolder.value));
                         launch();
                     } else if (exception instanceof CancellationException) {
                         Controllers.showToast(i18n("message.cancelled"));

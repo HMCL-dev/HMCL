@@ -85,6 +85,7 @@ public final class LauncherHelper {
     private final HMCLGameRepository repository;
     private Account account;
     private final String selectedVersion;
+    private final GameInstanceID selectedInstanceId;
     private Path scriptFile;
     private final GameSettings.Effective setting;
     private LauncherVisibility launcherVisibility;
@@ -96,7 +97,8 @@ public final class LauncherHelper {
         this.repository = Objects.requireNonNull(repository);
         this.account = Objects.requireNonNull(account);
         this.selectedVersion = Objects.requireNonNull(selectedVersion);
-        this.setting = repository.getEffectiveGameSettings(selectedVersion);
+        this.selectedInstanceId = new GameInstanceID(selectedVersion);
+        this.setting = repository.getEffectiveGameSettings(selectedInstanceId);
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
         this.launchingStepsPane.setTitle(i18n("version.launch"));
@@ -148,9 +150,9 @@ public final class LauncherHelper {
         PROCESSES.removeIf(it -> it.get() == null);
 
         DefaultDependencyManager dependencyManager = repository.getDependency();
-        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedInstanceManifest(selectedVersion)));
+        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedInstanceManifest(selectedInstanceId).manifest()));
         Optional<String> gameVersion = repository.getGameVersion(version.get());
-        boolean integrityCheck = repository.unmarkInstanceLaunchedAbnormally(selectedVersion);
+        boolean integrityCheck = repository.unmarkInstanceLaunchedAbnormally(selectedInstanceId);
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
         List<String> javaArguments = new ArrayList<>(0);
@@ -167,7 +169,7 @@ public final class LauncherHelper {
                             dependencyManager.checkGameCompletionAsync(version.get(), integrityCheck),
                             Task.composeAsync(() -> {
                                 try {
-                                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedInstanceId));
                                     ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
                                     if (provider == null) return null;
                                     else return provider.createCompletionTask(dependencyManager, selectedVersion);
@@ -233,7 +235,7 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions.Builder launchOptionsBuilder = repository.getLaunchOptions(
-                            selectedVersion, javaVersionRef.get(), repository.getBaseDirectory(), javaAgents, javaArguments, scriptFile != null);
+                            selectedInstanceId, javaVersionRef.get(), repository.getBaseDirectory(), javaAgents, javaArguments, scriptFile != null);
                     if (disableOfflineSkin) {
                         launchOptionsBuilder.setDaemon(false);
                     }
@@ -243,7 +245,7 @@ public final class LauncherHelper {
 
                     LaunchOptions launchOptions = launchOptionsBuilder.create();
 
-                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
+                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedInstanceId), 10));
 
                     return new HMCLGameLauncher(
                             repository,
@@ -1000,7 +1002,7 @@ public final class LauncherHelper {
             }
 
             if (exitType != ExitType.NORMAL) {
-                repository.markInstanceLaunchedAbnormally(version.getId());
+                repository.markInstanceLaunchedAbnormally(version.id());
                 runLater(() -> new GameCrashWindow(process, exitType, repository, version, launchOptions, logs).show());
             }
 

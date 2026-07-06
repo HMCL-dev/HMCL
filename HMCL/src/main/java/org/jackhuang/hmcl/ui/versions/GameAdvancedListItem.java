@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.geometry.Pos;
 import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.VersionIconType;
@@ -56,14 +57,21 @@ public class GameAdvancedListItem extends AdvancedListItem {
                 });
             }
         }
-        if (version != null && repository != null && repository.hasInstance(version)) {
-            setTitle(i18n("version.manage.manage"));
-            setSubtitle(version);
-            imageContainer.setImage(repository.getInstanceIconImage(version));
-        } else {
-            setTitle(i18n("version.empty"));
-            setSubtitle(i18n("version.empty.add"));
-            imageContainer.setImage(VersionIconType.DEFAULT.getIcon());
+        if (version != null && repository != null) {
+            try {
+                GameInstanceID instanceId = new GameInstanceID(version);
+                if (repository.hasInstance(instanceId)) {
+                    setTitle(i18n("version.manage.manage"));
+                    setSubtitle(version);
+                    imageContainer.setImage(repository.getInstanceIconImage(instanceId));
+                    return;
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
         }
+
+        setTitle(i18n("version.empty"));
+        setSubtitle(i18n("version.empty.add"));
+        imageContainer.setImage(VersionIconType.DEFAULT.getIcon());
     }
 }

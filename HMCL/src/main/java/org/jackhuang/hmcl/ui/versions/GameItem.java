@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import javafx.beans.property.*;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.GameDirectory;
@@ -44,6 +45,7 @@ public class GameItem {
 
     protected final HMCLGameRepository repository;
     protected final String id;
+    protected final GameInstanceID instanceId;
 
     private boolean initialized = false;
     private StringProperty title;
@@ -54,6 +56,7 @@ public class GameItem {
     public GameItem(HMCLGameRepository repository, String id) {
         this.repository = repository;
         this.id = id;
+        this.instanceId = new GameInstanceID(id);
     }
 
     public GameDirectory getGameDirectory() {
@@ -83,10 +86,10 @@ public class GameItem {
 
         CompletableFuture.supplyAsync(() -> {
             // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
-            Optional<String> gameVersion = repository.getGameVersion(id);
+            Optional<String> gameVersion = repository.getGameVersion(instanceId);
             String modPackVersion = null;
             try {
-                ModpackConfiguration<?> config = repository.readModpackConfiguration(id);
+                ModpackConfiguration<?> config = repository.readModpackConfiguration(instanceId);
                 modPackVersion = config != null ? config.getVersion() : null;
             } catch (IOException e) {
                 LOG.warning("Failed to read modpack configuration from " + id, e);
@@ -99,7 +102,7 @@ public class GameItem {
                 }
 
                 StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
-                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(id), result.gameVersion);
+                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesInstanceManifest(instanceId).manifest(), result.gameVersion);
                 for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                     String libraryId = mark.getLibraryId();
                     String libraryVersion = mark.getLibraryVersion();
@@ -118,7 +121,7 @@ public class GameItem {
         }, Schedulers.javafx());
 
         title.set(id);
-        image.set(repository.getInstanceIconImage(id));
+        image.set(repository.getInstanceIconImage(instanceId));
     }
 
     public ReadOnlyStringProperty titleProperty() {

@@ -25,6 +25,7 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -92,7 +93,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                     FXUtils.onScroll(item, mainPage.getVersions(), list -> {
                         String currentId = mainPage.getCurrentGame();
                         return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-                    }, it -> mainPage.getRepository().setSelectedInstance(it.getId()));
+                    }, it -> mainPage.getRepository().setSelectedInstance(new GameInstanceID(it.getId())));
 
                     FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
                             JFXPopup.PopupVPosition.BOTTOM,

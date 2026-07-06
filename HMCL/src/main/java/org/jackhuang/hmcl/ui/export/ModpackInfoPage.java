@@ -35,6 +35,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
@@ -68,6 +69,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private final HMCLGameRepository gameRepository;
     private final ModpackExportInfo.Options options;
     private final String versionName;
+    private final GameInstanceID instanceId;
     private final boolean canIncludeLauncher;
 
     private final ModpackExportInfo exportInfo = new ModpackExportInfo();
@@ -93,6 +95,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         this.gameRepository = gameRepository;
         this.options = controller.getSettings().get(MODPACK_INFO_OPTION);
         this.versionName = version;
+        this.instanceId = new GameInstanceID(version);
 
         if (this.options == null)
             throw new IllegalArgumentException("Settings.MODPACK_INFO_OPTION is required");
@@ -100,7 +103,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         name.set(version);
         author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getProfileName).orElse(""));
 
-        GameSettings.Effective versionSetting = gameRepository.getEffectiveGameSettings(versionName);
+        GameSettings.Effective versionSetting = gameRepository.getEffectiveGameSettings(instanceId);
         minMemory.set(Optional.ofNullable(versionSetting.get(GameSettings::minMemoryProperty)).orElse(0));
         launchArguments.set(versionSetting.get(GameSettings::gameArgumentsProperty));
         javaArguments.set(versionSetting.get(GameSettings::jvmOptionsProperty));

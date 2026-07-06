@@ -38,6 +38,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -112,7 +113,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     @Override
     public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
-        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId));
+        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId == null ? null : new GameInstanceID(instanceId)));
 
         setLoading(false);
         setFailed(false);
@@ -166,12 +167,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         int currentSearchID = searchID = searchID + 1;
         Task.supplyAsync(() -> {
             HMCLGameRepository.InstanceReference instanceReference = this.instanceReference.get();
-            if (StringUtils.isBlank(instanceReference.instanceId())) {
+            if (instanceReference.instanceId() == null) {
                 return userGameVersion;
             } else {
-                return StringUtils.isNotBlank(instanceReference.instanceId())
-                        ? instanceReference.repository().getGameVersion(instanceReference.instanceId()).orElse("")
-                        : "";
+                return instanceReference.repository().getGameVersion(instanceReference.instanceId()).orElse("");
             }
         }).thenApplyAsync(
                 gameVersion -> repository.search(downloadProvider, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteAddonRepository.SortOrder.DESC)
@@ -220,7 +219,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     protected HMCLGameRepository.InstanceReference getInstanceReference() {
         if (versionSelection) {
-            return new HMCLGameRepository.InstanceReference(instanceReference.get().repository(), selectedVersion.get());
+            @Nullable String instanceId = selectedVersion.get();
+            return new HMCLGameRepository.InstanceReference(instanceReference.get().repository(), instanceId == null ? null : new GameInstanceID(instanceId));
         } else {
             return instanceReference.get();
         }
@@ -329,7 +329,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 FXUtils.installFastTooltip(gameVersionField, i18n("search.enter"));
 
                 FXUtils.onChangeAndOperate(getSkinnable().instanceReference, instanceReference -> {
-                    if (StringUtils.isNotBlank(instanceReference.instanceId())) {
+                    if (instanceReference.instanceId() != null) {
                         GridPane.setColumnSpan(nameField, 3);
                     } else {
                         GridPane.setColumnSpan(nameField, 1);

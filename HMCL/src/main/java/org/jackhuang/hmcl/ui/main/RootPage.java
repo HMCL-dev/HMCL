@@ -23,6 +23,7 @@ import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
@@ -164,7 +165,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
                 String currentId = getSkinnable().getMainPage().getCurrentGame();
                 return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-            }, it -> getSkinnable().getMainPage().getRepository().setSelectedInstance(it.getId()));
+            }, it -> getSkinnable().getMainPage().getRepository().setSelectedInstance(new GameInstanceID(it.getId())));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
             }

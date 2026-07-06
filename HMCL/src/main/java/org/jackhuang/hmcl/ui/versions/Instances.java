@@ -117,15 +117,16 @@ public final class Instances {
     }
 
     public static void deleteVersion(HMCLGameRepository repository, String version) {
-        boolean isIndependent = repository.getRunDirectory(version).toAbsolutePath().normalize()
-                .equals(repository.getInstanceRoot(version).toAbsolutePath().normalize());
+        GameInstanceID instanceId = new GameInstanceID(version);
+        boolean isIndependent = repository.getRunDirectory(instanceId).toAbsolutePath().normalize()
+                .equals(repository.getInstanceRoot(instanceId).toAbsolutePath().normalize());
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
                 i18n("version.manage.remove.confirm.trash", version, version + "_removed");
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");
         deleteButton.setOnAction(e -> {
-            Task.supplyAsync(Schedulers.io(), () -> repository.removeInstanceFromDisk(version))
+            Task.supplyAsync(Schedulers.io(), () -> repository.removeInstanceFromDisk(instanceId))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null || !Boolean.TRUE.equals(result)) {
                             Controllers.dialog(i18n("version.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -142,12 +143,14 @@ public final class Instances {
                 handler.resolve();
                 return;
             }
-            if (repository.renameInstance(version, newName)) {
+            GameInstanceID oldInstanceId = new GameInstanceID(version);
+            GameInstanceID newInstanceId = new GameInstanceID(newName);
+            if (repository.renameInstance(oldInstanceId, newInstanceId)) {
                 handler.resolve();
                 repository.refreshAsync()
                         .thenRunAsync(Schedulers.javafx(), () -> {
-                            if (repository.hasInstance(newName)) {
-                                repository.setSelectedInstance(newName);
+                            if (repository.hasInstance(newInstanceId)) {
+                                repository.setSelectedInstance(newInstanceId);
                             }
                         }).start();
             } else {
@@ -163,7 +166,7 @@ public final class Instances {
     }
 
     public static void openFolder(HMCLGameRepository repository, String version) {
-        FXUtils.openFolder(repository.getRunDirectory(version));
+        FXUtils.openFolder(repository.getRunDirectory(new GameInstanceID(version)));
     }
 
     public static void installFromJson(HMCLGameRepository repository, Path file) {
@@ -196,7 +199,7 @@ public final class Instances {
                             .thenRunAsync(repository::refresh)
                             .whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
-                                    repository.setSelectedInstance(result);
+                                    repository.setSelectedInstance(new GameInstanceID(result));
                                 } else {
                                     Controllers.dialog(
                                             DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
@@ -210,7 +213,7 @@ public final class Instances {
                 new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
                     String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
-                    Task.runAsync(() -> repository.duplicateInstance(version, newVersionName, copySaves))
+                    Task.runAsync(() -> repository.duplicateInstance(new GameInstanceID(version), new GameInstanceID(newVersionName), copySaves))
                             .thenComposeAsync(repository.refreshAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
@@ -218,7 +221,7 @@ public final class Instances {
                                 } else {
                                     handler.reject(StringUtils.getStackTrace(exception));
                                     if (!repository.instanceIdConflicts(newVersionName)) {
-                                        repository.removeInstanceFromDisk(newVersionName);
+                                        repository.removeInstanceFromDisk(new GameInstanceID(newVersionName));
                                     }
                                 }
                             }).start();
@@ -235,7 +238,7 @@ public final class Instances {
     }
 
     public static void updateGameAssets(HMCLGameRepository repository, String version) {
-        TaskExecutor executor = new GameAssetDownloadTask(repository.getDependency(), repository.getInstanceManifest(version), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
+        TaskExecutor executor = new GameAssetDownloadTask(repository.getDependency(), repository.getInstanceManifest(new GameInstanceID(version)), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
                 .executor();
         Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
         executor.start();
@@ -243,7 +246,7 @@ public final class Instances {
 
     public static void cleanVersion(HMCLGameRepository repository, String id) {
         try {
-            repository.clean(id);
+            repository.clean(new GameInstanceID(id));
         } catch (IOException e) {
             LOG.warning("Unable to clean game directory", e);
         }
@@ -255,8 +258,9 @@ public final class Instances {
             return;
         ensureSelectedAccount(account -> {
             FileChooser chooser = new FileChooser();
-            if (Files.isDirectory(repository.getRunDirectory(id)))
-                chooser.setInitialDirectory(repository.getRunDirectory(id).toFile());
+            GameInstanceID instanceId = new GameInstanceID(id);
+            if (Files.isDirectory(repository.getRunDirectory(instanceId)))
+                chooser.setInitialDirectory(repository.getRunDirectory(instanceId).toFile());
             chooser.setTitle(i18n("version.launch_script.save"));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                 chooser.getExtensionFilters().add(
@@ -326,7 +330,18 @@ public final class Instances {
     }
 
     private static boolean checkVersionForLaunching(HMCLGameRepository repository, String id) {
-        if (id == null || !repository.isLoaded() || !repository.hasInstance(id)) {
+        boolean unavailable;
+        if (id == null || !repository.isLoaded()) {
+            unavailable = true;
+        } else {
+            try {
+                unavailable = !repository.hasInstance(new GameInstanceID(id));
+            } catch (IllegalArgumentException e) {
+                unavailable = true;
+            }
+        }
+
+        if (unavailable) {
             JFXButton gotoDownload = new JFXButton(i18n("version.empty.launch.goto_download"));
             gotoDownload.getStyleClass().add("dialog-accept");
             gotoDownload.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));

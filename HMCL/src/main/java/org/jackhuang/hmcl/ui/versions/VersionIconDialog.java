@@ -22,6 +22,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.VersionIconType;
@@ -40,15 +41,15 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class VersionIconDialog extends DialogPane {
     private final HMCLGameRepository repository;
-    private final String versionId;
+    private final GameInstanceID instanceId;
     private final Runnable onFinish;
     private final GameSettings.Instance setting;
 
     public VersionIconDialog(HMCLGameRepository repository, String versionId, Runnable onFinish) {
         this.repository = repository;
-        this.versionId = versionId;
+        this.instanceId = new GameInstanceID(versionId);
         this.onFinish = onFinish;
-        this.setting = repository.getInstanceGameSettingsOrCreate(versionId);
+        this.setting = repository.getInstanceGameSettingsOrCreate(instanceId);
 
         setTitle(i18n("settings.icon"));
         FlowPane pane = new FlowPane();
@@ -79,7 +80,7 @@ public class VersionIconDialog extends DialogPane {
         Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile != null) {
             try {
-                repository.setInstanceIconFile(versionId, selectedFile);
+                repository.setInstanceIconFile(instanceId, selectedFile);
 
                 if (setting != null) {
                     setting.iconProperty().setValue(VersionIconType.DEFAULT);
