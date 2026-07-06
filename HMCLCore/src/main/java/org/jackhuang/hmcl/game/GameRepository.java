@@ -383,15 +383,6 @@ public interface GameRepository {
     /// @return the asset index file path
     Path getIndexFile(GameInstanceID instanceId, String assetId);
 
-    /// Returns an asset index path by string id.
-    ///
-    /// @param id      the instance id string
-    /// @param assetId the asset index id
-    /// @return the asset index file path
-    default Path getIndexFile(String id, String assetId) {
-        return getIndexFile(new GameInstanceID(id), assetId);
-    }
-
     /// Returns the path of a logging configuration object.
     ///
     /// @param instanceId  the instance id
@@ -399,16 +390,6 @@ public interface GameRepository {
     /// @param loggingInfo the logging configuration descriptor
     /// @return the logging object path
     Path getLoggingObject(GameInstanceID instanceId, String assetId, LoggingInfo loggingInfo);
-
-    /// Returns a logging object path by string id.
-    ///
-    /// @param id          the instance id string
-    /// @param assetId     the asset index id used as the logging object namespace
-    /// @param loggingInfo the logging configuration descriptor
-    /// @return the logging object path
-    default Path getLoggingObject(String id, String assetId, LoggingInfo loggingInfo) {
-        return getLoggingObject(new GameInstanceID(id), assetId, loggingInfo);
-    }
 
     /// Returns the classpath entries whose library files are present on disk.
     ///

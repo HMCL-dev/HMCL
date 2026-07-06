@@ -45,7 +45,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class GameAssetIndexDownloadTask extends Task<Void> {
 
     private final AbstractDependencyManager dependencyManager;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final boolean forceDownloading;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
@@ -53,11 +53,11 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link GameRepository}
-     * @param version the <b>resolved</b> version
+     * @param manifest the <b>resolved</b> version
      */
-    public GameAssetIndexDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest version, boolean forceDownloading) {
+    public GameAssetIndexDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean forceDownloading) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.forceDownloading = forceDownloading;
         setSignificance(TaskSignificance.MODERATE);
     }
@@ -69,8 +69,8 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
 
     @Override
     public void execute() {
-        AssetIndexInfo assetIndexInfo = version.getAssetIndex();
-        Path assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
+        AssetIndexInfo assetIndexInfo = manifest.getAssetIndex();
+        Path assetIndexFile = dependencyManager.getGameRepository().getIndexFile(manifest.id(), assetIndexInfo.getId());
         boolean verifyHashCode = StringUtils.isNotBlank(assetIndexInfo.getSha1()) && assetIndexInfo.getUrl().contains(assetIndexInfo.getSha1());
 
         if (Files.exists(assetIndexFile) && !forceDownloading) {

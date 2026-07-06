@@ -42,7 +42,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class GameAssetDownloadTask extends Task<Void> {
     
     private final AbstractDependencyManager dependencyManager;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final AssetIndexInfo assetIndexInfo;
     private final Path assetIndexFile;
     private final boolean integrityCheck;
@@ -53,17 +53,17 @@ public final class GameAssetDownloadTask extends Task<Void> {
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link GameRepository}
-     * @param version the game version
+     * @param manifest the game version
      */
-    public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest version, boolean forceDownloadingIndex, boolean integrityCheck) {
+    public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean forceDownloadingIndex, boolean integrityCheck) {
         this.dependencyManager = dependencyManager;
-        this.version = version.resolve(dependencyManager.getGameRepository());
-        this.assetIndexInfo = this.version.getAssetIndex();
-        this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
+        this.manifest = manifest.resolve(dependencyManager.getGameRepository());
+        this.assetIndexInfo = this.manifest.getAssetIndex();
+        this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(manifest.id(), assetIndexInfo.getId());
         this.integrityCheck = integrityCheck;
 
         setStage("hmcl.install.assets");
-        dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version, forceDownloadingIndex));
+        dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.manifest, forceDownloadingIndex));
     }
 
     @Override
@@ -90,7 +90,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
             if (isCancelled())
                 throw new InterruptedException();
 
-            Path file = dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject);
+            Path file = dependencyManager.getGameRepository().getAssetObject(manifest.getId(), assetIndexInfo.getId(), assetObject);
             boolean download = !Files.isRegularFile(file);
             try {
                 if (!download && integrityCheck && !assetObject.validateChecksum(file, true))
