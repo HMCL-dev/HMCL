@@ -17,9 +17,20 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 @NotNullByDefault
+@JsonAdapter(GameInstanceID.Adapter.class)
+@JsonSerializable
 public record GameInstanceID(String id) implements Comparable<GameInstanceID> {
     public GameInstanceID {
         if (id.isEmpty()) {
@@ -35,5 +46,23 @@ public record GameInstanceID(String id) implements Comparable<GameInstanceID> {
     @Override
     public String toString() {
         return id;
+    }
+
+    static final class Adapter extends TypeAdapter<@Nullable GameInstanceID> {
+
+        @Override
+        public @Nullable GameInstanceID read(JsonReader in) throws IOException {
+            if (in.peek() == JsonToken.NULL) {
+                in.nextNull();
+                return null;
+            }
+
+            return new GameInstanceID(in.nextString());
+        }
+
+        @Override
+        public void write(JsonWriter out, @Nullable GameInstanceID value) throws IOException {
+            out.value(value != null ? value.id() : null);
+        }
     }
 }
