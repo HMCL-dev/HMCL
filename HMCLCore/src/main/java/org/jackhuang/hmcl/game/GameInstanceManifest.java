@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @NotNullByDefault
@@ -513,56 +512,80 @@ public record GameInstanceManifest(
     }
 
     /// Returns a manifest copy with the given structured arguments.
-    public GameInstanceManifest setArguments(@Nullable Arguments arguments) {
+    public GameInstanceManifest withArguments(@Nullable Arguments arguments) {
+        if (this.arguments == arguments)
+            return this;
+
         Builder builder = new Builder(this);
         builder.setArguments(arguments);
         return builder.toManifest();
     }
 
     /// Returns a manifest copy with the given main class.
-    public GameInstanceManifest setMainClass(@Nullable String mainClass) {
+    public GameInstanceManifest withMainClass(@Nullable String mainClass) {
+        if (Objects.equals(this.mainClass, mainClass))
+            return this;
+
         Builder builder = new Builder(this);
         builder.setMainClass(mainClass);
         return builder.toManifest();
     }
 
     /// Returns a manifest copy with the given asset index.
-    public GameInstanceManifest setAssetIndex(@Nullable AssetIndexInfo assetIndex) {
+    public GameInstanceManifest withAssetIndex(@Nullable AssetIndexInfo assetIndex) {
+        if (this.assetIndex == assetIndex)
+            return this;
+
         Builder builder = new Builder(this);
         builder.setAssetIndex(assetIndex);
         return builder.toManifest();
     }
 
     /// Returns a manifest copy with the given Java version.
-    public GameInstanceManifest setJavaVersion(@Nullable GameJavaVersion javaVersion) {
+    public GameInstanceManifest withJavaVersion(@Nullable GameJavaVersion javaVersion) {
+        if (this.javaVersion == javaVersion)
+            return this;
+
         Builder builder = new Builder(this);
         builder.setJavaVersion(javaVersion);
         return builder.toManifest();
     }
 
     /// Returns a manifest copy with the given libraries.
-    public GameInstanceManifest setLibraries(@Nullable List<Library> libraries) {
+    public GameInstanceManifest withLibraries(@Nullable List<Library> libraries) {
+        if (this.libraries == libraries)
+            return this;
+
         Builder builder = new Builder(this);
         builder.setLibraries(libraries);
         return builder.toManifest();
     }
 
     /// Returns a manifest copy with the given downloads.
-    public GameInstanceManifest setDownload(@Nullable Map<DownloadType, DownloadInfo> downloads) {
+    public GameInstanceManifest withDownloads(@Nullable Map<DownloadType, DownloadInfo> downloads) {
+        if (this.downloads == downloads)
+            return this;
+
         Builder builder = new Builder(this);
         builder.setDownloads(downloads);
         return builder.toManifest();
     }
 
     /// Returns a manifest copy with the given logging metadata.
-    public GameInstanceManifest setLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
+    public GameInstanceManifest withLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
+        if (this.logging == logging)
+            return this;
+
         Builder builder = new Builder(this);
         builder.setLogging(logging);
         return builder.toManifest();
     }
 
     /// Returns a manifest copy with the given root flag.
-    public GameInstanceManifest setRoot(@Nullable Boolean root) {
+    public GameInstanceManifest withRoot(@Nullable Boolean root) {
+        if (Objects.equals(this.root, root))
+            return this;
+
         Builder builder = new Builder(this);
         builder.setRoot(root);
         return builder.toManifest();
@@ -576,11 +599,6 @@ public record GameInstanceManifest(
         Builder builder = new Builder(this);
         builder.setPatches(patches);
         return builder.toManifest();
-    }
-
-    /// Returns a manifest copy with the given patches.
-    public GameInstanceManifest setPatches(@Nullable List<GameInstancePatch> patches) {
-        return withPatches(patches);
     }
 
     /// Returns a manifest copy with additional patches.
@@ -732,18 +750,6 @@ public record GameInstanceManifest(
         }
 
         return json;
-    }
-
-    private static @Nullable Instant parseInstant(@Nullable String value) {
-        if (value == null) {
-            return null;
-        }
-
-        try {
-            return Instant.parse(value);
-        } catch (DateTimeParseException e) {
-            return null;
-        }
     }
 
     private static final class Builder {

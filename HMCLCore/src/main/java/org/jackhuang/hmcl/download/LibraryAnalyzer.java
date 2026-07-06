@@ -115,7 +115,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 libraries.add(library);
             }
         }
-        return version.setLibraries(libraries);
+        return version.withLibraries(libraries);
     }
 
     private GameInstancePatch removingMatchedLibrary(GameInstancePatch patch, String libraryId) {
@@ -142,11 +142,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
      */
     public LibraryAnalyzer removeLibrary(String libraryId) {
         if (!has(libraryId)) return this;
-        version = removingMatchedLibrary(version, libraryId)
-                .setPatches(version.getPatches().stream()
-                        .filter(patch -> !libraryId.equals(patch.getId()))
-                        .map(patch -> removingMatchedLibrary(patch, libraryId))
-                        .collect(Collectors.toList()));
+        GameInstanceManifest manifest = removingMatchedLibrary(version, libraryId);
+        version = manifest.withPatches(version.getPatches().stream()
+                .filter(patch -> !libraryId.equals(patch.getId()))
+                .map(patch -> removingMatchedLibrary(patch, libraryId))
+                .collect(Collectors.toList()));
         return this;
     }
 

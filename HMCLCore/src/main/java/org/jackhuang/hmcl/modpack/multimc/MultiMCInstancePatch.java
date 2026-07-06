@@ -386,11 +386,11 @@ public final class MultiMCInstancePatch {
         }
 
         GameInstanceManifest version = new GameInstanceManifest(instanceId)
-                .setArguments(new Arguments().addGameArguments(minecraftArguments).addJVMArgumentsDirect(jvmArguments))
-                .setMainClass(mainClass)
-                .setLibraries(libraries)
-                .setAssetIndex(assetIndex)
-                .setDownload(Collections.singletonMap(DownloadType.CLIENT, mainJar.getRawDownloadInfo()));
+                .withArguments(new Arguments().addGameArguments(minecraftArguments).addJVMArgumentsDirect(jvmArguments))
+                .withMainClass(mainClass)
+                .withLibraries(libraries)
+                .withAssetIndex(assetIndex)
+                .withDownloads(Collections.singletonMap(DownloadType.CLIENT, mainJar.getRawDownloadInfo()));
 
         /* TODO: Official Version-Json can only store one pre-defined GameJavaVersion, including 8, 11, 16, 17 and 21.
             An array of all suitable java versions are NOT supported.
@@ -403,7 +403,7 @@ public final class MultiMCInstancePatch {
             for (int i = javaMajors.length - 1; i >= 0; i--) {
                 GameJavaVersion jv = GameJavaVersion.get(javaMajors[i]);
                 if (jv != null) {
-                    version = version.setJavaVersion(jv);
+                    version = version.withJavaVersion(jv);
                     break javaMajors;
                 }
             }

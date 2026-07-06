@@ -289,7 +289,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             dependencies.add(new GameLibrariesTask(
                     dependencyManager,
                     // TODO: check integrity of maven-only files when launching games?
-                    version.setLibraries(Lang.merge(version.getLibraries(), artifact.getMavenOnlyFiles())),
+                    version.withLibraries(Lang.merge(version.getLibraries(), artifact.getMavenOnlyFiles())),
                     true
             ));
 

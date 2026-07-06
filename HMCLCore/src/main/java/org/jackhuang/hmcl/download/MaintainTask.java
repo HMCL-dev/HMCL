@@ -84,7 +84,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
                     && ("log4j-patch".equals(library.getArtifactId()) || "log4j-patch-beta9".equals(library.getArtifactId()))
                     && "1.0".equals(library.getVersion())
                     && library.getDownload() == null) {
-                version = version.setLibraries(libraries.subList(1, libraries.size()));
+                version = version.withLibraries(libraries.subList(1, libraries.size()));
             }
         }
 
@@ -95,7 +95,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         if (!version.isResolvedPreservingPatches())
             throw new IllegalArgumentException("MaintainTask requires independent game version");
         GameInstanceManifest newVersion = maintain(repository, version.resolve(repository));
-        return newVersion.setPatches(version.getPatches());
+        return newVersion.withPatches(version.getPatches());
     }
 
     private static GameInstanceManifest maintainGameWithLaunchWrapper(GameRepository repository, GameInstanceManifest version, boolean reorderTweakClass) {
@@ -144,7 +144,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         }
 
         GameInstanceManifest ret = builder.build();
-        return mainClass == null ? ret : ret.setMainClass(mainClass);
+        return mainClass == null ? ret : ret.withMainClass(mainClass);
     }
 
     private static GameInstanceManifest maintainGameWithCpwModLauncher(GameRepository repository, GameInstanceManifest version) {
@@ -281,7 +281,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
             }
         }
 
-        return version.setLibraries(libraries.stream().filter(Objects::nonNull).collect(Collectors.toList()));
+        return version.withLibraries(libraries.stream().filter(Objects::nonNull).collect(Collectors.toList()));
     }
 
     public static GameInstanceManifest unique(GameInstanceManifest version) {
@@ -336,6 +336,6 @@ public class MaintainTask extends Task<GameInstanceManifest> {
             }
         }
 
-        return version.setLibraries(libraries);
+        return version.withLibraries(libraries);
     }
 }

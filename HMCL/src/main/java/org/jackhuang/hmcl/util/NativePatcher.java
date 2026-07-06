@@ -93,7 +93,7 @@ public final class NativePatcher {
                     newLibraries.add(library);
                 }
             }
-            return version.setLibraries(newLibraries);
+            return version.withLibraries(newLibraries);
         }
 
         final boolean useNativeGLFW = settings.get(GameSettings::useNativeGLFWProperty);
@@ -102,7 +102,7 @@ public final class NativePatcher {
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && (useNativeGLFW || useNativeOpenAL)
                 && gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") >= 0) {
 
-            version = version.setLibraries(version.getLibraries().stream()
+            version = version.withLibraries(version.getLibraries().stream()
                     .filter(library -> {
                         if (library.getClassifier() != null && library.getClassifier().startsWith("natives")
                                 && "org.lwjgl".equals(library.getGroupId())) {
@@ -186,7 +186,7 @@ public final class NativePatcher {
             }
         }
 
-        return version.setLibraries(newLibraries);
+        return version.withLibraries(newLibraries);
     }
 
     /// @see <a href="https://github.com/HMCL-dev/mesa-loader-windows">Java Mesa Loader for Windows</a>

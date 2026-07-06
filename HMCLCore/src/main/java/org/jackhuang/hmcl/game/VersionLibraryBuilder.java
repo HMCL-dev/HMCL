@@ -54,17 +54,17 @@ public final class VersionLibraryBuilder {
             // The official launcher will not parse the "arguments" property when it detects the presence of "mcArgs".
             // The "arguments" property with the "rule" is simply ignored here.
             this.mcArgs.addAll(this.game.stream().map(arg -> arg.toString(new HashMap<>(), new HashMap<>())).flatMap(Collection::stream).collect(Collectors.toList()));
-            ret = ret.setArguments(null);
+            ret = ret.withArguments(null);
 
             // Since $ will be escaped in linux, and our maintain of minecraftArgument will not cause escaping,
             // so we regenerate the minecraftArgument without escaping.
             ret = ret.withMinecraftArguments(new CommandBuilder().addAllWithoutParsing(mcArgs).toString());
         } else {
-            ret = ret.setArguments(ret.getArguments()
+            ret = ret.withArguments(ret.getArguments()
                     .map(args -> args.withGame(game))
                     .map(args -> jvmChanged ? args.withJvm(jvm) : args).orElse(new Arguments(game, jvmChanged ? jvm : null)));
         }
-        return ret.setLibraries(libraries);
+        return ret.withLibraries(libraries);
     }
 
     public boolean hasTweakClass(String tweakClass) {
