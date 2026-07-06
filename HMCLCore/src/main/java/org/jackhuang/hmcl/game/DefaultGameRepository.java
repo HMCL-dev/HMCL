@@ -117,7 +117,7 @@ public class DefaultGameRepository implements GameRepository {
 
         refreshImpl();
         loaded = true;
-        EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
+        EventBus.EVENT_BUS.fireEvent(new RefreshedGameInstancesEvent(this));
     }
 
     protected void refreshImpl() {

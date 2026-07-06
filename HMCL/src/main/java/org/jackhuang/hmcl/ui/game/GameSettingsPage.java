@@ -50,8 +50,8 @@ import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.GameInstanceIconDialog;
-import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.instances.GameInstanceIconDialog;
+import org.jackhuang.hmcl.ui.instances.GameInstancePage;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.ServerAddress;
@@ -78,7 +78,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Glavo
 @NotNullByDefault
 public final class GameSettingsPage<S extends GameSettings> extends StackPane
-        implements DecoratorPage, VersionPage.GameInstanceLoadable, PageAware {
+        implements DecoratorPage, GameInstancePage.GameInstanceLoadable, PageAware {
 
     private static final Object INHERIT_BUTTON_TOOLTIP_KEY = new Object();
     private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");
@@ -2661,7 +2661,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         repository.deleteIconFile(loadedInstanceId);
         GameSettings.Instance localGameSettings = repository.getInstanceGameSettingsOrCreate(loadedInstanceId);
         if (localGameSettings != null) {
-            localGameSettings.iconProperty().setValue(VersionIconType.DEFAULT);
+            localGameSettings.iconProperty().setValue(GameInstanceIconType.DEFAULT);
         }
         loadIcon();
     }

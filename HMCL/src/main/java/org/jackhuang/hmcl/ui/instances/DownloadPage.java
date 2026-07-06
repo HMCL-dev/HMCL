@@ -1,0 +1,621 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui.instances;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
+public class DownloadPage extends Control implements DecoratorPage {
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
+    private final BooleanProperty loaded = new SimpleBooleanProperty(false);
+    private final BooleanProperty loading = new SimpleBooleanProperty(false);
+    private final BooleanProperty failed = new SimpleBooleanProperty(false);
+    private final RemoteAddonRepository repository;
+    private final ModTranslations translations;
+    private final RemoteAddon addon;
+    private final ModTranslations.Mod mod;
+    private final HMCLGameRepository.InstanceReference instanceReference;
+    private final DownloadCallback callback;
+    private final DownloadListPage page;
+    private final RemoteAddonRepository.Type type;
+
+    private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
+
+    public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.InstanceReference instanceReference, @Nullable DownloadCallback callback) {
+        this.page = page;
+        this.repository = page.repository;
+        this.addon = addon;
+        this.type = Objects.requireNonNullElse(addon.repoType(), repository.getType());
+        this.translations = ModTranslations.getTranslationsByRepositoryType(this.type);
+        this.mod = translations.getModByCurseForgeId(addon.slug());
+        this.instanceReference = instanceReference;
+        this.callback = callback;
+        loadAddonVersions();
+
+        this.state.set(State.fromTitle(addon.title()));
+    }
+
+    private void loadAddonVersions() {
+        setLoading(true);
+        setFailed(false);
+
+        Task.supplyAsync(() -> {
+            Stream<RemoteAddon.Version> versions = addon.data().loadVersions(repository, page.getDownloadProvider());
+            return sortVersions(versions);
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                this.versions = result;
+
+                loaded.set(true);
+                setFailed(false);
+            } else {
+                setFailed(true);
+            }
+            setLoading(false);
+        }).start();
+    }
+
+    private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> sortVersions(Stream<RemoteAddon.Version> versions) {
+        SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> classifiedVersions
+                = new SimpleMultimap<>(HashMap::new, ArrayList::new);
+        versions.forEach(version -> {
+            for (String gameVersion : version.gameVersions()) {
+                classifiedVersions.put(gameVersion, version);
+            }
+        });
+
+        for (String gameVersion : classifiedVersions.keys()) {
+            List<RemoteAddon.Version> versionList = classifiedVersions.get(gameVersion);
+            versionList.sort(Comparator.comparing(RemoteAddon.Version::datePublished).reversed());
+        }
+        return classifiedVersions;
+    }
+
+    public RemoteAddon getAddon() {
+        return addon;
+    }
+
+    public HMCLGameRepository.InstanceReference getInstanceReference() {
+        return instanceReference;
+    }
+
+    public boolean isLoading() {
+        return loading.get();
+    }
+
+    public BooleanProperty loadingProperty() {
+        return loading;
+    }
+
+    public void setLoading(boolean loading) {
+        this.loading.set(loading);
+    }
+
+    public boolean isFailed() {
+        return failed.get();
+    }
+
+    public BooleanProperty failedProperty() {
+        return failed;
+    }
+
+    public void setFailed(boolean failed) {
+        this.failed.set(failed);
+    }
+
+    public void download(RemoteAddon addon, RemoteAddon.Version file) {
+        if (this.callback == null) {
+            saveAs(file);
+        } else {
+            this.callback.download(page.getDownloadProvider(), instanceReference.repository(), instanceReference.instanceId(), addon, file);
+        }
+    }
+
+    public void saveAs(RemoteAddon.Version file) {
+        String extension = StringUtils.substringAfterLast(file.file().filename(), '.');
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(i18n("button.save_as"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension));
+        fileChooser.setInitialFileName(file.file().filename());
+        Path dest = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
+        if (dest == null) {
+            return;
+        }
+
+        Controllers.taskDialog(
+                Task.composeAsync(() -> {
+                    var task = new FileDownloadTask(file.file().url(), dest, file.file().getIntegrityCheck());
+                    task.setName(file.name());
+                    return task;
+                }),
+                i18n("message.downloading"),
+                TaskCancellationAction.NORMAL);
+    }
+
+    @Override
+    public ReadOnlyObjectProperty<State> stateProperty() {
+        return state.getReadOnlyProperty();
+    }
+
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new DownloadPageSkin(this);
+    }
+
+    private static class DownloadPageSkin extends SkinBase<DownloadPage> {
+
+        protected DownloadPageSkin(DownloadPage control) {
+            super(control);
+
+            VBox pane = new VBox(8);
+            pane.getStyleClass().add("gray-background");
+            pane.setPadding(new Insets(10));
+
+            HBox descriptionPane = new HBox(8);
+            descriptionPane.setMinHeight(Region.USE_PREF_SIZE);
+            descriptionPane.setAlignment(Pos.CENTER);
+            pane.getChildren().add(descriptionPane);
+            descriptionPane.getStyleClass().add("card-non-transparent");
+            {
+                var imageContainer = new ImageContainer(40);
+                if (StringUtils.isNotBlank(getSkinnable().addon.iconUrl())) {
+                    imageContainer.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.iconUrl(), 80, 80, true, true));
+                }
+                descriptionPane.getChildren().add(imageContainer);
+
+                TwoLineListItem content = new TwoLineListItem();
+                HBox.setHgrow(content, Priority.ALWAYS);
+                ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.slug());
+                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.title());
+                content.setSubtitle(getSkinnable().addon.description());
+                content.getSubtitleLabel().setWrapText(true);
+                getSkinnable().addon.categories().stream()
+                        .filter(category -> getSkinnable().page.shouldDisplayCategory(category))
+                        .map(category -> getSkinnable().page.getLocalizedCategory(category, null))
+                        .forEach(content::addTag);
+                content.getFirstLine().setMinWidth(0);
+                descriptionPane.getChildren().add(content);
+
+                if (getSkinnable().mod != null) {
+                    JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
+                    openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
+                    descriptionPane.getChildren().add(openMcmodButton);
+                    openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
+                }
+
+                JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
+                openUrlButton.setExternalLink(getSkinnable().addon.pageUrl());
+                descriptionPane.getChildren().add(openUrlButton);
+                openUrlButton.setMinWidth(Region.USE_PREF_SIZE);
+            }
+
+            SpinnerPane spinnerPane = new SpinnerPane();
+            VBox.setVgrow(spinnerPane, Priority.ALWAYS);
+            pane.getChildren().add(spinnerPane);
+            {
+                spinnerPane.loadingProperty().bind(getSkinnable().loadingProperty());
+                spinnerPane.failedReasonProperty().bind(Bindings.createStringBinding(() -> {
+                    if (getSkinnable().isFailed()) {
+                        return i18n("download.failed.refresh");
+                    } else {
+                        return null;
+                    }
+                }, getSkinnable().failedProperty()));
+                spinnerPane.setOnFailedAction(e -> getSkinnable().loadAddonVersions());
+
+                ComponentList list = new ComponentList();
+                ScrollPane scrollPane = new ScrollPane(list);
+                FXUtils.smoothScrolling(scrollPane);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setFitToHeight(true);
+                FXUtils.setOverflowHidden(scrollPane, 8);
+                StackPane.setAlignment(scrollPane, Pos.TOP_CENTER);
+                spinnerPane.setContent(scrollPane);
+
+                FXUtils.onChangeAndOperate(control.loaded, loaded -> {
+                    if (control.versions == null) return;
+
+                    if (control.instanceReference.repository() != null && control.instanceReference.instanceId() != null) {
+                        HMCLGameRepository repository = control.instanceReference.repository();
+                        GameInstanceManifest game = repository.getResolvedInstanceManifest(control.instanceReference.instanceId()).standaloneManifest();
+                        String gameVersion = repository.getGameVersion(game).orElse(null);
+
+                        if (gameVersion != null && control.versions.containsKey(gameVersion)) {
+                            List<RemoteAddon.Version> modVersions = control.versions.get(gameVersion);
+                            if (modVersions != null && !modVersions.isEmpty()) {
+                                Set<ModLoaderType> targetLoaders = LibraryAnalyzer.analyze(game, gameVersion).getModLoaders();
+
+                                resolve:
+                                for (RemoteAddon.Version modVersion : modVersions) {
+                                    if (getSkinnable().type == RemoteAddonRepository.Type.MOD) {
+                                        for (ModLoaderType loader : modVersion.loaders()) {
+                                            if (targetLoaders.contains(loader)) {
+                                                list.getContent().addAll(
+                                                        ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
+                                                        new AddonItem(control.addon, modVersion, control)
+                                                );
+                                                break resolve;
+                                            }
+                                        }
+                                    } else {
+                                        list.getContent().addAll(
+                                                ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
+                                                new AddonItem(control.addon, modVersion, control)
+                                        );
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    final class Versions {
+                        static ComponentSublist createSublist(DownloadPage control, String title, List<String> target) {
+                            var sublist = new ComponentSublist(() -> {
+                                ArrayList<AddonItem> items = new ArrayList<>();
+                                for (String gv : target) {
+                                    List<RemoteAddon.Version> versions = control.versions.get(gv);
+                                    if (versions != null) {
+                                        for (RemoteAddon.Version v : versions) {
+                                            items.add(new AddonItem(control.addon, v, control));
+                                        }
+                                    }
+                                }
+                                return items;
+                            });
+
+                            sublist.setTitle(title);
+                            sublist.getStyleClass().add("no-padding");
+
+                            return sublist;
+                        }
+
+                        final List<String> releases = new ArrayList<>();
+                        final List<String> snapshots = new ArrayList<>();
+                    }
+
+                    TreeMap<GameVersionNumber, Versions> map = new TreeMap<>(Collections.reverseOrder());
+                    for (String version : control.versions.keys()) {
+                        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(version);
+                        GameVersionNumber releaseOfSnapshot = GameVersionNumber.getReleaseOfSnapshot(gameVersion);
+                        GameVersionNumber releaseVersion = Objects.requireNonNullElse(releaseOfSnapshot, gameVersion);
+
+                        Versions lists = map.computeIfAbsent(releaseVersion, v -> new Versions());
+
+                        if (releaseOfSnapshot == null) {
+                            lists.releases.add(version);
+                        } else {
+                            lists.snapshots.add(version);
+                        }
+                    }
+
+                    for (Map.Entry<GameVersionNumber, Versions> entry : map.entrySet()) {
+                        GameVersionNumber gameVersion = entry.getKey();
+                        Versions versions = entry.getValue();
+
+                        if (!versions.releases.isEmpty())
+                            list.getContent().add(Versions.createSublist(control, i18n("addon.download.title.release", gameVersion), versions.releases));
+
+                        if (!versions.snapshots.isEmpty())
+                            list.getContent().add(Versions.createSublist(control, i18n("addon.download.title.snapshot", gameVersion), versions.snapshots));
+                    }
+                });
+            }
+
+            getChildren().setAll(pane);
+        }
+    }
+
+    private static final class DependencyAddonItem extends LineButton {
+        public static final EnumMap<RemoteAddon.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
+                Pair.pair(RemoteAddon.DependencyType.EMBEDDED, "addon.dependency.embedded"),
+                Pair.pair(RemoteAddon.DependencyType.OPTIONAL, "addon.dependency.optional"),
+                Pair.pair(RemoteAddon.DependencyType.REQUIRED, "addon.dependency.required"),
+                Pair.pair(RemoteAddon.DependencyType.TOOL, "addon.dependency.tool"),
+                Pair.pair(RemoteAddon.DependencyType.INCLUDE, "addon.dependency.include"),
+                Pair.pair(RemoteAddon.DependencyType.INCOMPATIBLE, "addon.dependency.incompatible"),
+                Pair.pair(RemoteAddon.DependencyType.BROKEN, "addon.dependency.broken")
+        ));
+
+        public final RemoteAddon addon;
+
+        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.InstanceReference instanceReference) {
+            this.addon = addon;
+
+            HBox pane = new HBox(8);
+            pane.setPadding(new Insets(0, 8, 0, 8));
+            pane.setAlignment(Pos.CENTER_LEFT);
+            TwoLineListItem content = new TwoLineListItem();
+            pane.setMouseTransparent(true);
+            HBox.setHgrow(content, Priority.ALWAYS);
+            var imageView = new ImageContainer(40);
+            pane.getChildren().setAll(imageView, content);
+            FXUtils.setLimitHeight(this, 60);
+
+            RemoteAddonRepository.Type type = addon.repoType();
+            DownloadCallback callback = switch (type) {
+                case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
+                case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
+                case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
+                default -> null; // Dependencies should not be modpacks, worlds or customized stuff
+            };
+            setOnAction((e) -> {
+                fireEvent(new DialogCloseEvent());
+                Controllers.navigate(new DownloadPage(page, addon, instanceReference, callback));
+            });
+            setNode(IDX_LEADING, pane);
+
+            if (addon != RemoteAddon.BROKEN) {
+                ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(type).getModByCurseForgeId(addon.slug());
+                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
+                content.setSubtitle(addon.description());
+                for (String category : addon.categories()) {
+                    if (page.shouldDisplayCategory(category))
+                        content.addTag(page.getLocalizedCategory(category, null));
+                }
+                if (StringUtils.isNotBlank(addon.iconUrl())) {
+                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.iconUrl(), 80, 80, true, true));
+                }
+            } else {
+                content.setTitle(i18n("addon.broken_dependency.title"));
+                content.setSubtitle(i18n("addon.broken_dependency.desc"));
+                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@4x.png"));
+            }
+        }
+    }
+
+    private static final class AddonItem extends StackPane {
+
+        AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage) {
+            VBox pane = new VBox(8);
+            pane.setPadding(new Insets(8, 0, 8, 0));
+
+            {
+                HBox descPane = new HBox(8);
+                descPane.setPadding(new Insets(0, 8, 0, 8));
+                descPane.setAlignment(Pos.CENTER_LEFT);
+                descPane.setMouseTransparent(true);
+
+                {
+                    StackPane graphicPane = new StackPane();
+                    TwoLineListItem content = new TwoLineListItem();
+                    HBox.setHgrow(content, Priority.ALWAYS);
+                    content.setTitle(dataItem.name());
+                    content.setSubtitle(I18n.formatDateTime(dataItem.datePublished()));
+
+                    switch (dataItem.versionType()) {
+                        case Alpha:
+                            content.addTag(i18n("addon.channel.alpha"));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(24));
+                            break;
+                        case Beta:
+                            content.addTag(i18n("addon.channel.beta"));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(24));
+                            break;
+                        case Release:
+                            content.addTag(i18n("addon.channel.release"));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(24));
+                            break;
+                    }
+
+                    for (ModLoaderType modLoaderType : dataItem.loaders()) {
+                        switch (modLoaderType) {
+                            case FORGE:
+                                content.addTag(i18n("install.installer.forge"));
+                                break;
+                            case CLEANROOM:
+                                content.addTag(i18n("install.installer.cleanroom"));
+                                break;
+                            case NEO_FORGE:
+                                content.addTag(i18n("install.installer.neoforge"));
+                                break;
+                            case FABRIC:
+                                content.addTag(i18n("install.installer.fabric"));
+                                break;
+                            case LITE_LOADER:
+                                content.addTag(i18n("install.installer.liteloader"));
+                                break;
+                            case QUILT:
+                                content.addTag(i18n("install.installer.quilt"));
+                                break;
+                        }
+                    }
+
+                    descPane.getChildren().setAll(graphicPane, content);
+                }
+
+                pane.getChildren().add(descPane);
+            }
+
+            RipplerContainer container = new RipplerContainer(pane);
+            FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
+            getChildren().setAll(container);
+
+            // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
+            this.setMinHeight(50);
+        }
+    }
+
+    private static final class AddonVersion extends JFXDialogLayout {
+        public AddonVersion(RemoteAddon mod, RemoteAddon.Version version, DownloadPage selfPage) {
+            RemoteAddonRepository.Type type = selfPage.type;
+
+            String title = switch (type) {
+                case WORLD -> "world.download.title";
+                case MODPACK -> "modpack.download.title";
+                case RESOURCE_PACK -> "resourcepack.download.title";
+                case SHADER_PACK -> "shaderpack.download.title";
+                default -> "mods.download.title";
+            };
+            this.setHeading(new HBox(new Label(i18n(title, version.name()))));
+
+            VBox box = new VBox(8);
+            box.setPadding(new Insets(8));
+            AddonItem addonItem = new AddonItem(mod, version, selfPage);
+            addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
+            box.getChildren().setAll(addonItem);
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ScrollPane scrollPane = new ScrollPane();
+            ComponentList dependenciesList = new ComponentList();
+            loadDependencies(version, selfPage, spinnerPane, dependenciesList);
+            spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
+
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scrollPane.setContent(dependenciesList);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+            FXUtils.smoothScrolling(scrollPane);
+            FXUtils.setOverflowHidden(scrollPane, 8);
+            spinnerPane.setContent(scrollPane);
+            box.getChildren().add(spinnerPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
+
+            this.setBody(box);
+
+            JFXButton downloadButton = null;
+            if (selfPage.callback != null) {
+                downloadButton = new JFXButton(type == RemoteAddonRepository.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
+                downloadButton.getStyleClass().add("dialog-accept");
+                downloadButton.setOnAction(e -> {
+                    if (type == RemoteAddonRepository.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                        fireEvent(new DialogCloseEvent());
+                    }
+                    selfPage.download(mod, version);
+                });
+            }
+
+            JFXButton saveAsButton = new JFXButton(i18n("mods.save_as"));
+            saveAsButton.getStyleClass().add("dialog-accept");
+            saveAsButton.setOnAction(e -> {
+                if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                    fireEvent(new DialogCloseEvent());
+                }
+                selfPage.saveAs(version);
+            });
+
+            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            cancelButton.getStyleClass().add("dialog-cancel");
+            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            if (downloadButton == null) {
+                this.setActions(saveAsButton, cancelButton);
+            } else {
+                this.setActions(downloadButton, saveAsButton, cancelButton);
+            }
+
+            this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
+            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+
+            onEscPressed(this, cancelButton::fire);
+        }
+
+        private void loadDependencies(RemoteAddon.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
+            spinnerPane.setLoading(true);
+            Task.composeAsync(() -> {
+                // TODO: Massive tasks may cause OOM.
+                EnumMap<RemoteAddon.DependencyType, Pair<Label, List<DependencyAddonItem>>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
+                List<Task<?>> queue = new ArrayList<>(version.dependencies().size());
+                for (RemoteAddon.Dependency dependency : version.dependencies()) {
+                    if (dependency.getType() == RemoteAddon.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteAddon.DependencyType.BROKEN) {
+                        continue;
+                    }
+
+                    if (!dependencies.containsKey(dependency.getType())) {
+                        Label title = new Label(i18n(DependencyAddonItem.I18N_KEY.get(dependency.getType())));
+                        title.setPadding(new Insets(0, 8, 0, 8));
+                        List<DependencyAddonItem> list = new ArrayList<>();
+                        dependencies.put(dependency.getType(), Pair.pair(title, list));
+                    }
+
+                    queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
+                            .setSignificance(Task.TaskSignificance.MINOR)
+                            .thenAcceptAsync(Schedulers.javafx(), dep -> {
+                                if (dep == RemoteAddon.BROKEN) {
+                                    return;
+                                }
+                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.instanceReference);
+                                dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
+                            })
+                            .setSignificance(Task.TaskSignificance.MINOR));
+                }
+
+                return Task.allOf(queue).thenSupplyAsync(() ->
+                        dependencies.values().stream().flatMap(types ->
+                                Stream.concat(
+                                        Stream.of(types.key()),
+                                        types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)))
+                        ).toList()
+                );
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                spinnerPane.setLoading(false);
+                if (exception == null) {
+                    dependenciesList.getContent().setAll(result);
+                    spinnerPane.setFailedReason(null);
+                } else {
+                    dependenciesList.getContent().setAll();
+                    spinnerPane.setFailedReason(i18n("download.failed.refresh"));
+                }
+            }).start();
+        }
+    }
+
+    @FunctionalInterface
+    public interface DownloadCallback {
+        void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon addon, RemoteAddon.Version file);
+    }
+}

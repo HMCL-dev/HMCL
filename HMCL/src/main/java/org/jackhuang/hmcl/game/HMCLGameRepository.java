@@ -46,7 +46,7 @@ import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.setting.SettingFileUtils;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
-import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
@@ -85,7 +85,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public record InstanceReference(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
     }
 
-    /// Directory under the version root that stores HMCL-managed instance metadata.
+    /// Directory under the instance root that stores HMCL-managed instance metadata.
     private static final String INSTANCE_METADATA_DIRECTORY = ".hmcl";
 
     /// Directory under the instance metadata directory that stores instance configuration files.
@@ -140,7 +140,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         settings().setSelectedInstance(gameDirectory.getId(), instanceId);
     }
 
-    /// Refreshes the selected instance ID after versions are loaded.
+    /// Refreshes the selected instance ID after instances are loaded.
     public void refreshSelectedInstance() {
         @Nullable GameInstanceID selectedInstance = settings().getSelectedInstance(gameDirectory.getId());
         @Nullable GameInstanceID refreshedInstance = selectedInstance;
@@ -247,7 +247,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         Path srcDir = getInstanceRoot(srcId);
         Path dstDir = getInstanceRoot(dstId);
 
-        GameInstanceManifest fromVersion = getInstanceManifest(srcId);
+        GameInstanceManifest fromManifest = getInstanceManifest(srcId);
 
         List<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(srcId.id() + ".jar");
@@ -255,7 +255,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (!copySaves)
             blackList.add("saves");
 
-        if (Files.exists(dstDir)) throw new IOException("Version exists");
+        if (Files.exists(dstDir)) throw new IOException("Instance exists");
 
         Files.createDirectories(dstDir);
         FileUtils.copyDirectory(srcDir, dstDir, path -> Modpack.acceptFile(path, blackList, null));
@@ -270,7 +270,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
         Files.copy(fromJson, toJson);
 
-        JsonUtils.writeToJsonFile(toJson, fromVersion.withId(dstId).withJar(dstId));
+        JsonUtils.writeToJsonFile(toJson, fromManifest.withId(dstId).withJar(dstId));
 
         boolean copyOriginalGameDir;
         try {
@@ -304,7 +304,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return copied;
     }
 
-    /// Returns the HMCL-managed metadata directory under the version root.
+    /// Returns the HMCL-managed metadata directory under the instance root.
     ///
     /// This directory stores instance-scoped files owned by HMCL.
     public Path getInstanceMetadataDirectory(GameInstanceID instanceId) {
@@ -586,54 +586,54 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public Image getInstanceIconImage(@Nullable GameInstanceID instanceId) {
         if (instanceId == null || !isLoaded())
-            return VersionIconType.DEFAULT.getIcon();
+            return GameInstanceIconType.DEFAULT.getIcon();
 
         GameSettings.Instance setting = getInstanceGameSettings(instanceId);
-        VersionIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
+        GameInstanceIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT) : GameInstanceIconType.DEFAULT;
 
-        if (iconType == VersionIconType.DEFAULT) {
-            GameInstanceManifest version = getInstanceManifest(instanceId).resolve(this);
+        if (iconType == GameInstanceIconType.DEFAULT) {
+            GameInstanceManifest manifest = getResolvedInstanceManifest(instanceId).launchManifest();
             Optional<Path> iconFile = getInstanceIconFile(instanceId);
             if (iconFile.isPresent()) {
                 try {
                     return FXUtils.loadImage(iconFile.get(), 64, 64, true, true);
                 } catch (Exception e) {
-                    LOG.warning("Failed to load version icon of " + instanceId, e);
+                    LOG.warning("Failed to load instance icon of " + instanceId, e);
                 }
             }
 
-            if (LibraryAnalyzer.isModded(this, version)) {
-                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
+            if (LibraryAnalyzer.isModded(this, manifest)) {
+                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(manifest, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return VersionIconType.FABRIC.getIcon();
+                    return GameInstanceIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return VersionIconType.QUILT.getIcon();
+                    return GameInstanceIconType.QUILT.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
-                    return VersionIconType.LEGACY_FABRIC.getIcon();
+                    return GameInstanceIconType.LEGACY_FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return VersionIconType.NEO_FORGE.getIcon();
+                    return GameInstanceIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return VersionIconType.FORGE.getIcon();
+                    return GameInstanceIconType.FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
-                    return VersionIconType.CLEANROOM.getIcon();
+                    return GameInstanceIconType.CLEANROOM.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return VersionIconType.CHICKEN.getIcon();
+                    return GameInstanceIconType.CHICKEN.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return VersionIconType.OPTIFINE.getIcon();
+                    return GameInstanceIconType.OPTIFINE.getIcon();
             }
 
-            String gameVersion = getGameVersion(version).orElse(null);
+            String gameVersion = getGameVersion(manifest).orElse(null);
             if (gameVersion != null) {
                 GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion);
                 if (versionNumber.isAprilFools()) {
-                    return VersionIconType.APRIL_FOOLS.getIcon();
+                    return GameInstanceIconType.APRIL_FOOLS.getIcon();
                 } else if (versionNumber instanceof GameVersionNumber.LegacySnapshot) {
-                    return VersionIconType.COMMAND.getIcon();
+                    return GameInstanceIconType.COMMAND.getIcon();
                 } else if (versionNumber instanceof GameVersionNumber.Old) {
-                    return VersionIconType.CRAFT_TABLE.getIcon();
+                    return GameInstanceIconType.CRAFT_TABLE.getIcon();
                 }
             }
-            return VersionIconType.GRASS.getIcon();
+            return GameInstanceIconType.GRASS.getIcon();
         } else {
             return iconType.getIcon();
         }
@@ -807,9 +807,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private static final String PROFILE = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
 
 
-    // These version ids are forbidden because they may conflict with modpack configuration filenames
-    private static final Set<String> FORBIDDEN_INSTANCE_IDS = new HashSet<>(Arrays.asList(
-            "modpack", "minecraftinstance", "manifest"));
+    // These instance ids are forbidden because they may conflict with modpack configuration filenames
+    private static final Set<String> FORBIDDEN_INSTANCE_IDS = Set.of("modpack", "minecraftinstance", "manifest");
 
     public static boolean isValidInstanceId(String id) {
         if (FORBIDDEN_INSTANCE_IDS.contains(id))
@@ -823,7 +822,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     /**
-     * Returns true if the given version id conflicts with an existing version.
+     * Returns true if the given instance id conflicts with an existing instance.
      */
     public boolean instanceIdConflicts(String instanceId) {
         try {

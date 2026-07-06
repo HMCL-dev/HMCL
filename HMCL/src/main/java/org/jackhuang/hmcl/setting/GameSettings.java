@@ -152,10 +152,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// The icon of the instance.
         @SerializedName("icon")
-        private final SettingProperty<VersionIconType> icon = newSettingProperty("icon", VersionIconType.DEFAULT);
+        private final SettingProperty<GameInstanceIconType> icon = newSettingProperty("icon", GameInstanceIconType.DEFAULT);
 
         /// Returns the instance icon property.
-        public SettingProperty<VersionIconType> iconProperty() {
+        public SettingProperty<GameInstanceIconType> iconProperty() {
             return icon;
         }
 

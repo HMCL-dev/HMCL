@@ -52,18 +52,18 @@ public class DefaultLauncher extends Launcher {
 
     private final LibraryAnalyzer analyzer;
 
-    public DefaultLauncher(GameRepository repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options) {
-        this(repository, version, authInfo, options, null);
+    public DefaultLauncher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options) {
+        this(repository, manifest, authInfo, options, null);
     }
 
-    public DefaultLauncher(GameRepository repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, true);
+    public DefaultLauncher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+        this(repository, manifest, authInfo, options, listener, true);
     }
 
-    public DefaultLauncher(GameRepository repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
-        super(repository, version, authInfo, options, listener, daemon);
+    public DefaultLauncher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+        super(repository, manifest, authInfo, options, listener, daemon);
 
-        this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
+        this.analyzer = LibraryAnalyzer.analyze(manifest, repository.getGameVersion(manifest).orElse(null));
     }
 
     private Command generateCommandLine(Path nativeFolder) throws IOException {
