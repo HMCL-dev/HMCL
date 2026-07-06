@@ -344,11 +344,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                 Files.createDirectories(resourcePackDirectory);
 
                 Path newFile = resourcePackDirectory.resolve(file.getFileName());
-                if (Files.isDirectory(file)) {
-                    FileUtils.copyDirectory(file, newFile);
-                } else {
-                    FileUtils.copyFile(file, newFile);
-                }
+                FileUtils.copyTo(file, resourcePackDirectory);
 
                 addResourcePackInfo(newFile);
             } else {

@@ -59,6 +59,9 @@ public abstract class LocalAddonFile {
         return null;
     }
 
+    public void onUpdated(String newFileNameWithExtension) {
+    }
+
     public record AddonUpdate(
             LocalAddonFile localAddonFile,
             RemoteAddon.Version currentVersion,

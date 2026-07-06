@@ -45,11 +45,11 @@ final class ShaderZipFile extends ShaderFile {
         try (var zipSystem = CompressingUtils.createReadOnlyZipFileSystem(file)) {
             Path root = zipSystem.getRootDirectories().iterator().next();
             try (Stream<Path> stream = Files.walk(root)) {
-                Path shadersPath = stream.filter(Files::isDirectory)
+                Path shadersPath = stream
                         .filter(path -> path.endsWith("shaders"))
+                        .filter(Files::isDirectory)
                         .findFirst().orElse(null);
                 if (shadersPath == null) return null;
-                if (!Files.isDirectory(shadersPath)) return null;
 
                 if (Files.isRegularFile(shadersPath.resolve("pack.ts"))) { // Aperture
                     ApertureMeta meta = null;
@@ -95,6 +95,22 @@ final class ShaderZipFile extends ShaderFile {
                 .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), false);
+        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), true);
+    }
+
+    @Override
+    public void onUpdated(String newFileNameWithExtension) {
+        super.onUpdated(newFileNameWithExtension);
+        var configPath = getFile().resolveSibling(getFileName() + ".zip.txt");
+        var newConfigPath = getFile().resolveSibling(newFileNameWithExtension + ".txt");
+        if (Files.isRegularFile(configPath)) {
+            try {
+                Files.move(configPath, newConfigPath);
+            } catch (IOException e) {
+                LOG.warning("Failed to rename shader config file " + configPath, e);
+            }
+        } else {
+            LOG.warning("Failed to rename shader config file " + configPath + " because the file doesn't exist");
+        }
     }
 }

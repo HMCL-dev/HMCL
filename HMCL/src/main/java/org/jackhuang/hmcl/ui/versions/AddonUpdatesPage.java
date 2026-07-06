@@ -60,15 +60,15 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane implements DecoratorPage {
+public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("addon.check_update")));
 
-    private final LocalAddonManager<F> localAddonManager;
+    private final Path addonsDirectory;
     private final ObservableList<AddonUpdateObject> objects;
 
     @SuppressWarnings("unchecked")
-    public AddonUpdatesPage(LocalAddonManager<F> localAddonManager, List<LocalAddonFile.AddonUpdate> updates) {
-        this.localAddonManager = localAddonManager;
+    public AddonUpdatesPage(Path addonsDirectory, List<LocalAddonFile.AddonUpdate> updates) {
+        this.addonsDirectory = addonsDirectory;
 
         getStyleClass().add("gray-background");
 
@@ -132,7 +132,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
     private void updateFiles() {
         AddonUpdateTask task = new AddonUpdateTask(
-                localAddonManager.getDirectory(),
+                addonsDirectory,
                 objects.stream()
                         .filter(AddonUpdateObject::isEnabled)
                         .map(AddonUpdateObject::getData)
@@ -294,19 +294,18 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 RemoteAddon.Version remote = addon.targetVersion();
                 boolean isDisabled = local.isDisabled();
                 String originalFileName = local.getFile().getFileName().toString();
+                String fileName = addon.useRemoteFileName() ? remote.file().filename() : originalFileName;
+                if (isDisabled)
+                    fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
+                String newFileName = fileName;
 
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
                         .thenComposeAsync(() -> {
-                            String fileName = addon.useRemoteFileName() ? remote.file().filename() : originalFileName;
-                            if (isDisabled)
-                                fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
-
                             var task = new FileDownloadTask(
                                     remote.file().url(),
-                                    addonDirectory.resolve(fileName)
+                                    addonDirectory.resolve(newFileName)
                             );
-
                             task.setName(remote.name());
                             return task;
                         })
@@ -317,11 +316,14 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                                 if (isDisabled)
                                     local.markDisabled();
                                 failedAddons.add(local);
-                            } else if (!local.keepOldFiles()) {
-                                try {
-                                    local.delete();
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
+                            } else {
+                                local.onUpdated(newFileName);
+                                if (!local.keepOldFiles()) {
+                                    try {
+                                        local.delete();
+                                    } catch (IOException e) {
+                                        LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
+                                    }
                                 }
                             }
                         })

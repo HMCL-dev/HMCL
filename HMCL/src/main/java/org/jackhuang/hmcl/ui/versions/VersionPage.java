@@ -62,6 +62,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
     private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
+    private final TabHeader.Tab<ShaderListPage> shaderListTab = new TabHeader.Tab<>("shaderListTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
@@ -82,10 +83,11 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         installerListTab.setNodeSupplier(loadVersionFor(InstallerListPage::new));
         modListTab.setNodeSupplier(loadVersionFor(ModListPage::new));
         resourcePackTab.setNodeSupplier(loadVersionFor(ResourcePackListPage::new));
+        shaderListTab.setNodeSupplier(loadVersionFor(ShaderListPage::new));
         worldListTab.setNodeSupplier(loadVersionFor(WorldListPage::new));
         schematicsTab.setNodeSupplier(loadVersionFor(SchematicsPage::new));
 
-        tab = new TabHeader(transitionPane, versionSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab);
+        tab = new TabHeader(transitionPane, versionSettingsTab, installerListTab, modListTab, resourcePackTab, shaderListTab, worldListTab, schematicsTab);
         tab.select(versionSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -98,6 +100,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                     modListTab.getNode().loadInstance(getRepository(), getVersion());
                 if (resourcePackTab.isInitialized())
                     resourcePackTab.getNode().loadInstance(getRepository(), getVersion());
+                if (shaderListTab.isInitialized())
+                    shaderListTab.getNode().loadInstance(getRepository(), getVersion());
                 if (worldListTab.isInitialized())
                     worldListTab.getNode().loadInstance(getRepository(), getVersion());
                 if (schematicsTab.isInitialized())
@@ -162,6 +166,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             modListTab.getNode().loadInstance(repository, version);
         if (resourcePackTab.isInitialized())
             resourcePackTab.getNode().loadInstance(repository, version);
+        if (shaderListTab.isInitialized())
+            shaderListTab.getNode().loadInstance(repository, version);
         if (worldListTab.isInitialized())
             worldListTab.getNode().loadInstance(repository, version);
         if (schematicsTab.isInitialized())
@@ -290,6 +296,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         .addNavigationDrawerTab(control.tab, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
                         .addNavigationDrawerTab(control.tab, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                         .addNavigationDrawerTab(control.tab, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
+                        .addNavigationDrawerTab(control.tab, control.shaderListTab, i18n("shaderpack.manage"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
                         .addNavigationDrawerTab(control.tab, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
                         .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);

@@ -117,7 +117,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
-                .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
+                .addNavigationDrawerTab(tab, shaderTab, i18n("shaderpack"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
                 .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
@@ -214,14 +214,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tab.select(modpackTab, false);
     }
 
+    public DownloadListPage showModDownloads() {
+        tab.select(modTab, false);
+        return modTab.getNode();
+    }
+
     public DownloadListPage showResourcePackDownloads() {
         tab.select(resourcePackTab, false);
         return resourcePackTab.getNode();
     }
 
-    public DownloadListPage showModDownloads() {
-        tab.select(modTab, false);
-        return modTab.getNode();
+    public DownloadListPage showShaderDownloads() {
+        tab.select(shaderTab, false);
+        return shaderTab.getNode();
     }
 
     public void showWorldDownloads() {

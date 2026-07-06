@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.addon.shader;
 
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
+/// # STILL IN PREVIEW STATUS
+/// [Aperture Example Pack](https://github.com/IrisShaders/Aperture-Example-Pack/blob/slang/shaders/pack.json)
 @JsonSerializable
 public record ApertureMeta(String name, String version) {
 }

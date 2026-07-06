@@ -152,6 +152,11 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
+    public Path getShadersDirectory(String id) {
+        return getRunDirectory(id).resolve("shaderpacks");
+    }
+
+    @Override
     public Path getVersionRoot(String id) {
         return getBaseDirectory().resolve("versions/" + id);
     }

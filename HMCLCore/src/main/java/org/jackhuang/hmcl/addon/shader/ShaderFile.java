@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.addon.shader;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,10 +28,28 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public sealed abstract class ShaderFile extends LocalAddonFile implements Comparable<ShaderFile> permits ShaderZipFile, ShaderFolder {
     public static @Nullable ShaderFile fromFile(Path file) throws IOException {
         return Files.isRegularFile(file) ? ShaderZipFile.load(file) : ShaderFolder.load(file);
+    }
+
+    public static boolean isFileShaderPack(Path file) {
+        if (Files.isDirectory(file)) return Files.isDirectory(file.resolve("shaders"));
+        if (Files.isRegularFile(file)) {
+            try (var zipSystem = CompressingUtils.createReadOnlyZipFileSystem(file)) {
+                Path root = zipSystem.getRootDirectories().iterator().next();
+                try (Stream<Path> stream = Files.walk(root)) {
+                    return stream.filter(path -> path.endsWith("shaders")).anyMatch(Files::isDirectory);
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to check if file is shader pack", e);
+            }
+        }
+        return false;
     }
 
     protected Path file;
@@ -55,6 +74,18 @@ public sealed abstract class ShaderFile extends LocalAddonFile implements Compar
     @Override
     public String getFileName() {
         return fileNameWithoutExtension;
+    }
+
+    public ShaderLoaderType getLoaderType() {
+        return loaderType;
+    }
+
+    public @Nullable ApertureMeta getApertureMeta() {
+        return apertureMeta;
+    }
+
+    public @Nullable Image getIcon() {
+        return icon;
     }
 
     @Override

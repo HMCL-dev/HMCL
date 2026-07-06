@@ -491,6 +491,16 @@ public final class FileUtils {
         Files.copy(srcFile, destFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
+    public static void copyTo(Path src, Path destDir) throws IOException {
+        Objects.requireNonNull(src, "Source must not be null");
+        Objects.requireNonNull(destDir, "Destination directory must not be null");
+        Path dest = destDir.resolve(src.getFileName());
+        if (Files.isDirectory(src))
+            copyDirectory(src, dest);
+        else
+            copyFile(src, dest);
+    }
+
     public static List<Path> listFilesByExtension(Path file, String extension) {
         try (Stream<Path> list = Files.list(file)) {
             return list.filter(it -> Files.isRegularFile(it) && extension.equals(getExtension(it)))

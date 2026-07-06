@@ -143,6 +143,12 @@ public interface GameRepository extends VersionProvider {
     /// @return the resource pack directory
     Path getResourcePackDirectory(String id);
 
+    /// Get the directory for placing shader packs.
+    ///
+    /// @param id instance id
+    /// @return the shader pack directory
+    Path getShadersDirectory(String id);
+
     /**
      * Get minecraft jar
      *
