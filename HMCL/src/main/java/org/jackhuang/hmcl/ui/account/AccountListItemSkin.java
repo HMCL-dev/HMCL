@@ -25,12 +25,10 @@ import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -44,6 +42,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -73,21 +72,18 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         Canvas canvas = new Canvas(32, 32);
         TexturesLoader.bindAvatar(canvas, skinnable.getAccount());
 
-        Label title = new Label();
-        title.getStyleClass().add("title");
-        title.textProperty().bind(skinnable.titleProperty());
-        Label subtitle = new Label();
-        subtitle.getStyleClass().add("subtitle");
-        subtitle.textProperty().bind(skinnable.subtitleProperty());
+        TwoLineListItem item = new TwoLineListItem();
+        item.getFirstLine().getStyleClass().clear();
+        BorderPane.setAlignment(item, Pos.CENTER);
+
+        item.titleProperty().bind(skinnable.titleProperty());
+        item.subtitleProperty().bind(skinnable.subtitleProperty());
         if (skinnable.getAccount() instanceof AuthlibInjectorAccount) {
             Tooltip tooltip = new Tooltip();
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) skinnable.getAccount()).getServer();
             tooltip.textProperty().bind(BindingMapping.of(server, AuthlibInjectorServer::toString));
-            FXUtils.installSlowTooltip(subtitle, tooltip);
+            FXUtils.installSlowTooltip(item, tooltip);
         }
-        VBox item = new VBox(title, subtitle);
-        item.getStyleClass().add("two-line-list-item");
-        BorderPane.setAlignment(item, Pos.CENTER);
 
         center.getChildren().setAll(canvas, item);
         root.setCenter(center);
@@ -162,6 +158,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         right.getChildren().add(spinnerUpload);
 
         SpinnerPane spinnerFriend = new SpinnerPane();
+        spinnerFriend.getStyleClass().add("small-spinner-pane");
         JFXButton btnFriend = FXUtils.newToggleButton4(SVG.GROUP);
         btnFriend.disableProperty().bind(Bindings.not(skinnable.canAddFriend()));
         FXUtils.installFastTooltip(btnFriend, i18n("account.friend"));

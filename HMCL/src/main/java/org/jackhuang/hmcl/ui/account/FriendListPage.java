@@ -22,14 +22,14 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
@@ -112,10 +113,13 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
 
             Task.supplyAsync(control::getFriendList).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 setLoading(false);
+
                 if (exception != null) {
-                    LOG.warning("Failed to get friend list: " + exception);
+                    LOG.warning("Failed to get friend list" + exception);
                     setFailedReason(i18n("account.friend.failed"));
                 } else {
+                    LOG.info("Received friend list" + result);
+
                     getItems().addAll(result.friends().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.FRIEND)).collect(Collectors.toList()));
                     getItems().addAll(result.outgoingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.OUTGOING)).collect(Collectors.toList()));
                     getItems().addAll(result.incomingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.INCOMING)).collect(Collectors.toList()));
@@ -145,6 +149,8 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
 
     private final class FriendListCell extends ListCell<FriendListItem> {
         private final Region graphic;
+        private final Canvas avatar = new Canvas(32, 32);
+        private final TwoLineListItem twoLineListItem = new TwoLineListItem();
 
         public FriendListCell() {
             BorderPane root = new BorderPane();
@@ -153,6 +159,36 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
 
             RipplerContainer container = new RipplerContainer(root);
             this.graphic = container;
+
+            HBox center = new HBox();
+            center.setMouseTransparent(true);
+            center.setPrefWidth(Region.USE_PREF_SIZE);
+            center.setSpacing(8);
+            center.setAlignment(Pos.CENTER_LEFT);
+
+            center.getChildren().setAll(avatar, twoLineListItem);
+            root.setCenter(center);
+
+            HBox right = new HBox();
+
+            var deleteButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
+
+            right.getChildren().addAll(deleteButton);
+            right.setAlignment(Pos.CENTER_RIGHT);
+            root.setRight(right);
+        }
+
+        @Override
+        protected void updateItem(FriendListItem item, boolean empty) {
+            var currentItem = getItem();
+
+            super.updateItem(item, empty);
+
+            if (currentItem == getItem()) return;
+
+            TexturesLoader.bindAvatar(avatar, account);
+            twoLineListItem.setTitle(item.name());
+            twoLineListItem.setSubtitle(getClass().getName());
         }
     }
 
