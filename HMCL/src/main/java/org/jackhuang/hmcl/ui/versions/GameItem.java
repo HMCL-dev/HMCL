@@ -53,10 +53,10 @@ public class GameItem {
     private StringProperty subtitle;
     private ObjectProperty<Image> image;
 
-    public GameItem(HMCLGameRepository repository, String id) {
+    public GameItem(HMCLGameRepository repository, GameInstanceID instanceId) {
         this.repository = repository;
-        this.id = id;
-        this.instanceId = new GameInstanceID(id);
+        this.id = instanceId.toString();
+        this.instanceId = instanceId;
     }
 
     public GameDirectory getGameDirectory() {

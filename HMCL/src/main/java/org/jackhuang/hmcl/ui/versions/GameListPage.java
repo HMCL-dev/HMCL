@@ -152,7 +152,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> versionItems = repository.getDisplayInstanceManifests().map(instance -> new GameListItem(repository, instance.getId())).toList();
+            List<GameListItem> versionItems = repository.getDisplayInstanceManifests().map(instance -> new GameListItem(repository, instance.id())).toList();
 
             sourceList.setAll(versionItems);
 

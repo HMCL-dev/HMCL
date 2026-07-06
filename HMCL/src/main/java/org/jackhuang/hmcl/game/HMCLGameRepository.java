@@ -134,6 +134,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return selectedInstance.get();
     }
 
+    public @Nullable GameInstanceID getSelectedInstance2() {
+        return selectedInstance.get() == null ? null : new GameInstanceID(selectedInstance.get());
+    }
+
+
     /// Sets the selected instance ID for this repository's game directory.
     public void setSelectedInstance(@Nullable GameInstanceID instanceId) {
         settings().setSelectedInstance(gameDirectory.getId(), instanceId == null ? null : instanceId.id());
