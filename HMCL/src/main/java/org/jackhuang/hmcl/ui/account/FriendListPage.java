@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -59,6 +60,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class FriendListPage extends DecoratorAnimatedPage implements DecoratorPage {
     private final Account account;
     private final FriendControl control;
+    private static final Pattern REGEX = Pattern.compile("([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{12})");
 
     private final TabHeader tab;
     private final TabHeader.Tab<Right> friendPage = new TabHeader.Tab<>("friendPage");
@@ -198,7 +200,8 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
 
                 if (currentItem == getItem()) return;
 
-                UUID uuid = UUID.fromString(item.profileId());
+                String formatted = REGEX.matcher(item.profileId()).replaceAll("$1-$2-$3-$4-$5");
+                var uuid = UUID.fromString(formatted);
 
                 try {
                     CompleteGameProfile profile = null;
