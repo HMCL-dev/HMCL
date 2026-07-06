@@ -49,15 +49,15 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependencyManager;
     private final String gameVersion;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final String libraryId;
     private final String oldLibraryVersion;
     private final DownloadProvider downloadProvider;
 
-    public UpdateInstallerWizardProvider(@NotNull HMCLGameRepository repository, @NotNull String gameVersion, @NotNull GameInstanceManifest version, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
+    public UpdateInstallerWizardProvider(@NotNull HMCLGameRepository repository, @NotNull String gameVersion, @NotNull GameInstanceManifest manifest, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
         this.repository = repository;
         this.gameVersion = gameVersion;
-        this.version = version;
+        this.manifest = manifest;
         this.libraryId = libraryId;
         this.oldLibraryVersion = oldLibraryVersion;
         this.downloadProvider = DownloadProviders.getDownloadProvider();
@@ -76,7 +76,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
         // We remove library but not save it,
         // so if installation failed will not break down current version.
-        Task<GameInstanceManifest> ret = Task.supplyAsync(() -> version);
+        Task<GameInstanceManifest> ret = Task.supplyAsync(() -> manifest);
         var hints = new ArrayList<Task.StagesHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof RemoteVersion remoteVersion) {
@@ -103,7 +103,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                         controller.onFinish();
                     } else if ("game".equals(libraryId)) {
                         String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
-                        controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, repository, downloadProvider));
+                        controller.onNext(new AdditionalInstallersPage(newGameVersion, manifest, controller, repository, downloadProvider));
                     } else {
                         Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);

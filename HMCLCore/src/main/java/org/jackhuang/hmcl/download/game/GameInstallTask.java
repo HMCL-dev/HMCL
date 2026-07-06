@@ -35,15 +35,15 @@ public class GameInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultGameRepository gameRepository;
     private final DefaultDependencyManager dependencyManager;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final GameRemoteVersion remote;
     private final VersionJsonDownloadTask downloadTask;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public GameInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, GameRemoteVersion remoteVersion) {
+    public GameInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, GameRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
         this.downloadTask = new VersionJsonDownloadTask(remoteVersion.getGameVersion(), dependencyManager);
     }
@@ -72,7 +72,7 @@ public class GameInstallTask extends Task<GameInstancePatch> {
                 GameInstancePatch.PRIORITY_MC).withJar(null);
         setResult(patch);
 
-        GameInstanceManifest version = new GameInstanceManifest(this.version.id()).addPatch(patch);
+        GameInstanceManifest version = new GameInstanceManifest(this.manifest.id()).addPatch(patch);
         dependencies.add(Task.allOf(
                 new GameDownloadTask(dependencyManager, remote.getGameVersion(), version),
                 Task.allOf(

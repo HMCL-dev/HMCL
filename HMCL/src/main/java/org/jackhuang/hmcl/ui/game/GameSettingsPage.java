@@ -2622,17 +2622,17 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         if (JavaManager.isInitialized()) {
             GameVersionNumber gameVersionNumber = this.currentGameVersionNumber.get();
-            GameInstanceManifest version;
+            GameInstanceManifest manifest;
             if (this.instanceId == null) {
-                version = null;
+                manifest = null;
             } else {
-                version = repository != null && loadedInstanceId != null ? repository.getResolvedInstanceManifest(loadedInstanceId).launchManifest() : null;
+                manifest = repository != null && loadedInstanceId != null ? repository.getResolvedInstanceManifest(loadedInstanceId).launchManifest() : null;
             }
 
             try {
                 JavaRuntime java = effectiveSetting != null
-                        ? effectiveSetting.getJava(gameVersionNumber, version)
-                        : resolveEffectiveSetting(setting).getJava(gameVersionNumber, version);
+                        ? effectiveSetting.getJava(gameVersionNumber, manifest)
+                        : resolveEffectiveSetting(setting).getJava(gameVersionNumber, manifest);
                 if (java != null) {
                     javaSublist.setDescription(java.getBinary().toString());
                 } else {

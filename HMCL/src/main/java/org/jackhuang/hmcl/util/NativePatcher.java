@@ -64,8 +64,8 @@ public final class NativePatcher {
     }
 
     // https://github.com/LWJGL/lwjgl3/issues/1111
-    public static boolean needPatchMemoryUtil(GameInstanceManifest version, int javaVersion) {
-        return javaVersion >= 25 && javaVersion <= 26 && version.getLibraries().stream().anyMatch(library ->
+    public static boolean needPatchMemoryUtil(GameInstanceManifest manifest, int javaVersion) {
+        return javaVersion >= 25 && javaVersion <= 26 && manifest.getLibraries().stream().anyMatch(library ->
                 "org.lwjgl".equals(library.getGroupId())
                         && "lwjgl".equals(library.getArtifactId())
                         && "3.4.1".equals(library.getVersion())
@@ -74,16 +74,16 @@ public final class NativePatcher {
     }
 
     public static GameInstanceManifest patchNative(DefaultGameRepository repository,
-                                                   GameInstanceManifest version, String gameVersion,
+                                                   GameInstanceManifest manifest, String gameVersion,
                                                    JavaRuntime javaVersion,
                                                    GameSettings.Effective settings,
                                                    List<String> javaArguments) {
         if (settings.get(GameSettings::useCustomNativesProperty)) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
-                return version;
+                return manifest;
 
             ArrayList<Library> newLibraries = new ArrayList<>();
-            for (Library library : version.getLibraries()) {
+            for (Library library : manifest.getLibraries()) {
                 if (!library.appliesToCurrentEnvironment())
                     continue;
 
@@ -93,7 +93,7 @@ public final class NativePatcher {
                     newLibraries.add(library);
                 }
             }
-            return version.withLibraries(newLibraries);
+            return manifest.withLibraries(newLibraries);
         }
 
         final boolean useNativeGLFW = settings.get(GameSettings::useNativeGLFWProperty);
@@ -102,7 +102,7 @@ public final class NativePatcher {
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && (useNativeGLFW || useNativeOpenAL)
                 && gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") >= 0) {
 
-            version = version.withLibraries(version.getLibraries().stream()
+            manifest = manifest.withLibraries(manifest.getLibraries().stream()
                     .filter(library -> {
                         if (library.getClassifier() != null && library.getClassifier().startsWith("natives")
                                 && "org.lwjgl".equals(library.getGroupId())) {
@@ -125,25 +125,25 @@ public final class NativePatcher {
         GameVersionNumber gameVersionNumber = gameVersion != null ? GameVersionNumber.asGameVersion(gameVersion) : null;
 
         if (settings.get(GameSettings::notPatchNativesProperty))
-            return version;
+            return manifest;
 
         if (arch.isX86() && (os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX || os == OperatingSystem.MACOS))
-            return version;
+            return manifest;
 
         if (arch == Architecture.ARM64 && (os == OperatingSystem.MACOS || os == OperatingSystem.WINDOWS)
                 && gameVersionNumber != null
                 && gameVersionNumber.compareTo("1.19") >= 0)
-            return version;
+            return manifest;
 
         Map<String, Library> replacements = getNatives(javaVersion.getPlatform());
         if (replacements.isEmpty()) {
             LOG.warning("No alternative native library provided for platform " + javaVersion.getPlatform());
-            return version;
+            return manifest;
         }
 
         boolean lwjglVersionChanged = false;
         ArrayList<Library> newLibraries = new ArrayList<>();
-        for (Library library : version.getLibraries()) {
+        for (Library library : manifest.getLibraries()) {
             if (!library.appliesToCurrentEnvironment())
                 continue;
 
@@ -172,7 +172,7 @@ public final class NativePatcher {
         }
 
         if (lwjglVersionChanged) {
-            ModManager modManager = repository.getModManager(version.id());
+            ModManager modManager = repository.getModManager(manifest.id());
             try {
                 for (LocalModFile mod : modManager.getLocalFiles()) {
                     if ("sodium".equals(mod.getId())) {
@@ -186,7 +186,7 @@ public final class NativePatcher {
             }
         }
 
-        return version.withLibraries(newLibraries);
+        return manifest.withLibraries(newLibraries);
     }
 
     /// @see <a href="https://github.com/HMCL-dev/mesa-loader-windows">Java Mesa Loader for Windows</a>

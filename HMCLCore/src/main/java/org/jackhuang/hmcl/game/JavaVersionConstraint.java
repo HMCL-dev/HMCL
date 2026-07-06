@@ -57,12 +57,12 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public VersionRange<VersionNumber> getJavaVersionRange(GameInstanceManifest version, LibraryAnalyzer analyzer) {
+        public VersionRange<VersionNumber> getJavaVersionRange(GameInstanceManifest manifest, LibraryAnalyzer analyzer) {
             String javaVersion;
-            if (Objects.requireNonNull(version.javaVersion()).majorVersion() >= 9) {
-                javaVersion = "" + version.javaVersion().majorVersion();
+            if (Objects.requireNonNull(manifest.javaVersion()).majorVersion() >= 9) {
+                javaVersion = "" + manifest.javaVersion().majorVersion();
             } else {
-                javaVersion = "1." + version.javaVersion().majorVersion();
+                javaVersion = "1." + manifest.javaVersion().majorVersion();
             }
             return VersionNumber.atLeast(javaVersion);
         }
@@ -116,7 +116,7 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public VersionRange<VersionNumber> getJavaVersionRange(GameInstanceManifest version, LibraryAnalyzer analyzer) {
+        public VersionRange<VersionNumber> getJavaVersionRange(GameInstanceManifest manifest, LibraryAnalyzer analyzer) {
             if (analyzer == null || !analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
                 return VersionRange.all();
 
@@ -243,7 +243,7 @@ public enum JavaVersionConstraint {
         return gameVersionRange;
     }
 
-    public VersionRange<VersionNumber> getJavaVersionRange(GameInstanceManifest version, LibraryAnalyzer analyzer) {
+    public VersionRange<VersionNumber> getJavaVersionRange(GameInstanceManifest manifest, LibraryAnalyzer analyzer) {
         return javaVersionRange;
     }
 

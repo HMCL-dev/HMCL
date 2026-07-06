@@ -916,11 +916,11 @@ public sealed abstract class GameSettings extends ObservableSetting {
         }
 
         /// Finds the effective Java runtime.
-        public @Nullable JavaRuntime getJava(@Nullable GameVersionNumber gameVersion, @Nullable GameInstanceManifest version) throws InterruptedException {
+        public @Nullable JavaRuntime getJava(@Nullable GameVersionNumber gameVersion, @Nullable GameInstanceManifest manifest) throws InterruptedException {
             JavaVersionType javaVersionType = getInheritable(GameSettings::javaTypeProperty);
             switch (javaVersionType) {
                 case AUTO:
-                    return JavaManager.findSuitableJava(gameVersion, version);
+                    return JavaManager.findSuitableJava(gameVersion, manifest);
                 case CUSTOM:
                     try {
                         return JavaManager.getJava(Path.of(getInheritable(GameSettings::customJavaPathProperty)));
@@ -930,7 +930,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
                 case VERSION: {
                     String javaVersion = getInheritable(GameSettings::customJavaVersionProperty);
                     if (StringUtils.isBlank(javaVersion)) {
-                        return JavaManager.findSuitableJava(gameVersion, version);
+                        return JavaManager.findSuitableJava(gameVersion, manifest);
                     }
 
                     int majorVersion = -1;
@@ -948,13 +948,13 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     Collection<JavaRuntime> allJava = JavaManager.getAllJava().stream()
                             .filter(it -> it.getParsedVersion() == finalMajorVersion)
                             .collect(Collectors.toList());
-                    return JavaManager.findSuitableJava(allJava, gameVersion, version);
+                    return JavaManager.findSuitableJava(allJava, gameVersion, manifest);
                 }
                 case DETECTED: {
                     DetectedJava detectedJava = getInheritable(GameSettings::detectedJavaProperty);
                     String javaVersion = detectedJava.version();
                     if (StringUtils.isBlank(javaVersion)) {
-                        return JavaManager.findSuitableJava(gameVersion, version);
+                        return JavaManager.findSuitableJava(gameVersion, manifest);
                     }
 
                     if (StringUtils.isNotBlank(detectedJava.pathHash())) {

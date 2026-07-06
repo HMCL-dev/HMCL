@@ -47,7 +47,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class InstallerListPage extends ListPageBase<InstallerItem> implements GameInstancePage.GameInstanceLoadable {
     private HMCLGameRepository repository;
     private GameInstanceID instanceId;
-    private GameInstanceManifest version;
+    private GameInstanceManifest manifest;
     private String gameVersion;
 
     {
@@ -66,11 +66,11 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
     public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
         this.repository = repository;
         this.instanceId = instanceId;
-        this.version = repository.getInstanceManifest(instanceId);
+        this.manifest = repository.getInstanceManifest(instanceId);
         this.gameVersion = null;
 
         CompletableFuture.supplyAsync(() -> {
-            gameVersion = repository.getGameVersion(version).orElse(null);
+            gameVersion = repository.getGameVersion(manifest).orElse(null);
 
             return LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId).standaloneManifest(), gameVersion);
         }).thenAcceptAsync(analyzer -> {
@@ -100,10 +100,10 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
                 }
 
                 item.setOnInstall(() -> {
-                    Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(repository, gameVersion, version, libraryId, libraryVersion));
+                    Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(repository, gameVersion, manifest, libraryId, libraryVersion));
                 });
 
-                item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(version, libraryId)
+                item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(manifest, libraryId)
                         .thenComposeAsync(repository::saveAsync)
                         .withComposeAsync(repository.refreshAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.instanceId))
@@ -125,7 +125,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
 
                 InstallerItem installerItem = new InstallerItem(libraryId, InstallerItem.Style.LIST_ITEM);
                 installerItem.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
-                installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(version, libraryId)
+                installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(manifest, libraryId)
                         .thenComposeAsync(repository::saveAsync)
                         .withComposeAsync(repository.refreshAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.instanceId))
@@ -144,7 +144,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
     }
 
     private void doInstallOffline(Path file) {
-        Task<?> task = repository.getDependency().installLibraryAsync(version, file)
+        Task<?> task = repository.getDependency().installLibraryAsync(manifest, file)
                 .thenComposeAsync(repository::saveAsync)
                 .thenComposeAsync(repository.refreshAsync());
         task.setName(i18n("install.installer.install_offline"));

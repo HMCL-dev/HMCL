@@ -79,35 +79,35 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task<?> checkGameCompletionAsync(GameInstanceManifest version, boolean integrityCheck) {
+    public Task<?> checkGameCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck) {
         return Task.allOf(
                 Task.composeAsync(() -> {
-                    Path versionJar = repository.getInstanceJar(version);
+                    Path versionJar = repository.getInstanceJar(manifest);
 
                     return Files.notExists(versionJar) || FileUtils.size(versionJar) == 0L
-                            ? new GameDownloadTask(this, null, version)
+                            ? new GameDownloadTask(this, null, manifest)
                             : null;
-                }).thenComposeAsync(checkPatchCompletionAsync(version, integrityCheck)),
-                new GameAssetDownloadTask(this, version, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
+                }).thenComposeAsync(checkPatchCompletionAsync(manifest, integrityCheck)),
+                new GameAssetDownloadTask(this, manifest, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
                         .setSignificance(Task.TaskSignificance.MODERATE),
-                new GameLibrariesTask(this, version, integrityCheck)
+                new GameLibrariesTask(this, manifest, integrityCheck)
         );
     }
 
     @Override
-    public Task<?> checkLibraryCompletionAsync(GameInstanceManifest version, boolean integrityCheck) {
-        return new GameLibrariesTask(this, version, integrityCheck, version.getLibraries());
+    public Task<?> checkLibraryCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck) {
+        return new GameLibrariesTask(this, manifest, integrityCheck, manifest.getLibraries());
     }
 
     @Override
-    public Task<?> checkPatchCompletionAsync(GameInstanceManifest version, boolean integrityCheck) {
+    public Task<?> checkPatchCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck) {
         return Task.composeAsync(() -> {
             List<Task<?>> tasks = new ArrayList<>(0);
 
-            String gameVersion = repository.getGameVersion(version).orElse(null);
+            String gameVersion = repository.getGameVersion(manifest).orElse(null);
             if (gameVersion == null) return null;
 
-            GameInstanceManifest original = repository.getInstanceManifest(version.id());
+            GameInstanceManifest original = repository.getInstanceManifest(manifest.id());
             GameInstanceManifest standalone = repository.resolve(original).standaloneManifest();
 
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(standalone, gameVersion);
@@ -127,17 +127,17 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                                     .map(GameInstancePatch::getVersion)
                                     .orElse(null));
 
-                    boolean needsReInstallation = version.getLibraries().stream()
+                    boolean needsReInstallation = manifest.getLibraries().stream()
                             .anyMatch(library -> !library.hasDownloadURL()
                                     && "optifine".equals(library.getGroupId())
-                                    && GameLibrariesTask.shouldDownloadLibrary(repository, version, library, integrityCheck));
+                                    && GameLibrariesTask.shouldDownloadLibrary(repository, manifest, library, integrityCheck));
 
                     if (needsReInstallation) {
                         Library installer = new Library(new Artifact("optifine", "OptiFine", gameVersion + "_" + optifinePatchVersion, "installer"));
-                        if (GameLibrariesTask.shouldDownloadLibrary(repository, version, installer, integrityCheck)) {
+                        if (GameLibrariesTask.shouldDownloadLibrary(repository, manifest, installer, integrityCheck)) {
                             tasks.add(installLibraryAsync(gameVersion, original, "optifine", optifinePatchVersion));
                         } else {
-                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(version, installer)));
+                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(manifest, installer)));
                         }
                     }
                 }
@@ -210,16 +210,16 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
      * Remove installed library.
      * Will try to remove libraries and patches.
      *
-     * @param version not resolved version
+     * @param manifest not resolved instance manifest
      * @param libraryId forge/liteloader/optifine/fabric
      * @return task to remove the specified library
      */
-    public Task<GameInstanceManifest> removeLibraryAsync(GameInstanceManifest version, String libraryId) {
+    public Task<GameInstanceManifest> removeLibraryAsync(GameInstanceManifest manifest, String libraryId) {
         // MaintainTask requires version that does not inherits from any version.
         // If we want to remove a library in dependent version, we should keep the dependents not changed
         // So resolving this game version to preserve all information in this version.json is necessary.
         return Task.supplyAsync(() -> {
-            GameInstanceManifest independentVersion = repository.resolve(version).standaloneManifest();
+            GameInstanceManifest independentVersion = repository.resolve(manifest).standaloneManifest();
             String gameVersion = repository.getGameVersion(independentVersion).orElse(null);
             return LibraryAnalyzer.analyze(independentVersion, gameVersion).removeLibrary(libraryId).build();
         });

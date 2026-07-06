@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * @author huangyuhui
  */
 public final class GameInstanceLibraryBuilder {
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final List<String> mcArgs;
     private final List<Argument> game;
     private final List<Argument> jvm;
@@ -37,7 +37,7 @@ public final class GameInstanceLibraryBuilder {
     private boolean jvmChanged = false;
 
     public GameInstanceLibraryBuilder(GameInstanceManifest manifest) {
-        this.version = manifest;
+        this.manifest = manifest;
         this.libraries = new ArrayList<>(manifest.getLibraries());
         this.mcArgs = Optional.ofNullable(manifest.minecraftArguments()).map(StringUtils::tokenize).map(ArrayList::new).orElse(null);
         this.game = Optional.ofNullable(manifest.arguments()).map(Arguments::game).map(ArrayList::new).orElseGet(ArrayList::new);
@@ -46,7 +46,7 @@ public final class GameInstanceLibraryBuilder {
     }
 
     public GameInstanceManifest build() {
-        GameInstanceManifest ret = version;
+        GameInstanceManifest ret = manifest;
         if (useMcArgs) {
             // The official launcher will not parse the "arguments" property when it detects the presence of "mcArgs".
             // The "arguments" property with the "rule" is simply ignored here.

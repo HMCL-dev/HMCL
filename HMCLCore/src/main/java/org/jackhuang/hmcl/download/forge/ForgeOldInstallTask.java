@@ -39,14 +39,14 @@ import java.util.zip.ZipFile;
 public class ForgeOldInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final Path installer;
     private final String selfVersion;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    ForgeOldInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, String selfVersion, Path installer) {
+    ForgeOldInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.installer = installer;
         this.selfVersion = selfVersion;
 
@@ -73,7 +73,7 @@ public class ForgeOldInstallTask extends Task<GameInstancePatch> {
 
             // unpack the universal jar in the installer file.
             Library forgeLibrary = new Library(installProfile.getInstall().getPath());
-            Path forgeFile = dependencyManager.getGameRepository().getLibraryFile(version, forgeLibrary);
+            Path forgeFile = dependencyManager.getGameRepository().getLibraryFile(manifest, forgeLibrary);
             Files.createDirectories(forgeFile.getParent());
 
             ZipEntry forgeEntry = zipFile.getEntry(installProfile.getInstall().getFilePath());

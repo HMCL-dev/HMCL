@@ -251,21 +251,21 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             if (Files.exists(libraries))
                 FileUtils.copyDirectory(libraries, repository.getInstanceRoot(instanceId).resolve("libraries"));
 
-            for (Library library : artifact.getVersion().getLibraries()) {
+            for (Library library : artifact.getManifest().getLibraries()) {
                 if ("local".equals(library.getHint())) {
                     /* TODO: Determine whether we should erase community fields, like 'hint' and 'filename' from version json.
                         Retain them will facilitate compatibility, as some embedded libraries may check where their JAR is.
                         Meanwhile, potential compatibility issue with other launcher which never supports these fields might occur.
                         Here, we make the file stored twice, to keep maximum compatibility. */
-                    Path from = repository.getLibraryFile(artifact.getVersion(), library);
-                    Path target = repository.getLibraryFile(artifact.getVersion(), library.withoutCommunityFields());
+                    Path from = repository.getLibraryFile(artifact.getManifest(), library);
+                    Path target = repository.getLibraryFile(artifact.getManifest(), library.withoutCommunityFields());
                     Files.createDirectories(target.getParent());
                     Files.copy(from, target, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
 
             try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
-                Path libraryPath = repository.getLibraryFile(artifact.getVersion(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
+                Path libraryPath = repository.getLibraryFile(artifact.getManifest(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
 
                 Files.createDirectories(libraryPath.getParent());
                 Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), libraryPath, StandardCopyOption.REPLACE_EXISTING);
@@ -282,14 +282,14 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
         // Stage #5: Assemble game files.
         {
-            GameInstanceManifest version = artifact.getVersion();
+            GameInstanceManifest instanceManifest = artifact.getManifest();
 
-            dependencies.add(repository.saveAsync(artifact.getVersion()));
-            dependencies.add(new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true));
+            dependencies.add(repository.saveAsync(artifact.getManifest()));
+            dependencies.add(new GameAssetDownloadTask(dependencyManager, instanceManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true));
             dependencies.add(new GameLibrariesTask(
                     dependencyManager,
                     // TODO: check integrity of maven-only files when launching games?
-                    version.withLibraries(Lang.merge(version.getLibraries(), artifact.getMavenOnlyFiles())),
+                    instanceManifest.withLibraries(Lang.merge(instanceManifest.getLibraries(), artifact.getMavenOnlyFiles())),
                     true
             ));
 
@@ -301,9 +301,9 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                     Objects.equals(gameVersion, mainJarArtifact.getVersion()) &&
                     "client".equals(mainJarArtifact.getClassifier())
             ) {
-                dependencies.add(new GameDownloadTask(dependencyManager, gameVersion, version));
+                dependencies.add(new GameDownloadTask(dependencyManager, gameVersion, instanceManifest));
             } else {
-                dependencies.add(new GameDownloadTask(dependencyManager, null, version));
+                dependencies.add(new GameDownloadTask(dependencyManager, null, instanceManifest));
             }
         }
 

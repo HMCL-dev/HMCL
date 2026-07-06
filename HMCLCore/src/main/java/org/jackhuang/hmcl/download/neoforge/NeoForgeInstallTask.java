@@ -40,7 +40,7 @@ import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
 
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
 
     private final NeoForgeRemoteVersion remoteVersion;
 
@@ -50,9 +50,9 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
 
     private Task<GameInstancePatch> dependency;
 
-    public NeoForgeInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, NeoForgeRemoteVersion remoteVersion) {
+    public NeoForgeInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, NeoForgeRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.remoteVersion = remoteVersion;
     }
 
@@ -97,7 +97,7 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void execute() throws Exception {
-        dependency = install(dependencyManager, version, installer);
+        dependency = install(dependencyManager, manifest, installer);
     }
 
     public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest version, Path installer) throws IOException, VersionMismatchException {

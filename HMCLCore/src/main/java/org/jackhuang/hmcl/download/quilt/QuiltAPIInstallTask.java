@@ -36,13 +36,13 @@ import java.util.List;
 public final class QuiltAPIInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final QuiltAPIRemoteVersion remote;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public QuiltAPIInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, QuiltAPIRemoteVersion remoteVersion) {
+    public QuiltAPIInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, QuiltAPIRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
     }
 
@@ -60,7 +60,7 @@ public final class QuiltAPIInstallTask extends Task<GameInstancePatch> {
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
                 remote.getVersion().file().url(),
-                dependencyManager.getGameRepository().getModsDirectory(version.id()).resolve("quilt-api-" + remote.getVersion().version() + ".jar"),
+                dependencyManager.getGameRepository().getModsDirectory(manifest.id()).resolve("quilt-api-" + remote.getVersion().version() + ".jar"),
                 remote.getVersion().file().getIntegrityCheck())
         );
     }

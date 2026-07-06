@@ -199,7 +199,7 @@ public final class MultiMCInstancePatch {
     }
 
     public static final class ResolvedInstance {
-        private final GameInstanceManifest version;
+        private final GameInstanceManifest manifest;
 
         private final String gameVersion;
 
@@ -208,16 +208,16 @@ public final class MultiMCInstancePatch {
         private final List<String> jarModFileNames;
         private final List<Library> mavenOnlyFiles;
 
-        public ResolvedInstance(GameInstanceManifest version, String gameVersion, Library mainJar, List<String> jarModFileNames, List<Library> mavenOnlyFiles) {
-            this.version = version;
+        public ResolvedInstance(GameInstanceManifest manifest, String gameVersion, Library mainJar, List<String> jarModFileNames, List<Library> mavenOnlyFiles) {
+            this.manifest = manifest;
             this.gameVersion = gameVersion;
             this.mainJar = mainJar;
             this.jarModFileNames = jarModFileNames;
             this.mavenOnlyFiles = mavenOnlyFiles;
         }
 
-        public GameInstanceManifest getVersion() {
-            return version;
+        public GameInstanceManifest getManifest() {
+            return manifest;
         }
 
         public String getGameVersion() {

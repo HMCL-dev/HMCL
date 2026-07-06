@@ -42,24 +42,24 @@ import java.util.Optional;
 public final class CleanroomInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final CleanroomRemoteVersion remote;
     private Path installer;
     private FileDownloadTask dependent;
     private Task<GameInstancePatch> task;
     private String selfVersion;
 
-    public CleanroomInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, CleanroomRemoteVersion remoteVersion) {
+    public CleanroomInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, CleanroomRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
 
         setSignificance(TaskSignificance.MODERATE);
     }
 
-    public CleanroomInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, String selfVersion, Path installer) {
+    public CleanroomInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.selfVersion = selfVersion;
         this.remote = null;
         this.installer = installer;
@@ -113,14 +113,14 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
         if (selfVersion == null) {
-            task = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer).thenApplyAsync((version) -> version.withId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
+            task = new ForgeNewInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer).thenApplyAsync((version) -> version.withId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
         } else {
-            task = new ForgeNewInstallTask(dependencyManager, version, selfVersion, installer).thenApplyAsync((version) -> version.withId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
+            task = new ForgeNewInstallTask(dependencyManager, manifest, selfVersion, installer).thenApplyAsync((version) -> version.withId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
         }
     }
 
-    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest version, Path installer) throws IOException, VersionMismatchException {
-        Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
+    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, Path installer) throws IOException, VersionMismatchException {
+        Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(manifest);
         if (gameVersion.isEmpty()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
@@ -129,7 +129,7 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
-                return new CleanroomInstallTask(dependencyManager, version, modifyVersion(profile.getVersion()), installer);
+                return new CleanroomInstallTask(dependencyManager, manifest, modifyVersion(profile.getVersion()), installer);
             } else {
                 throw new IOException();
             }

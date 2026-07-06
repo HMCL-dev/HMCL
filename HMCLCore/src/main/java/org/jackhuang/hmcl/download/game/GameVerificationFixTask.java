@@ -40,13 +40,13 @@ import java.util.List;
 public final class GameVerificationFixTask extends Task<Void> {
     private final DefaultDependencyManager dependencyManager;
     private final String gameVersion;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
 
-    public GameVerificationFixTask(DefaultDependencyManager dependencyManager, String gameVersion, GameInstanceManifest version) {
+    public GameVerificationFixTask(DefaultDependencyManager dependencyManager, String gameVersion, GameInstanceManifest manifest) {
         this.dependencyManager = dependencyManager;
         this.gameVersion = gameVersion;
-        this.version = version;
+        this.manifest = manifest;
 
         setSignificance(TaskSignificance.MODERATE);
     }
@@ -58,8 +58,8 @@ public final class GameVerificationFixTask extends Task<Void> {
 
     @Override
     public void execute() throws IOException {
-        Path jar = dependencyManager.getGameRepository().getInstanceJar(version);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, gameVersion);
+        Path jar = dependencyManager.getGameRepository().getInstanceJar(manifest);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, gameVersion);
 
         if (Files.exists(jar) && GameVersionNumber.compare(gameVersion, "1.6") < 0 && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             try (FileSystem fs = CompressingUtils.createWritableZipFileSystem(jar, StandardCharsets.UTF_8)) {

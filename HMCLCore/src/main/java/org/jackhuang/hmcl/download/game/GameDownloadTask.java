@@ -35,13 +35,13 @@ import java.util.List;
 public final class GameDownloadTask extends Task<Void> {
     private final DefaultDependencyManager dependencyManager;
     private final String gameVersion;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
 
-    public GameDownloadTask(DefaultDependencyManager dependencyManager, String gameVersion, GameInstanceManifest version) {
+    public GameDownloadTask(DefaultDependencyManager dependencyManager, String gameVersion, GameInstanceManifest manifest) {
         this.dependencyManager = dependencyManager;
         this.gameVersion = gameVersion;
-        this.version = version.resolve(dependencyManager.getGameRepository());
+        this.manifest = manifest.resolve(dependencyManager.getGameRepository());
 
         setSignificance(TaskSignificance.MODERATE);
     }
@@ -53,12 +53,12 @@ public final class GameDownloadTask extends Task<Void> {
 
     @Override
     public void execute() {
-        Path jar = dependencyManager.getGameRepository().getInstanceJar(version);
+        Path jar = dependencyManager.getGameRepository().getInstanceJar(manifest);
 
         var task = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLWithCandidates(version.getDownloadInfo().getUrl()),
+                dependencyManager.getDownloadProvider().injectURLWithCandidates(manifest.getDownloadInfo().getUrl()),
                 jar,
-                FileDownloadTask.IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()));
+                FileDownloadTask.IntegrityCheck.of(CacheRepository.SHA1, manifest.getDownloadInfo().getSha1()));
         task.setCaching(true);
         task.setCacheRepository(dependencyManager.getCacheRepository());
 

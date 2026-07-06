@@ -169,10 +169,10 @@ public final class Instances {
     }
 
     public static void installFromJson(HMCLGameRepository repository, Path file) {
-        GameInstanceManifest version;
+        GameInstanceManifest manifest;
         try {
-            version = JsonUtils.fromJsonFile(file, GameInstanceManifest.class);
-            if (version == null) {
+            manifest = JsonUtils.fromJsonFile(file, GameInstanceManifest.class);
+            if (manifest == null) {
                 throw new IllegalArgumentException("Missing game manifest");
             }
         } catch (Exception e) {
@@ -186,7 +186,7 @@ public final class Instances {
             GameInstanceID instanceId = new GameInstanceID(result);
 
             DefaultDependencyManager dependencyManager = repository.getDependency();
-            GameInstanceManifest newVersion = version.withId(instanceId).withJar(instanceId);
+            GameInstanceManifest newVersion = manifest.withId(instanceId).withJar(instanceId);
 
             Controllers.taskDialog(
                     Task.allOf(new GameDownloadTask(dependencyManager, null, newVersion),

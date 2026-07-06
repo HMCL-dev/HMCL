@@ -34,11 +34,11 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMark> {
-    private GameInstanceManifest version;
+    private GameInstanceManifest manifest;
     private final Map<String, Pair<Library, String>> libraries;
 
-    private LibraryAnalyzer(GameInstanceManifest version, Map<String, Pair<Library, String>> libraries) {
-        this.version = version;
+    private LibraryAnalyzer(GameInstanceManifest manifest, Map<String, Pair<Library, String>> libraries) {
+        this.manifest = manifest;
         this.libraries = libraries;
     }
 
@@ -60,7 +60,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
      * Maybe a guessing implementation will be provided in the future. But by now, we simply set it to JUST_EXISTED.
      */
     public LibraryMark.LibraryStatus getLibraryStatus(String type) {
-        return version.hasPatch(type) ? LibraryMark.LibraryStatus.CLEAR : LibraryMark.LibraryStatus.JUST_EXISTED;
+        return manifest.hasPatch(type) ? LibraryMark.LibraryStatus.CLEAR : LibraryMark.LibraryStatus.JUST_EXISTED;
     }
 
     @NotNull
@@ -97,17 +97,17 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public boolean hasModLauncher() {
-        return LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(version.mainClass()) || version.getPatches().stream().anyMatch(
+        return LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass()) || manifest.getPatches().stream().anyMatch(
                 patch -> LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.getMainClass())
         );
     }
 
-    private GameInstanceManifest removingMatchedLibrary(GameInstanceManifest version, String libraryId) {
+    private GameInstanceManifest removingMatchedLibrary(GameInstanceManifest manifest, String libraryId) {
         LibraryType type = LibraryType.fromPatchId(libraryId);
-        if (type == null) return version;
+        if (type == null) return manifest;
 
         List<Library> libraries = new ArrayList<>();
-        List<Library> rawLibraries = version.getLibraries();
+        List<Library> rawLibraries = manifest.getLibraries();
         for (Library library : rawLibraries) {
             if (type.matchLibrary(library, rawLibraries)) {
                 // skip
@@ -115,7 +115,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 libraries.add(library);
             }
         }
-        return version.withLibraries(libraries);
+        return manifest.withLibraries(libraries);
     }
 
     private GameInstancePatch removingMatchedLibrary(GameInstancePatch patch, String libraryId) {
@@ -142,8 +142,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
      */
     public LibraryAnalyzer removeLibrary(String libraryId) {
         if (!has(libraryId)) return this;
-        GameInstanceManifest manifest = removingMatchedLibrary(version, libraryId);
-        version = manifest.withPatches(version.getPatches().stream()
+        GameInstanceManifest manifest = removingMatchedLibrary(this.manifest, libraryId);
+        this.manifest = manifest.withPatches(this.manifest.getPatches().stream()
                 .filter(patch -> !libraryId.equals(patch.getId()))
                 .map(patch -> removingMatchedLibrary(patch, libraryId))
                 .collect(Collectors.toList()));
@@ -151,7 +151,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public GameInstanceManifest build() {
-        return version;
+        return manifest;
     }
 
     public static LibraryAnalyzer analyze(GameInstanceManifest manifest, String gameVersion) {
@@ -182,10 +182,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return new LibraryAnalyzer(manifest, libraries);
     }
 
-    public static boolean isModded(GameRepository provider, GameInstanceManifest version) {
+    public static boolean isModded(GameRepository provider, GameInstanceManifest manifest) {
         GameInstanceManifest resolvedVersion;
         try {
-            resolvedVersion = version.resolve(provider);
+            resolvedVersion = manifest.resolve(provider);
         } catch (NoSuchGameInstanceException e) {
             return false;
         }

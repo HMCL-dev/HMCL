@@ -39,15 +39,15 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
     protected final BooleanProperty compatible = new SimpleBooleanProperty();
     protected final HMCLGameRepository repository;
     protected final String gameVersion;
-    protected final GameInstanceManifest version;
+    protected final GameInstanceManifest manifest;
 
-    public AdditionalInstallersPage(String gameVersion, GameInstanceManifest version, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
+    public AdditionalInstallersPage(String gameVersion, GameInstanceManifest manifest, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
         this.gameVersion = gameVersion;
-        this.version = version;
+        this.manifest = manifest;
         this.repository = repository;
 
-        txtName.setText(version.id().toString());
+        txtName.setText(manifest.id().toString());
         txtName.setEditable(false);
 
         for (InstallerItem library : group.getLibraries()) {
@@ -80,7 +80,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     @Override
     protected void reload() {
-        GameInstanceManifest standalone = repository.resolve(version).standaloneManifest();
+        GameInstanceManifest standalone = repository.resolve(manifest).standaloneManifest();
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(standalone, repository.getGameVersion(standalone).orElse(null));
         String game = analyzer.getVersion(MINECRAFT).orElse(null);
         String currentGameVersion = Lang.nonNull(getVersion("game"), game);

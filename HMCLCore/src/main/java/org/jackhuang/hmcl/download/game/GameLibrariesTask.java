@@ -55,7 +55,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class GameLibrariesTask extends Task<Void> {
 
     private final AbstractDependencyManager dependencyManager;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final boolean integrityCheck;
     private final List<Library> libraries;
     private final List<Task<?>> dependencies = new ArrayList<>();
@@ -64,21 +64,21 @@ public final class GameLibrariesTask extends Task<Void> {
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link GameRepository}
-     * @param version           the game version
+     * @param manifest           the game version
      */
-    public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest version, boolean integrityCheck) {
-        this(dependencyManager, version, integrityCheck, version.resolve(dependencyManager.getGameRepository()).getLibraries());
+    public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean integrityCheck) {
+        this(dependencyManager, manifest, integrityCheck, manifest.resolve(dependencyManager.getGameRepository()).getLibraries());
     }
 
     /**
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link GameRepository}
-     * @param version           the game version
+     * @param manifest           the game version
      */
-    public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest version, boolean integrityCheck, List<Library> libraries) {
+    public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean integrityCheck, List<Library> libraries) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.integrityCheck = integrityCheck;
         this.libraries = libraries;
 
@@ -91,8 +91,8 @@ public final class GameLibrariesTask extends Task<Void> {
         return dependencies;
     }
 
-    public static boolean shouldDownloadLibrary(GameRepository gameRepository, GameInstanceManifest version, Library library, boolean integrityCheck) {
-        Path file = gameRepository.getLibraryFile(version, library);
+    public static boolean shouldDownloadLibrary(GameRepository gameRepository, GameInstanceManifest manifest, Library library, boolean integrityCheck) {
+        Path file = gameRepository.getLibraryFile(manifest, library);
         if (!Files.isRegularFile(file)) return true;
 
         if (!integrityCheck) {
@@ -161,9 +161,9 @@ public final class GameLibrariesTask extends Task<Void> {
                 }
             }
 
-            Path file = gameRepository.getLibraryFile(version, library);
-            if ("optifine".equals(library.getGroupId()) && Files.exists(file) && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(version).orElse(null)).compareTo("1.20.4") == 0) {
-                String forgeVersion = LibraryAnalyzer.analyze(version, "1.20.4")
+            Path file = gameRepository.getLibraryFile(manifest, library);
+            if ("optifine".equals(library.getGroupId()) && Files.exists(file) && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(manifest).orElse(null)).compareTo("1.20.4") == 0) {
+                String forgeVersion = LibraryAnalyzer.analyze(manifest, "1.20.4")
                         .getVersion(LibraryAnalyzer.LibraryType.FORGE)
                         .orElse(null);
                 if (forgeVersion != null && LibraryAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
@@ -182,7 +182,7 @@ public final class GameLibrariesTask extends Task<Void> {
                 }
             }
 
-            if (shouldDownloadLibrary(gameRepository, version, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.getGroupId()))) {
+            if (shouldDownloadLibrary(gameRepository, manifest, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.getGroupId()))) {
                 dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter("hmcl.install.libraries"));
             } else {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file);

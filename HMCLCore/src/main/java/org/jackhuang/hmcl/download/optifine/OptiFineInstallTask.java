@@ -52,7 +52,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultGameRepository gameRepository;
     private final DefaultDependencyManager dependencyManager;
-    private final GameInstanceManifest version;
+    private final GameInstanceManifest manifest;
     private final OptiFineRemoteVersion remote;
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(0);
@@ -62,14 +62,14 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
     private final Library optiFineLibrary;
     private final Library optiFineInstallerLibrary;
 
-    public OptiFineInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, OptiFineRemoteVersion remoteVersion) {
-        this(dependencyManager, version, remoteVersion, null);
+    public OptiFineInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, OptiFineRemoteVersion remoteVersion) {
+        this(dependencyManager, manifest, remoteVersion, null);
     }
 
-    public OptiFineInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, OptiFineRemoteVersion remoteVersion, Path installer) {
+    public OptiFineInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, OptiFineRemoteVersion remoteVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
         this.installer = installer;
 
@@ -123,14 +123,14 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void execute() throws Exception {
-        String originalMainClass = version.resolve(dependencyManager.getGameRepository()).mainClass();
+        String originalMainClass = manifest.resolve(dependencyManager.getGameRepository()).mainClass();
         if (!LibraryAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
             throw new UnsupportedInstallationException(UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER);
 
         List<Library> libraries = new ArrayList<>(4);
         libraries.add(optiFineLibrary);
 
-        Path optiFineInstallerLibraryPath = gameRepository.getLibraryFile(version, optiFineInstallerLibrary);
+        Path optiFineInstallerLibraryPath = gameRepository.getLibraryFile(manifest, optiFineInstallerLibrary);
         FileUtils.copyFile(dest, optiFineInstallerLibraryPath);
 
         try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(optiFineInstallerLibraryPath)) {
@@ -140,14 +140,14 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
         // Install launch wrapper modified by OptiFine
         boolean hasLaunchWrapper = false;
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(dest)) {
-            Path optiFineLibraryPath = gameRepository.getLibraryFile(version, optiFineLibrary);
+            Path optiFineLibraryPath = gameRepository.getLibraryFile(manifest, optiFineLibrary);
             if (Files.exists(fs.getPath("optifine/Patcher.class"))) {
                 String[] command = {
                         JavaRuntime.getDefault().getBinary().toString(),
                         "-cp",
                         dest.toString(),
                         "optifine.Patcher",
-                        gameRepository.getInstanceJar(version).toAbsolutePath().normalize().toString(),
+                        gameRepository.getInstanceJar(manifest).toAbsolutePath().normalize().toString(),
                         dest.toString(),
                         optiFineLibraryPath.toString()
                 };
@@ -165,7 +165,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
             Path launchWrapper2 = fs.getPath("launchwrapper-2.0.jar");
             if (Files.exists(launchWrapper2)) {
                 Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper", "2.0"));
-                Path launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
+                Path launchWrapperFile = gameRepository.getLibraryFile(manifest, launchWrapper);
                 Files.createDirectories(launchWrapperFile.toAbsolutePath().getParent());
                 FileUtils.copyFile(launchWrapper2, launchWrapperFile);
                 hasLaunchWrapper = true;
@@ -180,7 +180,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
                 Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper-of", launchWrapperVersion));
 
                 if (Files.exists(launchWrapperJar)) {
-                    Path launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
+                    Path launchWrapperFile = gameRepository.getLibraryFile(manifest, launchWrapper);
                     Files.createDirectories(launchWrapperFile.toAbsolutePath().getParent());
                     FileUtils.copyFile(launchWrapperJar, launchWrapperFile);
 
@@ -216,7 +216,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
                 libraries
         ));
 
-        dependencies.add(new org.jackhuang.hmcl.download.game.GameLibrariesTask(dependencyManager, version, true, getResult().getLibraries()));
+        dependencies.add(new org.jackhuang.hmcl.download.game.GameLibrariesTask(dependencyManager, manifest, true, getResult().getLibraries()));
     }
 
     /**
