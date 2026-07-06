@@ -27,6 +27,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -56,17 +57,17 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class ModpackFileSelectionPage extends BorderPane implements WizardPage {
     private final WizardController controller;
-    private final String version;
+    private final GameInstanceID instanceId;
     private final ModAdviser adviser;
     private final ModpackFileTreeItem rootNode;
 
-    public ModpackFileSelectionPage(WizardController controller, HMCLGameRepository repository, String version, ModAdviser adviser) {
+    public ModpackFileSelectionPage(WizardController controller, HMCLGameRepository repository, GameInstanceID instanceId, ModAdviser adviser) {
         this.controller = controller;
-        this.version = version;
+        this.instanceId = instanceId;
         this.adviser = adviser;
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
-        rootNode = getTreeItem(repository.getRunDirectory(version), "minecraft", 0);
+        rootNode = getTreeItem(repository.getRunDirectory(instanceId), "minecraft", 0);
         treeView.setRoot(rootNode);
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         onEscPressed(treeView, () -> controller.onPrev(true));
@@ -107,12 +108,12 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                 }
                 if (fileName.startsWith("._")) // macOS system file
                     state = ModAdviser.ModSuggestion.HIDDEN;
-                if (FileUtils.getNameWithoutExtension(file).equals(version))
+                if (FileUtils.getNameWithoutExtension(file).equals(instanceId))
                     state = ModAdviser.ModSuggestion.HIDDEN;
             }
 
             if (isDirectory) {
-                if (fileName.equals(version + "-natives")) { // Ignore <version>-natives
+                if (fileName.equals(instanceId + "-natives")) { // Ignore <version>-natives
                     state = ModAdviser.ModSuggestion.HIDDEN;
                 }
                 if (level == 1 && fileName.startsWith("natives-")) { // Ignore natives-os-arch
@@ -123,7 +124,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                 return null;
         }
 
-        ModpackFileTreeItem node = new ModpackFileTreeItem(level == 0 ? version : StringUtils.substringAfterLast(basePath, '/'), basePath);
+        ModpackFileTreeItem node = new ModpackFileTreeItem(level == 0 ? instanceId.toString() : StringUtils.substringAfterLast(basePath, '/'), basePath);
         if (state == ModAdviser.ModSuggestion.SUGGESTED)
             node.setSelected(true);
 

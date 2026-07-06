@@ -161,7 +161,7 @@ public final class Instances {
     }
 
     public static void exportInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
-        Controllers.getDecorator().startWizard(new ExportWizardProvider(repository, instanceId.toString()), i18n("modpack.wizard")); // TODO
+        Controllers.getDecorator().startWizard(new ExportWizardProvider(repository, instanceId), i18n("modpack.wizard"));
     }
 
     public static void openFolder(HMCLGameRepository repository, GameInstanceID instanceId) {

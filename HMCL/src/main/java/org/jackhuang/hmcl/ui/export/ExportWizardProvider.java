@@ -48,13 +48,11 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final HMCLGameRepository repository;
-    private final String version;
     private final GameInstanceID instanceId;
 
-    public ExportWizardProvider(HMCLGameRepository repository, String version) {
+    public ExportWizardProvider(HMCLGameRepository repository, GameInstanceID instanceId) {
         this.repository = repository;
-        this.version = version;
-        this.instanceId = new GameInstanceID(version);
+        this.instanceId = instanceId;
     }
 
     @Override
@@ -167,7 +165,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new McbbsModpackExportTask(repository, version, exportInfo, modpackFile);
+                dependency = new McbbsModpackExportTask(repository, instanceId, exportInfo, modpackFile);
             }
 
             @Override
@@ -188,7 +186,7 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
             public void execute() {
                 GameSettings.Effective setting = repository.getEffectiveGameSettings(instanceId);
-                dependency = new MultiMCModpackExportTask(repository, version, exportInfo.getWhitelist(),
+                dependency = new MultiMCModpackExportTask(repository, instanceId, exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",
                                 exportInfo.getName() + "-" + exportInfo.getVersion(),
@@ -235,7 +233,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new ServerModpackExportTask(repository, version, exportInfo, modpackFile);
+                dependency = new ServerModpackExportTask(repository, instanceId, exportInfo, modpackFile);
             }
 
             @Override
@@ -257,7 +255,7 @@ public final class ExportWizardProvider implements WizardProvider {
             public void execute() {
                 dependency = new ModrinthModpackExportTask(
                         repository,
-                        version,
+                        instanceId,
                         exportInfo,
                         modpackFile
                 );
@@ -274,8 +272,8 @@ public final class ExportWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
         return switch (step) {
             case 0 -> new ModpackTypeSelectionPage(controller);
-            case 1 -> new ModpackInfoPage(controller, repository, version);
-            case 2 -> new ModpackFileSelectionPage(controller, repository, version, ModAdviser::suggestMod);
+            case 1 -> new ModpackInfoPage(controller, repository, instanceId);
+            case 2 -> new ModpackFileSelectionPage(controller, repository, instanceId, ModAdviser::suggestMod);
             default -> throw new IllegalArgumentException("step");
         };
     }

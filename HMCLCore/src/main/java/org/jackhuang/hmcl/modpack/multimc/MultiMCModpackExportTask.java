@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.modpack.multimc;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
@@ -42,18 +43,18 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public class MultiMCModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
-    private final String versionId;
+    private final GameInstanceID instanceId;
     private final List<String> whitelist;
     private final MultiMCInstanceConfiguration configuration;
     private final Path output;
 
     /**
      * @param output    mod pack file.
-     * @param versionId to locate version.json
+     * @param instanceId to locate version.json
      */
-    public MultiMCModpackExportTask(DefaultGameRepository repository, String versionId, List<String> whitelist, MultiMCInstanceConfiguration configuration, Path output) {
+    public MultiMCModpackExportTask(DefaultGameRepository repository, GameInstanceID instanceId, List<String> whitelist, MultiMCInstanceConfiguration configuration, Path output) {
         this.repository = repository;
-        this.versionId = versionId;
+        this.instanceId = instanceId;
         this.whitelist = whitelist;
         this.configuration = configuration;
         this.output = output;
@@ -72,15 +73,15 @@ public class MultiMCModpackExportTask extends Task<Void> {
     @Override
     public void execute() throws Exception {
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
-        blackList.add(versionId + ".jar");
-        blackList.add(versionId + ".json");
+        blackList.add(instanceId + ".jar");
+        blackList.add(instanceId + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (Zipper zip = new Zipper(output)) {
-            zip.putDirectory(repository.getRunDirectory(versionId), ".minecraft", path -> Modpack.acceptFile(path, blackList, whitelist));
+            zip.putDirectory(repository.getRunDirectory(instanceId), ".minecraft", path -> Modpack.acceptFile(path, blackList, whitelist));
 
-            String gameVersion = repository.getGameVersion(versionId)
-                    .orElseThrow(() -> new IOException("Cannot parse the version of " + versionId));
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(versionId), gameVersion);
+            String gameVersion = repository.getGameVersion(instanceId)
+                    .orElseThrow(() -> new IOException("Cannot parse the version of " + instanceId));
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(instanceId), gameVersion);
             List<MultiMCManifest.MultiMCManifestComponent> components = new ArrayList<>();
             components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, MultiMCComponents.getComponent(MINECRAFT), gameVersion));
 

@@ -92,14 +92,6 @@ public interface GameRepository {
     /// @return the resolved manifest view
     GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
 
-    /// Returns a resolved instance manifest by string id.
-    ///
-    /// @param id the instance id string
-    /// @return the resolved manifest
-    default GameInstanceManifest getResolvedInstanceManifest(String id) throws NoSuchGameInstanceException {
-        return getResolvedInstanceManifest(new GameInstanceID(id)).manifest();
-    }
-
     /// Returns a standalone manifest view for the instance.
     ///
     /// @param instanceId the instance id
@@ -112,8 +104,8 @@ public interface GameRepository {
     ///
     /// @param id the instance id string
     /// @return the standalone manifest
-    default GameInstanceManifest getResolvedPreservingPatchesManifest(String id) throws NoSuchGameInstanceException {
-        return getResolvedPreservingPatchesInstanceManifest(new GameInstanceID(id)).manifest();
+    default GameInstanceManifest getResolvedPreservingPatchesManifest(GameInstanceID id) throws NoSuchGameInstanceException {
+        return getResolvedPreservingPatchesInstanceManifest(id).manifest();
     }
 
     /// Returns the number of loaded instances.

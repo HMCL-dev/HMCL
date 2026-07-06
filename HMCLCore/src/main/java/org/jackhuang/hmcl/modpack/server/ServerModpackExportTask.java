@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.modpack.server;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -41,13 +42,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class ServerModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
-    private final String versionId;
+    private final GameInstanceID instanceId;
     private final ModpackExportInfo exportInfo;
     private final Path modpackFile;
 
-    public ServerModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo exportInfo, Path modpackFile) {
+    public ServerModpackExportTask(DefaultGameRepository repository, GameInstanceID instanceId, ModpackExportInfo exportInfo, Path modpackFile) {
         this.repository = repository;
-        this.versionId = version;
+        this.instanceId = instanceId;
         this.exportInfo = exportInfo.validate();
         this.modpackFile = modpackFile;
 
@@ -65,11 +66,11 @@ public class ServerModpackExportTask extends Task<Void> {
     @Override
     public void execute() throws Exception {
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
-        blackList.add(versionId + ".jar");
-        blackList.add(versionId + ".json");
+        blackList.add(instanceId + ".jar");
+        blackList.add(instanceId + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (Zipper zip = new Zipper(modpackFile)) {
-            Path runDirectory = repository.getRunDirectory(versionId);
+            Path runDirectory = repository.getRunDirectory(instanceId);
             List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
             zip.putDirectory(runDirectory, "overrides", path -> {
                 if (Modpack.acceptFile(path, blackList, exportInfo.getWhitelist())) {
@@ -84,9 +85,9 @@ public class ServerModpackExportTask extends Task<Void> {
                 }
             });
 
-            String gameVersion = repository.getGameVersion(versionId)
-                    .orElseThrow(() -> new IOException("Cannot parse the version of " + versionId));
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(versionId), gameVersion);
+            String gameVersion = repository.getGameVersion(instanceId)
+                    .orElseThrow(() -> new IOException("Cannot parse the version of " + instanceId));
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(instanceId), gameVersion);
             List<ServerModpackManifest.Addon> addons = new ArrayList<>();
             addons.add(new ServerModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
             analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
