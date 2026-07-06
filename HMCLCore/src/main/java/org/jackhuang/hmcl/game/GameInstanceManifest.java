@@ -329,13 +329,6 @@ public record GameInstanceManifest(
         return root != null && root;
     }
 
-    /// Returns the instance id as a string.
-    ///
-    /// @return the instance id string
-    public String getId() {
-        return id.id();
-    }
-
     /// Returns legacy game arguments.
     ///
     /// @return the legacy game arguments

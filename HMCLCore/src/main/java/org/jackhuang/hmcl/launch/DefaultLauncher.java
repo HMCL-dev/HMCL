@@ -352,7 +352,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (manifest.getMainClass() == null) {
-            throw new IllegalStateException("Main class is null for instance " + manifest.getId());
+            throw new IllegalStateException("Main class is null for instance " + manifest.id());
         }
 
         res.add(manifest.getMainClass());
@@ -494,7 +494,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     public Path getLog4jConfigurationFile() {
-        return repository.getInstanceRoot(manifest.getId()).resolve("log4j2.xml");
+        return repository.getInstanceRoot(manifest.id()).resolve("log4j2.xml");
     }
 
     public void extractLog4jConfigurationFile() throws IOException {
@@ -528,10 +528,10 @@ public class DefaultLauncher extends Launcher {
                 pair("${auth_session}", authInfo.getAccessToken()),
                 pair("${auth_access_token}", authInfo.getAccessToken()),
                 pair("${auth_uuid}", UUIDs.toCompactString(authInfo.getUUID())),
-                pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(manifest.getId())),
+                pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(manifest.id().toString())),
                 pair("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
                 pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(manifest.getType().getId())),
-                pair("${game_directory}", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.getId()))),
+                pair("${game_directory}", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.id()))),
                 pair("${user_type}", authInfo.getUserType()),
                 pair("${assets_index_name}", manifest.getAssetIndex().getId()),
                 pair("${user_properties}", authInfo.getUserProperties()),
@@ -556,7 +556,7 @@ public class DefaultLauncher extends Launcher {
     /// Returns the native library directory selected by the launch options.
     private Path getNativeFolder() {
         if (StringUtils.isBlank(options.getNativesDir())) {
-            return repository.getNativeDirectory(manifest.getId(), options.getJava().getPlatform());
+            return repository.getNativeDirectory(manifest.id(), options.getJava().getPlatform());
         }
 
         return Path.of(options.getNativesDir());
@@ -587,7 +587,7 @@ public class DefaultLauncher extends Launcher {
         if (isUsingLog4j())
             extractLog4jConfigurationFile();
 
-        Path runDirectory = repository.getRunDirectory(manifest.getId());
+        Path runDirectory = repository.getRunDirectory(manifest.id());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
             ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars(nativeFolder))).directory(runDirectory.toFile());
@@ -617,13 +617,13 @@ public class DefaultLauncher extends Launcher {
     }
 
     private Map<String, String> getEnvVars(Path nativeFolder) {
-        String versionName = Optional.ofNullable(options.getVersionName()).orElse(manifest.getId());
+        String versionName = Optional.ofNullable(options.getVersionName()).orElse(manifest.id().toString());
 
         Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
-        env.put("INST_DIR", FileUtils.getAbsolutePath(repository.getInstanceRoot(manifest.getId())));
-        env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.getId())));
+        env.put("INST_DIR", FileUtils.getAbsolutePath(repository.getInstanceRoot(manifest.id())));
+        env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.id())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
         if (options.getRenderer() instanceof Renderer.Driver driver) {
@@ -782,7 +782,7 @@ public class DefaultLauncher extends Launcher {
                         writer.newLine();
                     }
                     writer.write("Set-Location -LiteralPath ");
-                    writer.write(CommandBuilder.pwshString(FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.getId()))));
+                    writer.write(CommandBuilder.pwshString(FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.id()))));
                     writer.newLine();
 
 
@@ -826,7 +826,7 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         writer.newLine();
-                        writer.write(new CommandBuilder().addAll("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.id()))).toString());
                     } else {
                         writer.write("#!/usr/bin/env bash");
                         writer.newLine();
@@ -838,7 +838,7 @@ public class DefaultLauncher extends Launcher {
                             writer.write(new CommandBuilder().addAll("ln", "-s", FileUtils.getAbsolutePath(nativeFolder), commandLine.tempNativeFolder.toString()).toString());
                             writer.newLine();
                         }
-                        writer.write(new CommandBuilder().addAll("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.id()))).toString());
                     }
                     writer.newLine();
                     if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {

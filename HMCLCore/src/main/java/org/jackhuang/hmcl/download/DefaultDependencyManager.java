@@ -107,7 +107,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             String gameVersion = repository.getGameVersion(version).orElse(null);
             if (gameVersion == null) return null;
 
-            GameInstanceManifest original = repository.getInstanceManifest(version.getId());
+            GameInstanceManifest original = repository.getInstanceManifest(version.id());
             GameInstanceManifest resolved = original.resolvePreservingPatches(repository);
 
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);

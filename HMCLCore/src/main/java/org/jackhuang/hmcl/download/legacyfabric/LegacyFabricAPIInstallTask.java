@@ -55,7 +55,7 @@ public final class LegacyFabricAPIInstallTask extends Task<GameInstancePatch> {
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
                 remote.getVersion().file().url(),
-                dependencyManager.getGameRepository().getModsDirectory(version.getId()).resolve("legacy-fabric-api-" + remote.getVersion().version() + ".jar"),
+                dependencyManager.getGameRepository().getModsDirectory(version.id()).resolve("legacy-fabric-api-" + remote.getVersion().version() + ".jar"),
                 remote.getVersion().file().getIntegrityCheck())
         );
     }
