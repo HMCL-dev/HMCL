@@ -154,6 +154,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return manifest;
     }
 
+    public static LibraryAnalyzer analyze(GameInstanceManifest.Resolved resolved, String gameVersion) {
+        return analyze(resolved.standaloneManifest(), gameVersion);
+    }
+
     public static LibraryAnalyzer analyze(GameInstanceManifest manifest, String gameVersion) {
         if (manifest.inheritsFrom() != null)
             throw new IllegalArgumentException("LibraryAnalyzer can only analyze independent game version");
@@ -182,14 +186,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return new LibraryAnalyzer(manifest, libraries);
     }
 
-    public static boolean isModded(GameRepository provider, GameInstanceManifest manifest) {
-        GameInstanceManifest resolvedVersion;
-        try {
-            resolvedVersion = manifest.resolve(provider);
-        } catch (NoSuchGameInstanceException e) {
-            return false;
-        }
-        String mainClass = resolvedVersion.mainClass();
+    public static boolean isModded(GameInstanceManifest.Resolved resolved) {
+        String mainClass = resolved.launchManifest().mainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
                 || mainClass.startsWith("net.minecraftforge")
                 || mainClass.startsWith("net.neoforged")

@@ -72,7 +72,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
         CompletableFuture.supplyAsync(() -> {
             gameVersion = repository.getGameVersion(manifest).orElse(null);
 
-            return LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId).standaloneManifest(), gameVersion);
+            return LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId), gameVersion);
         }).thenAcceptAsync(analyzer -> {
             itemsProperty().clear();
 

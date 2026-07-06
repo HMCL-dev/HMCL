@@ -181,7 +181,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             localMods.clear();
 
             try {
-                analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedInstanceManifest(instanceId).standaloneManifest(), null);
+                analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedInstanceManifest(instanceId), null);
             } catch (NoSuchGameInstanceException e) {
                 throw new IOException(e);
             }

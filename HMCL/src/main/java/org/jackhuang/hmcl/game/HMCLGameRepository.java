@@ -537,7 +537,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         boolean isolated = switch (type) {
             case NEVER -> false;
             case ALWAYS -> true;
-            case MODDED -> LibraryAnalyzer.isModded(this, getInstanceManifest(instanceId).resolve(this));
+            case MODDED -> LibraryAnalyzer.isModded(getResolvedInstanceManifest(instanceId));
         };
 
         if (isolated) {
@@ -592,7 +592,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         GameInstanceIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT) : GameInstanceIconType.DEFAULT;
 
         if (iconType == GameInstanceIconType.DEFAULT) {
-            GameInstanceManifest manifest = getResolvedInstanceManifest(instanceId).launchManifest();
+            GameInstanceManifest.Resolved resolvedInstanceManifest = getResolvedInstanceManifest(instanceId);
+            GameInstanceManifest manifest = resolvedInstanceManifest.launchManifest();
             Optional<Path> iconFile = getInstanceIconFile(instanceId);
             if (iconFile.isPresent()) {
                 try {
@@ -602,8 +603,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 }
             }
 
-            if (LibraryAnalyzer.isModded(this, manifest)) {
-                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(manifest, null);
+            if (LibraryAnalyzer.isModded(resolvedInstanceManifest)) {
+                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(resolvedInstanceManifest, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
                     return GameInstanceIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))

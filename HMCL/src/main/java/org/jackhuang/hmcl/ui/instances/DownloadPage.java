@@ -272,13 +272,13 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     if (control.instanceReference.repository() != null && control.instanceReference.instanceId() != null) {
                         HMCLGameRepository repository = control.instanceReference.repository();
-                        GameInstanceManifest game = repository.getResolvedInstanceManifest(control.instanceReference.instanceId()).standaloneManifest();
-                        String gameVersion = repository.getGameVersion(game).orElse(null);
+                        GameInstanceManifest.Resolved resolvedManifest = repository.getResolvedInstanceManifest(control.instanceReference.instanceId());
+                        String gameVersion = repository.getGameVersion(resolvedManifest.unresolved()).orElse(null);
 
                         if (gameVersion != null && control.versions.containsKey(gameVersion)) {
                             List<RemoteAddon.Version> modVersions = control.versions.get(gameVersion);
                             if (modVersions != null && !modVersions.isEmpty()) {
-                                Set<ModLoaderType> targetLoaders = LibraryAnalyzer.analyze(game, gameVersion).getModLoaders();
+                                Set<ModLoaderType> targetLoaders = LibraryAnalyzer.analyze(resolvedManifest, gameVersion).getModLoaders();
 
                                 resolve:
                                 for (RemoteAddon.Version modVersion : modVersions) {
