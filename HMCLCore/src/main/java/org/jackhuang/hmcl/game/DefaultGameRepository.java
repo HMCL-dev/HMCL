@@ -634,6 +634,28 @@ public class DefaultGameRepository implements GameRepository {
             this.baseDirectory = baseDirectory;
         }
 
+        private List<GameInstanceManifest> getInheritanceChain(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
+            if (manifest.inheritsFrom() == null)
+                return List.of(manifest);
+
+            List<GameInstanceManifest> chain = new ArrayList<>(2);
+
+            for (GameInstanceManifest currentManifest = manifest; ; ) {
+                chain.add(currentManifest);
+                if (currentManifest.inheritsFrom() == null) {
+                    break;
+                } else {
+                    InstanceHolder parent = instances.get(currentManifest.inheritsFrom());
+                    if (parent == null) {
+                        throw new NoSuchGameInstanceException(currentManifest.inheritsFrom());
+                    }
+                    currentManifest = parent.manifest;
+                }
+            }
+
+            return chain;
+        }
+
         private GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,
                                                       Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
             GameInstanceManifest launchManifest;
