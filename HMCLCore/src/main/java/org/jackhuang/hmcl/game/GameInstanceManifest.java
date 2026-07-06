@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -142,11 +141,6 @@ public record GameInstanceManifest(
                 false,
                 null,
                 null);
-    }
-
-    /// Creates an empty root manifest with the given id.
-    public GameInstanceManifest(String id) {
-        this(new GameInstanceID(id));
     }
 
     public static GameInstanceManifest fromJson(JsonObject json, boolean copyJson) throws JsonParseException {
