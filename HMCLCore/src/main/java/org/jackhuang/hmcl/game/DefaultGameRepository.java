@@ -209,7 +209,7 @@ public class DefaultGameRepository implements GameRepository {
         Map<GameInstanceID, InstanceHolder> loadedInstances = new TreeMap<>();
         for (InstanceHolder holder : newStatus.instances.values()) {
             try {
-                GameInstanceManifest resolved = newStatus.resolve(holder.manifest, new HashSet<>());
+                GameInstanceManifest resolved = newStatus.resolve(holder.manifest, new HashSet<>()).launchManifest();
                 if (CompatibilityRule.appliesToCurrentEnvironment(resolved.compatibilityRules())) {
                     loadedInstances.put(holder.id, holder);
                 }
@@ -623,13 +623,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        GameInstanceManifest launchManifest = status.resolve(manifest, new HashSet<>()).withPatches(null);
-        GameInstanceManifest standaloneManifest = status.resolveStandalone(manifest, new HashSet<>());
-        GameInstanceID jar = launchManifest.jar();
-        if (jar != null) {
-            standaloneManifest = standaloneManifest.withJar(jar);
-        }
-        return new GameInstanceManifest.Resolved(launchManifest, standaloneManifest);
+        return status.resolve(manifest, new HashSet<>());
     }
 
     protected static class Status {
@@ -640,23 +634,28 @@ public class DefaultGameRepository implements GameRepository {
             this.baseDirectory = baseDirectory;
         }
 
-        private GameInstanceManifest resolve(GameInstanceManifest manifest,
-                                             Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
-            GameInstanceManifest currentManifest;
+        private GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,
+                                                      Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
+            GameInstanceManifest launchManifest;
+            GameInstanceManifest standaloneManifest = manifest.root()
+                    ? manifest
+                    : addPatches(
+                    addPatches(new GameInstanceManifest(manifest.id()), List.of(manifest.toPatch())),
+                    manifest.patches());
 
             if (manifest.inheritsFrom() == null) {
                 if (manifest.root()) {
                     // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
-                    currentManifest = manifest.patches() != null ? new GameInstanceManifest(manifest.id()).withPatches(manifest.patches()) : manifest;
+                    launchManifest = manifest.patches() != null ? new GameInstanceManifest(manifest.id()).withPatches(manifest.patches()) : manifest;
                 } else {
-                    currentManifest = manifest;
+                    launchManifest = manifest;
                 }
-                currentManifest = currentManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar());
+                launchManifest = launchManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar());
             } else {
                 // To maximize the compatibility.
                 if (!resolvedSoFar.add(manifest.id())) {
                     LOG.warning("Found circular dependency versions: " + resolvedSoFar);
-                    currentManifest = manifest.jar() == null ? manifest.withJar(manifest.id()) : manifest;
+                    launchManifest = manifest.jar() == null ? manifest.withJar(manifest.id()) : manifest;
                 } else {
                     InstanceHolder parentInstance = instances.get(manifest.inheritsFrom());
                     if (parentInstance == null) {
@@ -664,51 +663,32 @@ public class DefaultGameRepository implements GameRepository {
                     }
 
                     // It is supposed to auto-install a version in getVersion.
-                    currentManifest = manifest.merge(resolve(parentInstance.manifest, resolvedSoFar));
+                    GameInstanceManifest.Resolved parentResolved = resolve(parentInstance.manifest, resolvedSoFar);
+                    launchManifest = manifest.merge(parentResolved.launchManifest());
+                    standaloneManifest = addPatches(
+                            addPatches(parentResolved.standaloneManifest(), Collections.singleton(manifest.toPatch())),
+                            manifest.patches());
                 }
             }
 
-            if (manifest.patches() == null) {
-                // This is a version from an external launcher. NO need to resolve the patches.
-                return currentManifest;
-            } else if (!manifest.patches().isEmpty()) {
+            if (manifest.patches() != null && !manifest.patches().isEmpty()) {
                 // Assume patches themselves do not have patches recursively.
                 List<GameInstancePatch> sortedPatches = manifest.patches().stream()
                         .sorted(Comparator.comparing(GameInstancePatch::getPriority))
                         .toList();
                 for (GameInstancePatch patch : sortedPatches) {
-                    currentManifest = patch.merge(currentManifest);
+                    launchManifest = patch.merge(launchManifest);
                 }
             }
 
-            return currentManifest.withId(manifest.id());
-        }
-
-        private GameInstanceManifest resolveStandalone(GameInstanceManifest manifest,
-                                                       Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
-            GameInstanceManifest currentManifest = manifest.root()
-                    ? manifest
-                    : addPatches(
-                            addPatches(new GameInstanceManifest(manifest.id()), Collections.singleton(manifest.toPatch())),
-                            manifest.patches());
-
-            if (manifest.inheritsFrom() != null) {
-                // To maximize the compatibility.
-                if (!resolvedSoFar.add(manifest.id())) {
-                    LOG.warning("Found circular dependency versions: " + resolvedSoFar);
-                } else {
-                    InstanceHolder parentInstance = instances.get(manifest.inheritsFrom());
-                    if (parentInstance == null) {
-                        throw new NoSuchGameInstanceException(manifest.inheritsFrom());
-                    }
-
-                    currentManifest = addPatches(
-                            addPatches(resolveStandalone(parentInstance.manifest, resolvedSoFar), Collections.singleton(manifest.toPatch())),
-                            manifest.patches());
-                }
+            launchManifest = launchManifest.withId(manifest.id()).withPatches(null);
+            standaloneManifest = standaloneManifest.withId(manifest.id());
+            GameInstanceID jar = launchManifest.jar();
+            if (jar != null) {
+                standaloneManifest = standaloneManifest.withJar(jar);
             }
 
-            return currentManifest.withId(manifest.id());
+            return new GameInstanceManifest.Resolved(launchManifest, standaloneManifest);
         }
 
         private static GameInstanceManifest addPatches(GameInstanceManifest manifest, @Nullable Collection<GameInstancePatch> additional) {
