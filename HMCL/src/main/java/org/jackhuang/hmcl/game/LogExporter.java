@@ -42,22 +42,22 @@ public final class LogExporter {
     }
 
     public static CompletableFuture<Void> exportLogs(
-            Path zipFile, DefaultGameRepository gameRepository, String versionId, String logs, String launchScript,
+            Path zipFile, DefaultGameRepository repository, GameInstanceID instanceId, String logs, String launchScript,
             PathMatcher logMatcher) {
-        Path runDirectory = gameRepository.getRunDirectory(versionId);
-        Path baseDirectory = gameRepository.getBaseDirectory();
-        List<String> versions = new ArrayList<>();
+        Path runDirectory = repository.getRunDirectory(instanceId);
+        Path baseDirectory = repository.getBaseDirectory();
+        List<GameInstanceID> instances = new ArrayList<>();
 
-        String currentVersionId = versionId;
-        HashSet<String> resolvedSoFar = new HashSet<>();
+        GameInstanceID currentInstanceId = instanceId;
+        HashSet<GameInstanceID> resolvedSoFar = new HashSet<>();
         while (true) {
-            if (resolvedSoFar.contains(currentVersionId)) break;
-            resolvedSoFar.add(currentVersionId);
-            GameInstanceManifest currentVersion = gameRepository.getInstanceManifest(currentVersionId);
-            versions.add(currentVersionId);
+            if (resolvedSoFar.contains(currentInstanceId)) break;
+            resolvedSoFar.add(currentInstanceId);
+            GameInstanceManifest currentVersion = repository.getInstanceManifest(currentInstanceId);
+            instances.add(currentInstanceId);
 
-            if (StringUtils.isNotBlank(currentVersion.getInheritsFrom())) {
-                currentVersionId = currentVersion.getInheritsFrom();
+            if (currentVersion.inheritsFrom() != null) {
+                currentInstanceId = currentVersion.inheritsFrom();
             } else {
                 break;
             }
@@ -74,8 +74,8 @@ public final class LogExporter {
                 zipper.putTextFile(logs, "minecraft.log");
                 zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
 
-                for (String id : versions) {
-                    Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
+                for (GameInstanceID id : instances) {
+                    Path versionJson = repository.getInstanceJson(id);
                     if (Files.exists(versionJson)) {
                         zipper.putFile(versionJson, id + ".json");
                     }

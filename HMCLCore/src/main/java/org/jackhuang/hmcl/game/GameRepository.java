@@ -176,28 +176,11 @@ public interface GameRepository {
     /// @return the native library directory
     Path getNativeDirectory(GameInstanceID instanceId, Platform platform);
 
-    /// Returns the native directory by string id.
-    ///
-    /// @param id       the instance id string
-    /// @param platform the target platform
-    /// @return the native library directory
-    default Path getNativeDirectory(String id, Platform platform) {
-        return getNativeDirectory(new GameInstanceID(id), platform);
-    }
-
     /// Returns the mods directory for an instance.
     ///
     /// @param instanceId the instance id
     /// @return the mods directory
     Path getModsDirectory(GameInstanceID instanceId);
-
-    /// Returns the mods directory by string id.
-    ///
-    /// @param id the instance id string
-    /// @return the mods directory
-    default Path getModsDirectory(String id) {
-        return getModsDirectory(new GameInstanceID(id));
-    }
 
     /// Returns the resource pack directory for an instance.
     ///
@@ -205,32 +188,11 @@ public interface GameRepository {
     /// @return the resource pack directory
     Path getResourcePackDirectory(GameInstanceID instanceId);
 
-    /// Returns the resource pack directory by string id.
-    ///
-    /// @param id the instance id string
-    /// @return the resource pack directory
-    default Path getResourcePackDirectory(String id) {
-        return getResourcePackDirectory(new GameInstanceID(id));
-    }
-
     /// Returns the primary client jar path for a manifest.
     ///
     /// @param manifest the manifest whose jar should be located
     /// @return the primary client jar path
     Path getInstanceJar(GameInstanceManifest manifest);
-
-    /// Returns the instance jar path by string id.
-    ///
-    /// @param id the instance id string
-    /// @return the primary client jar path
-    /// @throws IllegalArgumentException if the instance id is invalid or the instance is not loaded
-    default Path getInstanceJar(String id) {
-        try {
-            return getInstanceJar(new GameInstanceID(id));
-        } catch (NoSuchGameInstanceException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
 
     /// Detects the Minecraft game version associated with a manifest.
     ///
@@ -245,18 +207,6 @@ public interface GameRepository {
     /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
     default Optional<String> getGameVersion(GameInstanceID instanceId) throws NoSuchGameInstanceException {
         return getGameVersion(getInstanceManifest(instanceId));
-    }
-
-    /// Returns the detected game version by string id.
-    ///
-    /// @param id the instance id string
-    /// @return the detected Minecraft game version, or empty if the id is invalid, the instance is missing, or detection fails
-    default Optional<String> getGameVersion(String id) {
-        try {
-            return getGameVersion(new GameInstanceID(id));
-        } catch (NoSuchGameInstanceException e) {
-            return Optional.empty();
-        }
     }
 
     /// Returns the primary client jar path for an instance.
@@ -274,11 +224,6 @@ public interface GameRepository {
     /// @param to   the target instance id
     /// @return whether the instance was renamed
     boolean renameInstance(GameInstanceID from, GameInstanceID to);
-
-    /// Renames an instance by string id.
-    default boolean renameInstance(String from, String to) {
-        return renameInstance(new GameInstanceID(from), new GameInstanceID(to));
-    }
 
     /// Returns the asset directory that should be used at launch time.
     ///
