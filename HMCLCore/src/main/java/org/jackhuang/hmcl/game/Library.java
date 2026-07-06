@@ -78,7 +78,6 @@ public class Library implements Comparable<Library>, Validation {
         }
     }
 
-
     /// Parses a library from either the standard version JSON format or TLauncher library format.
     public static Library fromJson(JsonObject json) {
         if (json == null) {

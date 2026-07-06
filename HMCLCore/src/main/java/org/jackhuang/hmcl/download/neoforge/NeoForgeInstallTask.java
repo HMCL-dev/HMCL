@@ -111,12 +111,12 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
                 return new ForgeNewInstallTask(dependencyManager, version, modifyNeoForgeOldVersion(gameVersion.get(), profile.getVersion()), installer).thenApplyAsync(neoForgeVersion -> {
-                    if (!neoForgeVersion.getId().equals(LibraryAnalyzer.LibraryType.FORGE.getPatchId()) || neoForgeVersion.getVersion() == null) {
+                    if (!neoForgeVersion.id().equals(LibraryAnalyzer.LibraryType.FORGE.getPatchId()) || neoForgeVersion.version() == null) {
                         throw new IOException("Invalid neoforge version.");
                     }
                     return neoForgeVersion.withId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
                             .withVersion(
-                                    removePrefix(neoForgeVersion.getVersion().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), ""), "-")
+                                    removePrefix(neoForgeVersion.version().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), ""), "-")
                             );
                 });
             } else if (LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId().equals(installProfile.get("profile")) || "NeoForge".equals(installProfile.get("profile"))) {

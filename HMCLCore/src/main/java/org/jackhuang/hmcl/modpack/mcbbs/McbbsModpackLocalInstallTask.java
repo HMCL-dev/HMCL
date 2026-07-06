@@ -106,7 +106,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
     @Override
     public void execute() throws Exception {
         GameInstanceManifest instanceManifest = repository.getInstanceManifest(instanceId);
-        Optional<GameInstancePatch> mcbbsPatch = instanceManifest.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.getId())).findFirst();
+        Optional<GameInstancePatch> mcbbsPatch = instanceManifest.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.id())).findFirst();
         if (!update) {
             GameInstancePatch patch = new GameInstancePatch(PATCH_NAME).withLibraries(manifest.getLibraries());
             dependencies.add(repository.saveAsync(instanceManifest.addPatch(patch)));

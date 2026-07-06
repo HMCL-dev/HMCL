@@ -30,14 +30,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @NotNullByDefault
 public record GameInstancePatch(
@@ -162,69 +160,14 @@ public record GameInstancePatch(
                 null);
     }
 
-    /// Returns the patch id.
-    public @Nullable String getId() {
-        return id;
-    }
-
-    /// Returns the patch version.
-    public @Nullable String getVersion() {
-        return version;
-    }
-
     /// Returns the patch priority.
     public int getPriority() {
         return priority == null ? Integer.MIN_VALUE : priority;
     }
 
-    /// Returns legacy game arguments.
-    public Optional<String> getMinecraftArguments() {
-        return Optional.ofNullable(minecraftArguments);
-    }
-
-    /// Returns structured arguments.
-    public Optional<Arguments> getArguments() {
-        return Optional.ofNullable(arguments);
-    }
-
-    /// Returns the main class.
-    public @Nullable String getMainClass() {
-        return mainClass;
-    }
-
-    /// Returns the jar id.
-    public @Nullable String getJar() {
-        return jar == null ? null : jar.id();
-    }
-
-    /// Returns the asset index.
-    public @Nullable AssetIndexInfo getAssetIndex() {
-        return assetIndex;
-    }
-
-    /// Returns the Java version.
-    public @Nullable GameJavaVersion getJavaVersion() {
-        return javaVersion;
-    }
-
     /// Returns libraries.
     public List<Library> getLibraries() {
         return libraries == null ? List.of() : libraries;
-    }
-
-    /// Returns compatibility rules.
-    public List<CompatibilityRule> getCompatibilityRules() {
-        return compatibilityRules == null ? List.of() : compatibilityRules;
-    }
-
-    /// Returns downloads.
-    public Map<DownloadType, DownloadInfo> getDownloads() {
-        return downloads == null ? Map.of() : downloads;
-    }
-
-    /// Returns logging metadata.
-    public Map<DownloadType, LoggingInfo> getLogging() {
-        return logging == null ? Map.of() : logging;
     }
 
     /// Returns whether the patch is hidden.

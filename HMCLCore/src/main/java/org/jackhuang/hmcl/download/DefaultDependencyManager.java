@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -121,10 +120,10 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                                 Matcher matcher = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$").matcher(optifineVersion);
                                 return matcher.find() ? matcher.group("optifine") : optifineVersion;
                             })
-                            .orElseGet(() -> standalone.getPatches().stream()
-                                    .filter(patch -> "optifine".equals(patch.getId()))
+                            .orElseGet(() -> resolvedInstanceManifest.standaloneManifest().getPatches().stream()
+                                    .filter(patch -> "optifine".equals(patch.id()))
                                     .findAny()
-                                    .map(GameInstancePatch::getVersion)
+                                    .map(gameInstancePatch -> gameInstancePatch.version())
                                     .orElse(null));
 
                     boolean needsReInstallation = manifest.getLibraries().stream()

@@ -98,7 +98,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
     public boolean hasModLauncher() {
         return LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass()) || manifest.getPatches().stream().anyMatch(
-                patch -> LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.getMainClass())
+                patch -> LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.mainClass())
         );
     }
 
@@ -144,7 +144,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         if (!has(libraryId)) return this;
         GameInstanceManifest manifest = removingMatchedLibrary(this.manifest, libraryId);
         this.manifest = manifest.withPatches(this.manifest.getPatches().stream()
-                .filter(patch -> !libraryId.equals(patch.getId()))
+                .filter(patch -> !libraryId.equals(patch.id()))
                 .map(patch -> removingMatchedLibrary(patch, libraryId))
                 .collect(Collectors.toList()));
         return this;
@@ -180,7 +180,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
         for (GameInstancePatch patch : manifest.getPatches()) {
             if (patch.isHidden()) continue;
-            libraries.put(patch.getId(), pair(null, patch.getVersion()));
+            libraries.put(patch.id(), pair(null, patch.version()));
         }
 
         return new LibraryAnalyzer(manifest, libraries);
@@ -312,11 +312,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
 
             private String scanPatch(GameInstancePatch patch) {
-                Optional<Arguments> optArgument = patch.getArguments();
-                if (!optArgument.isPresent()) {
+                Arguments optArgument = patch.arguments();
+                if (optArgument == null) {
                     return null;
                 }
-                List<Argument> gameArguments = optArgument.get().game();
+                List<Argument> gameArguments = optArgument.game();
                 if (gameArguments == null) {
                     return null;
                 }
