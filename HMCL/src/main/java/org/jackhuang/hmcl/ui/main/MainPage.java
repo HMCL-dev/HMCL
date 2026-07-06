@@ -325,7 +325,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
         VersionList<?> versionList = downloadProvider.getVersionListById("game");
 
-        Holder<String> gameVersionHolder = new Holder<>();
+        Holder<GameInstanceID> instanceHolder = new Holder<>();
         Task<?> task = versionList.refreshAsync("")
                 .thenSupplyAsync(() -> versionList.getVersions("").stream()
                         .filter(it -> it.getVersionType() == RELEASE)
@@ -336,17 +336,21 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 .thenComposeAsync(version -> {
                     HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
                     DefaultDependencyManager dependency = repository.getDependency();
-                    String gameVersion = gameVersionHolder.value = version.getGameVersion();
+
+                    String gameVersion = version.getGameVersion();
+                    GameInstanceID instanceId = new GameInstanceID(gameVersion);
+
+                    instanceHolder.value = instanceId;
 
                     return dependency.newGameBuilder()
-                            .name(new GameInstanceID(gameVersion))
+                            .name(instanceId)
                             .gameVersion(gameVersion)
                             .buildAsync();
                 })
                 .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refresh())
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        GameDirectoryManager.getSelectedRepository().setSelectedInstance(new GameInstanceID(gameVersionHolder.value));
+                        GameDirectoryManager.getSelectedRepository().setSelectedInstance(instanceHolder.value);
                         launch();
                     } else if (exception instanceof CancellationException) {
                         Controllers.showToast(i18n("message.cancelled"));
