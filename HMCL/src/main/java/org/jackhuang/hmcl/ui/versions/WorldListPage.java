@@ -197,11 +197,11 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void launch(World world) {
-        Versions.launchAndEnterWorld(repository, instanceId, world.getFileName());
+        Instances.launchAndEnterWorld(repository, instanceId, world.getFileName());
     }
 
     public void generateLaunchScript(World world) {
-        Versions.generateLaunchScriptForQuickEnterWorld(repository, instanceId, world.getFileName());
+        Instances.generateLaunchScriptForQuickEnterWorld(repository, instanceId, world.getFileName());
     }
 
     public BooleanProperty showAllProperty() {

@@ -150,11 +150,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public void launch() {
         fireEvent(new PageCloseEvent());
-        Versions.launchAndEnterWorld(repository, instanceId, world.getFileName());
+        Instances.launchAndEnterWorld(repository, instanceId, world.getFileName());
     }
 
     public void generateLaunchScript() {
-        Versions.generateLaunchScriptForQuickEnterWorld(repository, instanceId, world.getFileName());
+        Instances.generateLaunchScriptForQuickEnterWorld(repository, instanceId, world.getFileName());
     }
 
     @Override

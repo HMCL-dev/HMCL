@@ -38,7 +38,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.main.MainPage;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.versions.Instances;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
@@ -79,7 +79,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                 .add(accountListItem)
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     var repository = GameDirectoryManager.getSelectedRepository();
-                    Versions.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
+                    Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
                         launcherHelper.setKeep();
                         launcherHelper.setDisableOfflineSkin();
                     });

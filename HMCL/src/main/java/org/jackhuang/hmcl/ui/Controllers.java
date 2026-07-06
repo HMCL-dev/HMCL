@@ -61,7 +61,7 @@ import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.versions.Instances;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -703,7 +703,7 @@ public final class Controllers {
                     break;
                 case "hmcl://game/launch":
                     var repository = GameDirectoryManager.getSelectedRepository();
-                    Versions.launch(repository, repository.getSelectedInstance(), LauncherHelper::setKeep);
+                    Instances.launch(repository, repository.getSelectedInstance(), LauncherHelper::setKeep);
                     break;
             }
         } else {

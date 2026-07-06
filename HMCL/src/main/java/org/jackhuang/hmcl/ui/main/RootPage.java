@@ -48,7 +48,7 @@ import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.ui.nbt.NBTFileType;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.versions.Instances;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -115,7 +115,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                         i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
                         } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
-                            Versions.installFromJson(GameDirectoryManager.getSelectedRepository(), file);
+                            Instances.installFromJson(GameDirectoryManager.getSelectedRepository(), file);
                         }
                     });
 
@@ -158,7 +158,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 if (version == null) {
                     Controllers.navigate(Controllers.getGameListPage());
                 } else {
-                    Versions.modifyGameSettings(GameDirectoryManager.getSelectedRepository(), version);
+                    Instances.modifyGameSettings(GameDirectoryManager.getSelectedRepository(), version);
                 }
             });
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {

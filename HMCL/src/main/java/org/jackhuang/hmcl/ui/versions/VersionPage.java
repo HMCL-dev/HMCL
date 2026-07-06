@@ -189,7 +189,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void redownloadAssetIndex() {
-        Versions.updateGameAssets(getRepository(), getVersion());
+        Instances.updateGameAssets(getRepository(), getVersion());
     }
 
     private void clearLibraries() {
@@ -224,36 +224,36 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearJunkFiles() {
-        Versions.cleanVersion(getRepository(), getVersion());
+        Instances.cleanVersion(getRepository(), getVersion());
     }
 
     private void testGame() {
-        Versions.testGame(getRepository(), getVersion());
+        Instances.testGame(getRepository(), getVersion());
     }
 
     private void updateGame() {
-        Versions.updateVersion(getRepository(), getVersion());
+        Instances.updateVersion(getRepository(), getVersion());
     }
 
     private void generateLaunchScript() {
-        Versions.generateLaunchScript(getRepository(), getVersion());
+        Instances.generateLaunchScript(getRepository(), getVersion());
     }
 
     private void export() {
-        Versions.exportVersion(getRepository(), getVersion());
+        Instances.exportVersion(getRepository(), getVersion());
     }
 
     private void rename() {
-        Versions.renameVersion(getRepository(), getVersion())
+        Instances.renameVersion(getRepository(), getVersion())
                 .thenApply(newVersionName -> this.preferredVersionName = newVersionName);
     }
 
     private void remove() {
-        Versions.deleteVersion(getRepository(), getVersion());
+        Instances.deleteVersion(getRepository(), getVersion());
     }
 
     private void duplicate() {
-        Versions.duplicateInstance(getRepository(), getVersion());
+        Instances.duplicateInstance(getRepository(), getVersion());
     }
 
     public HMCLGameRepository getRepository() {

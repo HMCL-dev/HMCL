@@ -63,8 +63,8 @@ import java.util.function.Consumer;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class Versions {
-    private Versions() {
+public final class Instances {
+    private Instances() {
     }
 
     public static void addNewGame() {
