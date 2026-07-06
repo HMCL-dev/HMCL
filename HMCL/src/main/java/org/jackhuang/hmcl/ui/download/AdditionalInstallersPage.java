@@ -47,7 +47,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
         this.version = version;
         this.repository = repository;
 
-        txtName.setText(version.getId());
+        txtName.setText(version.id().toString());
         txtName.setEditable(false);
 
         for (InstallerItem library : group.getLibraries()) {

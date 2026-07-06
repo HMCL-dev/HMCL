@@ -91,9 +91,9 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
 
                     MainPage mainPage = Controllers.getRootPage().getMainPage();
                     FXUtils.onScroll(item, mainPage.getVersions(), list -> {
-                        String currentId = mainPage.getCurrentGame();
-                        return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-                    }, it -> mainPage.getRepository().setSelectedInstance(new GameInstanceID(it.getId())));
+                        GameInstanceID currentId = mainPage.getCurrentGame();
+                        return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
+                    }, it -> mainPage.getRepository().setSelectedInstance(it.id()));
 
                     FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
                             JFXPopup.PopupVPosition.BOTTOM,

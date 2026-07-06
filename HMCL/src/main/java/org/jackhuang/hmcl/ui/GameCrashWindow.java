@@ -142,7 +142,7 @@ public class GameCrashWindow extends Stage {
 
             return pair(CrashReportAnalyzer.analyze(rawLog), crashReport != null ? CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport) : new HashSet<>());
         }), Task.supplyAsync(() -> {
-            Path latestLog = repository.getRunDirectory(version.getId()).resolve("logs/latest.log");
+            Path latestLog = repository.getRunDirectory(version.id()).resolve("logs/latest.log");
             if (!Files.isReadable(latestLog)) {
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
@@ -345,7 +345,7 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem version = new TwoLineListItem();
                 version.getStyleClass().setAll("two-line-item-second-large");
                 version.setTitle(i18n("game.version"));
-                version.setSubtitle(GameCrashWindow.this.version.getId());
+                version.setSubtitle(GameCrashWindow.this.version.id().toString());
 
                 TwoLineListItem total_memory = new TwoLineListItem();
                 total_memory.getStyleClass().setAll("two-line-item-second-large");

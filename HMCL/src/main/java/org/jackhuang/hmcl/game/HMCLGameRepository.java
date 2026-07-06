@@ -141,13 +141,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Refreshes the selected instance ID after versions are loaded.
     public void refreshSelectedInstance() {
-        @Nullable String selectedInstance = settings().getSelectedInstance(gameDirectory.getId());
-        @Nullable String refreshedInstance = selectedInstance;
+        @Nullable GameInstanceID selectedInstance = settings().getSelectedInstance2(gameDirectory.getId());
+        @Nullable GameInstanceID refreshedInstance = selectedInstance;
         if (!hasInstance(refreshedInstance)) {
-            refreshedInstance = getInstanceManifests().isEmpty() ? null : getInstanceManifests().iterator().next().getId();
+            refreshedInstance = getInstanceManifests().isEmpty() ? null : getInstanceManifests().iterator().next().id();
         }
         if (!Objects.equals(selectedInstance, refreshedInstance)) {
-            setSelectedInstance(refreshedInstance == null ? null : new GameInstanceID(refreshedInstance));
+            setSelectedInstance(refreshedInstance);
         }
     }
 
@@ -205,7 +205,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return getInstanceManifests().stream()
                 .filter(v -> !v.isHidden())
                 .sorted(Comparator.comparing((GameInstanceManifest v) -> Lang.requireNonNullElse(v.getReleaseTime(), Instant.EPOCH))
-                        .thenComparing(v -> VersionNumber.asVersion(v.getId())));
+                        .thenComparing(v -> VersionNumber.asVersion(v.id().id())));
     }
 
     @Override
@@ -828,7 +828,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             // on Windows, filenames are case-insensitive
             for (GameInstanceManifest manifest : getInstanceManifests()) {
-                String existingId = manifest.getId();
+                String existingId = manifest.id().toString();
                 if (existingId.equalsIgnoreCase(id)) {
                     return true;
                 }

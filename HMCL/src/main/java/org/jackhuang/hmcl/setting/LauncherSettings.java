@@ -34,6 +34,7 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountID;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.theme.BuiltinBackground;
@@ -623,6 +624,10 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// The value is loaded by the game repository for the matching game directory.
     public @Nullable String getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
+    }
+
+    public @Nullable GameInstanceID getSelectedInstance2(@Nullable GameDirectoryID gameDirectoryId) {
+        return gameDirectoryId != null ? new GameInstanceID(selectedInstance.get(gameDirectoryId)) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.

@@ -209,9 +209,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
         HBox launchPane = new HBox();
         launchPane.getStyleClass().add("launch-pane");
         FXUtils.onScroll(launchPane, versions, list -> {
-            String currentId = getCurrentGame();
-            return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-        }, it -> repository.setSelectedInstance(new GameInstanceID(it.getId())));
+            GameInstanceID currentId = getCurrentGame();
+            return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
+        }, it -> repository.setSelectedInstance(it.id()));
 
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
@@ -386,8 +386,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return repository;
     }
 
-    public String getCurrentGame() {
-        return currentGame.get();
+    public GameInstanceID getCurrentGame() {
+        return new GameInstanceID(currentGame.get());
     }
 
     public StringProperty currentGameProperty() {

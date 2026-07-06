@@ -128,8 +128,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 List<GameInstanceManifest> children = repository.getInstanceManifests().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
-                                .comparing((GameInstanceManifest version) -> Lang.requireNonNullElse(version.getReleaseTime(), Instant.EPOCH))
-                                .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
+                                .comparing((GameInstanceManifest manifest) -> Lang.requireNonNullElse(manifest.getReleaseTime(), Instant.EPOCH))
+                                .thenComparing(manifest -> VersionNumber.asVersion(repository.getGameVersion(manifest).orElse(manifest.id().toString()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {
                     if (gameDirectory == GameDirectoryManager.getSelectedGameDirectory())
@@ -163,9 +163,9 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 }
             });
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
-                String currentId = getSkinnable().getMainPage().getCurrentGame();
-                return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-            }, it -> getSkinnable().getMainPage().getRepository().setSelectedInstance(new GameInstanceID(it.getId())));
+                GameInstanceID currentId = getSkinnable().getMainPage().getCurrentGame();
+                return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
+            }, it -> getSkinnable().getMainPage().getRepository().setSelectedInstance(it.id()));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
             }
