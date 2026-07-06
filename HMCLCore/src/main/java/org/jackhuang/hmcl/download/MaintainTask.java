@@ -46,7 +46,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         this.repository = repository;
         this.version = version;
 
-        if (version.getInheritsFrom() != null)
+        if (version.inheritsFrom() != null)
             throw new IllegalArgumentException("MaintainTask requires independent game version");
     }
 
@@ -56,7 +56,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
     }
 
     public static GameInstanceManifest maintain(GameRepository repository, GameInstanceManifest version) {
-        if (version.getInheritsFrom() != null)
+        if (version.inheritsFrom() != null)
             throw new IllegalArgumentException("MaintainTask requires independent game version");
 
         String mainClass = version.resolve(repository).getMainClass();

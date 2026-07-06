@@ -383,27 +383,6 @@ public record GameInstanceManifest(
         return jar == null ? null : jar.id();
     }
 
-    /// Returns the parent instance id as a string.
-    ///
-    /// @return the parent instance id, or `null` when absent
-    public @Nullable String getInheritsFrom() {
-        return inheritsFrom == null ? null : inheritsFrom.id();
-    }
-
-    /// Returns the minimum launcher version.
-    ///
-    /// @return the minimum launcher version, or zero when absent
-    public int getMinimumLauncherVersion() {
-        return minimumLauncherVersion == null ? 0 : minimumLauncherVersion;
-    }
-
-    /// Returns the compliance level.
-    ///
-    /// @return the compliance level, or `null` when absent
-    public @Nullable Integer getComplianceLevel() {
-        return complianceLevel;
-    }
-
     /// Returns the preferred Java version.
     ///
     /// @return the preferred Java version, or `null` when absent
@@ -451,13 +430,6 @@ public record GameInstanceManifest(
     /// @return libraries
     public List<Library> getLibraries() {
         return libraries == null ? List.of() : libraries;
-    }
-
-    /// Returns compatibility rules.
-    ///
-    /// @return compatibility rules
-    public List<CompatibilityRule> getCompatibilityRules() {
-        return compatibilityRules == null ? List.of() : compatibilityRules;
     }
 
     /// Returns download metadata.

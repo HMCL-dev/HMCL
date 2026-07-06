@@ -155,7 +155,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public static LibraryAnalyzer analyze(GameInstanceManifest manifest, String gameVersion) {
-        if (manifest.getInheritsFrom() != null)
+        if (manifest.inheritsFrom() != null)
             throw new IllegalArgumentException("LibraryAnalyzer can only analyze independent game version");
 
         Map<String, Pair<Library, String>> libraries = new HashMap<>();
