@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.IOException;
@@ -322,4 +323,16 @@ public final class TexturesLoader {
         }
     }
     // ====
+
+    public static Optional<Texture> getMicrosoftAccountSkin(String uuid) throws IOException, ServerResponseMalformedException {
+        return YggdrasilService.getTextures(
+                HttpRequest.GET("https://api.minecraftservices.com/minecraft/profile/" + uuid)
+                        .getJson(CompleteGameProfile.class)).map(e -> e.get(TextureType.SKIN));
+    }
+
+    public static Optional<Texture> getYggdrasilAccountSkin(String uuid, String url) throws IOException, ServerResponseMalformedException {
+        return YggdrasilService.getTextures(
+                HttpRequest.GET(url + uuid)
+                        .getJson(CompleteGameProfile.class)).map(e -> e.get(TextureType.SKIN));
+    }
 }

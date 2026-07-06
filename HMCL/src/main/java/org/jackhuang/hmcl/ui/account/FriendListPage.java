@@ -28,6 +28,11 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -45,6 +50,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -154,7 +160,7 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
         public FriendListCell() {
             BorderPane root = new BorderPane();
             root.getStyleClass().add("md-list-cell");
-            root.setPadding(new Insets(8, 8, 8, 0));
+            root.setPadding(new Insets(8, 8, 8, 8));
 
             RipplerContainer container = new RipplerContainer(root);
             this.graphic = container;
@@ -192,9 +198,28 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
 
                 if (currentItem == getItem()) return;
 
-                TexturesLoader.bindAvatar(avatar, account);
+                UUID uuid = UUID.fromString(item.profileId());
+
+                try {
+                    CompleteGameProfile profile = null;
+
+                    if (account instanceof YggdrasilAccount yggdrasilAccount) {
+                        profile = yggdrasilAccount.getYggdrasilService().getCompleteGameProfile(uuid).orElseThrow();
+                    } else if (account instanceof MicrosoftAccount microsoftAccount) {
+                        profile = microsoftAccount.getService().getCompleteGameProfile(uuid).orElseThrow();
+                    }
+
+                    var texture = YggdrasilService.getTextures(profile).map(it -> it.get(TextureType.SKIN)).orElseThrow();
+                    var loadedTexture = TexturesLoader.loadTexture(texture);
+                    TexturesLoader.drawAvatar(avatar, loadedTexture.image());
+                } catch (Throwable e) {
+                    LOG.warning("Failed to load skin", e);
+                    var skin = TexturesLoader.getDefaultSkin(uuid);
+                    TexturesLoader.drawAvatar(avatar, skin.image());
+                }
+
                 twoLineListItem.setTitle(item.name());
-                twoLineListItem.setSubtitle(getClass().getName());
+                twoLineListItem.setSubtitle(toString());
             }
         }
     }
