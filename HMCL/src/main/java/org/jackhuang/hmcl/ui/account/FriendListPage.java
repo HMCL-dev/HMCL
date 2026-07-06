@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.account;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -107,7 +106,7 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
         }
 
         private void refresh() {
-            setItems(FXCollections.emptyObservableList());
+            getItems().clear();
             setLoading(true);
             setFailedReason(null);
 
@@ -184,11 +183,19 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
 
             super.updateItem(item, empty);
 
-            if (currentItem == getItem()) return;
+            TexturesLoader.unbindAvatar(avatar);
 
-            TexturesLoader.bindAvatar(avatar, account);
-            twoLineListItem.setTitle(item.name());
-            twoLineListItem.setSubtitle(getClass().getName());
+            if (empty || item == null) {
+                this.setGraphic(null);
+            } else {
+                this.setGraphic(this.graphic);
+
+                if (currentItem == getItem()) return;
+
+                TexturesLoader.bindAvatar(avatar, account);
+                twoLineListItem.setTitle(item.name());
+                twoLineListItem.setSubtitle(getClass().getName());
+            }
         }
     }
 
@@ -196,8 +203,6 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
     }
 
     private enum FriendStatus {
-        FRIEND,
-        INCOMING,
-        OUTGOING
+        FRIEND, INCOMING, OUTGOING
     }
 }
