@@ -371,11 +371,11 @@ public record GameInstanceManifest(
     /// @return client jar download information
     public DownloadInfo getDownloadInfo() {
         DownloadInfo client = downloads == null ? null : downloads.get(DownloadType.CLIENT);
-        String jarName = jar == null ? id.id() : jar.id();
-        if (client == null) {
-            return new DownloadInfo(String.format("%s%s/%s.jar", Constants.DEFAULT_VERSION_DOWNLOAD_URL, jarName, jarName));
-        } else {
+        if (client != null) {
             return client;
+        } else {
+            GameInstanceID jarInstanceId = Objects.requireNonNullElse(jar, id);
+            return new DownloadInfo(String.format("%s%s/%s.jar", Constants.DEFAULT_VERSION_DOWNLOAD_URL, jarInstanceId, jarInstanceId));
         }
     }
 
