@@ -203,7 +203,7 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
                 String formatted = REGEX.matcher(item.profileId()).replaceAll("$1-$2-$3-$4-$5");
                 var uuid = UUID.fromString(formatted);
 
-                try {
+                Task.supplyAsync(() -> {
                     CompleteGameProfile profile = null;
 
                     if (account instanceof YggdrasilAccount yggdrasilAccount) {
@@ -213,13 +213,16 @@ public final class FriendListPage extends DecoratorAnimatedPage implements Decor
                     }
 
                     var texture = YggdrasilService.getTextures(profile).map(it -> it.get(TextureType.SKIN)).orElseThrow();
-                    var loadedTexture = TexturesLoader.loadTexture(texture);
-                    TexturesLoader.drawAvatar(avatar, loadedTexture.image());
-                } catch (Throwable e) {
-                    LOG.warning("Failed to load skin", e);
+                    return TexturesLoader.loadTexture(texture);
+                }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null) {
+                        TexturesLoader.drawAvatar(avatar, result.image());
+                        return;
+                    } else LOG.warning("Failed to load skin", exception);
+
                     var skin = TexturesLoader.getDefaultSkin(uuid);
                     TexturesLoader.drawAvatar(avatar, skin.image());
-                }
+                }).start();
 
                 twoLineListItem.setTitle(item.name());
                 twoLineListItem.setSubtitle(toString());

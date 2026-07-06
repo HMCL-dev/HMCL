@@ -91,7 +91,7 @@ public final class TexturesLoader {
         return TEXTURES_DIR.resolve(prefix).resolve(hash);
     }
 
-    public static LoadedTexture loadTexture(Texture texture) throws Throwable {
+    public static LoadedTexture loadTexture(Texture texture) throws Exception {
         if (StringUtils.isBlank(texture.url())) {
             throw new IOException("Texture url is empty");
         }
