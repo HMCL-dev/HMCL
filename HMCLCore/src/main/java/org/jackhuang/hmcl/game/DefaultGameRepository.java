@@ -709,7 +709,7 @@ public class DefaultGameRepository implements GameRepository {
                 standaloneManifest = standaloneManifest.withJar(launchManifest.jar());
             }
 
-            return new GameInstanceManifest.Resolved(launchManifest, standaloneManifest);
+            return new GameInstanceManifest.Resolved(manifest, launchManifest, standaloneManifest);
         }
 
         private static GameInstanceManifest addPatches(GameInstanceManifest manifest, @Nullable Collection<GameInstancePatch> additional) {

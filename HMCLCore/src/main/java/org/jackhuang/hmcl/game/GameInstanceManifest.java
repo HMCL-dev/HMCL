@@ -66,7 +66,8 @@ public record GameInstanceManifest(
     /// @param launchManifest     the final manifest data used by launch-time consumers
     /// @param standaloneManifest the standalone manifest data with pending patches preserved
     @NotNullByDefault
-    public record Resolved(GameInstanceManifest launchManifest,
+    public record Resolved(GameInstanceManifest unresolved,
+                           GameInstanceManifest launchManifest,
                            GameInstanceManifest standaloneManifest) {
 
         /// Creates a resolved manifest view.
