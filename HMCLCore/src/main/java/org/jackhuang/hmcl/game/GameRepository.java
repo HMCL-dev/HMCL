@@ -134,27 +134,11 @@ public interface GameRepository {
     /// @return the instance root directory
     Path getInstanceRoot(GameInstanceID instanceId);
 
-    /// Returns the instance root by string id.
-    ///
-    /// @param id the instance id string
-    /// @return the instance root
-    default Path getInstanceRoot(String id) {
-        return getInstanceRoot(new GameInstanceID(id));
-    }
-
     /// Returns the working directory used when launching an instance.
     ///
     /// @param instanceId the instance id
     /// @return the run directory
     Path getRunDirectory(GameInstanceID instanceId);
-
-    /// Returns the run directory by string id.
-    ///
-    /// @param id the instance id string
-    /// @return the run directory
-    default Path getRunDirectory(String id) {
-        return getRunDirectory(new GameInstanceID(id));
-    }
 
     /// Returns the base directory used to store shared libraries for a manifest.
     ///
