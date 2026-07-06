@@ -389,14 +389,6 @@ public class DefaultGameRepository implements GameRepository {
         }
     }
 
-    public boolean removeInstanceFromDisk(String id) {
-        try {
-            return removeInstanceFromDisk(new GameInstanceID(id));
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
     public boolean removeInstanceFromDisk(GameInstanceID id) {
         if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id.id())) == Event.Result.DENY) {
             return false;
@@ -597,10 +589,6 @@ public class DefaultGameRepository implements GameRepository {
         return getInstanceRoot(instanceId).resolve("modpack.json");
     }
 
-    public Path getModpackConfiguration(String instanceId) {
-        return getModpackConfiguration(new GameInstanceID(instanceId));
-    }
-
     @Nullable
     public ModpackConfiguration<?> readModpackConfiguration(GameInstanceID instanceId) throws IOException, NoSuchGameInstanceException {
         if (!hasInstance(instanceId)) throw new NoSuchGameInstanceException(instanceId);
@@ -609,49 +597,24 @@ public class DefaultGameRepository implements GameRepository {
         return JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
     }
 
-    @Nullable
-    public ModpackConfiguration<?> readModpackConfiguration(String instanceId) throws IOException, NoSuchGameInstanceException {
-        return readModpackConfiguration(new GameInstanceID(instanceId));
-    }
-
     public boolean isModpack(GameInstanceID instanceId) {
         return Files.exists(getModpackConfiguration(instanceId));
-    }
-
-    public boolean isModpack(String instanceId) {
-        return isModpack(new GameInstanceID(instanceId));
     }
 
     public Path getSavesDirectory(GameInstanceID instanceId) {
         return getRunDirectory(instanceId).resolve("saves");
     }
 
-    public Path getSavesDirectory(String instanceId) {
-        return getSavesDirectory(new GameInstanceID(instanceId));
-    }
-
     public Path getBackupsDirectory(GameInstanceID instanceID) {
         return getRunDirectory(instanceID).resolve("backups");
-    }
-
-    public Path getBackupsDirectory(String instanceId) {
-        return getBackupsDirectory(new GameInstanceID(instanceId));
     }
 
     public Path getSchematicsDirectory(GameInstanceID instanceId) {
         return getRunDirectory(instanceId).resolve("schematics");
     }
 
-    public Path getSchematicsDirectory(String instanceId) {
-        return getSchematicsDirectory(new GameInstanceID(instanceId));
-    }
-
     public ModManager getModManager(GameInstanceID instanceId) {
         return new ModManager(this, instanceId);
-    }
-
-    public ModManager getModManager(String instanceId) {
-        return new ModManager(this, new GameInstanceID(instanceId));
     }
 
     public ResourcePackManager getResourcePackManager(GameInstanceID instanceId) {

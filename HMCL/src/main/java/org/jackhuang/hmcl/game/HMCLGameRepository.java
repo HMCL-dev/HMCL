@@ -825,18 +825,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /**
      * Returns true if the given version id conflicts with an existing version.
      */
-    public boolean instanceIdConflicts(String id) {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            // on Windows, filenames are case-insensitive
-            for (GameInstanceManifest manifest : getInstanceManifests()) {
-                String existingId = manifest.id().toString();
-                if (existingId.equalsIgnoreCase(id)) {
-                    return true;
-                }
-            }
+    public boolean instanceIdConflicts(String instanceId) {
+        try {
+            return instanceIdConflicts(new GameInstanceID(instanceId));
+        } catch (IllegalArgumentException e) {
             return false;
-        } else {
-            return hasInstance(id);
         }
     }
 

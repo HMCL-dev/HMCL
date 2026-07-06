@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -55,36 +54,12 @@ public interface GameRepository {
     /// @return whether the instance exists
     boolean hasInstance(GameInstanceID instanceId);
 
-    /// Returns whether the instance exists.
-    ///
-    /// @param id the instance id string
-    /// @return whether the instance exists
-    default boolean hasInstance(@Nullable String id) {
-        if (id == null) {
-            return false;
-        }
-
-        try {
-            return hasInstance(new GameInstanceID(id));
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
     /// Returns the stored manifest for an instance without resolving inheritance or patches.
     ///
     /// @param instanceId the instance id
     /// @return the stored instance manifest
     /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
     GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
-
-    /// Returns an instance manifest by string id.
-    ///
-    /// @param id the instance id string
-    /// @return the instance manifest
-    default GameInstanceManifest getInstanceManifest(String id) throws NoSuchGameInstanceException {
-        return getInstanceManifest(new GameInstanceID(id));
-    }
 
     /// Returns a cached launch-ready manifest view for the instance.
     ///
