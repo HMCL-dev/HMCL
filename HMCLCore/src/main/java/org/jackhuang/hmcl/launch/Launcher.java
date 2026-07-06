@@ -33,23 +33,23 @@ import java.nio.file.Path;
 public abstract class Launcher {
 
     protected final GameRepository repository;
-    protected final GameInstanceManifest version;
+    protected final GameInstanceManifest manifest;
     protected final AuthInfo authInfo;
     protected final LaunchOptions options;
     protected final ProcessListener listener;
     protected final boolean daemon;
 
-    public Launcher(GameRepository repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options) {
-        this(repository, version, authInfo, options, null);
+    public Launcher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options) {
+        this(repository, manifest, authInfo, options, null);
     }
 
-    public Launcher(GameRepository repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, true);
+    public Launcher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+        this(repository, manifest, authInfo, options, listener, true);
     }
 
-    public Launcher(GameRepository repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+    public Launcher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         this.repository = repository;
-        this.version = version;
+        this.manifest = manifest;
         this.authInfo = authInfo;
         this.options = options;
         this.listener = listener;

@@ -90,7 +90,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
             if (isCancelled())
                 throw new InterruptedException();
 
-            Path file = dependencyManager.getGameRepository().getAssetObject(manifest.getId(), assetIndexInfo.getId(), assetObject);
+            Path file = dependencyManager.getGameRepository().getAssetObject(manifest.id(), assetIndexInfo.getId(), assetObject);
             boolean download = !Files.isRegularFile(file);
             try {
                 if (!download && integrityCheck && !assetObject.validateChecksum(file, true))

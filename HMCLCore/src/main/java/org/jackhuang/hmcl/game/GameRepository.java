@@ -295,30 +295,12 @@ public interface GameRepository {
     /// @return the actual asset directory
     Path getActualAssetDirectory(GameInstanceID instanceId, String assetId);
 
-    /// Returns the actual asset directory by string id.
-    ///
-    /// @param id      the instance id string
-    /// @param assetId the asset index id
-    /// @return the actual asset directory
-    default Path getActualAssetDirectory(String id, String assetId) {
-        return getActualAssetDirectory(new GameInstanceID(id), assetId);
-    }
-
     /// Returns the base asset storage directory for an instance.
     ///
     /// @param instanceId the instance id
     /// @param assetId    the asset index id
     /// @return the asset storage directory
     Path getAssetDirectory(GameInstanceID instanceId, String assetId);
-
-    /// Returns the asset directory by string id.
-    ///
-    /// @param id      the instance id string
-    /// @param assetId the asset index id
-    /// @return the asset storage directory
-    default Path getAssetDirectory(String id, String assetId) {
-        return getAssetDirectory(new GameInstanceID(id), assetId);
-    }
 
     /// Returns an existing asset object path by logical asset name.
     ///
@@ -329,17 +311,6 @@ public interface GameRepository {
     /// @throws IOException if the asset index cannot be read
     Optional<Path> getAssetObject(GameInstanceID instanceId, String assetId, String name) throws IOException;
 
-    /// Returns an asset object by string id.
-    ///
-    /// @param id      the instance id string
-    /// @param assetId the asset index id
-    /// @param name    the logical asset name
-    /// @return the asset object path, or empty if the object is not present in the asset index
-    /// @throws IOException if the asset index cannot be read
-    default Optional<Path> getAssetObject(String id, String assetId, String name) throws IOException {
-        return getAssetObject(new GameInstanceID(id), assetId, name);
-    }
-
     /// Returns the expected path for an asset object descriptor.
     ///
     /// @param instanceId the instance id
@@ -348,16 +319,6 @@ public interface GameRepository {
     /// @return the asset object path
     Path getAssetObject(GameInstanceID instanceId, String assetId, AssetObject obj);
 
-    /// Returns an asset object by string id.
-    ///
-    /// @param id      the instance id string
-    /// @param assetId the asset index id
-    /// @param obj     the asset object descriptor
-    /// @return the asset object path
-    default Path getAssetObject(String id, String assetId, AssetObject obj) {
-        return getAssetObject(new GameInstanceID(id), assetId, obj);
-    }
-
     /// Reads an asset index.
     ///
     /// @param instanceId the instance id
@@ -365,16 +326,6 @@ public interface GameRepository {
     /// @return the asset index
     /// @throws IOException if the asset index cannot be read
     AssetIndex getAssetIndex(GameInstanceID instanceId, String assetId) throws IOException;
-
-    /// Returns an asset index by string id.
-    ///
-    /// @param id      the instance id string
-    /// @param assetId the asset index id
-    /// @return the asset index
-    /// @throws IOException if the asset index cannot be read
-    default AssetIndex getAssetIndex(String id, String assetId) throws IOException {
-        return getAssetIndex(new GameInstanceID(id), assetId);
-    }
 
     /// Returns the path of an asset index file.
     ///

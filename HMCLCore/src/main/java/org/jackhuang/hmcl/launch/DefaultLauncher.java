@@ -158,11 +158,11 @@ public class DefaultLauncher extends Launcher {
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
 
-            res.addDefault("-Dminecraft.client.jar=", FileUtils.getAbsolutePath(repository.getInstanceJar(version)));
+            res.addDefault("-Dminecraft.client.jar=", FileUtils.getAbsolutePath(repository.getInstanceJar(manifest)));
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
-                repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns")
+                res.addDefault("-Xdock:name=", "Minecraft " + manifest.id());
+                repository.getAssetObject(manifest.id(), manifest.getAssetIndex().getId(), "icons/minecraft.icns")
                         .ifPresent(minecraftIcns -> {
                             res.addDefault("-Xdock:icon=", FileUtils.getAbsolutePath(minecraftIcns));
                         });
@@ -281,25 +281,25 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        Set<String> classpath = repository.getClasspath(version);
+        Set<String> classpath = repository.getClasspath(manifest);
 
         if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
             classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
         }
 
-        Path jar = repository.getInstanceJar(version);
+        Path jar = repository.getInstanceJar(manifest);
         if (!Files.isRegularFile(jar))
             throw new IOException("Minecraft jar does not exist");
         classpath.add(FileUtils.getAbsolutePath(jar.toAbsolutePath()));
 
         // Provided Minecraft arguments
-        Path gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
+        Path gameAssets = repository.getActualAssetDirectory(manifest.id(), manifest.getAssetIndex().getId());
         Map<String, String> configuration = getConfigurations();
         configuration.put("${classpath}", String.join(File.pathSeparator, classpath));
         configuration.put("${game_assets}", FileUtils.getAbsolutePath(gameAssets));
         configuration.put("${assets_root}", FileUtils.getAbsolutePath(gameAssets));
 
-        Optional<String> gameVersion = repository.getGameVersion(version);
+        Optional<String> gameVersion = repository.getGameVersion(manifest);
 
         // lwjgl assumes path to native libraries encoded by ASCII.
         // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
@@ -314,7 +314,7 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${natives_directory}", nativeFolderPath);
 
         Path javaNativeFolder = FileUtils.toAbsolute(nativeFolder);
-        @Nullable List<Argument> jvmArguments = version.getArguments().map(Arguments::jvm).orElse(null);
+        @Nullable List<Argument> jvmArguments = manifest.getArguments().map(Arguments::jvm).orElse(null);
 
         if (jvmArguments != null) {
             for (Argument jvmArgument : jvmArguments) {
@@ -351,17 +351,17 @@ public class DefaultLauncher extends Launcher {
             res.add("-javaagent:" + javaAgent);
         }
 
-        if (version.getMainClass() == null) {
-            throw new IllegalStateException("Main class is null for instance " + version.getId());
+        if (manifest.getMainClass() == null) {
+            throw new IllegalStateException("Main class is null for instance " + manifest.getId());
         }
 
-        res.add(version.getMainClass());
+        res.add(manifest.getMainClass());
 
-        res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(ArrayList::new), configuration));
+        res.addAll(Arguments.parseStringArguments(manifest.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(ArrayList::new), configuration));
 
         Map<String, Boolean> features = getFeatures();
-        version.getArguments().map(Arguments::game).ifPresent(arguments -> res.addAll(Arguments.parseArguments(arguments, configuration, features)));
-        if (version.getMinecraftArguments().isPresent()) {
+        manifest.getArguments().map(Arguments::game).ifPresent(arguments -> res.addAll(Arguments.parseArguments(arguments, configuration, features)));
+        if (manifest.getMinecraftArguments().isPresent()) {
             res.addAll(Arguments.parseArguments(this.getDefaultGameArguments(), configuration, features));
         }
         if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.game() != null && !argumentsFromAuthInfo.game().isEmpty())
@@ -461,9 +461,9 @@ public class DefaultLauncher extends Launcher {
 
         try {
             FileUtils.cleanDirectoryQuietly(destination);
-            for (Library library : version.getLibraries())
+            for (Library library : manifest.getLibraries())
                 if (library.isNative())
-                    new Unzipper(repository.getLibraryFile(version, library), destination)
+                    new Unzipper(repository.getLibraryFile(manifest, library), destination)
                             .setFilter((zipEntry, destFile, relativePath) -> {
                                 if (!zipEntry.isDirectory() && !zipEntry.isUnixSymlink()
                                         && Files.isRegularFile(destFile)
@@ -490,11 +490,11 @@ public class DefaultLauncher extends Launcher {
     }
 
     private boolean isUsingLog4j() {
-        return GameVersionNumber.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
+        return GameVersionNumber.compare(repository.getGameVersion(manifest).orElse("1.7"), "1.7") >= 0;
     }
 
     public Path getLog4jConfigurationFile() {
-        return repository.getInstanceRoot(version.getId()).resolve("log4j2.xml");
+        return repository.getInstanceRoot(manifest.getId()).resolve("log4j2.xml");
     }
 
     public void extractLog4jConfigurationFile() throws IOException {
@@ -502,7 +502,7 @@ public class DefaultLauncher extends Launcher {
 
         String sourcePath;
 
-        if (GameVersionNumber.asGameVersion(repository.getGameVersion(version)).compareTo("1.12") < 0) {
+        if (GameVersionNumber.asGameVersion(repository.getGameVersion(manifest)).compareTo("1.12") < 0) {
             if (options.isEnableDebugLogOutput()) {
                 sourcePath = "/assets/game/log4j2-1.7-debug.xml";
             } else {
@@ -528,35 +528,35 @@ public class DefaultLauncher extends Launcher {
                 pair("${auth_session}", authInfo.getAccessToken()),
                 pair("${auth_access_token}", authInfo.getAccessToken()),
                 pair("${auth_uuid}", UUIDs.toCompactString(authInfo.getUUID())),
-                pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(version.getId())),
+                pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(manifest.getId())),
                 pair("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
-                pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(version.getType().getId())),
-                pair("${game_directory}", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))),
+                pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(manifest.getType().getId())),
+                pair("${game_directory}", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.getId()))),
                 pair("${user_type}", authInfo.getUserType()),
-                pair("${assets_index_name}", version.getAssetIndex().getId()),
+                pair("${assets_index_name}", manifest.getAssetIndex().getId()),
                 pair("${user_properties}", authInfo.getUserProperties()),
                 pair("${resolution_width}", options.getWidth().toString()),
                 pair("${resolution_height}", options.getHeight().toString()),
-                pair("${library_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(version))),
+                pair("${library_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(manifest))),
                 pair("${classpath_separator}", File.pathSeparator),
-                pair("${primary_jar}", FileUtils.getAbsolutePath(repository.getInstanceJar(version))),
+                pair("${primary_jar}", FileUtils.getAbsolutePath(repository.getInstanceJar(manifest))),
                 pair("${language}", Locale.getDefault().toLanguageTag()),
 
                 // defined by HMCL
                 // libraries_directory stands for historical reasons here. We don't know the official launcher
                 // had already defined "library_directory" as the placeholder for path to ".minecraft/libraries"
                 // when we propose this placeholder.
-                pair("${libraries_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(version))),
+                pair("${libraries_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(manifest))),
                 // file_separator is used in -DignoreList
                 pair("${file_separator}", File.separator),
-                pair("${primary_jar_name}", FileUtils.getName(repository.getInstanceJar(version)))
+                pair("${primary_jar_name}", FileUtils.getName(repository.getInstanceJar(manifest)))
         );
     }
 
     /// Returns the native library directory selected by the launch options.
     private Path getNativeFolder() {
         if (StringUtils.isBlank(options.getNativesDir())) {
-            return repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
+            return repository.getNativeDirectory(manifest.getId(), options.getJava().getPlatform());
         }
 
         return Path.of(options.getNativesDir());
@@ -587,7 +587,7 @@ public class DefaultLauncher extends Launcher {
         if (isUsingLog4j())
             extractLog4jConfigurationFile();
 
-        Path runDirectory = repository.getRunDirectory(version.getId());
+        Path runDirectory = repository.getRunDirectory(manifest.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
             ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars(nativeFolder))).directory(runDirectory.toFile());
@@ -617,13 +617,13 @@ public class DefaultLauncher extends Launcher {
     }
 
     private Map<String, String> getEnvVars(Path nativeFolder) {
-        String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
+        String versionName = Optional.ofNullable(options.getVersionName()).orElse(manifest.getId());
 
         Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
-        env.put("INST_DIR", FileUtils.getAbsolutePath(repository.getInstanceRoot(version.getId())));
-        env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId())));
+        env.put("INST_DIR", FileUtils.getAbsolutePath(repository.getInstanceRoot(manifest.getId())));
+        env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.getId())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
         if (options.getRenderer() instanceof Renderer.Driver driver) {
@@ -782,7 +782,7 @@ public class DefaultLauncher extends Launcher {
                         writer.newLine();
                     }
                     writer.write("Set-Location -LiteralPath ");
-                    writer.write(CommandBuilder.pwshString(FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))));
+                    writer.write(CommandBuilder.pwshString(FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.getId()))));
                     writer.newLine();
 
 
@@ -826,7 +826,7 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         writer.newLine();
-                        writer.write(new CommandBuilder().addAll("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.getId()))).toString());
                     } else {
                         writer.write("#!/usr/bin/env bash");
                         writer.newLine();
@@ -838,7 +838,7 @@ public class DefaultLauncher extends Launcher {
                             writer.write(new CommandBuilder().addAll("ln", "-s", FileUtils.getAbsolutePath(nativeFolder), commandLine.tempNativeFolder.toString()).toString());
                             writer.newLine();
                         }
-                        writer.write(new CommandBuilder().addAll("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.getId()))).toString());
                     }
                     writer.newLine();
                     if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
