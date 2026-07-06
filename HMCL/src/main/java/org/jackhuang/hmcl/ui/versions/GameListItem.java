@@ -53,15 +53,15 @@ public class GameListItem extends GameItem {
     }
 
     public void remove() {
-        Instances.deleteInstance(repository, id);
+        Instances.deleteInstance(repository, instanceId);
     }
 
     public void export() {
-        Instances.exportInstance(repository, id);
+        Instances.exportInstance(repository, instanceId);
     }
 
     public void browse() {
-        Instances.openFolder(repository, id);
+        Instances.openFolder(repository, instanceId);
     }
 
     public void testGame() {

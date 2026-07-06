@@ -77,8 +77,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
     private final IntegerProperty pageCount = new SimpleIntegerProperty(-1);
     private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
-    private final ObservableList<String> versions = FXCollections.observableArrayList();
-    private final StringProperty selectedVersion = new SimpleStringProperty();
+    private final ObservableList<GameInstanceID> instances = FXCollections.observableArrayList();
+    private final ObjectProperty<GameInstanceID> selectedInstance = new SimpleObjectProperty<>();
     private final DownloadPage.DownloadCallback callback;
     private boolean searchInitialized = false;
     protected final BooleanProperty supportChinese = new SimpleBooleanProperty();
@@ -124,10 +124,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
 
         if (versionSelection) {
-            versions.setAll(repository.getDisplayInstanceManifests()
-                    .map(GameInstanceManifest::getId)
-                    .collect(Collectors.toList()));
-            selectedVersion.set(repository.getSelectedInstance());
+            instances.setAll(repository.getDisplayInstanceManifests()
+                    .map(GameInstanceManifest::id)
+                    .toList());
+            selectedInstance.set(repository.getSelectedInstance2());
         }
     }
 
@@ -156,11 +156,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     public void selectInstance(GameInstanceID instanceId) {
-        FXUtils.runInFX(() -> selectedVersion.set(instanceId.toString()));
-    }
-
-    public void selectVersion(String versionID) {
-        FXUtils.runInFX(() -> selectedVersion.set(versionID));
+        FXUtils.runInFX(() -> selectedInstance.set(instanceId));
     }
 
     private void search(String userGameVersion, RemoteAddonRepository.Category category, int pageOffset, String searchFilter, RemoteAddonRepository.SortType sort) {
@@ -223,8 +219,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     protected HMCLGameRepository.InstanceReference getInstanceReference() {
         if (versionSelection) {
-            @Nullable String instanceId = selectedVersion.get();
-            return new HMCLGameRepository.InstanceReference(instanceReference.get().repository(), instanceId == null ? null : new GameInstanceID(instanceId));
+            @Nullable GameInstanceID instanceId = selectedInstance.get();
+            return new HMCLGameRepository.InstanceReference(instanceReference.get().repository(), instanceId);
         } else {
             return instanceReference.get();
         }
@@ -282,10 +278,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     int columns = 0;
                     Node lastNode = null;
                     if (control.versionSelection) {
-                        JFXComboBox<String> versionsComboBox = new JFXComboBox<>();
+                        JFXComboBox<GameInstanceID> versionsComboBox = new JFXComboBox<>();
                         versionsComboBox.setMaxWidth(Double.MAX_VALUE);
-                        Bindings.bindContent(versionsComboBox.getItems(), control.versions);
-                        selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedVersion);
+                        Bindings.bindContent(versionsComboBox.getItems(), control.instances);
+                        selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedInstance);
 
                         searchPane.add(new Label(i18n("version")), columns++, rowIndex);
                         searchPane.add(lastNode = versionsComboBox, columns++, rowIndex);

@@ -46,7 +46,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallerListPage extends ListPageBase<InstallerItem> implements VersionPage.GameInstanceLoadable {
     private HMCLGameRepository repository;
-    private String versionId;
+    private GameInstanceID instanceId;
     private GameInstanceManifest version;
     private String gameVersion;
 
@@ -65,14 +65,14 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     @Override
     public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
         this.repository = repository;
-        this.versionId = instanceId;
+        this.instanceId = instanceId;
         this.version = repository.getInstanceManifest(instanceId);
         this.gameVersion = null;
 
         CompletableFuture.supplyAsync(() -> {
             gameVersion = repository.getGameVersion(version).orElse(null);
 
-            return LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(instanceId), gameVersion);
+            return LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesInstanceManifest(instanceId).manifest(), gameVersion);
         }).thenAcceptAsync(analyzer -> {
             itemsProperty().clear();
 
@@ -106,7 +106,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                 item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(repository::saveAsync)
                         .withComposeAsync(repository.refreshAsync())
-                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.versionId))
+                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.instanceId))
                         .start());
 
                 itemsProperty().add(item);
@@ -128,7 +128,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                 installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(repository::saveAsync)
                         .withComposeAsync(repository.refreshAsync())
-                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.versionId))
+                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.instanceId))
                         .start());
 
                 itemsProperty().add(installerItem);
@@ -153,7 +153,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
             public void onStop(boolean success, TaskExecutor executor) {
                 runInFX(() -> {
                     if (success) {
-                        loadInstance(repository, versionId);
+                        loadInstance(repository, instanceId);
                         Controllers.dialog(i18n("install.success"));
                     } else {
                         if (executor.getException() == null)

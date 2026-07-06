@@ -90,7 +90,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private HMCLGameRepository repository;
-    private String instanceId;
+    private GameInstanceID instanceId;
 
     private Path resourcePackDirectory;
     private ResourcePackManager resourcePackManager;
@@ -184,7 +184,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void onDownload() {
-        Controllers.getDownloadPage().showResourcePackDownloads().selectVersion(instanceId);
+        Controllers.getDownloadPage().showResourcePackDownloads().selectInstance(instanceId);
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
@@ -620,7 +620,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                                 ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
                                                 : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
                                         remoteAddon,
-                                        new HMCLGameRepository.InstanceReference(page.repository, new GameInstanceID(page.instanceId)),
+                                        new HMCLGameRepository.InstanceReference(page.repository, page.instanceId),
                                         org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
                                 ));
                             });

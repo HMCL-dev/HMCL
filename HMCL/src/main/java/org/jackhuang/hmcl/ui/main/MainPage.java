@@ -318,7 +318,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launch() {
         HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-        Instances.launch(repository, repository.getSelectedInstance());
+        Instances.launch(repository, repository.getSelectedInstance2());
     }
 
     private void launchNoGame() {

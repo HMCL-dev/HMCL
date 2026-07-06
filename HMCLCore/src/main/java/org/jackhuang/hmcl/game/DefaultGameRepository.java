@@ -651,10 +651,10 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public ModManager getModManager(String instanceId) {
-        return new ModManager(this, instanceId);
+        return new ModManager(this, new GameInstanceID(instanceId));
     }
 
-    public ResourcePackManager getResourcePackManager(String instanceId) {
+    public ResourcePackManager getResourcePackManager(GameInstanceID instanceId) {
         return new ResourcePackManager(this, instanceId);
     }
 

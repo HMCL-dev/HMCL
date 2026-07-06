@@ -164,8 +164,8 @@ public final class Instances {
         Controllers.getDecorator().startWizard(new ExportWizardProvider(repository, instanceId.toString()), i18n("modpack.wizard")); // TODO
     }
 
-    public static void openFolder(HMCLGameRepository repository, String version) {
-        FXUtils.openFolder(repository.getRunDirectory(new GameInstanceID(version)));
+    public static void openFolder(HMCLGameRepository repository, GameInstanceID instanceId) {
+        FXUtils.openFolder(repository.getRunDirectory(instanceId));
     }
 
     public static void installFromJson(HMCLGameRepository repository, Path file) {

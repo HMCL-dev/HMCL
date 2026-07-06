@@ -80,7 +80,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                 .add(accountListItem)
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     var repository = GameDirectoryManager.getSelectedRepository();
-                    Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
+                    Instances.launch(repository, repository.getSelectedInstance2(), launcherHelper -> {
                         launcherHelper.setKeep();
                         launcherHelper.setDisableOfflineSkin();
                     });
