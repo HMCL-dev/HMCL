@@ -156,8 +156,7 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, String name, Modpack modpack) {
-        GameInstanceID instanceId = new GameInstanceID(name);
+    public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, Modpack modpack) {
         repository.markInstanceAsModpack(instanceId);
 
         ExceptionalRunnable<?> success = () -> {
@@ -201,8 +200,7 @@ public final class ModpackHelper {
                 });
     }
 
-    public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, String name, Modpack modpack, String iconUrl) {
-        GameInstanceID instanceId = new GameInstanceID(name);
+    public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, Modpack modpack, String iconUrl) {
         repository.markInstanceAsModpack(instanceId);
 
         ExceptionalRunnable<?> success = () -> {
