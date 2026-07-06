@@ -844,6 +844,20 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
+    public boolean instanceIdConflicts(GameInstanceID id) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            // on Windows, filenames are case-insensitive
+            for (GameInstanceManifest manifest : getInstanceManifests()) {
+                if (manifest.id().toString().equalsIgnoreCase(id.toString())) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return hasInstance(id);
+        }
+    }
+
     public static long getAllocatedMemory(long minimum, long available, boolean auto) {
         if (auto) {
             available -= 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself

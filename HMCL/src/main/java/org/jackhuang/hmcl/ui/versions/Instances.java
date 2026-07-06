@@ -210,17 +210,18 @@ public final class Instances {
     public static void duplicateInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
         Controllers.prompt(
                 new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
-                    String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
+                    String newInstanceName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
+                    GameInstanceID newInstanceId = new GameInstanceID(newInstanceName);
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
-                    Task.runAsync(() -> repository.duplicateInstance(instanceId, new GameInstanceID(newVersionName), copySaves))
+                    Task.runAsync(() -> repository.duplicateInstance(instanceId, newInstanceId, copySaves))
                             .thenComposeAsync(repository.refreshAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     handler.resolve();
                                 } else {
                                     handler.reject(StringUtils.getStackTrace(exception));
-                                    if (!repository.instanceIdConflicts(newVersionName)) {
-                                        repository.removeInstanceFromDisk(new GameInstanceID(newVersionName));
+                                    if (!repository.instanceIdConflicts(newInstanceId)) {
+                                        repository.removeInstanceFromDisk(newInstanceId);
                                     }
                                 }
                             }).start();
