@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
@@ -33,7 +33,7 @@ import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 
 public class GameInstallTask extends Task<GameInstancePatch> {
 
-    private final DefaultGameRepository2 gameRepository;
+    private final DefaultGameRepository gameRepository;
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest version;
     private final GameRemoteVersion remote;

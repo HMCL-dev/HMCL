@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.game.Library;
@@ -48,18 +48,18 @@ import java.util.regex.Pattern;
  */
 public class DefaultDependencyManager extends AbstractDependencyManager {
 
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final DownloadProvider downloadProvider;
     private final DefaultCacheRepository cacheRepository;
 
-    public DefaultDependencyManager(DefaultGameRepository2 repository, DownloadProvider downloadProvider, DefaultCacheRepository cacheRepository) {
+    public DefaultDependencyManager(DefaultGameRepository repository, DownloadProvider downloadProvider, DefaultCacheRepository cacheRepository) {
         this.repository = repository;
         this.downloadProvider = downloadProvider;
         this.cacheRepository = cacheRepository;
     }
 
     @Override
-    public DefaultGameRepository2 getGameRepository() {
+    public DefaultGameRepository getGameRepository() {
         return repository;
     }
 

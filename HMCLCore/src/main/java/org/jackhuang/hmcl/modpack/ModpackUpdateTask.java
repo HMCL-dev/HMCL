@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.modpack;
 
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -28,12 +28,12 @@ import java.util.Collections;
 
 public class ModpackUpdateTask extends Task<Void> {
 
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final String id;
     private final Task<?> updateTask;
     private final Path backupFolder;
 
-    public ModpackUpdateTask(DefaultGameRepository2 repository, String id, Task<?> updateTask) {
+    public ModpackUpdateTask(DefaultGameRepository repository, String id, Task<?> updateTask) {
         this.repository = repository;
         this.id = id;
         this.updateTask = updateTask;

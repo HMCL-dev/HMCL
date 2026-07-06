@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 
 import java.nio.file.Path;
@@ -34,7 +35,7 @@ public final class GameJsonParseFailedEvent extends Event {
 
     /**
      *
-     * @param source {@link org.jackhuang.hmcl.game.DefaultGameRepository2}
+     * @param source {@link DefaultGameRepository}
      * @param jsonFile the minecraft.json file.
      * @param version the version name
      */

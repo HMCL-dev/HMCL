@@ -32,7 +32,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @NotNullByDefault
-public interface GameRepository2 {
+public interface GameRepository {
     /// Resolves inheritance and pending patches into a launch-ready manifest view.
     ///
     /// @param manifest the manifest to resolve

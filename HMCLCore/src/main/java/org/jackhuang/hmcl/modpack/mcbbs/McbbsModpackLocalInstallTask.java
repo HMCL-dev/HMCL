@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.modpack.mcbbs;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
@@ -46,7 +46,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
     private final McbbsModpackManifest manifest;
     private final String name;
     private final boolean update;
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final MinecraftInstanceTask<McbbsModpackManifest> instanceTask;
     private final List<Task<?>> dependencies = new ArrayList<>(2);
     private final List<Task<?>> dependents = new ArrayList<>(4);

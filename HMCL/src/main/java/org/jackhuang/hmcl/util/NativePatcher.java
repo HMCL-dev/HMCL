@@ -73,7 +73,7 @@ public final class NativePatcher {
         );
     }
 
-    public static GameInstanceManifest patchNative(DefaultGameRepository2 repository,
+    public static GameInstanceManifest patchNative(DefaultGameRepository repository,
                                                    GameInstanceManifest version, String gameVersion,
                                                    JavaRuntime javaVersion,
                                                    GameSettings.Effective settings,

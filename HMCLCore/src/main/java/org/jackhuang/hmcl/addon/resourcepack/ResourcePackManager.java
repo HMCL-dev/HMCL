@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.addon.resourcepack;
 
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.game.GameRepository2;
+import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.Pair;
@@ -218,7 +218,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private boolean loaded = false;
 
-    public ResourcePackManager(GameRepository2 repository, String id) {
+    public ResourcePackManager(GameRepository repository, String id) {
         super(repository, id);
         this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
         this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");

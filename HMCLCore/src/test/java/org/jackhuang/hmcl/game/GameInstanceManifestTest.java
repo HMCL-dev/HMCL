@@ -54,7 +54,7 @@ public final class GameInstanceManifestTest {
                 false,
                 List.of(patch("patch", null)));
 
-        GameInstanceManifest.Resolved resolved = new DefaultGameRepository2(Path.of(".")).resolve(manifest);
+        GameInstanceManifest.Resolved resolved = new DefaultGameRepository(Path.of(".")).resolve(manifest);
 
         assertNull(resolved.manifest().mainClass());
         assertEquals(List.of(patch("patch", null)), resolved.appliedPatches());

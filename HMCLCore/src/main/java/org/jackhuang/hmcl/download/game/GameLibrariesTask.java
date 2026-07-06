@@ -20,9 +20,9 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameRepository2;
+import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -63,7 +63,7 @@ public final class GameLibrariesTask extends Task<Void> {
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository2}
+     * @param dependencyManager the dependency manager that can provides {@link GameRepository}
      * @param version           the game version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest version, boolean integrityCheck) {
@@ -73,7 +73,7 @@ public final class GameLibrariesTask extends Task<Void> {
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository2}
+     * @param dependencyManager the dependency manager that can provides {@link GameRepository}
      * @param version           the game version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest version, boolean integrityCheck, List<Library> libraries) {
@@ -91,7 +91,7 @@ public final class GameLibrariesTask extends Task<Void> {
         return dependencies;
     }
 
-    public static boolean shouldDownloadLibrary(GameRepository2 gameRepository, GameInstanceManifest version, Library library, boolean integrityCheck) {
+    public static boolean shouldDownloadLibrary(GameRepository gameRepository, GameInstanceManifest version, Library library, boolean integrityCheck) {
         Path file = gameRepository.getLibraryFile(version, library);
         if (!Files.isRegularFile(file)) return true;
 
@@ -135,7 +135,7 @@ public final class GameLibrariesTask extends Task<Void> {
     @Override
     public void execute() throws IOException {
         int progress = 0;
-        GameRepository2 gameRepository = dependencyManager.getGameRepository();
+        GameRepository gameRepository = dependencyManager.getGameRepository();
         for (Library library : libraries) {
             if (!library.appliesToCurrentEnvironment()) {
                 continue;
@@ -143,7 +143,7 @@ public final class GameLibrariesTask extends Task<Void> {
 
             // https://github.com/HMCL-dev/HMCL/issues/3975
             if ("net.minecraftforge".equals(library.getGroupId()) && "minecraftforge".equals(library.getArtifactId())
-                    && gameRepository instanceof DefaultGameRepository2 defaultGameRepository) {
+                    && gameRepository instanceof DefaultGameRepository defaultGameRepository) {
                 List<FMLLib> fmlLibs = getFMLLibs(library.getVersion());
                 if (fmlLibs != null) {
                     Path libDir = defaultGameRepository.getBaseDirectory().resolve("lib")

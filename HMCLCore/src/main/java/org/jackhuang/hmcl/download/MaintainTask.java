@@ -39,10 +39,10 @@ import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MaintainTask extends Task<GameInstanceManifest> {
-    private final GameRepository2 repository;
+    private final GameRepository repository;
     private final GameInstanceManifest version;
 
-    public MaintainTask(GameRepository2 repository, GameInstanceManifest version) {
+    public MaintainTask(GameRepository repository, GameInstanceManifest version) {
         this.repository = repository;
         this.version = version;
 
@@ -55,7 +55,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         setResult(maintain(repository, version));
     }
 
-    public static GameInstanceManifest maintain(GameRepository2 repository, GameInstanceManifest version) {
+    public static GameInstanceManifest maintain(GameRepository repository, GameInstanceManifest version) {
         if (version.getInheritsFrom() != null)
             throw new IllegalArgumentException("MaintainTask requires independent game version");
 
@@ -91,14 +91,14 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         return version;
     }
 
-    public static GameInstanceManifest maintainPreservingPatches(GameRepository2 repository, GameInstanceManifest version) {
+    public static GameInstanceManifest maintainPreservingPatches(GameRepository repository, GameInstanceManifest version) {
         if (!version.isResolvedPreservingPatches())
             throw new IllegalArgumentException("MaintainTask requires independent game version");
         GameInstanceManifest newVersion = maintain(repository, version.resolve(repository));
         return newVersion.setPatches(version.getPatches());
     }
 
-    private static GameInstanceManifest maintainGameWithLaunchWrapper(GameRepository2 repository, GameInstanceManifest version, boolean reorderTweakClass) {
+    private static GameInstanceManifest maintainGameWithLaunchWrapper(GameRepository repository, GameInstanceManifest version, boolean reorderTweakClass) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
         String mainClass = null;
@@ -147,7 +147,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         return mainClass == null ? ret : ret.setMainClass(mainClass);
     }
 
-    private static GameInstanceManifest maintainGameWithCpwModLauncher(GameRepository2 repository, GameInstanceManifest version) {
+    private static GameInstanceManifest maintainGameWithCpwModLauncher(GameRepository repository, GameInstanceManifest version) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
 
@@ -173,7 +173,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         return builder.build();
     }
 
-    private static String updateIgnoreList(GameRepository2 repository, GameInstanceManifest version, String ignoreList) {
+    private static String updateIgnoreList(GameRepository repository, GameInstanceManifest version, String ignoreList) {
         String[] ignores = ignoreList.split(",");
         List<String> newIgnoreList = new ArrayList<>();
 
@@ -205,7 +205,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
     }
 
     // Fix wrong configurations when launching 1.17+ with Forge.
-    private static GameInstanceManifest maintainGameWithCpwBoostrapLauncher(GameRepository2 repository, GameInstanceManifest version) {
+    private static GameInstanceManifest maintainGameWithCpwBoostrapLauncher(GameRepository repository, GameInstanceManifest version) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
 
@@ -247,7 +247,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         return builder.build();
     }
 
-    private static GameInstanceManifest maintainOptiFineLibrary(GameRepository2 repository, GameInstanceManifest version, boolean remove) {
+    private static GameInstanceManifest maintainOptiFineLibrary(GameRepository repository, GameInstanceManifest version, boolean remove) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
         List<Library> libraries = new ArrayList<>(version.getLibraries());
 

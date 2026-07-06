@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
@@ -80,7 +80,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final Modpack modpack;
     private final MultiMCInstanceConfiguration manifest;
     private final String name;
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final List<Task<?>> dependents = new ArrayList<>();
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final DefaultDependencyManager dependencyManager;

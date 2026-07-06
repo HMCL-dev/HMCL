@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
 import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.DownloadInfo;
 import org.jackhuang.hmcl.game.DownloadType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
@@ -194,7 +194,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     }
 
     private final DefaultDependencyManager dependencyManager;
-    private final DefaultGameRepository2 gameRepository;
+    private final DefaultGameRepository gameRepository;
     private final GameInstanceManifest version;
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);

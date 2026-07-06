@@ -50,7 +50,7 @@ import static org.jackhuang.hmcl.util.Lang.getOrDefault;
  */
 public final class OptiFineInstallTask extends Task<GameInstancePatch> {
 
-    private final DefaultGameRepository2 gameRepository;
+    private final DefaultGameRepository gameRepository;
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest version;
     private final OptiFineRemoteVersion remote;

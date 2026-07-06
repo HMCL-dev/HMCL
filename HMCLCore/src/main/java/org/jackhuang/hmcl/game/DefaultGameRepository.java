@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
-public class DefaultGameRepository2 implements GameRepository2 {
+public class DefaultGameRepository implements GameRepository {
 
     private static final GameInstanceManifest CLASSIC_MANIFEST = new GameInstanceManifest(
             new GameInstanceID("Classic"),
@@ -91,7 +91,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
     private volatile boolean loaded;
     private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
-    public DefaultGameRepository2(Path baseDirectory) {
+    public DefaultGameRepository(Path baseDirectory) {
         this.status = new Status(baseDirectory);
     }
 

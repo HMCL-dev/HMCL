@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -41,7 +41,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     private final Modpack modpack;
     private final ServerModpackManifest manifest;
     private final String name;
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final List<Task<?>> dependents = new ArrayList<>(4);
 

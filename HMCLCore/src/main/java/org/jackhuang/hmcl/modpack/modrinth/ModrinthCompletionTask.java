@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.modpack.modrinth;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -41,7 +41,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class ModrinthCompletionTask extends Task<Void> {
 
     private final DefaultDependencyManager dependency;
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final ModManager modManager;
     private final String version;
     private ModrinthManifest manifest;

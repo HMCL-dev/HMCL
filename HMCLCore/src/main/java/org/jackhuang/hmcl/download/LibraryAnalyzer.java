@@ -182,7 +182,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return new LibraryAnalyzer(version, libraries);
     }
 
-    public static boolean isModded(GameRepository2 provider, GameInstanceManifest version) {
+    public static boolean isModded(GameRepository provider, GameInstanceManifest version) {
         GameInstanceManifest resolvedVersion;
         try {
             resolvedVersion = version.resolve(provider);

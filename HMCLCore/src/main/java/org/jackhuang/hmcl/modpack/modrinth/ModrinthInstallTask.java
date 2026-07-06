@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.modpack.modrinth;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
@@ -40,7 +40,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class ModrinthInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final Path zipFile;
     private final Modpack modpack;
     private final ModrinthManifest manifest;

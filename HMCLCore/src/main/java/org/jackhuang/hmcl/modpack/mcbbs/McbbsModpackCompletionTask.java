@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.modpack.mcbbs;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
@@ -51,7 +51,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
 
     private final DefaultDependencyManager dependency;
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final ModManager modManager;
     private final String version;
     private final Path configurationFile;

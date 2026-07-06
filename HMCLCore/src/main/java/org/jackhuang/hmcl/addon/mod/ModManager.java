@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.meta.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameRepository2;
+import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.NoSuchGameInstanceException;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -69,7 +69,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     private boolean loaded = false;
 
-    public ModManager(GameRepository2 repository, String id) {
+    public ModManager(GameRepository repository, String id) {
         super(repository, id);
     }
 

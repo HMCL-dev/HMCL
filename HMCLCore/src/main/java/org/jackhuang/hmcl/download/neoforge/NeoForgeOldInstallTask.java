@@ -172,7 +172,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
     }
 
     private final DefaultDependencyManager dependencyManager;
-    private final DefaultGameRepository2 gameRepository;
+    private final DefaultGameRepository gameRepository;
     private final GameInstanceManifest version;
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);

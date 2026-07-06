@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameRepository2;
+import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
 
@@ -33,7 +33,7 @@ public interface DependencyManager {
     /**
      * The relied game repository.
      */
-    GameRepository2 getGameRepository();
+    GameRepository getGameRepository();
 
     /**
      * The cache repository

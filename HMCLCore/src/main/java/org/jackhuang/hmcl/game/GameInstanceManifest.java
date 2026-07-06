@@ -537,7 +537,7 @@ public record GameInstanceManifest(
     ///
     /// @param repository the repository that provides parent manifests
     /// @return the resolved manifest
-    public GameInstanceManifest resolve(GameRepository2 repository) throws NoSuchGameInstanceException {
+    public GameInstanceManifest resolve(GameRepository repository) throws NoSuchGameInstanceException {
         return repository.resolve(this).manifest();
     }
 
@@ -545,7 +545,7 @@ public record GameInstanceManifest(
     ///
     /// @param repository the repository that provides parent manifests
     /// @return the standalone manifest
-    public GameInstanceManifest resolvePreservingPatches(GameRepository2 repository) throws NoSuchGameInstanceException {
+    public GameInstanceManifest resolvePreservingPatches(GameRepository repository) throws NoSuchGameInstanceException {
         return repository.resolvePreservingPatches(this).manifest();
     }
 

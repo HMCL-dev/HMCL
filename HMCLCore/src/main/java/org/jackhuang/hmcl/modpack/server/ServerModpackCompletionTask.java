@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -42,7 +42,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class ServerModpackCompletionTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final String version;
     private ModpackConfiguration<ServerModpackManifest> manifest;
     private GetTask dependent;

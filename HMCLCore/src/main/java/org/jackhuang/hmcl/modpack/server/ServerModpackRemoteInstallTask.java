@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -36,7 +36,7 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
 
     private final String name;
     private final DefaultDependencyManager dependency;
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final ServerModpackManifest manifest;

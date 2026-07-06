@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.modpack.multimc;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
@@ -41,7 +41,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * Export the game to a mod pack file.
  */
 public class MultiMCModpackExportTask extends Task<Void> {
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final String versionId;
     private final List<String> whitelist;
     private final MultiMCInstanceConfiguration configuration;
@@ -51,7 +51,7 @@ public class MultiMCModpackExportTask extends Task<Void> {
      * @param output    mod pack file.
      * @param versionId to locate version.json
      */
-    public MultiMCModpackExportTask(DefaultGameRepository2 repository, String versionId, List<String> whitelist, MultiMCInstanceConfiguration configuration, Path output) {
+    public MultiMCModpackExportTask(DefaultGameRepository repository, String versionId, List<String> whitelist, MultiMCInstanceConfiguration configuration, Path output) {
         this.repository = repository;
         this.versionId = versionId;
         this.whitelist = whitelist;

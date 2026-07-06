@@ -83,7 +83,7 @@ public class GameCrashWindow extends Stage {
     private final TextFlow feedbackTextFlow = new TextFlow();
 
     private final ManagedProcess managedProcess;
-    private final DefaultGameRepository2 repository;
+    private final DefaultGameRepository repository;
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
     private final View view;
@@ -91,7 +91,7 @@ public class GameCrashWindow extends Stage {
 
     private final List<Log> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository2 repository, GameInstanceManifest version, LaunchOptions launchOptions, List<Log> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, GameInstanceManifest version, LaunchOptions launchOptions, List<Log> logs) {
         Themes.applyNativeDarkMode(this);
 
         this.managedProcess = managedProcess;

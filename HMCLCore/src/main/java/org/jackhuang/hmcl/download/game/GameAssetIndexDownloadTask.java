@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.AssetIndex;
 import org.jackhuang.hmcl.game.AssetIndexInfo;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -51,7 +52,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository2}
+     * @param dependencyManager the dependency manager that can provides {@link GameRepository}
      * @param version the <b>resolved</b> version
      */
     public GameAssetIndexDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest version, boolean forceDownloading) {

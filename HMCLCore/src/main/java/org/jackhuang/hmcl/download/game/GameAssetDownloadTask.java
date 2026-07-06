@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.download.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
-import org.jackhuang.hmcl.game.AssetIndex;
-import org.jackhuang.hmcl.game.AssetIndexInfo;
-import org.jackhuang.hmcl.game.AssetObject;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
@@ -55,7 +52,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository2}
+     * @param dependencyManager the dependency manager that can provides {@link GameRepository}
      * @param version the game version
      */
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest version, boolean forceDownloadingIndex, boolean integrityCheck) {

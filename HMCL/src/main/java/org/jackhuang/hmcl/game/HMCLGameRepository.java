@@ -75,7 +75,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// HMCL game repository implementation backed by a GameDirectory and per-instance game settings.
 @NotNullByDefault
-public final class HMCLGameRepository extends DefaultGameRepository2 {
+public final class HMCLGameRepository extends DefaultGameRepository {
     /// References an optional game instance in a repository.
     ///
     /// @param repository the owning game repository
