@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -53,6 +56,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,7 +152,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionP
         }).withRunAsync(Schedulers.javafx(), () -> {
             if (!failures.isEmpty()) {
                 StringBuilder failure = new StringBuilder(i18n("shaderpack.add.failed"));
-                for (Path file: failures) {
+                for (Path file : failures) {
                     failure.append("\n").append(file.toString());
                 }
                 Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -171,31 +175,21 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionP
 
     public void checkUpdates(Collection<ShaderFile> shaderPacks) {
         if (shadersDir == null) return;
-        Runnable action = () -> Controllers.taskDialog(Task
-                        .composeAsync(() -> {
-                            Optional<String> gameVersion = repository.getGameVersion(instanceId);
-                            return gameVersion.map(g -> new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), g, shaderPacks)).orElse(null);
-                        })
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                            if (exception != null || result == null) {
-                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                            } else if (result.isEmpty()) {
-                                Controllers.dialog(i18n("addon.check_update.empty"));
-                            } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(shadersDir, result));
-                            }
-                        })
-                        .withStagesHints("update.checking"),
-                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (repository.isModpack(instanceId)) {
-            Controllers.confirm(
-                    i18n("resourcepack.update_in_modpack.warning"), null,
-                    MessageDialogPane.MessageType.WARNING,
-                    action, null);
-        } else {
-            action.run();
-        }
+        Controllers.taskDialog(
+                Task.composeAsync(() -> {
+                    Optional<String> gameVersion = repository.getGameVersion(instanceId);
+                    return gameVersion.map(g -> new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), g, shaderPacks)).orElse(null);
+                }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception != null || result == null) {
+                        Controllers.dialog(I18n.i18n("addon.check_update.failed_check"), I18n.i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                    } else if (result.isEmpty()) {
+                        Controllers.dialog(I18n.i18n("addon.check_update.empty"));
+                    } else {
+                        Controllers.navigateForward(new AddonUpdatesPage(shadersDir, result));
+                    }
+                }).withStagesHints("update.checking"),
+                I18n.i18n("addon.check_update"), TaskCancellationAction.NORMAL);
     }
 
     private void onAddFiles() {
@@ -260,7 +254,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionP
                 toolbarSelecting.getChildren().setAll(
                         createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
                             Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
-                                    control.removeFiles(listView.getSelectionModel().getSelectedItems()),
+                                            control.removeFiles(listView.getSelectionModel().getSelectedItems()),
                                     null);
                         }),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
@@ -302,7 +296,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionP
                 toolbarNormal.setPickOnBounds(false);
                 toolbarNormal.getChildren().setAll(
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
-                        createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
+                        createToolbarButton2(i18n("shaderpack.add"), SVG.ADD, control::onAddFiles),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, control::onOpenFolder),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 control.checkUpdates(listView.getItems().stream().toList())
