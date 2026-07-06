@@ -336,27 +336,6 @@ public record GameInstanceManifest(
         return Optional.ofNullable(arguments);
     }
 
-    /// Returns the main class.
-    ///
-    /// @return the main class, or `null` when absent
-    public @Nullable String getMainClass() {
-        return mainClass;
-    }
-
-    /// Returns the patch version.
-    ///
-    /// @return always `null` for manifests
-    public @Nullable String getVersion() {
-        return null;
-    }
-
-    /// Returns the preferred Java version.
-    ///
-    /// @return the preferred Java version, or `null` when absent
-    public @Nullable GameJavaVersion getJavaVersion() {
-        return javaVersion;
-    }
-
     /// Returns whether the manifest is hidden.
     ///
     /// @return whether the manifest is hidden

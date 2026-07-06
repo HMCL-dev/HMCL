@@ -59,7 +59,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         if (version.inheritsFrom() != null)
             throw new IllegalArgumentException("MaintainTask requires independent game version");
 
-        String mainClass = version.resolve(repository).getMainClass();
+        String mainClass = version.resolve(repository).mainClass();
 
         if (mainClass != null && mainClass.equals(LibraryAnalyzer.LAUNCH_WRAPPER_MAIN)) {
             version = maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(repository, unique(version), true), false);

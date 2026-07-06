@@ -123,7 +123,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void execute() throws Exception {
-        String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
+        String originalMainClass = version.resolve(dependencyManager.getGameRepository()).mainClass();
         if (!LibraryAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
             throw new UnsupportedInstallationException(UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER);
 

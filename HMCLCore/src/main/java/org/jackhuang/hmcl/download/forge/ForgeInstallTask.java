@@ -99,7 +99,7 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
-        String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
+        String originalMainClass = version.resolve(dependencyManager.getGameRepository()).mainClass();
         if (GameVersionNumber.compare("1.13", remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with fabric.
             if (!LibraryAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))

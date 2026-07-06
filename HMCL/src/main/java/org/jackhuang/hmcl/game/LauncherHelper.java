@@ -455,7 +455,7 @@ public final class LauncherHelper {
                     }
 
                     if (targetJavaVersion == null)
-                        targetJavaVersion = version.getJavaVersion();
+                        targetJavaVersion = version.javaVersion();
                 }
 
                 if (targetJavaVersion != null && supportedVersions.contains(targetJavaVersion)) {
@@ -529,7 +529,7 @@ public final class LauncherHelper {
                                     ? GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion)
                                     : GameJavaVersion.JAVA_21;
                         } else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
-                            gameJavaVersion = version.getJavaVersion();
+                            gameJavaVersion = version.javaVersion();
                         else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA))
                             gameJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersion);
                         else

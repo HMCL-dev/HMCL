@@ -97,7 +97,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public boolean hasModLauncher() {
-        return LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(version.getMainClass()) || version.getPatches().stream().anyMatch(
+        return LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(version.mainClass()) || version.getPatches().stream().anyMatch(
                 patch -> LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.getMainClass())
         );
     }
@@ -189,7 +189,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         } catch (NoSuchGameInstanceException e) {
             return false;
         }
-        String mainClass = resolvedVersion.getMainClass();
+        String mainClass = resolvedVersion.mainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
                 || mainClass.startsWith("net.minecraftforge")
                 || mainClass.startsWith("net.neoforged")

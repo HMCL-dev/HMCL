@@ -37,7 +37,7 @@ public enum JavaVersionConstraint {
         @Override
         protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version, @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             // Give priority to the Java version requirements specified in the version JSON
-            return version == null || version.getJavaVersion() == null;
+            return version == null || version.javaVersion() == null;
         }
 
         @Override
@@ -53,16 +53,16 @@ public enum JavaVersionConstraint {
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             if (version == null) return false;
             // We only checks for 1.7.10 and above, since 1.7.2 with Forge can only run on Java 7, but it is recorded Java 8 in game json, which is not correct.
-            return gameVersionNumber.compareTo("1.7.10") >= 0 && version.getJavaVersion() != null;
+            return gameVersionNumber.compareTo("1.7.10") >= 0 && version.javaVersion() != null;
         }
 
         @Override
         public VersionRange<VersionNumber> getJavaVersionRange(GameInstanceManifest version, LibraryAnalyzer analyzer) {
             String javaVersion;
-            if (Objects.requireNonNull(version.getJavaVersion()).majorVersion() >= 9) {
-                javaVersion = "" + version.getJavaVersion().majorVersion();
+            if (Objects.requireNonNull(version.javaVersion()).majorVersion() >= 9) {
+                javaVersion = "" + version.javaVersion().majorVersion();
             } else {
-                javaVersion = "1." + version.getJavaVersion().majorVersion();
+                javaVersion = "1." + version.javaVersion().majorVersion();
             }
             return VersionNumber.atLeast(javaVersion);
         }
@@ -135,7 +135,7 @@ public enum JavaVersionConstraint {
         protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             if (version == null) return false;
-            return super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer) && LAUNCH_WRAPPER_MAIN.equals(version.getMainClass()) &&
+            return super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer) && LAUNCH_WRAPPER_MAIN.equals(version.mainClass()) &&
                     version.getLibraries().stream()
                             .filter(library -> "launchwrapper".equals(library.getArtifactId()))
                             .anyMatch(library -> VersionNumber.asVersion(library.getVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0);
@@ -256,7 +256,7 @@ public enum JavaVersionConstraint {
     protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                            @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
         GameJavaVersion gameJavaVersion;
-        if (version == null || (gameJavaVersion = version.getJavaVersion()) == null) {
+        if (version == null || (gameJavaVersion = version.javaVersion()) == null) {
             return true;
         }
 

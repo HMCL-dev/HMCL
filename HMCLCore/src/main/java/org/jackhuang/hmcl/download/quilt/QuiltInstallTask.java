@@ -65,7 +65,7 @@ public final class QuiltInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void preExecute() throws Exception {
-        if (!Objects.equals("net.minecraft.client.main.Main", version.resolve(dependencyManager.getGameRepository()).getMainClass()))
+        if (!Objects.equals("net.minecraft.client.main.Main", version.resolve(dependencyManager.getGameRepository()).mainClass()))
             throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
     }
 
