@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.modpack;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.task.Task;
 
@@ -31,9 +32,9 @@ public interface ModpackProvider {
 
     String getName();
 
-    Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, String version);
+    Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId);
 
-    Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException;
+    Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException;
 
     /**
      * @param zipFile the opened modpack zip file.

@@ -315,10 +315,11 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
-            GameBuilder builder = dependencyManager.gameBuilder();
+            GameBuilder builder = dependencyManager.newGameBuilder();
 
             String name = (String) settings.get("name");
-            builder.name(name);
+            GameInstanceID instanceId = new GameInstanceID(name);
+            builder.name(instanceId);
             builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
 
             settings.asStringMap().forEach((key, value) -> {
@@ -329,8 +330,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             return builder.buildAsync().whenComplete(any -> {
                 repository.refresh();
-                repository.applyDefaultIsolationSetting(new GameInstanceID(name));
-            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(new GameInstanceID(name)));
+                repository.applyDefaultIsolationSetting(instanceId);
+            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(instanceId));
         }
 
         @Override

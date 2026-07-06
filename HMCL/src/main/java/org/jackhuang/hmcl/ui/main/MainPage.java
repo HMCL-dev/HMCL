@@ -338,8 +338,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     DefaultDependencyManager dependency = repository.getDependency();
                     String gameVersion = gameVersionHolder.value = version.getGameVersion();
 
-                    return dependency.gameBuilder()
-                            .name(gameVersion)
+                    return dependency.newGameBuilder()
+                            .name(new GameInstanceID(gameVersion))
                             .gameVersion(gameVersion)
                             .buildAsync();
                 })

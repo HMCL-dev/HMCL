@@ -51,10 +51,10 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
     }
 
     private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
-        GameBuilder builder = dependencyManager.gameBuilder();
+        GameBuilder builder = dependencyManager.newGameBuilder();
 
         String name = (String) settings.get("name");
-        builder.name(name);
+        builder.name(new GameInstanceID(name));
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
         settings.asStringMap().forEach((key, value) -> {

@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -40,24 +41,24 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     private final Path zipFile;
     private final Modpack modpack;
     private final ServerModpackManifest manifest;
-    private final String name;
+    private final GameInstanceID instanceId;
     private final DefaultGameRepository repository;
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public ServerModpackLocalInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ServerModpackManifest manifest, String name) {
+    public ServerModpackLocalInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ServerModpackManifest manifest, GameInstanceID instanceId) {
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
-        this.name = name;
+        this.instanceId = instanceId;
         this.repository = dependencyManager.getGameRepository();
-        Path run = repository.getRunDirectory(name);
+        Path run = repository.getRunDirectory(instanceId);
 
-        Path json = repository.getModpackConfiguration(name);
-        if (repository.hasInstance(name) && Files.notExists(json))
-            throw new IllegalArgumentException("Version " + name + " already exists.");
+        Path json = repository.getModpackConfiguration(instanceId);
+        if (repository.hasInstance(instanceId) && Files.notExists(json))
+            throw new IllegalArgumentException("Version " + instanceId + " already exists.");
 
-        GameBuilder builder = dependencyManager.gameBuilder().name(name);
+        GameBuilder builder = dependencyManager.newGameBuilder().name(instanceId);
         for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
             builder.version(addon.getId(), addon.getVersion());
         }
@@ -65,7 +66,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
             if (event.isFailed())
-                repository.removeInstanceFromDisk(name);
+                repository.removeInstanceFromDisk(instanceId);
         });
 
         ModpackConfiguration<ServerModpackManifest> config = null;
@@ -74,12 +75,12 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
                 if (!ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Version " + name + " is not a Server modpack. Cannot update this version.");
+                    throw new IllegalArgumentException("Version " + instanceId + " is not a Server modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(instanceId)).withStage("hmcl.modpack"));
     }
 
     @Override

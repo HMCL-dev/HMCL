@@ -244,10 +244,10 @@ public final class MultiMCInstancePatch {
      * See to do marks below for more information</p>
      *
      * @param patches   List of all Json-Patch.
-     * @param versionID the version ID. Used when constructing a manifest.
+     * @param instanceId the version ID. Used when constructing a manifest.
      * @return The resolved instance.
      */
-    public static ResolvedInstance resolveArtifact(List<MultiMCInstancePatch> patches, String versionID) {
+    public static ResolvedInstance resolveArtifact(List<MultiMCInstancePatch> patches, GameInstanceID instanceId) {
         if (patches.isEmpty()) {
             throw new IllegalArgumentException("Empty components.");
         }
@@ -385,7 +385,7 @@ public final class MultiMCInstancePatch {
             mainClass = "org.jackhuang.hmcl.HMCLMultiMCBootstrap";
         }
 
-        GameInstanceManifest version = new GameInstanceManifest(versionID)
+        GameInstanceManifest version = new GameInstanceManifest(instanceId)
                 .setArguments(new Arguments().addGameArguments(minecraftArguments).addJVMArgumentsDirect(jvmArguments))
                 .setMainClass(mainClass)
                 .setLibraries(libraries)

@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.curse.CurseMetaMod;
@@ -53,7 +54,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
     private final ModManager modManager;
-    private final String version;
+    private final GameInstanceID instanceId;
     private final Path configurationFile;
     private ModpackConfiguration<McbbsModpackManifest> configuration;
     private McbbsModpackManifest manifest;
@@ -63,16 +64,16 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
     private final AtomicInteger finished = new AtomicInteger(0);
     private final AtomicBoolean notFound = new AtomicBoolean(false);
 
-    public McbbsModpackCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        this(dependencyManager, version, null);
+    public McbbsModpackCompletionTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId) {
+        this(dependencyManager, instanceId, null);
     }
 
-    public McbbsModpackCompletionTask(DefaultDependencyManager dependencyManager, String version, ModpackConfiguration<McbbsModpackManifest> configuration) {
+    public McbbsModpackCompletionTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId, ModpackConfiguration<McbbsModpackManifest> configuration) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
-        this.modManager = repository.getModManager(version);
-        this.version = version;
-        this.configurationFile = repository.getModpackConfiguration(version);
+        this.modManager = repository.getModManager(instanceId);
+        this.instanceId = instanceId;
+        this.configurationFile = repository.getModpackConfiguration(instanceId);
         this.configuration = configuration;
 
         setStage("hmcl.modpack.download");
@@ -109,7 +110,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                     throw new IOException("Unable to parse server manifest.json from " + manifest.getFileApi(), e);
                 }
 
-                Path rootPath = repository.getInstanceRoot(version);
+                Path rootPath = repository.getInstanceRoot(instanceId);
                 Files.createDirectories(rootPath);
 
                 Map<McbbsModpackManifest.File, McbbsModpackManifest.File> localFiles = manifest.getFiles().stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
@@ -171,7 +172,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 manifest = remoteManifest.setFiles(newFiles);
                 return executor.all(tasks.stream().filter(Objects::nonNull).collect(Collectors.toList()));
             })).thenAcceptAsync(wrapConsumer(unused1 -> {
-                Path manifestFile = repository.getModpackConfiguration(version);
+                Path manifestFile = repository.getModpackConfiguration(instanceId);
                 JsonUtils.writeToJsonFile(manifestFile,
                         new ModpackConfiguration<>(manifest, this.configuration.getType(), this.manifest.getName(), this.manifest.getVersion(),
                                 this.manifest.getFiles().stream()

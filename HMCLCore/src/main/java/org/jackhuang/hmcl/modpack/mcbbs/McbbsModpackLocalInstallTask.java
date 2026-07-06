@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
@@ -44,29 +45,29 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
     private final Path zipFile;
     private final Modpack modpack;
     private final McbbsModpackManifest manifest;
-    private final String name;
+    private final GameInstanceID instanceId;
     private final boolean update;
     private final DefaultGameRepository repository;
     private final MinecraftInstanceTask<McbbsModpackManifest> instanceTask;
     private final List<Task<?>> dependencies = new ArrayList<>(2);
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public McbbsModpackLocalInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, McbbsModpackManifest manifest, String name) {
+    public McbbsModpackLocalInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, McbbsModpackManifest manifest, GameInstanceID instanceId) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
-        this.name = name;
+        this.instanceId = instanceId;
         this.repository = dependencyManager.getGameRepository();
-        Path run = repository.getRunDirectory(name);
+        Path run = repository.getRunDirectory(instanceId);
 
-        Path json = repository.getModpackConfiguration(name);
-        if (repository.hasInstance(name) && Files.notExists(json))
-            throw new IllegalArgumentException("Version " + name + " already exists.");
-        this.update = repository.hasInstance(name);
+        Path json = repository.getModpackConfiguration(instanceId);
+        if (repository.hasInstance(instanceId) && Files.notExists(json))
+            throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
+        this.update = repository.hasInstance(instanceId);
 
 
-        GameBuilder builder = dependencyManager.gameBuilder().name(name);
+        GameBuilder builder = dependencyManager.newGameBuilder().name(instanceId);
         for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
             builder.version(addon.getId(), addon.getVersion());
         }
@@ -74,7 +75,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
             if (event.isFailed())
-                repository.removeInstanceFromDisk(name);
+                repository.removeInstanceFromDisk(instanceId);
         });
 
         ModpackConfiguration<McbbsModpackManifest> config = null;
@@ -83,12 +84,12 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
                 if (!McbbsModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Version " + name + " is not a Mcbbs modpack. Cannot update this version.");
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Mcbbs modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
-        instanceTask = new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name));
+        instanceTask = new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(instanceId));
         dependents.add(instanceTask.withStage("hmcl.modpack"));
     }
 
@@ -104,7 +105,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        GameInstanceManifest version = repository.getInstanceManifest(name);
+        GameInstanceManifest version = repository.getInstanceManifest(instanceId);
         Optional<GameInstancePatch> mcbbsPatch = version.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.getId())).findFirst();
         if (!update) {
             GameInstancePatch patch = new GameInstancePatch(PATCH_NAME).setLibraries(manifest.getLibraries());
@@ -118,7 +119,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
             // TODO: maintain libraries.
         }
 
-        dependencies.add(new McbbsModpackCompletionTask(dependencyManager, name, instanceTask.getResult()));
+        dependencies.add(new McbbsModpackCompletionTask(dependencyManager, instanceId, instanceTask.getResult()));
     }
 
     private static final String PATCH_NAME = "mcbbs";

@@ -69,7 +69,7 @@ public interface DependencyManager {
     /**
      * The builder to build a brand new game then libraries such as Forge, LiteLoader and OptiFine.
      */
-    GameBuilder gameBuilder();
+    GameBuilder newGameBuilder();
 
     /**
      * Install a library to a version.

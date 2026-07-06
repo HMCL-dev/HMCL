@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.modpack;
 
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -29,20 +30,20 @@ import java.util.Collections;
 public class ModpackUpdateTask extends Task<Void> {
 
     private final DefaultGameRepository repository;
-    private final String id;
+    private final GameInstanceID id;
     private final Task<?> updateTask;
     private final Path backupFolder;
 
-    public ModpackUpdateTask(DefaultGameRepository repository, String id, Task<?> updateTask) {
+    public ModpackUpdateTask(DefaultGameRepository repository, GameInstanceID instanceId, Task<?> updateTask) {
         this.repository = repository;
-        this.id = id;
+        this.id = instanceId;
         this.updateTask = updateTask;
 
         Path backup = repository.getBaseDirectory().resolve("backup");
         while (true) {
             int num = (int)(Math.random() * 10000000);
-            if (!Files.exists(backup.resolve(id + "-" + num))) {
-                backupFolder = backup.resolve(id + "-" + num);
+            if (!Files.exists(backup.resolve(instanceId + "-" + num))) {
+                backupFolder = backup.resolve(instanceId + "-" + num);
                 break;
             }
         }

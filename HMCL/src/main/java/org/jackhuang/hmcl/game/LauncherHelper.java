@@ -84,7 +84,6 @@ public final class LauncherHelper {
 
     private final HMCLGameRepository repository;
     private Account account;
-    private final String selectedVersion;
     private final GameInstanceID selectedInstanceId;
     private Path scriptFile;
     private final GameSettings.Effective setting;
@@ -96,7 +95,6 @@ public final class LauncherHelper {
     public LauncherHelper(HMCLGameRepository repository, Account account, GameInstanceID selectedInstanceId) {
         this.repository = Objects.requireNonNull(repository);
         this.account = Objects.requireNonNull(account);
-        this.selectedVersion = selectedInstanceId.toString();
         this.selectedInstanceId = selectedInstanceId;
         this.setting = repository.getEffectiveGameSettings(selectedInstanceId);
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
@@ -134,7 +132,7 @@ public final class LauncherHelper {
     public void launch() {
         FXUtils.checkFxUserThread();
 
-        LOG.info("Launching game version: " + selectedVersion);
+        LOG.info("Launching game version: " + selectedInstanceId);
 
         Controllers.dialog(launchingStepsPane);
         launch0();
@@ -172,7 +170,7 @@ public final class LauncherHelper {
                                     ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedInstanceId));
                                     ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
                                     if (provider == null) return null;
-                                    else return provider.createCompletionTask(dependencyManager, selectedVersion);
+                                    else return provider.createCompletionTask(dependencyManager, selectedInstanceId);
                                 } catch (IOException e) {
                                     return null;
                                 }
