@@ -91,7 +91,7 @@ public class McbbsModpackExportTask extends Task<Void> {
 
             String gameVersion = repository.getGameVersion(instanceId)
                     .orElseThrow(() -> new IOException("Cannot parse the version of " + instanceId));
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesManifest(instanceId), gameVersion);
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId).standaloneManifest(), gameVersion);
 
             // Mcbbs manifest
             List<McbbsModpackManifest.Addon> addons = new ArrayList<>();

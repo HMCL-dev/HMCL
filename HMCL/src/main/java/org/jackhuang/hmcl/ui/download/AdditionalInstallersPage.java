@@ -80,8 +80,8 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     @Override
     protected void reload() {
-        GameInstanceManifest resolved = version.resolvePreservingPatches(repository);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
+        GameInstanceManifest standalone = repository.resolve(version).standaloneManifest();
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(standalone, repository.getGameVersion(standalone).orElse(null));
         String game = analyzer.getVersion(MINECRAFT).orElse(null);
         String currentGameVersion = Lang.nonNull(getVersion("game"), game);
 

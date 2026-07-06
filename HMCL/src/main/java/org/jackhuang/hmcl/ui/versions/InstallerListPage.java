@@ -72,7 +72,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
         CompletableFuture.supplyAsync(() -> {
             gameVersion = repository.getGameVersion(version).orElse(null);
 
-            return LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesInstanceManifest(instanceId).manifest(), gameVersion);
+            return LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId).standaloneManifest(), gameVersion);
         }).thenAcceptAsync(analyzer -> {
             itemsProperty().clear();
 

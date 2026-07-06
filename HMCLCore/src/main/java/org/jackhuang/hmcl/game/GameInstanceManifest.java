@@ -60,39 +60,30 @@ public record GameInstanceManifest(
         @Nullable @Unmodifiable JsonObject rawJson
 ) {
 
-    /// A launch-ready manifest view with inheritance and pending patches applied.
+    /// Resolved manifest views with inheritance folded.
     ///
-    /// @param manifest       the final manifest data used by launch-time consumers
-    /// @param appliedPatches patches that have already been applied to produce the final manifest
+    /// @param launchManifest     the final manifest data used by launch-time consumers
+    /// @param standaloneManifest the standalone manifest data with pending patches preserved
     @NotNullByDefault
-    public record Resolved(GameInstanceManifest manifest,
-                           @Unmodifiable List<GameInstancePatch> appliedPatches) {
+    public record Resolved(GameInstanceManifest launchManifest,
+                           GameInstanceManifest standaloneManifest) {
 
         /// Creates a resolved manifest view.
         public Resolved {
-            Objects.requireNonNull(manifest);
-            appliedPatches = List.copyOf(appliedPatches);
+            Objects.requireNonNull(launchManifest);
+            Objects.requireNonNull(standaloneManifest);
 
-            if (manifest.inheritsFrom() != null) {
-                throw new IllegalArgumentException("Resolved manifest cannot inherit from another manifest");
+            if (!launchManifest.id().equals(standaloneManifest.id())) {
+                throw new IllegalArgumentException("Resolved manifest views must have the same id");
             }
-            if (manifest.patches() != null && !manifest.patches().isEmpty()) {
-                throw new IllegalArgumentException("Resolved manifest cannot contain pending patches");
+
+            if (launchManifest.inheritsFrom() != null) {
+                throw new IllegalArgumentException("Launch manifest cannot inherit from another manifest");
             }
-        }
-    }
-
-    /// A manifest view whose inheritance has been folded while preserving pending patches.
-    ///
-    /// @param manifest the standalone manifest data that can be saved back to disk
-    @NotNullByDefault
-    public record Standalone(GameInstanceManifest manifest) {
-
-        /// Creates a standalone manifest view.
-        public Standalone {
-            Objects.requireNonNull(manifest);
-
-            if (manifest.inheritsFrom() != null) {
+            if (launchManifest.patches() != null && !launchManifest.patches().isEmpty()) {
+                throw new IllegalArgumentException("Launch manifest cannot contain pending patches");
+            }
+            if (standaloneManifest.inheritsFrom() != null) {
                 throw new IllegalArgumentException("Standalone manifest cannot inherit from another manifest");
             }
         }
@@ -531,15 +522,7 @@ public record GameInstanceManifest(
     /// @param repository the repository that provides parent manifests
     /// @return the resolved manifest
     public GameInstanceManifest resolve(GameRepository repository) throws NoSuchGameInstanceException {
-        return repository.resolve(this).manifest();
-    }
-
-    /// Resolves this manifest through the repository while preserving patches.
-    ///
-    /// @param repository the repository that provides parent manifests
-    /// @return the standalone manifest
-    public GameInstanceManifest resolvePreservingPatches(GameRepository repository) throws NoSuchGameInstanceException {
-        return repository.resolvePreservingPatches(this).manifest();
+        return repository.resolve(this).launchManifest();
     }
 
     /// Returns a manifest copy with the given id.

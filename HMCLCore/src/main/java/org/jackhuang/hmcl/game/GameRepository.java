@@ -36,17 +36,11 @@ import java.util.Set;
 /// locating instance-owned files, and exposing helper paths used by launch, download, and maintenance code.
 @NotNullByDefault
 public interface GameRepository {
-    /// Resolves inheritance and pending patches into a launch-ready manifest view.
+    /// Resolves inheritance into launch and standalone manifest views.
     ///
     /// @param manifest the manifest to resolve
     /// @return the resolved manifest view
     GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException;
-
-    /// Resolves inheritance while leaving patches as manifest data.
-    ///
-    /// @param manifest the manifest to resolve
-    /// @return the standalone manifest view
-    GameInstanceManifest.Standalone resolvePreservingPatches(GameInstanceManifest manifest) throws NoSuchGameInstanceException;
 
     /// Returns whether the instance exists in the current repository index.
     ///
@@ -66,22 +60,6 @@ public interface GameRepository {
     /// @param instanceId the instance id
     /// @return the resolved manifest view
     GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
-
-    /// Returns a standalone manifest view for the instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the standalone manifest view
-    default GameInstanceManifest.Standalone getResolvedPreservingPatchesInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return resolvePreservingPatches(getInstanceManifest(instanceId));
-    }
-
-    /// Returns a standalone manifest by string id.
-    ///
-    /// @param id the instance id string
-    /// @return the standalone manifest
-    default GameInstanceManifest getResolvedPreservingPatchesManifest(GameInstanceID id) throws NoSuchGameInstanceException {
-        return getResolvedPreservingPatchesInstanceManifest(id).manifest();
-    }
 
     /// Returns the number of loaded instances.
     ///
@@ -174,7 +152,7 @@ public interface GameRepository {
     /// @return the primary client jar path
     /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
     default Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getInstanceJar(getResolvedInstanceManifest(instanceId).manifest());
+        return getInstanceJar(getResolvedInstanceManifest(instanceId).launchManifest());
     }
 
     /// Renames an instance and updates repository-managed references.

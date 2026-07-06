@@ -2626,7 +2626,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             if (this.instanceId == null) {
                 version = null;
             } else {
-                version = repository != null && loadedInstanceId != null ? repository.getResolvedInstanceManifest(loadedInstanceId).manifest() : null;
+                version = repository != null && loadedInstanceId != null ? repository.getResolvedInstanceManifest(loadedInstanceId).launchManifest() : null;
             }
 
             try {

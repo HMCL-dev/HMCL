@@ -108,9 +108,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             if (gameVersion == null) return null;
 
             GameInstanceManifest original = repository.getInstanceManifest(version.id());
-            GameInstanceManifest resolved = original.resolvePreservingPatches(repository);
+            GameInstanceManifest standalone = repository.resolve(original).standaloneManifest();
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(standalone, gameVersion);
             for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
                 if (!analyzer.has(type))
                     continue;
@@ -121,7 +121,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                                 Matcher matcher = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$").matcher(optifineVersion);
                                 return matcher.find() ? matcher.group("optifine") : optifineVersion;
                             })
-                            .orElseGet(() -> resolved.getPatches().stream()
+                            .orElseGet(() -> standalone.getPatches().stream()
                                     .filter(patch -> "optifine".equals(patch.getId()))
                                     .findAny()
                                     .map(GameInstancePatch::getVersion)
@@ -219,7 +219,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         // If we want to remove a library in dependent version, we should keep the dependents not changed
         // So resolving this game version to preserve all information in this version.json is necessary.
         return Task.supplyAsync(() -> {
-            GameInstanceManifest independentVersion = version.resolvePreservingPatches(repository);
+            GameInstanceManifest independentVersion = repository.resolve(version).standaloneManifest();
             String gameVersion = repository.getGameVersion(independentVersion).orElse(null);
             return LibraryAnalyzer.analyze(independentVersion, gameVersion).removeLibrary(libraryId).build();
         });

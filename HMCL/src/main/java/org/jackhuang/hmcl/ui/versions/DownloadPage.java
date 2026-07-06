@@ -272,7 +272,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     if (control.instanceReference.repository() != null && control.instanceReference.instanceId() != null) {
                         HMCLGameRepository repository = control.instanceReference.repository();
-                        GameInstanceManifest game = repository.getResolvedPreservingPatchesInstanceManifest(control.instanceReference.instanceId()).manifest();
+                        GameInstanceManifest game = repository.getResolvedInstanceManifest(control.instanceReference.instanceId()).standaloneManifest();
                         String gameVersion = repository.getGameVersion(game).orElse(null);
 
                         if (gameVersion != null && control.versions.containsKey(gameVersion)) {

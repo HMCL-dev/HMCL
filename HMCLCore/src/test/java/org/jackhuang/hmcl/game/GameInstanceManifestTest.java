@@ -56,8 +56,9 @@ public final class GameInstanceManifestTest {
 
         GameInstanceManifest.Resolved resolved = new DefaultGameRepository(Path.of(".")).resolve(manifest);
 
-        assertNull(resolved.manifest().mainClass());
-        assertEquals(List.of(patch("patch", null)), resolved.appliedPatches());
+        assertNull(resolved.launchManifest().mainClass());
+        assertNull(resolved.launchManifest().patches());
+        assertEquals(List.of(patch("patch", null)), resolved.standaloneManifest().getPatches());
     }
 
     /// Creates a minimal manifest for tests.

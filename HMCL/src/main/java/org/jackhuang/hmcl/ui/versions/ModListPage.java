@@ -92,7 +92,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         this.repository = repository;
         this.instanceId = instanceId;
 
-        GameInstanceManifest resolved = repository.getResolvedPreservingPatchesInstanceManifest(instanceId).manifest();
+        GameInstanceManifest resolved = repository.getResolvedInstanceManifest(instanceId).standaloneManifest();
         this.gameVersion = repository.getGameVersion(resolved).orElse(null);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         modded.set(analyzer.hasModLoader());

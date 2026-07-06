@@ -333,7 +333,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getInstanceJar(getResolvedInstanceManifest(instanceId).manifest());
+        return getInstanceJar(getResolvedInstanceManifest(instanceId).launchManifest());
     }
 
     @Override
@@ -437,7 +437,7 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public Optional<String> getGameVersion(GameInstanceManifest manifest) {
         try {
-            GameInstanceManifest resolved = resolve(manifest).manifest();
+            GameInstanceManifest resolved = resolve(manifest).launchManifest();
             Path instanceJar = getInstanceJar(resolved);
             return gameVersions.computeIfAbsent(instanceJar, jar -> {
                 Optional<String> gameVersion = GameVersion.minecraftVersion(jar);
@@ -623,22 +623,13 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        return toResolved(status.resolve(manifest, new HashSet<>()));
-    }
-
-    @Override
-    public GameInstanceManifest.Standalone resolvePreservingPatches(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        GameInstanceManifest standaloneManifest = status.resolvePreservingPatches(manifest, new HashSet<>());
-        GameInstanceID jar = resolve(manifest).manifest().jar();
+        GameInstanceManifest launchManifest = status.resolve(manifest, new HashSet<>()).withPatches(null);
+        GameInstanceManifest standaloneManifest = status.resolveStandalone(manifest, new HashSet<>());
+        GameInstanceID jar = launchManifest.jar();
         if (jar != null) {
             standaloneManifest = standaloneManifest.withJar(jar);
         }
-        return new GameInstanceManifest.Standalone(standaloneManifest);
-    }
-
-    private static GameInstanceManifest.Resolved toResolved(GameInstanceManifest manifest) {
-        List<GameInstancePatch> appliedPatches = manifest.patches() == null ? List.of() : manifest.patches();
-        return new GameInstanceManifest.Resolved(manifest.withPatches(null), appliedPatches);
+        return new GameInstanceManifest.Resolved(launchManifest, standaloneManifest);
     }
 
     protected static class Status {
@@ -693,8 +684,8 @@ public class DefaultGameRepository implements GameRepository {
             return currentManifest.withId(manifest.id());
         }
 
-        private GameInstanceManifest resolvePreservingPatches(GameInstanceManifest manifest,
-                                                              Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
+        private GameInstanceManifest resolveStandalone(GameInstanceManifest manifest,
+                                                       Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
             GameInstanceManifest currentManifest = manifest.root()
                     ? manifest
                     : addPatches(
@@ -712,7 +703,7 @@ public class DefaultGameRepository implements GameRepository {
                     }
 
                     currentManifest = addPatches(
-                            addPatches(resolvePreservingPatches(parentInstance.manifest, resolvedSoFar), Collections.singleton(manifest.toPatch())),
+                            addPatches(resolveStandalone(parentInstance.manifest, resolvedSoFar), Collections.singleton(manifest.toPatch())),
                             manifest.patches());
                 }
             }

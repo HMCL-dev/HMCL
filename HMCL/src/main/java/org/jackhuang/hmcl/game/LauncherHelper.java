@@ -148,7 +148,7 @@ public final class LauncherHelper {
         PROCESSES.removeIf(it -> it.get() == null);
 
         DefaultDependencyManager dependencyManager = repository.getDependency();
-        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedInstanceManifest(selectedInstanceId).manifest()));
+        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedInstanceManifest(selectedInstanceId).launchManifest()));
         Optional<String> gameVersion = repository.getGameVersion(version.get());
         boolean integrityCheck = repository.unmarkInstanceLaunchedAbnormally(selectedInstanceId);
         CountDownLatch launchingLatch = new CountDownLatch(1);
