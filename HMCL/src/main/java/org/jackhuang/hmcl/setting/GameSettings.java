@@ -916,7 +916,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
         }
 
         /// Finds the effective Java runtime.
-        public @Nullable JavaRuntime getJava(@Nullable GameVersionNumber gameVersion, @Nullable Version version) throws InterruptedException {
+        public @Nullable JavaRuntime getJava(@Nullable GameVersionNumber gameVersion, @Nullable GameInstanceManifest version) throws InterruptedException {
             JavaVersionType javaVersionType = getInheritable(GameSettings::javaTypeProperty);
             switch (javaVersionType) {
                 case AUTO:

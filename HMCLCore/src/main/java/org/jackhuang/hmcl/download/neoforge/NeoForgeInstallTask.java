@@ -21,7 +21,8 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.*;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -36,10 +37,10 @@ import java.util.*;
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
-public final class NeoForgeInstallTask extends Task<Version> {
+public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
 
-    private final Version version;
+    private final GameInstanceManifest version;
 
     private final NeoForgeRemoteVersion remoteVersion;
 
@@ -47,9 +48,9 @@ public final class NeoForgeInstallTask extends Task<Version> {
 
     private FileDownloadTask dependent;
 
-    private Task<Version> dependency;
+    private Task<GameInstancePatch> dependency;
 
-    public NeoForgeInstallTask(DefaultDependencyManager dependencyManager, Version version, NeoForgeRemoteVersion remoteVersion) {
+    public NeoForgeInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, NeoForgeRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remoteVersion = remoteVersion;
@@ -99,7 +100,7 @@ public final class NeoForgeInstallTask extends Task<Version> {
         dependency = install(dependencyManager, version, installer);
     }
 
-    public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
+    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {

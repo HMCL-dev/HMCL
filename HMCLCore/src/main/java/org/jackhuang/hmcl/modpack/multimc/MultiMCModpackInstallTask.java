@@ -25,9 +25,9 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -80,7 +80,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final Modpack modpack;
     private final MultiMCInstanceConfiguration manifest;
     private final String name;
-    private final DefaultGameRepository repository;
+    private final DefaultGameRepository2 repository;
     private final List<Task<?>> dependents = new ArrayList<>();
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final DefaultDependencyManager dependencyManager;
@@ -285,7 +285,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
         // Stage #5: Assemble game files.
         {
-            Version version = artifact.getVersion();
+            GameInstanceManifest version = artifact.getVersion();
 
             dependencies.add(repository.saveAsync(artifact.getVersion()));
             dependencies.add(new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true));

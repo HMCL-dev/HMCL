@@ -89,9 +89,9 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     @Override
     public void execute() throws Exception {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
-        Version originalVersion = JsonUtils.GSON.fromJson(json, Version.class).setId(name).setJar(null);
+        GameInstanceManifest originalVersion = JsonUtils.GSON.fromJson(json, GameInstanceManifest.class).setId(name).setJar(null);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(originalVersion, null);
-        Task<Version> libraryTask = Task.supplyAsync(() -> originalVersion);
+        Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> originalVersion);
         // reinstall libraries
         // libraries of Forge and OptiFine should be obtained by installation.
         for (LibraryAnalyzer.LibraryMark mark : analyzer) {

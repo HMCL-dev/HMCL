@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -166,9 +167,12 @@ public final class Versions {
     }
 
     public static void installFromJson(HMCLGameRepository repository, Path file) {
-        Version version;
+        GameInstanceManifest version;
         try {
-            version = repository.readVersionJson(file);
+            version = JsonUtils.fromJsonFile(file, GameInstanceManifest.class);
+            if (version == null) {
+                throw new IllegalArgumentException("Missing game manifest");
+            }
         } catch (Exception e) {
             Controllers.dialog(i18n("install.new_game.malformed_json"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             return;
@@ -178,7 +182,7 @@ public final class Versions {
             handler.resolve();
 
             DefaultDependencyManager dependencyManager = repository.getDependency();
-            Version newVersion = version.setId(result).setJar(result);
+            GameInstanceManifest newVersion = version.setId(result).setJar(result);
 
             Controllers.taskDialog(
                     Task.allOf(new GameDownloadTask(dependencyManager, null, newVersion),

@@ -24,8 +24,9 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -41,15 +42,15 @@ import static org.jackhuang.hmcl.download.UnsupportedInstallationException.FABRI
  *
  * @author huangyuhui
  */
-public final class FabricInstallTask extends Task<Version> {
+public final class FabricInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest version;
     private final FabricRemoteVersion remote;
     private final GetTask launchMetaTask;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public FabricInstallTask(DefaultDependencyManager dependencyManager, Version version, FabricRemoteVersion remoteVersion) {
+    public FabricInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, FabricRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
@@ -92,10 +93,10 @@ public final class FabricInstallTask extends Task<Version> {
 
         setResult(getPatch(fabricInfo, remote.getGameVersion(), remote.getSelfVersion()));
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
+        dependencies.add(new org.jackhuang.hmcl.download.game.GameLibrariesTask(dependencyManager, version, true, getResult().getLibraries()));
     }
 
-    private Version getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {
+    private GameInstancePatch getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {
         JsonObject launcherMeta = fabricInfo.launcherMeta;
         Arguments arguments = new Arguments();
 
@@ -125,7 +126,7 @@ public final class FabricInstallTask extends Task<Version> {
         libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.intermediary.maven), "https://maven.fabricmc.net/", null));
         libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.loader.maven), "https://maven.fabricmc.net/", null));
 
-        return new Version(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
+        return new GameInstancePatch(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), loaderVersion, GameInstancePatch.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
 
     @JsonSerializable

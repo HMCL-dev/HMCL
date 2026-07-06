@@ -2614,7 +2614,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         if (JavaManager.isInitialized()) {
             GameVersionNumber gameVersionNumber = this.currentGameVersionNumber.get();
-            Version version;
+            GameInstanceManifest version;
             if (this.instanceId == null) {
                 version = null;
             } else {

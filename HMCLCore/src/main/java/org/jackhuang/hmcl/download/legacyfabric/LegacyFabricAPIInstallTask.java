@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.download.legacyfabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 
@@ -27,14 +28,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class LegacyFabricAPIInstallTask extends Task<Version> {
+public final class LegacyFabricAPIInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest version;
     private final LegacyFabricAPIRemoteVersion remote;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public LegacyFabricAPIInstallTask(DefaultDependencyManager dependencyManager, Version version, LegacyFabricAPIRemoteVersion remoteVersion) {
+    public LegacyFabricAPIInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, LegacyFabricAPIRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;

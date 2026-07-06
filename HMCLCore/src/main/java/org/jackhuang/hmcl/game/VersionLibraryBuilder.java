@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * @author huangyuhui
  */
 public final class VersionLibraryBuilder {
-    private final Version version;
+    private final GameInstanceManifest version;
     private final List<String> mcArgs;
     private final List<Argument> game;
     private final List<Argument> jvm;
@@ -39,7 +39,7 @@ public final class VersionLibraryBuilder {
     private final boolean useMcArgs;
     private boolean jvmChanged = false;
 
-    public VersionLibraryBuilder(Version version) {
+    public VersionLibraryBuilder(GameInstanceManifest version) {
         this.version = version;
         this.libraries = new ArrayList<>(version.getLibraries());
         this.mcArgs = version.getMinecraftArguments().map(StringUtils::tokenize).map(ArrayList::new).orElse(null);
@@ -48,8 +48,8 @@ public final class VersionLibraryBuilder {
         this.useMcArgs = mcArgs != null;
     }
 
-    public Version build() {
-        Version ret = version;
+    public GameInstanceManifest build() {
+        GameInstanceManifest ret = version;
         if (useMcArgs) {
             // The official launcher will not parse the "arguments" property when it detects the presence of "mcArgs".
             // The "arguments" property with the "rule" is simply ignored here.

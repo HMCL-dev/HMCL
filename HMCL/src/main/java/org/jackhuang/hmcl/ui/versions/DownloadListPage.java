@@ -38,8 +38,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
@@ -124,7 +124,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
         if (versionSelection) {
             versions.setAll(repository.getDisplayVersions()
-                    .map(Version::getId)
+                    .map(GameInstanceManifest::getId)
                     .collect(Collectors.toList()));
             selectedVersion.set(repository.getSelectedInstance());
         }

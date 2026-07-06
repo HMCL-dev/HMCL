@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @NotNullByDefault
 public record GameInstancePatch(
@@ -59,6 +60,282 @@ public record GameInstancePatch(
         @Nullable Boolean hidden,
         @Nullable @Unmodifiable JsonObject rawJson
 ) {
+
+    /// Priority for the Minecraft base patch.
+    public static final int PRIORITY_MC = 0;
+
+    /// Priority for loader patches.
+    public static final int PRIORITY_LOADER = 30000;
+
+    /// Creates an empty patch with the given id.
+    public GameInstancePatch(String id) {
+        this(
+                id,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    /// Creates a patch with launch metadata.
+    public GameInstancePatch(
+            String id,
+            @Nullable String version,
+            int priority,
+            @Nullable Arguments arguments,
+            @Nullable String mainClass,
+            @Nullable List<Library> libraries) {
+        this(
+                id,
+                version,
+                priority,
+                null,
+                arguments,
+                mainClass,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                libraries,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    /// Creates a patch from manifest metadata.
+    public static GameInstancePatch fromManifest(
+            GameInstanceManifest manifest,
+            String id,
+            @Nullable String version,
+            int priority) {
+        return new GameInstancePatch(
+                id,
+                version,
+                priority,
+                manifest.minecraftArguments(),
+                manifest.arguments(),
+                manifest.mainClass(),
+                manifest.inheritsFrom() == null ? null : manifest.inheritsFrom().id(),
+                manifest.jar(),
+                manifest.assetIndex(),
+                manifest.assets(),
+                manifest.complianceLevel(),
+                manifest.javaVersion(),
+                manifest.libraries(),
+                manifest.compatibilityRules(),
+                manifest.downloads(),
+                manifest.logging(),
+                manifest.type(),
+                manifest.time(),
+                manifest.releaseTime(),
+                manifest.minimumLauncherVersion(),
+                manifest.hidden(),
+                null);
+    }
+
+    /// Returns the patch id.
+    public @Nullable String getId() {
+        return id;
+    }
+
+    /// Returns the patch version.
+    public @Nullable String getVersion() {
+        return version;
+    }
+
+    /// Returns the patch priority.
+    public int getPriority() {
+        return priority == null ? Integer.MIN_VALUE : priority;
+    }
+
+    /// Returns legacy game arguments.
+    public Optional<String> getMinecraftArguments() {
+        return Optional.ofNullable(minecraftArguments);
+    }
+
+    /// Returns structured arguments.
+    public Optional<Arguments> getArguments() {
+        return Optional.ofNullable(arguments);
+    }
+
+    /// Returns the main class.
+    public @Nullable String getMainClass() {
+        return mainClass;
+    }
+
+    /// Returns the jar id.
+    public @Nullable String getJar() {
+        return jar == null ? null : jar.id();
+    }
+
+    /// Returns the asset index.
+    public @Nullable AssetIndexInfo getAssetIndex() {
+        return assetIndex;
+    }
+
+    /// Returns the Java version.
+    public @Nullable GameJavaVersion getJavaVersion() {
+        return javaVersion;
+    }
+
+    /// Returns libraries.
+    public List<Library> getLibraries() {
+        return libraries == null ? List.of() : libraries;
+    }
+
+    /// Returns compatibility rules.
+    public List<CompatibilityRule> getCompatibilityRules() {
+        return compatibilityRules == null ? List.of() : compatibilityRules;
+    }
+
+    /// Returns downloads.
+    public Map<DownloadType, DownloadInfo> getDownloads() {
+        return downloads == null ? Map.of() : downloads;
+    }
+
+    /// Returns logging metadata.
+    public Map<DownloadType, LoggingInfo> getLogging() {
+        return logging == null ? Map.of() : logging;
+    }
+
+    /// Returns whether the patch is hidden.
+    public boolean isHidden() {
+        return hidden != null && hidden;
+    }
+
+    /// Returns a patch copy with the given id.
+    public GameInstancePatch setId(@Nullable String id) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
+                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
+                releaseTime, minimumLauncherVersion, hidden);
+    }
+
+    /// Returns a patch copy with the given version.
+    public GameInstancePatch setVersion(@Nullable String version) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
+                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
+                releaseTime, minimumLauncherVersion, hidden);
+    }
+
+    /// Returns a patch copy with the given priority.
+    public GameInstancePatch setPriority(@Nullable Integer priority) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
+                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
+                releaseTime, minimumLauncherVersion, hidden);
+    }
+
+    /// Returns a patch copy with the given jar id.
+    public GameInstancePatch setJar(@Nullable String jar) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom,
+                jar == null ? null : new GameInstanceID(jar), assetIndex, assets, complianceLevel, javaVersion,
+                libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion,
+                hidden);
+    }
+
+    /// Returns a patch copy with the given libraries.
+    public GameInstancePatch setLibraries(@Nullable List<Library> libraries) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
+                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
+                releaseTime, minimumLauncherVersion, hidden);
+    }
+
+    /// Returns a patch copy with the given Java version.
+    public GameInstancePatch setJavaVersion(@Nullable GameJavaVersion javaVersion) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
+                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
+                releaseTime, minimumLauncherVersion, hidden);
+    }
+
+    /// Returns a patch copy with the given arguments.
+    public GameInstancePatch setArguments(@Nullable Arguments arguments) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
+                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
+                releaseTime, minimumLauncherVersion, hidden);
+    }
+
+    /// Returns a patch copy with the given main class.
+    public GameInstancePatch setMainClass(@Nullable String mainClass) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
+                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
+                releaseTime, minimumLauncherVersion, hidden);
+    }
+
+    /// Returns a patch copy with the given asset index.
+    public GameInstancePatch setAssetIndex(@Nullable AssetIndexInfo assetIndex) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
+                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
+                releaseTime, minimumLauncherVersion, hidden);
+    }
+
+    /// Returns a patch copy with the given downloads.
+    public GameInstancePatch setDownload(@Nullable Map<DownloadType, DownloadInfo> downloads) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
+                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
+                releaseTime, minimumLauncherVersion, hidden);
+    }
+
+    /// Returns a patch copy with the given logging metadata.
+    public GameInstancePatch setLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
+        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
+                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
+                releaseTime, minimumLauncherVersion, hidden);
+    }
+
+    private static GameInstancePatch copy(
+            @Nullable String id,
+            @Nullable String version,
+            @Nullable Integer priority,
+            @Nullable String minecraftArguments,
+            @Nullable Arguments arguments,
+            @Nullable String mainClass,
+            @Nullable String inheritsFrom,
+            @Nullable GameInstanceID jar,
+            @Nullable AssetIndexInfo assetIndex,
+            @Nullable String assets,
+            @Nullable Integer complianceLevel,
+            @Nullable GameJavaVersion javaVersion,
+            @Nullable List<Library> libraries,
+            @Nullable List<CompatibilityRule> compatibilityRules,
+            @Nullable Map<DownloadType, DownloadInfo> downloads,
+            @Nullable Map<DownloadType, LoggingInfo> logging,
+            @Nullable ReleaseType type,
+            @Nullable String time,
+            @Nullable String releaseTime,
+            @Nullable Integer minimumLauncherVersion,
+            @Nullable Boolean hidden) {
+        return new GameInstancePatch(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom,
+                jar, assetIndex, assets, complianceLevel, javaVersion,
+                libraries == null ? null : List.copyOf(libraries),
+                compatibilityRules == null ? null : List.copyOf(compatibilityRules),
+                downloads == null ? null : Map.copyOf(downloads),
+                logging == null ? null : Map.copyOf(logging),
+                type, time, releaseTime, minimumLauncherVersion, hidden, null);
+    }
 
     public static GameInstancePatch fromJson(JsonObject json) throws JsonParseException {
         @Nullable String id = null;

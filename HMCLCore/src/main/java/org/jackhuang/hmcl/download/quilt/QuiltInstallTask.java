@@ -24,8 +24,9 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -40,15 +41,15 @@ import static org.jackhuang.hmcl.download.UnsupportedInstallationException.FABRI
  *
  * @author huangyuhui
  */
-public final class QuiltInstallTask extends Task<Version> {
+public final class QuiltInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest version;
     private final QuiltRemoteVersion remote;
     private final GetTask launchMetaTask;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public QuiltInstallTask(DefaultDependencyManager dependencyManager, Version version, QuiltRemoteVersion remoteVersion) {
+    public QuiltInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, QuiltRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
@@ -87,10 +88,10 @@ public final class QuiltInstallTask extends Task<Version> {
     public void execute() {
         setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), QuiltInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
+        dependencies.add(new org.jackhuang.hmcl.download.game.GameLibrariesTask(dependencyManager, version, true, getResult().getLibraries()));
     }
 
-    private Version getPatch(QuiltInfo quiltInfo, String gameVersion, String loaderVersion) {
+    private GameInstancePatch getPatch(QuiltInfo quiltInfo, String gameVersion, String loaderVersion) {
         JsonObject launcherMeta = quiltInfo.launcherMeta;
         Arguments arguments = new Arguments();
 
@@ -121,7 +122,7 @@ public final class QuiltInstallTask extends Task<Version> {
         libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.intermediary.maven), getMavenRepositoryByGroup(quiltInfo.intermediary.maven), null));
         libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.loader.maven), getMavenRepositoryByGroup(quiltInfo.loader.maven), null));
 
-        return new Version(LibraryAnalyzer.LibraryType.QUILT.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
+        return new GameInstancePatch(LibraryAnalyzer.LibraryType.QUILT.getPatchId(), loaderVersion, GameInstancePatch.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
 
     private static String getMavenRepositoryByGroup(String maven) {

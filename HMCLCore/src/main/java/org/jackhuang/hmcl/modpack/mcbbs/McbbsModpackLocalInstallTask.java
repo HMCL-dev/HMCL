@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.modpack.mcbbs;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.DefaultGameRepository2;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -45,7 +46,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
     private final McbbsModpackManifest manifest;
     private final String name;
     private final boolean update;
-    private final DefaultGameRepository repository;
+    private final DefaultGameRepository2 repository;
     private final MinecraftInstanceTask<McbbsModpackManifest> instanceTask;
     private final List<Task<?>> dependencies = new ArrayList<>(2);
     private final List<Task<?>> dependents = new ArrayList<>(4);
@@ -103,14 +104,14 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        Version version = repository.readVersionJson(name);
-        Optional<Version> mcbbsPatch = version.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.getId())).findFirst();
+        GameInstanceManifest version = repository.getVersion(name);
+        Optional<GameInstancePatch> mcbbsPatch = version.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.getId())).findFirst();
         if (!update) {
-            Version patch = new Version(PATCH_NAME).setLibraries(manifest.getLibraries());
+            GameInstancePatch patch = new GameInstancePatch(PATCH_NAME).setLibraries(manifest.getLibraries());
             dependencies.add(repository.saveAsync(version.addPatch(patch)));
         } else if (mcbbsPatch.isPresent()) {
             // This mcbbs modpack was installed by HMCL.
-            Version patch = mcbbsPatch.get().setLibraries(manifest.getLibraries());
+            GameInstancePatch patch = mcbbsPatch.get().setLibraries(manifest.getLibraries());
             dependencies.add(repository.saveAsync(version.addPatch(patch)));
         } else {
             // This mcbbs modpack was installed by other launchers.

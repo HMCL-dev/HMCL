@@ -21,6 +21,7 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @NotNullByDefault
@@ -145,6 +148,11 @@ public record GameInstanceManifest(
                 false,
                 null,
                 null);
+    }
+
+    /// Creates an empty root manifest with the given id.
+    public GameInstanceManifest(String id) {
+        this(new GameInstanceID(id));
     }
 
     public static GameInstanceManifest fromJson(JsonObject json, boolean copyJson) throws JsonParseException {
@@ -321,6 +329,234 @@ public record GameInstanceManifest(
         return root != null && root;
     }
 
+    /// Returns the instance id as a string.
+    ///
+    /// @return the instance id string
+    public String getId() {
+        return id.id();
+    }
+
+    /// Returns legacy game arguments.
+    ///
+    /// @return the legacy game arguments
+    public Optional<String> getMinecraftArguments() {
+        return Optional.ofNullable(minecraftArguments);
+    }
+
+    /// Returns structured game arguments.
+    ///
+    /// @return the structured game arguments
+    public Optional<Arguments> getArguments() {
+        return Optional.ofNullable(arguments);
+    }
+
+    /// Returns the main class.
+    ///
+    /// @return the main class, or `null` when absent
+    public @Nullable String getMainClass() {
+        return mainClass;
+    }
+
+    /// Returns the manifest timestamp.
+    ///
+    /// @return the parsed timestamp, or `null` when absent or malformed
+    public @Nullable Instant getTime() {
+        return parseInstant(time);
+    }
+
+    /// Returns the release timestamp.
+    ///
+    /// @return the parsed release timestamp, or `null` when absent or malformed
+    public @Nullable Instant getReleaseTime() {
+        return parseInstant(releaseTime);
+    }
+
+    /// Returns the patch version.
+    ///
+    /// @return always `null` for manifests
+    public @Nullable String getVersion() {
+        return null;
+    }
+
+    /// Returns the patch priority.
+    ///
+    /// @return the lowest priority for manifests
+    public int getPriority() {
+        return Integer.MIN_VALUE;
+    }
+
+    /// Returns the release type.
+    ///
+    /// @return the release type, or unknown when absent
+    public ReleaseType getType() {
+        return type == null ? ReleaseType.UNKNOWN : type;
+    }
+
+    /// Returns the primary jar instance id as a string.
+    ///
+    /// @return the primary jar instance id, or `null` when absent
+    public @Nullable String getJar() {
+        return jar == null ? null : jar.id();
+    }
+
+    /// Returns the parent instance id as a string.
+    ///
+    /// @return the parent instance id, or `null` when absent
+    public @Nullable String getInheritsFrom() {
+        return inheritsFrom == null ? null : inheritsFrom.id();
+    }
+
+    /// Returns the minimum launcher version.
+    ///
+    /// @return the minimum launcher version, or zero when absent
+    public int getMinimumLauncherVersion() {
+        return minimumLauncherVersion == null ? 0 : minimumLauncherVersion;
+    }
+
+    /// Returns the compliance level.
+    ///
+    /// @return the compliance level, or `null` when absent
+    public @Nullable Integer getComplianceLevel() {
+        return complianceLevel;
+    }
+
+    /// Returns the preferred Java version.
+    ///
+    /// @return the preferred Java version, or `null` when absent
+    public @Nullable GameJavaVersion getJavaVersion() {
+        return javaVersion;
+    }
+
+    /// Returns whether the manifest is hidden.
+    ///
+    /// @return whether the manifest is hidden
+    public boolean isHidden() {
+        return hidden != null && hidden;
+    }
+
+    /// Returns whether the manifest is a root manifest.
+    ///
+    /// @return whether the manifest is a root manifest
+    public boolean isRoot() {
+        return root();
+    }
+
+    /// Returns whether this manifest is already a standalone view.
+    ///
+    /// @return whether this manifest has no parent
+    public boolean isResolvedPreservingPatches() {
+        return inheritsFrom == null;
+    }
+
+    /// Returns the pending patches.
+    ///
+    /// @return the pending patches, or an empty list when absent
+    public List<GameInstancePatch> getPatches() {
+        return patches == null ? List.of() : patches;
+    }
+
+    /// Returns logging metadata.
+    ///
+    /// @return logging metadata
+    public Map<DownloadType, LoggingInfo> getLogging() {
+        return logging == null ? Map.of() : logging;
+    }
+
+    /// Returns libraries.
+    ///
+    /// @return libraries
+    public List<Library> getLibraries() {
+        return libraries == null ? List.of() : libraries;
+    }
+
+    /// Returns compatibility rules.
+    ///
+    /// @return compatibility rules
+    public List<CompatibilityRule> getCompatibilityRules() {
+        return compatibilityRules == null ? List.of() : compatibilityRules;
+    }
+
+    /// Returns download metadata.
+    ///
+    /// @return download metadata
+    public Map<DownloadType, DownloadInfo> getDownloads() {
+        return downloads == null ? Map.of() : downloads;
+    }
+
+    /// Returns client jar download information.
+    ///
+    /// @return client jar download information
+    public DownloadInfo getDownloadInfo() {
+        DownloadInfo client = downloads == null ? null : downloads.get(DownloadType.CLIENT);
+        String jarName = jar == null ? id.id() : jar.id();
+        if (client == null) {
+            return new DownloadInfo(String.format("%s%s/%s.jar", Constants.DEFAULT_VERSION_DOWNLOAD_URL, jarName, jarName));
+        } else {
+            return client;
+        }
+    }
+
+    /// Returns the asset index metadata.
+    ///
+    /// @return asset index metadata
+    public AssetIndexInfo getAssetIndex() {
+        String assetsId = assets == null ? "legacy" : assets;
+
+        if (assetIndex == null) {
+            String hash;
+            switch (assetsId) {
+                case "1.8" -> hash = "f6ad102bcaa53b1a58358f16e376d548d44933ec";
+                case "14w31a" -> hash = "10a2a0e75b03cfb5a7196abbdf43b54f7fa61deb";
+                case "14w25a" -> hash = "32ff354a3be1c4dd83027111e6d79ee4d701d2c0";
+                case "1.7.4" -> hash = "545510a60f526b9aa8a38f9c0bc7a74235d21675";
+                case "1.7.10" -> hash = "1863782e33ce7b584fc45b037325a1964e095d3e";
+                case "1.7.3" -> hash = "f6cf726f4747128d13887010c2cbc44ba83504d9";
+                case "pre-1.6" -> hash = "3d8e55480977e32acd9844e545177e69a52f594b";
+                case "legacy" -> hash = "770572e819335b6c0a053f8378ad88eda189fc14";
+                default -> {
+                    assetsId = "legacy";
+                    hash = "770572e819335b6c0a053f8378ad88eda189fc14";
+                }
+            }
+
+            String url = Constants.DEFAULT_INDEX_URL + hash + "/" + assetsId + ".json";
+            return new AssetIndexInfo(assetsId, url);
+        } else {
+            return assetIndex;
+        }
+    }
+
+    /// Returns whether this manifest applies to the current environment.
+    ///
+    /// @return whether this manifest applies to the current environment
+    public boolean appliesToCurrentEnvironment() {
+        return CompatibilityRule.appliesToCurrentEnvironment(compatibilityRules);
+    }
+
+    /// Resolves this manifest through the repository.
+    ///
+    /// @param repository the repository that provides parent manifests
+    /// @return the resolved manifest
+    public GameInstanceManifest resolve(GameRepository2 repository) throws NoSuchGameInstanceException {
+        return repository.resolve(this).manifest();
+    }
+
+    /// Resolves this manifest through the repository while preserving patches.
+    ///
+    /// @param repository the repository that provides parent manifests
+    /// @return the standalone manifest
+    public GameInstanceManifest resolvePreservingPatches(GameRepository2 repository) throws NoSuchGameInstanceException {
+        return repository.resolvePreservingPatches(this).manifest();
+    }
+
+    /// Returns a manifest copy with the given id.
+    ///
+    /// @param id the new instance id
+    /// @return the updated manifest
+    public GameInstanceManifest setId(String id) {
+        return withId(new GameInstanceID(id));
+    }
+
     public GameInstanceManifest withId(GameInstanceID id) {
         Objects.requireNonNull(id);
 
@@ -333,6 +569,14 @@ public record GameInstanceManifest(
         return builder.toManifest();
     }
 
+    /// Returns a manifest copy with the given jar id.
+    ///
+    /// @param jar the jar id, or `null` when absent
+    /// @return the updated manifest
+    public GameInstanceManifest setJar(@Nullable String jar) {
+        return withJar(jar == null ? null : new GameInstanceID(jar));
+    }
+
     public GameInstanceManifest withJar(@Nullable GameInstanceID jar) {
         if (Objects.equals(this.jar, jar)) {
             return this;
@@ -341,6 +585,14 @@ public record GameInstanceManifest(
         Builder builder = new Builder(this);
         builder.setJar(jar);
         return builder.toManifest();
+    }
+
+    /// Returns a manifest copy with the given parent id.
+    ///
+    /// @param inheritsFrom the parent id, or `null` when absent
+    /// @return the updated manifest
+    public GameInstanceManifest setInheritsFrom(@Nullable String inheritsFrom) {
+        return withInheritsFrom(inheritsFrom == null ? null : new GameInstanceID(inheritsFrom));
     }
 
     /// Returns a manifest copy with the given parent instance id.
@@ -357,6 +609,69 @@ public record GameInstanceManifest(
         return builder.toManifest();
     }
 
+    /// Returns a manifest copy with the given legacy game arguments.
+    public GameInstanceManifest setMinecraftArguments(@Nullable String minecraftArguments) {
+        Builder builder = new Builder(this);
+        builder.setMinecraftArguments(minecraftArguments);
+        return builder.toManifest();
+    }
+
+    /// Returns a manifest copy with the given structured arguments.
+    public GameInstanceManifest setArguments(@Nullable Arguments arguments) {
+        Builder builder = new Builder(this);
+        builder.setArguments(arguments);
+        return builder.toManifest();
+    }
+
+    /// Returns a manifest copy with the given main class.
+    public GameInstanceManifest setMainClass(@Nullable String mainClass) {
+        Builder builder = new Builder(this);
+        builder.setMainClass(mainClass);
+        return builder.toManifest();
+    }
+
+    /// Returns a manifest copy with the given asset index.
+    public GameInstanceManifest setAssetIndex(@Nullable AssetIndexInfo assetIndex) {
+        Builder builder = new Builder(this);
+        builder.setAssetIndex(assetIndex);
+        return builder.toManifest();
+    }
+
+    /// Returns a manifest copy with the given Java version.
+    public GameInstanceManifest setJavaVersion(@Nullable GameJavaVersion javaVersion) {
+        Builder builder = new Builder(this);
+        builder.setJavaVersion(javaVersion);
+        return builder.toManifest();
+    }
+
+    /// Returns a manifest copy with the given libraries.
+    public GameInstanceManifest setLibraries(@Nullable List<Library> libraries) {
+        Builder builder = new Builder(this);
+        builder.setLibraries(libraries);
+        return builder.toManifest();
+    }
+
+    /// Returns a manifest copy with the given downloads.
+    public GameInstanceManifest setDownload(@Nullable Map<DownloadType, DownloadInfo> downloads) {
+        Builder builder = new Builder(this);
+        builder.setDownloads(downloads);
+        return builder.toManifest();
+    }
+
+    /// Returns a manifest copy with the given logging metadata.
+    public GameInstanceManifest setLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
+        Builder builder = new Builder(this);
+        builder.setLogging(logging);
+        return builder.toManifest();
+    }
+
+    /// Returns a manifest copy with the given root flag.
+    public GameInstanceManifest setRoot(@Nullable Boolean root) {
+        Builder builder = new Builder(this);
+        builder.setRoot(root);
+        return builder.toManifest();
+    }
+
     public GameInstanceManifest withPatches(@Nullable List<GameInstancePatch> patches) {
         if (patches == this.patches) {
             return this;
@@ -365,6 +680,66 @@ public record GameInstanceManifest(
         Builder builder = new Builder(this);
         builder.setPatches(patches);
         return builder.toManifest();
+    }
+
+    /// Returns a manifest copy with the given patches.
+    public GameInstanceManifest setPatches(@Nullable List<GameInstancePatch> patches) {
+        return withPatches(patches);
+    }
+
+    /// Returns a manifest copy with additional patches.
+    public GameInstanceManifest addPatch(GameInstancePatch... additional) {
+        return addPatches(Arrays.asList(additional));
+    }
+
+    /// Returns a manifest copy with additional patches.
+    public GameInstanceManifest addPatches(@Nullable List<GameInstancePatch> additional) {
+        Set<String> patchIds = new HashSet<>();
+        if (additional != null) {
+            for (GameInstancePatch patch : additional) {
+                if (patch.id() != null) {
+                    patchIds.add(patch.id());
+                }
+            }
+        }
+
+        List<GameInstancePatch> patches = new ArrayList<>();
+        if (this.patches != null) {
+            for (GameInstancePatch patch : this.patches) {
+                if (patch.id() == null || !patchIds.contains(patch.id())) {
+                    patches.add(patch);
+                }
+            }
+        }
+        if (additional != null) {
+            patches.addAll(additional);
+        }
+        return withPatches(patches);
+    }
+
+    /// Returns a manifest copy without pending patches.
+    public GameInstanceManifest clearPatches() {
+        return withPatches(null);
+    }
+
+    /// Returns a manifest copy without the patch with the given id.
+    public GameInstanceManifest removePatchById(String patchId) {
+        if (patches == null) {
+            return this;
+        }
+
+        List<GameInstancePatch> filtered = new ArrayList<>();
+        for (GameInstancePatch patch : patches) {
+            if (!patchId.equals(patch.id())) {
+                filtered.add(patch);
+            }
+        }
+        return withPatches(filtered);
+    }
+
+    /// Returns whether this manifest has a patch with the given id.
+    public boolean hasPatch(String patchId) {
+        return patches != null && patches.stream().anyMatch(patch -> patchId.equals(patch.id()));
     }
 
     /// Converts this manifest into a hidden patch entry for preserving resolved inheritance.
@@ -463,6 +838,18 @@ public record GameInstanceManifest(
         return json;
     }
 
+    private static @Nullable Instant parseInstant(@Nullable String value) {
+        if (value == null) {
+            return null;
+        }
+
+        try {
+            return Instant.parse(value);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
     private static final class Builder {
         // @formatter:off
         private @Nullable GameInstanceID id;
@@ -535,6 +922,21 @@ public record GameInstanceManifest(
             }
         }
 
+        public void setMinecraftArguments(@Nullable String minecraftArguments) {
+            this.minecraftArguments = minecraftArguments;
+            rawJson = null;
+        }
+
+        public void setArguments(@Nullable Arguments arguments) {
+            this.arguments = arguments;
+            rawJson = null;
+        }
+
+        public void setMainClass(@Nullable String mainClass) {
+            this.mainClass = mainClass;
+            rawJson = null;
+        }
+
         public void setInheritsFrom(@Nullable GameInstanceID inheritsFrom) {
             this.inheritsFrom = inheritsFrom;
             if (rawJson != null) {
@@ -544,6 +946,36 @@ public record GameInstanceManifest(
                     rawJson.remove("inheritsFrom");
                 }
             }
+        }
+
+        public void setAssetIndex(@Nullable AssetIndexInfo assetIndex) {
+            this.assetIndex = assetIndex;
+            rawJson = null;
+        }
+
+        public void setJavaVersion(@Nullable GameJavaVersion javaVersion) {
+            this.javaVersion = javaVersion;
+            rawJson = null;
+        }
+
+        public void setLibraries(@Nullable List<Library> libraries) {
+            this.libraries = libraries == null ? null : List.copyOf(libraries);
+            rawJson = null;
+        }
+
+        public void setDownloads(@Nullable Map<DownloadType, DownloadInfo> downloads) {
+            this.downloads = downloads == null ? null : Map.copyOf(downloads);
+            rawJson = null;
+        }
+
+        public void setLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
+            this.logging = logging == null ? null : Map.copyOf(logging);
+            rawJson = null;
+        }
+
+        public void setRoot(@Nullable Boolean root) {
+            this.root = root;
+            rawJson = null;
         }
 
         public void setPatches(@Nullable List<GameInstancePatch> patches) {

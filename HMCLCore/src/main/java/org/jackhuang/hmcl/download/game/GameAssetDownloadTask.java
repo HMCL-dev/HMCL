@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.AssetIndex;
 import org.jackhuang.hmcl.game.AssetIndexInfo;
 import org.jackhuang.hmcl.game.AssetObject;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
@@ -45,7 +45,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class GameAssetDownloadTask extends Task<Void> {
     
     private final AbstractDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest version;
     private final AssetIndexInfo assetIndexInfo;
     private final Path assetIndexFile;
     private final boolean integrityCheck;
@@ -55,10 +55,10 @@ public final class GameAssetDownloadTask extends Task<Void> {
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository2}
      * @param version the game version
      */
-    public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, Version version, boolean forceDownloadingIndex, boolean integrityCheck) {
+    public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest version, boolean forceDownloadingIndex, boolean integrityCheck) {
         this.dependencyManager = dependencyManager;
         this.version = version.resolve(dependencyManager.getGameRepository());
         this.assetIndexInfo = this.version.getAssetIndex();

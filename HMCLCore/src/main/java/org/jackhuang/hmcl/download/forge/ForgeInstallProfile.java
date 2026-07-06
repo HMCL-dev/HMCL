@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.download.forge;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
 
@@ -34,9 +34,9 @@ public final class ForgeInstallProfile implements Validation {
     private final ForgeInstall install;
 
     @SerializedName("versionInfo")
-    private final Version versionInfo;
+    private final GameInstanceManifest versionInfo;
 
-    public ForgeInstallProfile(ForgeInstall install, Version versionInfo) {
+    public ForgeInstallProfile(ForgeInstall install, GameInstanceManifest versionInfo) {
         this.install = install;
         this.versionInfo = versionInfo;
     }
@@ -45,7 +45,7 @@ public final class ForgeInstallProfile implements Validation {
         return install;
     }
 
-    public Version getVersionInfo() {
+    public GameInstanceManifest getVersionInfo() {
         return versionInfo;
     }
 

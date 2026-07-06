@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -40,17 +40,13 @@ import java.util.List;
 public final class GameVerificationFixTask extends Task<Void> {
     private final DefaultDependencyManager dependencyManager;
     private final String gameVersion;
-    private final Version version;
+    private final GameInstanceManifest version;
     private final List<Task<?>> dependencies = new ArrayList<>();
 
-    public GameVerificationFixTask(DefaultDependencyManager dependencyManager, String gameVersion, Version version) {
+    public GameVerificationFixTask(DefaultDependencyManager dependencyManager, String gameVersion, GameInstanceManifest version) {
         this.dependencyManager = dependencyManager;
         this.gameVersion = gameVersion;
         this.version = version;
-
-        if (!version.isResolved()) {
-            throw new IllegalArgumentException("GameVerificationFixTask requires a resolved game version");
-        }
 
         setSignificance(TaskSignificance.MODERATE);
     }

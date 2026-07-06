@@ -33,8 +33,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -50,7 +50,7 @@ public final class GameListPopupMenu extends StackPane {
 
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY,
-                            HMCLGameRepository repository, List<Version> versions) {
+                            HMCLGameRepository repository, List<GameInstanceManifest> versions) {
         GameListPopupMenu menu = new GameListPopupMenu();
         menu.getItems().setAll(versions.stream()
                 .filter(it -> repository.hasVersion(it.getId()))

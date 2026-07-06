@@ -23,7 +23,8 @@ import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -38,17 +39,17 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
-public final class CleanroomInstallTask extends Task<Version> {
+public final class CleanroomInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest version;
     private final CleanroomRemoteVersion remote;
     private Path installer;
     private FileDownloadTask dependent;
-    private Task<Version> task;
+    private Task<GameInstancePatch> task;
     private String selfVersion;
 
-    public CleanroomInstallTask(DefaultDependencyManager dependencyManager, Version version, CleanroomRemoteVersion remoteVersion) {
+    public CleanroomInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, CleanroomRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
@@ -56,7 +57,7 @@ public final class CleanroomInstallTask extends Task<Version> {
         setSignificance(TaskSignificance.MODERATE);
     }
 
-    public CleanroomInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
+    public CleanroomInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.selfVersion = selfVersion;
@@ -118,7 +119,7 @@ public final class CleanroomInstallTask extends Task<Version> {
         }
     }
 
-    public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
+    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
         if (gameVersion.isEmpty()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {

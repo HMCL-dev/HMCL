@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jetbrains.annotations.NotNullByDefault;
 
 @NotNullByDefault
-public class NoSuchGameInstanceException extends Exception {
+public class NoSuchGameInstanceException extends RuntimeException {
     private final GameInstanceID id;
 
     public NoSuchGameInstanceException(GameInstanceID id) {

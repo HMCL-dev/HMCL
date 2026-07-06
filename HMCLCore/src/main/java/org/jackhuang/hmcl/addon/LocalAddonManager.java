@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.addon;
 
-import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.GameRepository2;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
@@ -46,15 +46,15 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
 
     protected final Set<@NotNull T> localFiles = new LinkedHashSet<>();
 
-    protected final GameRepository repository;
+    protected final GameRepository2 repository;
     protected final String id;
 
-    public LocalAddonManager(GameRepository gameRepository, String versionId) {
+    public LocalAddonManager(GameRepository2 gameRepository, String versionId) {
         this.repository = gameRepository;
         this.id = versionId;
     }
 
-    public GameRepository getRepository() {
+    public GameRepository2 getRepository() {
         return repository;
     }
 

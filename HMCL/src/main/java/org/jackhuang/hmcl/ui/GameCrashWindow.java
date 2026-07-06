@@ -73,7 +73,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameCrashWindow extends Stage {
-    private final Version version;
+    private final GameInstanceManifest version;
     private final String memory;
     private final String total_memory;
     private final String java;
@@ -83,7 +83,7 @@ public class GameCrashWindow extends Stage {
     private final TextFlow feedbackTextFlow = new TextFlow();
 
     private final ManagedProcess managedProcess;
-    private final DefaultGameRepository repository;
+    private final DefaultGameRepository2 repository;
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
     private final View view;
@@ -91,7 +91,7 @@ public class GameCrashWindow extends Stage {
 
     private final List<Log> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, List<Log> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository2 repository, GameInstanceManifest version, LaunchOptions launchOptions, List<Log> logs) {
         Themes.applyNativeDarkMode(this);
 
         this.managedProcess = managedProcess;

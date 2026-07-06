@@ -64,7 +64,7 @@ public final class NativePatcher {
     }
 
     // https://github.com/LWJGL/lwjgl3/issues/1111
-    public static boolean needPatchMemoryUtil(Version version, int javaVersion) {
+    public static boolean needPatchMemoryUtil(GameInstanceManifest version, int javaVersion) {
         return javaVersion >= 25 && javaVersion <= 26 && version.getLibraries().stream().anyMatch(library ->
                 "org.lwjgl".equals(library.getGroupId())
                         && "lwjgl".equals(library.getArtifactId())
@@ -73,11 +73,11 @@ public final class NativePatcher {
         );
     }
 
-    public static Version patchNative(DefaultGameRepository repository,
-                                      Version version, String gameVersion,
-                                      JavaRuntime javaVersion,
-                                      GameSettings.Effective settings,
-                                      List<String> javaArguments) {
+    public static GameInstanceManifest patchNative(DefaultGameRepository2 repository,
+                                                   GameInstanceManifest version, String gameVersion,
+                                                   JavaRuntime javaVersion,
+                                                   GameSettings.Effective settings,
+                                                   List<String> javaArguments) {
         if (settings.get(GameSettings::useCustomNativesProperty)) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;

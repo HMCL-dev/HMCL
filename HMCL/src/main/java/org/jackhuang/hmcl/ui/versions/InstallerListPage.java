@@ -22,8 +22,8 @@ import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -45,7 +45,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class InstallerListPage extends ListPageBase<InstallerItem> implements VersionPage.GameInstanceLoadable {
     private HMCLGameRepository repository;
     private String versionId;
-    private Version version;
+    private GameInstanceManifest version;
     private String gameVersion;
 
     {

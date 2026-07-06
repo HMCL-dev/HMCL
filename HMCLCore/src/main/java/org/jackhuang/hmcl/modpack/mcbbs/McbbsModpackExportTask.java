@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.modpack.mcbbs;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.DefaultGameRepository2;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -44,12 +44,12 @@ import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class McbbsModpackExportTask extends Task<Void> {
-    private final DefaultGameRepository repository;
+    private final DefaultGameRepository2 repository;
     private final String version;
     private final ModpackExportInfo info;
     private final Path modpackFile;
 
-    public McbbsModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo info, Path modpackFile) {
+    public McbbsModpackExportTask(DefaultGameRepository2 repository, String version, ModpackExportInfo info, Path modpackFile) {
         this.repository = repository;
         this.version = version;
         this.info = info.validate();

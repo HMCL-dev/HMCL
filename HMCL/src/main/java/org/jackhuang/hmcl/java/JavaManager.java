@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.game.JavaVersionConstraint;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -315,12 +315,12 @@ public final class JavaManager {
     }
 
     @Nullable
-    public static JavaRuntime findSuitableJava(GameVersionNumber gameVersion, Version version) throws InterruptedException {
+    public static JavaRuntime findSuitableJava(GameVersionNumber gameVersion, GameInstanceManifest version) throws InterruptedException {
         return findSuitableJava(getAllJava(), gameVersion, version);
     }
 
     @Nullable
-    public static JavaRuntime findSuitableJava(Collection<JavaRuntime> javaRuntimes, GameVersionNumber gameVersion, Version version) {
+    public static JavaRuntime findSuitableJava(Collection<JavaRuntime> javaRuntimes, GameVersionNumber gameVersion, GameInstanceManifest version) {
         LibraryAnalyzer analyzer = version != null ? LibraryAnalyzer.analyze(version, gameVersion != null ? gameVersion.toString() : null) : null;
 
         boolean forceX86 = Architecture.SYSTEM_ARCH == Architecture.ARM64

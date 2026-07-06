@@ -23,8 +23,8 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
@@ -90,7 +90,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         this.repository = repository;
         this.instanceId = instanceId;
 
-        Version resolved = repository.getResolvedPreservingPatchesVersion(instanceId);
+        GameInstanceManifest resolved = repository.getResolvedPreservingPatchesVersion(instanceId);
         this.gameVersion = repository.getGameVersion(resolved).orElse(null);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         modded.set(analyzer.hasModLoader());

@@ -42,7 +42,7 @@ public final class LogExporter {
     }
 
     public static CompletableFuture<Void> exportLogs(
-            Path zipFile, DefaultGameRepository gameRepository, String versionId, String logs, String launchScript,
+            Path zipFile, DefaultGameRepository2 gameRepository, String versionId, String logs, String launchScript,
             PathMatcher logMatcher) {
         Path runDirectory = gameRepository.getRunDirectory(versionId);
         Path baseDirectory = gameRepository.getBaseDirectory();
@@ -53,7 +53,7 @@ public final class LogExporter {
         while (true) {
             if (resolvedSoFar.contains(currentVersionId)) break;
             resolvedSoFar.add(currentVersionId);
-            Version currentVersion = gameRepository.getVersion(currentVersionId);
+            GameInstanceManifest currentVersion = gameRepository.getVersion(currentVersionId);
             versions.add(currentVersionId);
 
             if (StringUtils.isNotBlank(currentVersion.getInheritsFrom())) {

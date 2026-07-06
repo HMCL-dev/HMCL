@@ -42,15 +42,15 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class HMCLGameLauncher extends DefaultLauncher {
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
+    public HMCLGameLauncher(GameRepository2 repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
     }
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+    public HMCLGameLauncher(GameRepository2 repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
         this(repository, version, authInfo, options, listener, true);
     }
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+    public HMCLGameLauncher(GameRepository2 repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         super(repository, version, authInfo, options, listener, daemon);
     }
 

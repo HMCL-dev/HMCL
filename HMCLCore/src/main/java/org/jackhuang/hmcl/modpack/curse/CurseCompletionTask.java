@@ -21,7 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.DefaultGameRepository2;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -51,7 +51,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class CurseCompletionTask extends Task<Void> {
 
     private final DefaultDependencyManager dependency;
-    private final DefaultGameRepository repository;
+    private final DefaultGameRepository2 repository;
     private final ModManager modManager;
     private final String version;
     private CurseManifest manifest;

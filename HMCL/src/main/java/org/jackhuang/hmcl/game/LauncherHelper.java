@@ -148,7 +148,7 @@ public final class LauncherHelper {
         PROCESSES.removeIf(it -> it.get() == null);
 
         DefaultDependencyManager dependencyManager = repository.getDependency();
-        AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
+        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
         Optional<String> gameVersion = repository.getGameVersion(version.get());
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
@@ -202,7 +202,12 @@ public final class LauncherHelper {
                             })
                     );
                 }).withStage("launch.state.dependencies")
-                .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
+                .thenComposeAsync(() -> {
+                    if (gameVersion.isEmpty()) {
+                        return null;
+                    }
+                    return new GameVerificationFixTask(dependencyManager, gameVersion.get(), version.get());
+                })
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
                             || setting.getInheritable(GameSettings::noJVMOptionsProperty)
@@ -386,7 +391,7 @@ public final class LauncherHelper {
         executor.start();
     }
 
-    private static Task<JavaRuntime> checkGameState(HMCLGameRepository repository, GameSettings.Effective setting, Version version) {
+    private static Task<JavaRuntime> checkGameState(HMCLGameRepository repository, GameSettings.Effective setting, GameInstanceManifest version) {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
         GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT));
 
@@ -798,7 +803,7 @@ public final class LauncherHelper {
 
         private final ReentrantLock lock = new ReentrantLock();
         private final HMCLGameRepository repository;
-        private final Version version;
+        private final GameInstanceManifest version;
         private final LaunchOptions launchOptions;
         private ManagedProcess process;
         private volatile boolean lwjgl;
@@ -810,7 +815,7 @@ public final class LauncherHelper {
         private Thread submitLogThread;
         private LinkedBlockingQueue<Log> logBuffer;
 
-        public HMCLProcessListener(HMCLGameRepository repository, Version version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
+        public HMCLProcessListener(HMCLGameRepository repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
             this.repository = repository;
             this.version = version;
             this.launchOptions = launchOptions;

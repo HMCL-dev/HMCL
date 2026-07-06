@@ -23,9 +23,8 @@ import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
@@ -38,11 +37,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends AbstractInstallersPage {
     protected final BooleanProperty compatible = new SimpleBooleanProperty();
-    protected final GameRepository repository;
+    protected final HMCLGameRepository repository;
     protected final String gameVersion;
-    protected final Version version;
+    protected final GameInstanceManifest version;
 
-    public AdditionalInstallersPage(String gameVersion, Version version, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
+    public AdditionalInstallersPage(String gameVersion, GameInstanceManifest version, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
         this.gameVersion = gameVersion;
         this.version = version;
@@ -81,7 +80,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     @Override
     protected void reload() {
-        Version resolved = version.resolvePreservingPatches(repository);
+        GameInstanceManifest resolved = version.resolvePreservingPatches(repository);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
         String game = analyzer.getVersion(MINECRAFT).orElse(null);
         String currentGameVersion = Lang.nonNull(getVersion("game"), game);

@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
@@ -44,7 +44,7 @@ public class DefaultGameBuilder extends GameBuilder {
     public Task<?> buildAsync() {
         var hints = new ArrayList<Task.StagesHint>();
 
-        Task<Version> libraryTask = Task.supplyAsync(() -> new Version(name));
+        Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> new GameInstanceManifest(name));
         libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "game", gameVersion));
         hints.add(new Task.StagesHint("hmcl.install.game:" + gameVersion));
         hints.add(new Task.StagesHint("hmcl.install.libraries"));
@@ -66,7 +66,7 @@ public class DefaultGameBuilder extends GameBuilder {
         }).withStagesHints(hints);
     }
 
-    private ExceptionalFunction<Version, Task<Version>, ?> libraryTaskHelper(String gameVersion, String libraryId, String libraryVersion) {
+    private ExceptionalFunction<GameInstanceManifest, Task<GameInstanceManifest>, ?> libraryTaskHelper(String gameVersion, String libraryId, String libraryVersion) {
         return version -> dependencyManager.installLibraryAsync(gameVersion, version, libraryId, libraryVersion);
     }
 }

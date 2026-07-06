@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.*;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -42,16 +43,16 @@ import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
  *
  * @author huangyuhui
  */
-public final class ForgeInstallTask extends Task<Version> {
+public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest version;
     private Path installer;
     private final ForgeRemoteVersion remote;
     private FileDownloadTask dependent;
-    private Task<Version> dependency;
+    private Task<GameInstancePatch> dependency;
 
-    public ForgeInstallTask(DefaultDependencyManager dependencyManager, Version version, ForgeRemoteVersion remoteVersion) {
+    public ForgeInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, ForgeRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
@@ -115,13 +116,13 @@ public final class ForgeInstallTask extends Task<Version> {
      * Detect Forge installer type.
      *
      * @param dependencyManager game repository
-     * @param version version.json
+     * @param version instance manifest
      * @param installer the Forge installer, either the new or old one.
      * @return true for new, false for old
      * @throws IOException if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
-    public static boolean detectForgeInstallerType(DependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
+    public static boolean detectForgeInstallerType(DependencyManager dependencyManager, GameInstanceManifest version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
@@ -148,13 +149,13 @@ public final class ForgeInstallTask extends Task<Version> {
      * This method will try to identify this installer whether it is in old or new format.
      *
      * @param dependencyManager game repository
-     * @param version version.json
+     * @param version instance manifest
      * @param installer the Forge installer, either the new or old one.
      * @return the task to install library
      * @throws IOException if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
-    public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
+    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {

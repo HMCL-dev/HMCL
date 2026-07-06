@@ -34,7 +34,7 @@ public final class GameJsonParseFailedEvent extends Event {
 
     /**
      *
-     * @param source {@link org.jackhuang.hmcl.game.DefaultGameRepository}
+     * @param source {@link org.jackhuang.hmcl.game.DefaultGameRepository2}
      * @param jsonFile the minecraft.json file.
      * @param version the version name
      */

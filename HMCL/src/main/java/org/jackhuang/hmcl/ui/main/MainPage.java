@@ -44,8 +44,8 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -94,7 +94,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
     private final BooleanProperty showUpdateDialog = new SimpleBooleanProperty(this, "showUpdateDialog");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
-    private final ObservableList<Version> versions = FXCollections.observableArrayList();
+    private final ObservableList<GameInstanceManifest> versions = FXCollections.observableArrayList();
     private HMCLGameRepository repository;
 
     private TransitionPane announcementPane;
@@ -397,7 +397,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         this.currentGame.set(currentGame);
     }
 
-    public ObservableList<Version> getVersions() {
+    public ObservableList<GameInstanceManifest> getVersions() {
         return versions;
     }
 
@@ -437,7 +437,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         this.latestVersion.set(latestVersion);
     }
 
-    public void initVersions(HMCLGameRepository repository, List<Version> versions) {
+    public void initVersions(HMCLGameRepository repository, List<GameInstanceManifest> versions) {
         FXUtils.checkFxUserThread();
         this.repository = repository;
         this.versions.setAll(versions);

@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameRepository2;
 import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 import java.io.IOException;
@@ -32,22 +32,22 @@ import java.nio.file.Path;
  */
 public abstract class Launcher {
 
-    protected final GameRepository repository;
-    protected final Version version;
+    protected final GameRepository2 repository;
+    protected final GameInstanceManifest version;
     protected final AuthInfo authInfo;
     protected final LaunchOptions options;
     protected final ProcessListener listener;
     protected final boolean daemon;
 
-    public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
+    public Launcher(GameRepository2 repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
     }
 
-    public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+    public Launcher(GameRepository2 repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
         this(repository, version, authInfo, options, listener, true);
     }
 
-    public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+    public Launcher(GameRepository2 repository, GameInstanceManifest version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         this.repository = repository;
         this.version = version;
         this.authInfo = authInfo;

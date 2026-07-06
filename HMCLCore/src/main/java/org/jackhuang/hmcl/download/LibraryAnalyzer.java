@@ -34,10 +34,10 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMark> {
-    private Version version;
+    private GameInstanceManifest version;
     private final Map<String, Pair<Library, String>> libraries;
 
-    private LibraryAnalyzer(Version version, Map<String, Pair<Library, String>> libraries) {
+    private LibraryAnalyzer(GameInstanceManifest version, Map<String, Pair<Library, String>> libraries) {
         this.version = version;
         this.libraries = libraries;
     }
@@ -102,7 +102,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         );
     }
 
-    private Version removingMatchedLibrary(Version version, String libraryId) {
+    private GameInstanceManifest removingMatchedLibrary(GameInstanceManifest version, String libraryId) {
         LibraryType type = LibraryType.fromPatchId(libraryId);
         if (type == null) return version;
 
@@ -116,6 +116,22 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
         }
         return version.setLibraries(libraries);
+    }
+
+    private GameInstancePatch removingMatchedLibrary(GameInstancePatch patch, String libraryId) {
+        LibraryType type = LibraryType.fromPatchId(libraryId);
+        if (type == null) return patch;
+
+        List<Library> libraries = new ArrayList<>();
+        List<Library> rawLibraries = patch.getLibraries();
+        for (Library library : rawLibraries) {
+            if (type.matchLibrary(library, rawLibraries)) {
+                // skip
+            } else {
+                libraries.add(library);
+            }
+        }
+        return patch.setLibraries(libraries);
     }
 
     /**
@@ -134,11 +150,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return this;
     }
 
-    public Version build() {
+    public GameInstanceManifest build() {
         return version;
     }
 
-    public static LibraryAnalyzer analyze(Version version, String gameVersion) {
+    public static LibraryAnalyzer analyze(GameInstanceManifest version, String gameVersion) {
         if (version.getInheritsFrom() != null)
             throw new IllegalArgumentException("LibraryAnalyzer can only analyze independent game version");
 
@@ -148,7 +164,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             libraries.put(LibraryType.MINECRAFT.getPatchId(), pair(null, gameVersion));
         }
 
-        List<Library> rawLibraries = version.resolve(null).getLibraries();
+        List<Library> rawLibraries = version.getLibraries();
         for (Library library : rawLibraries) {
             for (LibraryType type : LibraryType.values()) {
                 if (type.matchLibrary(library, rawLibraries)) {
@@ -158,7 +174,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
         }
 
-        for (Version patch : version.getPatches()) {
+        for (GameInstancePatch patch : version.getPatches()) {
             if (patch.isHidden()) continue;
             libraries.put(patch.getId(), pair(null, patch.getVersion()));
         }
@@ -166,8 +182,13 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return new LibraryAnalyzer(version, libraries);
     }
 
-    public static boolean isModded(VersionProvider provider, Version version) {
-        Version resolvedVersion = version.resolve(provider);
+    public static boolean isModded(GameRepository2 provider, GameInstanceManifest version) {
+        GameInstanceManifest resolvedVersion;
+        try {
+            resolvedVersion = version.resolve(provider);
+        } catch (NoSuchGameInstanceException e) {
+            return false;
+        }
         String mainClass = resolvedVersion.getMainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
                 || mainClass.startsWith("net.minecraftforge")
@@ -223,7 +244,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
-            protected String patchVersion(Version gameVersion, String libraryVersion) {
+            protected String patchVersion(GameInstanceManifest gameVersion, String libraryVersion) {
                 Matcher matcher = FORGE_VERSION_MATCHER.matcher(libraryVersion);
                 if (matcher.find()) {
                     return matcher.group("forge");
@@ -246,14 +267,14 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
-            protected String patchVersion(Version gameVersion, String libraryVersion) {
+            protected String patchVersion(GameInstanceManifest gameVersion, String libraryVersion) {
                 String res = scanVersion(gameVersion);
                 if (res != null) {
                     return res;
                 }
 
-                for (Version patch : gameVersion.getPatches()) {
-                    res = scanVersion(patch);
+                for (GameInstancePatch patch : gameVersion.getPatches()) {
+                    res = scanPatch(patch);
                     if (res != null) {
                         return res;
                     }
@@ -267,7 +288,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 return super.patchVersion(gameVersion, libraryVersion);
             }
 
-            private String scanVersion(Version version) {
+            private String scanVersion(GameInstanceManifest version) {
                 Optional<Arguments> optArgument = version.getArguments();
                 if (!optArgument.isPresent()) {
                     return null;
@@ -287,6 +308,32 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                                 return ((StringArgument) next).argument();
                             }
                             return null; // Normally, there should not be two --fml.neoForgeVersion argument.
+                        }
+                    }
+                }
+                return null;
+            }
+
+            private String scanPatch(GameInstancePatch patch) {
+                Optional<Arguments> optArgument = patch.getArguments();
+                if (!optArgument.isPresent()) {
+                    return null;
+                }
+                List<Argument> gameArguments = optArgument.get().game();
+                if (gameArguments == null) {
+                    return null;
+                }
+
+                for (int i = 0; i < gameArguments.size() - 1; i++) {
+                    Argument argument = gameArguments.get(i);
+                    if (argument instanceof StringArgument) {
+                        String argumentValue = ((StringArgument) argument).argument();
+                        if ("--fml.neoForgeVersion".equals(argumentValue) || "--fml.forgeVersion".equals(argumentValue)) {
+                            Argument next = gameArguments.get(i + 1);
+                            if (next instanceof StringArgument) {
+                                return ((StringArgument) next).argument();
+                            }
+                            return null;
                         }
                     }
                 }
@@ -341,7 +388,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             return group.matcher(library.getGroupId()).matches() && artifact.matcher(library.getArtifactId()).matches();
         }
 
-        protected String patchVersion(Version gameVersion, String libraryVersion) {
+        protected String patchVersion(GameInstanceManifest gameVersion, String libraryVersion) {
             return libraryVersion;
         }
     }

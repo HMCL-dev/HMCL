@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,13 +47,45 @@ public interface GameRepository2 {
 
     boolean hasInstance(GameInstanceID instanceId);
 
+    /// Returns whether the instance exists.
+    ///
+    /// @param id the instance id string
+    /// @return whether the instance exists
+    default boolean hasVersion(@Nullable String id) {
+        if (id == null) {
+            return false;
+        }
+
+        try {
+            return hasInstance(new GameInstanceID(id));
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+
+    /// Returns an instance manifest by string id.
+    ///
+    /// @param id the instance id string
+    /// @return the instance manifest
+    default GameInstanceManifest getVersion(String id) throws NoSuchGameInstanceException {
+        return getInstanceManifest(new GameInstanceID(id));
+    }
 
     /// Returns a cached launch-ready manifest view for the instance.
     ///
     /// @param instanceId the instance id
     /// @return the resolved manifest view
     GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+
+    /// Returns a resolved instance manifest by string id.
+    ///
+    /// @param id the instance id string
+    /// @return the resolved manifest
+    default GameInstanceManifest getResolvedVersion(String id) throws NoSuchGameInstanceException {
+        return getResolvedInstanceManifest(new GameInstanceID(id)).manifest();
+    }
 
     /// Returns a standalone manifest view for the instance.
     ///
@@ -62,19 +95,67 @@ public interface GameRepository2 {
         return resolvePreservingPatches(getInstanceManifest(instanceId));
     }
 
+    /// Returns a standalone manifest by string id.
+    ///
+    /// @param id the instance id string
+    /// @return the standalone manifest
+    default GameInstanceManifest getResolvedPreservingPatchesVersion(String id) throws NoSuchGameInstanceException {
+        return getResolvedPreservingPatchesInstanceManifest(new GameInstanceID(id)).manifest();
+    }
+
     int getInstanceCount();
+
+    /// Returns the instance count.
+    ///
+    /// @return the instance count
+    default int getVersionCount() {
+        return getInstanceCount();
+    }
 
     Collection<GameInstanceManifest> getInstanceManifests();
 
+    /// Returns all instance manifests.
+    ///
+    /// @return all instance manifests
+    default Collection<GameInstanceManifest> getVersions() {
+        return getInstanceManifests();
+    }
+
     void refresh();
+
+    /// Refreshes the repository.
+    default void refreshVersions() {
+        refresh();
+    }
 
     default Task<Void> refreshAsync() {
         return Task.runAsync(this::refresh);
     }
 
+    /// Refreshes the repository asynchronously.
+    default Task<Void> refreshVersionsAsync() {
+        return refreshAsync();
+    }
+
     Path getInstanceRoot(GameInstanceID instanceId);
 
+    /// Returns the instance root by string id.
+    ///
+    /// @param id the instance id string
+    /// @return the instance root
+    default Path getVersionRoot(String id) {
+        return getInstanceRoot(new GameInstanceID(id));
+    }
+
     Path getRunDirectory(GameInstanceID instanceId);
+
+    /// Returns the run directory by string id.
+    ///
+    /// @param id the instance id string
+    /// @return the run directory
+    default Path getRunDirectory(String id) {
+        return getRunDirectory(new GameInstanceID(id));
+    }
 
     Path getLibrariesDirectory(GameInstanceManifest manifest);
 
@@ -82,16 +163,54 @@ public interface GameRepository2 {
 
     Path getNativeDirectory(GameInstanceID instanceId, Platform platform);
 
+    /// Returns the native directory by string id.
+    default Path getNativeDirectory(String id, Platform platform) {
+        return getNativeDirectory(new GameInstanceID(id), platform);
+    }
+
     Path getModsDirectory(GameInstanceID instanceId);
+
+    /// Returns the mods directory by string id.
+    default Path getModsDirectory(String id) {
+        return getModsDirectory(new GameInstanceID(id));
+    }
 
     Path getResourcePackDirectory(GameInstanceID instanceId);
 
+    /// Returns the resource pack directory by string id.
+    default Path getResourcePackDirectory(String id) {
+        return getResourcePackDirectory(new GameInstanceID(id));
+    }
+
     Path getInstanceJar(GameInstanceManifest manifest);
+
+    /// Returns the instance jar path.
+    default Path getVersionJar(GameInstanceManifest manifest) {
+        return getInstanceJar(manifest);
+    }
+
+    /// Returns the instance jar path by string id.
+    default Path getVersionJar(String id) {
+        try {
+            return getInstanceJar(new GameInstanceID(id));
+        } catch (NoSuchGameInstanceException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
 
     Optional<String> getGameVersion(GameInstanceManifest manifest);
 
     default Optional<String> getGameVersion(GameInstanceID instanceId) throws NoSuchGameInstanceException {
         return getGameVersion(getInstanceManifest(instanceId));
+    }
+
+    /// Returns the detected game version by string id.
+    default Optional<String> getGameVersion(String id) {
+        try {
+            return getGameVersion(new GameInstanceID(id));
+        } catch (NoSuchGameInstanceException e) {
+            return Optional.empty();
+        }
     }
 
     default Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
@@ -100,19 +219,59 @@ public interface GameRepository2 {
 
     boolean renameInstance(GameInstanceID from, GameInstanceID to);
 
+    /// Renames an instance by string id.
+    default boolean renameVersion(String from, String to) {
+        return renameInstance(new GameInstanceID(from), new GameInstanceID(to));
+    }
+
     Path getActualAssetDirectory(GameInstanceID instanceId, String assetId);
+
+    /// Returns the actual asset directory by string id.
+    default Path getActualAssetDirectory(String id, String assetId) {
+        return getActualAssetDirectory(new GameInstanceID(id), assetId);
+    }
 
     Path getAssetDirectory(GameInstanceID instanceId, String assetId);
 
+    /// Returns the asset directory by string id.
+    default Path getAssetDirectory(String id, String assetId) {
+        return getAssetDirectory(new GameInstanceID(id), assetId);
+    }
+
     Optional<Path> getAssetObject(GameInstanceID instanceId, String assetId, String name) throws IOException;
+
+    /// Returns an asset object by string id.
+    default Optional<Path> getAssetObject(String id, String assetId, String name) throws IOException {
+        return getAssetObject(new GameInstanceID(id), assetId, name);
+    }
 
     Path getAssetObject(GameInstanceID instanceId, String assetId, AssetObject obj);
 
+    /// Returns an asset object by string id.
+    default Path getAssetObject(String id, String assetId, AssetObject obj) {
+        return getAssetObject(new GameInstanceID(id), assetId, obj);
+    }
+
     AssetIndex getAssetIndex(GameInstanceID instanceId, String assetId) throws IOException;
+
+    /// Returns an asset index by string id.
+    default AssetIndex getAssetIndex(String id, String assetId) throws IOException {
+        return getAssetIndex(new GameInstanceID(id), assetId);
+    }
 
     Path getIndexFile(GameInstanceID instanceId, String assetId);
 
+    /// Returns an asset index path by string id.
+    default Path getIndexFile(String id, String assetId) {
+        return getIndexFile(new GameInstanceID(id), assetId);
+    }
+
     Path getLoggingObject(GameInstanceID instanceId, String assetId, LoggingInfo loggingInfo);
+
+    /// Returns a logging object path by string id.
+    default Path getLoggingObject(String id, String assetId, LoggingInfo loggingInfo) {
+        return getLoggingObject(new GameInstanceID(id), assetId, loggingInfo);
+    }
 
     default Set<String> getClasspath(GameInstanceManifest manifest) {
         Set<String> classpath = new LinkedHashSet<>();

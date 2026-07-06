@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
@@ -33,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -85,6 +88,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
     }
 
     private volatile Status status;
+    private volatile boolean loaded;
     private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
     public DefaultGameRepository2(Path baseDirectory) {
@@ -95,6 +99,16 @@ public class DefaultGameRepository2 implements GameRepository2 {
         return status.baseDirectory;
     }
 
+    public void setBaseDirectory(Path baseDirectory) {
+        this.status = new Status(baseDirectory);
+        this.loaded = false;
+        this.gameVersions.clear();
+    }
+
+    public boolean isLoaded() {
+        return loaded;
+    }
+
     @Override
     public void refresh() {
         if (EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this)) == Event.Result.DENY) {
@@ -102,10 +116,11 @@ public class DefaultGameRepository2 implements GameRepository2 {
         }
 
         refreshImpl();
+        loaded = true;
         EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
     }
 
-    private void refreshImpl() {
+    protected void refreshImpl() {
         Status newStatus = new Status(status.baseDirectory);
 
         if (hasClassicVersion(newStatus.baseDirectory)) {
@@ -374,6 +389,59 @@ public class DefaultGameRepository2 implements GameRepository2 {
         }
     }
 
+    public boolean removeVersionFromDisk(String id) {
+        try {
+            return removeInstanceFromDisk(new GameInstanceID(id));
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public boolean removeInstanceFromDisk(GameInstanceID id) {
+        if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id.id())) == Event.Result.DENY) {
+            return false;
+        }
+
+        Status currentStatus = status;
+        currentStatus.instances.remove(id);
+
+        Path file = getInstanceRoot(id);
+        if (Files.notExists(file)) {
+            return true;
+        }
+
+        Path removedFile = file.toAbsolutePath().resolveSibling(FileUtils.getName(file) + "_removed");
+        try {
+            Files.move(file, removedFile, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            LOG.warning("Unable to remove version folder: " + file, e);
+            return false;
+        }
+
+        try {
+            if (FileUtils.moveToTrash(removedFile)) {
+                return true;
+            }
+
+            for (Path path : FileUtils.listFilesByExtension(removedFile, "json")) {
+                try {
+                    Files.delete(path);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete file " + path, e);
+                }
+            }
+
+            try {
+                FileUtils.deleteDirectory(removedFile);
+            } catch (IOException e) {
+                LOG.warning("Unable to remove version folder: " + file, e);
+            }
+            return true;
+        } finally {
+            refreshAsync().start();
+        }
+    }
+
     @Override
     public Optional<String> getGameVersion(GameInstanceManifest manifest) {
         try {
@@ -529,6 +597,10 @@ public class DefaultGameRepository2 implements GameRepository2 {
         return getInstanceRoot(instanceId).resolve("modpack.json");
     }
 
+    public Path getModpackConfiguration(String instanceId) {
+        return getModpackConfiguration(new GameInstanceID(instanceId));
+    }
+
     @Nullable
     public ModpackConfiguration<?> readModpackConfiguration(GameInstanceID instanceId) throws IOException, NoSuchGameInstanceException {
         if (!hasInstance(instanceId)) throw new NoSuchGameInstanceException(instanceId);
@@ -537,20 +609,49 @@ public class DefaultGameRepository2 implements GameRepository2 {
         return JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
     }
 
+    @Nullable
+    public ModpackConfiguration<?> readModpackConfiguration(String instanceId) throws IOException, NoSuchGameInstanceException {
+        return readModpackConfiguration(new GameInstanceID(instanceId));
+    }
+
     public boolean isModpack(GameInstanceID instanceId) {
         return Files.exists(getModpackConfiguration(instanceId));
+    }
+
+    public boolean isModpack(String instanceId) {
+        return isModpack(new GameInstanceID(instanceId));
     }
 
     public Path getSavesDirectory(GameInstanceID instanceId) {
         return getRunDirectory(instanceId).resolve("saves");
     }
 
+    public Path getSavesDirectory(String instanceId) {
+        return getSavesDirectory(new GameInstanceID(instanceId));
+    }
+
     public Path getBackupsDirectory(GameInstanceID instanceID) {
         return getRunDirectory(instanceID).resolve("backups");
     }
 
+    public Path getBackupsDirectory(String instanceId) {
+        return getBackupsDirectory(new GameInstanceID(instanceId));
+    }
+
     public Path getSchematicsDirectory(GameInstanceID instanceId) {
         return getRunDirectory(instanceId).resolve("schematics");
+    }
+
+    public Path getSchematicsDirectory(String instanceId) {
+        return getSchematicsDirectory(new GameInstanceID(instanceId));
+    }
+
+    public ModManager getModManager(String instanceId) {
+        return new ModManager(this, instanceId);
+    }
+
+    public ResourcePackManager getResourcePackManager(String instanceId) {
+        return new ResourcePackManager(this, instanceId);
     }
 
     @Override
@@ -615,7 +716,7 @@ public class DefaultGameRepository2 implements GameRepository2 {
             } else if (!manifest.patches().isEmpty()) {
                 // Assume patches themselves do not have patches recursively.
                 List<GameInstancePatch> sortedPatches = manifest.patches().stream()
-                        .sorted(Comparator.comparing(GameInstancePatch::priority))
+                        .sorted(Comparator.comparing(GameInstancePatch::getPriority))
                         .toList();
                 for (GameInstancePatch patch : sortedPatches) {
                     currentManifest = patch.merge(currentManifest);

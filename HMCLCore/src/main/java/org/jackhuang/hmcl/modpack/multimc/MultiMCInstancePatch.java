@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.JsonMap;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -200,7 +199,7 @@ public final class MultiMCInstancePatch {
     }
 
     public static final class ResolvedInstance {
-        private final Version version;
+        private final GameInstanceManifest version;
 
         private final String gameVersion;
 
@@ -209,7 +208,7 @@ public final class MultiMCInstancePatch {
         private final List<String> jarModFileNames;
         private final List<Library> mavenOnlyFiles;
 
-        public ResolvedInstance(Version version, String gameVersion, Library mainJar, List<String> jarModFileNames, List<Library> mavenOnlyFiles) {
+        public ResolvedInstance(GameInstanceManifest version, String gameVersion, Library mainJar, List<String> jarModFileNames, List<Library> mavenOnlyFiles) {
             this.version = version;
             this.gameVersion = gameVersion;
             this.mainJar = mainJar;
@@ -217,7 +216,7 @@ public final class MultiMCInstancePatch {
             this.mavenOnlyFiles = mavenOnlyFiles;
         }
 
-        public Version getVersion() {
+        public GameInstanceManifest getVersion() {
             return version;
         }
 
@@ -245,7 +244,7 @@ public final class MultiMCInstancePatch {
      * See to do marks below for more information</p>
      *
      * @param patches   List of all Json-Patch.
-     * @param versionID the version ID. Used when constructing a Version.
+     * @param versionID the version ID. Used when constructing a manifest.
      * @return The resolved instance.
      */
     public static ResolvedInstance resolveArtifact(List<MultiMCInstancePatch> patches, String versionID) {
@@ -386,12 +385,12 @@ public final class MultiMCInstancePatch {
             mainClass = "org.jackhuang.hmcl.HMCLMultiMCBootstrap";
         }
 
-        Version version = new Version(versionID)
+        GameInstanceManifest version = new GameInstanceManifest(versionID)
                 .setArguments(new Arguments().addGameArguments(minecraftArguments).addJVMArgumentsDirect(jvmArguments))
                 .setMainClass(mainClass)
                 .setLibraries(libraries)
                 .setAssetIndex(assetIndex)
-                .setDownload(new JsonMap<>(Collections.singletonMap(DownloadType.CLIENT, mainJar.getRawDownloadInfo())));
+                .setDownload(Collections.singletonMap(DownloadType.CLIENT, mainJar.getRawDownloadInfo()));
 
         /* TODO: Official Version-Json can only store one pre-defined GameJavaVersion, including 8, 11, 16, 17 and 21.
             An array of all suitable java versions are NOT supported.
@@ -411,8 +410,6 @@ public final class MultiMCInstancePatch {
 
             message.append(" - Java Version Range: ").append(Arrays.toString(javaMajors)).append('\n');
         }
-
-        version = version.markAsResolved();
 
         String gameVersion = null;
         for (MultiMCInstancePatch patch : patches) {

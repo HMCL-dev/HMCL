@@ -21,8 +21,8 @@ import javafx.scene.Node;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
@@ -49,12 +49,12 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependencyManager;
     private final String gameVersion;
-    private final Version version;
+    private final GameInstanceManifest version;
     private final String libraryId;
     private final String oldLibraryVersion;
     private final DownloadProvider downloadProvider;
 
-    public UpdateInstallerWizardProvider(@NotNull HMCLGameRepository repository, @NotNull String gameVersion, @NotNull Version version, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
+    public UpdateInstallerWizardProvider(@NotNull HMCLGameRepository repository, @NotNull String gameVersion, @NotNull GameInstanceManifest version, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
         this.repository = repository;
         this.gameVersion = gameVersion;
         this.version = version;
@@ -76,7 +76,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
         // We remove library but not save it,
         // so if installation failed will not break down current version.
-        Task<Version> ret = Task.supplyAsync(() -> version);
+        Task<GameInstanceManifest> ret = Task.supplyAsync(() -> version);
         var hints = new ArrayList<Task.StagesHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof RemoteVersion remoteVersion) {

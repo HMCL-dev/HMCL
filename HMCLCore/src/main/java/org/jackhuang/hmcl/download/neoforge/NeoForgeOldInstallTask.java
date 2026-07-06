@@ -57,7 +57,7 @@ import java.util.zip.ZipException;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
 
-public class NeoForgeOldInstallTask extends Task<Version> {
+public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
     private class ProcessorTask extends Task<Void> {
 
@@ -172,21 +172,21 @@ public class NeoForgeOldInstallTask extends Task<Version> {
     }
 
     private final DefaultDependencyManager dependencyManager;
-    private final DefaultGameRepository gameRepository;
-    private final Version version;
+    private final DefaultGameRepository2 gameRepository;
+    private final GameInstanceManifest version;
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     private ForgeNewInstallProfile profile;
     private List<Processor> processors;
-    private Version neoForgeVersion;
+    private GameInstanceManifest neoForgeVersion;
     private final String selfVersion;
 
     private Path tempDir;
     private AtomicInteger processorDoneCount = new AtomicInteger(0);
 
-    NeoForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
+    NeoForgeOldInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
         this.version = version;
@@ -275,7 +275,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
             processors = profile.getProcessors();
-            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), Version.class);
+            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), GameInstanceManifest.class);
 
             for (Library library : profile.getLibraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());
@@ -335,7 +335,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
         LOG.info("Patching DOWNLOAD_MOJMAPS task");
         return new VersionJsonDownloadTask(version, dependencyManager)
                 .thenComposeAsync(json -> {
-                    DownloadInfo mappings = fromNonNullJson(json, Version.class)
+                    DownloadInfo mappings = fromNonNullJson(json, GameInstanceManifest.class)
                             .getDownloads().get(DownloadType.CLIENT_MAPPINGS);
                     if (mappings == null) {
                         throw new Exception("client_mappings download info not found");
@@ -404,10 +404,11 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                 processorsTask.thenComposeAsync(
                         dependencyManager.checkLibraryCompletionAsync(neoForgeVersion, true)));
 
-        setResult(neoForgeVersion
-                .setPriority(Version.PRIORITY_LOADER)
-                .setId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
-                .setVersion(selfVersion));
+        setResult(GameInstancePatch.fromManifest(
+                neoForgeVersion,
+                LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId(),
+                selfVersion,
+                GameInstancePatch.PRIORITY_LOADER));
     }
 
     @Override

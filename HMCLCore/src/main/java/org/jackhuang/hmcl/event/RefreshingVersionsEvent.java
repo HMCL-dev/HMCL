@@ -29,7 +29,7 @@ public final class RefreshingVersionsEvent extends Event {
     /**
      * Constructor.
      *
-     * @param source {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param source {@link org.jackhuang.hmcl.game.GameRepository2}
      */
     public RefreshingVersionsEvent(Object source) {
         super(source);

@@ -21,7 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.AssetIndex;
 import org.jackhuang.hmcl.game.AssetIndexInfo;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -44,17 +44,17 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class GameAssetIndexDownloadTask extends Task<Void> {
 
     private final AbstractDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest version;
     private final boolean forceDownloading;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository2}
      * @param version the <b>resolved</b> version
      */
-    public GameAssetIndexDownloadTask(AbstractDependencyManager dependencyManager, Version version, boolean forceDownloading) {
+    public GameAssetIndexDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest version, boolean forceDownloading) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.forceDownloading = forceDownloading;

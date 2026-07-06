@@ -75,7 +75,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// HMCL game repository implementation backed by a GameDirectory and per-instance game settings.
 @NotNullByDefault
-public final class HMCLGameRepository extends DefaultGameRepository {
+public final class HMCLGameRepository extends DefaultGameRepository2 {
     /// References an optional game instance in a repository.
     ///
     /// @param repository the owning game repository
@@ -201,24 +201,24 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return Objects.requireNonNullElse(parent.runningDirectoryProperty().getValue(), "");
     }
 
-    public Stream<Version> getDisplayVersions() {
+    public Stream<GameInstanceManifest> getDisplayVersions() {
         return getVersions().stream()
                 .filter(v -> !v.isHidden())
-                .sorted(Comparator.comparing((Version v) -> Lang.requireNonNullElse(v.getReleaseTime(), Instant.EPOCH))
+                .sorted(Comparator.comparing((GameInstanceManifest v) -> Lang.requireNonNullElse(v.getReleaseTime(), Instant.EPOCH))
                         .thenComparing(v -> VersionNumber.asVersion(v.getId())));
     }
 
     @Override
-    protected void refreshVersionsImpl() {
+    protected void refreshImpl() {
         instanceGameSettings.clear();
         loadedInstanceGameSettings.clear();
         readOnlyInstanceGameSettings.clear();
-        super.refreshVersionsImpl();
-        versions.keySet().forEach(this::loadInstanceGameSettings);
+        super.refreshImpl();
+        getVersions().stream().map(GameInstanceManifest::getId).forEach(this::loadInstanceGameSettings);
 
         try {
             Path file = getBaseDirectory().resolve("launcher_profiles.json");
-            if (!Files.exists(file) && !versions.isEmpty()) {
+            if (!Files.exists(file) && !getVersions().isEmpty()) {
                 Files.createDirectories(file.getParent());
                 Files.writeString(file, PROFILE);
             }
@@ -246,7 +246,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         Path srcDir = getVersionRoot(srcId);
         Path dstDir = getVersionRoot(dstId);
 
-        Version fromVersion = getVersion(srcId);
+        GameInstanceManifest fromVersion = getVersion(srcId);
 
         List<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(srcId + ".jar");
@@ -591,7 +591,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         VersionIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
 
         if (iconType == VersionIconType.DEFAULT) {
-            Version version = getVersion(id).resolve(this);
+            GameInstanceManifest version = getVersion(id).resolve(this);
             Optional<Path> iconFile = getVersionIconFile(id);
             if (iconFile.isPresent()) {
                 try {
@@ -827,14 +827,15 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public boolean versionIdConflicts(String id) {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             // on Windows, filenames are case-insensitive
-            for (String existingId : versions.keySet()) {
+            for (GameInstanceManifest manifest : getVersions()) {
+                String existingId = manifest.getId();
                 if (existingId.equalsIgnoreCase(id)) {
                     return true;
                 }
             }
             return false;
         } else {
-            return versions.containsKey(id);
+            return hasVersion(id);
         }
     }
 

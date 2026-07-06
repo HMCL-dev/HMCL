@@ -48,11 +48,11 @@ import static org.jackhuang.hmcl.util.Lang.getOrDefault;
  *
  * @author huangyuhui
  */
-public final class OptiFineInstallTask extends Task<Version> {
+public final class OptiFineInstallTask extends Task<GameInstancePatch> {
 
-    private final DefaultGameRepository gameRepository;
+    private final DefaultGameRepository2 gameRepository;
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest version;
     private final OptiFineRemoteVersion remote;
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(0);
@@ -62,11 +62,11 @@ public final class OptiFineInstallTask extends Task<Version> {
     private final Library optiFineLibrary;
     private final Library optiFineInstallerLibrary;
 
-    public OptiFineInstallTask(DefaultDependencyManager dependencyManager, Version version, OptiFineRemoteVersion remoteVersion) {
+    public OptiFineInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, OptiFineRemoteVersion remoteVersion) {
         this(dependencyManager, version, remoteVersion, null);
     }
 
-    public OptiFineInstallTask(DefaultDependencyManager dependencyManager, Version version, OptiFineRemoteVersion remoteVersion, Path installer) {
+    public OptiFineInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest version, OptiFineRemoteVersion remoteVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
         this.version = version;
@@ -207,7 +207,7 @@ public final class OptiFineInstallTask extends Task<Version> {
             libraries.add(new Library(new Artifact("net.minecraft", "launchwrapper", "1.12")));
         }
 
-        setResult(new Version(
+        setResult(new GameInstancePatch(
                 LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(),
                 remote.getSelfVersion(),
                 10000,
@@ -216,20 +216,20 @@ public final class OptiFineInstallTask extends Task<Version> {
                 libraries
         ));
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
+        dependencies.add(new org.jackhuang.hmcl.download.game.GameLibrariesTask(dependencyManager, version, true, getResult().getLibraries()));
     }
 
     /**
      * Install OptiFine library from existing local file.
      *
      * @param dependencyManager game repository
-     * @param version           version.json
+     * @param version           instance manifest
      * @param installer         the OptiFine installer
      * @return the task to install library
      * @throws IOException              if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
-    public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
+    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
