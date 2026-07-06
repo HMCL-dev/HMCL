@@ -179,7 +179,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private void onAddFiles() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("resourcepack.add"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.resourcepack"), "*.zip"));
         List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
         if (files != null && !files.isEmpty()) {
             addFiles(files);
