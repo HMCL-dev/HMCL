@@ -253,7 +253,7 @@ public record GameInstanceManifest(
                             } catch (IllegalArgumentException ignored) {
                             }
                         }
-                        builder.logging = Map.copyOf(map);
+                        builder.logging = Collections.unmodifiableMap(map);
                     }
                 }
                 case "type" -> {
