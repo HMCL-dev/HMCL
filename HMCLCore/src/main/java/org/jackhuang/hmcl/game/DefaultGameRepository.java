@@ -683,9 +683,8 @@ public class DefaultGameRepository implements GameRepository {
 
             launchManifest = launchManifest.withId(manifest.id()).withPatches(null);
             standaloneManifest = standaloneManifest.withId(manifest.id());
-            GameInstanceID jar = launchManifest.jar();
-            if (jar != null) {
-                standaloneManifest = standaloneManifest.withJar(jar);
+            if (launchManifest.jar() != null) {
+                standaloneManifest = standaloneManifest.withJar(launchManifest.jar());
             }
 
             return new GameInstanceManifest.Resolved(launchManifest, standaloneManifest);
