@@ -35,6 +35,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -45,6 +46,7 @@ import org.jackhuang.hmcl.util.ChunkBaseApp;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -67,7 +69,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private Path savesDir;
     private List<World> worlds;
     private HMCLGameRepository repository;
-    private String instanceId;
+    private GameInstanceID instanceId;
     private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
 
     private int refreshCount = 0;
@@ -86,7 +88,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
         this.repository = repository;
         this.instanceId = instanceId;
         this.savesDir = repository.getSavesDirectory(instanceId);

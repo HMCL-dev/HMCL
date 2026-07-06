@@ -22,6 +22,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -32,6 +33,7 @@ import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -61,7 +63,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
         this.repository = repository;
         this.versionId = instanceId;
         this.version = repository.getInstanceManifest(instanceId);

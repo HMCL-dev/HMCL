@@ -93,11 +93,11 @@ public final class LauncherHelper {
     private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
 
-    public LauncherHelper(HMCLGameRepository repository, Account account, String selectedVersion) {
+    public LauncherHelper(HMCLGameRepository repository, Account account, GameInstanceID selectedInstanceId) {
         this.repository = Objects.requireNonNull(repository);
         this.account = Objects.requireNonNull(account);
-        this.selectedVersion = Objects.requireNonNull(selectedVersion);
-        this.selectedInstanceId = new GameInstanceID(selectedVersion);
+        this.selectedVersion = selectedInstanceId.toString();
+        this.selectedInstanceId = selectedInstanceId;
         this.setting = repository.getEffectiveGameSettings(selectedInstanceId);
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);

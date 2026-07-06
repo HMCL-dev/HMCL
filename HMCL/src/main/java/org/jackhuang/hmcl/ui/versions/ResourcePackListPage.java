@@ -107,7 +107,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
         this.repository = repository;
         this.instanceId = instanceId;
         this.resourcePackManager = new ResourcePackManager(repository, instanceId);

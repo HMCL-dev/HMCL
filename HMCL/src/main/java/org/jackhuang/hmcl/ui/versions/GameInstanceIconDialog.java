@@ -39,17 +39,17 @@ import java.nio.file.Path;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class VersionIconDialog extends DialogPane {
+public class GameInstanceIconDialog extends DialogPane {
     private final HMCLGameRepository repository;
     private final GameInstanceID instanceId;
     private final Runnable onFinish;
     private final GameSettings.Instance setting;
 
-    public VersionIconDialog(HMCLGameRepository repository, String versionId, Runnable onFinish) {
+    public GameInstanceIconDialog(HMCLGameRepository repository, GameInstanceID instanceId, Runnable onFinish) {
         this.repository = repository;
-        this.instanceId = new GameInstanceID(versionId);
+        this.instanceId = instanceId;
         this.onFinish = onFinish;
-        this.setting = repository.getInstanceGameSettingsOrCreate(instanceId);
+        this.setting = repository.getInstanceGameSettingsOrCreate(this.instanceId);
 
         setTitle(i18n("settings.icon"));
         FlowPane pane = new FlowPane();

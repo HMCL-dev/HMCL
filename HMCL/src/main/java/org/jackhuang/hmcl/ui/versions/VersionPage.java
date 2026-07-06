@@ -68,7 +68,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
-    private String preferredVersionName = null;
+    private GameInstanceID preferredInstanceId = null;
 
     public static class WorkingDirChangedEvent extends Event {
         public static final EventType<WorkingDirChangedEvent> EVENT_TYPE = new EventType<>(Event.ANY, "WORKING_DIR_CHANGED");
@@ -94,15 +94,15 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         addEventHandler(WorkingDirChangedEvent.EVENT_TYPE, event -> {
             if (this.instanceReference.get() != null) {
                 if (installerListTab.isInitialized())
-                    installerListTab.getNode().loadInstance(getRepository(), getVersion());
+                    installerListTab.getNode().loadInstance(getRepository(), getInstanceId());
                 if (modListTab.isInitialized())
-                    modListTab.getNode().loadInstance(getRepository(), getVersion());
+                    modListTab.getNode().loadInstance(getRepository(), getInstanceId());
                 if (resourcePackTab.isInitialized())
-                    resourcePackTab.getNode().loadInstance(getRepository(), getVersion());
+                    resourcePackTab.getNode().loadInstance(getRepository(), getInstanceId());
                 if (worldListTab.isInitialized())
-                    worldListTab.getNode().loadInstance(getRepository(), getVersion());
+                    worldListTab.getNode().loadInstance(getRepository(), getInstanceId());
                 if (schematicsTab.isInitialized())
-                    schematicsTab.getNode().loadInstance(getRepository(), getVersion());
+                    schematicsTab.getNode().loadInstance(getRepository(), getInstanceId());
             }
         });
 
@@ -115,8 +115,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             HMCLGameRepository repository = this.instanceReference.get().repository();
             @Nullable GameInstanceID instanceId = this.instanceReference.get().instanceId();
             if (instanceId == null || !repository.hasInstance(instanceId)) {
-                if (preferredVersionName != null) {
-                    loadVersion(preferredVersionName, repository);
+                if (preferredInstanceId != null) {
+                    loadInstance(preferredInstanceId, repository);
                 } else {
                     fireEvent(new PageCloseEvent());
                 }
@@ -128,9 +128,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         return () -> {
             T node = nodeSupplier.get();
             if (instanceReference.get() != null) {
-                if (node instanceof VersionPage.GameInstanceLoadable) {
+                if (node instanceof VersionPage.GameInstanceLoadable loadable) {
                     @Nullable GameInstanceID instanceId = instanceReference.get().instanceId();
-                    ((GameInstanceLoadable) node).loadInstance(instanceReference.get().repository(), instanceId == null ? null : instanceId.id());
+                    loadable.loadInstance(instanceReference.get().repository(), instanceId);
                 }
             }
             return node;
@@ -141,35 +141,35 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         tab.select(versionSettingsTab, false);
     }
 
-    public void setVersion(String version, HMCLGameRepository repository) {
-        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, new GameInstanceID(version)));
+    public void setInstance(GameInstanceID version, HMCLGameRepository repository) {
+        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, version));
     }
 
-    public void loadVersion(String version, HMCLGameRepository repository) {
+    public void loadInstance(GameInstanceID instanceId, HMCLGameRepository repository) {
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
         if (this.instanceReference.get() != null && (!getRepository().isLoaded() ||
-                !getRepository().hasInstance(new GameInstanceID(version)))) {
+                !getRepository().hasInstance(instanceId))) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }
 
-        setVersion(version, repository);
-        preferredVersionName = version;
+        setInstance(instanceId, repository);
+        preferredInstanceId = instanceId;
 
         if (versionSettingsTab.isInitialized())
-            versionSettingsTab.getNode().loadInstance(repository, version);
+            versionSettingsTab.getNode().loadInstance(repository, instanceId);
         if (installerListTab.isInitialized())
-            installerListTab.getNode().loadInstance(repository, version);
+            installerListTab.getNode().loadInstance(repository, instanceId);
         if (modListTab.isInitialized())
-            modListTab.getNode().loadInstance(repository, version);
+            modListTab.getNode().loadInstance(repository, instanceId);
         if (resourcePackTab.isInitialized())
-            resourcePackTab.getNode().loadInstance(repository, version);
+            resourcePackTab.getNode().loadInstance(repository, instanceId);
         if (worldListTab.isInitialized())
-            worldListTab.getNode().loadInstance(repository, version);
+            worldListTab.getNode().loadInstance(repository, instanceId);
         if (schematicsTab.isInitialized())
-            schematicsTab.getNode().loadInstance(repository, version);
-        currentVersionUpgradable.set(repository.isModpack(new GameInstanceID(version)));
+            schematicsTab.getNode().loadInstance(repository, instanceId);
+        currentVersionUpgradable.set(repository.isModpack(instanceId));
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
@@ -179,20 +179,20 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
         if (!getRepository().isLoaded() ||
-                !getRepository().hasInstance(new GameInstanceID(getVersion()))) {
+                !getRepository().hasInstance(getInstanceId())) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }
 
-        loadVersion(getVersion(), getRepository());
+        loadInstance(getInstanceId(), getRepository());
     }
 
     private void onBrowse(String sub) {
-        FXUtils.openFolder(getRepository().getRunDirectory(new GameInstanceID(getVersion())).resolve(sub));
+        FXUtils.openFolder(getRepository().getRunDirectory(getInstanceId()).resolve(sub));
     }
 
     private void redownloadAssetIndex() {
-        Instances.updateGameAssets(getRepository(), getVersion());
+        Instances.updateGameAssets(getRepository(), getInstanceId());
     }
 
     private void clearLibraries() {
@@ -227,46 +227,45 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearJunkFiles() {
-        Instances.cleanVersion(getRepository(), getVersion());
+        Instances.cleanInstance(getRepository(), getInstanceId());
     }
 
     private void testGame() {
-        Instances.testGame(getRepository(), getVersion());
+        Instances.testGame(getRepository(), getInstanceId());
     }
 
     private void updateGame() {
-        Instances.updateVersion(getRepository(), getVersion());
+        Instances.updateInstance(getRepository(), getInstanceId());
     }
 
     private void generateLaunchScript() {
-        Instances.generateLaunchScript(getRepository(), getVersion());
+        Instances.generateLaunchScript(getRepository(), getInstanceId());
     }
 
     private void export() {
-        Instances.exportVersion(getRepository(), getVersion());
+        Instances.exportInstance(getRepository(), getInstanceId());
     }
 
     private void rename() {
-        Instances.renameVersion(getRepository(), getVersion())
-                .thenApply(newVersionName -> this.preferredVersionName = newVersionName);
+        Instances.renameInstance(getRepository(), getInstanceId())
+                .thenApply(newVersionName -> this.preferredInstanceId = new GameInstanceID(newVersionName));
     }
 
     private void remove() {
-        Instances.deleteVersion(getRepository(), getVersion());
+        Instances.deleteInstance(getRepository(), getInstanceId());
     }
 
     private void duplicate() {
-        Instances.duplicateInstance(getRepository(), getVersion());
+        Instances.duplicateInstance(getRepository(), getInstanceId());
     }
 
     public HMCLGameRepository getRepository() {
         return Optional.ofNullable(instanceReference.get()).map(HMCLGameRepository.InstanceReference::repository).orElse(null);
     }
 
-    public String getVersion() {
+    public @Nullable GameInstanceID getInstanceId() {
         return Optional.ofNullable(instanceReference.get())
                 .map(HMCLGameRepository.InstanceReference::instanceId)
-                .map(GameInstanceID::id)
                 .orElse(null);
     }
 
@@ -350,7 +349,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             }
 
             control.state.bind(Bindings.createObjectBinding(() ->
-                            State.fromTitle(i18n("version.manage.manage.title", getSkinnable().getVersion()), -1),
+                            State.fromTitle(i18n("version.manage.manage.title", getSkinnable().getInstanceId()), -1),
                     getSkinnable().instanceReference));
 
             //control.transitionPane.getStyleClass().add("gray-background");
@@ -365,6 +364,6 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         ///
         /// @param repository the repository containing the game instance
         /// @param instanceId the game instance ID, or `null` when only repository context is available
-        void loadInstance(HMCLGameRepository repository, @Nullable String instanceId);
+        void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId);
     }
 }

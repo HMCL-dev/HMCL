@@ -58,14 +58,14 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         this(repository, modpackFile, null);
     }
 
-    public ModpackInstallWizardProvider(HMCLGameRepository repository, String updateVersion) {
-        this(repository, null, updateVersion);
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, GameInstanceID updateInstanceId) {
+        this(repository, null, updateInstanceId);
     }
 
-    public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile, String updateVersion) {
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile, GameInstanceID updateInstanceId) {
         this.repository = repository;
         this.file = modpackFile;
-        this.updateVersion = updateVersion;
+        this.updateVersion = updateInstanceId != null ? updateInstanceId.toString() : null;
     }
 
     public void setIconUrl(String iconUrl) {

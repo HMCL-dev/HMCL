@@ -112,8 +112,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
-        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId == null ? null : new GameInstanceID(instanceId)));
+    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
+        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId));
 
         setLoading(false);
         setFailed(false);
@@ -153,6 +153,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     public void setLoading(boolean loading) {
         this.loading.set(loading);
+    }
+
+    public void selectInstance(GameInstanceID instanceId) {
+        FXUtils.runInFX(() -> selectedVersion.set(instanceId.toString()));
     }
 
     public void selectVersion(String versionID) {

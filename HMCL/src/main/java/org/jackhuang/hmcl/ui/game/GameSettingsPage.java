@@ -50,7 +50,7 @@ import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.VersionIconDialog;
+import org.jackhuang.hmcl.ui.versions.GameInstanceIconDialog;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
@@ -97,7 +97,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private @Nullable HMCLGameRepository repository;
 
     /// The current instance ID.
-    private @Nullable String instanceId;
+    private @Nullable GameInstanceID instanceId;
 
     /// The current setting.
     private final ObjectProperty<@Nullable S> currentSetting = new SimpleObjectProperty<>(this, "setting");
@@ -2440,7 +2440,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     @SuppressWarnings("unchecked")
     @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
+    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
         this.gameDirectory = repository.getGameDirectory();
         this.repository = repository;
         this.instanceId = instanceId;
@@ -2448,13 +2448,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         assert isPresetSetting == (instanceId == null);
 
         if (instanceId != null) {
-            GameInstanceID loadedInstanceId = new GameInstanceID(instanceId);
-            this.currentGameVersionNumber.set(GameVersionNumber.asGameVersion(repository.getGameVersion(loadedInstanceId)));
+            this.currentGameVersionNumber.set(GameVersionNumber.asGameVersion(repository.getGameVersion(instanceId)));
 
-            @Nullable GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(loadedInstanceId);
+            @Nullable GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(instanceId);
             this.currentSetting.set((S) setting);
             setSettingsReadOnly(
-                    setting == null || repository.isInstanceGameSettingsReadOnly(loadedInstanceId),
+                    setting == null || repository.isInstanceGameSettingsReadOnly(instanceId),
                     i18n("settings.game.instance_settings.unsupported"),
                     setting != null ? this::forceOverwriteInstanceGameSettings : null);
             loadIcon();
@@ -2470,7 +2469,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Returns the loaded instance ID, or `null` when this page edits preset settings.
     private @Nullable GameInstanceID getLoadedInstanceId() {
-        return instanceId == null ? null : new GameInstanceID(instanceId);
+        return instanceId == null ? null : instanceId;
     }
 
     /// Updates the page read-only state used when settings cannot be saved safely.
@@ -2651,7 +2650,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         if (repository == null || instanceId == null)
             return;
 
-        Controllers.dialog(new VersionIconDialog(repository, instanceId, this::loadIcon));
+        Controllers.dialog(new GameInstanceIconDialog(repository, instanceId, this::loadIcon));
     }
 
     private void onDeleteIcon() {

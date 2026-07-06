@@ -24,6 +24,7 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -54,7 +55,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final World world;
     private final Path backupsDir;
     private final HMCLGameRepository repository;
-    private final String instanceId;
+    private final GameInstanceID instanceId;
     private final boolean supportQuickPlay;
     private FileChannel sessionLockChannel;
 
@@ -69,7 +70,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
 
-    public WorldManagePage(World world, HMCLGameRepository repository, String instanceId) {
+    public WorldManagePage(World world, HMCLGameRepository repository, GameInstanceID instanceId) {
         this.world = world;
         this.backupsDir = repository.getBackupsDirectory(instanceId);
         this.repository = repository;

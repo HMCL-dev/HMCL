@@ -23,6 +23,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
@@ -39,6 +40,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -58,7 +60,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     private ModManager modManager;
     private HMCLGameRepository repository;
-    private String instanceId;
+    private GameInstanceID instanceId;
     private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
@@ -86,11 +88,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
         this.repository = repository;
         this.instanceId = instanceId;
 
-        GameInstanceManifest resolved = repository.getResolvedPreservingPatchesManifest(instanceId);
+        GameInstanceManifest resolved = repository.getResolvedPreservingPatchesInstanceManifest(instanceId).manifest();
         this.gameVersion = repository.getGameVersion(resolved).orElse(null);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         modded.set(analyzer.hasModLoader());
@@ -265,7 +267,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void download() {
-        Controllers.getDownloadPage().showModDownloads().selectVersion(instanceId);
+        Controllers.getDownloadPage().showModDownloads().selectInstance(instanceId);
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
@@ -298,7 +300,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         return this.repository;
     }
 
-    public String getInstanceId() {
+    public GameInstanceID getInstanceId() {
         return this.instanceId;
     }
 }

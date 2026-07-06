@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon.resourcepack;
 
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
@@ -218,10 +219,10 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private boolean loaded = false;
 
-    public ResourcePackManager(GameRepository repository, String id) {
-        super(repository, id);
-        this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
-        this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
+    public ResourcePackManager(GameRepository repository, GameInstanceID instanceId) {
+        super(repository, instanceId);
+        this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.instanceId);
+        this.optionsFile = repository.getRunDirectory(instanceId).resolve("options.txt");
     }
 
     @NotNull
@@ -262,7 +263,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             lock.lock();
             try {
                 if (minecraftVersion == null) {
-                    minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(id));
+                    minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(instanceId));
                     supportsNewOptionsFormat = isMcVersionSupportsNewOptionsFormat(minecraftVersion);
                 }
             } finally {
@@ -277,7 +278,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         if (requiredVersion == null) {
             lock.lock();
             try {
-                if (requiredVersion == null) requiredVersion = getPackVersion(getMinecraftVersion(), repository.getInstanceJar(id));
+                if (requiredVersion == null) requiredVersion = getPackVersion(getMinecraftVersion(), repository.getInstanceJar(instanceId));
             } finally {
                 lock.unlock();
             }

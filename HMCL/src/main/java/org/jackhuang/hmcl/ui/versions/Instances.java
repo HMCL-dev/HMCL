@@ -79,7 +79,7 @@ public final class Instances {
         }
     }
 
-    public static void downloadModpackImpl(DownloadProvider downloadProvider, HMCLGameRepository repository, String version, RemoteAddon mod, RemoteAddon.Version file) {
+    public static void downloadModpackImpl(DownloadProvider downloadProvider, HMCLGameRepository repository, GameInstanceID instanceId, RemoteAddon mod, RemoteAddon.Version file) {
         Path modpack;
         List<URI> downloadURLs;
         try {
@@ -96,8 +96,8 @@ public final class Instances {
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 ModpackInstallWizardProvider installWizardProvider;
-                                if (version != null)
-                                    installWizardProvider = new ModpackInstallWizardProvider(repository, modpack, version);
+                                if (instanceId != null)
+                                    installWizardProvider = new ModpackInstallWizardProvider(repository, modpack, instanceId);
                                 else
                                     installWizardProvider = new ModpackInstallWizardProvider(repository, modpack);
                                 if (StringUtils.isNotBlank(mod.iconUrl()))
@@ -116,12 +116,11 @@ public final class Instances {
         );
     }
 
-    public static void deleteVersion(HMCLGameRepository repository, String version) {
-        GameInstanceID instanceId = new GameInstanceID(version);
+    public static void deleteInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
         boolean isIndependent = repository.getRunDirectory(instanceId).toAbsolutePath().normalize()
                 .equals(repository.getInstanceRoot(instanceId).toAbsolutePath().normalize());
-        String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
-                i18n("version.manage.remove.confirm.trash", version, version + "_removed");
+        String message = isIndependent ? i18n("version.manage.remove.confirm.independent", instanceId) :
+                i18n("version.manage.remove.confirm.trash", instanceId, instanceId + "_removed");
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");
@@ -137,13 +136,13 @@ public final class Instances {
         Controllers.confirmAction(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, deleteButton);
     }
 
-    public static CompletableFuture<String> renameVersion(HMCLGameRepository repository, String version) {
+    public static CompletableFuture<String> renameInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
-            if (newName.equals(version)) {
+            if (newName.equals(instanceId.toString())) {
                 handler.resolve();
                 return;
             }
-            GameInstanceID oldInstanceId = new GameInstanceID(version);
+            GameInstanceID oldInstanceId = instanceId;
             GameInstanceID newInstanceId = new GameInstanceID(newName);
             if (repository.renameInstance(oldInstanceId, newInstanceId)) {
                 handler.resolve();
@@ -156,13 +155,13 @@ public final class Instances {
             } else {
                 handler.reject(i18n("version.manage.rename.fail"));
             }
-        }, version,
+        }, instanceId.toString(),
             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName) || newVersionName.equals(version)));
+            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName) || newVersionName.equals(instanceId)));
     }
 
-    public static void exportVersion(HMCLGameRepository repository, String version) {
-        Controllers.getDecorator().startWizard(new ExportWizardProvider(repository, version), i18n("modpack.wizard"));
+    public static void exportInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
+        Controllers.getDecorator().startWizard(new ExportWizardProvider(repository, instanceId.toString()), i18n("modpack.wizard")); // TODO
     }
 
     public static void openFolder(HMCLGameRepository repository, String version) {
@@ -208,12 +207,12 @@ public final class Instances {
         }, FileUtils.getNameWithoutExtension(file), new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId), new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName)));
     }
 
-    public static void duplicateInstance(HMCLGameRepository repository, String version) {
+    public static void duplicateInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
         Controllers.prompt(
                 new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
                     String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
-                    Task.runAsync(() -> repository.duplicateInstance(new GameInstanceID(version), new GameInstanceID(newVersionName), copySaves))
+                    Task.runAsync(() -> repository.duplicateInstance(instanceId, new GameInstanceID(newVersionName), copySaves))
                             .thenComposeAsync(repository.refreshAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
@@ -227,38 +226,37 @@ public final class Instances {
                             }).start();
                 })
                         .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("version.manage.duplicate.confirm")))
-                        .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, version,
+                        .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, instanceId.toString(),
                                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
                                 new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName))))
                         .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("version.manage.duplicate.duplicate_save"), false)));
     }
 
-    public static void updateVersion(HMCLGameRepository repository, String version) {
-        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(repository, version));
+    public static void updateInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
+        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(repository, instanceId));
     }
 
-    public static void updateGameAssets(HMCLGameRepository repository, String version) {
-        TaskExecutor executor = new GameAssetDownloadTask(repository.getDependency(), repository.getInstanceManifest(new GameInstanceID(version)), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
+    public static void updateGameAssets(HMCLGameRepository repository, GameInstanceID instanceId) {
+        TaskExecutor executor = new GameAssetDownloadTask(repository.getDependency(), repository.getInstanceManifest(instanceId), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
                 .executor();
         Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
         executor.start();
     }
 
-    public static void cleanVersion(HMCLGameRepository repository, String id) {
+    public static void cleanInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
         try {
-            repository.clean(new GameInstanceID(id));
+            repository.clean(instanceId);
         } catch (IOException e) {
             LOG.warning("Unable to clean game directory", e);
         }
     }
 
     @SafeVarargs
-    public static void generateLaunchScript(HMCLGameRepository repository, String id, Consumer<LauncherHelper>... injecters) {
-        if (!checkVersionForLaunching(repository, id))
+    public static void generateLaunchScript(HMCLGameRepository repository, GameInstanceID instanceId, Consumer<LauncherHelper>... injecters) {
+        if (!checkVersionForLaunching(repository, instanceId))
             return;
         ensureSelectedAccount(account -> {
             FileChooser chooser = new FileChooser();
-            GameInstanceID instanceId = new GameInstanceID(id);
             if (Files.isDirectory(repository.getRunDirectory(instanceId)))
                 chooser.setInitialDirectory(repository.getRunDirectory(instanceId).toFile());
             chooser.setTitle(i18n("version.launch_script.save"));
@@ -278,7 +276,7 @@ public final class Instances {
                     file = file.resolveSibling(file.getFileName().toString() + "." + defaultExt);
                 }
 
-                LauncherHelper launcherHelper = new LauncherHelper(repository, account, id);
+                LauncherHelper launcherHelper = new LauncherHelper(repository, account, instanceId);
                 for (Consumer<LauncherHelper> injecter : injecters) {
                     injecter.accept(launcherHelper);
                 }
@@ -303,11 +301,11 @@ public final class Instances {
     }
 
     @SafeVarargs
-    public static void launch(HMCLGameRepository repository, String id, Consumer<LauncherHelper>... injecters) {
-        if (!checkVersionForLaunching(repository, id))
+    public static void launch(HMCLGameRepository repository, GameInstanceID instanceId, Consumer<LauncherHelper>... injecters) {
+        if (!checkVersionForLaunching(repository, instanceId))
             return;
         ensureSelectedAccount(account -> {
-            LauncherHelper launcherHelper = new LauncherHelper(repository, account, id);
+            LauncherHelper launcherHelper = new LauncherHelper(repository, account, instanceId);
             for (Consumer<LauncherHelper> injecter : injecters) {
                 injecter.accept(launcherHelper);
             }
@@ -315,30 +313,26 @@ public final class Instances {
         });
     }
 
-    public static void testGame(HMCLGameRepository repository, String id) {
-        launch(repository, id, LauncherHelper::setTestMode);
+    public static void testGame(HMCLGameRepository repository, GameInstanceID instanceId) {
+        launch(repository, instanceId, LauncherHelper::setTestMode);
     }
 
-    public static void launchAndEnterWorld(HMCLGameRepository repository, String id, String worldFolderName) {
-        launch(repository, id, launcherHelper ->
+    public static void launchAndEnterWorld(HMCLGameRepository repository, GameInstanceID instanceId, String worldFolderName) {
+        launch(repository, instanceId, launcherHelper ->
                 launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
     }
 
-    public static void generateLaunchScriptForQuickEnterWorld(HMCLGameRepository repository, String id, String worldFolderName) {
-        generateLaunchScript(repository, id, launcherHelper ->
+    public static void generateLaunchScriptForQuickEnterWorld(HMCLGameRepository repository, GameInstanceID instanceId, String worldFolderName) {
+        generateLaunchScript(repository, instanceId, launcherHelper ->
                 launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
     }
 
-    private static boolean checkVersionForLaunching(HMCLGameRepository repository, String id) {
+    private static boolean checkVersionForLaunching(HMCLGameRepository repository, GameInstanceID instanceId) {
         boolean unavailable;
-        if (id == null || !repository.isLoaded()) {
+        if (instanceId == null || !repository.isLoaded()) {
             unavailable = true;
         } else {
-            try {
-                unavailable = !repository.hasInstance(new GameInstanceID(id));
-            } catch (IllegalArgumentException e) {
-                unavailable = true;
-            }
+            unavailable = !repository.hasInstance(instanceId);
         }
 
         if (unavailable) {
@@ -391,8 +385,8 @@ public final class Instances {
         Controllers.navigate(Controllers.getSettingsPage());
     }
 
-    public static void modifyGameSettings(HMCLGameRepository repository, String version) {
-        Controllers.getVersionPage().setVersion(version, repository);
+    public static void modifyGameSettings(HMCLGameRepository repository, GameInstanceID instanceId) {
+        Controllers.getVersionPage().setInstance(instanceId, repository); // TODO
         Controllers.getVersionPage().showInstanceSettings();
         // VersionPage.loadVersion will be invoked after navigation
         Controllers.navigate(Controllers.getVersionPage());

@@ -646,6 +646,10 @@ public class DefaultGameRepository implements GameRepository {
         return getSchematicsDirectory(new GameInstanceID(instanceId));
     }
 
+    public ModManager getModManager(GameInstanceID instanceId) {
+        return new ModManager(this, instanceId);
+    }
+
     public ModManager getModManager(String instanceId) {
         return new ModManager(this, instanceId);
     }

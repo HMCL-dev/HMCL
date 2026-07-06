@@ -45,19 +45,19 @@ public class GameListItem extends GameItem {
     }
 
     public void rename() {
-        Instances.renameVersion(repository, id);
+        Instances.renameInstance(repository, instanceId);
     }
 
     public void duplicate() {
-        Instances.duplicateInstance(repository, id);
+        Instances.duplicateInstance(repository, instanceId);
     }
 
     public void remove() {
-        Instances.deleteVersion(repository, id);
+        Instances.deleteInstance(repository, id);
     }
 
     public void export() {
-        Instances.exportVersion(repository, id);
+        Instances.exportInstance(repository, id);
     }
 
     public void browse() {
@@ -65,19 +65,19 @@ public class GameListItem extends GameItem {
     }
 
     public void testGame() {
-        Instances.testGame(repository, id);
+        Instances.testGame(repository, instanceId);
     }
 
     public void launch() {
-        Instances.launch(repository, id);
+        Instances.launch(repository, instanceId);
     }
 
     public void modifyGameSettings() {
-        Instances.modifyGameSettings(repository, id);
+        Instances.modifyGameSettings(repository, instanceId);
     }
 
     public void generateLaunchScript() {
-        Instances.generateLaunchScript(repository, id);
+        Instances.generateLaunchScript(repository, instanceId);
     }
 
     public boolean canUpdate() {
@@ -85,6 +85,6 @@ public class GameListItem extends GameItem {
     }
 
     public void update() {
-        Instances.updateVersion(repository, id);
+        Instances.updateInstance(repository, instanceId);
     }
 }
