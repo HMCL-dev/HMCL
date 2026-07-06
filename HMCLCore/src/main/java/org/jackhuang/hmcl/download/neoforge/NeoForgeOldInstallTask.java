@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
+import org.jackhuang.hmcl.download.game.GameInstanceJsonDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -333,7 +333,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
             return null;
 
         LOG.info("Patching DOWNLOAD_MOJMAPS task");
-        return new VersionJsonDownloadTask(version, dependencyManager)
+        return new GameInstanceJsonDownloadTask(version, dependencyManager)
                 .thenComposeAsync(json -> {
                     DownloadInfo mappings = fromNonNullJson(json, GameInstanceManifest.class)
                             .getDownloads().get(DownloadType.CLIENT_MAPPINGS);

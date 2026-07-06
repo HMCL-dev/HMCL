@@ -32,14 +32,14 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class VersionJsonDownloadTask extends Task<String> {
+public final class GameInstanceJsonDownloadTask extends Task<String> {
     private final String gameVersion;
     private final DefaultDependencyManager dependencyManager;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final VersionList<?> gameVersionList;
 
-    public VersionJsonDownloadTask(String gameVersion, DefaultDependencyManager dependencyManager) {
+    public GameInstanceJsonDownloadTask(String gameVersion, DefaultDependencyManager dependencyManager) {
         this.gameVersion = gameVersion;
         this.dependencyManager = dependencyManager;
         this.gameVersionList = dependencyManager.getVersionList("game");

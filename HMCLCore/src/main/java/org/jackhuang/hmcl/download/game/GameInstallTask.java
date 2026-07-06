@@ -37,7 +37,7 @@ public class GameInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final GameRemoteVersion remote;
-    private final VersionJsonDownloadTask downloadTask;
+    private final GameInstanceJsonDownloadTask downloadTask;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     public GameInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, GameRemoteVersion remoteVersion) {
@@ -45,7 +45,7 @@ public class GameInstallTask extends Task<GameInstancePatch> {
         this.gameRepository = dependencyManager.getGameRepository();
         this.manifest = manifest;
         this.remote = remoteVersion;
-        this.downloadTask = new VersionJsonDownloadTask(remoteVersion.getGameVersion(), dependencyManager);
+        this.downloadTask = new GameInstanceJsonDownloadTask(remoteVersion.getGameVersion(), dependencyManager);
     }
 
     @Override

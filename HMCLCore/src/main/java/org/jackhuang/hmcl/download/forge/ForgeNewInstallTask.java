@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
+import org.jackhuang.hmcl.download.game.GameInstanceJsonDownloadTask;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.DownloadInfo;
@@ -355,7 +355,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
             return null;
 
         LOG.info("Patching DOWNLOAD_MOJMAPS task");
-        return new VersionJsonDownloadTask(version, dependencyManager)
+        return new GameInstanceJsonDownloadTask(version, dependencyManager)
                 .thenComposeAsync(json -> {
                     DownloadInfo mappings = fromNonNullJson(json, GameInstanceManifest.class)
                             .getDownloads().get(DownloadType.CLIENT_MAPPINGS);
