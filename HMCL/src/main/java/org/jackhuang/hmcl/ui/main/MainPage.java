@@ -73,6 +73,7 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -91,7 +92,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
 
-    private final StringProperty currentGame = new SimpleStringProperty(this, "currentGame");
+    private final ObjectProperty<@Nullable GameInstanceID> currentGame = new SimpleObjectProperty<>(this, "currentGame");
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
     private final BooleanProperty showUpdateDialog = new SimpleBooleanProperty(this, "showUpdateDialog");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
@@ -230,7 +231,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     private Tooltip tooltip;
 
                     @Override
-                    public void accept(String currentGame) {
+                    public void accept(@Nullable GameInstanceID currentGame) {
                         if (currentGame == null) {
                             launchLabel.setText(i18n("version.launch.empty"));
                             currentLabel.setText(null);
@@ -241,7 +242,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             FXUtils.installFastTooltip(launchButton, tooltip);
                         } else {
                             launchLabel.setText(i18n("version.launch"));
-                            currentLabel.setText(currentGame);
+                            currentLabel.setText(currentGame.toString());
                             graphic.getChildren().setAll(launchLabel, currentLabel);
                             FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launch);
                             if (tooltip != null)
@@ -318,7 +319,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launch() {
         HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-        Instances.launch(repository, repository.getSelectedInstance2());
+        Instances.launch(repository, repository.getSelectedInstance());
     }
 
     private void launchNoGame() {
@@ -391,14 +392,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     public GameInstanceID getCurrentGame() {
-        return new GameInstanceID(currentGame.get());
+        return currentGame.get();
     }
 
-    public StringProperty currentGameProperty() {
+    public ObjectProperty<@Nullable GameInstanceID> currentGameProperty() {
         return currentGame;
     }
 
-    public void setCurrentGame(String currentGame) {
+    public void setCurrentGame(@Nullable GameInstanceID currentGame) {
         this.currentGame.set(currentGame);
     }
 

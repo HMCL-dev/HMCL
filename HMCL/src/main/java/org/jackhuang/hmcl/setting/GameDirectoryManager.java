@@ -133,10 +133,10 @@ public final class GameDirectoryManager {
     private static final ObjectProperty<@UnknownNullability HMCLGameRepository> selectedRepository = new SimpleObjectProperty<>(GameDirectoryManager.class, "selectedRepository");
 
     /// The selected instance ID projected from the selected repository.
-    private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper(GameDirectoryManager.class, "selectedInstance");
+    private static final ReadOnlyObjectWrapper<GameInstanceID> selectedInstance = new ReadOnlyObjectWrapper<>(GameDirectoryManager.class, "selectedInstance");
 
     /// Updates [#selectedInstance] when the selected repository changes its selected instance.
-    private static final ChangeListener<String> selectedRepositoryInstanceListener =
+    private static final ChangeListener<GameInstanceID> selectedRepositoryInstanceListener =
             (observable, oldValue, newValue) -> selectedInstance.set(newValue);
 
     /// Initializes game directory state from the stores loaded by [SettingsManager].
@@ -467,18 +467,18 @@ public final class GameDirectoryManager {
     }
 
     /// Returns the selected instance property projected from the selected repository.
-    public static ReadOnlyStringProperty selectedInstanceProperty() {
+    public static ReadOnlyObjectProperty<@Nullable GameInstanceID> selectedInstanceProperty() {
         return selectedInstance.getReadOnlyProperty();
     }
 
     /// Returns the selected instance ID for the selected repository.
-    public static @Nullable String getSelectedInstance() {
+    public static @Nullable GameInstanceID getSelectedInstance() {
         return getSelectedRepository().getSelectedInstance();
     }
 
     /// Sets the selected instance ID for the selected repository.
-    public static void setSelectedInstance(@Nullable String instance) {
-        getSelectedRepository().setSelectedInstance(instance == null ? null : new GameInstanceID(instance));
+    public static void setSelectedInstance(@Nullable GameInstanceID instance) {
+        getSelectedRepository().setSelectedInstance(instance);
     }
 
     /// Listeners notified after the selected repository has loaded versions.

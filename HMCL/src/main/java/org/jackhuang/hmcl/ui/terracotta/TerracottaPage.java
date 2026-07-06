@@ -55,7 +55,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     private final TransitionPane transitionPane = new TransitionPane();
 
     @SuppressWarnings("unused")
-    private ChangeListener<String> instanceChangeListenerHolder;
+    private ChangeListener<GameInstanceID> instanceChangeListenerHolder;
 
     public TerracottaPage() {
         statusPage.setNodeSupplier(TerracottaControllerPage::new);
@@ -80,13 +80,13 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                 .add(accountListItem)
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     var repository = GameDirectoryManager.getSelectedRepository();
-                    Instances.launch(repository, repository.getSelectedInstance2(), launcherHelper -> {
+                    Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
                         launcherHelper.setKeep();
                         launcherHelper.setDisableOfflineSkin();
                     });
                 }, item -> {
                     instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(),
-                            instanceName -> item.setSubtitle(StringUtils.isNotBlank(instanceName) ? instanceName : i18n("version.empty"))
+                            instanceName -> item.setSubtitle(instanceName != null ? instanceName.toString() : i18n("version.empty"))
                     );
 
                     MainPage mainPage = Controllers.getRootPage().getMainPage();

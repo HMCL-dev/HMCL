@@ -45,28 +45,24 @@ public class GameAdvancedListItem extends AdvancedListItem {
         AdvancedListItem.setAlignment(imageContainer, Pos.CENTER);
         setLeftGraphic(imageContainer);
 
-        holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), this::loadVersion));
+        holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), this::loadInstance));
     }
 
-    private void loadVersion(String version) {
+    private void loadInstance(GameInstanceID instanceId) {
         if (GameDirectoryManager.getSelectedRepository() != repository) {
             repository = GameDirectoryManager.getSelectedRepository();
             if (repository != null) {
                 onInstanceIconChangedListener = repository.onInstanceIconChanged.registerWeak(event -> {
-                    this.loadVersion(repository.getSelectedInstance());
+                    this.loadInstance(repository.getSelectedInstance());
                 });
             }
         }
-        if (version != null && repository != null) {
-            try {
-                GameInstanceID instanceId = new GameInstanceID(version);
-                if (repository.hasInstance(instanceId)) {
-                    setTitle(i18n("version.manage.manage"));
-                    setSubtitle(version);
-                    imageContainer.setImage(repository.getInstanceIconImage(instanceId));
-                    return;
-                }
-            } catch (IllegalArgumentException ignored) {
+        if (instanceId != null && repository != null) {
+            if (repository.hasInstance(instanceId)) {
+                setTitle(i18n("version.manage.manage"));
+                setSubtitle(instanceId.toString());
+                imageContainer.setImage(repository.getInstanceIconImage(instanceId));
+                return;
             }
         }
 

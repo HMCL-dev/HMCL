@@ -144,13 +144,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
         if (instanceId == null) {
-            @Nullable String selectedInstance = repository.getSelectedInstance();
-            if (selectedInstance != null) {
-                try {
-                    instanceId = new GameInstanceID(selectedInstance);
-                } catch (IllegalArgumentException ignored) {
-                }
-            }
+            instanceId = repository.getSelectedInstance();
         }
 
         Path runDirectory = instanceId != null && repository.hasInstance(instanceId) ? repository.getRunDirectory(instanceId) : repository.getBaseDirectory();

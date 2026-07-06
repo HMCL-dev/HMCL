@@ -155,7 +155,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // second item in left sidebar
             GameAdvancedListItem gameListItem = new GameAdvancedListItem();
             gameListItem.setOnAction(e -> {
-                GameInstanceID instanceId = GameDirectoryManager.getSelectedRepository().getSelectedInstance2();
+                GameInstanceID instanceId = GameDirectoryManager.getSelectedRepository().getSelectedInstance();
                 if (instanceId == null) {
                     Controllers.navigate(Controllers.getGameListPage());
                 } else {

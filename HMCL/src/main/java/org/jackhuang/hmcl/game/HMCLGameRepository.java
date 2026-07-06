@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import javafx.beans.binding.Binding;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.StringBinding;
+import javafx.beans.binding.ObjectBinding;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -100,7 +101,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private final GameDirectory gameDirectory;
 
     /// The selected instance ID persisted for this repository's game directory.
-    private final StringBinding selectedInstance;
+    private final ObjectBinding<@Nullable GameInstanceID> selectedInstance;
 
     // instance game settings
     private final Map<GameInstanceID, GameSettings.Instance> instanceGameSettings = new HashMap<>();
@@ -115,7 +116,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public HMCLGameRepository(GameDirectory gameDirectory) {
         super(gameDirectory.getPath().toPath());
         this.gameDirectory = gameDirectory;
-        this.selectedInstance = Bindings.stringValueAt(settings().getSelectedInstance(), gameDirectory.getId());
+        this.selectedInstance = Bindings.valueAt(settings().getSelectedInstance(), gameDirectory.getId());
         gameDirectory.pathProperty().addListener((a, b, newValue) -> changeDirectory(newValue.toPath()));
     }
 
@@ -125,30 +126,25 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     /// Returns the selected instance ID property for this repository's game directory.
-    public StringBinding selectedInstanceProperty() {
+    public Binding<@Nullable GameInstanceID> selectedInstanceProperty() {
         return selectedInstance;
     }
 
     /// Returns the selected instance ID for this repository's game directory.
-    public @Nullable String getSelectedInstance() {
+    public @Nullable GameInstanceID getSelectedInstance() {
         return selectedInstance.get();
     }
 
-    public @Nullable GameInstanceID getSelectedInstance2() {
-        return selectedInstance.get() == null ? null : new GameInstanceID(selectedInstance.get());
-    }
-
-
     /// Sets the selected instance ID for this repository's game directory.
     public void setSelectedInstance(@Nullable GameInstanceID instanceId) {
-        settings().setSelectedInstance(gameDirectory.getId(), instanceId == null ? null : instanceId.id());
+        settings().setSelectedInstance(gameDirectory.getId(), instanceId);
     }
 
     /// Refreshes the selected instance ID after versions are loaded.
     public void refreshSelectedInstance() {
-        @Nullable GameInstanceID selectedInstance = settings().getSelectedInstance2(gameDirectory.getId());
+        @Nullable GameInstanceID selectedInstance = settings().getSelectedInstance(gameDirectory.getId());
         @Nullable GameInstanceID refreshedInstance = selectedInstance;
-        if (!hasInstance(refreshedInstance)) {
+        if (refreshedInstance == null || !hasInstance(refreshedInstance)) {
             refreshedInstance = getInstanceManifests().isEmpty() ? null : getInstanceManifests().iterator().next().id();
         }
         if (!Objects.equals(selectedInstance, refreshedInstance)) {

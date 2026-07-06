@@ -610,38 +610,34 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     ///
     /// This field is owned by [GameDirectoryManager]. Code outside [GameDirectoryManager] should not modify it directly.
     @SerializedName(PROPERTY_SELECTED_INSTANCE)
-    private final ObservableMap<GameDirectoryID, String> selectedInstance = FXCollections.observableHashMap();
+    private final ObservableMap<GameDirectoryID, GameInstanceID> selectedInstance = FXCollections.observableHashMap();
 
     /// Returns selected instance IDs keyed by game directory ID.
     ///
     /// The map stores persisted selected instance values by game directory ID.
-    public ObservableMap<GameDirectoryID, String> getSelectedInstance() {
+    public ObservableMap<GameDirectoryID, GameInstanceID> getSelectedInstance() {
         return selectedInstance;
     }
 
     /// Returns the selected instance ID for the given game directory ID.
     ///
     /// The value is loaded by the game repository for the matching game directory.
-    public @Nullable String getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
+    public @Nullable GameInstanceID getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
-    }
-
-    public @Nullable GameInstanceID getSelectedInstance2(@Nullable GameDirectoryID gameDirectoryId) {
-        return gameDirectoryId != null ? new GameInstanceID(selectedInstance.get(gameDirectoryId)) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.
     ///
     /// Blank values remove the persisted selected instance entry.
-    public void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable String selectedInstance) {
+    public void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable GameInstanceID selectedInstance) {
         if (gameDirectoryId == null) {
             return;
         }
 
-        if (StringUtils.isBlank(selectedInstance)) {
-            this.selectedInstance.remove(gameDirectoryId);
-        } else {
+        if (selectedInstance != null) {
             this.selectedInstance.put(gameDirectoryId, selectedInstance);
+        } else {
+            this.selectedInstance.remove(gameDirectoryId);
         }
     }
 

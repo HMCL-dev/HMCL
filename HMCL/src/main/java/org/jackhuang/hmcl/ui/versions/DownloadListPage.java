@@ -127,7 +127,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             instances.setAll(repository.getDisplayInstanceManifests()
                     .map(GameInstanceManifest::id)
                     .toList());
-            selectedInstance.set(repository.getSelectedInstance2());
+            selectedInstance.set(repository.getSelectedInstance());
         }
     }
 
