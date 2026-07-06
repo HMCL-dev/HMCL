@@ -75,9 +75,9 @@ public final class LogExporter {
                 zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
 
                 for (GameInstanceID id : instances) {
-                    Path versionJson = repository.getInstanceJson(id);
-                    if (Files.exists(versionJson)) {
-                        zipper.putFile(versionJson, id + ".json");
+                    Path instanceJson = repository.getInstanceJson(id);
+                    if (Files.exists(instanceJson)) {
+                        zipper.putFile(instanceJson, id + ".json");
                     }
                 }
             } catch (IOException e) {
