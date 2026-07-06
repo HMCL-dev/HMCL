@@ -108,11 +108,11 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         GameInstanceManifest version = repository.getInstanceManifest(instanceId);
         Optional<GameInstancePatch> mcbbsPatch = version.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.getId())).findFirst();
         if (!update) {
-            GameInstancePatch patch = new GameInstancePatch(PATCH_NAME).setLibraries(manifest.getLibraries());
+            GameInstancePatch patch = new GameInstancePatch(PATCH_NAME).withLibraries(manifest.getLibraries());
             dependencies.add(repository.saveAsync(version.addPatch(patch)));
         } else if (mcbbsPatch.isPresent()) {
             // This mcbbs modpack was installed by HMCL.
-            GameInstancePatch patch = mcbbsPatch.get().setLibraries(manifest.getLibraries());
+            GameInstancePatch patch = mcbbsPatch.get().withLibraries(manifest.getLibraries());
             dependencies.add(repository.saveAsync(version.addPatch(patch)));
         } else {
             // This mcbbs modpack was installed by other launchers.

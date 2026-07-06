@@ -23,6 +23,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
@@ -51,8 +54,8 @@ public record GameInstanceManifest(
         @Nullable @Unmodifiable Map<DownloadType, DownloadInfo> downloads,
         @Nullable @Unmodifiable Map<DownloadType, LoggingInfo> logging,
         @Nullable ReleaseType type,
-        @Nullable String time,
-        @Nullable String releaseTime,
+        @Nullable Instant time,
+        @Nullable Instant releaseTime,
         @Nullable Integer minimumLauncherVersion,
         @Nullable Boolean root,
         @Nullable Boolean hidden,
@@ -270,12 +273,18 @@ public record GameInstanceManifest(
                 }
                 case "time" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        builder.time = primitive.getAsString();
+                        try {
+                            builder.time = InstantTypeAdapter.deserializeToInstant(primitive.getAsString());
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
                 case "releaseTime" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        builder.releaseTime = primitive.getAsString();
+                        try {
+                            builder.releaseTime = InstantTypeAdapter.deserializeToInstant(primitive.getAsString());
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
                 case "minimumLauncherVersion" -> {
@@ -341,46 +350,11 @@ public record GameInstanceManifest(
         return mainClass;
     }
 
-    /// Returns the manifest timestamp.
-    ///
-    /// @return the parsed timestamp, or `null` when absent or malformed
-    public @Nullable Instant getTime() {
-        return parseInstant(time);
-    }
-
-    /// Returns the release timestamp.
-    ///
-    /// @return the parsed release timestamp, or `null` when absent or malformed
-    public @Nullable Instant getReleaseTime() {
-        return parseInstant(releaseTime);
-    }
-
     /// Returns the patch version.
     ///
     /// @return always `null` for manifests
     public @Nullable String getVersion() {
         return null;
-    }
-
-    /// Returns the patch priority.
-    ///
-    /// @return the lowest priority for manifests
-    public int getPriority() {
-        return Integer.MIN_VALUE;
-    }
-
-    /// Returns the release type.
-    ///
-    /// @return the release type, or unknown when absent
-    public ReleaseType getType() {
-        return type == null ? ReleaseType.UNKNOWN : type;
-    }
-
-    /// Returns the primary jar instance id as a string.
-    ///
-    /// @return the primary jar instance id, or `null` when absent
-    public @Nullable String getJar() {
-        return jar == null ? null : jar.id();
     }
 
     /// Returns the preferred Java version.
@@ -746,9 +720,9 @@ public record GameInstanceManifest(
         if (type != null)
             json.addProperty("type", type.name());
         if (time != null)
-            json.addProperty("time", time);
+            json.addProperty("time", InstantTypeAdapter.serializeToString(time, ZoneOffset.UTC));
         if (releaseTime != null)
-            json.addProperty("releaseTime", releaseTime);
+            json.addProperty("releaseTime", InstantTypeAdapter.serializeToString(releaseTime, ZoneOffset.UTC));
         if (minimumLauncherVersion != null)
             json.addProperty("minimumLauncherVersion", minimumLauncherVersion);
         if (root != null)
@@ -795,8 +769,8 @@ public record GameInstanceManifest(
         private @Nullable @Unmodifiable Map<DownloadType, DownloadInfo> downloads;
         private @Nullable @Unmodifiable Map<DownloadType, LoggingInfo> logging;
         private @Nullable ReleaseType type;
-        private @Nullable String time;
-        private @Nullable String releaseTime;
+        private @Nullable Instant time;
+        private @Nullable Instant releaseTime;
         private @Nullable Integer minimumLauncherVersion;
         private @Nullable Boolean root;
         private @Nullable Boolean hidden;

@@ -69,7 +69,7 @@ public class GameInstallTask extends Task<GameInstancePatch> {
                 JsonUtils.fromNonNullJson(downloadTask.getResult(), GameInstanceManifest.class),
                 MINECRAFT.getPatchId(),
                 remote.getGameVersion(),
-                GameInstancePatch.PRIORITY_MC).setJar(null);
+                GameInstancePatch.PRIORITY_MC).withJar(null);
         setResult(patch);
 
         GameInstanceManifest version = new GameInstanceManifest(this.version.id()).addPatch(patch);

@@ -23,11 +23,15 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -54,8 +58,8 @@ public record GameInstancePatch(
         @Nullable @Unmodifiable Map<DownloadType, DownloadInfo> downloads,
         @Nullable @Unmodifiable Map<DownloadType, LoggingInfo> logging,
         @Nullable ReleaseType type,
-        @Nullable String time,
-        @Nullable String releaseTime,
+        @Nullable Instant time,
+        @Nullable Instant releaseTime,
         @Nullable Integer minimumLauncherVersion,
         @Nullable Boolean hidden,
         @Nullable @Unmodifiable JsonObject rawJson
@@ -229,78 +233,78 @@ public record GameInstancePatch(
     }
 
     /// Returns a patch copy with the given id.
-    public GameInstancePatch setId(@Nullable String id) {
+    public GameInstancePatch withId(@Nullable String id) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
                 assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
                 releaseTime, minimumLauncherVersion, hidden);
     }
 
     /// Returns a patch copy with the given version.
-    public GameInstancePatch setVersion(@Nullable String version) {
+    public GameInstancePatch withVersion(@Nullable String version) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
                 assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
                 releaseTime, minimumLauncherVersion, hidden);
     }
 
     /// Returns a patch copy with the given priority.
-    public GameInstancePatch setPriority(@Nullable Integer priority) {
+    public GameInstancePatch withPriority(@Nullable Integer priority) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
                 assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
                 releaseTime, minimumLauncherVersion, hidden);
     }
 
     /// Returns a patch copy with the given jar id.
-    public GameInstancePatch setJar(@Nullable String jar) {
+    public GameInstancePatch withJar(@Nullable GameInstanceID jar) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom,
-                jar == null ? null : new GameInstanceID(jar), assetIndex, assets, complianceLevel, javaVersion,
+                jar, assetIndex, assets, complianceLevel, javaVersion,
                 libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion,
                 hidden);
     }
 
     /// Returns a patch copy with the given libraries.
-    public GameInstancePatch setLibraries(@Nullable List<Library> libraries) {
+    public GameInstancePatch withLibraries(@Nullable List<Library> libraries) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
                 assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
                 releaseTime, minimumLauncherVersion, hidden);
     }
 
     /// Returns a patch copy with the given Java version.
-    public GameInstancePatch setJavaVersion(@Nullable GameJavaVersion javaVersion) {
+    public GameInstancePatch withJavaVersion(@Nullable GameJavaVersion javaVersion) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
                 assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
                 releaseTime, minimumLauncherVersion, hidden);
     }
 
     /// Returns a patch copy with the given arguments.
-    public GameInstancePatch setArguments(@Nullable Arguments arguments) {
+    public GameInstancePatch withArguments(@Nullable Arguments arguments) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
                 assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
                 releaseTime, minimumLauncherVersion, hidden);
     }
 
     /// Returns a patch copy with the given main class.
-    public GameInstancePatch setMainClass(@Nullable String mainClass) {
+    public GameInstancePatch withMainClass(@Nullable String mainClass) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
                 assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
                 releaseTime, minimumLauncherVersion, hidden);
     }
 
     /// Returns a patch copy with the given asset index.
-    public GameInstancePatch setAssetIndex(@Nullable AssetIndexInfo assetIndex) {
+    public GameInstancePatch withAssetIndex(@Nullable AssetIndexInfo assetIndex) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
                 assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
                 releaseTime, minimumLauncherVersion, hidden);
     }
 
     /// Returns a patch copy with the given downloads.
-    public GameInstancePatch setDownload(@Nullable Map<DownloadType, DownloadInfo> downloads) {
+    public GameInstancePatch withDownload(@Nullable Map<DownloadType, DownloadInfo> downloads) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
                 assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
                 releaseTime, minimumLauncherVersion, hidden);
     }
 
     /// Returns a patch copy with the given logging metadata.
-    public GameInstancePatch setLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
+    public GameInstancePatch withLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
         return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
                 assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
                 releaseTime, minimumLauncherVersion, hidden);
@@ -324,8 +328,8 @@ public record GameInstancePatch(
             @Nullable Map<DownloadType, DownloadInfo> downloads,
             @Nullable Map<DownloadType, LoggingInfo> logging,
             @Nullable ReleaseType type,
-            @Nullable String time,
-            @Nullable String releaseTime,
+            @Nullable Instant time,
+            @Nullable Instant releaseTime,
             @Nullable Integer minimumLauncherVersion,
             @Nullable Boolean hidden) {
         return new GameInstancePatch(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom,
@@ -355,8 +359,8 @@ public record GameInstancePatch(
         @Nullable Map<DownloadType, DownloadInfo> downloads = null;
         @Nullable Map<DownloadType, LoggingInfo> logging = null;
         @Nullable ReleaseType type = null;
-        @Nullable String time = null;
-        @Nullable String releaseTime = null;
+        @Nullable Instant time = null;
+        @Nullable Instant releaseTime = null;
         @Nullable Integer minimumLauncherVersion = null;
         @Nullable Boolean hidden = null;
 
@@ -472,12 +476,18 @@ public record GameInstancePatch(
                 }
                 case "time" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        time = primitive.getAsString();
+                        try {
+                            time = InstantTypeAdapter.deserializeToInstant(primitive.getAsString());
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
                 case "releaseTime" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        releaseTime = primitive.getAsString();
+                        try {
+                            releaseTime = InstantTypeAdapter.deserializeToInstant(primitive.getAsString());
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
                 case "minimumLauncherVersion" -> {
@@ -570,9 +580,9 @@ public record GameInstancePatch(
         if (type != null)
             json.addProperty("type", type.name());
         if (time != null)
-            json.addProperty("time", time);
+            json.addProperty("time", InstantTypeAdapter.serializeToString(time, ZoneOffset.UTC));
         if (releaseTime != null)
-            json.addProperty("releaseTime", releaseTime);
+            json.addProperty("releaseTime", InstantTypeAdapter.serializeToString(releaseTime, ZoneOffset.UTC));
         if (minimumLauncherVersion != null)
             json.addProperty("minimumLauncherVersion", minimumLauncherVersion);
         if (hidden != null)

@@ -530,7 +530,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${auth_uuid}", UUIDs.toCompactString(authInfo.getUUID())),
                 pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(manifest.id().toString())),
                 pair("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
-                pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(manifest.getType().getId())),
+                pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(manifest.type() != null ? manifest.type().getId() : ReleaseType.UNKNOWN.getId())),
                 pair("${game_directory}", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.id()))),
                 pair("${user_type}", authInfo.getUserType()),
                 pair("${assets_index_name}", manifest.getAssetIndex().getId()),

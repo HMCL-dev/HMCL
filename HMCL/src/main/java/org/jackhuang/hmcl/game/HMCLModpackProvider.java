@@ -64,13 +64,13 @@ public final class HMCLModpackProvider implements ModpackProvider {
         Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class).setEncoding(encoding);
         String gameJson = CompressingUtils.readTextZipEntry(file, "minecraft/pack.json");
         GameInstanceManifest game = JsonUtils.fromNonNullJson(gameJson, GameInstanceManifest.class);
-        if (game.getJar() == null)
+        if (game.jar() == null)
             if (StringUtils.isBlank(manifest.getVersion()))
                 throw new JsonParseException("Cannot recognize the game version of modpack " + file + ".");
             else
                 manifest.setManifest(HMCLModpackManifest.INSTANCE);
         else
-            manifest.setManifest(HMCLModpackManifest.INSTANCE).setGameVersion(game.getJar());
+            manifest.setManifest(HMCLModpackManifest.INSTANCE).setGameVersion(game.jar().id());
         return manifest;
     }
 

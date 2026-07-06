@@ -128,7 +128,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 List<GameInstanceManifest> children = repository.getInstanceManifests().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
-                                .comparing((GameInstanceManifest manifest) -> Lang.requireNonNullElse(manifest.getReleaseTime(), Instant.EPOCH))
+                                .comparing((GameInstanceManifest manifest) -> Lang.requireNonNullElse(manifest.releaseTime(), Instant.EPOCH))
                                 .thenComparing(manifest -> VersionNumber.asVersion(repository.getGameVersion(manifest).orElse(manifest.id().toString()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {

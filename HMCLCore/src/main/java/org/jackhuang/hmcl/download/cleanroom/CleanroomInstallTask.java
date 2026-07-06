@@ -113,9 +113,9 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
         if (selfVersion == null) {
-            task = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer).thenApplyAsync((version) -> version.setId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
+            task = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer).thenApplyAsync((version) -> version.withId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
         } else {
-            task = new ForgeNewInstallTask(dependencyManager, version, selfVersion, installer).thenApplyAsync((version) -> version.setId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
+            task = new ForgeNewInstallTask(dependencyManager, version, selfVersion, installer).thenApplyAsync((version) -> version.withId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
         }
     }
 

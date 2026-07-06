@@ -205,7 +205,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public Stream<GameInstanceManifest> getDisplayInstanceManifests() {
         return getInstanceManifests().stream()
                 .filter(v -> !v.isHidden())
-                .sorted(Comparator.comparing((GameInstanceManifest v) -> Lang.requireNonNullElse(v.getReleaseTime(), Instant.EPOCH))
+                .sorted(Comparator.comparing((GameInstanceManifest v) -> Lang.requireNonNullElse(v.releaseTime(), Instant.EPOCH))
                         .thenComparing(v -> VersionNumber.asVersion(v.id().id())));
     }
 

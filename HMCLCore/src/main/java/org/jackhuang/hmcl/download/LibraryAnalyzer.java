@@ -131,7 +131,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 libraries.add(library);
             }
         }
-        return patch.setLibraries(libraries);
+        return patch.withLibraries(libraries);
     }
 
     /**

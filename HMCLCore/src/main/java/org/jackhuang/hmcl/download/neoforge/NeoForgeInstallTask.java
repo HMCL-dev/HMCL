@@ -114,8 +114,8 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
                     if (!neoForgeVersion.getId().equals(LibraryAnalyzer.LibraryType.FORGE.getPatchId()) || neoForgeVersion.getVersion() == null) {
                         throw new IOException("Invalid neoforge version.");
                     }
-                    return neoForgeVersion.setId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
-                            .setVersion(
+                    return neoForgeVersion.withId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
+                            .withVersion(
                                     removePrefix(neoForgeVersion.getVersion().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), ""), "-")
                             );
                 });
