@@ -659,14 +659,14 @@ public class DefaultGameRepository implements GameRepository {
         private GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,
                                                       Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
             GameInstanceManifest launchManifest;
-            GameInstanceManifest standaloneManifest = manifest.root()
+            GameInstanceManifest standaloneManifest = manifest.isRoot()
                     ? manifest
                     : addPatches(
                     addPatches(new GameInstanceManifest(manifest.id()), List.of(manifest.toPatch())),
                     manifest.patches());
 
             if (manifest.inheritsFrom() == null) {
-                if (manifest.root()) {
+                if (manifest.isRoot()) {
                     // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
                     launchManifest = manifest.patches() != null ? new GameInstanceManifest(manifest.id()).withPatches(manifest.patches()) : manifest;
                 } else {

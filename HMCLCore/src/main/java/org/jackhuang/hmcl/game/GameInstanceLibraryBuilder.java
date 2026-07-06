@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -42,9 +39,9 @@ public final class GameInstanceLibraryBuilder {
     public GameInstanceLibraryBuilder(GameInstanceManifest manifest) {
         this.version = manifest;
         this.libraries = new ArrayList<>(manifest.getLibraries());
-        this.mcArgs = manifest.getMinecraftArguments().map(StringUtils::tokenize).map(ArrayList::new).orElse(null);
-        this.game = manifest.getArguments().map(Arguments::game).map(ArrayList::new).orElseGet(ArrayList::new);
-        this.jvm = new ArrayList<>(manifest.getArguments().map(Arguments::jvm).orElse(Arguments.DEFAULT_JVM_ARGUMENTS));
+        this.mcArgs = Optional.ofNullable(manifest.minecraftArguments()).map(StringUtils::tokenize).map(ArrayList::new).orElse(null);
+        this.game = Optional.ofNullable(manifest.arguments()).map(Arguments::game).map(ArrayList::new).orElseGet(ArrayList::new);
+        this.jvm = new ArrayList<>(Optional.ofNullable(manifest.arguments()).map(Arguments::jvm).orElse(Arguments.DEFAULT_JVM_ARGUMENTS));
         this.useMcArgs = mcArgs != null;
     }
 
@@ -60,7 +57,7 @@ public final class GameInstanceLibraryBuilder {
             // so we regenerate the minecraftArgument without escaping.
             ret = ret.withMinecraftArguments(new CommandBuilder().addAllWithoutParsing(mcArgs).toString());
         } else {
-            ret = ret.withArguments(ret.getArguments()
+            ret = ret.withArguments(Optional.ofNullable(ret.arguments())
                     .map(args -> args.withGame(game))
                     .map(args -> jvmChanged ? args.withJvm(jvm) : args).orElse(new Arguments(game, jvmChanged ? jvm : null)));
         }

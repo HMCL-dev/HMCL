@@ -317,25 +317,6 @@ public record GameInstanceManifest(
         return builder.toManifest();
     }
 
-    @Override
-    public Boolean root() {
-        return root != null && root;
-    }
-
-    /// Returns legacy game arguments.
-    ///
-    /// @return the legacy game arguments
-    public Optional<String> getMinecraftArguments() {
-        return Optional.ofNullable(minecraftArguments);
-    }
-
-    /// Returns structured game arguments.
-    ///
-    /// @return the structured game arguments
-    public Optional<Arguments> getArguments() {
-        return Optional.ofNullable(arguments);
-    }
-
     /// Returns whether the manifest is hidden.
     ///
     /// @return whether the manifest is hidden
@@ -347,7 +328,7 @@ public record GameInstanceManifest(
     ///
     /// @return whether the manifest is a root manifest
     public boolean isRoot() {
-        return root();
+        return root != null && root;
     }
 
     /// Returns whether this manifest is already a standalone view.

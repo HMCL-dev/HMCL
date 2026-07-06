@@ -314,7 +314,7 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${natives_directory}", nativeFolderPath);
 
         Path javaNativeFolder = FileUtils.toAbsolute(nativeFolder);
-        @Nullable List<Argument> jvmArguments = manifest.getArguments().map(Arguments::jvm).orElse(null);
+        @Nullable List<Argument> jvmArguments = Optional.ofNullable(manifest.arguments()).map(Arguments::jvm).orElse(null);
 
         if (jvmArguments != null) {
             for (Argument jvmArgument : jvmArguments) {
@@ -357,11 +357,11 @@ public class DefaultLauncher extends Launcher {
 
         res.add(manifest.mainClass());
 
-        res.addAll(Arguments.parseStringArguments(manifest.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(ArrayList::new), configuration));
+        res.addAll(Arguments.parseStringArguments(Optional.ofNullable(manifest.minecraftArguments()).map(StringUtils::tokenize).orElseGet(ArrayList::new), configuration));
 
         Map<String, Boolean> features = getFeatures();
-        manifest.getArguments().map(Arguments::game).ifPresent(arguments -> res.addAll(Arguments.parseArguments(arguments, configuration, features)));
-        if (manifest.getMinecraftArguments().isPresent()) {
+        Optional.ofNullable(manifest.arguments()).map(Arguments::game).ifPresent(arguments -> res.addAll(Arguments.parseArguments(arguments, configuration, features)));
+        if (Optional.ofNullable(manifest.minecraftArguments()).isPresent()) {
             res.addAll(Arguments.parseArguments(this.getDefaultGameArguments(), configuration, features));
         }
         if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.game() != null && !argumentsFromAuthInfo.game().isEmpty())
