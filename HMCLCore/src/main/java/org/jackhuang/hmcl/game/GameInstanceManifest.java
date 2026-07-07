@@ -592,26 +592,6 @@ public record GameInstanceManifest(
         return withPatches(patches);
     }
 
-    /// Returns a manifest copy without pending patches.
-    public GameInstanceManifest clearPatches() {
-        return withPatches(null);
-    }
-
-    /// Returns a manifest copy without the patch with the given id.
-    public GameInstanceManifest removePatchById(String patchId) {
-        if (patches == null) {
-            return this;
-        }
-
-        List<GameInstancePatch> filtered = new ArrayList<>();
-        for (GameInstancePatch patch : patches) {
-            if (!patchId.equals(patch.id())) {
-                filtered.add(patch);
-            }
-        }
-        return withPatches(filtered);
-    }
-
     /// Returns whether this manifest has a patch with the given id.
     public boolean hasPatch(String patchId) {
         return patches != null && patches.stream().anyMatch(patch -> patchId.equals(patch.id()));
