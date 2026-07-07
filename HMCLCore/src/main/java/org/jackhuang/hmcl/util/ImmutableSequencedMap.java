@@ -161,32 +161,45 @@ public final class ImmutableSequencedMap<K extends @UnknownNullability Object, V
         throw new UnsupportedOperationException();
     }
 
-    /// Returns an unmodifiable view of the keys in insertion order.
-    ///
-    /// @return an unmodifiable set of keys
+    /// {@inheritDoc}
     @Override
-    public Set<K> keySet() {
-        return Collections.unmodifiableSet(map.keySet());
+    public @Unmodifiable Set<K> keySet() {
+        return map.keySet();
     }
 
-    /// Returns an unmodifiable view of the values in insertion order.
-    ///
-    /// @return an unmodifiable collection of values
+    /// {@inheritDoc}
     @Override
-    public Collection<V> values() {
-        return Collections.unmodifiableCollection(map.values());
+    public @Unmodifiable Collection<V> values() {
+        return map.values();
     }
 
-    /// Returns an unmodifiable view of the entries in insertion order.
-    ///
-    /// @return an unmodifiable set of entries
+    /// {@inheritDoc}
     @Override
-    public Set<Entry<K, V>> entrySet() {
-        return Collections.unmodifiableSet(map.entrySet());
+    public @Unmodifiable Set<Entry<K, V>> entrySet() {
+        return map.entrySet();
     }
 
+    /// {@inheritDoc}
     @Override
     public void forEach(BiConsumer<? super K, ? super V> action) {
         map.forEach(action);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        return obj == this || map.equals(obj);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public int hashCode() {
+        return map.hashCode();
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public String toString() {
+        return map.toString();
     }
 }
