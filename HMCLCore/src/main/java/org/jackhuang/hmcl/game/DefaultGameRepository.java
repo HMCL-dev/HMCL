@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
@@ -574,14 +575,18 @@ public class DefaultGameRepository implements GameRepository {
 
     public Task<GameInstanceManifest> saveAsync(GameInstanceManifest instanceManifest) {
         return Task.supplyAsync(() -> {
-            Path json = getInstanceJson(instanceManifest.id()).toAbsolutePath();
+            GameInstanceManifest savedManifest = instanceManifest.isResolvedPreservingPatches()
+                    ? MaintainTask.maintainPreservingPatches(this, instanceManifest)
+                    : instanceManifest;
+
+            Path json = getInstanceJson(savedManifest.id()).toAbsolutePath();
             Files.createDirectories(json.getParent());
-            JsonUtils.writeToJsonFile(json, instanceManifest);
+            JsonUtils.writeToJsonFile(json, savedManifest);
 
             Status currentStatus = status;
-            currentStatus.instances.put(instanceManifest.id(), new InstanceHolder(currentStatus, instanceManifest.id(), instanceManifest));
+            currentStatus.instances.put(savedManifest.id(), new InstanceHolder(currentStatus, savedManifest.id(), savedManifest));
             gameVersions.clear();
-            return instanceManifest;
+            return savedManifest;
         });
     }
 
