@@ -277,14 +277,16 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        InstanceHolder instanceHolder = status.instances.get(instanceId);
+        Status currentStatus = status;
+
+        InstanceHolder instanceHolder = currentStatus.instances.get(instanceId);
         if (instanceHolder == null) {
             throw new NoSuchGameInstanceException(instanceId);
         }
 
         GameInstanceManifest.Resolved resolvedManifest = instanceHolder.resolvedManifest;
         if (resolvedManifest == null) {
-            resolvedManifest = resolve(instanceHolder.manifest);
+            resolvedManifest = currentStatus.resolve(instanceHolder.manifest, new HashSet<>());
             instanceHolder.resolvedManifest = resolvedManifest;
         }
         return resolvedManifest;
