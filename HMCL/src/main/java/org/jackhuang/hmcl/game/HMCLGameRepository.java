@@ -593,7 +593,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         if (iconType == GameInstanceIconType.DEFAULT) {
             GameInstanceManifest.Resolved resolvedInstanceManifest = getResolvedInstanceManifest(instanceId);
-            GameInstanceManifest manifest = resolvedInstanceManifest.launchManifest();
             Optional<Path> iconFile = getInstanceIconFile(instanceId);
             if (iconFile.isPresent()) {
                 try {
@@ -623,7 +622,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                     return GameInstanceIconType.OPTIFINE.getIcon();
             }
 
-            String gameVersion = getGameVersion(manifest).orElse(null);
+            String gameVersion = getGameVersion(resolvedInstanceManifest.launchManifest()).orElse(null);
             if (gameVersion != null) {
                 GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion);
                 if (versionNumber.isAprilFools()) {
