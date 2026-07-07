@@ -43,6 +43,8 @@ import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import java.util.Stack;
+
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 
 public class DecoratorController {
@@ -77,6 +79,7 @@ public class DecoratorController {
             {
                 Stack<JFXDatePickerContent> stack = null;
                 if (decorator.getDrawerWrapper() != null) {
+                    //noinspection unchecked
                     stack = (Stack<JFXDatePickerContent>) decorator.getDrawerWrapper().getProperties().get(JFXDatePickerSkin.PROPERTY_DATE_PICKER_CONTENTS);
                 }
                 if (stack != null && !stack.isEmpty()) {

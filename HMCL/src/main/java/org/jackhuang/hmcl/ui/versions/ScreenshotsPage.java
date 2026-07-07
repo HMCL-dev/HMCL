@@ -30,8 +30,9 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.BackgroundType;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -62,7 +63,7 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> implements VersionPage.VersionLoadable, PageAware {
+public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> implements VersionPage.GameInstanceLoadable, PageAware {
 
     private Path screenshotsDir;
 
@@ -72,8 +73,8 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
     }
 
     @Override
-    public void loadVersion(Profile profile, String version) {
-        screenshotsDir = profile.getRepository().getRunDirectory(version).resolve("screenshots");
+    public void loadInstance(HMCLGameRepository repository, String version) {
+        screenshotsDir = repository.getRunDirectory(version).resolve("screenshots");
         refresh();
     }
 
@@ -347,8 +348,9 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             JFXButton setAsBgButton = new JFXButton(i18n("screenshots.set_as_bg"));
             setAsBgButton.getStyleClass().add("dialog-accept");
             setAsBgButton.setOnAction(e -> {
-                SettingsManager.settings().backgroundImageProperty().set(screenshot.getPath().toString());
+                SettingsManager.settings().getThemeAppearanceOverrides().add(LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                 SettingsManager.settings().backgroundTypeProperty().set(BackgroundType.CUSTOM);
+                SettingsManager.settings().customBackgroundImagePathProperty().set(screenshot.getPath().toString());
             });
 
             JFXButton copyButton = new JFXButton(i18n("menu.copy"));
