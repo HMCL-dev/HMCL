@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.geometry.Pos;
 import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.VersionIconType;
@@ -45,16 +47,15 @@ public class GameAdvancedListItem extends AdvancedListItem {
         setLeftGraphic(imageContainer);
 
         holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), this::loadVersion));
+        holder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> loadVersion(GameDirectoryManager.getSelectedInstance())));
     }
 
     private void loadVersion(String version) {
         if (GameDirectoryManager.getSelectedRepository() != repository) {
             repository = GameDirectoryManager.getSelectedRepository();
-            if (repository != null) {
-                onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
-                    this.loadVersion(repository.getSelectedInstance());
-                });
-            }
+            onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
+                this.loadVersion(repository.getSelectedInstance());
+            });
         }
         if (version != null && repository != null && repository.hasVersion(version)) {
             setTitle(i18n("version.manage.manage"));
