@@ -61,6 +61,28 @@ public final class GameInstanceManifestTest {
         assertEquals(List.of(patch("patch", null)), resolved.standaloneManifest().getPatches());
     }
 
+    /// Manifest edits update known raw JSON fields without discarding unknown fields.
+    @Test
+    public void testRawJsonIsPreservedWhenUpdatingKnownFields() {
+        JsonObject json = new JsonObject();
+        json.addProperty("id", "example");
+        json.addProperty("root", false);
+        json.addProperty("unknownField", "value");
+
+        GameInstanceManifest manifest = GameInstanceManifest.fromJson(json, true)
+                .withRoot(true)
+                .withMainClass("example.Main");
+
+        JsonObject updatedJson = manifest.toJsonObject();
+        assertEquals("value", updatedJson.get("unknownField").getAsString());
+        assertEquals(true, updatedJson.get("root").getAsBoolean());
+        assertEquals("example.Main", updatedJson.get("mainClass").getAsString());
+
+        JsonObject rootRemovedJson = manifest.withRoot(null).toJsonObject();
+        assertEquals("value", rootRemovedJson.get("unknownField").getAsString());
+        assertFalse(rootRemovedJson.has("root"));
+    }
+
     /// Creates a minimal manifest for tests.
     private static GameInstanceManifest manifest(
             String id,

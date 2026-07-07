@@ -767,17 +767,35 @@ public record GameInstanceManifest(
 
         public void setMinecraftArguments(@Nullable String minecraftArguments) {
             this.minecraftArguments = minecraftArguments;
-            rawJson = null;
+            if (rawJson != null) {
+                if (minecraftArguments != null) {
+                    rawJson.addProperty("minecraftArguments", minecraftArguments);
+                } else {
+                    rawJson.remove("minecraftArguments");
+                }
+            }
         }
 
         public void setArguments(@Nullable Arguments arguments) {
             this.arguments = arguments;
-            rawJson = null;
+            if (rawJson != null) {
+                if (arguments != null) {
+                    rawJson.add("arguments", JsonUtils.GSON.toJsonTree(arguments));
+                } else {
+                    rawJson.remove("arguments");
+                }
+            }
         }
 
         public void setMainClass(@Nullable String mainClass) {
             this.mainClass = mainClass;
-            rawJson = null;
+            if (rawJson != null) {
+                if (mainClass != null) {
+                    rawJson.addProperty("mainClass", mainClass);
+                } else {
+                    rawJson.remove("mainClass");
+                }
+            }
         }
 
         public void setInheritsFrom(@Nullable GameInstanceID inheritsFrom) {
@@ -793,32 +811,76 @@ public record GameInstanceManifest(
 
         public void setAssetIndex(@Nullable AssetIndexInfo assetIndex) {
             this.assetIndex = assetIndex;
-            rawJson = null;
+            if (rawJson != null) {
+                if (assetIndex != null) {
+                    rawJson.add("assetIndex", JsonUtils.GSON.toJsonTree(assetIndex));
+                } else {
+                    rawJson.remove("assetIndex");
+                }
+            }
         }
 
         public void setJavaVersion(@Nullable GameJavaVersion javaVersion) {
             this.javaVersion = javaVersion;
-            rawJson = null;
+            if (rawJson != null) {
+                if (javaVersion != null) {
+                    rawJson.add("javaVersion", JsonUtils.GSON.toJsonTree(javaVersion));
+                } else {
+                    rawJson.remove("javaVersion");
+                }
+            }
         }
 
         public void setLibraries(@Nullable List<Library> libraries) {
             this.libraries = libraries == null ? null : List.copyOf(libraries);
-            rawJson = null;
+            if (rawJson != null) {
+                if (this.libraries != null) {
+                    rawJson.add("libraries", JsonUtils.GSON.toJsonTree(this.libraries));
+                } else {
+                    rawJson.remove("libraries");
+                }
+            }
         }
 
         public void setDownloads(@Nullable Map<DownloadType, DownloadInfo> downloads) {
             this.downloads = downloads == null ? null : Map.copyOf(downloads);
-            rawJson = null;
+            if (rawJson != null) {
+                if (this.downloads != null) {
+                    JsonObject downloadsObject = new JsonObject();
+                    for (Map.Entry<DownloadType, DownloadInfo> entry : this.downloads.entrySet()) {
+                        downloadsObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                    }
+                    rawJson.add("downloads", downloadsObject);
+                } else {
+                    rawJson.remove("downloads");
+                }
+            }
         }
 
         public void setLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
             this.logging = logging == null ? null : Map.copyOf(logging);
-            rawJson = null;
+            if (rawJson != null) {
+                if (this.logging != null) {
+                    JsonObject loggingObject = new JsonObject();
+                    for (Map.Entry<DownloadType, LoggingInfo> entry : this.logging.entrySet()) {
+                        loggingObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                    }
+                    rawJson.add("logging", loggingObject);
+                } else {
+                    rawJson.remove("logging");
+                }
+            }
         }
 
         public void setRoot(@Nullable Boolean root) {
             this.root = root;
-            rawJson = null;
+            if (rawJson != null) {
+                if (root != null) {
+                    rawJson.addProperty("root", root);
+                } else {
+                    rawJson.remove("root");
+                }
+            }
         }
 
         public void setPatches(@Nullable List<GameInstancePatch> patches) {
