@@ -208,8 +208,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             navBarPane.setId("decoratorTitleTransitionPane");
             FXUtils.onChangeAndOperate(skinnable.stateProperty(), s -> {
                 if (s == null) return;
-                Node node = createNavBar(skinnable, s.getLeftPaneWidth(), s.isBackable(), skinnable.canCloseProperty().get(), skinnable.showCloseAsHomeProperty().get(), s.isRefreshable(), s.getTitle(), s.getTitleNode());
-                if (s.isAnimate()) {
+                Node node = createNavBar(skinnable, s.leftPaneWidth(), s.backable(), skinnable.canCloseProperty().get(), skinnable.showCloseAsHomeProperty().get(), s.refreshable(), s.title(), s.titleNode());
+                if (s.animate()) {
                     TransitionPane.AnimationProducer animation = switch (skinnable.getNavigationDirection()) {
                         case NEXT -> NavBarAnimations.NEXT;
                         case PREVIOUS -> NavBarAnimations.PREVIOUS;

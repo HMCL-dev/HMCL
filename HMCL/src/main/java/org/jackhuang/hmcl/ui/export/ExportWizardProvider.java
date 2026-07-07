@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.export;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackExportTask;
@@ -28,7 +29,6 @@ import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
@@ -46,11 +46,11 @@ import java.util.List;
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 public final class ExportWizardProvider implements WizardProvider {
-    private final Profile profile;
+    private final HMCLGameRepository repository;
     private final String version;
 
-    public ExportWizardProvider(Profile profile, String version) {
-        this.profile = profile;
+    public ExportWizardProvider(HMCLGameRepository repository, String version) {
+        this.repository = repository;
         this.version = version;
     }
 
@@ -123,13 +123,11 @@ public final class ExportWizardProvider implements WizardProvider {
                 if (!packWithLauncher) return;
                 try (Zipper zip = new Zipper(modpackFile)) {
                     LauncherSettings exported = new LauncherSettings();
+                    LauncherSettings current = settings();
 
-                    exported.backgroundTypeProperty().set(settings().backgroundTypeProperty().get());
-                    exported.backgroundImageProperty().set(settings().backgroundImageProperty().get());
-                    exported.themeColorProperty().set(settings().themeColorProperty().get());
-                    exported.versionListSourceProperty().set(settings().versionListSourceProperty().get());
-                    exported.fileDownloadSourceProperty().set(settings().fileDownloadSourceProperty().get());
-                    exported.preferredLoginTypeProperty().set(settings().preferredLoginTypeProperty().get());
+                    exported.versionListSourceProperty().set(current.versionListSourceProperty().get());
+                    exported.fileDownloadSourceProperty().set(current.fileDownloadSourceProperty().get());
+                    exported.preferredLoginTypeProperty().set(current.preferredLoginTypeProperty().get());
 
                     zip.putTextFile(exported.toJson(), ".hmcl/config/launcher-settings.json");
                     AuthlibInjectorServerList exportedServers = new AuthlibInjectorServerList();
@@ -140,21 +138,6 @@ public final class ExportWizardProvider implements WizardProvider {
                     zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
                             ? "modpack.mrpack"
                             : "modpack.zip");
-
-                    Path bg = Metadata.HMCL_LOCAL_HOME.resolve("background");
-                    if (!Files.isDirectory(bg))
-                        bg = Metadata.CURRENT_DIRECTORY.resolve("bg");
-                    if (Files.isDirectory(bg))
-                        zip.putDirectory(bg, ".hmcl/bg");
-
-                    for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-                        String fileName = "background." + extension;
-                        Path background = Metadata.HMCL_LOCAL_HOME.resolve(fileName);
-                        if (!Files.isRegularFile(background))
-                            background = Metadata.CURRENT_DIRECTORY.resolve(fileName);
-                        if (Files.isRegularFile(background))
-                            zip.putFile(background, ".hmcl/" + fileName);
-                    }
 
                     for (String extension : FontManager.FONT_EXTENSIONS) {
                         String fileName = "font." + extension;
@@ -181,7 +164,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new McbbsModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
+                dependency = new McbbsModpackExportTask(repository, version, exportInfo, modpackFile);
             }
 
             @Override
@@ -201,8 +184,8 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                GameSettings.Effective setting = profile.getRepository().getEffectiveGameSettings(version);
-                dependency = new MultiMCModpackExportTask(profile.getRepository(), version, exportInfo.getWhitelist(),
+                GameSettings.Effective setting = repository.getEffectiveGameSettings(version);
+                dependency = new MultiMCModpackExportTask(repository, version, exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",
                                 exportInfo.getName() + "-" + exportInfo.getVersion(),
@@ -249,7 +232,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new ServerModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
+                dependency = new ServerModpackExportTask(repository, version, exportInfo, modpackFile);
             }
 
             @Override
@@ -270,7 +253,7 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
             public void execute() {
                 dependency = new ModrinthModpackExportTask(
-                        profile.getRepository(),
+                        repository,
                         version,
                         exportInfo,
                         modpackFile
@@ -288,8 +271,8 @@ public final class ExportWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
         return switch (step) {
             case 0 -> new ModpackTypeSelectionPage(controller);
-            case 1 -> new ModpackInfoPage(controller, profile.getRepository(), version);
-            case 2 -> new ModpackFileSelectionPage(controller, profile, version, ModAdviser::suggestMod);
+            case 1 -> new ModpackInfoPage(controller, repository, version);
+            case 2 -> new ModpackFileSelectionPage(controller, repository, version, ModAdviser::suggestMod);
             default -> throw new IllegalArgumentException("step");
         };
     }

@@ -580,7 +580,7 @@ final class IndependentSettingBinder {
         long maxMemoryBytes = Math.max(0, maxMemory != null ? maxMemory : 0) * 1024L * 1024L;
         return HMCLGameRepository.getAllocatedMemory(
                 maxMemoryBytes,
-                memoryStatusBar.getMemoryStatus().getAvailable(),
+                memoryStatusBar.getMemoryStatus().available(),
                 Boolean.TRUE.equals(autoMemory));
     }
 
@@ -595,9 +595,9 @@ final class IndependentSettingBinder {
         boolean autoMemoryEnabled = Boolean.TRUE.equals(autoMemory);
         physicalMemoryLabel.setText(i18n("settings.memory.used_per_total",
                 GIGABYTES.convertFromBytes(memoryStatus.getUsed()),
-                GIGABYTES.convertFromBytes(memoryStatus.getTotal())));
+                GIGABYTES.convertFromBytes(memoryStatus.total())));
         allocatedMemoryLabel.setText(i18n(
-                memoryStatus.hasAvailable() && maxMemoryBytes > memoryStatus.getAvailable()
+                memoryStatus.hasAvailable() && maxMemoryBytes > memoryStatus.available()
                         ? (autoMemoryEnabled
                            ? "settings.memory.allocate.auto.exceeded"
                            : "settings.memory.allocate.manual.exceeded")
@@ -607,9 +607,9 @@ final class IndependentSettingBinder {
                 GIGABYTES.convertFromBytes(maxMemoryBytes),
                 GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(
                         maxMemoryBytes,
-                        memoryStatus.getAvailable(),
+                        memoryStatus.available(),
                         autoMemoryEnabled)),
-                GIGABYTES.convertFromBytes(memoryStatus.getAvailable())));
+                GIGABYTES.convertFromBytes(memoryStatus.available())));
     }
 
     private static <T> void toggleOverride(

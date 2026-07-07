@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -285,17 +287,10 @@ public final class CommandBuilder {
         return raw.stream().map(i -> i.arg).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private static class Item {
-        final String arg;
-        final boolean parse;
-
-        Item(String arg, boolean parse) {
-            this.arg = arg;
-            this.parse = parse;
-        }
+    private record Item(String arg, boolean parse) {
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? toBatchStringLiteral(arg) : toShellStringLiteral(arg)) : arg;
         }
     }

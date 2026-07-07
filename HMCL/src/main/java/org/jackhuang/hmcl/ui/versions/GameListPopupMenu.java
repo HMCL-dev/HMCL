@@ -33,9 +33,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -51,11 +50,11 @@ public final class GameListPopupMenu extends StackPane {
 
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY,
-                            Profile profile, List<Version> versions) {
+                            HMCLGameRepository repository, List<Version> versions) {
         GameListPopupMenu menu = new GameListPopupMenu();
         menu.getItems().setAll(versions.stream()
-                .filter(it -> profile.getRepository().hasVersion(it.getId()))
-                .map(it -> new GameItem(profile, it.getId()))
+                .filter(it -> repository.hasVersion(it.getId()))
+                .map(it -> new GameItem(repository, it.getId()))
                 .toList());
         JFXPopup popup = new JFXPopup(menu);
         popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
@@ -128,7 +127,7 @@ public final class GameListPopupMenu extends StackPane {
             FXUtils.onClicked(rootPane, () -> {
                 GameItem item = getItem();
                 if (item != null) {
-                    Profiles.setSelectedInstance(item.getProfile(), item.getId());
+                    item.getRepository().setSelectedInstance(item.getId());
                     if (getScene().getWindow() instanceof JFXPopup popup)
                         popup.hide();
                 }

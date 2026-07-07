@@ -996,11 +996,16 @@ public sealed abstract class GameSettings extends ObservableSetting {
         }
 
         /// Returns the effective renderer.
-        public Renderer getRenderer() {
-            return switch (getInheritable(GameSettings::graphicsBackendProperty)) {
+        public Renderer getRenderer(GameVersionNumber version) {
+            GraphicsAPI graphicsAPI = getInheritable(GameSettings::graphicsBackendProperty);
+            if (graphicsAPI == GraphicsAPI.DEFAULT) {
+                graphicsAPI = GraphicsAPI.getDefaultGraphicsAPI(version);
+            }
+
+            return switch (graphicsAPI) {
+                case DEFAULT -> Renderer.DEFAULT;
                 case OPENGL -> selectRenderer(GraphicsAPI.OPENGL, getInheritable(GameSettings::openGLRendererProperty));
                 case VULKAN -> selectRenderer(GraphicsAPI.VULKAN, getInheritable(GameSettings::vulkanRendererProperty));
-                case DEFAULT -> Renderer.DEFAULT;
             };
         }
 

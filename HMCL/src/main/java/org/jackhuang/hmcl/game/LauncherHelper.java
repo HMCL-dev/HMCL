@@ -34,7 +34,10 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.GameSettings;
+import org.jackhuang.hmcl.setting.JavaVersionType;
+import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
@@ -57,6 +60,7 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -71,13 +75,14 @@ import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.TIME_FORMATTER;
 import static org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM;
 
 public final class LauncherHelper {
 
     private static final String LWJGL_3_4_1_TIP = "lwjgl3.4.1-ffm";
 
-    private final Profile profile;
+    private final HMCLGameRepository repository;
     private Account account;
     private final String selectedVersion;
     private Path scriptFile;
@@ -87,11 +92,11 @@ public final class LauncherHelper {
     private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
 
-    public LauncherHelper(Profile profile, Account account, String selectedVersion) {
-        this.profile = Objects.requireNonNull(profile);
+    public LauncherHelper(HMCLGameRepository repository, Account account, String selectedVersion) {
+        this.repository = Objects.requireNonNull(repository);
         this.account = Objects.requireNonNull(account);
         this.selectedVersion = Objects.requireNonNull(selectedVersion);
-        this.setting = profile.getRepository().getEffectiveGameSettings(selectedVersion);
+        this.setting = repository.getEffectiveGameSettings(selectedVersion);
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
         this.launchingStepsPane.setTitle(i18n("version.launch"));
@@ -142,8 +147,7 @@ public final class LauncherHelper {
         // https://github.com/HMCL-dev/HMCL/pull/4121
         PROCESSES.removeIf(it -> it.get() == null);
 
-        HMCLGameRepository repository = profile.getRepository();
-        DefaultDependencyManager dependencyManager = profile.getDependency();
+        DefaultDependencyManager dependencyManager = repository.getDependency();
         AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
         Optional<String> gameVersion = repository.getGameVersion(version.get());
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
@@ -153,7 +157,7 @@ public final class LauncherHelper {
 
         AtomicReference<JavaRuntime> javaVersionRef = new AtomicReference<>();
 
-        TaskExecutor executor = checkGameState(profile, setting, version.get())
+        TaskExecutor executor = checkGameState(repository, setting, version.get())
                 .thenComposeAsync(java -> {
                     javaVersionRef.set(Objects.requireNonNull(java));
                     version.set(NativePatcher.patchNative(repository, version.get(), gameVersion.orElse(null), java, setting, javaArguments));
@@ -173,7 +177,7 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
-                                        || !(setting.getRenderer() instanceof Renderer.Driver renderer)
+                                        || !(setting.getRenderer(GameVersionNumber.asGameVersion(gameVersion)) instanceof Renderer.Driver renderer)
                                         || renderer.mesaDriverName() == null)
                                     return null;
 
@@ -224,7 +228,7 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions.Builder launchOptionsBuilder = repository.getLaunchOptions(
-                            selectedVersion, javaVersionRef.get(), profile.getPath().toPath(), javaAgents, javaArguments, scriptFile != null);
+                            selectedVersion, javaVersionRef.get(), repository.getBaseDirectory(), javaAgents, javaArguments, scriptFile != null);
                     if (disableOfflineSkin) {
                         launchOptionsBuilder.setDaemon(false);
                     }
@@ -382,8 +386,8 @@ public final class LauncherHelper {
         executor.start();
     }
 
-    private static Task<JavaRuntime> checkGameState(Profile profile, GameSettings.Effective setting, Version version) {
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, profile.getRepository().getGameVersion(version).orElse(null));
+    private static Task<JavaRuntime> checkGameState(HMCLGameRepository repository, GameSettings.Effective setting, Version version) {
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
         GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT));
 
         Task<JavaRuntime> getJavaTask = Task.supplyAsync(() -> {
@@ -450,7 +454,7 @@ public final class LauncherHelper {
                 }
 
                 if (targetJavaVersion != null && supportedVersions.contains(targetJavaVersion)) {
-                    downloadJava(targetJavaVersion, profile)
+                    downloadJava(targetJavaVersion, repository)
                             .whenCompleteAsync((downloadedJava, exception) -> {
                                 if (exception == null) {
                                     future.complete(downloadedJava);
@@ -527,7 +531,7 @@ public final class LauncherHelper {
                             gameJavaVersion = null;
 
                         if (gameJavaVersion != null) {
-                            FXUtils.runInFX(() -> downloadJava(gameJavaVersion, profile).whenCompleteAsync((downloadedJava, throwable) -> {
+                            FXUtils.runInFX(() -> downloadJava(gameJavaVersion, repository).whenCompleteAsync((downloadedJava, throwable) -> {
                                 if (throwable == null) {
                                     setting.setJavaAutoSelected();
                                     future.complete(downloadedJava);
@@ -685,14 +689,14 @@ public final class LauncherHelper {
         return task.withStage("launch.state.java");
     }
 
-    private static CompletableFuture<JavaRuntime> downloadJava(GameJavaVersion javaVersion, Profile profile) {
+    private static CompletableFuture<JavaRuntime> downloadJava(GameJavaVersion javaVersion, HMCLGameRepository repository) {
         CompletableFuture<JavaRuntime> future = new CompletableFuture<>();
         Controllers.dialog(new MessageDialogPane.Builder(
                 i18n("launch.advice.require_newer_java_version", javaVersion.majorVersion()),
                 i18n("message.warning"),
                 MessageType.QUESTION)
                 .yesOrNo(() -> {
-                    DownloadProvider downloadProvider = profile.getDependency().getDownloadProvider();
+                    DownloadProvider downloadProvider = repository.getDependency().getDownloadProvider();
                     Controllers.taskDialog(JavaManager.getDownloadJavaTask(downloadProvider, SYSTEM_PLATFORM, javaVersion)
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
@@ -965,7 +969,7 @@ public final class LauncherHelper {
         @Override
         public void onExit(int exitCode, ExitType exitType) {
             if (showLogs) {
-                logBuffer.add(new Log(String.format("[HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", exitCode, exitCode, exitType), Log4jLevel.INFO));
+                logBuffer.add(new Log(String.format("[%s] [HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", TIME_FORMATTER.format(Instant.now()), exitCode, exitCode, exitType), Log4jLevel.INFO));
                 submitLogThread.interrupt();
                 try {
                     submitLogThread.join();
