@@ -37,8 +37,11 @@ public class GameAdvancedListItem extends AdvancedListItem {
     private final ImageContainer imageContainer;
     private final WeakListenerHolder holder = new WeakListenerHolder();
     private HMCLGameRepository repository;
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private Consumer<Event> onVersionIconChangedListener;
+
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
+    private Consumer<RefreshedVersionsEvent> onRefreshedVersionsListener;
 
     public GameAdvancedListItem() {
         this.imageContainer = new ImageContainer(LEFT_GRAPHIC_SIZE);
@@ -47,15 +50,21 @@ public class GameAdvancedListItem extends AdvancedListItem {
         setLeftGraphic(imageContainer);
 
         holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), this::loadVersion));
-        holder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> loadVersion(GameDirectoryManager.getSelectedInstance())));
     }
 
     private void loadVersion(String version) {
-        if (GameDirectoryManager.getSelectedRepository() != repository) {
+        boolean repositoryChanged = GameDirectoryManager.getSelectedRepository() != repository;
+        if (repositoryChanged) {
             repository = GameDirectoryManager.getSelectedRepository();
             onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
                 this.loadVersion(repository.getSelectedInstance());
             });
+
+            if (!repository.isLoaded()) {
+                onRefreshedVersionsListener = EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
+                        .registerWeak(event -> loadVersion(GameDirectoryManager.getSelectedInstance()));
+                return;
+            }
         }
         if (version != null && repository != null && repository.hasVersion(version)) {
             setTitle(i18n("version.manage.manage"));
