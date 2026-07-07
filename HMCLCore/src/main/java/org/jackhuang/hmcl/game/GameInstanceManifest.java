@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.ImmutableSequencedMap;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.LowerCaseEnumTypeAdapter;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -237,8 +238,10 @@ public record GameInstanceManifest(
                         var map = new LinkedHashMap<DownloadType, DownloadInfo>();
                         for (Map.Entry<String, JsonElement> downloadEntry : obj.entrySet()) {
                             try {
-                                DownloadType type = DownloadType.valueOf(downloadEntry.getKey());
-                                map.put(type, JsonUtils.GSON.fromJson(downloadEntry.getValue(), DownloadInfo.class));
+                                DownloadType key = LowerCaseEnumTypeAdapter.fromJson(DownloadType.class, downloadEntry.getKey());
+                                if (key != null) {
+                                    map.put(key, JsonUtils.GSON.fromJson(downloadEntry.getValue(), DownloadInfo.class));
+                                }
                             } catch (IllegalArgumentException ignored) {
                             }
                         }
@@ -250,8 +253,10 @@ public record GameInstanceManifest(
                         var map = new LinkedHashMap<DownloadType, LoggingInfo>();
                         for (Map.Entry<String, JsonElement> loggingEntry : obj.entrySet()) {
                             try {
-                                DownloadType type = DownloadType.valueOf(loggingEntry.getKey());
-                                map.put(type, JsonUtils.GSON.fromJson(loggingEntry.getValue(), LoggingInfo.class));
+                                DownloadType key = LowerCaseEnumTypeAdapter.fromJson(DownloadType.class, loggingEntry.getKey());
+                                if (key != null) {
+                                    map.put(key, JsonUtils.GSON.fromJson(loggingEntry.getValue(), LoggingInfo.class));
+                                }
                             } catch (IllegalArgumentException ignored) {
                             }
                         }
@@ -261,7 +266,7 @@ public record GameInstanceManifest(
                 case "type" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
                         try {
-                            builder.type = ReleaseType.valueOf(primitive.getAsString());
+                            builder.type = LowerCaseEnumTypeAdapter.fromJson(ReleaseType.class, primitive.getAsString());
                         } catch (IllegalArgumentException ignored) {
                         }
                     }
@@ -660,19 +665,19 @@ public record GameInstanceManifest(
         if (downloads != null) {
             JsonObject downloadsObject = new JsonObject();
             for (Map.Entry<DownloadType, DownloadInfo> entry : downloads.entrySet()) {
-                downloadsObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                downloadsObject.add(entry.getKey().name().toLowerCase(Locale.ROOT), JsonUtils.GSON.toJsonTree(entry.getValue()));
             }
             json.add("downloads", downloadsObject);
         }
         if (logging != null) {
             JsonObject loggingObject = new JsonObject();
             for (Map.Entry<DownloadType, LoggingInfo> entry : logging.entrySet()) {
-                loggingObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                loggingObject.add(entry.getKey().name().toLowerCase(Locale.ROOT), JsonUtils.GSON.toJsonTree(entry.getValue()));
             }
             json.add("logging", loggingObject);
         }
         if (type != null)
-            json.addProperty("type", type.name());
+            json.addProperty("type", type.name().toLowerCase(Locale.ROOT));
         if (time != null)
             json.addProperty("time", InstantTypeAdapter.serializeToString(time, ZoneOffset.UTC));
         if (releaseTime != null)
