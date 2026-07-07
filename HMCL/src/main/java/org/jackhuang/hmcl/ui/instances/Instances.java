@@ -157,7 +157,7 @@ public final class Instances {
             }
         }, instanceId.toString(),
             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName) || newVersionName.equals(instanceId)));
+            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName) || newVersionName.equals(instanceId.toString())));
     }
 
     public static void exportInstance(HMCLGameRepository repository, GameInstanceID instanceId) {

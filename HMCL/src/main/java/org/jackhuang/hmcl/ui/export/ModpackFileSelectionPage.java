@@ -108,7 +108,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                 }
                 if (fileName.startsWith("._")) // macOS system file
                     state = ModAdviser.ModSuggestion.HIDDEN;
-                if (FileUtils.getNameWithoutExtension(file).equals(instanceId))
+                if (FileUtils.getNameWithoutExtension(file).equals(instanceId.toString()))
                     state = ModAdviser.ModSuggestion.HIDDEN;
             }
 
