@@ -22,6 +22,7 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.ImmutableSequencedMap;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -233,7 +234,7 @@ public record GameInstanceManifest(
                 }
                 case "downloads" -> {
                     if (value instanceof JsonObject obj) {
-                        Map<DownloadType, DownloadInfo> map = new EnumMap<>(DownloadType.class);
+                        var map = new LinkedHashMap<DownloadType, DownloadInfo>();
                         for (Map.Entry<String, JsonElement> downloadEntry : obj.entrySet()) {
                             try {
                                 DownloadType type = DownloadType.valueOf(downloadEntry.getKey());
@@ -241,12 +242,12 @@ public record GameInstanceManifest(
                             } catch (IllegalArgumentException ignored) {
                             }
                         }
-                        builder.downloads = Collections.unmodifiableMap(map);
+                        builder.downloads = ImmutableSequencedMap.wrap(map);
                     }
                 }
                 case "logging" -> {
                     if (value instanceof JsonObject obj) {
-                        Map<DownloadType, LoggingInfo> map = new EnumMap<>(DownloadType.class);
+                        var map = new LinkedHashMap<DownloadType, LoggingInfo>();
                         for (Map.Entry<String, JsonElement> loggingEntry : obj.entrySet()) {
                             try {
                                 DownloadType type = DownloadType.valueOf(loggingEntry.getKey());
@@ -254,7 +255,7 @@ public record GameInstanceManifest(
                             } catch (IllegalArgumentException ignored) {
                             }
                         }
-                        builder.logging = Collections.unmodifiableMap(map);
+                        builder.logging = ImmutableSequencedMap.wrap(map);
                     }
                 }
                 case "type" -> {
@@ -843,7 +844,7 @@ public record GameInstanceManifest(
         }
 
         public void setDownloads(@Nullable Map<DownloadType, DownloadInfo> downloads) {
-            this.downloads = downloads == null ? null : Map.copyOf(downloads);
+            this.downloads = downloads == null ? null : ImmutableSequencedMap.copyOf(downloads);
             if (rawJson != null) {
                 if (this.downloads != null) {
                     JsonObject downloadsObject = new JsonObject();
@@ -858,7 +859,7 @@ public record GameInstanceManifest(
         }
 
         public void setLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
-            this.logging = logging == null ? null : Map.copyOf(logging);
+            this.logging = logging == null ? null : ImmutableSequencedMap.copyOf(logging);
             if (rawJson != null) {
                 if (this.logging != null) {
                     JsonObject loggingObject = new JsonObject();

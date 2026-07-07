@@ -83,6 +83,31 @@ public final class GameInstanceManifestTest {
         assertFalse(rootRemovedJson.has("root"));
     }
 
+    /// Download maps keep the JSON entry order after parsing and rebuilding.
+    @Test
+    public void testDownloadMapOrderIsPreserved() {
+        JsonObject serverDownload = new JsonObject();
+        serverDownload.addProperty("url", "server");
+        JsonObject clientDownload = new JsonObject();
+        clientDownload.addProperty("url", "client");
+
+        JsonObject downloads = new JsonObject();
+        downloads.add("SERVER", serverDownload);
+        downloads.add("CLIENT", clientDownload);
+
+        JsonObject json = new JsonObject();
+        json.addProperty("id", "example");
+        json.add("downloads", downloads);
+
+        GameInstanceManifest manifest = GameInstanceManifest.fromJson(json, true);
+        assertEquals(List.of(DownloadType.SERVER, DownloadType.CLIENT), List.copyOf(manifest.getDownloads().keySet()));
+
+        JsonObject updatedDownloads = manifest.withDownloads(manifest.getDownloads())
+                .toJsonObject()
+                .getAsJsonObject("downloads");
+        assertEquals(List.of("SERVER", "CLIENT"), List.copyOf(updatedDownloads.keySet()));
+    }
+
     /// Creates a minimal manifest for tests.
     private static GameInstanceManifest manifest(
             String id,

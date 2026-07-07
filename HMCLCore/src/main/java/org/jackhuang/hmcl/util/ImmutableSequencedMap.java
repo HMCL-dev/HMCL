@@ -65,12 +65,17 @@ public final class ImmutableSequencedMap<K extends @UnknownNullability Object, V
     /// @param <V> the type of values
     /// @param map the source map whose entries are copied
     /// @return an [ImmutableSequencedMap] with the same entries and order as {@code map}
+    @SuppressWarnings("unchecked")
     public static <K extends @UnknownNullability Object, V extends @UnknownNullability Object> ImmutableSequencedMap<K, V> copyOf(Map<? extends K, ? extends V> map) {
+        if (map instanceof ImmutableSequencedMap<?, ?>) {
+            return (ImmutableSequencedMap<K, V>) map;
+        }
+
         if (map.isEmpty()) {
             return of();
-        } else {
-            return new ImmutableSequencedMap<>(new LinkedHashMap<>(map));
         }
+
+        return new ImmutableSequencedMap<>(new LinkedHashMap<>(map));
     }
 
     /// Wraps the given [LinkedHashMap] directly without copying.
