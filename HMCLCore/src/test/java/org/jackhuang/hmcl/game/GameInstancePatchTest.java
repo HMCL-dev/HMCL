@@ -80,4 +80,17 @@ public final class GameInstancePatchTest {
                 .getAsJsonObject("downloads");
         assertEquals(List.of("SERVER", "CLIENT"), List.copyOf(updatedDownloads.keySet()));
     }
+
+    /// Inherited instance ids are parsed and written through GameInstanceID.
+    @Test
+    public void testInheritsFromUsesGameInstanceId() {
+        JsonObject json = new JsonObject();
+        json.addProperty("id", "patch");
+        json.addProperty("inheritsFrom", "parent");
+
+        GameInstancePatch patch = GameInstancePatch.fromJson(json);
+
+        assertEquals(new GameInstanceID("parent"), patch.inheritsFrom());
+        assertEquals("parent", patch.toJsonObject().get("inheritsFrom").getAsString());
+    }
 }

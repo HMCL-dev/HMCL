@@ -46,7 +46,7 @@ public record GameInstancePatch(
         @Nullable String minecraftArguments,
         @Nullable Arguments arguments,
         @Nullable String mainClass,
-        @Nullable String inheritsFrom,
+        @Nullable GameInstanceID inheritsFrom,
         @Nullable GameInstanceID jar,
         @Nullable AssetIndexInfo assetIndex,
         @Nullable String assets,
@@ -143,7 +143,7 @@ public record GameInstancePatch(
                 manifest.minecraftArguments(),
                 manifest.arguments(),
                 manifest.mainClass(),
-                manifest.inheritsFrom() == null ? null : manifest.inheritsFrom().id(),
+                manifest.inheritsFrom(),
                 manifest.jar(),
                 manifest.assetIndex(),
                 manifest.assets(),
@@ -304,7 +304,7 @@ public record GameInstancePatch(
         private @Nullable String minecraftArguments;
         private @Nullable Arguments arguments;
         private @Nullable String mainClass;
-        private @Nullable String inheritsFrom;
+        private @Nullable GameInstanceID inheritsFrom;
         private @Nullable GameInstanceID jar;
         private @Nullable AssetIndexInfo assetIndex;
         private @Nullable String assets;
@@ -412,11 +412,11 @@ public record GameInstancePatch(
             }
         }
 
-        private void setInheritsFrom(@Nullable String inheritsFrom) {
+        private void setInheritsFrom(@Nullable GameInstanceID inheritsFrom) {
             this.inheritsFrom = inheritsFrom;
             if (rawJson != null) {
                 if (inheritsFrom != null) {
-                    rawJson.addProperty("inheritsFrom", inheritsFrom);
+                    rawJson.addProperty("inheritsFrom", inheritsFrom.toString());
                 } else {
                     rawJson.remove("inheritsFrom");
                 }
@@ -619,7 +619,7 @@ public record GameInstancePatch(
         @Nullable String minecraftArguments = null;
         @Nullable Arguments arguments = null;
         @Nullable String mainClass = null;
-        @Nullable String inheritsFrom = null;
+        @Nullable GameInstanceID inheritsFrom = null;
         @Nullable GameInstanceID jar = null;
         @Nullable AssetIndexInfo assetIndex = null;
         @Nullable String assets = null;
@@ -668,7 +668,10 @@ public record GameInstancePatch(
                 }
                 case "inheritsFrom" -> {
                     if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        inheritsFrom = primitive.getAsString();
+                        try {
+                            inheritsFrom = new GameInstanceID(primitive.getAsString());
+                        } catch (IllegalArgumentException ignored) {
+                        }
                     }
                 }
                 case "jar" -> {
@@ -819,7 +822,7 @@ public record GameInstancePatch(
         if (mainClass != null)
             json.addProperty("mainClass", mainClass);
         if (inheritsFrom != null)
-            json.addProperty("inheritsFrom", inheritsFrom);
+            json.addProperty("inheritsFrom", inheritsFrom.toString());
         if (jar != null)
             json.addProperty("jar", jar.toString());
         if (assetIndex != null)

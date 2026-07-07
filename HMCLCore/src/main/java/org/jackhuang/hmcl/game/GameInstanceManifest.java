@@ -609,7 +609,7 @@ public record GameInstanceManifest(
                 minecraftArguments,
                 arguments,
                 mainClass,
-                inheritsFrom == null ? null : inheritsFrom.toString(),
+                inheritsFrom,
                 jar,
                 assetIndex,
                 assets,
