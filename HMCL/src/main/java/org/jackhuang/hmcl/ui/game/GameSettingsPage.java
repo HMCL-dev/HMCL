@@ -381,16 +381,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     maxMemoryButton = createInheritanceButton();
                 }
 
-                var options = new ArrayList<RadioChoiceList.Choice<Boolean>>();
-                options.add(new RadioChoiceList.Choice<>(i18n("settings.memory.auto_allocate"), true));
                 var manualMemoryEditor = new HBox(8);
                 manualMemoryEditor.setAlignment(Pos.CENTER_RIGHT);
                 manualMemoryEditor.getChildren().setAll(
                         maxMemorySlider,
                         maxMemoryTextField,
                         new Label(i18n("settings.memory.unit.mib")));
-                options.add(new EditorChoice<>(i18n("settings.memory.manual_allocate"), false, manualMemoryEditor, maxMemoryButton));
-                memoryItem.setChoices(options);
+                memoryItem.setChoices(List.of(
+                        new RadioChoiceList.Choice<>(i18n("settings.memory.auto_allocate"), true),
+                        new EditorChoice<>(i18n("settings.memory.manual_allocate"), false, manualMemoryEditor, maxMemoryButton)
+                ));
 
                 var memoryStatusBar = new MemoryStatusBar();
 
