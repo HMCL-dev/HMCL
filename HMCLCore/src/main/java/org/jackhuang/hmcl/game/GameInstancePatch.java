@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import org.jackhuang.hmcl.util.ImmutableSequencedMap;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -32,10 +33,10 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @NotNullByDefault
 public record GameInstancePatch(
@@ -177,111 +178,438 @@ public record GameInstancePatch(
 
     /// Returns a patch copy with the given id.
     public GameInstancePatch withId(@Nullable String id) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
-                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
-                releaseTime, minimumLauncherVersion, hidden);
+        if (Objects.equals(this.id, id)) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setId(id);
+        return builder.toPatch();
     }
 
     /// Returns a patch copy with the given version.
     public GameInstancePatch withVersion(@Nullable String version) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
-                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
-                releaseTime, minimumLauncherVersion, hidden);
+        if (Objects.equals(this.version, version)) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setVersion(version);
+        return builder.toPatch();
     }
 
     /// Returns a patch copy with the given priority.
     public GameInstancePatch withPriority(@Nullable Integer priority) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
-                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
-                releaseTime, minimumLauncherVersion, hidden);
+        if (Objects.equals(this.priority, priority)) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setPriority(priority);
+        return builder.toPatch();
     }
 
     /// Returns a patch copy with the given jar id.
     public GameInstancePatch withJar(@Nullable GameInstanceID jar) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom,
-                jar, assetIndex, assets, complianceLevel, javaVersion,
-                libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion,
-                hidden);
+        if (Objects.equals(this.jar, jar)) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setJar(jar);
+        return builder.toPatch();
     }
 
     /// Returns a patch copy with the given libraries.
     public GameInstancePatch withLibraries(@Nullable List<Library> libraries) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
-                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
-                releaseTime, minimumLauncherVersion, hidden);
+        if (this.libraries == libraries) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setLibraries(libraries);
+        return builder.toPatch();
     }
 
     /// Returns a patch copy with the given Java version.
     public GameInstancePatch withJavaVersion(@Nullable GameJavaVersion javaVersion) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
-                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
-                releaseTime, minimumLauncherVersion, hidden);
+        if (this.javaVersion == javaVersion) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setJavaVersion(javaVersion);
+        return builder.toPatch();
     }
 
     /// Returns a patch copy with the given arguments.
     public GameInstancePatch withArguments(@Nullable Arguments arguments) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
-                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
-                releaseTime, minimumLauncherVersion, hidden);
+        if (this.arguments == arguments) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setArguments(arguments);
+        return builder.toPatch();
     }
 
     /// Returns a patch copy with the given main class.
     public GameInstancePatch withMainClass(@Nullable String mainClass) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
-                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
-                releaseTime, minimumLauncherVersion, hidden);
+        if (Objects.equals(this.mainClass, mainClass)) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setMainClass(mainClass);
+        return builder.toPatch();
     }
 
     /// Returns a patch copy with the given asset index.
     public GameInstancePatch withAssetIndex(@Nullable AssetIndexInfo assetIndex) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
-                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
-                releaseTime, minimumLauncherVersion, hidden);
+        if (this.assetIndex == assetIndex) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setAssetIndex(assetIndex);
+        return builder.toPatch();
     }
 
     /// Returns a patch copy with the given downloads.
     public GameInstancePatch withDownload(@Nullable Map<DownloadType, DownloadInfo> downloads) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
-                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
-                releaseTime, minimumLauncherVersion, hidden);
+        if (this.downloads == downloads) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setDownloads(downloads);
+        return builder.toPatch();
     }
 
     /// Returns a patch copy with the given logging metadata.
     public GameInstancePatch withLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
-        return copy(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex,
-                assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time,
-                releaseTime, minimumLauncherVersion, hidden);
+        if (this.logging == logging) {
+            return this;
+        }
+
+        Builder builder = new Builder(this);
+        builder.setLogging(logging);
+        return builder.toPatch();
     }
 
-    private static GameInstancePatch copy(
-            @Nullable String id,
-            @Nullable String version,
-            @Nullable Integer priority,
-            @Nullable String minecraftArguments,
-            @Nullable Arguments arguments,
-            @Nullable String mainClass,
-            @Nullable String inheritsFrom,
-            @Nullable GameInstanceID jar,
-            @Nullable AssetIndexInfo assetIndex,
-            @Nullable String assets,
-            @Nullable Integer complianceLevel,
-            @Nullable GameJavaVersion javaVersion,
-            @Nullable List<Library> libraries,
-            @Nullable List<CompatibilityRule> compatibilityRules,
-            @Nullable Map<DownloadType, DownloadInfo> downloads,
-            @Nullable Map<DownloadType, LoggingInfo> logging,
-            @Nullable ReleaseType type,
-            @Nullable Instant time,
-            @Nullable Instant releaseTime,
-            @Nullable Integer minimumLauncherVersion,
-            @Nullable Boolean hidden) {
-        return new GameInstancePatch(id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom,
-                jar, assetIndex, assets, complianceLevel, javaVersion,
-                libraries == null ? null : List.copyOf(libraries),
-                compatibilityRules == null ? null : List.copyOf(compatibilityRules),
-                downloads == null ? null : Map.copyOf(downloads),
-                logging == null ? null : Map.copyOf(logging),
-                type, time, releaseTime, minimumLauncherVersion, hidden, null);
+    private static final class Builder {
+        private @Nullable String id;
+        private @Nullable String version;
+        private @Nullable Integer priority;
+        private @Nullable String minecraftArguments;
+        private @Nullable Arguments arguments;
+        private @Nullable String mainClass;
+        private @Nullable String inheritsFrom;
+        private @Nullable GameInstanceID jar;
+        private @Nullable AssetIndexInfo assetIndex;
+        private @Nullable String assets;
+        private @Nullable Integer complianceLevel;
+        private @Nullable GameJavaVersion javaVersion;
+        private @Nullable @Unmodifiable List<Library> libraries;
+        private @Nullable @Unmodifiable List<CompatibilityRule> compatibilityRules;
+        private @Nullable @Unmodifiable Map<DownloadType, DownloadInfo> downloads;
+        private @Nullable @Unmodifiable Map<DownloadType, LoggingInfo> logging;
+        private @Nullable ReleaseType type;
+        private @Nullable Instant time;
+        private @Nullable Instant releaseTime;
+        private @Nullable Integer minimumLauncherVersion;
+        private @Nullable Boolean hidden;
+        private @Nullable JsonObject rawJson;
+
+        private Builder(GameInstancePatch patch) {
+            this.id = patch.id;
+            this.version = patch.version;
+            this.priority = patch.priority;
+            this.minecraftArguments = patch.minecraftArguments;
+            this.arguments = patch.arguments;
+            this.mainClass = patch.mainClass;
+            this.inheritsFrom = patch.inheritsFrom;
+            this.jar = patch.jar;
+            this.assetIndex = patch.assetIndex;
+            this.assets = patch.assets;
+            this.complianceLevel = patch.complianceLevel;
+            this.javaVersion = patch.javaVersion;
+            this.libraries = patch.libraries;
+            this.compatibilityRules = patch.compatibilityRules;
+            this.downloads = patch.downloads;
+            this.logging = patch.logging;
+            this.type = patch.type;
+            this.time = patch.time;
+            this.releaseTime = patch.releaseTime;
+            this.minimumLauncherVersion = patch.minimumLauncherVersion;
+            this.hidden = patch.hidden;
+            this.rawJson = patch.rawJson != null ? patch.rawJson.deepCopy() : null;
+        }
+
+        private void setId(@Nullable String id) {
+            this.id = id;
+            if (rawJson != null) {
+                if (id != null) {
+                    rawJson.addProperty("id", id);
+                } else {
+                    rawJson.remove("id");
+                }
+            }
+        }
+
+        private void setVersion(@Nullable String version) {
+            this.version = version;
+            if (rawJson != null) {
+                if (version != null) {
+                    rawJson.addProperty("version", version);
+                } else {
+                    rawJson.remove("version");
+                }
+            }
+        }
+
+        private void setPriority(@Nullable Integer priority) {
+            this.priority = priority;
+            if (rawJson != null) {
+                if (priority != null) {
+                    rawJson.addProperty("priority", priority);
+                } else {
+                    rawJson.remove("priority");
+                }
+            }
+        }
+
+        private void setMinecraftArguments(@Nullable String minecraftArguments) {
+            this.minecraftArguments = minecraftArguments;
+            if (rawJson != null) {
+                if (minecraftArguments != null) {
+                    rawJson.addProperty("minecraftArguments", minecraftArguments);
+                } else {
+                    rawJson.remove("minecraftArguments");
+                }
+            }
+        }
+
+        private void setArguments(@Nullable Arguments arguments) {
+            this.arguments = arguments;
+            if (rawJson != null) {
+                if (arguments != null) {
+                    rawJson.add("arguments", JsonUtils.GSON.toJsonTree(arguments));
+                } else {
+                    rawJson.remove("arguments");
+                }
+            }
+        }
+
+        private void setMainClass(@Nullable String mainClass) {
+            this.mainClass = mainClass;
+            if (rawJson != null) {
+                if (mainClass != null) {
+                    rawJson.addProperty("mainClass", mainClass);
+                } else {
+                    rawJson.remove("mainClass");
+                }
+            }
+        }
+
+        private void setInheritsFrom(@Nullable String inheritsFrom) {
+            this.inheritsFrom = inheritsFrom;
+            if (rawJson != null) {
+                if (inheritsFrom != null) {
+                    rawJson.addProperty("inheritsFrom", inheritsFrom);
+                } else {
+                    rawJson.remove("inheritsFrom");
+                }
+            }
+        }
+
+        private void setJar(@Nullable GameInstanceID jar) {
+            this.jar = jar;
+            if (rawJson != null) {
+                if (jar != null) {
+                    rawJson.addProperty("jar", jar.toString());
+                } else {
+                    rawJson.remove("jar");
+                }
+            }
+        }
+
+        private void setAssetIndex(@Nullable AssetIndexInfo assetIndex) {
+            this.assetIndex = assetIndex;
+            if (rawJson != null) {
+                if (assetIndex != null) {
+                    rawJson.add("assetIndex", JsonUtils.GSON.toJsonTree(assetIndex));
+                } else {
+                    rawJson.remove("assetIndex");
+                }
+            }
+        }
+
+        private void setAssets(@Nullable String assets) {
+            this.assets = assets;
+            if (rawJson != null) {
+                if (assets != null) {
+                    rawJson.addProperty("assets", assets);
+                } else {
+                    rawJson.remove("assets");
+                }
+            }
+        }
+
+        private void setComplianceLevel(@Nullable Integer complianceLevel) {
+            this.complianceLevel = complianceLevel;
+            if (rawJson != null) {
+                if (complianceLevel != null) {
+                    rawJson.addProperty("complianceLevel", complianceLevel);
+                } else {
+                    rawJson.remove("complianceLevel");
+                }
+            }
+        }
+
+        private void setJavaVersion(@Nullable GameJavaVersion javaVersion) {
+            this.javaVersion = javaVersion;
+            if (rawJson != null) {
+                if (javaVersion != null) {
+                    rawJson.add("javaVersion", JsonUtils.GSON.toJsonTree(javaVersion));
+                } else {
+                    rawJson.remove("javaVersion");
+                }
+            }
+        }
+
+        private void setLibraries(@Nullable List<Library> libraries) {
+            this.libraries = libraries == null ? null : List.copyOf(libraries);
+            if (rawJson != null) {
+                if (this.libraries != null) {
+                    rawJson.add("libraries", JsonUtils.GSON.toJsonTree(this.libraries));
+                } else {
+                    rawJson.remove("libraries");
+                }
+            }
+        }
+
+        private void setCompatibilityRules(@Nullable List<CompatibilityRule> compatibilityRules) {
+            this.compatibilityRules = compatibilityRules == null ? null : List.copyOf(compatibilityRules);
+            if (rawJson != null) {
+                if (this.compatibilityRules != null) {
+                    rawJson.add("compatibilityRules", JsonUtils.GSON.toJsonTree(this.compatibilityRules));
+                } else {
+                    rawJson.remove("compatibilityRules");
+                }
+            }
+        }
+
+        private void setDownloads(@Nullable Map<DownloadType, DownloadInfo> downloads) {
+            this.downloads = downloads == null ? null : ImmutableSequencedMap.copyOf(downloads);
+            if (rawJson != null) {
+                if (this.downloads != null) {
+                    JsonObject downloadsObject = new JsonObject();
+                    for (Map.Entry<DownloadType, DownloadInfo> entry : this.downloads.entrySet()) {
+                        downloadsObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                    }
+                    rawJson.add("downloads", downloadsObject);
+                } else {
+                    rawJson.remove("downloads");
+                }
+            }
+        }
+
+        private void setLogging(@Nullable Map<DownloadType, LoggingInfo> logging) {
+            this.logging = logging == null ? null : ImmutableSequencedMap.copyOf(logging);
+            if (rawJson != null) {
+                if (this.logging != null) {
+                    JsonObject loggingObject = new JsonObject();
+                    for (Map.Entry<DownloadType, LoggingInfo> entry : this.logging.entrySet()) {
+                        loggingObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                    }
+                    rawJson.add("logging", loggingObject);
+                } else {
+                    rawJson.remove("logging");
+                }
+            }
+        }
+
+        private void setType(@Nullable ReleaseType type) {
+            this.type = type;
+            if (rawJson != null) {
+                if (type != null) {
+                    rawJson.addProperty("type", type.name());
+                } else {
+                    rawJson.remove("type");
+                }
+            }
+        }
+
+        private void setTime(@Nullable Instant time) {
+            this.time = time;
+            if (rawJson != null) {
+                if (time != null) {
+                    rawJson.addProperty("time", InstantTypeAdapter.serializeToString(time, ZoneOffset.UTC));
+                } else {
+                    rawJson.remove("time");
+                }
+            }
+        }
+
+        private void setReleaseTime(@Nullable Instant releaseTime) {
+            this.releaseTime = releaseTime;
+            if (rawJson != null) {
+                if (releaseTime != null) {
+                    rawJson.addProperty("releaseTime", InstantTypeAdapter.serializeToString(releaseTime, ZoneOffset.UTC));
+                } else {
+                    rawJson.remove("releaseTime");
+                }
+            }
+        }
+
+        private void setMinimumLauncherVersion(@Nullable Integer minimumLauncherVersion) {
+            this.minimumLauncherVersion = minimumLauncherVersion;
+            if (rawJson != null) {
+                if (minimumLauncherVersion != null) {
+                    rawJson.addProperty("minimumLauncherVersion", minimumLauncherVersion);
+                } else {
+                    rawJson.remove("minimumLauncherVersion");
+                }
+            }
+        }
+
+        private void setHidden(@Nullable Boolean hidden) {
+            this.hidden = hidden;
+            if (rawJson != null) {
+                if (hidden != null) {
+                    rawJson.addProperty("hidden", hidden);
+                } else {
+                    rawJson.remove("hidden");
+                }
+            }
+        }
+
+        private GameInstancePatch toPatch() {
+            return new GameInstancePatch(
+                    id,
+                    version,
+                    priority,
+                    minecraftArguments,
+                    arguments,
+                    mainClass,
+                    inheritsFrom,
+                    jar,
+                    assetIndex,
+                    assets,
+                    complianceLevel,
+                    javaVersion,
+                    libraries,
+                    compatibilityRules,
+                    downloads,
+                    logging,
+                    type,
+                    time,
+                    releaseTime,
+                    minimumLauncherVersion,
+                    hidden,
+                    rawJson);
+        }
     }
 
     public static GameInstancePatch fromJson(JsonObject json) throws JsonParseException {
@@ -385,7 +713,7 @@ public record GameInstancePatch(
                 }
                 case "downloads" -> {
                     if (value instanceof JsonObject object) {
-                        Map<DownloadType, DownloadInfo> map = new EnumMap<>(DownloadType.class);
+                        Map<DownloadType, DownloadInfo> map = new LinkedHashMap<>();
                         for (Map.Entry<String, JsonElement> downloadEntry : object.entrySet()) {
                             try {
                                 DownloadType downloadType = DownloadType.valueOf(downloadEntry.getKey());
@@ -393,12 +721,12 @@ public record GameInstancePatch(
                             } catch (IllegalArgumentException ignored) {
                             }
                         }
-                        downloads = Collections.unmodifiableMap(map);
+                        downloads = ImmutableSequencedMap.copyOf(map);
                     }
                 }
                 case "logging" -> {
                     if (value instanceof JsonObject object) {
-                        Map<DownloadType, LoggingInfo> map = new EnumMap<>(DownloadType.class);
+                        Map<DownloadType, LoggingInfo> map = new LinkedHashMap<>();
                         for (Map.Entry<String, JsonElement> loggingEntry : object.entrySet()) {
                             try {
                                 DownloadType downloadType = DownloadType.valueOf(loggingEntry.getKey());
@@ -406,7 +734,7 @@ public record GameInstancePatch(
                             } catch (IllegalArgumentException ignored) {
                             }
                         }
-                        logging = Collections.unmodifiableMap(map);
+                        logging = ImmutableSequencedMap.copyOf(map);
                     }
                 }
                 case "type" -> {
