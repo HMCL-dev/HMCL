@@ -113,7 +113,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                 if (item != null)
                     item.update();
             });
-            FXUtils.installFastTooltip(btnUpgrade, i18n("version.update"));
+            FXUtils.installFastTooltip(btnUpgrade, i18n("instance.update"));
             right.getChildren().add(btnUpgrade);
 
             this.btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
@@ -123,7 +123,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                     item.testGame();
             });
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test"));
+            FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch.test"));
             right.getChildren().add(btnLaunch);
 
             this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
@@ -191,14 +191,14 @@ public final class GameListCell extends ListCell<GameListItem> {
         JFXPopup popup = new JFXPopup(menu);
 
         menu.getContent().setAll(
-                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), item::testGame, popup),
-                new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), item::generateLaunchScript, popup),
+                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), item::testGame, popup),
+                new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), item::generateLaunchScript, popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.SETTINGS, i18n("version.manage.manage"), item::modifyGameSettings, popup),
+                new IconedMenuItem(SVG.SETTINGS, i18n("instance.manage.manage"), item::modifyGameSettings, popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), item::rename, popup),
-                new IconedMenuItem(SVG.FOLDER_COPY, i18n("version.manage.duplicate"), item::duplicate, popup),
-                new IconedMenuItem(SVG.DELETE, i18n("version.manage.remove"), item::remove, popup),
+                new IconedMenuItem(SVG.EDIT, i18n("instance.manage.rename"), item::rename, popup),
+                new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), item::duplicate, popup),
+                new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), item::remove, popup),
                 new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), item::export, popup),
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.game"), item::browse, popup));

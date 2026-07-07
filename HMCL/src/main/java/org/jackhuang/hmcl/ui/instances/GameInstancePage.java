@@ -317,25 +317,25 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 PopupMenu managementList = new PopupMenu();
                 JFXPopup managementPopup = new JFXPopup(managementList);
                 managementList.getContent().setAll(
-                        new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), control::testGame, managementPopup),
-                        new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), control::generateLaunchScript, managementPopup),
+                        new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), control::testGame, managementPopup),
+                        new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), control::generateLaunchScript, managementPopup),
                         new MenuSeparator(),
-                        new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), control::rename, managementPopup),
-                        new IconedMenuItem(SVG.FOLDER_COPY, i18n("version.manage.duplicate"), control::duplicate, managementPopup),
-                        new IconedMenuItem(SVG.DELETE, i18n("version.manage.remove"), control::remove, managementPopup),
+                        new IconedMenuItem(SVG.EDIT, i18n("instance.manage.rename"), control::rename, managementPopup),
+                        new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), control::duplicate, managementPopup),
+                        new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), control::remove, managementPopup),
                         new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), control::export, managementPopup),
                         new MenuSeparator(),
-                        new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
-                        new IconedMenuItem(null, i18n("version.manage.remove_assets"), control::clearAssets, managementPopup),
-                        new IconedMenuItem(null, i18n("version.manage.remove_libraries"), control::clearLibraries, managementPopup),
-                        new IconedMenuItem(null, i18n("version.manage.clean"), control::clearJunkFiles, managementPopup).addTooltip(i18n("version.manage.clean.tooltip"))
+                        new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
+                        new IconedMenuItem(null, i18n("instance.manage.remove_assets"), control::clearAssets, managementPopup),
+                        new IconedMenuItem(null, i18n("instance.manage.remove_libraries"), control::clearLibraries, managementPopup),
+                        new IconedMenuItem(null, i18n("instance.manage.clean"), control::clearJunkFiles, managementPopup).addTooltip(i18n("instance.manage.clean.tooltip"))
                 );
 
                 AdvancedListBox toolbar = new AdvancedListBox()
-                        .addNavigationDrawerItem(i18n("version.update"), SVG.UPDATE, control::updateGame, upgradeItem -> {
+                        .addNavigationDrawerItem(i18n("instance.update"), SVG.UPDATE, control::updateGame, upgradeItem -> {
                             upgradeItem.visibleProperty().bind(control.currentInstanceUpgradable);
                         })
-                        .addNavigationDrawerItem(i18n("version.launch.test"), SVG.ROCKET_LAUNCH, control::testGame)
+                        .addNavigationDrawerItem(i18n("instance.launch.test"), SVG.ROCKET_LAUNCH, control::testGame)
                         .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, null, browseMenuItem -> {
                             browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
                         })
@@ -349,7 +349,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             }
 
             control.state.bind(Bindings.createObjectBinding(() ->
-                            State.fromTitle(i18n("version.manage.manage.title", getSkinnable().getInstanceId()), -1),
+                            State.fromTitle(i18n("instance.manage.manage.title", getSkinnable().getInstanceId()), -1),
                     getSkinnable().instanceReference));
 
             //control.transitionPane.getStyleClass().add("gray-background");

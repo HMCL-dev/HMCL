@@ -99,7 +99,7 @@ public final class LauncherHelper {
         this.setting = repository.getEffectiveGameSettings(selectedInstanceId);
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
-        this.launchingStepsPane.setTitle(i18n("version.launch"));
+        this.launchingStepsPane.setTitle(i18n("instance.launch"));
     }
 
     private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
@@ -276,7 +276,7 @@ public final class LauncherHelper {
                     } else {
                         runLater(() -> {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Controllers.dialog(i18n("version.launch_script.success", FileUtils.getAbsolutePath(scriptFile)));
+                            Controllers.dialog(i18n("instance.launch_script.success", FileUtils.getAbsolutePath(scriptFile)));
                         });
                     }
                 }).withFakeProgress(
@@ -378,7 +378,7 @@ public final class LauncherHelper {
                                     message = StringUtils.getStackTrace(ex);
                                 }
                                 Controllers.dialog(message,
-                                        scriptFile == null ? i18n("launch.failed") : i18n("version.launch_script.failed"),
+                                        scriptFile == null ? i18n("launch.failed") : i18n("instance.launch_script.failed"),
                                         MessageType.ERROR);
                             }
                         }

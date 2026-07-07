@@ -119,8 +119,8 @@ public final class Instances {
     public static void deleteInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
         boolean isIndependent = repository.getRunDirectory(instanceId).toAbsolutePath().normalize()
                 .equals(repository.getInstanceRoot(instanceId).toAbsolutePath().normalize());
-        String message = isIndependent ? i18n("version.manage.remove.confirm.independent", instanceId) :
-                i18n("version.manage.remove.confirm.trash", instanceId, instanceId + "_removed");
+        String message = isIndependent ? i18n("instance.manage.remove.confirm.independent", instanceId) :
+                i18n("instance.manage.remove.confirm.trash", instanceId, instanceId + "_removed");
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");
@@ -128,7 +128,7 @@ public final class Instances {
             Task.supplyAsync(Schedulers.io(), () -> repository.removeInstanceFromDisk(instanceId))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null || !Boolean.TRUE.equals(result)) {
-                            Controllers.dialog(i18n("version.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                            Controllers.dialog(i18n("instance.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                         }
                     }).start();
         });
@@ -137,7 +137,7 @@ public final class Instances {
     }
 
     public static CompletableFuture<String> renameInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
-        return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
+        return Controllers.prompt(i18n("instance.manage.rename.message"), (newName, handler) -> {
             if (newName.equals(instanceId.toString())) {
                 handler.resolve();
                 return;
@@ -153,7 +153,7 @@ public final class Instances {
                             }
                         }).start();
             } else {
-                handler.reject(i18n("version.manage.rename.fail"));
+                handler.reject(i18n("instance.manage.rename.fail"));
             }
         }, instanceId.toString(),
             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
@@ -180,7 +180,7 @@ public final class Instances {
             return;
         }
 
-        Controllers.prompt(i18n("version.manage.duplicate.prompt"), (result, handler) -> {
+        Controllers.prompt(i18n("instance.manage.duplicate.prompt"), (result, handler) -> {
             handler.resolve();
 
             GameInstanceID instanceId = new GameInstanceID(result);
@@ -211,7 +211,7 @@ public final class Instances {
 
     public static void duplicateInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
         Controllers.prompt(
-                new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
+                new PromptDialogPane.Builder(i18n("instance.manage.duplicate.prompt"), (res, handler) -> {
                     String newInstanceName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
                     GameInstanceID newInstanceId = new GameInstanceID(newInstanceName);
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
@@ -228,11 +228,11 @@ public final class Instances {
                                 }
                             }).start();
                 })
-                        .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("version.manage.duplicate.confirm")))
+                        .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("instance.manage.duplicate.confirm")))
                         .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, instanceId.toString(),
                                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
                                 new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName))))
-                        .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("version.manage.duplicate.duplicate_save"), false)));
+                        .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("instance.manage.duplicate.duplicate_save"), false)));
     }
 
     public static void updateInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
@@ -242,7 +242,7 @@ public final class Instances {
     public static void updateGameAssets(HMCLGameRepository repository, GameInstanceID instanceId) {
         TaskExecutor executor = new GameAssetDownloadTask(repository.getDependency(), repository.getInstanceManifest(instanceId), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
                 .executor();
-        Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
+        Controllers.taskDialog(executor, i18n("instance.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
         executor.start();
     }
 
@@ -262,7 +262,7 @@ public final class Instances {
             FileChooser chooser = new FileChooser();
             if (Files.isDirectory(repository.getRunDirectory(instanceId)))
                 chooser.setInitialDirectory(repository.getRunDirectory(instanceId).toFile());
-            chooser.setTitle(i18n("version.launch_script.save"));
+            chooser.setTitle(i18n("instance.launch_script.save"));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                 chooser.getExtensionFilters().add(
                         new FileChooser.ExtensionFilter(i18n("extension.command"), "*.command")
@@ -339,11 +339,11 @@ public final class Instances {
         }
 
         if (unavailable) {
-            JFXButton gotoDownload = new JFXButton(i18n("version.empty.launch.goto_download"));
+            JFXButton gotoDownload = new JFXButton(i18n("instance.empty.launch.goto_download"));
             gotoDownload.getStyleClass().add("dialog-accept");
             gotoDownload.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
 
-            Controllers.confirmAction(i18n("version.empty.launch"), i18n("launch.failed"),
+            Controllers.confirmAction(i18n("instance.empty.launch"), i18n("launch.failed"),
                     MessageDialogPane.MessageType.ERROR,
                     gotoDownload,
                     null);

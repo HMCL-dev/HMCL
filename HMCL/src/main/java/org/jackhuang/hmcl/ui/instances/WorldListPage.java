@@ -282,7 +282,7 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
                 btnLaunch.visibleProperty().bind(page.supportQuickPlayProperty());
                 btnLaunch.managedProperty().bind(btnLaunch.visibleProperty());
                 right.getChildren().add(btnLaunch);
-                FXUtils.installFastTooltip(btnLaunch, i18n("version.launch"));
+                FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch"));
                 btnLaunch.setOnAction(event -> {
                     World world = getItem();
                     if (world != null)
@@ -356,12 +356,12 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
 
             if (supportQuickPlay) {
 
-                IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), () -> page.launch(world), popup);
+                IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch_and_enter_world"), () -> page.launch(world), popup);
                 launchItem.setDisable(worldLocked);
 
                 popupMenu.getContent().addAll(
                         launchItem,
-                        new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> page.generateLaunchScript(world), popup),
+                        new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), () -> page.generateLaunchScript(world), popup),
                         new MenuSeparator()
                 );
             }

@@ -233,15 +233,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     @Override
                     public void accept(@Nullable GameInstanceID currentGame) {
                         if (currentGame == null) {
-                            launchLabel.setText(i18n("version.launch.empty"));
+                            launchLabel.setText(i18n("instance.launch.empty"));
                             currentLabel.setText(null);
                             graphic.getChildren().setAll(launchLabel);
                             FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launchNoGame);
                             if (tooltip == null)
-                                tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
+                                tooltip = new Tooltip(i18n("instance.launch.empty.tooltip"));
                             FXUtils.installFastTooltip(launchButton, tooltip);
                         } else {
-                            launchLabel.setText(i18n("version.launch"));
+                            launchLabel.setText(i18n("instance.launch"));
                             currentLabel.setText(currentGame.toString());
                             graphic.getChildren().setAll(launchLabel, currentLabel);
                             FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launch);
@@ -264,7 +264,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     -menuButton.getHeight(),
                     repository, versions
             ));
-            FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
+            FXUtils.installFastTooltip(menuButton, i18n("instance.switch"));
             menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
 
             EventHandler<MouseEvent> secondaryClickHandle = event -> {
@@ -362,7 +362,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                                 MessageDialogPane.MessageType.WARNING);
                     }
                 });
-        Controllers.taskDialog(task, i18n("version.launch.empty.installing"), TaskCancellationAction.NORMAL);
+        Controllers.taskDialog(task, i18n("instance.launch.empty.installing"), TaskCancellationAction.NORMAL);
     }
 
     private void onUpgrade() {

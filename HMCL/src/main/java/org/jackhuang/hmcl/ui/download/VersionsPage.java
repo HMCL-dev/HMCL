@@ -237,28 +237,28 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                     switch (versionType) {
                         case RELEASE -> {
-                            twoLineListItem.addTag(i18n("version.game.release"));
+                            twoLineListItem.addTag(i18n("instance.game.release"));
                             imageView.setImage(GameInstanceIconType.GRASS.getIcon());
                         }
                         case SNAPSHOT, PENDING, UNOBFUSCATED -> {
                             if (versionType == RemoteVersion.Type.SNAPSHOT
                                     && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
-                                twoLineListItem.addTag(i18n("version.game.april_fools"));
+                                twoLineListItem.addTag(i18n("instance.game.april_fools"));
                                 imageView.setImage(GameInstanceIconType.APRIL_FOOLS.getIcon());
                             } else {
-                                twoLineListItem.addTag(i18n("version.game.snapshot"));
+                                twoLineListItem.addTag(i18n("instance.game.snapshot"));
                                 imageView.setImage(GameInstanceIconType.COMMAND.getIcon());
                             }
                         }
                         default -> {
-                            twoLineListItem.addTag(i18n("version.game.old"));
+                            twoLineListItem.addTag(i18n("instance.game.old"));
                             imageView.setImage(GameInstanceIconType.CRAFT_TABLE.getIcon());
                         }
                     }
 
                     switch (NativePatcher.checkSupportedStatus(gameVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION)) {
-                        case UNTESTED -> twoLineListItem.addTagWarning(i18n("version.game.support_status.untested"));
-                        case UNSUPPORTED -> twoLineListItem.addTagWarning(i18n("version.game.support_status.unsupported"));
+                        case UNTESTED -> twoLineListItem.addTagWarning(i18n("instance.game.support_status.untested"));
+                        case UNSUPPORTED -> twoLineListItem.addTagWarning(i18n("instance.game.support_status.unsupported"));
                     }
                 } else {
                     GameInstanceIconType iconType;
@@ -333,7 +333,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                 {
                     nameField = new JFXTextField();
-                    nameField.setPromptText(i18n("version.search.prompt"));
+                    nameField.setPromptText(i18n("instance.search.prompt"));
                     nameField.textProperty().addListener(o -> updateList());
 
                     if ("game".equals(control.libraryId)) {
@@ -353,7 +353,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         );
                         categoryField.getSelectionModel().select(VersionTypeFilter.ALL);
                     }
-                    categoryField.setConverter(stringConverter(type -> i18n("version.game." + type.name().toLowerCase(Locale.ROOT))));
+                    categoryField.setConverter(stringConverter(type -> i18n("instance.game." + type.name().toLowerCase(Locale.ROOT))));
                     categoryField.getSelectionModel().selectedItemProperty().addListener(o -> updateList());
 
                     JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
@@ -361,13 +361,13 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                     if (control.versionList.hasType()) {
                         searchPane.addRow(rowIndex++,
-                                new Label(i18n("version.search")), nameField,
-                                new Label(i18n("version.game.type")), categoryField,
+                                new Label(i18n("instance.search")), nameField,
+                                new Label(i18n("instance.game.type")), categoryField,
                                 refreshButton
                         );
                     } else {
                         searchPane.addRow(rowIndex++,
-                                new Label(i18n("version.search")), nameField,
+                                new Label(i18n("instance.search")), nameField,
                                 refreshButton
                         );
                     }

@@ -70,7 +70,7 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("version.manage")));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("instance.manage")));
     /// Navigation drawer items for configured game directories.
     @SuppressWarnings("FieldCanBeLocal")
     private final ObservableList<GameDirectoryListItem> gameDirectoryListItems;
@@ -157,7 +157,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             sourceList.setAll(versionItems);
 
             if (versionItems.isEmpty()) {
-                setFailedReason(i18n("version.empty.hint"));
+                setFailedReason(i18n("instance.empty.hint"));
             }
 
             setLoading(false);

@@ -283,7 +283,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
                         Bindings.bindContent(instancesComboBox.getItems(), control.instances);
                         selectedItemPropertyFor(instancesComboBox).bindBidirectional(control.selectedInstance);
 
-                        searchPane.add(new Label(i18n("version")), columns++, rowIndex);
+                        searchPane.add(new Label(i18n("instance")), columns++, rowIndex);
                         searchPane.add(lastNode = instancesComboBox, columns++, rowIndex);
                     }
 

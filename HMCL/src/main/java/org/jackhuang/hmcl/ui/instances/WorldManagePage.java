@@ -233,7 +233,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
             {
                 if (getSkinnable().supportQuickPlay) {
-                    toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty()));
+                    toolbar.addNavigationDrawerItem(i18n("instance.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty()));
                 }
 
                 if (ChunkBaseApp.isSupported(getSkinnable().world)) {
@@ -266,8 +266,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
                     if (getSkinnable().supportQuickPlay) {
                         managePopupMenu.getContent().addAll(
-                                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), () -> getSkinnable().launch(), managePopup),
-                                new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> getSkinnable().generateLaunchScript(), managePopup),
+                                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch"), () -> getSkinnable().launch(), managePopup),
+                                new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), () -> getSkinnable().generateLaunchScript(), managePopup),
                                 new MenuSeparator()
                         );
                     }

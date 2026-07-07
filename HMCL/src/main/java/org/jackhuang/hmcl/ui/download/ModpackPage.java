@@ -61,7 +61,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
         {
             var archiveNamePane = new LinePane();
             {
-                archiveNamePane.setTitle(i18n("version.name"));
+                archiveNamePane.setTitle(i18n("instance.name"));
 
                 txtModpackName = new JFXTextField();
                 txtModpackName.setPrefWidth(300);

@@ -59,15 +59,15 @@ public class GameAdvancedListItem extends AdvancedListItem {
         }
         if (instanceId != null && repository != null) {
             if (repository.hasInstance(instanceId)) {
-                setTitle(i18n("version.manage.manage"));
+                setTitle(i18n("instance.manage.manage"));
                 setSubtitle(instanceId.toString());
                 imageContainer.setImage(repository.getInstanceIconImage(instanceId));
                 return;
             }
         }
 
-        setTitle(i18n("version.empty"));
-        setSubtitle(i18n("version.empty.add"));
+        setTitle(i18n("instance.empty"));
+        setSubtitle(i18n("instance.empty.add"));
         imageContainer.setImage(GameInstanceIconType.DEFAULT.getIcon());
     }
 }

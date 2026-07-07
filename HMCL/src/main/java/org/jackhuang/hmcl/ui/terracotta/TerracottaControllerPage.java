@@ -210,7 +210,7 @@ public class TerracottaControllerPage extends StackPane {
                                 i18n("terracotta.status.waiting.host.launch.desc"),
                                 i18n("terracotta.status.waiting.host.launch.title"),
                                 MessageDialogPane.MessageType.QUESTION
-                        ).addAction(i18n("version.launch"), () -> {
+                        ).addAction(i18n("instance.launch"), () -> {
                             var repository = GameDirectoryManager.getSelectedRepository();
                             Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
                                 launcherHelper.setKeep();

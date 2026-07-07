@@ -77,7 +77,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
 
         AdvancedListBox toolbar = new AdvancedListBox()
                 .add(accountListItem)
-                .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
+                .addNavigationDrawerItem(i18n("instance.launch"), SVG.ROCKET_LAUNCH, () -> {
                     var repository = GameDirectoryManager.getSelectedRepository();
                     Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
                         launcherHelper.setKeep();
@@ -85,7 +85,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                     });
                 }, item -> {
                     instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(),
-                            instanceName -> item.setSubtitle(instanceName != null ? instanceName.toString() : i18n("version.empty"))
+                            instanceName -> item.setSubtitle(instanceName != null ? instanceName.toString() : i18n("instance.empty"))
                     );
 
                     MainPage mainPage = Controllers.getRootPage().getMainPage();

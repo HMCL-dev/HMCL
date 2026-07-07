@@ -174,7 +174,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
             gameItem.setLeftIcon(SVG.FORMAT_LIST_BULLETED);
-            gameItem.setTitle(i18n("version.manage"));
+            gameItem.setTitle(i18n("instance.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
             FXUtils.onSecondaryButtonClicked(gameItem, () -> showGameListPopupMenu(gameItem));
 
@@ -229,7 +229,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             AdvancedListBox sideBar = new AdvancedListBox()
                     .startCategory(i18n("account").toUpperCase(Locale.ROOT))
                     .add(accountListItem)
-                    .startCategory(i18n("version").toUpperCase(Locale.ROOT))
+                    .startCategory(i18n("instance").toUpperCase(Locale.ROOT))
                     .add(gameListItem)
                     .add(gameItem)
                     .add(downloadItem)
