@@ -64,7 +64,7 @@ public final class LowerCaseEnumTypeAdapter<E extends Enum<E>> extends TypeAdapt
     private LowerCaseEnumTypeAdapter(Class<E> enumClass) {
         var lowercaseToConstant = new HashMap<String, E>();
         for (E constant : enumClass.getEnumConstants()) {
-            lowercaseToConstant.put(constant.name().toLowerCase(), constant);
+            lowercaseToConstant.put(constant.name().toLowerCase(Locale.ROOT), constant);
         }
         this.lowercaseToConstant = Map.copyOf(lowercaseToConstant);
     }
