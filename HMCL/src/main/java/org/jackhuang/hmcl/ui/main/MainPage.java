@@ -21,10 +21,12 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -254,14 +256,33 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
-            menuButton.setOnAction(e -> GameListPopupMenu.show(
+            menuButton.setOnAction(e -> {
+                menuButton.arm(); 
+                menuButton.disarm();
+
+                JFXPopup popup = GameListPopupMenu.showAndGetPopup(
                     menuButton,
                     JFXPopup.PopupVPosition.BOTTOM,
                     JFXPopup.PopupHPosition.RIGHT,
                     0,
                     -menuButton.getHeight(),
                     repository, versions
-            ));
+                );
+
+                if (popup != null) {
+
+                    RotateTransition rotateOpen = new RotateTransition(Duration.millis(200), menuButton.getGraphic());
+                    rotateOpen.setToAngle(-180);
+                    rotateOpen.play();
+
+                    popup.setOnHidden(windowEvent -> {
+
+                        RotateTransition rotateClose = new RotateTransition(Duration.millis(200), menuButton.getGraphic());
+                        rotateClose.setToAngle(0);
+                        rotateClose.play();
+                    });
+                }
+            });
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
 
