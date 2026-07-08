@@ -55,6 +55,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         super(skinnable);
 
         BorderPane root = new BorderPane();
+        root.setPickOnBounds(false);
         RipplerContainer rootRippler = new RipplerContainer(root);
 
         rootRippler.setPickOnBounds(true);
