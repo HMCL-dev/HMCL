@@ -272,13 +272,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
                     RotateTransition rotateOpen = new RotateTransition(Duration.millis(200), menuButton.getGraphic());
                     rotateOpen.setToAngle(-180);
-                    rotateOpen.play();
+                    FXUtils.playAnimation(menuButton.getGraphic(), "arrow-rotation", rotateOpen);
 
                     popup.setOnHidden(windowEvent -> {
-
                         RotateTransition rotateClose = new RotateTransition(Duration.millis(200), menuButton.getGraphic());
                         rotateClose.setToAngle(0);
-                        rotateClose.play();
+                        FXUtils.playAnimation(menuButton.getGraphic(), "arrow-rotation", rotateClose);
                     });
                 }
             });

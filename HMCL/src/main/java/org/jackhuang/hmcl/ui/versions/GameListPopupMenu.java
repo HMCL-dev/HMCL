@@ -51,13 +51,7 @@ public final class GameListPopupMenu extends StackPane {
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY,
                             HMCLGameRepository repository, List<Version> versions) {
-        GameListPopupMenu menu = new GameListPopupMenu();
-        menu.getItems().setAll(versions.stream()
-                .filter(it -> repository.hasVersion(it.getId()))
-                .map(it -> new GameItem(repository, it.getId()))
-                .toList());
-        JFXPopup popup = new JFXPopup(menu);
-        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
+        showAndGetPopup(owner, vAlign, hAlign, initOffsetX, initOffsetY, repository, versions);
     }
 
     public static JFXPopup showAndGetPopup(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
