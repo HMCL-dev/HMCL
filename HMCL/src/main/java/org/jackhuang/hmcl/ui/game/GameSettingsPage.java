@@ -430,6 +430,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             memorySelectedValue.addListener((observable, oldValue, newValue) ->
                     memorySublist.setDescription(getMemoryAllocationDisplayName(newValue)));
             memorySublist.setDescription(getMemoryAllocationDisplayName(memorySelectedValue.get()));
+            bindMemorySelectedValue(memorySelectedValue);
 
             // Launcher Visibility Setting
             var launcherVisibilityPane = createInheritableButton(
@@ -1832,6 +1833,86 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         if (newParentProperty != null) {
             newParentProperty.addListener(listener);
         }
+    }
+
+    /// Keeps a listener attached to the current instance's parent preset setting property.
+    private <T extends @UnknownNullability Object> void updateParentSettingPropertyListener(
+            @Nullable GameSettings setting,
+            ObjectProperty<@Nullable SettingProperty<T>> activeParentProperty,
+            Function<GameSettings, ? extends SettingProperty<T>> propertyGetter,
+            InvalidationListener listener) {
+        SettingProperty<T> oldParentProperty = activeParentProperty.get();
+        SettingProperty<T> newParentProperty = setting instanceof GameSettings.Instance instance
+                ? propertyGetter.apply(getEffectiveParentGameSettings(instance))
+                : null;
+        if (oldParentProperty == newParentProperty) {
+            return;
+        }
+
+        if (oldParentProperty != null) {
+            oldParentProperty.removeListener(listener);
+        }
+        activeParentProperty.set(newParentProperty);
+        if (newParentProperty != null) {
+            newParentProperty.addListener(listener);
+        }
+    }
+
+    /// Binds the memory sublist description source to the effective automatic memory setting.
+    private void bindMemorySelectedValue(ObjectProperty<Boolean> memorySelectedValue) {
+        ObjectProperty<@Nullable SettingProperty<Boolean>> activeAutoMemoryProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<Boolean>> activeParentAutoMemoryProperty = new SimpleObjectProperty<>();
+        final Holder<InvalidationListener> refreshHolder = new Holder<>();
+
+        InvalidationListener refresh = observable -> {
+            S setting = currentSetting.get();
+            updateParentSettingPropertyListener(
+                    setting,
+                    activeParentAutoMemoryProperty,
+                    GameSettings::autoMemoryProperty,
+                    refreshHolder.value);
+            if (setting == null) {
+                memorySelectedValue.set(true);
+                return;
+            }
+
+            memorySelectedValue.set(resolveEffectiveSetting(setting)
+                    .get(GameSettings::autoMemoryProperty));
+        };
+        InvalidationListener weakRefresh = holder.weak(refresh);
+        refreshHolder.value = weakRefresh;
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(weakRefresh);
+            }
+
+            SettingProperty<Boolean> oldAutoMemoryProperty = activeAutoMemoryProperty.get();
+            if (oldAutoMemoryProperty != null) {
+                oldAutoMemoryProperty.removeListener(weakRefresh);
+            }
+
+            SettingProperty<Boolean> newAutoMemoryProperty = newValue != null
+                    ? newValue.autoMemoryProperty()
+                    : null;
+            activeAutoMemoryProperty.set(newAutoMemoryProperty);
+            if (newValue != null) {
+                newValue.addListener(weakRefresh);
+            }
+            if (newAutoMemoryProperty != null) {
+                newAutoMemoryProperty.addListener(weakRefresh);
+            }
+            refresh.invalidated(newValue);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            SettingProperty<Boolean> autoMemoryProperty = setting.autoMemoryProperty();
+            activeAutoMemoryProperty.set(autoMemoryProperty);
+            setting.addListener(weakRefresh);
+            autoMemoryProperty.addListener(weakRefresh);
+        }
+        refresh.invalidated(setting);
     }
 
     /// Binds a radio choice list to an inheritable setting property.
