@@ -1390,27 +1390,27 @@
 }
 
 .log-toggle.fatal {
-    -fx-background-color: -fixed-log-fatal;
+    -fx-background-color: -fixed-log-fatal-background;
 }
 
 .log-toggle.error {
-    -fx-background-color: -fixed-log-error;
+    -fx-background-color: -fixed-log-error-background;
 }
 
 .log-toggle.warn {
-    -fx-background-color: -fixed-log-warn;
+    -fx-background-color: -fixed-log-warn-background;
 }
 
 .log-toggle.info {
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-toggle.debug {
-    -fx-background-color: -fixed-log-debug;
+    -fx-background-color: -fixed-log-debug-background;
 }
 
 .log-toggle.trace {
-    -fx-background-color: -fixed-log-trace;
+    -fx-background-color: -fixed-log-trace-background;
 }
 
 .log-window-list-cell:selected {
@@ -1418,7 +1418,7 @@
 }
 
 .log-window {
-    -fx-background-color: -monet-surface-container;
+    -fx-background-color: -fixed-log-background;
 }
 
 .log-window .scroll-bar .thumb {
@@ -1441,36 +1441,36 @@
 
 .log-window-list-cell:fatal {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-fatal;
+    -fx-background-color: -fixed-log-fatal-background;
 }
 
 .log-window-list-cell:error {
-    -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-error;
+    -fx-text-fill: -fixed-log-error-text-fill;
+    -fx-background-color: -fixed-log-error-background;
 }
 
 .log-window-list-cell:warn {
-    -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-warn;
+    -fx-text-fill: -fixed-log-warn-text-fill;
+    -fx-background-color: -fixed-log-warn-background;
 }
 
 .log-window-list-cell:info {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-window-list-cell {
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-window-list-cell:debug {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-debug;
+    -fx-background-color: -fixed-log-debug-background;
 }
 
 .log-window-list-cell:trace {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-trace;
+    -fx-background-color: -fixed-log-trace-background;
 }
 
 .log-window-list-cell:selected {
