@@ -338,6 +338,10 @@ public class InstallerItem extends Control {
                     throw new AssertionError("Unknown state type: " + state.getClass());
                 }
             }, control.resolvedStateProperty));
+            statusLabel.styleProperty().bind(Bindings.createStringBinding(() -> {
+                State state = control.resolvedStateProperty.get();
+                return (state instanceof IncompatibleState) ? "-fx-opacity: 0.6;" : "-fx-opacity: 1.0;";
+            }, control.resolvedStateProperty));
             BorderPane.setMargin(statusLabel, new Insets(0, 0, 0, 8));
             BorderPane.setAlignment(statusLabel, Pos.CENTER_LEFT);
 
