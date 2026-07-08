@@ -106,6 +106,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
     private boolean updatingParentSetting = false;
+    private final ObjectProperty<GameSettings.@Nullable Preset> activeParentSetting =
+            new SimpleObjectProperty<>(this, "activeParentSetting");
 
     // GUI
     private final ScrollPane scrollPane;
@@ -132,6 +134,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         assert settingType == GameSettings.Preset.class || settingType == GameSettings.Instance.class;
 
         this.isPresetSetting = settingType == GameSettings.Preset.class;
+        if (!isPresetSetting) {
+            bindActiveParentSetting();
+        }
 
         this.scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
@@ -273,6 +278,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
                 refreshJavaSettings();
             });
+            activeParentSetting.addListener(weakJavaListener);
             javaItem.selectedChoiceProperty().addListener((observable, oldChoice, newChoice) -> {
                 S setting = currentSetting.get();
                 if (setting == null || updatingSelectedJava) {
@@ -417,7 +423,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         maxMemoryButton,
                         GameSettingsPage::updateInheritanceButton,
                         holder,
-                        this::getEffectiveParentGameSettings);
+                        this::getEffectiveParentGameSettings,
+                        activeParentSetting);
 
                 return List.of(memoryItem, memoryStatusPane);
             });
@@ -893,6 +900,39 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         return SettingsManager.gameSettingsPresets().getPreset(id);
     }
 
+    /// Keeps [#activeParentSetting] synchronized with the current instance's resolved parent preset.
+    private void bindActiveParentSetting() {
+        InvalidationListener refresh = observable -> refreshActiveParentSetting();
+        InvalidationListener weakRefresh = holder.weak(refresh);
+
+        getAvailableParentPresets().addListener(weakRefresh);
+        SettingsManager.settings().defaultGameSettingsPresetProperty().addListener(weakRefresh);
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null) {
+                oldValue.removeListener(weakRefresh);
+            }
+
+            if (newValue != null) {
+                newValue.addListener(weakRefresh);
+            }
+
+            refreshActiveParentSetting();
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null) {
+            setting.addListener(weakRefresh);
+        }
+        refreshActiveParentSetting();
+    }
+
+    /// Refreshes the current instance's resolved parent preset.
+    private void refreshActiveParentSetting() {
+        activeParentSetting.set(currentSetting.get() instanceof GameSettings.Instance instance
+                ? getEffectiveParentGameSettings(instance)
+                : null);
+    }
+
     /// Adds the title-line inheritance button for the Java selection sublist.
     private void bindJavaInheritanceButton(ComponentSublist sublist) {
         if (isPresetSetting) {
@@ -1046,7 +1086,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 this::createInheritanceButton,
                 GameSettingsPage::updateInheritanceButton,
                 holder,
-                this::getEffectiveParentGameSettings);
+                this::getEffectiveParentGameSettings,
+                activeParentSetting);
     }
 
     /// Binds an integer text field to a setting property with independent override state.
@@ -1063,7 +1104,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 this::createInheritanceButton,
                 GameSettingsPage::updateInheritanceButton,
                 holder,
-                this::getEffectiveParentGameSettings);
+                this::getEffectiveParentGameSettings,
+                activeParentSetting);
     }
 
     /// Binds the windowed resolution selector to the width and height settings.
@@ -1106,6 +1148,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
         InvalidationListener weakPropertyListener = holder.weak(propertyListener);
         refreshHolder.value = weakPropertyListener;
+        activeParentSetting.addListener(weakPropertyListener);
 
         ChangeListener<@Nullable Boolean> focusedListener = (observable, oldValue, newValue) -> {
             if (!newValue) {
@@ -1449,6 +1492,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
         InvalidationListener weakRefresh = holder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        activeParentSetting.addListener(weakRefresh);
 
         textProperty.addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -1558,6 +1602,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
         InvalidationListener weakRefresh = holder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        activeParentSetting.addListener(weakRefresh);
 
         textProperty.addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -1741,6 +1786,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
         InvalidationListener weakRefresh = holder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        activeParentSetting.addListener(weakRefresh);
 
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             GameSettings setting = currentSetting.get();
@@ -1881,6 +1927,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
         InvalidationListener weakRefresh = holder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        activeParentSetting.addListener(weakRefresh);
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
@@ -1955,6 +2002,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
         InvalidationListener weakPropertyListener = holder.weak(propertyListener);
         refreshHolder.value = weakPropertyListener;
+        activeParentSetting.addListener(weakPropertyListener);
 
         ChangeListener<@Nullable T> itemListener = (observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -2066,6 +2114,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
         InvalidationListener weakPropertyListener = holder.weak(propertyListener);
         refreshHolder.value = weakPropertyListener;
+        activeParentSetting.addListener(weakPropertyListener);
 
         item.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -2169,6 +2218,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
         InvalidationListener weakPropertyListener = holder.weak(propertyListener);
         refreshHolder.value = weakPropertyListener;
+        activeParentSetting.addListener(weakPropertyListener);
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
@@ -2253,7 +2303,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isPresetSetting);
 
-        IndependentSettingBinder.bindToggleButton(currentSetting, button, propertyGetter, holder, this::getEffectiveParentGameSettings);
+        IndependentSettingBinder.bindToggleButton(
+                currentSetting,
+                button,
+                propertyGetter,
+                holder,
+                this::getEffectiveParentGameSettings,
+                activeParentSetting);
         return button;
     }
 
@@ -2304,6 +2360,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
         InvalidationListener weakRefresh = holder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        activeParentSetting.addListener(weakRefresh);
 
         button.valueProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -2409,6 +2466,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         };
         InvalidationListener weakRefresh = holder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        activeParentSetting.addListener(weakRefresh);
 
         button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
             InheritableProperty<Boolean> property = activeProperty.get();

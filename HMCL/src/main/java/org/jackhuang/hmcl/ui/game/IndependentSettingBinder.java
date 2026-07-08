@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -67,7 +68,8 @@ final class IndependentSettingBinder {
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             WeakListenerHolder listenerHolder,
-            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
+            Observable parentSettingsInvalidation) {
         ObjectProperty<@Nullable SettingProperty<String>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -107,6 +109,7 @@ final class IndependentSettingBinder {
         };
         InvalidationListener weakRefresh = listenerHolder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        parentSettingsInvalidation.addListener(weakRefresh);
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -164,7 +167,8 @@ final class IndependentSettingBinder {
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             WeakListenerHolder listenerHolder,
-            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
+            Observable parentSettingsInvalidation) {
         ObjectProperty<@Nullable SettingProperty<Integer>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<Integer>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -205,6 +209,7 @@ final class IndependentSettingBinder {
         };
         InvalidationListener weakRefresh = listenerHolder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        parentSettingsInvalidation.addListener(weakRefresh);
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -269,7 +274,8 @@ final class IndependentSettingBinder {
             @Nullable JFXButton maxMemoryButton,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             WeakListenerHolder listenerHolder,
-            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
+            Observable parentSettingsInvalidation) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeAutoMemoryProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<Integer>> activeMaxMemoryProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeParentAutoMemoryProperty = new SimpleObjectProperty<>();
@@ -327,6 +333,7 @@ final class IndependentSettingBinder {
         };
         InvalidationListener weakRefresh = listenerHolder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        parentSettingsInvalidation.addListener(weakRefresh);
 
         choiceList.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -494,7 +501,8 @@ final class IndependentSettingBinder {
             LineInheritableToggleButton button,
             Function<GameSettings, SettingProperty<Boolean>> propertyGetter,
             WeakListenerHolder listenerHolder,
-            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
+            Observable parentSettingsInvalidation) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -528,6 +536,7 @@ final class IndependentSettingBinder {
         };
         InvalidationListener weakRefresh = listenerHolder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        parentSettingsInvalidation.addListener(weakRefresh);
 
         button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
