@@ -105,8 +105,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                         String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
                         controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, repository, downloadProvider));
                     } else {
-                        Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
-                                i18n("install.change_version"), controller::onFinish, controller::onCancel);
+                        Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()), i18n("install.change_version"), controller::onFinish, controller::onCancel);
                     }
                 });
             default:
@@ -133,10 +132,8 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                 ResponseCodeException rce = (ResponseCodeException) exception.getCause();
                 int responseCode = rce.getResponseCode();
                 String uri = rce.getUri();
-                if (responseCode == 404)
-                    message += i18n("download.code.404", uri);
-                else
-                    message += i18n("download.failed", uri, responseCode);
+                if (responseCode == 404) message += i18n("download.code.404", uri);
+                else message += i18n("download.failed", uri, responseCode);
             } else {
                 message += StringUtils.getStackTrace(exception.getCause());
             }
@@ -158,11 +155,11 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         } else if (exception instanceof UnsupportedInstallationException) {
             switch (((UnsupportedInstallationException) exception).getReason()) {
                 case UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2 ->
-                        Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
                 case UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE ->
-                        Controllers.dialog(i18n("install.failed.cleanroom_forge"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("install.failed.cleanroom_forge"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
                 default ->
-                        Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
             }
         } else if (exception instanceof DefaultDependencyManager.UnsupportedLibraryInstallerException) {
             Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
