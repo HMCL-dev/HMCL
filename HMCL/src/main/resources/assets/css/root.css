@@ -448,16 +448,24 @@
 }
 
 .launch-pane > .jfx-button.launch-button {
-    -fx-max-width: 207px;
-    -fx-min-width: 207px;
+    -fx-max-width: 200px;
+    -fx-min-width: 200px;
     -fx-border-width: 0 3px 0 0;
-    -fx-border-color: -monet-on-surface-variant;
+    -fx-border-color: linear-gradient(
+        to bottom, 
+        transparent 0%, 
+        transparent 20%, 
+        -monet-on-surface-variant 20%,
+        -monet-on-surface-variant 80%,
+        transparent 80%, 
+        transparent 100%
+    );
     -fx-background-radius: 4px 0 0 4px;
 }
 
 .launch-pane > .jfx-button.menu-button {
-    -fx-max-width: 20px;
-    -fx-min-width: 20px;
+    -fx-max-width: 27px;
+    -fx-min-width: 27px;
     -fx-font-size: 15px;
     -fx-background-radius: 0 4px 4px 0;
 }
