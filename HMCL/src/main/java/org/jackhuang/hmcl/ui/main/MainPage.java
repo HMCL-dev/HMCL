@@ -256,9 +256,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
             menuButton.setOnAction(e -> {
-                menuButton.arm(); 
-                menuButton.disarm();
-
                 JFXPopup popup = GameListPopupMenu.showAndGetPopup(
                     menuButton,
                     JFXPopup.PopupVPosition.BOTTOM,
@@ -269,13 +266,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 );
 
                 if (popup != null) {
-
-                    RotateTransition rotateOpen = new RotateTransition(Duration.millis(200), menuButton.getGraphic());
+                    Duration duration = AnimationUtils.isAnimationEnabled() ? Duration.millis(200) : Duration.ONE;
+                    RotateTransition rotateOpen = new RotateTransition(duration, menuButton.getGraphic());
                     rotateOpen.setToAngle(-180);
                     FXUtils.playAnimation(menuButton.getGraphic(), "arrow-rotation", rotateOpen);
-
+                    
                     popup.setOnHidden(windowEvent -> {
-                        RotateTransition rotateClose = new RotateTransition(Duration.millis(200), menuButton.getGraphic());
+                        RotateTransition rotateClose = new RotateTransition(duration, menuButton.getGraphic());
                         rotateClose.setToAngle(0);
                         FXUtils.playAnimation(menuButton.getGraphic(), "arrow-rotation", rotateClose);
                     });
