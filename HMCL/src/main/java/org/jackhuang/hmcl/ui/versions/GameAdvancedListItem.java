@@ -49,20 +49,22 @@ public class GameAdvancedListItem extends AdvancedListItem {
         AdvancedListItem.setAlignment(imageContainer, Pos.CENTER);
         setLeftGraphic(imageContainer);
 
-        holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), this::loadVersion));
+        holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), it -> this.loadVersion()));
     }
 
-    private void loadVersion(String version) {
+    private void loadVersion() {
+        String version = GameDirectoryManager.getSelectedInstance();
+
         boolean repositoryChanged = GameDirectoryManager.getSelectedRepository() != repository;
         if (repositoryChanged) {
             repository = GameDirectoryManager.getSelectedRepository();
             onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
-                this.loadVersion(repository.getSelectedInstance());
+                this.loadVersion();
             });
 
             if (!repository.isLoaded()) {
                 onRefreshedVersionsListener = EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
-                        .registerWeak(event -> loadVersion(GameDirectoryManager.getSelectedInstance()));
+                        .registerWeak(event -> loadVersion());
                 return;
             }
         }
