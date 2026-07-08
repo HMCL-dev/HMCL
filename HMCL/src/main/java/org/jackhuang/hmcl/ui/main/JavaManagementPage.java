@@ -301,7 +301,8 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             if (empty || item == null) {
                 setGraphic(null);
             } else {
-                label.setText(String.valueOf(item.getParsedVersion()));
+                int parsedVersion = item.getParsedVersion();
+                label.setText(parsedVersion >= 0 ? String.valueOf(parsedVersion) : "?");
 
                 content.setTitle((item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
