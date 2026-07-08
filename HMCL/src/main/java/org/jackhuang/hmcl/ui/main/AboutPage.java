@@ -137,10 +137,12 @@ public final class AboutPage extends SpinnerPane {
                 if (obj.has("image")) {
                     JsonElement image = obj.get("image");
                     if (image.isJsonPrimitive()) {
-                        var imageView = new ImageContainer(32,  32);
+                        var imageView = new ImageContainer(32, 32);
                         imageView.setImage(loadImage(image.getAsString()));
                         imageView.setMouseTransparent(true);
 
+
+                        button.setLeading(imageView);
                     } else if (image.isJsonObject()) {
                         holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> button.setLeading(darkMode
                                 ? loadImage(image.getAsJsonObject().get("dark").getAsString())
