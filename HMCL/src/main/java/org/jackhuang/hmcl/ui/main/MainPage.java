@@ -30,6 +30,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
@@ -266,16 +267,24 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 );
 
                 if (popup != null) {
-                    Duration duration = AnimationUtils.isAnimationEnabled() ? Duration.millis(200) : Duration.ONE;
-                    RotateTransition rotateOpen = new RotateTransition(duration, menuButton.getGraphic());
-                    rotateOpen.setToAngle(-180);
-                    FXUtils.playAnimation(menuButton.getGraphic(), "arrow-rotation", rotateOpen);
-                    
-                    popup.setOnHidden(windowEvent -> {
-                        RotateTransition rotateClose = new RotateTransition(duration, menuButton.getGraphic());
-                        rotateClose.setToAngle(0);
-                        FXUtils.playAnimation(menuButton.getGraphic(), "arrow-rotation", rotateClose);
-                    });
+                    Node graphic = menuButton.getGraphic();
+                    if (graphic != null) {
+                        if (AnimationUtils.isAnimationEnabled()) {
+                            Duration duration = Duration.millis(200);
+                            RotateTransition rotateOpen = new RotateTransition(duration, graphic);
+                            rotateOpen.setToAngle(-180);
+                            FXUtils.playAnimation(graphic, "arrow-rotation", rotateOpen);
+
+                            popup.setOnHidden(windowEvent -> {
+                                RotateTransition rotateClose = new RotateTransition(duration, graphic);
+                                rotateClose.setToAngle(0);
+                                FXUtils.playAnimation(graphic, "arrow-rotation", rotateClose);
+                            });
+                        } else {
+                            graphic.setRotate(-180);
+                            popup.setOnHidden(windowEvent -> graphic.setRotate(0));
+                        }
+                    }
                 }
             });
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
