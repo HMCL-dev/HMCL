@@ -314,7 +314,11 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         @Override
         protected void updateItem(World world, boolean empty) {
+            World oldWorld = getItem();
+
             super.updateItem(world, empty);
+
+            if (oldWorld == world) return;
 
             this.content.getTags().clear();
 

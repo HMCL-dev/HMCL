@@ -53,7 +53,11 @@ public abstract class MDListCell<T> extends ListCell<T> {
 
     @Override
     protected void updateItem(T item, boolean empty) {
+        T oldItem = getItem();
+
         super.updateItem(item, empty);
+
+        if (oldItem == item) return;
 
         updateControl(item, empty);
         if (empty) {
