@@ -38,6 +38,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.jackhuang.hmcl.download.UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE;
+
 public final class CleanroomInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
@@ -73,6 +75,9 @@ public final class CleanroomInstallTask extends Task<Version> {
 
     @Override
     public void preExecute() throws Exception {
+        if (LibraryAnalyzer.analyze(version.resolve(dependencyManager.getGameRepository()), "1.12.2").has(LibraryAnalyzer.LibraryType.FORGE))
+            throw new UnsupportedInstallationException(CLEANROOM_NOT_COMPATIBLE_WITH_FORGE);
+
         if (installer == null) {
             installer = Files.createTempFile("cleanroom-installer", ".jar");
 

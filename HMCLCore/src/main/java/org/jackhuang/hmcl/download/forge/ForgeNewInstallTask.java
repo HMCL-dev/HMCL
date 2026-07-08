@@ -20,15 +20,12 @@ package org.jackhuang.hmcl.download.forge;
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.DownloadInfo;
-import org.jackhuang.hmcl.game.DownloadType;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -40,7 +37,6 @@ import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,8 +55,9 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.zip.ZipException;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import static org.jackhuang.hmcl.download.UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class ForgeNewInstallTask extends Task<Version> {
 
@@ -293,6 +290,11 @@ public class ForgeNewInstallTask extends Task<Version> {
 
     @Override
     public void preExecute() throws Exception {
+        if (gameRepository.getGameVersion(version).orElse("").equals("1.12.2"))
+            if (LibraryAnalyzer.analyze(version.resolve(dependencyManager.getGameRepository()), "1.12.2").has(LibraryAnalyzer.LibraryType.CLEANROOM))
+                throw new UnsupportedInstallationException(CLEANROOM_NOT_COMPATIBLE_WITH_FORGE);
+
+
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
             processors = profile.getProcessors();
