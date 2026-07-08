@@ -136,12 +136,13 @@ public final class AboutPage extends SpinnerPane {
                 if (obj.has("image")) {
                     JsonElement image = obj.get("image");
                     if (image.isJsonPrimitive()) {
-                        button.setLeading(loadImage(image.getAsString()));
+                        button.setLeading(loadImage(image.getAsString()), 32);
                     } else if (image.isJsonObject()) {
                         holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
                             button.setLeading(darkMode
                                     ? loadImage(image.getAsJsonObject().get("dark").getAsString())
-                                    : loadImage(image.getAsJsonObject().get("light").getAsString())
+                                    : loadImage(image.getAsJsonObject().get("light").getAsString()),
+                                    32
                             );
                         }));
                     }
