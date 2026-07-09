@@ -30,7 +30,6 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -546,7 +545,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                         HBox container = new HBox(8);
                         container.setPadding(new Insets(8));
-                        container.setCursor(Cursor.HAND);
                         container.setAlignment(Pos.CENTER_LEFT);
 
                         imageContainer.setMouseTransparent(true);

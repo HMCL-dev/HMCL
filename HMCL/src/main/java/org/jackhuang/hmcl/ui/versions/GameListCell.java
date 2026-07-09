@@ -17,13 +17,14 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
@@ -141,7 +142,6 @@ public final class GameListCell extends ListCell<GameListItem> {
             right.getChildren().add(btnManage);
         }
 
-        root.setCursor(Cursor.HAND);
         container.setOnMouseClicked(e -> {
             GameListItem item = getItem();
             if (item == null)
