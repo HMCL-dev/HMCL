@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
-import org.jackhuang.hmcl.util.i18n.I18n;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -138,19 +137,19 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
                 JFXButton clearButton = FXUtils.newToggleButton4(SVG.CLOSE);
                 FXUtils.installFastTooltip(clearButton, i18n("button.clear"));
-                clearButton.setOnAction(e -> {
-                    control.txtName.clear();
-                });
+                clearButton.disableProperty().bind(control.txtName.textProperty().isEmpty());
+                clearButton.setOnAction(e -> control.txtName.clear());
 
-                JFXButton resetButton = FXUtils.newToggleButton4(SVG.RESTORE);
-                FXUtils.installFastTooltip(resetButton, i18n("button.reset"));
-                resetButton.setOnAction(e -> {
-                    if (control instanceof InstallersPage page) {
-                        page.resetDefaultName();
-                    }
-                });
+                versionNamePane.getChildren().addAll(new Label(i18n("version.name")), control.txtName, clearButton);
+                
+                if (control instanceof InstallersPage page) {
+                    JFXButton resetButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                    FXUtils.installFastTooltip(resetButton, i18n("button.reset"));
+                    resetButton.setOnAction(e -> page.resetDefaultName());
+                    
+                    versionNamePane.getChildren().add(resetButton);
+                }
 
-                versionNamePane.getChildren().setAll(new Label(i18n("version.name")), control.txtName, clearButton, resetButton);
                 root.setTop(versionNamePane);
             }
 

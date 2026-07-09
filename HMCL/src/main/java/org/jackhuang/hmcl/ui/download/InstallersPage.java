@@ -111,7 +111,7 @@ public class InstallersPage extends AbstractInstallersPage {
         }
     }
 
-    public void setTxtNameWithLoaders() {
+    private void setTxtNameWithLoaders() {
         StringBuilder nameBuilder = new StringBuilder(getTitle());
 
         for (InstallerItem library : group.getLibraries()) {
