@@ -115,6 +115,9 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
         return new InstallersPageSkin(this);
     }
 
+    protected abstract boolean showExpendPane();
+    protected abstract void resetDefaultName();
+
     protected static class InstallersPageSkin extends SkinBase<AbstractInstallersPage> {
         /**
          * Constructor for all SkinBase instances.
@@ -135,19 +138,19 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
                 HBox.setHgrow(control.txtName, Priority.ALWAYS);
 
-                JFXButton clearButton = FXUtils.newToggleButton4(SVG.CLOSE);
-                FXUtils.installFastTooltip(clearButton, i18n("button.clear"));
-                clearButton.disableProperty().bind(control.txtName.textProperty().isEmpty());
-                clearButton.setOnAction(e -> control.txtName.clear());
-
-                versionNamePane.getChildren().addAll(new Label(i18n("version.name")), control.txtName, clearButton);
+                versionNamePane.getChildren().addAll(new Label(i18n("version.name")), control.txtName);
                 
-                if (control instanceof InstallersPage page) {
+                if (control.showExpendPane()) {
+                    JFXButton clearButton = FXUtils.newToggleButton4(SVG.CLOSE);
+                    FXUtils.installFastTooltip(clearButton, i18n("button.clear"));
+                    clearButton.disableProperty().bind(control.txtName.textProperty().isEmpty());
+                    clearButton.setOnAction(e -> control.txtName.clear());
+
                     JFXButton resetButton = FXUtils.newToggleButton4(SVG.RESTORE);
                     FXUtils.installFastTooltip(resetButton, i18n("button.reset"));
-                    resetButton.setOnAction(e -> page.resetDefaultName());
+                    resetButton.setOnAction(e -> control.resetDefaultName());
                     
-                    versionNamePane.getChildren().add(resetButton);
+                    versionNamePane.getChildren().addAll(clearButton, resetButton);
                 }
 
                 root.setTop(versionNamePane);
