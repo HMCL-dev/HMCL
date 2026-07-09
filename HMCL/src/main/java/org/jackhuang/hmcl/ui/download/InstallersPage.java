@@ -145,12 +145,12 @@ public class InstallersPage extends AbstractInstallersPage {
     }
 
     @Override
-    public boolean showExpendPane() {
+    protected boolean showExtendPane() {
         return true;
     }
 
     @Override
-    public void resetDefaultName() {
+    protected void resetDefaultName() {
         isNameModifiedByUser = false;
         setTxtNameWithLoaders();
     }

@@ -115,7 +115,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
         return new InstallersPageSkin(this);
     }
 
-    protected abstract boolean showExpendPane();
+    protected abstract boolean showExtendPane();
     protected abstract void resetDefaultName();
 
     protected static class InstallersPageSkin extends SkinBase<AbstractInstallersPage> {
@@ -140,7 +140,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
                 versionNamePane.getChildren().addAll(new Label(i18n("version.name")), control.txtName);
                 
-                if (control.showExpendPane()) {
+                if (control.showExtendPane()) {
                     JFXButton clearButton = FXUtils.newToggleButton4(SVG.CLOSE);
                     FXUtils.installFastTooltip(clearButton, i18n("button.clear"));
                     clearButton.disableProperty().bind(control.txtName.textProperty().isEmpty());

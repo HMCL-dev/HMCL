@@ -113,11 +113,11 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
     }
 
     @Override
-    protected boolean showExpendPane() {
+    protected boolean showExtendPane() {
         return false;
     }
 
     @Override
-    public void resetDefaultName() {
+    protected void resetDefaultName() {
     }
 }
