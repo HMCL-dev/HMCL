@@ -85,7 +85,7 @@ public enum Log4jLevel {
             if (containsAny(line, INFO_MARKERS)) {
                 level = INFO;
             }
-            if (containsAny(line, ERROR_MARKERS)) {
+            if (containsAny(line, ERROR_MARKERS) || line.contains("[STDERR]")) {
                 level = ERROR;
             }
             if (containsAny(line, WARN_MARKERS)) {
