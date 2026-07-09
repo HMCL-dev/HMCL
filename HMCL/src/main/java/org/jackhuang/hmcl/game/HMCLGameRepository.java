@@ -535,7 +535,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Returns whether a new instance should use an isolated running directory under the default isolation settings.
     public boolean shouldIsolateNewInstance(boolean modded) {
-        return shouldIsolateByDefault(getParentGameSettings(null), modded);
+        GameSettings.Preset preset = getParentGameSettings(null);
+        DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
+        return switch (type) {
+            case NEVER -> false;
+            case ALWAYS -> true;
+            case MODDED -> modded;
+        };
     }
 
     /// Applies default isolation to a new instance before the version metadata is saved.
@@ -551,16 +557,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
             saveGameSettings(id);
         }
-    }
-
-    /// Returns whether the given preset requests default isolation for an instance with the given modded state.
-    private static boolean shouldIsolateByDefault(GameSettings.Preset preset, boolean modded) {
-        DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
-        return switch (type) {
-            case NEVER -> false;
-            case ALWAYS -> true;
-            case MODDED -> modded;
-        };
     }
 
     public GameSettings.Effective getEffectiveGameSettings(String id) {
