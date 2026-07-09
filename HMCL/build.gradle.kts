@@ -7,6 +7,7 @@ import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import org.jackhuang.hmcl.gradle.pack.CreateDeb
+import org.jackhuang.hmcl.gradle.pack.CreateRpm
 import org.jackhuang.hmcl.gradle.pack.ReleaseType
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
 import java.net.URI
@@ -305,6 +306,28 @@ val makeDeb by tasks.registering(CreateDeb::class) {
 
     doLast {
         createChecksum(debFile.get().asFile)
+    }
+}
+
+val makeRpm by tasks.registering(CreateRpm::class) {
+    dependsOn(makeExecutables)
+
+    val rpmFile = layout.file(provider { artifactFile("rpm") })
+
+    val rpmChannel = when (versionType) {
+        "stable" -> ReleaseType.STABLE
+        "dev" -> ReleaseType.DEVELOPMENT
+        else -> ReleaseType.NIGHTLY
+    }
+
+    version.set(project.version.toString())
+    releaseType.set(rpmChannel)
+    appShFile.set(layout.file(provider { artifactFile("sh") }))
+    iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
+    outputFile.set(rpmFile)
+
+    doLast {
+        createChecksum(rpmFile.get().asFile)
     }
 }
 
