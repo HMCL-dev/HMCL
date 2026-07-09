@@ -224,6 +224,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
     }
 
+    @Nullable
     private Charset optionsFileCharset;
 
     @NotNull

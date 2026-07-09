@@ -511,14 +511,14 @@ public final class FileUtils {
         saveSafely(file, content, UTF_8);
     }
 
-    public static void saveSafely(Path file, String content, Charset charset) throws IOException {
+    public static void saveSafely(Path file, String content, @Nullable Charset charset) throws IOException {
         Path parent = file.toAbsolutePath().getParent();
         if (parent != null) {
             Files.createDirectories(parent);
         }
 
         Path tmpFile = tmpSaveFile(file);
-        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, charset, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, charset != null ? charset : UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             writer.write(content);
         }
 
