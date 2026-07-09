@@ -92,7 +92,9 @@ public final class SettingsMap {
     /// Returns whether the selected installation includes any non-vanilla component.
     public boolean isInstallingModdedVersion() {
         for (LibraryAnalyzer.LibraryType value : LibraryAnalyzer.LibraryType.values()) {
-            if (value.isModLoader() && get(value.getPatchId()) instanceof RemoteVersion) {
+            if (value != LibraryAnalyzer.LibraryType.MINECRAFT
+                    && value.isModLoader()
+                    && get(value.getPatchId()) instanceof RemoteVersion) {
                 return true;
             }
         }
