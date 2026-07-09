@@ -116,6 +116,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
     }
 
     protected abstract boolean showExtendPane();
+    
     protected abstract void resetDefaultName();
 
     protected static class InstallersPageSkin extends SkinBase<AbstractInstallersPage> {
