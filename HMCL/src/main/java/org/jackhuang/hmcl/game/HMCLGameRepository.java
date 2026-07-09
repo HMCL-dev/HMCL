@@ -383,7 +383,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: "
                         + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA ->
-                        LOG.warning("Unsupported instance game settings schema. Expected: "
+                    LOG.warning("Unsupported instance game settings schema. Expected: "
                                 + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
                 }
@@ -859,25 +859,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                     (long) (threshold * 0.8 + (usable - threshold) * 0.2),
                     16L * 1024 * 1024 * 1024);
         return suggested;
-    }
-
-
-    public static long getAllocatedMemory(long minimum, long available, boolean auto) {
-        if (auto) {
-            available -= 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
-            if (available <= 0) {
-                return minimum;
-            }
-
-            final long threshold = 8L * 1024 * 1024 * 1024; // 8 GiB
-            final long suggested = Math.min(available <= threshold
-                            ? (long) (available * 0.8)
-                            : (long) (threshold * 0.8 + (available - threshold) * 0.2),
-                    16L * 1024 * 1024 * 1024);
-            return Math.max(minimum, suggested);
-        } else {
-            return minimum;
-        }
     }
 
     public static ProxyOption getProxyOption() {
