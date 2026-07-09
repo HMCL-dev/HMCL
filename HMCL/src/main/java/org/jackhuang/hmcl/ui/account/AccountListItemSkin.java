@@ -185,9 +185,9 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         Region background = new Region();
         background.setMouseTransparent(true);
         background.setStyle("-fx-background-color: -monet-surface-container-low-transparent-80; -fx-background-radius: 4;");
-        JFXDepthManager.setDepth(background, 1);
 
         rootRippler.getChildren().add(0, background);
+        JFXDepthManager.setDepth(rootRippler, 1);
 
         getChildren().setAll(rootRippler);
     }
