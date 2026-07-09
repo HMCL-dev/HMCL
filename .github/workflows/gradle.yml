@@ -54,3 +54,49 @@ jobs:
         name: HMCL-${{ env.SHORT_SHA }}-deb
         path: HMCL/build/libs/HMCL-*.deb
         archive: false
+
+  rpm:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Build RPM in RHEL-compatible container
+      run: |
+        HOST_UID="$(id -u)"
+        HOST_GID="$(id -g)"
+        docker run --rm \
+          -e GRADLE_USER_HOME=/tmp/hmcl-gradle \
+          -e MICROSOFT_AUTH_ID="${MICROSOFT_AUTH_ID}" \
+          -e CURSEFORGE_API_KEY="${CURSEFORGE_API_KEY}" \
+          -e HOST_UID="$HOST_UID" \
+          -e HOST_GID="$HOST_GID" \
+          -v "$PWD":/workspace \
+          -w /workspace \
+          rockylinux:9 \
+          bash -lc '
+            dnf install -y java-17-openjdk-devel rpm-build &&
+              ./gradlew :HMCL:makeRpm --no-daemon --stacktrace
+            status=$?
+            chown -R "$HOST_UID:$HOST_GID" \
+              .gradle \
+              HMCL/build \
+              HMCLCore/build \
+              HMCLBoot/build \
+              HMCLMultiMCBootstrap/build \
+              HMCLTransformerDiscoveryService/build \
+              buildSrc/build \
+              2>/dev/null || true
+            exit "$status"
+          '
+      env:
+        MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
+        CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+    - name: Get short SHA
+      run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+    - name: Upload RPM
+      uses: actions/upload-artifact@v7
+      with:
+        name: HMCL-${{ env.SHORT_SHA }}-rpm
+        path: HMCL/build/libs/HMCL-*.rpm
+        archive: false
