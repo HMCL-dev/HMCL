@@ -1923,7 +1923,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             }
 
             memorySelectedValue.set(resolveEffectiveSetting(setting)
-                    .get(GameSettings::autoMemoryProperty));
+                    .getInheritable(GameSettings::autoMemoryProperty));
         };
         InvalidationListener weakRefresh = holder.weak(refresh);
         refreshHolder.value = weakRefresh;
