@@ -412,6 +412,13 @@ public final class GameDirectoriesTest {
     @Test
     public void newIsolatedInstallingInstanceUsesVersionRootBeforeVersionExists(@TempDir Path tempDirectory)
             throws ReflectiveOperationException {
+        GameSettingsPresetID defaultPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174002");
+        GameSettings.Preset defaultPreset = new GameSettings.Preset(defaultPresetId);
+        defaultPreset.defaultIsolationTypeProperty().setValue(DefaultIsolationType.MODDED);
+        GameSettingsPresets presets = new GameSettingsPresets();
+        presets.getPresets().setAll(defaultPreset);
+
         GameDirectory gameDirectory = new GameDirectory(
                 GameDirectoryID.generate(),
                 LocalizedText.plain("Dev"),
@@ -421,7 +428,8 @@ public final class GameDirectoriesTest {
         GameDirectories userDirectories = new GameDirectories();
 
         try (GameDirectoryEnvironment ignored =
-                     new GameDirectoryEnvironment(localDirectories, userDirectories)) {
+                     new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
+            settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
             String id = "1.21.11-fabric";
 
