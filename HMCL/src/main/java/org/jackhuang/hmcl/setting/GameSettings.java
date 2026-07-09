@@ -67,7 +67,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public sealed abstract class GameSettings extends ObservableSetting {
     /// Suggested maximum heap memory in MiB.
-    static final int SUGGESTED_MEMORY;
+    public static final int SUGGESTED_MEMORY;
 
     static {
         double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());

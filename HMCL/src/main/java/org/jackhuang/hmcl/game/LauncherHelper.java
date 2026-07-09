@@ -640,7 +640,7 @@ public final class LauncherHelper {
 
                 // Cannot allocate too much memory exceeding free space.
                 long totalMemorySizeMB = (long) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
-                if (totalMemorySizeMB > 0 && totalMemorySizeMB < setting.getMaxMemory()) {
+                if (totalMemorySizeMB > 0 && !setting.getInheritable(GameSettings::autoMemoryProperty) && totalMemorySizeMB < setting.getMaxMemory()) {
                     suggestions.add(i18n("launch.advice.not_enough_space", totalMemorySizeMB));
                 }
 
