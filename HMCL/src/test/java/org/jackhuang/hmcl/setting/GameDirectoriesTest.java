@@ -408,6 +408,36 @@ public final class GameDirectoriesTest {
         }
     }
 
+    /// Tests that new isolated installing instances resolve content directories under the version root before metadata is saved.
+    @Test
+    public void newIsolatedInstallingInstanceUsesVersionRootBeforeVersionExists(@TempDir Path tempDirectory)
+            throws ReflectiveOperationException {
+        GameDirectory gameDirectory = new GameDirectory(
+                GameDirectoryID.generate(),
+                LocalizedText.plain("Dev"),
+                PortablePath.of(tempDirectory.toString()));
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(gameDirectory);
+        GameDirectories userDirectories = new GameDirectories();
+
+        try (GameDirectoryEnvironment ignored =
+                     new GameDirectoryEnvironment(localDirectories, userDirectories)) {
+            HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
+            String id = "1.21.11-fabric";
+
+            assertFalse(repository.hasVersion(id));
+            assertEquals(repository.getBaseDirectory(), repository.getRunDirectory(id));
+
+            repository.applyDefaultIsolationSettingForNewInstance(id, true);
+
+            assertEquals(repository.getVersionRoot(id), repository.getRunDirectory(id));
+            assertEquals(repository.getVersionRoot(id).resolve("mods"), repository.getModsDirectory(id));
+
+            assertTrue(repository.removeVersionFromDisk(id));
+            assertEquals(repository.getBaseDirectory(), repository.getRunDirectory(id));
+        }
+    }
+
     /// Tests that instance settings without an explicit parent use the default preset.
     @Test
     public void nullInstanceParentUsesDefaultPresetInsteadOfLegacyGameDirectoryPreset()

@@ -242,6 +242,19 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         clean(getRunDirectory(id));
     }
 
+    /// Removes a version from disk and drops any cached instance settings for that version.
+    @Override
+    public boolean removeVersionFromDisk(String id) {
+        boolean removed = super.removeVersionFromDisk(id);
+        if (removed) {
+            instanceGameSettings.remove(id);
+            loadedInstanceGameSettings.remove(id);
+            readOnlyInstanceGameSettings.remove(id);
+            beingModpackVersions.remove(id);
+        }
+        return removed;
+    }
+
     public void duplicateVersion(String srcId, String dstId, boolean copySaves) throws IOException {
         Path srcDir = getVersionRoot(srcId);
         Path dstDir = getVersionRoot(dstId);
@@ -520,31 +533,39 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }
 
-    public GameSettings.Effective getEffectiveGameSettings(String id) {
-        GameSettings.Instance instance = getInstanceGameSettings(id);
-        return GameSettings.resolve(getParentGameSettings(instance), instance);
+    /// Returns whether a new instance should use an isolated running directory under the default isolation settings.
+    public boolean shouldIsolateNewInstance(boolean modded) {
+        return shouldIsolateByDefault(getParentGameSettings(null), modded);
     }
 
-    public void applyDefaultIsolationSetting(String id) {
-        if (!hasVersion(id)) {
+    /// Applies default isolation to a new instance before the version metadata is saved.
+    public void applyDefaultIsolationSettingForNewInstance(String id, boolean modded) {
+        if (!shouldIsolateNewInstance(modded) || readOnlyInstanceGameSettings.contains(id)) {
             return;
         }
 
-        GameSettings.Instance instanceSetting = getInstanceGameSettings(id);
-        GameSettings.Preset preset = getParentGameSettings(instanceSetting);
+        GameSettings.Instance setting = getInstanceGameSettings(id);
+        if (setting == null) {
+            setting = initInstanceGameSettings(id, new GameSettings.Instance());
+        }
+        if (setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
+            saveGameSettings(id);
+        }
+    }
+
+    /// Returns whether the given preset requests default isolation for an instance with the given modded state.
+    private static boolean shouldIsolateByDefault(GameSettings.Preset preset, boolean modded) {
         DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
-        boolean isolated = switch (type) {
+        return switch (type) {
             case NEVER -> false;
             case ALWAYS -> true;
-            case MODDED -> LibraryAnalyzer.isModded(this, getVersion(id).resolve(this));
+            case MODDED -> modded;
         };
+    }
 
-        if (isolated) {
-            GameSettings.Instance setting = instanceSetting != null ? instanceSetting : getInstanceGameSettingsOrCreate(id);
-            if (setting != null) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-            }
-        }
+    public GameSettings.Effective getEffectiveGameSettings(String id) {
+        GameSettings.Instance instance = getInstanceGameSettings(id);
+        return GameSettings.resolve(getParentGameSettings(instance), instance);
     }
 
     public Optional<Path> getVersionIconFile(String id) {
