@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
@@ -224,13 +224,17 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
     }
 
+    private Charset optionsFileCharset;
+
     @NotNull
     private Map<String, String> loadOptions() {
         getMinecraftVersion();
         Map<String, String> options = new LinkedHashMap<>();
         if (!Files.isRegularFile(optionsFile)) return options;
-        try (var stream = Files.lines(optionsFile, StandardCharsets.UTF_8)) {
-            stream.forEach(s -> {
+        try {
+            byte[] bytes = Files.readAllBytes(optionsFile);
+            optionsFileCharset = StringUtils.maybeDetectTextEncoding(bytes);
+            new String(bytes, optionsFileCharset).lines().forEach(s -> {
                 if (StringUtils.isNotBlank(s)) {
                     var entry = s.split(":", 2);
                     if (entry.length == 2) {
@@ -250,7 +254,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             for (var entry : options.entrySet()) {
                 sb.append(entry.getKey()).append(":").append(entry.getValue()).append(System.lineSeparator());
             }
-            FileUtils.saveSafely(optionsFile, sb.toString());
+            FileUtils.saveSafely(optionsFile, sb.toString(), optionsFileCharset);
         } catch (IOException e) {
             LOG.warning("Failed to save instance options file", e);
         }

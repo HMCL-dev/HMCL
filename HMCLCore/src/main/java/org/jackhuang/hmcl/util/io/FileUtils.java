@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
@@ -507,13 +508,17 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, String content) throws IOException {
+        saveSafely(file, content, UTF_8);
+    }
+
+    public static void saveSafely(Path file, String content, Charset charset) throws IOException {
         Path parent = file.toAbsolutePath().getParent();
         if (parent != null) {
             Files.createDirectories(parent);
         }
 
         Path tmpFile = tmpSaveFile(file);
-        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, charset, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             writer.write(content);
         }
 
