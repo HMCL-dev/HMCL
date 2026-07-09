@@ -111,7 +111,7 @@ public class InstallersPage extends AbstractInstallersPage {
         }
     }
 
-    private void setTxtNameWithLoaders() {
+    public void setTxtNameWithLoaders() {
         StringBuilder nameBuilder = new StringBuilder(getTitle());
 
         for (InstallerItem library : group.getLibraries()) {
@@ -142,5 +142,10 @@ public class InstallersPage extends AbstractInstallersPage {
 
         txtName.setText(nameBuilder.toString());
         isNameModifiedByUser = false;
+    }
+
+    public void resetDefaultName() {
+        isNameModifiedByUser = false;
+        setTxtNameWithLoaders();
     }
 }

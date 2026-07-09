@@ -27,16 +27,20 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -127,11 +131,26 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             {
                 HBox versionNamePane = new HBox(8);
                 versionNamePane.getStyleClass().add("card-non-transparent");
-                versionNamePane.setStyle("-fx-padding: 20 8 20 16");
+                versionNamePane.setStyle("-fx-padding: 20 16 20 16");
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
 
-                control.txtName.setMaxWidth(300);
-                versionNamePane.getChildren().setAll(new Label(i18n("version.name")), control.txtName);
+                HBox.setHgrow(control.txtName, Priority.ALWAYS);
+
+                JFXButton clearButton = FXUtils.newToggleButton4(SVG.CLOSE);
+                FXUtils.installFastTooltip(clearButton, i18n("button.clear"));
+                clearButton.setOnAction(e -> {
+                    control.txtName.clear();
+                });
+
+                JFXButton resetButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                FXUtils.installFastTooltip(resetButton, i18n("button.reset"));
+                resetButton.setOnAction(e -> {
+                    if (control instanceof InstallersPage page) {
+                        page.resetDefaultName();
+                    }
+                });
+
+                versionNamePane.getChildren().setAll(new Label(i18n("version.name")), control.txtName, clearButton, resetButton);
                 root.setTop(versionNamePane);
             }
 
