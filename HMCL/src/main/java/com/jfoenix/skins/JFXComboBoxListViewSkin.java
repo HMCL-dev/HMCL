@@ -15,15 +15,22 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.EventTarget;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.ComboBoxBase;
+import javafx.scene.control.ListView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
+
+import java.util.List;
 
 public class JFXComboBoxListViewSkin<T> extends ComboBoxListViewSkin<T> {
     protected final ObjectProperty<Paint> promptTextFill;
@@ -150,6 +157,30 @@ public class JFXComboBoxListViewSkin<T> extends ComboBoxListViewSkin<T> {
             }
 
         });
+
+        for (Node child : getChildren()) {
+            if (child instanceof ListView<?> listView && "list-view".equals(listView.getId())) {
+                // The default hideOnClick logic of ComboBoxListViewSkin doesn't work well with FloatScrollBarSkin.
+                // We implement hideOnClick ourselves to prevent the popup from
+                // hiding when releasing the mouse on the scrollbar.
+
+                this.setHideOnClick(false);
+                listView.addEventFilter(MouseEvent.MOUSE_RELEASED, t -> {
+                    EventTarget target = t.getTarget();
+                    if (target instanceof Node targetNode) {
+                        List<String> s = targetNode.getStyleClass();
+                        if (s.contains("thumb")
+                                || s.contains("track")
+                                || s.contains("decrement-arrow")
+                                || s.contains("increment-arrow")) {
+                            return;
+                        }
+                    }
+
+                    comboBox.hide();
+                });
+            }
+        }
     }
 
     protected void layoutChildren(double x, double y, double w, double h) {
