@@ -306,7 +306,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
                 String vendor = JavaInfo.normalizeVendor(item.getVendor());
 
-                content.setTitle((vendor != null ? vendor : "Unknown") + " " + (item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
+                content.setTitle((vendor != null ? vendor : i18n("message.unknown")) + " " + (item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
 
                 if (oldItem != item) {
