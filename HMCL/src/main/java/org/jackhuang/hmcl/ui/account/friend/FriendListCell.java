@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXListView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -42,6 +43,7 @@ import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
+import java.util.Locale;
 import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -131,6 +133,13 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
         }).start();
 
         twoLineListItem.setTitle(item.name());
+
 //        twoLineListItem.setSubtitle(toString());
+
+        if (item.status() != FriendStatus.NORMAL) {
+            var tag = new Label(i18n("account.friend." + item.status().name().toLowerCase(Locale.ROOT)));
+            tag.getStyleClass().add("tag");
+            twoLineListItem.getTags().add(tag);
+        }
     }
 }
