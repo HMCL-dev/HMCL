@@ -382,8 +382,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                         + file + ", Actual: " + schemaResult.actual());
                 case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: "
                         + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
-                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA -> LOG.warning("Unsupported instance game settings schema. Expected: "
-                        + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
+                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA ->
+                    LOG.warning("Unsupported instance game settings schema. Expected: "
+                                + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
                 }
             }
@@ -684,7 +685,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Result of loading an instance-specific game settings file.
     ///
-    /// @param setting the loaded instance settings, or `null` when unavailable
+    /// @param setting   the loaded instance settings, or `null` when unavailable
     /// @param allowSave whether the file may be overwritten
     private record InstanceGameSettingsLoadResult(
             @Nullable GameSettings.Instance setting,
@@ -694,8 +695,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         GameSettings.Effective vs = getEffectiveGameSettings(version);
         boolean noJVMOptions = vs.getInheritable(GameSettings::noJVMOptionsProperty);
-        boolean autoMemory = vs.get(GameSettings::autoMemoryProperty);
+        boolean autoMemory = vs.getInheritable(GameSettings::autoMemoryProperty);
         GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(getGameVersion(version));
+
+        @Nullable Integer maxMemory;
+        if (autoMemory) {
+            maxMemory = noJVMOptions
+                    ? null
+                    : Math.toIntExact(getAutoAllocatedMemory(SystemInfo.getPhysicalMemoryStatus().available()) / 1024L / 1024L);
+        } else {
+            maxMemory = vs.getMaxMemory();
+        }
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
@@ -703,17 +713,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setVersionType(Metadata.TITLE)
                 .setVersionName(version)
                 .setProfileName(Metadata.TITLE)
-                .setGameArguments(StringUtils.tokenize(vs.get(GameSettings::gameArgumentsProperty)))
-                .setOverrideJavaArguments(StringUtils.tokenize(vs.get(GameSettings::jvmOptionsProperty)))
-                .setMaxMemory(noJVMOptions && autoMemory ? null : (int) (getAllocatedMemory(
-                        vs.getMaxMemory() * 1024L * 1024L,
-                        SystemInfo.getPhysicalMemoryStatus().available(),
-                        autoMemory
-                ) / 1024 / 1024))
-                .setMinMemory(vs.get(GameSettings::minMemoryProperty))
-                .setMetaspace(Lang.toIntOrNull(vs.get(GameSettings::permSizeProperty)))
+                .setGameArguments(StringUtils.tokenize(vs.getInheritable(GameSettings::gameArgumentsProperty)))
+                .setOverrideJavaArguments(StringUtils.tokenize(vs.getInheritable(GameSettings::jvmOptionsProperty)))
+                .setMaxMemory(maxMemory)
+                .setMinMemory(vs.getInheritable(GameSettings::minMemoryProperty))
+                .setMetaspace(Lang.toIntOrNull(vs.getInheritable(GameSettings::permSizeProperty)))
                 .setEnvironmentVariables(
-                        Lang.mapOf(StringUtils.tokenize(vs.get(GameSettings::environmentVariablesProperty))
+                        Lang.mapOf(StringUtils.tokenize(vs.getInheritable(GameSettings::environmentVariablesProperty))
                                 .stream()
                                 .map(it -> {
                                     int idx = it.indexOf('=');
@@ -731,16 +737,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setPostExitCommand(vs.getInheritable(GameSettings::postExitCommandProperty))
                 .setNoGeneratedJVMArgs(noJVMOptions)
                 .setNoGeneratedOptimizingJVMArgs(vs.getInheritable(GameSettings::noOptimizingJVMOptionsProperty))
-                .setUseCustomNatives(vs.get(GameSettings::useCustomNativesProperty))
-                .setNativesDir(vs.get(GameSettings::nativesDirectoryProperty))
+                .setUseCustomNatives(vs.getInheritable(GameSettings::useCustomNativesProperty))
+                .setNativesDir(vs.getInheritable(GameSettings::nativesDirectoryProperty))
                 .setProcessPriority(vs.getInheritable(GameSettings::processPriorityProperty))
                 .setGraphicsBackend(vs.getInheritable(GameSettings::graphicsBackendProperty))
                 .setRenderer(vs.getRenderer(gameVersionNumber))
                 .setEnableDebugLogOutput(vs.getInheritable(GameSettings::enableDebugLogOutputProperty))
                 .setAllowAutoAgent(vs.getInheritable(GameSettings::allowAutoAgentProperty))
                 .setDisableAutoGameOptions(vs.getInheritable(GameSettings::disableAutoGameOptionsProperty))
-                .setUseNativeGLFW(vs.get(GameSettings::useNativeGLFWProperty))
-                .setUseNativeOpenAL(vs.get(GameSettings::useNativeOpenALProperty))
+                .setUseNativeGLFW(vs.getInheritable(GameSettings::useNativeGLFWProperty))
+                .setUseNativeOpenAL(vs.getInheritable(GameSettings::useNativeOpenALProperty))
                 .setDaemon(!makeLaunchScript && vs.getInheritable(GameSettings::launcherVisibilityProperty).isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
@@ -838,22 +844,21 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public static long getAllocatedMemory(long minimum, long available, boolean auto) {
-        if (auto) {
-            available -= 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
-            if (available <= 0) {
-                return minimum;
-            }
-
-            final long threshold = 8L * 1024 * 1024 * 1024; // 8 GiB
-            final long suggested = Math.min(available <= threshold
-                            ? (long) (available * 0.8)
-                            : (long) (threshold * 0.8 + (available - threshold) * 0.2),
-                    16L * 1024 * 1024 * 1024);
-            return Math.max(minimum, suggested);
-        } else {
-            return minimum;
+    public static long getAutoAllocatedMemory(long available) {
+        long usable = available - 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
+        if (usable <= 0) {
+            return available;
         }
+
+        final long threshold = 8L * 1024 * 1024 * 1024; // 8 GiB
+        final long suggested;
+        if (usable <= threshold)
+            suggested = (long) (usable * 0.8);
+        else
+            suggested = Math.min(
+                    (long) (threshold * 0.8 + (usable - threshold) * 0.2),
+                    16L * 1024 * 1024 * 1024);
+        return suggested;
     }
 
     public static ProxyOption getProxyOption() {
