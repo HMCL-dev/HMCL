@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.game.friend.FriendResponse;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -158,7 +159,7 @@ public final class MicrosoftAccount extends OAuthAccount implements FriendContro
     }
 
     @Override
-    public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
+    public @NotNull ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
         return BindingMapping.of(service.getProfileRepository().binding(getProfileID()))
                 .map(profile -> profile.flatMap(it -> {
                     try {

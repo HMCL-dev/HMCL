@@ -25,8 +25,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -37,6 +39,10 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
+
+import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -84,7 +90,12 @@ public final class FriendPage extends DecoratorAnimatedPage implements Decorator
                 if (e == null) resultHandler.resolve();
                 else {
                     LOG.warning("Failed to add friend", e);
-                    resultHandler.reject(e.getMessage());
+                    if (e.getCause() instanceof ResponseCodeException cause && cause.getData() != null) {
+                        var errResponse = JsonUtils.fromJson(cause.getData(), MicrosoftService.MinecraftErrorResponse.class);
+                        if (errResponse != null && errResponse.details != null && errResponse.details.status != null) {
+                            resultHandler.reject(i18n("account.failed." + errResponse.details.status.toLowerCase(Locale.ROOT)));
+                        } else resultHandler.reject(Accounts.localizeErrorMessage(e));
+                    } else resultHandler.reject(Accounts.localizeErrorMessage(e));
                 }
             }).start();
         }, null);

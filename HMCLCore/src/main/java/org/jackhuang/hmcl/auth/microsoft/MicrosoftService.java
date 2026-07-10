@@ -500,12 +500,17 @@ public class MicrosoftService {
         }
     }
 
-    private static class MinecraftErrorResponse {
+    public static class MinecraftErrorResponse {
         public String path;
         public String errorType;
         public String error;
         public String errorMessage;
         public String developerMessage;
+        public Details details;
+    }
+
+    public static class Details {
+        public String status;
     }
 
     private static final Gson GSON = new GsonBuilder()
