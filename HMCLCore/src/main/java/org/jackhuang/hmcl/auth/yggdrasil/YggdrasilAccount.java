@@ -68,10 +68,7 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
 
             GameProfile characterToSelect = selector.select(service, acquiredSession.availableProfiles());
 
-            session = service.refresh(
-                    acquiredSession.accessToken(),
-                    acquiredSession.clientToken(),
-                    characterToSelect);
+            session = service.refresh(acquiredSession.accessToken(), acquiredSession.clientToken(), characterToSelect);
             // response validity has been checked in refresh()
         } else {
             session = acquiredSession;
@@ -84,6 +81,7 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
     }
 
     private ObjectBinding<Optional<CompleteGameProfile>> profilePropertiesBinding;
+
     private void addProfilePropertiesListener() {
         // binding() is thread-safe
         // hold the binding so that it won't be garbage-collected
@@ -123,8 +121,7 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
                         throw e;
                     }
                 }
-                if (acquiredSession.selectedProfile() == null ||
-                        !acquiredSession.selectedProfile().getId().equals(profileID)) {
+                if (acquiredSession.selectedProfile() == null || !acquiredSession.selectedProfile().getId().equals(profileID)) {
                     throw new ServerResponseMalformedException("Selected profile changed");
                 }
                 if (!acquiredSession.hasProfileName()) {
@@ -150,15 +147,9 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
                 throw new CharacterDeletedException();
             }
 
-            GameProfile characterToSelect = acquiredSession.availableProfiles().stream()
-                    .filter(charatcer -> charatcer.getId().equals(profileID))
-                    .findFirst()
-                    .orElseThrow(CharacterDeletedException::new);
+            GameProfile characterToSelect = acquiredSession.availableProfiles().stream().filter(charatcer -> charatcer.getId().equals(profileID)).findFirst().orElseThrow(CharacterDeletedException::new);
 
-            session = service.refresh(
-                    acquiredSession.accessToken(),
-                    acquiredSession.clientToken(),
-                    characterToSelect);
+            session = service.refresh(acquiredSession.accessToken(), acquiredSession.clientToken(), characterToSelect);
 
         } else {
             if (!acquiredSession.selectedProfile().getId().equals(profileID)) {
@@ -192,8 +183,7 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
     public void writePrivateData(JsonObject privateData) {
         super.writePrivateData(privateData);
         session.writePrivateData(privateData);
-        service.getProfileRepository().getImmediately(profileID).ifPresent(profile ->
-                privateData.add("profileProperties", JsonUtils.GSON.toJsonTree(profile.getProperties())));
+        service.getProfileRepository().getImmediately(profileID).ifPresent(profile -> privateData.add("profileProperties", JsonUtils.GSON.toJsonTree(profile.getProperties())));
     }
 
     public YggdrasilService getYggdrasilService() {
@@ -208,15 +198,14 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
 
     @Override
     public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
-        return BindingMapping.of(service.getProfileRepository().binding(getProfileID()))
-                .map(profile -> profile.flatMap(it -> {
-                    try {
-                        return YggdrasilService.getTextures(it);
-                    } catch (ServerResponseMalformedException e) {
-                        LOG.warning("Failed to parse texture payload", e);
-                        return Optional.empty();
-                    }
-                }));
+        return BindingMapping.of(service.getProfileRepository().binding(getProfileID())).map(profile -> profile.flatMap(it -> {
+            try {
+                return YggdrasilService.getTextures(it);
+            } catch (ServerResponseMalformedException e) {
+                LOG.warning("Failed to parse texture payload", e);
+                return Optional.empty();
+            }
+        }));
 
     }
 
@@ -239,7 +228,6 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
         return service.getFriendList(session.accessToken());
     }
 
-
     @Override
     public void updateFriend(String uuid, EnumUpdateType updateType) throws IOException {
         service.updateFriend(session.accessToken(), uuid, updateType);
@@ -247,7 +235,6 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
 
     @Override
     public String toString() {
-        return "YggdrasilAccount[accountID=" + getAccountID() + ", profileID=" + profileID
-                + ", loginName=" + loginName + "]";
+        return "YggdrasilAccount[accountID=" + getAccountID() + ", profileID=" + profileID + ", loginName=" + loginName + "]";
     }
 }
