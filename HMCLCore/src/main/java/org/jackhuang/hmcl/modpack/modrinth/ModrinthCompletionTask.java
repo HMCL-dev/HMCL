@@ -105,15 +105,15 @@ public class ModrinthCompletionTask extends Task<Void> {
         Path runDirectory = FileUtils.toAbsolute(repository.getRunDirectory(version));
         Path modsDirectory = runDirectory.resolve("mods");
 
-        for (ModrinthManifest.File file : manifest.getFiles()) {
-            if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))
+        for (ModrinthManifest.File file : manifest.files()) {
+            if (file.env() != null && file.env().getOrDefault("client", "required").equals("unsupported"))
                 continue;
-            if (file.getDownloads().isEmpty())
+            if (file.downloads().isEmpty())
                 continue;
 
-            Path filePath = runDirectory.resolve(file.getPath()).toAbsolutePath().normalize();
+            Path filePath = runDirectory.resolve(file.path()).toAbsolutePath().normalize();
             if (!filePath.startsWith(runDirectory))
-                throw new IOException("Unsecure path: " + file.getPath());
+                throw new IOException("Unsecure path: " + file.path());
 
             if (Files.exists(filePath))
                 continue;
@@ -121,7 +121,7 @@ public class ModrinthCompletionTask extends Task<Void> {
                 continue;
 
             var task = new FileDownloadTask(
-                    dependency.getDownloadProvider().injectURLsWithCandidates(file.getDownloads()),
+                    dependency.getDownloadProvider().injectURLsWithCandidates(file.downloads()),
                     filePath);
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);

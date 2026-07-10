@@ -204,7 +204,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                                         try {
                                                             String result = NetworkUtils.doGet(String.format("https://cursemeta.dries007.net/%d/%d.json", file.getProjectID(), file.getFileID()));
                                                             CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
-                                                            return file.withFileName(mod.getFileNameOnDisk()).withURL(mod.getDownloadURL());
+                                                            return file.withFileName(mod.fileNameOnDisk()).withURL(mod.downloadURL());
                                                         } catch (FileNotFoundException fof) {
                                                             LOG.warning("Could not query cursemeta for deleted mods: " + file.getUrl(), fof);
                                                             notFound.set(true);
@@ -213,7 +213,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                                             try {
                                                                 String result = NetworkUtils.doGet(String.format("https://addons-ecs.forgesvc.net/api/v2/addon/%d/file/%d", file.getProjectID(), file.getFileID()));
                                                                 CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
-                                                                return file.withFileName(mod.getFileName()).withURL(mod.getDownloadURL());
+                                                                return file.withFileName(mod.fileName()).withURL(mod.downloadURL());
                                                             } catch (FileNotFoundException fof) {
                                                                 LOG.warning("Could not query forgesvc for deleted mods: " + file.getUrl(), fof);
                                                                 notFound.set(true);
