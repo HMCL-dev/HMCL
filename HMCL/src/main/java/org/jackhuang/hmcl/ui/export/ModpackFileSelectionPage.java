@@ -29,8 +29,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModAdviser;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Pair;
@@ -44,6 +46,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -58,7 +61,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     private final WizardController controller;
     private final String version;
     private final ModAdviser adviser;
-    private final ModpackFileTreeItem rootNode;
+    private ModpackFileTreeItem rootNode;
 
     public ModpackFileSelectionPage(WizardController controller, HMCLGameRepository repository, String version, ModAdviser adviser) {
         this.controller = controller;
@@ -66,12 +69,21 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.adviser = adviser;
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
-        rootNode = getTreeItem(repository.getRunDirectory(version), "minecraft", 0);
-        treeView.setRoot(rootNode);
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         onEscPressed(treeView, () -> controller.onPrev(true));
-        setMargin(treeView, new Insets(10, 10, 5, 10));
-        this.setCenter(treeView);
+
+        SpinnerPane spinnerPane = new SpinnerPane();
+        spinnerPane.setContent(treeView);
+        setMargin(spinnerPane, new Insets(10, 10, 5, 10));
+        this.setCenter(spinnerPane);
+
+        spinnerPane.setLoading(true);
+        CompletableFuture
+                .supplyAsync(() -> getTreeItem(repository.getRunDirectory(version), "minecraft", 0), Schedulers.io())
+                .thenAcceptAsync(modpackFileTreeItem -> {
+                    treeView.setRoot(rootNode = modpackFileTreeItem);
+                    spinnerPane.setLoading(false);
+                }, Schedulers.javafx());
 
         HBox nextPane = new HBox();
         nextPane.setPadding(new Insets(16, 16, 16, 0));
@@ -79,6 +91,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         {
             JFXButton btnNext = FXUtils.newRaisedButton(i18n("wizard.next"));
             btnNext.setPrefSize(100, 40);
+            btnNext.disableProperty().bind(spinnerPane.loadingProperty());
             btnNext.setOnAction(e -> onNext());
 
             nextPane.getChildren().setAll(btnNext);
@@ -176,6 +189,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     }
 
     private void onNext() {
+        if (rootNode == null) return;
         ArrayList<String> list = new ArrayList<>();
         getFilesNeeded(rootNode, "minecraft", list);
         controller.getSettings().put(MODPACK_FILE_SELECTION, list);
