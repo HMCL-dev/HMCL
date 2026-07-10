@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.account.friend.FriendPage;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -128,15 +129,13 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         }
         btnRefresh.setOnAction(e -> {
             spinnerRefresh.showSpinner();
-            skinnable.refreshAsync()
-                    .whenComplete(Schedulers.javafx(), ex -> {
-                        spinnerRefresh.hideSpinner();
+            skinnable.refreshAsync().whenComplete(Schedulers.javafx(), ex -> {
+                spinnerRefresh.hideSpinner();
 
-                        if (ex != null) {
-                            Controllers.showToast(Accounts.localizeErrorMessage(ex));
-                        }
-                    })
-                    .start();
+                if (ex != null) {
+                    Controllers.showToast(Accounts.localizeErrorMessage(ex));
+                }
+            }).start();
         });
         FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh"));
         spinnerRefresh.setContent(btnRefresh);
@@ -148,9 +147,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             Task<?> uploadTask = skinnable.uploadSkin();
             if (uploadTask != null) {
                 spinnerUpload.showSpinner();
-                uploadTask
-                        .whenComplete(Schedulers.javafx(), ex -> spinnerUpload.hideSpinner())
-                        .start();
+                uploadTask.whenComplete(Schedulers.javafx(), ex -> spinnerUpload.hideSpinner()).start();
             }
         });
         FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload"));
@@ -170,30 +167,30 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
 
             var account = skinnable.getAccount();
 
-            Task.runAsync(skinnable::refreshAsync)
-                    .whenComplete(exception -> {
-                        if (exception != null) {
-                            Controllers.showToast(Accounts.localizeErrorMessage(exception));
-                            return;
-                        }
+            skinnable.refreshAsync().whenComplete(exception -> {
+                if (exception != null) {
+                    Controllers.showToast(Accounts.localizeErrorMessage(exception));
+                    spinnerFriend.hideSpinner();
+                    return;
+                }
 
-                        if (account instanceof MicrosoftAccount microsoftAccount) {
-                            Platform.runLater(() -> Controllers.navigate(new FriendListPage(account, microsoftAccount)));
-                        } else if (account instanceof YggdrasilAccount yggdrasilAccount) {
-                            try {
-                                yggdrasilAccount.getFriendList();
-                                Platform.runLater(() -> Controllers.navigate(new FriendListPage(account, yggdrasilAccount)));
-                            } catch (IOException e) {
-                                Platform.runLater(() -> {
-                                    if (e instanceof ResponseCodeException responseCodeException && responseCodeException.getResponseCode() == 404) {
-                                        Controllers.dialog(i18n("account.friend.unsupported"));
-                                    }
-
-                                    Controllers.showToast(Accounts.localizeErrorMessage(e));
-                                });
+                if (account instanceof MicrosoftAccount microsoftAccount) {
+                    Platform.runLater(() -> Controllers.navigate(new FriendPage(account, microsoftAccount)));
+                } else if (account instanceof YggdrasilAccount yggdrasilAccount) {
+                    try {
+                        yggdrasilAccount.getFriendList();
+                        Platform.runLater(() -> Controllers.navigate(new FriendPage(account, yggdrasilAccount)));
+                    } catch (IOException e) {
+                        Platform.runLater(() -> {
+                            if (e instanceof ResponseCodeException responseCodeException && responseCodeException.getResponseCode() == 404) {
+                                Controllers.dialog(i18n("account.friend.unsupported"));
                             }
-                        }
-                    }).thenRunAsync(Schedulers.javafx(), spinnerFriend::hideSpinner).start();
+
+                            Controllers.showToast(Accounts.localizeErrorMessage(e));
+                        });
+                    }
+                }
+            }).thenRunAsync(Schedulers.javafx(), spinnerFriend::hideSpinner).start();
         });
         right.getChildren().add(spinnerFriend);
 
@@ -222,8 +219,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         Accounts.getAccounts().remove(account);
         if (account.isPortable()) {
             account.setPortable(false);
-            if (!Accounts.getAccounts().contains(account))
-                Accounts.getAccounts().add(account);
+            if (!Accounts.getAccounts().contains(account)) Accounts.getAccounts().add(account);
         } else {
             account.setPortable(true);
             if (!Accounts.getAccounts().contains(account)) {

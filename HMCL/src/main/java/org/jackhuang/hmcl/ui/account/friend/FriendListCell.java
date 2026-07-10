@@ -1,0 +1,109 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui.account.friend;
+
+import com.jfoenix.controls.JFXListView;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.game.TexturesLoader;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.MDListCell;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+
+import java.util.UUID;
+import java.util.regex.Pattern;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+public final class FriendListCell extends MDListCell<FriendListItem> {
+    private final Account account;
+    private final Canvas avatar = new Canvas(32, 32);
+    private final TwoLineListItem twoLineListItem = new TwoLineListItem();
+    private static final Pattern REGEX = Pattern.compile("([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{12})");
+
+    public FriendListCell(JFXListView<FriendListItem> listView, Account account) {
+        super(listView);
+
+        this.account = account;
+
+        BorderPane root = new BorderPane();
+        root.setPadding(new Insets(8, 8, 8, 8));
+
+        HBox center = new HBox();
+        center.setMouseTransparent(true);
+        center.setPrefWidth(Region.USE_PREF_SIZE);
+        center.setSpacing(8);
+        center.setAlignment(Pos.CENTER_LEFT);
+
+        center.getChildren().setAll(avatar, twoLineListItem);
+        root.setCenter(center);
+
+        HBox right = new HBox();
+
+        var deleteButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
+
+        right.getChildren().addAll(deleteButton);
+        right.setAlignment(Pos.CENTER_RIGHT);
+        root.setRight(right);
+
+        getContainer().getChildren().setAll(root);
+    }
+
+    @Override
+    protected void updateControl(FriendListItem item, boolean empty) {
+        String formatted = REGEX.matcher(item.profileId()).replaceAll("$1-$2-$3-$4-$5");
+        var uuid = UUID.fromString(formatted);
+
+        Task.supplyAsync(() -> {
+            CompleteGameProfile profile = null;
+
+            if (account instanceof YggdrasilAccount yggdrasilAccount) {
+                profile = yggdrasilAccount.getYggdrasilService().getCompleteGameProfile(uuid).orElseThrow();
+            } else if (account instanceof MicrosoftAccount microsoftAccount) {
+                profile = microsoftAccount.getService().getCompleteGameProfile(uuid).orElseThrow();
+            }
+
+            var texture = YggdrasilService.getTextures(profile).map(it -> it.get(TextureType.SKIN)).orElseThrow();
+            return TexturesLoader.loadTexture(texture);
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                TexturesLoader.drawAvatar(avatar, result.image());
+                return;
+            } else LOG.warning("Failed to load skin", exception);
+
+            var skin = TexturesLoader.getDefaultSkin(uuid);
+            TexturesLoader.drawAvatar(avatar, skin.image());
+        }).start();
+
+        twoLineListItem.setTitle(item.name());
+        twoLineListItem.setSubtitle(toString());
+    }
+}
