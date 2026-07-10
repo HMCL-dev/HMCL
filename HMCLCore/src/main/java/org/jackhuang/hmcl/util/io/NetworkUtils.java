@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.glavo.url.WebURL;
-import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -167,12 +167,12 @@ public final class NetworkUtils {
     private static final List<Pair<String, String>> API_KEYS;
 
     static {
-        if (CurseForgeRemoteAddonRepository.API_KEY.isEmpty()) {
+        if (CurseForgeRemoteModRepository.API_KEY.isEmpty()) {
             API_KEYS = List.of();
         } else {
             API_KEYS = List.of(
-                    pair("api.curseforge.com", CurseForgeRemoteAddonRepository.API_KEY),
-                    pair("forgecdn.net", CurseForgeRemoteAddonRepository.API_KEY)
+                    pair("api.curseforge.com", CurseForgeRemoteModRepository.API_KEY),
+                    pair("forgecdn.net", CurseForgeRemoteModRepository.API_KEY)
             );
         }
     }
