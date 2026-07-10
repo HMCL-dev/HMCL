@@ -31,28 +31,32 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.TexturesLoader;
+import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 import java.util.UUID;
-import java.util.regex.Pattern;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class FriendListCell extends MDListCell<FriendListItem> {
     private final Account account;
+    private final FriendControl control;
     private final Canvas avatar = new Canvas(32, 32);
     private final TwoLineListItem twoLineListItem = new TwoLineListItem();
-    private static final Pattern REGEX = Pattern.compile("([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{12})");
 
-    public FriendListCell(JFXListView<FriendListItem> listView, Account account) {
+    public FriendListCell(JFXListView<FriendListItem> listView, Account account, FriendControl control) {
         super(listView);
 
         this.account = account;
+        this.control = control;
 
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(8, 8, 8, 8));
@@ -68,10 +72,29 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
 
         HBox right = new HBox();
 
-        var deleteButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
+        var copyButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
+        copyButton.setOnAction(event -> FXUtils.copyText(control.toUuidWithDashes(getItem().profileId())));
+        FXUtils.installFastTooltip(copyButton, i18n("account.copy_uuid"));
+        right.getChildren().addAll(copyButton);
 
+        var deleteButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
+        deleteButton.setOnAction(event -> {
+            Controllers.confirm(i18n("account.friend.delete.confirm"), null, () -> {
+                Task.runAsync(() -> control.deleteFriend(control.toUuidWithoutDashes(getItem().profileId()))).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception != null) {
+                        LOG.warning("Failed to delete friend", exception);
+                        Controllers.dialog(i18n("account.friend.delete.failed"), null, MessageDialogPane.MessageType.ERROR);
+                        return;
+                    }
+                    listView.getItems().remove(getItem());
+                });
+
+            }, null);
+
+        });
         right.getChildren().addAll(deleteButton);
         right.setAlignment(Pos.CENTER_RIGHT);
+
         root.setRight(right);
 
         getContainer().getChildren().setAll(root);
@@ -79,8 +102,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
 
     @Override
     protected void updateControl(FriendListItem item, boolean empty) {
-        String formatted = REGEX.matcher(item.profileId()).replaceAll("$1-$2-$3-$4-$5");
-        var uuid = UUID.fromString(formatted);
+        var uuid = UUID.fromString(control.toUuidWithDashes(item.profileId()));
 
         Task.supplyAsync(() -> {
             CompleteGameProfile profile = null;

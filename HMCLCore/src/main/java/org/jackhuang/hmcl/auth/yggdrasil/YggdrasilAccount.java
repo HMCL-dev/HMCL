@@ -238,6 +238,12 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
         return service.getFriendList(session.accessToken());
     }
 
+
+    @Override
+    public void deleteFriend(String uuid) throws IOException {
+        service.deleteFriend(session.accessToken(), uuid);
+    }
+
     @Override
     public String toString() {
         return "YggdrasilAccount[accountID=" + getAccountID() + ", profileID=" + profileID

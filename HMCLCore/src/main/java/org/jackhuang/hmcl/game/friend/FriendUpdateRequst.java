@@ -17,23 +17,12 @@
  */
 package org.jackhuang.hmcl.game.friend;
 
-import java.io.IOException;
-import java.util.regex.Pattern;
+import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
-public interface FriendControl {
-    Pattern REGEX = Pattern.compile("([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{12})");
-
-    FriendResponse getFriendList() throws IOException;
-
-    void deleteFriend(String uuid) throws IOException;
-    
-    default String toUuidWithDashes(String uuidMayWithoutDashes) {
-        if (uuidMayWithoutDashes.contains("-")) return uuidMayWithoutDashes;
-        else return REGEX.matcher(uuidMayWithoutDashes).replaceAll("$1-$2-$3-$4-$5");
-    }
-
-    default String toUuidWithoutDashes(String uuidMayWithDashes) {
-        if (!uuidMayWithDashes.contains("-")) return uuidMayWithDashes;
-        else return uuidMayWithDashes.replace("-", "");
-    }
+@JsonSerializable
+public record FriendUpdateRequst(
+        @SerializedName("profileId") String profileID,
+        @SerializedName("updateType") EnumUpdateType updateType
+) {
 }

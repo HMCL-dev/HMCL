@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
@@ -241,6 +240,18 @@ public class YggdrasilService {
         return JsonUtils.fromNonNullJson(NetworkUtils.readFullyAsString(request), FriendResponse.class);
     }
 
+    public void deleteFriend(String accessToken, String uuid) throws IOException {
+        var url = provider.getFriendsURL().toString();
+        HttpURLConnection request = HttpRequest.PUT(url)
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").createConnection();
+
+        if (request.getResponseCode() != 200) {
+            throw new ResponseCodeException(url, request.getResponseCode());
+        }
+    }
+
     private static String request(URI uri, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
@@ -253,11 +264,7 @@ public class YggdrasilService {
     }
 
     private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
-        try {
-            return GSON.fromJson(text, typeOfT);
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(text, e);
-        }
+        return null;
     }
 
     private final static class TextureResponse {

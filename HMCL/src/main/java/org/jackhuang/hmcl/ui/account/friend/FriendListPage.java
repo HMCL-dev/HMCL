@@ -69,4 +69,8 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
     public Account getAccount() {
         return account;
     }
+
+    public FriendControl getControl() {
+        return control;
+    }
 }
