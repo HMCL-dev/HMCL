@@ -89,7 +89,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                     throw new IOException("Malformed modpack configuration");
                 }
             }
-            manifest = configuration.getManifest();
+            manifest = configuration.manifest();
             if (manifest == null) throw new CustomException();
         })).thenComposeAsync(unused -> {
             // we first download latest manifest
@@ -173,7 +173,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
             })).thenAcceptAsync(wrapConsumer(unused1 -> {
                 Path manifestFile = repository.getModpackConfiguration(version);
                 JsonUtils.writeToJsonFile(manifestFile,
-                        new ModpackConfiguration<>(manifest, this.configuration.getType(), this.manifest.getName(), this.manifest.getVersion(),
+                        new ModpackConfiguration<>(manifest, this.configuration.type(), this.manifest.getName(), this.manifest.getVersion(),
                                 this.manifest.getFiles().stream()
                                         .flatMap(file -> file instanceof McbbsModpackManifest.AddonFile
                                                 ? Stream.of((McbbsModpackManifest.AddonFile) file)
@@ -237,7 +237,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                         .collect(Collectors.toList()));
 
                         manifest = newManifest;
-                        configuration = configuration.setManifest(newManifest);
+                        configuration = configuration.withManifest(newManifest);
                         JsonUtils.writeToJsonFile(configurationFile, configuration);
 
                         for (McbbsModpackManifest.File file : newManifest.getFiles())

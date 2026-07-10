@@ -236,7 +236,7 @@ public final class ModpackHelper {
     }
 
     public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
-        switch (configuration.getType()) {
+        switch (configuration.type()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
                 return new ModpackUpdateTask(repository, name, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, name))
                         .thenComposeAsync(repository.refreshVersionsAsync())
@@ -248,7 +248,7 @@ public final class ModpackHelper {
 
     public static Task<?> getUpdateTask(HMCLGameRepository repository, Path zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
-        ModpackProvider provider = getProviderByType(configuration.getType());
+        ModpackProvider provider = getProviderByType(configuration.type());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }

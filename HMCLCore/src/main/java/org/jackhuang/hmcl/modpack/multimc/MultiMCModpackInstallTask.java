@@ -120,7 +120,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                 if (Files.exists(json)) {
                     config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
 
-                    if (!MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
+                    if (!MultiMCModpackProvider.INSTANCE.getName().equals(config.type()))
                         throw new IllegalArgumentException("Version " + name + " is not a MultiMC modpack. Cannot update this version.");
                 }
             } catch (JsonParseException | IOException ignore) {

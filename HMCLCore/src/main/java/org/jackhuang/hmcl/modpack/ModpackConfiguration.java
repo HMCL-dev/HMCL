@@ -23,67 +23,32 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Immutable
-public final class ModpackConfiguration<T> implements Validation {
+public record ModpackConfiguration<T>(T manifest, String type, String name, @Nullable String version,
+                                      List<FileInformation> overrides) implements Validation {
 
     @SuppressWarnings("unchecked")
     public static <T> TypeToken<ModpackConfiguration<T>> typeOf(Class<T> clazz) {
         return (TypeToken<ModpackConfiguration<T>>) TypeToken.getParameterized(ModpackConfiguration.class, clazz);
     }
 
-    private final T manifest;
-    private final String type;
-    private final String name;
-    private final String version;
-    private final List<FileInformation> overrides;
-
-    public ModpackConfiguration() {
-        this(null, null, "", null, Collections.emptyList());
+    public ModpackConfiguration {
+        if (name == null) name = "";
+        overrides = overrides == null ? List.of() : List.copyOf(overrides);
     }
 
-    public ModpackConfiguration(T manifest, String type, String name, String version, List<FileInformation> overrides) {
-        this.manifest = manifest;
-        this.type = type;
-        this.name = name;
-        this.version = version;
-        this.overrides = new ArrayList<>(overrides);
-    }
-
-    public T getManifest() {
-        return manifest;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    @Nullable
-    public String getVersion() {
-        return version;
-    }
-
-    public ModpackConfiguration<T> setManifest(T manifest) {
+    public ModpackConfiguration<T> withManifest(T manifest) {
         return new ModpackConfiguration<>(manifest, type, name, version, overrides);
     }
 
-    public ModpackConfiguration<T> setOverrides(List<FileInformation> overrides) {
+    public ModpackConfiguration<T> withOverrides(List<FileInformation> overrides) {
         return new ModpackConfiguration<>(manifest, type, name, version, overrides);
     }
 
-    public ModpackConfiguration<T> setVersion(String version) {
+    public ModpackConfiguration<T> withVersion(String version) {
         return new ModpackConfiguration<>(manifest, type, name, version, overrides);
-    }
-
-    public List<FileInformation> getOverrides() {
-        return Collections.unmodifiableList(overrides);
     }
 
     @Override
@@ -94,41 +59,14 @@ public final class ModpackConfiguration<T> implements Validation {
             throw new JsonParseException("MinecraftInstanceConfiguration missing `type`");
     }
 
+    /**
+     * @param path the relative path to Minecraft run directory.
+     */
     @Immutable
-    public static class FileInformation implements Validation {
-        private final String path; // relative
-        private final String hash;
-        private final String downloadURL;
-
-        public FileInformation() {
-            this(null, null);
-        }
+    public record FileInformation(String path, String hash, @Nullable String downloadURL) implements Validation {
 
         public FileInformation(String path, String hash) {
             this(path, hash, null);
-        }
-
-        public FileInformation(String path, String hash, String downloadURL) {
-            this.path = path;
-            this.hash = hash;
-            this.downloadURL = downloadURL;
-        }
-
-        /**
-         * The relative path to Minecraft run directory
-         *
-         * @return the relative path to Minecraft run directory.
-         */
-        public String getPath() {
-            return path;
-        }
-
-        public String getDownloadURL() {
-            return downloadURL;
-        }
-
-        public String getHash() {
-            return hash;
         }
 
         @Override

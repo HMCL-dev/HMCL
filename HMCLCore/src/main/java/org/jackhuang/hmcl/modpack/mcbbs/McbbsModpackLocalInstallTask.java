@@ -81,7 +81,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
-                if (!McbbsModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (!McbbsModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Version " + name + " is not a Mcbbs modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {

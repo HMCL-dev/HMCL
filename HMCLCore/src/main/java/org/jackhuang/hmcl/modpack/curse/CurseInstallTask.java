@@ -107,7 +107,7 @@ public final class CurseInstallTask extends Task<Void> {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(CurseManifest.class));
 
-                if (!CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (!CurseModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Version " + name + " is not a Curse modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
@@ -172,7 +172,7 @@ public final class CurseInstallTask extends Task<Void> {
             // resolves those file names and writes the enriched manifest to
             // manifest.json, so read from there when available.
             Path oldManifestFile = repository.getVersionRoot(name).resolve("manifest.json");
-            List<CurseManifestFile> oldFiles = config.getManifest().files();
+            List<CurseManifestFile> oldFiles = config.manifest().files();
             if (Files.exists(oldManifestFile)) {
                 try {
                     CurseManifest oldManifest = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class);

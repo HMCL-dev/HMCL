@@ -106,7 +106,7 @@ public class ModrinthInstallTask extends Task<Void> {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ModrinthManifest.class));
 
-                if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Version " + name + " is not a Modrinth modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
@@ -143,7 +143,7 @@ public class ModrinthInstallTask extends Task<Void> {
     public void execute() throws Exception {
         if (config != null) {
             // For update, remove mods not listed in new manifest
-            for (ModrinthManifest.File oldManifestFile : config.getManifest().files()) {
+            for (ModrinthManifest.File oldManifestFile : config.manifest().files()) {
                 Path oldFile = run.resolve(oldManifestFile.path());
                 if (!Files.exists(oldFile)) continue;
                 if (manifest.files().stream().noneMatch(oldManifestFile::equals)) {

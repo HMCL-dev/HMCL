@@ -56,11 +56,11 @@ public final class McbbsModpackProvider implements ModpackProvider {
     public void injectLaunchOptions(String modpackConfigurationJson, LaunchOptions.Builder builder) {
         ModpackConfiguration<McbbsModpackManifest> config = JsonUtils.GSON.fromJson(modpackConfigurationJson, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
-        if (!getName().equals(config.getType())) {
-            throw new IllegalArgumentException("Incorrect manifest type, actual=" + config.getType() + ", expected=" + getName());
+        if (!getName().equals(config.type())) {
+            throw new IllegalArgumentException("Incorrect manifest type, actual=" + config.type() + ", expected=" + getName());
         }
 
-        config.getManifest().injectLaunchOptions(builder);
+        config.manifest().injectLaunchOptions(builder);
     }
 
     private static Modpack fromManifestFile(InputStream json, Charset encoding) throws IOException, JsonParseException {

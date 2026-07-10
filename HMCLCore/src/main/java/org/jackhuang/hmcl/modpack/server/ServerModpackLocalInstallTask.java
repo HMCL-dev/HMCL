@@ -73,7 +73,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
-                if (!ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (!ServerModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Version " + name + " is not a Server modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
