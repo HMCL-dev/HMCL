@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.TexturesLoader;
+import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -80,7 +81,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
         var deleteButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
         deleteButton.setOnAction(event -> {
             Controllers.confirm(i18n("account.friend.delete.confirm"), null, () -> {
-                Task.runAsync(() -> control.deleteFriend(control.toUuidWithoutDashes(getItem().profileId()))).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                Task.runAsync(() -> control.updateFriend(control.toUuidWithoutDashes(getItem().profileId()), EnumUpdateType.REMOVE)).whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception != null) {
                         LOG.warning("Failed to delete friend", exception);
                         Controllers.dialog(i18n("account.friend.delete.failed"), null, MessageDialogPane.MessageType.ERROR);

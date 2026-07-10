@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.game.friend.FriendResponse;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -177,6 +178,11 @@ public final class MicrosoftAccount extends OAuthAccount implements FriendContro
     @Override
     public FriendResponse getFriendList() throws IOException {
         return service.getFriendList(session.accessToken());
+    }
+
+    @Override
+    public void updateFriend(String uuid, EnumUpdateType updateType) throws IOException {
+        service.updateFriend(session.accessToken(), uuid, updateType);
     }
 
     @Override

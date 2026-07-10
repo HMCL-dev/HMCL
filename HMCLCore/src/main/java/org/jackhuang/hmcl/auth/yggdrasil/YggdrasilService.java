@@ -23,7 +23,9 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendResponse;
+import org.jackhuang.hmcl.game.friend.FriendUpdateRequst;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
@@ -45,6 +47,7 @@ import static java.util.Collections.unmodifiableList;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.fromJson;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class YggdrasilService {
@@ -192,7 +195,9 @@ public class YggdrasilService {
                 throw new ServerResponseMalformedException(e);
             }
             TextureResponse texturePayload = fromJson(new String(decodedBinary, UTF_8), TextureResponse.class);
-            return Optional.ofNullable(texturePayload.textures);
+            if (texturePayload != null) {
+                return Optional.ofNullable(texturePayload.textures);
+            } else return Optional.empty();
         } else {
             return Optional.empty();
         }
@@ -240,9 +245,10 @@ public class YggdrasilService {
         return JsonUtils.fromNonNullJson(NetworkUtils.readFullyAsString(request), FriendResponse.class);
     }
 
-    public void deleteFriend(String accessToken, String uuid) throws IOException {
+    public void updateFriend(String accessToken, String uuid, EnumUpdateType updateType) throws IOException {
         var url = provider.getFriendsURL().toString();
         HttpURLConnection request = HttpRequest.PUT(url)
+                .json(new FriendUpdateRequst(uuid, updateType))
                 .authorization("Bearer " + accessToken)
                 .retry(5)
                 .accept("application/json").createConnection();
@@ -261,10 +267,6 @@ public class YggdrasilService {
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }
-    }
-
-    private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
-        return null;
     }
 
     private final static class TextureResponse {

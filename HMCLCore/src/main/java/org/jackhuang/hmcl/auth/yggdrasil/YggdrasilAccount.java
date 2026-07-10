@@ -21,6 +21,7 @@ import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.game.friend.FriendResponse;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -240,8 +241,8 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
 
 
     @Override
-    public void deleteFriend(String uuid) throws IOException {
-        service.deleteFriend(session.accessToken(), uuid);
+    public void updateFriend(String uuid, EnumUpdateType updateType) throws IOException {
+        service.updateFriend(session.accessToken(), uuid, updateType);
     }
 
     @Override

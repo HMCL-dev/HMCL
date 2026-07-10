@@ -25,8 +25,8 @@ public interface FriendControl {
 
     FriendResponse getFriendList() throws IOException;
 
-    void deleteFriend(String uuid) throws IOException;
-    
+    void updateFriend(String uuid, EnumUpdateType updateType) throws IOException;
+
     default String toUuidWithDashes(String uuidMayWithoutDashes) {
         if (uuidMayWithoutDashes.contains("-")) return uuidMayWithoutDashes;
         else return REGEX.matcher(uuidMayWithoutDashes).replaceAll("$1-$2-$3-$4-$5");

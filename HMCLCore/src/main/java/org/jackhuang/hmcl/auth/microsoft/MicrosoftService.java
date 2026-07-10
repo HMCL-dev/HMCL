@@ -31,7 +31,9 @@ import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendResponse;
+import org.jackhuang.hmcl.game.friend.FriendUpdateRequst;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
@@ -314,16 +316,31 @@ public class MicrosoftService {
     }
 
     public FriendResponse getFriendList(String accessToken) throws IOException {
-        HttpURLConnection request = HttpRequest.GET("https://api.minecraftservices.com/friends")
+        var url = "https://api.minecraftservices.com/friends";
+        HttpURLConnection request = HttpRequest.GET(url)
                 .authorization("Bearer " + accessToken)
                 .retry(5)
                 .accept("application/json").createConnection();
 
         if (request.getResponseCode() != 200) {
-            throw new ResponseCodeException("https://api.minecraftservices.com/friends", request.getResponseCode());
+            throw new ResponseCodeException(url, request.getResponseCode());
         }
 
         return JsonUtils.fromNonNullJson(NetworkUtils.readFullyAsString(request), FriendResponse.class);
+    }
+
+    public void updateFriend(String accessToken, String uuid, EnumUpdateType updateType) throws IOException {
+        var url = "https://api.minecraftservices.com/friends";
+
+        HttpURLConnection request = HttpRequest.PUT(url)
+                .json(new FriendUpdateRequst(uuid, updateType))
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").createConnection();
+
+        if (request.getResponseCode() != 200) {
+            throw new ResponseCodeException(url, request.getResponseCode());
+        }
     }
 
     public static class XboxAuthorizationException extends AuthenticationException {
