@@ -80,7 +80,7 @@ public final class FriendPage extends DecoratorAnimatedPage implements Decorator
 
     private void onAddFriend() {
         Controllers.prompt(i18n("account.friend.add"), (name, resultHandler) -> {
-            Task.runAsync(() -> control.updateFriend(name, EnumUpdateType.ADD)).whenComplete(Schedulers.javafx(), e -> {
+            Task.runAsync(() -> control.updateFriend(name, null, EnumUpdateType.ADD)).whenComplete(Schedulers.javafx(), e -> {
                 if (e == null) resultHandler.resolve();
                 else {
                     LOG.warning("Failed to add friend", e);

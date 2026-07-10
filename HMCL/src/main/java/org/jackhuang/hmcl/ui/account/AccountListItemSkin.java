@@ -168,9 +168,10 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             var account = skinnable.getAccount();
 
             skinnable.refreshAsync().whenComplete(exception -> {
+                Platform.runLater(spinnerFriend::hideSpinner);
+
                 if (exception != null) {
-                    Controllers.showToast(Accounts.localizeErrorMessage(exception));
-                    spinnerFriend.hideSpinner();
+                    Platform.runLater(() -> Controllers.showToast(Accounts.localizeErrorMessage(exception)));
                     return;
                 }
 
@@ -191,7 +192,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
                         });
                     }
                 }
-            }).thenRunAsync(Schedulers.javafx(), spinnerFriend::hideSpinner).start();
+            }).start();
         });
         right.getChildren().add(spinnerFriend);
 

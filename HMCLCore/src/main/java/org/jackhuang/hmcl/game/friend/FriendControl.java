@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.game.friend;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.util.regex.Pattern;
 
@@ -25,7 +28,7 @@ public interface FriendControl {
 
     FriendResponse getFriendList() throws IOException;
 
-    void updateFriend(String uuid, EnumUpdateType updateType) throws IOException;
+    void updateFriend(@Nullable String name, @Nullable String uuid, @NotNull EnumUpdateType updateType) throws IOException;
 
     default String toUuidWithDashes(String uuidMayWithoutDashes) {
         if (uuidMayWithoutDashes.contains("-")) return uuidMayWithoutDashes;

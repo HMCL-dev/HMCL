@@ -22,7 +22,8 @@ import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
 @JsonSerializable
 public record FriendUpdateRequst(
-        @SerializedName("profileId") String profileID,
+        @SerializedName("name") String name,
+        @SerializedName("profileId") String profileId,
         @SerializedName("updateType") EnumUpdateType updateType
 ) {
 }

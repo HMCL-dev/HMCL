@@ -86,7 +86,7 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
 
         btnOk.setOnAction(action -> {
             spinnerPane.showSpinner();
-            Task.runAsync(() -> control.updateFriend(control.toUuidWithoutDashes(item.profileId()), EnumUpdateType.REMOVE)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            Task.runAsync(() -> control.updateFriend(control.toUuidWithoutDashes(item.profileId()), null, EnumUpdateType.REMOVE)).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 spinnerPane.hideSpinner();
                 if (exception != null) {
                     LOG.warning("Failed to delete friend", exception);

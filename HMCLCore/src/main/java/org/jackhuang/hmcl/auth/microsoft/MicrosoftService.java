@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -317,30 +318,21 @@ public class MicrosoftService {
 
     public FriendResponse getFriendList(String accessToken) throws IOException {
         var url = "https://api.minecraftservices.com/friends";
-        HttpURLConnection request = HttpRequest.GET(url)
+
+        return HttpRequest.GET(url)
                 .authorization("Bearer " + accessToken)
                 .retry(5)
-                .accept("application/json").createConnection();
-
-        if (request.getResponseCode() != 200) {
-            throw new ResponseCodeException(url, request.getResponseCode());
-        }
-
-        return JsonUtils.fromNonNullJson(NetworkUtils.readFullyAsString(request), FriendResponse.class);
+                .accept("application/json").getJson(FriendResponse.class);
     }
 
-    public void updateFriend(String accessToken, String uuid, EnumUpdateType updateType) throws IOException {
+    public void updateFriend(String accessToken, @Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
         var url = "https://api.minecraftservices.com/friends";
 
-        HttpURLConnection request = HttpRequest.PUT(url)
-                .json(new FriendUpdateRequst(uuid, updateType), GSON)
+        HttpRequest.PUT(url)
+                .json(new FriendUpdateRequst(name, uuid, updateType), GSON)
                 .authorization("Bearer " + accessToken)
                 .retry(5)
-                .accept("application/json").createConnection();
-
-        if (request.getResponseCode() != 200) {
-            throw new ResponseCodeException(url, request.getResponseCode());
-        }
+                .accept("application/json").getJson(MinecraftErrorResponse.class);
     }
 
     public static class XboxAuthorizationException extends AuthenticationException {

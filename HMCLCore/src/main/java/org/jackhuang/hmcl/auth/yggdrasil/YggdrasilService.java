@@ -27,10 +27,13 @@ import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendResponse;
 import org.jackhuang.hmcl.game.friend.FriendUpdateRequst;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
-import org.jackhuang.hmcl.util.io.*;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
+import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -233,29 +236,21 @@ public class YggdrasilService {
 
     public FriendResponse getFriendList(String accessToken) throws IOException {
         var url = provider.getFriendsURL().toString();
-        HttpURLConnection request = HttpRequest.GET(url)
+
+        return HttpRequest.GET(url)
                 .authorization("Bearer " + accessToken)
                 .retry(5)
-                .accept("application/json").createConnection();
-
-        if (request.getResponseCode() != 200) {
-            throw new ResponseCodeException(url, request.getResponseCode());
-        }
-
-        return JsonUtils.fromNonNullJson(NetworkUtils.readFullyAsString(request), FriendResponse.class);
+                .accept("application/json").getJson(FriendResponse.class);
     }
 
-    public void updateFriend(String accessToken, String uuid, EnumUpdateType updateType) throws IOException {
+    public void updateFriend(String accessToken, @Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
         var url = provider.getFriendsURL().toString();
-        HttpURLConnection request = HttpRequest.PUT(url)
-                .json(new FriendUpdateRequst(uuid, updateType), GSON)
+
+        HttpRequest.PUT(url)
+                .json(new FriendUpdateRequst(name, uuid, updateType), GSON)
                 .authorization("Bearer " + accessToken)
                 .retry(5)
-                .accept("application/json").createConnection();
-
-        if (request.getResponseCode() != 200) {
-            throw new ResponseCodeException(url, request.getResponseCode());
-        }
+                .accept("application/json").getJson(ErrorResponse.class);
     }
 
     private static String request(URI uri, Object payload) throws AuthenticationException {

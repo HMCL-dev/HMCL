@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.game.friend.FriendResponse;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -181,8 +182,8 @@ public final class MicrosoftAccount extends OAuthAccount implements FriendContro
     }
 
     @Override
-    public void updateFriend(String uuid, EnumUpdateType updateType) throws IOException {
-        service.updateFriend(session.accessToken(), uuid, updateType);
+    public void updateFriend(@Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
+        service.updateFriend(session.accessToken(), name, uuid, updateType);
     }
 
     @Override
