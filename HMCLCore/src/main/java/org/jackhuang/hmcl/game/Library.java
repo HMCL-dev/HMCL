@@ -134,9 +134,9 @@ public class Library implements Comparable<Library>, Validation {
                         return nd.replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
                     }
                 }
-            } else if (downloads != null && downloads.getClassifiers() != null) {
+            } else if (downloads != null && downloads.classifiers() != null) {
                 for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
-                    LibraryDownloadInfo info = downloads.getClassifiers().get(nativeDescriptor);
+                    LibraryDownloadInfo info = downloads.classifiers().get(nativeDescriptor);
                     if (info != null) {
                         return nativeDescriptor;
                     }
@@ -165,15 +165,15 @@ public class Library implements Comparable<Library>, Validation {
             return true;
         }
 
-        return downloads != null && downloads.getClassifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
+        return downloads != null && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
     }
 
     public LibraryDownloadInfo getRawDownloadInfo() {
         if (downloads != null) {
             if (isNative())
-                return downloads.getClassifiers().get(getClassifier());
+                return downloads.classifiers().get(getClassifier());
             else
-                return downloads.getArtifact();
+                return downloads.artifact();
         } else {
             return null;
         }

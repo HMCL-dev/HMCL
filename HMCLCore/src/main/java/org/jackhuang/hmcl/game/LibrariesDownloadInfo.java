@@ -28,26 +28,14 @@ import java.util.Map;
  * @author huangyuhui
  */
 @Immutable
-public final class LibrariesDownloadInfo {
+public record LibrariesDownloadInfo(LibraryDownloadInfo artifact, Map<String, LibraryDownloadInfo> classifiers) {
 
-    private final LibraryDownloadInfo artifact;
-    private final Map<String, LibraryDownloadInfo> classifiers;
+    public LibrariesDownloadInfo {
+        classifiers = classifiers == null ? Map.of() : Map.copyOf(classifiers);
+    }
 
     public LibrariesDownloadInfo(LibraryDownloadInfo artifact) {
         this(artifact, null);
-    }
-
-    public LibrariesDownloadInfo(LibraryDownloadInfo artifact, Map<String, LibraryDownloadInfo> classifiers) {
-        this.artifact = artifact;
-        this.classifiers = classifiers == null ? null : new HashMap<>(classifiers);
-    }
-
-    public LibraryDownloadInfo getArtifact() {
-        return artifact;
-    }
-
-    public Map<String, LibraryDownloadInfo> getClassifiers() {
-        return classifiers == null ? Collections.emptyMap() : Collections.unmodifiableMap(classifiers);
     }
 
 }
