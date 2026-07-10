@@ -58,8 +58,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name);
-        for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
-            builder.version(addon.getId(), addon.getVersion());
+        for (ServerModpackManifest.Addon addon : manifest.addons()) {
+            builder.version(addon.id(), addon.version());
         }
 
         dependents.add(builder.buildAsync());

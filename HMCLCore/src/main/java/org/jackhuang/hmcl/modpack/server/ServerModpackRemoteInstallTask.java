@@ -52,8 +52,8 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name);
-        for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
-            builder.version(addon.getId(), addon.getVersion());
+        for (ServerModpackManifest.Addon addon : manifest.addons()) {
+            builder.version(addon.id(), addon.version());
         }
 
         dependents.add(builder.buildAsync());
@@ -86,7 +86,7 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        dependencies.add(new ServerModpackCompletionTask(dependency, name, new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
+        dependencies.add(new ServerModpackCompletionTask(dependency, name, new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.name(), manifest.version(), Collections.emptyList())));
     }
 
     public static final String MODPACK_TYPE = "Server";
