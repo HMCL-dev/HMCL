@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -638,7 +639,10 @@ public final class StringUtils {
         detector.handleData(data);
         detector.dataEnd();
         var detected = detector.getDetectedCharset();
-        return detected != null ? detected.getCharset(OperatingSystem.NATIVE_CHARSET) : OperatingSystem.NATIVE_CHARSET;
+        if (detected == null || !detected.isSupported()) return OperatingSystem.NATIVE_CHARSET;
+        var charset = detected.getCharset();
+        if (charset == StandardCharsets.UTF_8 || charset == StandardCharsets.US_ASCII) return StandardCharsets.UTF_8;
+        return OperatingSystem.NATIVE_CHARSET;
     }
 
     public static class LevCalculator {
