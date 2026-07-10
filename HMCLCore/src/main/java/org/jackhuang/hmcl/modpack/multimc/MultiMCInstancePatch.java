@@ -199,43 +199,8 @@ public final class MultiMCInstancePatch {
         }
     }
 
-    public static final class ResolvedInstance {
-        private final Version version;
-
-        private final String gameVersion;
-
-        private final Library mainJar;
-
-        private final List<String> jarModFileNames;
-        private final List<Library> mavenOnlyFiles;
-
-        public ResolvedInstance(Version version, String gameVersion, Library mainJar, List<String> jarModFileNames, List<Library> mavenOnlyFiles) {
-            this.version = version;
-            this.gameVersion = gameVersion;
-            this.mainJar = mainJar;
-            this.jarModFileNames = jarModFileNames;
-            this.mavenOnlyFiles = mavenOnlyFiles;
-        }
-
-        public Version getVersion() {
-            return version;
-        }
-
-        public String getGameVersion() {
-            return gameVersion;
-        }
-
-        public Library getMainJar() {
-            return mainJar;
-        }
-
-        public List<String> getJarModFileNames() {
-            return jarModFileNames;
-        }
-
-        public List<Library> getMavenOnlyFiles() {
-            return mavenOnlyFiles;
-        }
+    public record ResolvedInstance(Version version, String gameVersion, Library mainJar,
+                                   List<String> jarModFileNames, List<Library> mavenOnlyFiles) {
     }
 
     /**

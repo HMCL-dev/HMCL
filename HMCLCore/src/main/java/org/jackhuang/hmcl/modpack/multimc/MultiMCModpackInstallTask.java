@@ -142,14 +142,14 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             Path root = getRootPath(fs);
 
             List<MultiMCManifest.MultiMCManifestComponent> components = Objects.requireNonNull(
-                    Objects.requireNonNull(manifest.getMmcPack(), "mmc-pack.json").getComponents(), "components"
+                    Objects.requireNonNull(manifest.getMmcPack(), "mmc-pack.json").components(), "components"
             );
             List<Task<MultiMCInstancePatch>> patches = new ArrayList<>();
 
             String mcVersion = null;
             for (MultiMCManifest.MultiMCManifestComponent component : components) {
-                if (MultiMCComponents.getComponent(component.getUid()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
-                    mcVersion = component.getVersion();
+                if (MultiMCComponents.getComponent(component.uid()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
+                    mcVersion = component.version();
                     break;
                 }
             }
@@ -158,7 +158,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
 
             for (MultiMCManifest.MultiMCManifestComponent component : components) {
-                String componentID = Objects.requireNonNull(component.getUid(), "Component ID");
+                String componentID = Objects.requireNonNull(component.uid(), "Component ID");
                 Path patchPath = root.resolve(String.format("patches/%s.json", componentID));
 
                 if (Files.exists(patchPath)) {
@@ -170,7 +170,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                     patches.add(Task.supplyAsync(() -> patch)); // TODO: Task.completed has unclear compatibility issue.
                 } else {
                     patches.add(
-                            new GetTask(MultiMCComponents.getMetaURL(componentID, component.getVersion(), mcVersion))
+                            new GetTask(MultiMCComponents.getMetaURL(componentID, component.version(), mcVersion))
                                     .thenApplyAsync(s -> MultiMCInstancePatch.read(componentID, s))
                     );
                 }
@@ -206,10 +206,10 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             while (true) {
                 for (MultiMCInstancePatch patch : existed.values()) {
                     for (MultiMCManifest.MultiMCManifestCachedRequires require : patch.getRequires()) {
-                        String componentID = require.getID();
+                        String componentID = require.uid();
                         if (!existed.containsKey(componentID)) {
                             Task<MultiMCInstancePatch> task = new GetTask(MultiMCComponents.getMetaURL(
-                                    componentID, Lang.requireNonNullElse(require.getEqualsVersion(), require.getSuggests()), mcVersion
+                                    componentID, Lang.requireNonNullElse(require.equalsVersion(), require.suggests()), mcVersion
                             )).thenApplyAsync(s -> MultiMCInstancePatch.read(componentID, s));
                             task.run();
 
@@ -254,21 +254,21 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             if (Files.exists(libraries))
                 FileUtils.copyDirectory(libraries, repository.getVersionRoot(name).resolve("libraries"));
 
-            for (Library library : artifact.getVersion().getLibraries()) {
+            for (Library library : artifact.version().getLibraries()) {
                 if ("local".equals(library.getHint())) {
                     /* TODO: Determine whether we should erase community fields, like 'hint' and 'filename' from version json.
                         Retain them will facilitate compatibility, as some embedded libraries may check where their JAR is.
                         Meanwhile, potential compatibility issue with other launcher which never supports these fields might occur.
                         Here, we make the file stored twice, to keep maximum compatibility. */
-                    Path from = repository.getLibraryFile(artifact.getVersion(), library);
-                    Path target = repository.getLibraryFile(artifact.getVersion(), library.withoutCommunityFields());
+                    Path from = repository.getLibraryFile(artifact.version(), library);
+                    Path target = repository.getLibraryFile(artifact.version(), library.withoutCommunityFields());
                     Files.createDirectories(target.getParent());
                     Files.copy(from, target, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
 
             try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
-                Path libraryPath = repository.getLibraryFile(artifact.getVersion(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
+                Path libraryPath = repository.getLibraryFile(artifact.version(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
 
                 Files.createDirectories(libraryPath.getParent());
                 Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), libraryPath, StandardCopyOption.REPLACE_EXISTING);
@@ -285,19 +285,19 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
         // Stage #5: Assemble game files.
         {
-            Version version = artifact.getVersion();
+            Version version = artifact.version();
 
-            dependencies.add(repository.saveAsync(artifact.getVersion()));
+            dependencies.add(repository.saveAsync(artifact.version()));
             dependencies.add(new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true));
             dependencies.add(new GameLibrariesTask(
                     dependencyManager,
                     // TODO: check integrity of maven-only files when launching games?
-                    version.setLibraries(Lang.merge(version.getLibraries(), artifact.getMavenOnlyFiles())),
+                    version.setLibraries(Lang.merge(version.getLibraries(), artifact.mavenOnlyFiles())),
                     true
             ));
 
-            Artifact mainJarArtifact = artifact.getMainJar().getArtifact();
-            String gameVersion = artifact.getGameVersion();
+            Artifact mainJarArtifact = artifact.mainJar().getArtifact();
+            String gameVersion = artifact.gameVersion();
             if (gameVersion != null &&
                     "com.mojang".equals(mainJarArtifact.getGroup()) &&
                     "minecraft".equals(mainJarArtifact.getName()) &&
@@ -328,7 +328,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     public void postExecute() throws Exception {
         MultiMCInstancePatch.ResolvedInstance artifact = Objects.requireNonNull(getResult(), "ResolvedInstance");
 
-        List<String> files = artifact.getJarModFileNames();
+        List<String> files = artifact.jarModFileNames();
         if (!isDependenciesSucceeded() || files.isEmpty()) {
             return;
         }
