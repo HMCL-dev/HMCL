@@ -73,14 +73,14 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
 
         HBox right = new HBox();
 
-        var copyButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
+        var copyButton = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
         copyButton.setOnAction(event -> FXUtils.copyText(control.toUuidWithDashes(getItem().profileId())));
         FXUtils.installFastTooltip(copyButton, i18n("account.copy_uuid"));
         right.getChildren().addAll(copyButton);
 
         var deleteButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
         deleteButton.setOnAction(event -> {
-            Controllers.confirm(i18n("account.friend.delete.confirm"), null, () -> {
+            Controllers.confirm(i18n("account.friend.delete.confirm", getItem().name()), null, () -> {
                 Task.runAsync(() -> control.updateFriend(control.toUuidWithoutDashes(getItem().profileId()), EnumUpdateType.REMOVE)).whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception != null) {
                         LOG.warning("Failed to delete friend", exception);
@@ -103,6 +103,10 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
 
     @Override
     protected void updateControl(FriendListItem item, boolean empty) {
+        TexturesLoader.unbindAvatar(avatar);
+
+        if (item == null || empty) return;
+
         var uuid = UUID.fromString(control.toUuidWithDashes(item.profileId()));
 
         Task.supplyAsync(() -> {
@@ -127,6 +131,6 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
         }).start();
 
         twoLineListItem.setTitle(item.name());
-        twoLineListItem.setSubtitle(toString());
+//        twoLineListItem.setSubtitle(toString());
     }
 }

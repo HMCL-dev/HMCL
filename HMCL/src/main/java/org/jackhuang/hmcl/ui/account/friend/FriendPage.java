@@ -26,6 +26,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.game.friend.FriendControl;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -74,7 +75,9 @@ public final class FriendPage extends DecoratorAnimatedPage implements Decorator
     }
 
     private void onAddFriend() {
-
+        Controllers.prompt(i18n("TODO"), (e,a) -> {
+            Controllers.dialog("TODO");
+        }, null);
     }
 
     @Override
