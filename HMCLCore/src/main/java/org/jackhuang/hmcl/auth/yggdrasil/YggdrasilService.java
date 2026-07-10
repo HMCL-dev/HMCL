@@ -111,8 +111,8 @@ public class YggdrasilService {
         YggdrasilSession response = handleAuthenticationResponse(request(provider.getRefreshmentURL(), request), clientToken);
 
         if (characterToSelect != null) {
-            if (response.getSelectedProfile() == null ||
-                    !response.getSelectedProfile().getId().equals(characterToSelect.getId())) {
+            if (response.selectedProfile() == null ||
+                    !response.selectedProfile().getId().equals(characterToSelect.getId())) {
                 throw new ServerResponseMalformedException("Failed to select character");
             }
         }

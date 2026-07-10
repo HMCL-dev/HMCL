@@ -92,7 +92,7 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
             Map<String, String> properties = JsonUtils.GSON.fromJson(
                     profilePropertiesObject,
                     JsonUtils.mapTypeOf(String.class, String.class));
-            GameProfile selected = session.getSelectedProfile();
+            GameProfile selected = session.selectedProfile();
             ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository =
                     server.getYggdrasilService().getProfileRepository();
             profileRepository.put(selected.getId(), new CompleteGameProfile(selected, properties));

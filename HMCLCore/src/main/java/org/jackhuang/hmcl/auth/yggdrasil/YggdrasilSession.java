@@ -30,51 +30,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/// @param selectedProfile nullable (null if no character is selected)
+/// @param availableProfiles nullable (null if the YggdrasilSession is loaded from storage)
 @Immutable
-public class YggdrasilSession {
+public record YggdrasilSession(String clientToken, String accessToken, @Nullable GameProfile selectedProfile,
+                               List<GameProfile> availableProfiles, @Nullable Map<String, String> userProperties) {
 
-    private final String clientToken;
-    private final String accessToken;
-    private final GameProfile selectedProfile;
-    private final List<GameProfile> availableProfiles;
-
-    @Nullable
-    private final Map<String, String> userProperties;
-
-    public YggdrasilSession(String clientToken, String accessToken, GameProfile selectedProfile, List<GameProfile> availableProfiles, Map<String, String> userProperties) {
-        this.clientToken = clientToken;
-        this.accessToken = accessToken;
-        this.selectedProfile = selectedProfile;
-        this.availableProfiles = availableProfiles;
-        this.userProperties = userProperties;
-
+    public YggdrasilSession {
         if (accessToken != null) Logger.registerAccessToken(accessToken);
-    }
-
-    public String getClientToken() {
-        return clientToken;
-    }
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    /**
-     * @return nullable (null if no character is selected)
-     */
-    public GameProfile getSelectedProfile() {
-        return selectedProfile;
-    }
-
-    /**
-     * @return nullable (null if the YggdrasilSession is loaded from storage)
-     */
-    public List<GameProfile> getAvailableProfiles() {
-        return availableProfiles;
-    }
-
-    public Map<String, String> getUserProperties() {
-        return userProperties;
     }
 
     public boolean hasProfileName() {
