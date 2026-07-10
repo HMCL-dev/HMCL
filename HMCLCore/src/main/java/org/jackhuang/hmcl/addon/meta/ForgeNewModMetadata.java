@@ -56,101 +56,20 @@ import java.util.jar.Manifest;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @Immutable
-public final class ForgeNewModMetadata {
-    private final String modLoader;
+public record ForgeNewModMetadata(String modLoader, String loaderVersion, String logoFile, String license, List<Mod> mods) {
 
-    private final String loaderVersion;
+    public record Mod(String modId, String version, String displayName, String side, String displayURL,
+                      @JsonAdapter(AuthorDeserializer.class) String authors, String description, String logoFile) {
 
-    private final String logoFile;
-
-    private final String license;
-
-    private final List<Mod> mods;
-
-    public ForgeNewModMetadata(String modLoader, String loaderVersion, String logoFile, String license, List<Mod> mods) {
-        this.modLoader = modLoader;
-        this.loaderVersion = loaderVersion;
-        this.logoFile = logoFile;
-        this.license = license;
-        this.mods = mods;
-    }
-
-    public String getModLoader() {
-        return modLoader;
-    }
-
-    public String getLoaderVersion() {
-        return loaderVersion;
-    }
-
-    public String getLogoFile() {
-        return logoFile;
-    }
-
-    public String getLicense() {
-        return license;
-    }
-
-    public List<Mod> getMods() {
-        return mods;
-    }
-
-    public static class Mod {
-        private final String modId;
-        private final String version;
-        private final String displayName;
-        private final String side;
-        private final String displayURL;
-        @JsonAdapter(AuthorDeserializer.class)
-        private final String authors;
-        private final String description;
-        private final String logoFile;
-
-        public Mod() {
-            this("", "", "", "", "", "", "", "");
-        }
-
-        public Mod(String modId, String version, String displayName, String side, String displayURL, String authors, String description, String logoFile) {
-            this.modId = modId;
-            this.version = version;
-            this.displayName = displayName;
-            this.side = side;
-            this.displayURL = displayURL;
-            this.authors = authors;
-            this.description = description;
-            this.logoFile = logoFile;
-        }
-
-        public String getModId() {
-            return modId;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public String getSide() {
-            return side;
-        }
-
-        public String getDisplayURL() {
-            return displayURL;
-        }
-
-        public String getAuthors() {
-            return authors;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public String getLogoFile() {
-            return logoFile;
+        public Mod {
+            if (modId == null) modId = "";
+            if (version == null) version = "";
+            if (displayName == null) displayName = "";
+            if (side == null) side = "";
+            if (displayURL == null) displayURL = "";
+            if (authors == null) authors = "";
+            if (description == null) description = "";
+            if (logoFile == null) logoFile = "";
         }
 
         static final class AuthorDeserializer implements JsonDeserializer<String> {
@@ -226,9 +145,9 @@ public final class ForgeNewModMetadata {
             throw ioException;
         }
         ForgeNewModMetadata metadata = JsonUtils.GSON.fromJson(tomlParseResult.toJson(), ForgeNewModMetadata.class);
-        if (metadata == null || metadata.getMods().isEmpty())
+        if (metadata == null || metadata.mods().isEmpty())
             throw new IOException("Mod " + modFile + " `%s` is malformed..".formatted(modToml.getName()));
-        Mod mod = metadata.getMods().get(0);
+        Mod mod = metadata.mods().get(0);
         ZipArchiveEntry manifestMF = tree.getEntry("META-INF/MANIFEST.MF");
         String jarVersion = "";
         if (manifestMF != null) {
@@ -240,13 +159,13 @@ public final class ForgeNewModMetadata {
             }
         }
 
-        ModLoaderType type = analyzeLoader(tomlParseResult, mod.getModId(), modLoaderType);
+        ModLoaderType type = analyzeLoader(tomlParseResult, mod.modId(), modLoaderType);
 
-        String logoPath = StringUtils.isNotBlank(mod.getLogoFile()) ? mod.getLogoFile() : metadata.getLogoFile();
+        String logoPath = StringUtils.isNotBlank(mod.logoFile()) ? mod.logoFile() : metadata.logoFile();
 
-        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalAddonFile.Description(mod.getDescription()),
-                mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
-                mod.getDisplayURL(),
+        return new LocalModFile(modManager, modManager.getLocalMod(mod.modId(), type), modFile, mod.displayName(), new LocalAddonFile.Description(mod.description()),
+                mod.authors(), jarVersion == null ? mod.version() : mod.version().replace("${file.jarVersion}", jarVersion), "",
+                mod.displayURL(),
                 logoPath);
     }
 
@@ -316,7 +235,7 @@ public final class ForgeNewModMetadata {
         try {
             TomlArray tomlArray = toml.getArray("dependencies." + modID);
             if (tomlArray != null) {
-                dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
+                dependencies = tomlArray.toList().stream().map(o -> ((TomlTable) o).toMap()).toList();
             }
         } catch (ClassCastException ignored) { // https://github.com/HMCL-dev/HMCL/issues/5068
         }
@@ -325,7 +244,7 @@ public final class ForgeNewModMetadata {
             try {
                 TomlArray tomlArray = toml.getArray("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
                 if (tomlArray != null) {
-                    dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
+                    dependencies = tomlArray.toList().stream().map(o -> ((TomlTable) o).toMap()).toList();
                 }
             } catch (ClassCastException e) {
                 try {
@@ -335,7 +254,7 @@ public final class ForgeNewModMetadata {
 
                     TomlArray tomlArray = table.getArray(modID);
                     if (tomlArray != null) {
-                        dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
+                        dependencies = tomlArray.toList().stream().map(o -> ((TomlTable) o).toMap()).toList();
                     }
                 } catch (Throwable ignored) {
                 }
