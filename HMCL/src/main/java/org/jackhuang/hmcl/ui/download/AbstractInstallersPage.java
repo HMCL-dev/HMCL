@@ -115,8 +115,28 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
         return new InstallersPageSkin(this);
     }
 
+    /**
+     * Determines whether to display the extension pane.
+     * <p>
+     * This method controls the visibility of the extension pane in the UI.
+     * When this method returns {@code true} and the pane is visible, users can 
+     * interact with the features inside it, which includes triggering the 
+     * "Reset to Default Name" button handled by {@link #resetDefaultName()}.
+     * </p>
+     *
+     * @return {@code true} if the extension pane should be displayed; {@code false} otherwise.
+     */
     protected abstract boolean showExtendPane();
 
+    /**
+     * Resets the name to its default value.
+     * <p>
+     * This method contains the business logic for the "Reset to Default Name" button 
+     * located within the extension pane. This logic can only be triggered by the user 
+     * clicking the corresponding button after {@link #showExtendPane()} returns 
+     * {@code true} and the extension pane is successfully displayed.
+     * </p>
+     */
     protected abstract void resetDefaultName();
 
     protected static class InstallersPageSkin extends SkinBase<AbstractInstallersPage> {
