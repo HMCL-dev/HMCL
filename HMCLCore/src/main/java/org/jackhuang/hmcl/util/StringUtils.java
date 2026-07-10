@@ -634,7 +634,7 @@ public final class StringUtils {
         return JsonUtils.fromNonNullJson(json, JsonUtils.listTypeOf(String.class));
     }
 
-    public static Charset maybeDetectTextEncoding(byte[] data) {
+    public static Charset detectMaybeNativeTextEncoding(byte[] data) {
         var detector = new UniversalDetector();
         detector.handleData(data);
         detector.dataEnd();

@@ -240,7 +240,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             LOG.warning("Failed to read instance options file", e);
             return options;
         }
-        optionsFileCharset = StringUtils.maybeDetectTextEncoding(bytes);
+        optionsFileCharset = StringUtils.detectMaybeNativeTextEncoding(bytes);
         new String(bytes, optionsFileCharset).lines().forEach(s -> {
             if (StringUtils.isNotBlank(s)) {
                 var entry = s.split(":", 2);
