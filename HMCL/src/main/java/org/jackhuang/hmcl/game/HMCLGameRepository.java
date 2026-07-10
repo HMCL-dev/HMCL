@@ -242,6 +242,19 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         clean(getRunDirectory(id));
     }
 
+    /// Removes a version from disk and drops any cached instance settings for that version.
+    @Override
+    public boolean removeVersionFromDisk(String id) {
+        boolean removed = super.removeVersionFromDisk(id);
+        if (removed) {
+            instanceGameSettings.remove(id);
+            loadedInstanceGameSettings.remove(id);
+            readOnlyInstanceGameSettings.remove(id);
+            beingModpackVersions.remove(id);
+        }
+        return removed;
+    }
+
     public void duplicateVersion(String srcId, String dstId, boolean copySaves) throws IOException {
         Path srcDir = getVersionRoot(srcId);
         Path dstDir = getVersionRoot(dstId);
@@ -337,10 +350,15 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
+        @Nullable GameSettingsPresetID legacyParent = gameDirectory.getLegacyGameSettings();
+        if (SettingsManager.getGameSettings(legacyParent) == null) {
+            legacyParent = null;
+        }
+
         LegacyGameSettingsMigrator.InstanceMigrationResult migrationResult =
                 LegacyGameSettingsMigrator.migrateInstanceGameSettings(
                         this, id,
-                        getParentGameSettings(null).idProperty().getValue());
+                        legacyParent);
         if (migrationResult != null) {
             initInstanceGameSettings(id, migrationResult.setting());
             try {
@@ -350,14 +368,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 LOG.warning("Failed to save migrated instance game settings for " + id, e);
             }
             return;
-        }
-
-        GameSettings.Preset gameDirectoryPreset = SettingsManager.getGameSettings(gameDirectory.getLegacyGameSettings());
-        if (gameDirectoryPreset != null && gameDirectoryPreset.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS) {
-            GameSettings.Instance setting = new GameSettings.Instance();
-            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-            initInstanceGameSettings(id, setting);
-            saveGameSettings(id);
         }
     }
 
@@ -385,8 +395,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                         + file + ", Actual: " + schemaResult.actual());
                 case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: "
                         + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
-                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA -> LOG.warning("Unsupported instance game settings schema. Expected: "
-                        + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
+                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA ->
+                    LOG.warning("Unsupported instance game settings schema. Expected: "
+                                + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
                 }
             }
@@ -516,38 +527,42 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
+    /// Returns the explicit parent preset of the instance, falling back to the default preset.
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
-        @Nullable GameSettingsPresetID parent = instance != null && instance.parentProperty().getValue() != null
-                ? instance.parentProperty().getValue()
-                : gameDirectory.getLegacyGameSettings();
+        @Nullable GameSettingsPresetID parent = instance != null ? instance.parentProperty().getValue() : null;
         GameSettings.Preset parentSetting = SettingsManager.getGameSettings(parent);
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
+    }
+
+    /// Returns whether a new instance should use an isolated running directory under the default isolation settings.
+    public boolean shouldIsolateNewInstance(boolean modded) {
+        GameSettings.Preset preset = getParentGameSettings(null);
+        DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
+        return switch (type) {
+            case NEVER -> false;
+            case ALWAYS -> true;
+            case MODDED -> modded;
+        };
+    }
+
+    /// Applies default isolation to a new instance before the version metadata is saved.
+    public void applyDefaultIsolationSettingForNewInstance(String id, boolean modded) {
+        if (!shouldIsolateNewInstance(modded) || readOnlyInstanceGameSettings.contains(id)) {
+            return;
+        }
+
+        GameSettings.Instance setting = getInstanceGameSettings(id);
+        if (setting == null) {
+            setting = initInstanceGameSettings(id, new GameSettings.Instance());
+        }
+        if (setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
+            saveGameSettings(id);
+        }
     }
 
     public GameSettings.Effective getEffectiveGameSettings(String id) {
         GameSettings.Instance instance = getInstanceGameSettings(id);
         return GameSettings.resolve(getParentGameSettings(instance), instance);
-    }
-
-    public void applyDefaultIsolationSetting(String id) {
-        if (!hasVersion(id)) {
-            return;
-        }
-
-        GameSettings.Preset preset = getParentGameSettings(null);
-        DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
-        boolean isolated = switch (type) {
-            case NEVER -> false;
-            case ALWAYS -> true;
-            case MODDED -> LibraryAnalyzer.isModded(this, getVersion(id).resolve(this));
-        };
-
-        if (isolated) {
-            GameSettings.Instance setting = getInstanceGameSettingsOrCreate(id);
-            if (setting != null) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-            }
-        }
     }
 
     public Optional<Path> getVersionIconFile(String id) {
@@ -687,7 +702,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Result of loading an instance-specific game settings file.
     ///
-    /// @param setting the loaded instance settings, or `null` when unavailable
+    /// @param setting   the loaded instance settings, or `null` when unavailable
     /// @param allowSave whether the file may be overwritten
     private record InstanceGameSettingsLoadResult(
             @Nullable GameSettings.Instance setting,
@@ -697,7 +712,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         GameSettings.Effective vs = getEffectiveGameSettings(version);
         boolean noJVMOptions = vs.getInheritable(GameSettings::noJVMOptionsProperty);
-        boolean autoMemory = vs.get(GameSettings::autoMemoryProperty);
+        boolean autoMemory = vs.getInheritable(GameSettings::autoMemoryProperty);
+        GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(getGameVersion(version));
+
+        @Nullable Integer maxMemory;
+        if (autoMemory) {
+            maxMemory = noJVMOptions
+                    ? null
+                    : Math.toIntExact(getAutoAllocatedMemory(SystemInfo.getPhysicalMemoryStatus().available()) / 1024L / 1024L);
+        } else {
+            maxMemory = vs.getMaxMemory();
+        }
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
@@ -705,17 +730,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setVersionType(Metadata.TITLE)
                 .setVersionName(version)
                 .setProfileName(Metadata.TITLE)
-                .setGameArguments(StringUtils.tokenize(vs.get(GameSettings::gameArgumentsProperty)))
-                .setOverrideJavaArguments(StringUtils.tokenize(vs.get(GameSettings::jvmOptionsProperty)))
-                .setMaxMemory(noJVMOptions && autoMemory ? null : (int) (getAllocatedMemory(
-                        vs.getMaxMemory() * 1024L * 1024L,
-                        SystemInfo.getPhysicalMemoryStatus().getAvailable(),
-                        autoMemory
-                ) / 1024 / 1024))
-                .setMinMemory(vs.get(GameSettings::minMemoryProperty))
-                .setMetaspace(Lang.toIntOrNull(vs.get(GameSettings::permSizeProperty)))
+                .setGameArguments(StringUtils.tokenize(vs.getInheritable(GameSettings::gameArgumentsProperty)))
+                .setOverrideJavaArguments(StringUtils.tokenize(vs.getInheritable(GameSettings::jvmOptionsProperty)))
+                .setMaxMemory(maxMemory)
+                .setMinMemory(vs.getInheritable(GameSettings::minMemoryProperty))
+                .setMetaspace(Lang.toIntOrNull(vs.getInheritable(GameSettings::permSizeProperty)))
                 .setEnvironmentVariables(
-                        Lang.mapOf(StringUtils.tokenize(vs.get(GameSettings::environmentVariablesProperty))
+                        Lang.mapOf(StringUtils.tokenize(vs.getInheritable(GameSettings::environmentVariablesProperty))
                                 .stream()
                                 .map(it -> {
                                     int idx = it.indexOf('=');
@@ -733,16 +754,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setPostExitCommand(vs.getInheritable(GameSettings::postExitCommandProperty))
                 .setNoGeneratedJVMArgs(noJVMOptions)
                 .setNoGeneratedOptimizingJVMArgs(vs.getInheritable(GameSettings::noOptimizingJVMOptionsProperty))
-                .setUseCustomNatives(vs.get(GameSettings::useCustomNativesProperty))
-                .setNativesDir(vs.get(GameSettings::nativesDirectoryProperty))
+                .setUseCustomNatives(vs.getInheritable(GameSettings::useCustomNativesProperty))
+                .setNativesDir(vs.getInheritable(GameSettings::nativesDirectoryProperty))
                 .setProcessPriority(vs.getInheritable(GameSettings::processPriorityProperty))
                 .setGraphicsBackend(vs.getInheritable(GameSettings::graphicsBackendProperty))
-                .setRenderer(vs.getRenderer())
+                .setRenderer(vs.getRenderer(gameVersionNumber))
                 .setEnableDebugLogOutput(vs.getInheritable(GameSettings::enableDebugLogOutputProperty))
                 .setAllowAutoAgent(vs.getInheritable(GameSettings::allowAutoAgentProperty))
                 .setDisableAutoGameOptions(vs.getInheritable(GameSettings::disableAutoGameOptionsProperty))
-                .setUseNativeGLFW(vs.get(GameSettings::useNativeGLFWProperty))
-                .setUseNativeOpenAL(vs.get(GameSettings::useNativeOpenALProperty))
+                .setUseNativeGLFW(vs.getInheritable(GameSettings::useNativeGLFWProperty))
+                .setUseNativeOpenAL(vs.getInheritable(GameSettings::useNativeOpenALProperty))
                 .setDaemon(!makeLaunchScript && vs.getInheritable(GameSettings::launcherVisibilityProperty).isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
@@ -840,22 +861,21 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public static long getAllocatedMemory(long minimum, long available, boolean auto) {
-        if (auto) {
-            available -= 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
-            if (available <= 0) {
-                return minimum;
-            }
-
-            final long threshold = 8L * 1024 * 1024 * 1024; // 8 GiB
-            final long suggested = Math.min(available <= threshold
-                            ? (long) (available * 0.8)
-                            : (long) (threshold * 0.8 + (available - threshold) * 0.2),
-                    16L * 1024 * 1024 * 1024);
-            return Math.max(minimum, suggested);
-        } else {
-            return minimum;
+    public static long getAutoAllocatedMemory(long available) {
+        long usable = available - 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
+        if (usable <= 0) {
+            return available;
         }
+
+        final long threshold = 8L * 1024 * 1024 * 1024; // 8 GiB
+        final long suggested;
+        if (usable <= threshold)
+            suggested = (long) (usable * 0.8);
+        else
+            suggested = Math.min(
+                    (long) (threshold * 0.8 + (usable - threshold) * 0.2),
+                    16L * 1024 * 1024 * 1024);
+        return suggested;
     }
 
     public static ProxyOption getProxyOption() {

@@ -233,7 +233,7 @@ public class DefaultGameRepository implements GameRepository {
     public boolean removeVersionFromDisk(String id) {
         if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id)) == Event.Result.DENY)
             return false;
-        if (!versions.containsKey(id))
+        if (versions == null || !versions.containsKey(id))
             return FileUtils.deleteDirectoryQuietly(getVersionRoot(id));
         Path file = getVersionRoot(id);
         if (Files.notExists(file))
@@ -454,7 +454,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getLoggingObject(String version, String assetId, LoggingInfo loggingInfo) {
-        return getAssetDirectory(version, assetId).resolve("log_configs").resolve(loggingInfo.getFile().getId());
+        return getAssetDirectory(version, assetId).resolve("log_configs").resolve(loggingInfo.file().getId());
     }
 
     protected Path reconstructAssets(String version, String assetId) throws IOException, JsonParseException {

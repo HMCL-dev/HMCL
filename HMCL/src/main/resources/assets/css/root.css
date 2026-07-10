@@ -448,16 +448,24 @@
 }
 
 .launch-pane > .jfx-button.launch-button {
-    -fx-max-width: 207px;
-    -fx-min-width: 207px;
+    -fx-max-width: 200px;
+    -fx-min-width: 200px;
     -fx-border-width: 0 3px 0 0;
-    -fx-border-color: -monet-on-surface-variant;
+    -fx-border-color: linear-gradient(
+        to bottom, 
+        transparent 0%, 
+        transparent 20%, 
+        -monet-on-surface-variant 20%,
+        -monet-on-surface-variant 80%,
+        transparent 80%, 
+        transparent 100%
+    );
     -fx-background-radius: 4px 0 0 4px;
 }
 
 .launch-pane > .jfx-button.menu-button {
-    -fx-max-width: 20px;
-    -fx-min-width: 20px;
+    -fx-max-width: 27px;
+    -fx-min-width: 27px;
     -fx-font-size: 15px;
     -fx-background-radius: 0 4px 4px 0;
 }
@@ -1406,27 +1414,27 @@
 }
 
 .log-toggle.fatal {
-    -fx-background-color: -fixed-log-fatal;
+    -fx-background-color: -fixed-log-fatal-background;
 }
 
 .log-toggle.error {
-    -fx-background-color: -fixed-log-error;
+    -fx-background-color: -fixed-log-error-background;
 }
 
 .log-toggle.warn {
-    -fx-background-color: -fixed-log-warn;
+    -fx-background-color: -fixed-log-warn-background;
 }
 
 .log-toggle.info {
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-toggle.debug {
-    -fx-background-color: -fixed-log-debug;
+    -fx-background-color: -fixed-log-debug-background;
 }
 
 .log-toggle.trace {
-    -fx-background-color: -fixed-log-trace;
+    -fx-background-color: -fixed-log-trace-background;
 }
 
 .log-window-list-cell:selected {
@@ -1434,7 +1442,7 @@
 }
 
 .log-window {
-    -fx-background-color: -monet-surface-container;
+    -fx-background-color: -fixed-log-background;
 }
 
 .log-window .scroll-bar .thumb {
@@ -1457,36 +1465,36 @@
 
 .log-window-list-cell:fatal {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-fatal;
+    -fx-background-color: -fixed-log-fatal-background;
 }
 
 .log-window-list-cell:error {
-    -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-error;
+    -fx-text-fill: -fixed-log-error-text-fill;
+    -fx-background-color: -fixed-log-error-background;
 }
 
 .log-window-list-cell:warn {
-    -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-warn;
+    -fx-text-fill: -fixed-log-warn-text-fill;
+    -fx-background-color: -fixed-log-warn-background;
 }
 
 .log-window-list-cell:info {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-window-list-cell {
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-window-list-cell:debug {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-debug;
+    -fx-background-color: -fixed-log-debug-background;
 }
 
 .log-window-list-cell:trace {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-trace;
+    -fx-background-color: -fixed-log-trace-background;
 }
 
 .log-window-list-cell:selected {
@@ -1605,7 +1613,7 @@
     -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
     -fx-background-radius: 3px;
     -fx-background-insets: 0px;
-    -fx-min-height: 25px;
+    -fx-min-height: 36px;
 }
 
 .color-palette-region {

@@ -76,7 +76,6 @@ final class PresetManagementPane extends ComponentSublist {
         this.holder = Objects.requireNonNull(holder);
 
         setTitle(i18n("settings.type.global.preset.manage_all"));
-        setHasSubtitle(true);
 
         LineButton createButton = new LineButton();
         createButton.setTitle(i18n("settings.type.global.preset.create"));
@@ -189,7 +188,7 @@ final class PresetManagementPane extends ComponentSublist {
 
     /// Creates a new preset and selects it for editing.
     private void createPreset() {
-        int number = createDefaultPresetNumber();
+        int number = SettingsManager.gameSettingsPresets().newPresetAutoNameNumber();
         PromptDialogPane.Builder.StringQuestion nameQuestion =
                 new PromptDialogPane.Builder.StringQuestion("", "")
                         .setPromptText(i18n("settings.type.global.preset.auto_name", number));
@@ -214,26 +213,6 @@ final class PresetManagementPane extends ComponentSublist {
             selectPreset.accept(setting);
             handler.resolve();
         }).addQuestion(nameQuestion));
-    }
-
-    /// Returns the first automatic preset number that is not used by existing presets.
-    private int createDefaultPresetNumber() {
-        for (int index = 1; ; index++) {
-            String name = i18n("settings.type.global.preset.auto_name", index);
-            boolean used = false;
-            for (GameSettings.Preset setting : SettingsManager.getGameSettings()) {
-                Integer autoNameNumber = setting.autoNameNumberProperty().getValue();
-                if ((autoNameNumber != null && autoNameNumber == index)
-                        || Objects.equals(name, getPresetDisplayName(setting))) {
-                    used = true;
-                    break;
-                }
-            }
-
-            if (!used) {
-                return index;
-            }
-        }
     }
 
     /// Asks the user for a new preset name.
