@@ -25,49 +25,13 @@ import org.jackhuang.hmcl.util.Immutable;
  * @author huangyuhui
  */
 @Immutable
-public final class LiteLoaderRepository {
+public record LiteLoaderRepository(@SerializedName("stream") String stream, @SerializedName("type") String type,
+                                   @SerializedName("url") String url, @SerializedName("classifier") String classifier) {
 
-    @SerializedName("stream")
-    private final String stream;
-
-    @SerializedName("type")
-    private final String type;
-
-    @SerializedName("url")
-    private final String url;
-
-    @SerializedName("classifier")
-    private final String classifier;
-
-    /**
-     * No-arg constructor for Gson.
-     */
-    @SuppressWarnings("unused")
-    public LiteLoaderRepository() {
-        this("", "", "", "");
+    public LiteLoaderRepository {
+        if (stream == null) stream = "";
+        if (type == null) type = "";
+        if (url == null) url = "";
+        if (classifier == null) classifier = "";
     }
-
-    public LiteLoaderRepository(String stream, String type, String url, String classifier) {
-        this.stream = stream;
-        this.type = type;
-        this.url = url;
-        this.classifier = classifier;
-    }
-
-    public String getStream() {
-        return stream;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public String getClassifier() {
-        return classifier;
-    }
-
 }

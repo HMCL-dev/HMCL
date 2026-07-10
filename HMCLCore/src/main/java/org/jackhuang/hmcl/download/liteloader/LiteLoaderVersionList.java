@@ -55,15 +55,15 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
         return new GetTask(downloadProvider.injectURLWithCandidates(LITELOADER_LIST))
                 .thenGetJsonAsync(LiteLoaderVersionsRoot.class)
                 .thenAcceptAsync(root -> {
-                    LiteLoaderGameVersions versions = root.getVersions().get(gameVersion);
+                    LiteLoaderGameVersions versions = root.versions().get(gameVersion);
                     if (versions == null) {
                         return;
                     }
 
                     LiteLoaderRemoteVersion snapshot = null;
-                    if (versions.getSnapshots() != null) {
+                    if (versions.snapshots() != null) {
                         try {
-                            snapshot = loadSnapshotVersion(gameVersion, versions.getSnapshots().getLiteLoader().get("latest"));
+                            snapshot = loadSnapshotVersion(gameVersion, versions.snapshots().liteLoader().get("latest"));
                         } catch (IOException e) {
                             throw new UncheckedIOException(e);
                         }
@@ -73,8 +73,8 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
                     try {
                         this.versions.clear();
 
-                        if (versions.getRepoitory() != null && versions.getArtifacts() != null) {
-                            loadArtifactVersion(gameVersion, versions.getRepoitory(), versions.getArtifacts());
+                        if (versions.repoitory() != null && versions.artifacts() != null) {
+                            loadArtifactVersion(gameVersion, versions.repoitory(), versions.artifacts());
                         }
 
                         if (snapshot != null) {
@@ -92,16 +92,16 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
     }
 
     private void loadArtifactVersion(String gameVersion, LiteLoaderRepository repository, LiteLoaderBranch branch) {
-        for (Map.Entry<String, LiteLoaderVersion> entry : branch.getLiteLoader().entrySet()) {
+        for (Map.Entry<String, LiteLoaderVersion> entry : branch.liteLoader().entrySet()) {
             String branchName = entry.getKey();
             LiteLoaderVersion v = entry.getValue();
             if ("latest".equals(branchName))
                 continue;
 
             versions.put(gameVersion, new LiteLoaderRemoteVersion(
-                    gameVersion, v.getVersion(), RemoteVersion.Type.RELEASE,
-                    Collections.singletonList(repository.getUrl() + "com/mumfrey/liteloader/" + gameVersion + "/" + v.getFile()),
-                    v.getTweakClass(), v.getLibraries()
+                    gameVersion, v.version(), RemoteVersion.Type.RELEASE,
+                    Collections.singletonList(repository.url() + "com/mumfrey/liteloader/" + gameVersion + "/" + v.file()),
+                    v.tweakClass(), v.libraries()
             ));
         }
     }
@@ -119,7 +119,7 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
         return new LiteLoaderRemoteVersion(
                 gameVersion, timestamp + "-" + buildNumber, RemoteVersion.Type.SNAPSHOT,
                 Collections.singletonList(String.format(SNAPSHOT_FILE, gameVersion, gameVersion, timestamp, buildNumber)),
-                v.getTweakClass(), v.getLibraries()
+                v.tweakClass(), v.libraries()
         );
     }
 }

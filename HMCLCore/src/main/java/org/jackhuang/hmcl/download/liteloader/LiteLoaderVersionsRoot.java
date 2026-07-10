@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download.liteloader;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -28,29 +29,10 @@ import java.util.Map;
  * @author huangyuhui
  */
 @Immutable
-public final class LiteLoaderVersionsRoot {
+public record LiteLoaderVersionsRoot(@SerializedName("versions") Map<String, LiteLoaderGameVersions> versions,
+                                     @SerializedName("meta") @Nullable LiteLoaderVersionsMeta meta) {
 
-    @SerializedName("versions")
-    private final Map<String, LiteLoaderGameVersions> versions;
-
-    @SerializedName("meta")
-    private final LiteLoaderVersionsMeta meta;
-
-    public LiteLoaderVersionsRoot() {
-        this(Collections.emptyMap(), null);
+    public LiteLoaderVersionsRoot {
+        versions = versions == null ? Collections.emptyMap() : Collections.unmodifiableMap(versions);
     }
-
-    public LiteLoaderVersionsRoot(Map<String, LiteLoaderGameVersions> versions, LiteLoaderVersionsMeta meta) {
-        this.versions = versions;
-        this.meta = meta;
-    }
-
-    public Map<String, LiteLoaderGameVersions> getVersions() {
-        return Collections.unmodifiableMap(versions);
-    }
-
-    public LiteLoaderVersionsMeta getMeta() {
-        return meta;
-    }
-
 }

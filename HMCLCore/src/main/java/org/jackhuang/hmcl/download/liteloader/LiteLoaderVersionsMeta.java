@@ -25,37 +25,12 @@ import org.jackhuang.hmcl.util.Immutable;
  * @author huangyuhui
  */
 @Immutable
-public final class LiteLoaderVersionsMeta {
+public record LiteLoaderVersionsMeta(@SerializedName("description") String description,
+                                     @SerializedName("authors") String authors, @SerializedName("url") String url) {
 
-    @SerializedName("description")
-    private final String description;
-
-    @SerializedName("authors")
-    private final String authors;
-
-    @SerializedName("url")
-    private final String url;
-
-    public LiteLoaderVersionsMeta() {
-        this("", "", "");
+    public LiteLoaderVersionsMeta {
+        if (description == null) description = "";
+        if (authors == null) authors = "";
+        if (url == null) url = "";
     }
-
-    public LiteLoaderVersionsMeta(String description, String authors, String url) {
-        this.description = description;
-        this.authors = authors;
-        this.url = url;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getAuthors() {
-        return authors;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
 }
