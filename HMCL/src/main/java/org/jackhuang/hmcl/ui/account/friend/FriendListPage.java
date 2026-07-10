@@ -17,12 +17,18 @@
  */
 package org.jackhuang.hmcl.ui.account.friend;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -72,5 +78,35 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
 
     public FriendControl getControl() {
         return control;
+    }
+
+    public void tryDeleteFriend(FriendListItem item) {
+        SpinnerPane spinnerPane = new SpinnerPane();
+        JFXButton btnOk = new JFXButton(i18n("button.ok"));
+
+        btnOk.setOnAction(action -> {
+            spinnerPane.showSpinner();
+            Task.runAsync(() -> control.updateFriend(control.toUuidWithoutDashes(item.profileId()), EnumUpdateType.REMOVE)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                spinnerPane.hideSpinner();
+                if (exception != null) {
+                    LOG.warning("Failed to delete friend", exception);
+                    fireEvent(new DialogCloseEvent());
+                    Controllers.dialog(i18n("account.friend.delete.failed"), null, MessageDialogPane.MessageType.ERROR);
+                    return;
+                }
+                getItems().remove(item);
+            }).start();
+        });
+
+        btnOk.getStyleClass().add("dialog-accept");
+        spinnerPane.setContent(btnOk);
+
+
+        var dialog = new MessageDialogPane.Builder(i18n("account.friend.delete.confirm", item.name()), i18n("message.question"), MessageDialogPane.MessageType.QUESTION)
+                .addAction(spinnerPane)
+                .addCancel(null)
+                .build();
+
+        Controllers.dialog(dialog);
     }
 }

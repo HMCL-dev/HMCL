@@ -184,6 +184,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
                         Platform.runLater(() -> {
                             if (e instanceof ResponseCodeException responseCodeException && responseCodeException.getResponseCode() == 404) {
                                 Controllers.dialog(i18n("account.friend.unsupported"));
+                                return;
                             }
 
                             Controllers.showToast(Accounts.localizeErrorMessage(e));

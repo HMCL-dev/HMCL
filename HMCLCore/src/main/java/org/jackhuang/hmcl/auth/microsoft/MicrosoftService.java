@@ -333,7 +333,7 @@ public class MicrosoftService {
         var url = "https://api.minecraftservices.com/friends";
 
         HttpURLConnection request = HttpRequest.PUT(url)
-                .json(new FriendUpdateRequst(uuid, updateType))
+                .json(new FriendUpdateRequst(uuid, updateType), GSON)
                 .authorization("Bearer " + accessToken)
                 .retry(5)
                 .accept("application/json").createConnection();

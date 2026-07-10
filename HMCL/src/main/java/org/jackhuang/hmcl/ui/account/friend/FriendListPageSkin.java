@@ -26,7 +26,7 @@ public final class FriendListPageSkin extends ToolbarListPageSkin<FriendListItem
     public FriendListPageSkin(FriendListPage skinnable) {
         super(skinnable);
 
-        listView.setCellFactory(x -> new FriendListCell(super.listView, skinnable.getAccount(), skinnable.getControl()));
+        listView.setCellFactory(x -> new FriendListCell(super.listView, skinnable.getAccount(), skinnable.getControl(), skinnable));
     }
 
     @Override

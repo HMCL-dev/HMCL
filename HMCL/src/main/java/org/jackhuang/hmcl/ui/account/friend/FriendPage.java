@@ -25,7 +25,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -36,6 +39,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class FriendPage extends DecoratorAnimatedPage implements DecoratorPage {
     private final Account account;
@@ -75,8 +79,14 @@ public final class FriendPage extends DecoratorAnimatedPage implements Decorator
     }
 
     private void onAddFriend() {
-        Controllers.prompt(i18n("TODO"), (e,a) -> {
-            Controllers.dialog("TODO");
+        Controllers.prompt(i18n("account.friend.add"), (name, resultHandler) -> {
+            Task.runAsync(() -> control.updateFriend(name, EnumUpdateType.ADD)).whenComplete(Schedulers.javafx(), e -> {
+                if (e == null) resultHandler.resolve();
+                else {
+                    LOG.warning("Failed to add friend", e);
+                    resultHandler.reject(e.getMessage());
+                }
+            }).start();
         }, null);
     }
 

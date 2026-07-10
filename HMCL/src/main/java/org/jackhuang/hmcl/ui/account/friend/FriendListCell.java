@@ -32,15 +32,12 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.TexturesLoader;
-import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 import java.util.Locale;
@@ -55,7 +52,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
     private final Canvas avatar = new Canvas(32, 32);
     private final TwoLineListItem twoLineListItem = new TwoLineListItem();
 
-    public FriendListCell(JFXListView<FriendListItem> listView, Account account, FriendControl control) {
+    public FriendListCell(JFXListView<FriendListItem> listView, Account account, FriendControl control, FriendListPage friendListPage) {
         super(listView);
 
         this.account = account;
@@ -81,20 +78,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
         right.getChildren().addAll(copyButton);
 
         var deleteButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
-        deleteButton.setOnAction(event -> {
-            Controllers.confirm(i18n("account.friend.delete.confirm", getItem().name()), null, () -> {
-                Task.runAsync(() -> control.updateFriend(control.toUuidWithoutDashes(getItem().profileId()), EnumUpdateType.REMOVE)).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (exception != null) {
-                        LOG.warning("Failed to delete friend", exception);
-                        Controllers.dialog(i18n("account.friend.delete.failed"), null, MessageDialogPane.MessageType.ERROR);
-                        return;
-                    }
-                    listView.getItems().remove(getItem());
-                });
-
-            }, null);
-
-        });
+        deleteButton.setOnAction(event -> friendListPage.tryDeleteFriend(getItem()));
         right.getChildren().addAll(deleteButton);
         right.setAlignment(Pos.CENTER_RIGHT);
 
@@ -136,6 +120,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
 
 //        twoLineListItem.setSubtitle(toString());
 
+        twoLineListItem.getTags().clear();
         if (item.status() != FriendStatus.NORMAL) {
             var tag = new Label(i18n("account.friend." + item.status().name().toLowerCase(Locale.ROOT)));
             tag.getStyleClass().add("tag");

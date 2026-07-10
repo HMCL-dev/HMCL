@@ -248,7 +248,7 @@ public class YggdrasilService {
     public void updateFriend(String accessToken, String uuid, EnumUpdateType updateType) throws IOException {
         var url = provider.getFriendsURL().toString();
         HttpURLConnection request = HttpRequest.PUT(url)
-                .json(new FriendUpdateRequst(uuid, updateType))
+                .json(new FriendUpdateRequst(uuid, updateType), GSON)
                 .authorization("Bearer " + accessToken)
                 .retry(5)
                 .accept("application/json").createConnection();
