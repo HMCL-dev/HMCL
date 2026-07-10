@@ -518,7 +518,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     Bindings.createStringBinding(() -> {
                         if (getSkinnable().isFailed()) {
                             return i18n("download.failed.refresh");
-                        } if (!getSkinnable().isLoading() && getSkinnable().items.isEmpty()) {
+                        } else if (!getSkinnable().isLoading() && getSkinnable().pageCount.get() >= 0 && getSkinnable().items.isEmpty()) {
                             return i18n("download.failed.no_results_found"); 
                         } else {
                             return null;
@@ -526,6 +526,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     },
                     getSkinnable().failedProperty(), 
                     getSkinnable().loadingProperty(), 
+                    getSkinnable().pageCount,
                     getSkinnable().items)
                 );
                 spinnerPane.setOnFailedAction(e -> {
