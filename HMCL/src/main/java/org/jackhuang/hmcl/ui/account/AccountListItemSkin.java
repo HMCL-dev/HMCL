@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -87,6 +88,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         center.getChildren().setAll(canvas, item);
         root.setCenter(center);
+        BorderPane.setMargin(center, new Insets(0, 0, 0, 8));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
@@ -196,12 +198,9 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         right.getChildren().add(spinnerFriend);
 
         JFXButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
-        SpinnerPane spinnerCopyUUID = new SpinnerPane();
-        spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
         btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getProfileID().toString()));
         FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid"));
-        spinnerCopyUUID.setContent(btnCopyUUID);
-        right.getChildren().add(spinnerCopyUUID);
+        right.getChildren().add(btnCopyUUID);
 
         JFXButton btnRemove = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
         btnRemove.setOnAction(e -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::remove, null));
