@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.theme.BuiltinBackground;
 import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
+import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -1056,6 +1057,103 @@ public final class LegacyConfigMigrator {
         object.add("directories", profiles);
 
         return JsonUtils.GSON.fromJson(object, GameDirectories.class);
+    }
+
+    /// Removes absolute game directories from a migrated store and returns them in a separate store.
+    ///
+    /// Absolute game directories belong to the user-level store, while relative game directories remain
+    /// associated with the workspace that owns the legacy config file.
+    static GameDirectories takeAbsoluteGameDirectories(GameDirectories migratedGameDirectories) {
+        Objects.requireNonNull(migratedGameDirectories);
+
+        GameDirectories absoluteGameDirectories = new GameDirectories();
+        List<GameDirectory> absoluteEntries = migratedGameDirectories.getGameDirectories().stream()
+                .filter(gameDirectory -> gameDirectory.getPath().isAbsolute())
+                .toList();
+        migratedGameDirectories.getGameDirectories().removeAll(absoluteEntries);
+        absoluteGameDirectories.getGameDirectories().addAll(absoluteEntries);
+        return absoluteGameDirectories;
+    }
+
+    /// Appends migrated absolute game directories to the user-level store.
+    ///
+    /// Existing entries for the same normalized folder are reused. Launcher settings references are remapped
+    /// to the reused or replacement directory ID whenever the migrated ID cannot be retained.
+    ///
+    /// @param launcherSettings the migrated launcher settings whose directory references may need remapping
+    /// @param userGameDirectories the loaded user-level game directory store
+    /// @param migratedGameDirectories the migrated absolute game directories to merge
+    /// @return whether the user-level store was changed
+    static boolean mergeUserGameDirectories(
+            LauncherSettings launcherSettings,
+            GameDirectories userGameDirectories,
+            GameDirectories migratedGameDirectories) {
+        Objects.requireNonNull(launcherSettings);
+        Objects.requireNonNull(userGameDirectories);
+        Objects.requireNonNull(migratedGameDirectories);
+
+        boolean changed = false;
+        for (GameDirectory migrated : migratedGameDirectories.getGameDirectories()) {
+            @Nullable GameDirectory existing = findGameDirectoryByPath(userGameDirectories, migrated.getPath());
+            if (existing != null) {
+                remapGameDirectoryReferences(launcherSettings, migrated.getId(), existing.getId());
+                continue;
+            }
+
+            GameDirectory appended = migrated;
+            if (hasGameDirectoryID(userGameDirectories, migrated.getId())) {
+                appended = new GameDirectory(
+                        GameDirectoryID.generate(),
+                        migrated.getName(),
+                        migrated.getPath(),
+                        migrated.getLegacyGameSettings());
+                remapGameDirectoryReferences(launcherSettings, migrated.getId(), appended.getId());
+            }
+            userGameDirectories.getGameDirectories().add(appended);
+            changed = true;
+        }
+        return changed;
+    }
+
+    /// Finds a user-level game directory representing the same normalized folder.
+    private static @Nullable GameDirectory findGameDirectoryByPath(
+            GameDirectories gameDirectories,
+            PortablePath expectedPath) {
+        Path normalizedExpectedPath = expectedPath.toPath().normalize();
+        for (GameDirectory gameDirectory : gameDirectories.getGameDirectories()) {
+            PortablePath actualPath = gameDirectory.getPath();
+            if (actualPath.isAbsolute() == expectedPath.isAbsolute()
+                    && actualPath.toPath().normalize().equals(normalizedExpectedPath)) {
+                return gameDirectory;
+            }
+        }
+        return null;
+    }
+
+    /// Returns whether a game directory store already contains the given ID.
+    private static boolean hasGameDirectoryID(GameDirectories gameDirectories, GameDirectoryID id) {
+        return gameDirectories.getGameDirectories().stream()
+                .anyMatch(gameDirectory -> gameDirectory.getId().equals(id));
+    }
+
+    /// Replaces launcher settings references to one migrated game directory ID.
+    private static void remapGameDirectoryReferences(
+            LauncherSettings launcherSettings,
+            GameDirectoryID migratedID,
+            GameDirectoryID targetID) {
+        if (migratedID.equals(targetID)) {
+            return;
+        }
+
+        boolean selected = migratedID.equals(launcherSettings.selectedGameDirectoryProperty().get());
+        if (selected) {
+            launcherSettings.selectedGameDirectoryProperty().set(targetID);
+        }
+
+        @Nullable String selectedInstance = launcherSettings.getSelectedInstance().remove(migratedID);
+        if (selectedInstance != null && (selected || !launcherSettings.getSelectedInstance().containsKey(targetID))) {
+            launcherSettings.getSelectedInstance().put(targetID, selectedInstance);
+        }
     }
 
     /// Converts a legacy profile map into game directory JSON.

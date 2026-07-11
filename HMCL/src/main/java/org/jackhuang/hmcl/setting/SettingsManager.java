@@ -1099,7 +1099,7 @@ public final class SettingsManager {
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(launcherSettings.languageProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
-        loadGameDirectories(migratedDetachedSettings.gameDirectories());
+        boolean migratedGameDirectoriesSaved = loadGameDirectories(migratedDetachedSettings.gameDirectories());
         gameSettingsAccess = loadGameSettingsPresets(migratedDetachedSettings.gameSettingsPresets());
         launcherStateAccess = loadLauncherState(migratedDetachedSettings.launcherState());
         authlibInjectorServersAccess =
@@ -1116,12 +1116,14 @@ public final class SettingsManager {
             checkWritable(Metadata.HMCL_LOCAL_HOME);
         }
 
-        if (legacyConfigMigration != null && loadedGameAccounts.migratedAccountsSaved()) {
+        if (legacyConfigMigration != null
+                && loadedGameAccounts.migratedAccountsSaved()
+                && migratedGameDirectoriesSaved) {
             LOG.info("Migrating settings from " + legacyConfigMigration.path() + " to " + SETTINGS_LOCATION);
             FileUtils.saveSafely(SETTINGS_LOCATION, legacyConfigMigration.launcherSettings().toJson());
             LegacyConfigMigrator.completeLegacyConfigMigration(legacyConfigMigration);
         } else if (legacyConfigMigration != null) {
-            LOG.warning("Skipped legacy config migration because migrated account private data was not saved");
+            LOG.warning("Skipped legacy config migration because detached migration data was not saved");
         }
 
         if (launcherSettings.isSavable()) {
@@ -1256,16 +1258,25 @@ public final class SettingsManager {
     /// Loads game directories and installs the save listener.
     ///
     /// @param fallbackGameDirectories the fallback store used when the local game directory file does not exist
-    private static void loadGameDirectories(
+    /// @return whether migrated user-level game directories were saved or required no store changes
+    private static boolean loadGameDirectories(
             @Nullable GameDirectories fallbackGameDirectories) throws IOException {
         if (localGameDirectories != null || userGameDirectories != null) {
             throw new IllegalStateException("Game directories are already loaded");
         }
 
+        GameDirectories migratedUserGameDirectories = fallbackGameDirectories != null
+                ? LegacyConfigMigrator.takeAbsoluteGameDirectories(fallbackGameDirectories)
+                : new GameDirectories();
         boolean newlyCreatedLocal = !Files.exists(LOCAL_GAME_DIRECTORIES_LOCATION);
         boolean newlyCreatedUser = !Files.exists(USER_GAME_DIRECTORIES_LOCATION);
         JsonSettingFile.LoadResult<GameDirectories> userResult = USER_GAME_DIRECTORIES_FILE.load(null);
         JsonSettingFile.LoadResult<GameDirectories> localResult = LOCAL_GAME_DIRECTORIES_FILE.load(fallbackGameDirectories);
+
+        boolean userGameDirectoriesChanged = LegacyConfigMigrator.mergeUserGameDirectories(
+                settings(),
+                userResult.value(),
+                migratedUserGameDirectories);
 
         localGameDirectories = localResult.value();
         localGameDirectories.setUserFile(false);
@@ -1285,12 +1296,13 @@ public final class SettingsManager {
         if (newlyCreatedLocal && localGameDirectories.isSavable()) {
             LOCAL_GAME_DIRECTORIES_FILE.saveSync(localGameDirectories);
         }
-        if (newlyCreatedUser && userGameDirectories.isSavable()) {
+        if ((newlyCreatedUser || userGameDirectoriesChanged) && userGameDirectories.isSavable()) {
             USER_GAME_DIRECTORIES_FILE.saveSync(userGameDirectories);
         }
 
         localGameDirectoriesAccess = localResult.access();
         userGameDirectoriesAccess = userResult.access();
+        return !userGameDirectoriesChanged || userGameDirectories.isSavable();
     }
 
     /// Loads game settings presets and installs the save listener.

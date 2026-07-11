@@ -75,6 +75,110 @@ public final class GameDirectoriesTest {
         assertNull(gameDirectories.getGameDirectories().get(0).getLegacyGameSettings());
     }
 
+    /// Tests separating absolute migrated paths into the user-level game directory store.
+    @Test
+    public void separatesAbsoluteMigratedGameDirectories() {
+        GameDirectory relative = new GameDirectory(
+                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000"),
+                LocalizedText.plain("Relative"),
+                PortablePath.of("games/relative"));
+        GameDirectory absolute = new GameDirectory(
+                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174001"),
+                LocalizedText.plain("Absolute"),
+                PortablePath.of("/games/absolute"));
+        GameDirectories migrated = new GameDirectories();
+        migrated.getGameDirectories().addAll(relative, absolute);
+
+        GameDirectories userDirectories = LegacyConfigMigrator.takeAbsoluteGameDirectories(migrated);
+
+        assertEquals(List.of(relative), migrated.getGameDirectories());
+        assertEquals(List.of(absolute), userDirectories.getGameDirectories());
+    }
+
+    /// Tests appending migrated absolute paths after existing user-level game directories.
+    @Test
+    public void appendsMigratedUserGameDirectories() {
+        GameDirectory existing = new GameDirectory(
+                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000"),
+                LocalizedText.plain("Existing"),
+                PortablePath.of("/games/existing"));
+        GameDirectory migrated = new GameDirectory(
+                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174001"),
+                LocalizedText.plain("Migrated"),
+                PortablePath.of("/games/migrated"));
+        GameDirectories userDirectories = new GameDirectories();
+        userDirectories.getGameDirectories().add(existing);
+        GameDirectories migratedDirectories = new GameDirectories();
+        migratedDirectories.getGameDirectories().add(migrated);
+
+        assertTrue(LegacyConfigMigrator.mergeUserGameDirectories(
+                new LauncherSettings(), userDirectories, migratedDirectories));
+        assertEquals(List.of(existing, migrated), userDirectories.getGameDirectories());
+    }
+
+    /// Tests reusing an existing user-level folder and remapping launcher settings to its ID.
+    @Test
+    public void reusesExistingUserGameDirectoryByPath() {
+        GameDirectoryID existingID =
+                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
+        GameDirectoryID migratedID =
+                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174001");
+        GameDirectory existing = new GameDirectory(
+                existingID,
+                LocalizedText.plain("Existing"),
+                PortablePath.of("/games/main"));
+        GameDirectory migrated = new GameDirectory(
+                migratedID,
+                LocalizedText.plain("Migrated"),
+                PortablePath.of("/games/other/../main"));
+        GameDirectories userDirectories = new GameDirectories();
+        userDirectories.getGameDirectories().add(existing);
+        GameDirectories migratedDirectories = new GameDirectories();
+        migratedDirectories.getGameDirectories().add(migrated);
+        LauncherSettings launcherSettings = new LauncherSettings();
+        launcherSettings.selectedGameDirectoryProperty().set(migratedID);
+        launcherSettings.setSelectedInstance(migratedID, "1.21.5");
+
+        assertFalse(LegacyConfigMigrator.mergeUserGameDirectories(
+                launcherSettings, userDirectories, migratedDirectories));
+        assertEquals(List.of(existing), userDirectories.getGameDirectories());
+        assertEquals(existingID, launcherSettings.selectedGameDirectoryProperty().get());
+        assertNull(launcherSettings.getSelectedInstance(migratedID));
+        assertEquals("1.21.5", launcherSettings.getSelectedInstance(existingID));
+    }
+
+    /// Tests replacing a colliding migrated ID when its folder is different.
+    @Test
+    public void replacesCollidingMigratedUserGameDirectoryId() {
+        GameDirectoryID collidingID =
+                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
+        GameDirectory existing = new GameDirectory(
+                collidingID,
+                LocalizedText.plain("Existing"),
+                PortablePath.of("/games/existing"));
+        GameDirectory migrated = new GameDirectory(
+                collidingID,
+                LocalizedText.plain("Migrated"),
+                PortablePath.of("/games/migrated"));
+        GameDirectories userDirectories = new GameDirectories();
+        userDirectories.getGameDirectories().add(existing);
+        GameDirectories migratedDirectories = new GameDirectories();
+        migratedDirectories.getGameDirectories().add(migrated);
+        LauncherSettings launcherSettings = new LauncherSettings();
+        launcherSettings.selectedGameDirectoryProperty().set(collidingID);
+        launcherSettings.setSelectedInstance(collidingID, "1.20.1");
+
+        assertTrue(LegacyConfigMigrator.mergeUserGameDirectories(
+                launcherSettings, userDirectories, migratedDirectories));
+        assertEquals(2, userDirectories.getGameDirectories().size());
+        GameDirectory appended = userDirectories.getGameDirectories().get(1);
+        assertNotEquals(collidingID, appended.getId());
+        assertEquals("/games/migrated", appended.getPath().getPath());
+        assertEquals(appended.getId(), launcherSettings.selectedGameDirectoryProperty().get());
+        assertNull(launcherSettings.getSelectedInstance(collidingID));
+        assertEquals("1.20.1", launcherSettings.getSelectedInstance(appended.getId()));
+    }
+
     /// Tests that built-in profiles do not store names after migration.
     @Test
     public void removesBuiltInProfileNamesDuringMigration() {
