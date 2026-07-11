@@ -155,7 +155,7 @@ public final class JavaDownloadDialog extends StackPane {
             if (!distributions.isEmpty()) {
                 JFXButton more = new JFXButton(i18n("java.download.more"));
                 more.setGraphic(SVG.FORMAT_LIST_BULLETED.createIcon());
-                more.getStyleClass().add("dialog-cancel");
+                more.getStyleClass().add("dialog-accept");
                 more.setOnAction(event -> JavaDownloadDialog.this.getChildren().setAll(new DownloadDiscoJava()));
 
                 setActions(warningLabel, more, acceptPane, cancelButton);
