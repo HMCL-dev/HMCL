@@ -294,6 +294,12 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             Files.createDirectories(modsDirectory);
 
             Path newFile = modsDirectory.resolve(file.getFileName());
+
+            CachedMod previous = cache.remove(newFile);
+            if (previous != null) {
+                removeModInfo(previous.mod());
+            }
+
             FileUtils.copyFile(file, newFile);
 
             LocalModFile modInfo = addModInfo(newFile);
