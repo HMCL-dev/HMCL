@@ -1099,7 +1099,9 @@ public final class SettingsManager {
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(launcherSettings.languageProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
-        boolean migratedGameDirectoriesSaved = loadGameDirectories(migratedDetachedSettings.gameDirectories());
+        boolean migratedGameDirectoriesSaved = loadGameDirectories(
+                migratedDetachedSettings.localGameDirectories(),
+                migratedDetachedSettings.userGameDirectories());
         gameSettingsAccess = loadGameSettingsPresets(migratedDetachedSettings.gameSettingsPresets());
         launcherStateAccess = loadLauncherState(migratedDetachedSettings.launcherState());
         authlibInjectorServersAccess =
@@ -1257,26 +1259,27 @@ public final class SettingsManager {
 
     /// Loads game directories and installs the save listener.
     ///
-    /// @param fallbackGameDirectories the fallback store used when the local game directory file does not exist
+    /// @param fallbackLocalGameDirectories the fallback store used when the local game directory file does not exist
+    /// @param migratedUserGameDirectories absolute migrated directories to merge into the user-level store
     /// @return whether migrated user-level game directories were saved or required no store changes
     private static boolean loadGameDirectories(
-            @Nullable GameDirectories fallbackGameDirectories) throws IOException {
+            @Nullable GameDirectories fallbackLocalGameDirectories,
+            @Nullable GameDirectories migratedUserGameDirectories) throws IOException {
         if (localGameDirectories != null || userGameDirectories != null) {
             throw new IllegalStateException("Game directories are already loaded");
         }
 
-        GameDirectories migratedUserGameDirectories = fallbackGameDirectories != null
-                ? LegacyConfigMigrator.takeAbsoluteGameDirectories(fallbackGameDirectories)
-                : new GameDirectories();
         boolean newlyCreatedLocal = !Files.exists(LOCAL_GAME_DIRECTORIES_LOCATION);
         boolean newlyCreatedUser = !Files.exists(USER_GAME_DIRECTORIES_LOCATION);
         JsonSettingFile.LoadResult<GameDirectories> userResult = USER_GAME_DIRECTORIES_FILE.load(null);
-        JsonSettingFile.LoadResult<GameDirectories> localResult = LOCAL_GAME_DIRECTORIES_FILE.load(fallbackGameDirectories);
+        JsonSettingFile.LoadResult<GameDirectories> localResult =
+                LOCAL_GAME_DIRECTORIES_FILE.load(fallbackLocalGameDirectories);
 
-        boolean userGameDirectoriesChanged = LegacyConfigMigrator.mergeUserGameDirectories(
-                settings(),
-                userResult.value(),
-                migratedUserGameDirectories);
+        boolean userGameDirectoriesChanged = migratedUserGameDirectories != null
+                && LegacyConfigMigrator.mergeMigratedUserGameDirectories(
+                        settings(),
+                        userResult.value(),
+                        migratedUserGameDirectories);
 
         localGameDirectories = localResult.value();
         localGameDirectories.setUserFile(false);

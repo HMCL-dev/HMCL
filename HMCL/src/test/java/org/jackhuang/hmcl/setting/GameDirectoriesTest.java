@@ -77,22 +77,31 @@ public final class GameDirectoriesTest {
 
     /// Tests separating absolute migrated paths into the user-level game directory store.
     @Test
-    public void separatesAbsoluteMigratedGameDirectories() {
-        GameDirectory relative = new GameDirectory(
-                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000"),
-                LocalizedText.plain("Relative"),
-                PortablePath.of("games/relative"));
-        GameDirectory absolute = new GameDirectory(
-                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174001"),
-                LocalizedText.plain("Absolute"),
-                PortablePath.of("/games/absolute"));
-        GameDirectories migrated = new GameDirectories();
-        migrated.getGameDirectories().addAll(relative, absolute);
+    public void separatesAbsoluteMigratedGameDirectories() throws IOException {
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix())) {
+            Path config = fileSystem.getPath("/hmcl.json");
+            Files.writeString(config, """
+                    {
+                      "_version": 2,
+                      "configurations": {
+                        "Relative": { "gameDir": "games/relative" },
+                        "Absolute": { "gameDir": "/games/absolute" }
+                      }
+                    }
+                    """);
 
-        GameDirectories userDirectories = LegacyConfigMigrator.takeAbsoluteGameDirectories(migrated);
+            LegacyConfigMigrator.LegacyConfigMigration migration =
+                    Objects.requireNonNull(LegacyConfigMigrator.migrateLegacyConfig(config));
+            GameDirectories localDirectories =
+                    Objects.requireNonNull(migration.detachedSettings().localGameDirectories());
+            GameDirectories userDirectories =
+                    Objects.requireNonNull(migration.detachedSettings().userGameDirectories());
 
-        assertEquals(List.of(relative), migrated.getGameDirectories());
-        assertEquals(List.of(absolute), userDirectories.getGameDirectories());
+            assertEquals(1, localDirectories.getGameDirectories().size());
+            assertEquals("games/relative", localDirectories.getGameDirectories().get(0).getPath().getPath());
+            assertEquals(1, userDirectories.getGameDirectories().size());
+            assertEquals("/games/absolute", userDirectories.getGameDirectories().get(0).getPath().getPath());
+        }
     }
 
     /// Tests appending migrated absolute paths after existing user-level game directories.
@@ -111,7 +120,7 @@ public final class GameDirectoriesTest {
         GameDirectories migratedDirectories = new GameDirectories();
         migratedDirectories.getGameDirectories().add(migrated);
 
-        assertTrue(LegacyConfigMigrator.mergeUserGameDirectories(
+        assertTrue(LegacyConfigMigrator.mergeMigratedUserGameDirectories(
                 new LauncherSettings(), userDirectories, migratedDirectories));
         assertEquals(List.of(existing, migrated), userDirectories.getGameDirectories());
     }
@@ -139,7 +148,7 @@ public final class GameDirectoriesTest {
         launcherSettings.selectedGameDirectoryProperty().set(migratedID);
         launcherSettings.setSelectedInstance(migratedID, "1.21.5");
 
-        assertFalse(LegacyConfigMigrator.mergeUserGameDirectories(
+        assertFalse(LegacyConfigMigrator.mergeMigratedUserGameDirectories(
                 launcherSettings, userDirectories, migratedDirectories));
         assertEquals(List.of(existing), userDirectories.getGameDirectories());
         assertEquals(existingID, launcherSettings.selectedGameDirectoryProperty().get());
@@ -168,7 +177,7 @@ public final class GameDirectoriesTest {
         launcherSettings.selectedGameDirectoryProperty().set(collidingID);
         launcherSettings.setSelectedInstance(collidingID, "1.20.1");
 
-        assertTrue(LegacyConfigMigrator.mergeUserGameDirectories(
+        assertTrue(LegacyConfigMigrator.mergeMigratedUserGameDirectories(
                 launcherSettings, userDirectories, migratedDirectories));
         assertEquals(2, userDirectories.getGameDirectories().size());
         GameDirectory appended = userDirectories.getGameDirectories().get(1);

@@ -281,8 +281,20 @@ public final class LegacyConfigMigrator {
             migrateLegacyInstanceGameSettings(gameDirectories, gameSettingsPresets);
             migrateLegacyAllowAutoAgent(deserialized, gameSettingsPresets, legacyAllowAutoAgent);
             migrateLegacyDisableAutoGameOptions(deserialized, gameSettingsPresets, legacyDisableAutoGameOptions);
-            DetachedSettings detachedSettings = new DetachedSettings(gameDirectories, gameSettingsPresets,
-                    launcherState, authlibInjectorServers, accountMigration);
+            GameDirectories localGameDirectories = new GameDirectories();
+            GameDirectories userGameDirectories = new GameDirectories();
+            for (GameDirectory gameDirectory : gameDirectories.getGameDirectories()) {
+                (gameDirectory.getPath().isAbsolute() ? userGameDirectories : localGameDirectories)
+                        .getGameDirectories()
+                        .add(gameDirectory);
+            }
+            DetachedSettings detachedSettings = new DetachedSettings(
+                    localGameDirectories,
+                    userGameDirectories,
+                    gameSettingsPresets,
+                    launcherState,
+                    authlibInjectorServers,
+                    accountMigration);
             return new LegacyConfigMigration(path, deserialized, detachedSettings);
         } catch (JsonParseException e) {
             LOG.warning("Malformed legacy config file: " + path, e);
@@ -1059,22 +1071,6 @@ public final class LegacyConfigMigrator {
         return JsonUtils.GSON.fromJson(object, GameDirectories.class);
     }
 
-    /// Removes absolute game directories from a migrated store and returns them in a separate store.
-    ///
-    /// Absolute game directories belong to the user-level store, while relative game directories remain
-    /// associated with the workspace that owns the legacy config file.
-    static GameDirectories takeAbsoluteGameDirectories(GameDirectories migratedGameDirectories) {
-        Objects.requireNonNull(migratedGameDirectories);
-
-        GameDirectories absoluteGameDirectories = new GameDirectories();
-        List<GameDirectory> absoluteEntries = migratedGameDirectories.getGameDirectories().stream()
-                .filter(gameDirectory -> gameDirectory.getPath().isAbsolute())
-                .toList();
-        migratedGameDirectories.getGameDirectories().removeAll(absoluteEntries);
-        absoluteGameDirectories.getGameDirectories().addAll(absoluteEntries);
-        return absoluteGameDirectories;
-    }
-
     /// Appends migrated absolute game directories to the user-level store.
     ///
     /// Existing entries for the same normalized folder are reused. Launcher settings references are remapped
@@ -1084,7 +1080,7 @@ public final class LegacyConfigMigrator {
     /// @param userGameDirectories the loaded user-level game directory store
     /// @param migratedGameDirectories the migrated absolute game directories to merge
     /// @return whether the user-level store was changed
-    static boolean mergeUserGameDirectories(
+    static boolean mergeMigratedUserGameDirectories(
             LauncherSettings launcherSettings,
             GameDirectories userGameDirectories,
             GameDirectories migratedGameDirectories) {
@@ -1468,20 +1464,22 @@ public final class LegacyConfigMigrator {
 
     /// Detached settings migrated out of an old config file.
     ///
-    /// @param gameDirectories the detached game directory store, or `null` when none was migrated
+    /// @param localGameDirectories the detached workspace-relative game directory store, or `null` when none was migrated
+    /// @param userGameDirectories the detached absolute game directory store, or `null` when none was migrated
     /// @param gameSettingsPresets the detached preset store, or `null` when none was migrated
     /// @param launcherState the detached launcher state, or `null` when none was migrated
     /// @param authlibInjectorServers the detached authlib-injector servers, or `null` when none was migrated
     /// @param accountMigration the detached account metadata and private data stores, or `null` when none was migrated
     record DetachedSettings(
-            @Nullable GameDirectories gameDirectories,
+            @Nullable GameDirectories localGameDirectories,
+            @Nullable GameDirectories userGameDirectories,
             @Nullable GameSettingsPresets gameSettingsPresets,
             @Nullable LauncherState launcherState,
             @Nullable AuthlibInjectorServerList authlibInjectorServers,
             @Nullable AccountMigrationResult accountMigration) {
         /// Returns an empty detached settings migration result.
         static DetachedSettings empty() {
-            return new DetachedSettings(null, null, null, null, null);
+            return new DetachedSettings(null, null, null, null, null, null);
         }
     }
 
