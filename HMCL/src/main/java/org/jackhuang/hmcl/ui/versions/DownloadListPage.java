@@ -268,7 +268,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 HBox rowBox1 = new HBox(16);
                 rowBox1.setAlignment(Pos.CENTER_LEFT);
                 rowBox1.setMaxWidth(Double.MAX_VALUE);
-                GridPane.setHgrow(rowBox1, Priority.ALWAYS);
 
                 JFXTextField nameField = new JFXTextField();
                 HBox.setHgrow(nameField, Priority.ALWAYS);
@@ -280,10 +279,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     FXUtils.installFastTooltip(nameField, i18n("search.hint.english"));
                 }
 
-                JFXButton btnExpend = FXUtils.newToggleButton4(SVG.ARROW_DROP_DOWN);
-                btnExpend.setOnAction(e -> {
+                JFXButton btnExpand = FXUtils.newToggleButton4(SVG.ARROW_DROP_DOWN);
+                btnExpand.setOnAction(e -> {
                     isExpanded.set(!isExpanded.get());
-                    btnExpend.setGraphic(isExpanded.get() ? FXUtils.newToggleButton4(SVG.ARROW_DROP_UP) : FXUtils.newToggleButton4(SVG.ARROW_DROP_DOWN));
+                    btnExpand.setGraphic(isExpanded.get() ? SVG.ARROW_DROP_UP.createIcon() : SVG.ARROW_DROP_DOWN.createIcon());
                 });
 
                 if (control.versionSelection) {
@@ -291,17 +290,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     versionsComboBox.setPrefWidth(200);
                     Bindings.bindContent(versionsComboBox.getItems(), control.versions);
                     selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedVersion);
-
-                    rowBox1.getChildren().addAll(new Label(i18n("version")), versionsComboBox, new Label(i18n("mods.name")), nameField, btnExpend);
+                    rowBox1.getChildren().addAll(new Label(i18n("version")), versionsComboBox, new Label(i18n("mods.name")), nameField, btnExpand);
                 } else {
-                    rowBox1.getChildren().addAll(new Label(i18n("mods.name")), nameField, btnExpend);
+                    rowBox1.getChildren().addAll(new Label(i18n("mods.name")), nameField, btnExpand);
                 }
 
                 searchPane.getChildren().add(rowBox1);
 
                 HBox rowBox2 = new HBox(16);
                 rowBox2.setAlignment(Pos.CENTER_LEFT);
-                GridPane.setHgrow(rowBox2, Priority.ALWAYS);
+                rowBox2.setMaxWidth(Double.MAX_VALUE);
 
                 rowBox2.visibleProperty().bind(isExpanded);
                 rowBox2.managedProperty().bind(isExpanded);
