@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
@@ -152,8 +153,11 @@ public final class JavaDownloadDialog extends StackPane {
             setBody(vbox);
 
             if (!distributions.isEmpty()) {
-                JFXHyperlink more = new JFXHyperlink(i18n("java.download.more"));
+                JFXButton more = new JFXButton(i18n("java.download.more"));
+                more.setGraphic(SVG.FORMAT_LIST_BULLETED.createIcon());
+                more.getStyleClass().add("dialog-cancel");
                 more.setOnAction(event -> JavaDownloadDialog.this.getChildren().setAll(new DownloadDiscoJava()));
+
                 setActions(warningLabel, more, acceptPane, cancelButton);
             } else
                 setActions(warningLabel, acceptPane, cancelButton);
