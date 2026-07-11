@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.account.friend;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -32,6 +33,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.TexturesLoader;
+import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -52,6 +54,12 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
     private final Canvas avatar = new Canvas(32, 32);
     private final TwoLineListItem twoLineListItem = new TwoLineListItem();
 
+    private final JFXButton copyButton =  FXUtils.newToggleButton4(SVG.CONTENT_COPY);
+    private final JFXButton deleteButton = FXUtils.newToggleButton4(SVG.PERSON_OFF);
+    private final JFXButton acceptButton = FXUtils.newToggleButton4(SVG.PERSON_CHECK);
+    private final JFXButton rejectButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
+    private final HBox actions = new HBox();
+
     public FriendListCell(JFXListView<FriendListItem> listView, Account account, FriendControl control, FriendListPage friendListPage) {
         super(listView);
 
@@ -70,19 +78,23 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
         center.getChildren().setAll(avatar, twoLineListItem);
         root.setCenter(center);
 
-        HBox right = new HBox();
 
-        var copyButton = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
+
         copyButton.setOnAction(event -> FXUtils.copyText(control.toUuidWithDashes(getItem().profileId())));
         FXUtils.installFastTooltip(copyButton, i18n("account.copy_uuid"));
-        right.getChildren().addAll(copyButton);
 
-        var deleteButton = FXUtils.newToggleButton4(SVG.PERSON_OFF);
-        deleteButton.setOnAction(event -> friendListPage.tryDeleteFriend(getItem()));
-        right.getChildren().addAll(deleteButton);
-        right.setAlignment(Pos.CENTER_RIGHT);
+        deleteButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.delete.confirm"),i18n("account.friend.delete.failed")));
+        FXUtils.installFastTooltip(deleteButton, i18n("account.friend.delete"));
 
-        root.setRight(right);
+        acceptButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.ADD, i18n("account.friend.accept.confirm"),i18n("account.friend.accept.failed")));
+        FXUtils.installFastTooltip(acceptButton, i18n("account.friend.accept"));
+
+        rejectButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.reject.confirm"),i18n("account.friend.reject.failed")));
+        FXUtils.installFastTooltip(rejectButton, i18n("account.friend.reject"));
+
+        actions.setAlignment(Pos.CENTER_RIGHT);
+
+        root.setRight(actions);
 
         getContainer().getChildren().setAll(root);
     }
@@ -125,6 +137,14 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
             var tag = new Label(i18n("account.friend." + item.status().name().toLowerCase(Locale.ROOT)));
             tag.getStyleClass().add("tag");
             twoLineListItem.getTags().add(tag);
+        }
+
+        actions.getChildren().setAll(copyButton);
+
+        if (item.status() == FriendStatus.NORMAL) {
+            actions.getChildren().addAll(deleteButton);
+        } else if (item.status() == FriendStatus.INCOMING) {
+            actions.getChildren().addAll(acceptButton, rejectButton);
         }
     }
 }

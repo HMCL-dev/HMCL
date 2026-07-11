@@ -80,19 +80,19 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
         return control;
     }
 
-    public void tryDeleteFriend(FriendListItem item) {
+    public void confirmUpdateFriend(FriendListItem item, EnumUpdateType updateType, String text, String failedText) {
         SpinnerPane spinnerPane = new SpinnerPane();
         JFXButton btnOk = new JFXButton(i18n("button.ok"));
 
         btnOk.setOnAction(action -> {
             spinnerPane.showSpinner();
-            Task.supplyAsync(() -> control.updateFriend(control.toUuidWithoutDashes(item.profileId()), null, EnumUpdateType.REMOVE)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            Task.supplyAsync(() -> control.updateFriend(control.toUuidWithoutDashes(item.profileId()), null, updateType)).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 spinnerPane.hideSpinner();
 
                 if (exception != null) {
-                    LOG.warning("Failed to delete friend", exception);
+                    LOG.warning("Failed to update friend", exception);
                     fireEvent(new DialogCloseEvent());
-                    Controllers.dialog(i18n("account.friend.delete.failed"), null, MessageDialogPane.MessageType.ERROR);
+                    Controllers.dialog(failedText, null, MessageDialogPane.MessageType.ERROR);
                     return;
                 }
 
@@ -104,7 +104,7 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
         spinnerPane.setContent(btnOk);
 
 
-        var dialog = new MessageDialogPane.Builder(i18n("account.friend.delete.confirm", item.name()), i18n("message.question"), MessageDialogPane.MessageType.QUESTION)
+        var dialog = new MessageDialogPane.Builder(i18n(text, item.name()), i18n("message.question"), MessageDialogPane.MessageType.QUESTION)
                 .addAction(spinnerPane)
                 .addCancel(null)
                 .build();
