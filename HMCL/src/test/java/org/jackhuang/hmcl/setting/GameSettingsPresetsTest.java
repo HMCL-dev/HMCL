@@ -155,9 +155,9 @@ public final class GameSettingsPresetsTest {
         assertEquals(1, presets.getPresets().size());
         GameDirectory gameDirectory = gameDirectories.getGameDirectories().get(0);
         GameSettings.Preset preset = presets.getPresets().get(0);
-        assertEquals(gameDirectory.getLegacyGameSettings(), preset.idProperty().getValue());
+        assertNull(gameDirectory.getLegacyGameSettings());
         assertEquals(preset.idProperty().getValue(), presets.getLegacyGameSettings(gameDirectory.getId()));
-        assertNotEquals(gameDirectory.getId(), preset.idProperty().getValue());
+        assertNotEquals(gameDirectory.getId().uuid(), preset.idProperty().getValue().uuid());
         assertEquals(2048, preset.maxMemoryProperty().getValue());
     }
 }

@@ -632,8 +632,8 @@ public final class GameDirectoriesTest {
         GameDirectory gameDirectory = new GameDirectory(
                 GameDirectoryID.generate(),
                 LocalizedText.plain("Dev"),
-                PortablePath.of(tempDirectory.toString()),
-                legacyPresetId);
+                PortablePath.of(tempDirectory.toString()));
+        presets.getLegacyGameSettings().put(gameDirectory.getId(), legacyPresetId);
         GameDirectories localDirectories = new GameDirectories();
         localDirectories.getGameDirectories().add(gameDirectory);
         GameDirectories userDirectories = new GameDirectories();
@@ -672,8 +672,8 @@ public final class GameDirectoriesTest {
         GameDirectory gameDirectory = new GameDirectory(
                 GameDirectoryID.generate(),
                 LocalizedText.plain("Dev"),
-                PortablePath.of(tempDirectory.toString()),
-                legacyPresetId);
+                PortablePath.of(tempDirectory.toString()));
+        presets.getLegacyGameSettings().put(gameDirectory.getId(), legacyPresetId);
         GameDirectories localDirectories = new GameDirectories();
         localDirectories.getGameDirectories().add(gameDirectory);
         GameDirectories userDirectories = new GameDirectories();
@@ -717,8 +717,8 @@ public final class GameDirectoriesTest {
         GameDirectory gameDirectory = new GameDirectory(
                 GameDirectoryID.generate(),
                 LocalizedText.plain("Dev"),
-                PortablePath.of(tempDirectory.toString()),
-                legacyPresetId);
+                PortablePath.of(tempDirectory.toString()));
+        presets.getLegacyGameSettings().put(gameDirectory.getId(), legacyPresetId);
         GameDirectories localDirectories = new GameDirectories();
         localDirectories.getGameDirectories().add(gameDirectory);
         GameDirectories userDirectories = new GameDirectories();
@@ -755,8 +755,8 @@ public final class GameDirectoriesTest {
         GameDirectory gameDirectory = new GameDirectory(
                 GameDirectoryID.generate(),
                 LocalizedText.plain("Dev"),
-                PortablePath.of(tempDirectory.toString()),
-                legacyPresetId);
+                PortablePath.of(tempDirectory.toString()));
+        presets.getLegacyGameSettings().put(gameDirectory.getId(), legacyPresetId);
         GameDirectories localDirectories = new GameDirectories();
         localDirectories.getGameDirectories().add(gameDirectory);
         GameDirectories userDirectories = new GameDirectories();

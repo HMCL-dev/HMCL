@@ -132,7 +132,7 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
             FXCollections.observableHashMap();
 
     /// Returns legacy parent presets keyed by game directory ID.
-    public ObservableMap<GameDirectoryID, GameSettingsPresetID> getLegacyGameSettings() {
+    ObservableMap<GameDirectoryID, GameSettingsPresetID> getLegacyGameSettings() {
         return legacyGameSettings;
     }
 

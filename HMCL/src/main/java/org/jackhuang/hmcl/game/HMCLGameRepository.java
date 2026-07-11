@@ -351,7 +351,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
 
         @Nullable GameSettingsPresetID legacyParent =
-                SettingsManager.getLegacyGameSettingsPresetID(gameDirectory.getId());
+                SettingsManager.gameSettingsPresets().getLegacyGameSettings(gameDirectory.getId());
         if (SettingsManager.getGameSettings(legacyParent) == null) {
             legacyParent = gameDirectory.getLegacyGameSettings();
         }

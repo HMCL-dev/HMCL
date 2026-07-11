@@ -284,7 +284,6 @@ public final class LegacyConfigMigrator {
             GameDirectories localGameDirectories = new GameDirectories();
             GameDirectories userGameDirectories = new GameDirectories();
             for (GameDirectory gameDirectory : gameDirectories.getGameDirectories()) {
-                gameDirectory.setLegacyGameSettings(null);
                 (gameDirectory.getPath().isAbsolute() ? userGameDirectories : localGameDirectories)
                         .getGameDirectories()
                         .add(gameDirectory);
@@ -1102,7 +1101,8 @@ public final class LegacyConfigMigrator {
             }
 
             GameDirectory appended = migrated;
-            if (hasGameDirectoryID(userGameDirectories, migrated.getId())) {
+            if (userGameDirectories.getGameDirectories().stream()
+                    .anyMatch(gameDirectory -> gameDirectory.getId().equals(migrated.getId()))) {
                 appended = new GameDirectory(
                         GameDirectoryID.generate(),
                         migrated.getName(),
@@ -1130,12 +1130,6 @@ public final class LegacyConfigMigrator {
             }
         }
         return null;
-    }
-
-    /// Returns whether a game directory store already contains the given ID.
-    private static boolean hasGameDirectoryID(GameDirectories gameDirectories, GameDirectoryID id) {
-        return gameDirectories.getGameDirectories().stream()
-                .anyMatch(gameDirectory -> gameDirectory.getId().equals(id));
     }
 
     /// Replaces launcher settings references to one migrated game directory ID.
@@ -1188,9 +1182,6 @@ public final class LegacyConfigMigrator {
                 migrated.addProperty("name", name);
             }
             migrated.addProperty("id", getLegacyProfileID(name).toString());
-            if (profile.get("global") instanceof JsonObject) {
-                migrated.addProperty("legacyGameSettings", getLegacyGameSettingsID(name).toString());
-            }
             result.add(migrated);
         }
         return result;
@@ -1365,26 +1356,30 @@ public final class LegacyConfigMigrator {
         }
 
         for (GameDirectory gameDirectory : gameDirectories.getGameDirectories()) {
-            @Nullable GameSettingsPresetID legacyGameSettings = gameDirectory.getLegacyGameSettings();
-            if (legacyGameSettings == null) {
+            @Nullable String profileName = getLegacyProfileName(gameDirectory);
+            if (profileName == null) {
                 continue;
             }
 
-            gameSettingsPresets.getLegacyGameSettings().put(gameDirectory.getId(), legacyGameSettings);
+            @Nullable JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson
+                    ? profileJson
+                    : null;
+            @Nullable JsonObject legacySettingObject = profileObject != null
+                    && profileObject.get("global") instanceof JsonObject legacyJson
+                    ? legacyJson
+                    : null;
+            if (legacySettingObject == null) {
+                continue;
+            }
 
+            GameSettingsPresetID legacyGameSettings = getLegacyGameSettingsID(profileName);
+            gameSettingsPresets.getLegacyGameSettings().put(gameDirectory.getId(), legacyGameSettings);
             GameSettings.Preset legacyParent = gameSettingsPresets.getPreset(legacyGameSettings);
             if (legacyParent == null) {
-                @Nullable String profileName = getLegacyProfileName(gameDirectory);
-                if (profileName == null) {
-                    continue;
-                }
-                JsonObject profileObject = configurations.get(profileName) instanceof JsonObject profileJson ? profileJson : null;
-                JsonObject legacySettingObject = profileObject != null && profileObject.get("global") instanceof JsonObject legacyJson ? legacyJson : null;
-                if (legacySettingObject == null) {
-                    continue;
-                }
-
-                legacyParent = LegacyGameSettingsMigrator.toPreset(legacyGameSettings, gameSettingsPresets.newPresetAutoNameNumber(), legacySettingObject);
+                legacyParent = LegacyGameSettingsMigrator.toPreset(
+                        legacyGameSettings,
+                        gameSettingsPresets.newPresetAutoNameNumber(),
+                        legacySettingObject);
                 gameSettingsPresets.getPresets().add(legacyParent);
             }
         }
@@ -1398,7 +1393,8 @@ public final class LegacyConfigMigrator {
         Objects.requireNonNull(gameSettingsPresets);
 
         for (GameDirectory gameDirectory : gameDirectories.getGameDirectories()) {
-            @Nullable GameSettingsPresetID legacyGameSettings = gameDirectory.getLegacyGameSettings();
+            @Nullable GameSettingsPresetID legacyGameSettings =
+                    gameSettingsPresets.getLegacyGameSettings(gameDirectory.getId());
             if (legacyGameSettings == null) {
                 continue;
             }

@@ -931,11 +931,6 @@ public final class SettingsManager {
         return gameSettingsPresets().getPreset(id);
     }
 
-    /// Returns the workspace-level legacy parent preset associated with a game directory.
-    public static @Nullable GameSettingsPresetID getLegacyGameSettingsPresetID(GameDirectoryID gameDirectoryID) {
-        return gameSettingsPresets().getLegacyGameSettings(gameDirectoryID);
-    }
-
     /// Returns the default game setting preset, creating one when needed.
     public static GameSettings.Preset getDefaultGameSettingsPresetOrCreate() {
         GameSettings.Preset setting = getGameSettings(settings().defaultGameSettingsPresetProperty().get());
@@ -1104,7 +1099,7 @@ public final class SettingsManager {
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(launcherSettings.languageProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
-        boolean migratedGameDirectoriesSaved = loadGameDirectories(
+        boolean migratedUserGameDirectoriesSaved = loadGameDirectories(
                 migratedDetachedSettings.localGameDirectories(),
                 migratedDetachedSettings.userGameDirectories(),
                 migratedDetachedSettings.gameSettingsPresets());
@@ -1126,12 +1121,16 @@ public final class SettingsManager {
 
         if (legacyConfigMigration != null
                 && loadedGameAccounts.migratedAccountsSaved()
-                && migratedGameDirectoriesSaved) {
+                && migratedUserGameDirectoriesSaved) {
             LOG.info("Migrating settings from " + legacyConfigMigration.path() + " to " + SETTINGS_LOCATION);
             FileUtils.saveSafely(SETTINGS_LOCATION, legacyConfigMigration.launcherSettings().toJson());
             LegacyConfigMigrator.completeLegacyConfigMigration(legacyConfigMigration);
         } else if (legacyConfigMigration != null) {
-            LOG.warning("Skipped legacy config migration because detached migration data was not saved");
+            if (!loadedGameAccounts.migratedAccountsSaved()) {
+                LOG.warning("Skipped legacy config migration because migrated account private data was not saved");
+            } else {
+                LOG.warning("Skipped legacy config migration because migrated user game directories were not saved");
+            }
         }
 
         if (launcherSettings.isSavable()) {
