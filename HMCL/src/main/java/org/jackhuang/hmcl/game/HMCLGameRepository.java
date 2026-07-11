@@ -695,6 +695,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         GameSettings.Effective vs = getEffectiveGameSettings(version);
         boolean noJVMOptions = vs.getInheritable(GameSettings::noJVMOptionsProperty);
         boolean autoMemory = vs.get(GameSettings::autoMemoryProperty);
+        GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(getGameVersion(version));
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
@@ -734,7 +735,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setNativesDir(vs.get(GameSettings::nativesDirectoryProperty))
                 .setProcessPriority(vs.getInheritable(GameSettings::processPriorityProperty))
                 .setGraphicsBackend(vs.getInheritable(GameSettings::graphicsBackendProperty))
-                .setRenderer(vs.getRenderer())
+                .setRenderer(vs.getRenderer(gameVersionNumber))
                 .setEnableDebugLogOutput(vs.getInheritable(GameSettings::enableDebugLogOutputProperty))
                 .setAllowAutoAgent(vs.getInheritable(GameSettings::allowAutoAgentProperty))
                 .setDisableAutoGameOptions(vs.getInheritable(GameSettings::disableAutoGameOptionsProperty))
