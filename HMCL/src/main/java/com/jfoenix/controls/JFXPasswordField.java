@@ -38,7 +38,6 @@ import javafx.scene.paint.Paint;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 import static org.jackhuang.hmcl.ui.FXUtils.useJFXContextMenu;
 
