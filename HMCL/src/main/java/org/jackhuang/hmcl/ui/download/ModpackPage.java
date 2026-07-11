@@ -61,6 +61,8 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
         {
             var archiveNamePane = new LinePane();
             {
+                FXUtils.setLimitHeight(archiveNamePane, 75);
+
                 archiveNamePane.setTitle(i18n("version.name"));
 
                 txtModpackName = new JFXTextField();
@@ -68,7 +70,6 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
                 // BorderPane.setMargin(txtModpackName, new Insets(0, 0, 8, 32));
                 BorderPane.setAlignment(txtModpackName, Pos.CENTER_RIGHT);
                 archiveNamePane.setRight(txtModpackName);
-                FXUtils.setLimitHeight(archiveNamePane, 75);
             }
 
             var modpackNamePane = new LineTextPane();
