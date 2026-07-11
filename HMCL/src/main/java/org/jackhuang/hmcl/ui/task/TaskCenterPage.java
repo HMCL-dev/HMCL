@@ -19,7 +19,11 @@ package org.jackhuang.hmcl.ui.task;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXProgressBar;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -72,7 +76,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
             new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("task.manage")));
 
     private final VBox activeContainer = new VBox(10);
-    private final VBox failedContainer = new VBox(0);
+    private final VBox failedContainer = new VBox(10);
 
     private final Node activeEmpty = createEmptyBox(SVG.CHECKLIST, i18n("task.empty.running"));
 
@@ -177,15 +181,20 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
             } else if (!active && wasActive[0]) {
                 boolean success = center.getFailedTasks().size() == failedAtStart[0];
                 if (success)
-                    ring.playComplete(() -> ring.setIdle(true));
+                    // Guard: if a task started again by the time the flourish ends, don't go idle.
+                    ring.playComplete(() -> {
+                        if (center.getEntries().isEmpty())
+                            ring.setIdle(true);
+                    });
                 else
                     ring.setIdle(true);
             }
             wasActive[0] = active;
         });
 
-        Label caption = new Label();
-        caption.getStyleClass().add("task-overview-caption");
+        // Shown only while idle (labels the pause glyph); when active the % lives in the ring center.
+        Label idleCaption = new Label(i18n("task.overview.idle"));
+        idleCaption.getStyleClass().add("task-overview-caption");
 
         VBox stats = new VBox(10);
         stats.setAlignment(Pos.CENTER);
@@ -224,11 +233,13 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         cancelAllButton.getStyleClass().add("dialog-cancel");
         cancelAllButton.setOnAction(e -> center.cancelAll());
 
-        // Idle collapses everything but the ring + "Idle" caption; the remaining content, being in a
-        // center-aligned VBox, then sits centered in the panel.
+        // Idle collapses the stats + cancel to nothing; the ring (its center shows the % or the pause
+        // glyph) is self-explanatory, so no separate caption is needed. The center-aligned VBox then
+        // centers the lone ring in the panel.
         Runnable updateIdle = () -> {
             boolean active = !center.getEntries().isEmpty();
-            caption.setText(i18n(active ? "task.overview.progress" : "task.overview.idle"));
+            idleCaption.setVisible(!active);
+            idleCaption.setManaged(!active);
             stats.setVisible(active);
             stats.setManaged(active);
             cancelAllButton.setVisible(active);
@@ -237,7 +248,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         updateIdle.run();
         center.getEntries().addListener((ListChangeListener<TaskCenter.Entry>) c -> updateIdle.run());
 
-        box.getChildren().addAll(ringPane, caption, stats, cancelAllButton);
+        box.getChildren().addAll(ringPane, idleCaption, stats, cancelAllButton);
 
         // Wrap in padding so the tinted panel sits inset like the content card on the right.
         // VGrow so it fills the full height of the left VBox (otherwise the card stops at content
@@ -262,33 +273,44 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     // ── content (right): active stream + collapsible failures ────────
 
     private Node createContentPane(TaskCenter center) {
-        VBox column = new VBox(12);
-        column.setPadding(new Insets(16));
+        // Active task list: its own scroll area, grows to fill the space above the failures, with a
+        // scrollbar of its own when the list overflows.
+        activeContainer.setPadding(new Insets(16));
+        ScrollPane activeScroll = new ScrollPane(activeContainer);
+        activeScroll.setFitToWidth(true);
+        activeScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        VBox.setVgrow(activeScroll, Priority.ALWAYS);
+        // Fill the viewport when the list is short (so the empty-state box centers via its VGrow) but
+        // still overflow-and-scroll when it is tall — can't use fitToHeight, which would kill scrolling.
+        activeScroll.viewportBoundsProperty().addListener((o, ov, nv) ->
+                activeContainer.setMinHeight(nv.getHeight()));
 
-        VBox.setVgrow(activeContainer, Priority.ALWAYS);
-        column.getChildren().add(activeContainer);
-        column.getChildren().add(createFailedSection(center));
-
-        ScrollPane scrollPane = new ScrollPane(column);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
+        VBox column = new VBox();
+        column.getChildren().addAll(activeScroll, createFailedSection(center, column.heightProperty()));
 
         BorderPane contentWrapper = new BorderPane();
         contentWrapper.getStyleClass().add("card-non-transparent");
         contentWrapper.setPadding(new Insets(4));
-        contentWrapper.setCenter(scrollPane);
+        contentWrapper.setCenter(column);
 
         StackPane centerPane = new StackPane(contentWrapper);
         centerPane.setPadding(new Insets(12));
         return centerPane;
     }
 
-    private Node createFailedSection(TaskCenter center) {
+    /// Collapsible failures pinned to the bottom. Expanding animates the body open; it sizes to its
+    /// content but is capped at half the content height, with its own scrollbar beyond that.
+    private Node createFailedSection(TaskCenter center, javafx.beans.value.ObservableDoubleValue regionHeight) {
         BooleanProperty expanded = new SimpleBooleanProperty(false);
 
-        Label arrow = new Label();
+        // A single caret that rotates 0°→90° instead of swapping glyphs (smoother).
+        Label arrow = new Label("▸");
         arrow.getStyleClass().add("task-stat-label");
-        arrow.textProperty().bind(Bindings.when(expanded).then("▾").otherwise("▸"));
+        expanded.addListener((o, was, now) -> {
+            RotateTransition rotate = new RotateTransition(Duration.millis(200), arrow);
+            rotate.setToAngle(now ? 90 : 0);
+            rotate.play();
+        });
 
         Label title = new Label();
         title.getStyleClass().add("task-stat-label");
@@ -296,31 +318,65 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
                 () -> i18n("task.failed.section", center.getFailedTasks().size()),
                 center.getFailedTasks()));
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
+        // Kept managed (reserving its slot) so the header doesn't jump size on expand; just fades.
         JFXButton clearButton = new JFXButton(i18n("task.clear"));
         clearButton.getStyleClass().add("dialog-cancel");
         clearButton.setOnAction(e -> {
             center.clearFailed();
             e.consume();
         });
-        clearButton.visibleProperty().bind(expanded);
-        clearButton.managedProperty().bind(expanded);
+        clearButton.setOpacity(0);
+        clearButton.setMouseTransparent(true);
+        expanded.addListener((o, was, now) -> {
+            FadeTransition fade = new FadeTransition(Duration.millis(200), clearButton);
+            fade.setToValue(now ? 1 : 0);
+            fade.play();
+            clearButton.setMouseTransparent(!now);
+        });
 
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        // Left-aligned but vertically centered within the bar (CENTER_LEFT), clear button on the right.
         HBox header = new HBox(8, arrow, title, spacer, clearButton);
+        header.setAlignment(Pos.CENTER_LEFT);
         header.getStyleClass().add("task-failed-header");
         header.setOnMouseClicked(e -> expanded.set(!expanded.get()));
 
-        failedContainer.visibleProperty().bind(expanded);
-        failedContainer.managedProperty().bind(expanded);
+        failedContainer.setPadding(new Insets(12));
+        ScrollPane body = new ScrollPane(failedContainer);
+        body.setFitToWidth(true);
+        body.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        body.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        body.setMinHeight(0);
 
-        VBox section = new VBox(header, failedContainer);
+        // Body height = min(content, half the region), scaled by the open fraction (0 collapsed →
+        // 1 expanded). Use the container's PREFERRED height, not its laid-out getHeight(): a collapsed
+        // body has a 0-height viewport, and a ScrollPane won't lay out content in a 0-height viewport,
+        // so getHeight() would stay 0 → target 0 → body never opens (until a full re-layout). Depend
+        // on the failed list and body width so it recomputes as cards are added and layout settles.
+        DoubleProperty open = new SimpleDoubleProperty(0);
+        var target = Bindings.createDoubleBinding(
+                () -> {
+                    double width = body.getWidth() > 0 ? body.getWidth() : -1;
+                    return Math.min(failedContainer.prefHeight(width) + 4, regionHeight.get() * 0.5);
+                },
+                center.getFailedTasks(), regionHeight, body.widthProperty());
+        body.prefHeightProperty().bind(target.multiply(open));
+        body.maxHeightProperty().bind(target.multiply(open));
 
-        // The whole section only exists while there is something to inspect.
+        expanded.addListener((o, was, now) -> new Timeline(new KeyFrame(Duration.millis(220),
+                new KeyValue(open, now ? 1 : 0, Interpolator.EASE_BOTH))).play());
+
+        VBox section = new VBox(header, body);
+
+        // The whole section only exists while there is something to inspect; collapse it when cleared.
         javafx.beans.binding.BooleanBinding hasFailed = Bindings.isNotEmpty(center.getFailedTasks());
         section.visibleProperty().bind(hasFailed);
         section.managedProperty().bind(hasFailed);
+        center.getFailedTasks().addListener((ListChangeListener<TaskCenter.Entry>) c -> {
+            if (center.getFailedTasks().isEmpty())
+                expanded.set(false);
+        });
         return section;
     }
 
@@ -479,35 +535,54 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     // ── failed row ────────────────────────────────────────────────────
 
     private Node createFailedRow(TaskCenter.Entry entry) {
-        HBox row = new HBox(8);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.getStyleClass().add("task-history-cell");
-
         boolean cancelled = entry.getException() instanceof CancellationException
                 || entry.getStatus() == TaskCenter.Status.CANCELLED;
-        Node icon = (cancelled ? SVG.CANCEL : SVG.CLOSE).createIcon(14);
 
-        Label label = new Label(entry.getDisplayText());
-        label.getStyleClass().add("subtitle-label");
-        HBox.setHgrow(label, Priority.ALWAYS);
-        label.setMaxWidth(Double.MAX_VALUE);
+        VBox card = new VBox();
+        card.getStyleClass().add("task-card");
 
-        row.getChildren().add(icon);
+        Label titleLabel = new Label(entry.getDisplayText());
+        titleLabel.getStyleClass().add("title-label");
+
+        // Subtitle: the (first line of the) error for a failure, or the cancelled note.
+        Label subtitle = new Label(failureSummary(entry, cancelled));
+        subtitle.getStyleClass().add("subtitle-label");
+        subtitle.setMaxWidth(Double.MAX_VALUE);
+
+        VBox titleBox = new VBox(2, titleLabel, subtitle);
+        HBox.setHgrow(titleBox, Priority.ALWAYS);
+        titleBox.setMaxWidth(Double.MAX_VALUE);
+
+        HBox header = new HBox(8);
+        header.setAlignment(Pos.CENTER_LEFT);
         Label kindTag = createKindTag(entry.getKind());
         if (kindTag != null)
-            row.getChildren().add(kindTag);
-        // A status tag distinguishes a manual cancellation (muted) from a genuine failure (red).
+            header.getChildren().add(kindTag);
         Label statusTag = new Label(i18n(cancelled ? "task.status.cancelled" : "task.status.failed"));
         statusTag.getStyleClass().addAll("tag", cancelled ? "tag-cancelled" : "tag-failed");
-        row.getChildren().add(statusTag);
-        row.getChildren().add(label);
+        header.getChildren().addAll(statusTag, titleBox);
+        card.getChildren().add(header);
 
-        if (!cancelled) {
-            row.getStyleClass().add("clickable");
-            row.setOnMouseClicked(e -> showFailedTaskDialog(entry));
-        }
+        if (!cancelled)
+            card.setOnMouseClicked(e -> showFailedTaskDialog(entry));
+        else
+            card.setStyle("-fx-cursor: default;"); // cancelled cards aren't clickable
 
-        return row;
+        return card;
+    }
+
+    private static String failureSummary(TaskCenter.Entry entry, boolean cancelled) {
+        if (cancelled)
+            return i18n("task.cancelled");
+        Throwable ex = entry.getException();
+        String message = ex != null ? ex.getLocalizedMessage() : null;
+        if (message == null || message.isBlank())
+            return i18n("task.failed.no_exception");
+        message = message.strip();
+        int newline = message.indexOf('\n');
+        if (newline >= 0)
+            message = message.substring(0, newline);
+        return message.length() > 80 ? message.substring(0, 80) + "…" : message;
     }
 
     // ── failed task dialog ─────────────────────────────────────────────

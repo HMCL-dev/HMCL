@@ -315,7 +315,27 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         fab.getStyleClass().add("task-fab");
         FXUtils.setLimitWidth(fab, 52);
         FXUtils.setLimitHeight(fab, 52);
-        fab.setOnMouseClicked(e -> Controllers.navigate(TaskCenterPage.getInstance()));
+        // Draggable so it can be moved off a page button it happens to cover. [startX, startY,
+        // startTranslateX, startTranslateY, movedFlag]
+        double[] drag = new double[5];
+        fab.setOnMousePressed(e -> {
+            drag[0] = e.getSceneX();
+            drag[1] = e.getSceneY();
+            drag[2] = fab.getTranslateX();
+            drag[3] = fab.getTranslateY();
+            drag[4] = 0;
+            e.consume();
+        });
+        fab.setOnMouseDragged(e -> {
+            fab.setTranslateX(drag[2] + e.getSceneX() - drag[0]);
+            fab.setTranslateY(drag[3] + e.getSceneY() - drag[1]);
+            drag[4] = 1;
+            e.consume();
+        });
+        fab.setOnMouseClicked(e -> {
+            if (drag[4] == 0) // a real click, not the end of a drag
+                Controllers.navigate(TaskCenterPage.getInstance());
+        });
         FXUtils.installFastTooltip(fab, i18n("task.manage"));
 
         Runnable update = () -> {

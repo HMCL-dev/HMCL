@@ -64,6 +64,9 @@ public final class TaskOverviewRing extends StackPane {
     private final RotateTransition spin;
     private final TranslateTransition downloadBob;
     private Timeline displayAnim;
+    /// The currently-running completion flourish stage (fill → check pop-in → hold), so a task that
+    /// starts mid-flourish can cancel it.
+    private Animation completionAnim;
 
     private boolean indeterminate;
     private boolean completed;
@@ -211,10 +214,11 @@ public final class TaskOverviewRing extends StackPane {
 
     /// Idle look: a breathing dim ring with a pause glyph, shown when there are no active tasks.
     public void setIdle(boolean value) {
-        if (idle == value)
-            return;
-        idle = value;
         if (value) {
+            if (idle)
+                return;
+            boolean fromComplete = completed; // coming straight off a completion flourish
+            idle = true;
             completed = false;
             greenArc.setOpacity(0);
             if (displayAnim != null)
@@ -225,15 +229,65 @@ public final class TaskOverviewRing extends StackPane {
             displayProgress.set(0);
             pulseArc.setOpacity(0);
             breathe.playFromStart();
+            if (fromComplete)
+                morphCheckToPause();
+            else
+                updateCenter();
         } else {
+            // Force active — runs even if not currently idle: a task starting mid completion-flourish
+            // must interrupt it (cancel the flourish, clear any completed/green/check state) instead
+            // of being no-op'd and then overridden by the flourish's delayed setIdle(true).
+            idle = false;
             completed = false;
+            if (completionAnim != null) {
+                completionAnim.stop();
+                completionAnim = null;
+            }
             greenArc.setOpacity(0);
             breathe.stop();
             arcLayer.setOpacity(1);
+            checkPane.setVisible(false);
+            checkPane.setRotate(0);
+            checkPane.setOpacity(1);
+            checkPane.setScaleX(1);
+            checkPane.setScaleY(1);
+            pauseGlyph.setRotate(0);
+            pauseGlyph.setOpacity(1);
             onProgressChanged(progress.get());
+            updateCenter();
         }
-        updateCenter();
         refresh();
+    }
+
+    /// The completion check spins and fades out while the pause glyph spins in — a little "settling
+    /// down to idle" transition after everything finishes.
+    private void morphCheckToPause() {
+        percentLabel.setVisible(false);
+        downloadGlyph.setVisible(false);
+
+        RotateTransition checkOut = new RotateTransition(Duration.millis(420), checkPane);
+        checkOut.setByAngle(180);
+        FadeTransition checkFade = new FadeTransition(Duration.millis(420), checkPane);
+        checkFade.setToValue(0);
+
+        pauseGlyph.setVisible(true);
+        pauseGlyph.setOpacity(0);
+        pauseGlyph.setRotate(-180);
+        RotateTransition pauseIn = new RotateTransition(Duration.millis(420), pauseGlyph);
+        pauseIn.setToAngle(0);
+        FadeTransition pauseFade = new FadeTransition(Duration.millis(420), pauseGlyph);
+        pauseFade.setToValue(1);
+
+        ParallelTransition morph = new ParallelTransition(checkOut, checkFade, pauseIn, pauseFade);
+        morph.setInterpolator(Interpolator.EASE_BOTH);
+        morph.setOnFinished(e -> {
+            checkPane.setVisible(false);
+            checkPane.setRotate(0);
+            checkPane.setOpacity(1);
+            checkPane.setScaleX(1);
+            checkPane.setScaleY(1);
+        });
+        morph.play();
     }
 
     private void refresh() {
@@ -300,7 +354,11 @@ public final class TaskOverviewRing extends StackPane {
         Timeline fill = new Timeline(new KeyFrame(Duration.millis(360),
                 new KeyValue(displayProgress, 1, Interpolator.EASE_BOTH),
                 new KeyValue(greenArc.opacityProperty(), 1, Interpolator.EASE_BOTH)));
-        fill.setOnFinished(e -> morphToCheck(onFinished));
+        completionAnim = fill;
+        fill.setOnFinished(e -> {
+            if (completed) // not cancelled by a task starting mid-flourish
+                morphToCheck(onFinished);
+        });
         fill.play();
     }
 
@@ -324,12 +382,18 @@ public final class TaskOverviewRing extends StackPane {
                 new KeyFrame(Duration.millis(340),
                         new KeyValue(checkPane.scaleXProperty(), 1.0, Interpolator.EASE_BOTH),
                         new KeyValue(checkPane.scaleYProperty(), 1.0, Interpolator.EASE_BOTH)));
+        completionAnim = morph;
         morph.setOnFinished(e -> {
-            if (onFinished != null) {
-                PauseTransition hold = new PauseTransition(Duration.millis(900));
-                hold.setOnFinished(x -> onFinished.run());
-                hold.play();
-            }
+            if (!completed) // cancelled mid-flourish
+                return;
+            PauseTransition hold = new PauseTransition(Duration.millis(900));
+            completionAnim = hold;
+            hold.setOnFinished(x -> {
+                completionAnim = null;
+                if (onFinished != null)
+                    onFinished.run();
+            });
+            hold.play();
         });
         morph.play();
     }

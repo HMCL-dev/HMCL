@@ -290,7 +290,7 @@ public final class TaskProgressAggregator {
     }
 
     private static final class Stage {
-        private enum Status {WAITING, RUNNING, SUCCESS, FAILED}
+        private enum Status { WAITING, RUNNING, SUCCESS, FAILED }
 
         private final double weight;
         private int runningTasksCount = 0;
