@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.game.friend.EnumPresenceStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
+import java.util.UUID;
 
-public record FriendListItem(String profileId, String name, FriendStatus status, @Nullable EnumPresenceStatus presenceStatus, @Nullable Instant lastUpdated) {
+public record FriendListItem(UUID profileId, String name, FriendStatus status, @Nullable EnumPresenceStatus presenceStatus, @Nullable Instant lastUpdated) {
 }

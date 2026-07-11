@@ -104,7 +104,7 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
         btnOk.setOnAction(action -> {
             stackPane.getChildren().setAll(spinner);
 
-            Task.supplyAsync(() -> control.updateFriend(null, control.toUuidWithoutDashes(item.profileId()), updateType)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            Task.supplyAsync(() -> control.updateFriend(null, item.profileId(), updateType)).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception != null) {
                     LOG.warning("Failed to update friend", exception);
                     fireEvent(new DialogCloseEvent());

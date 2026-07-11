@@ -20,8 +20,10 @@ package org.jackhuang.hmcl.game.friend;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
+import java.util.UUID;
+
 @JsonSerializable
 public record FriendItem(
-        @SerializedName("profileId") String profileId,
+        @SerializedName("profileId") UUID profileId,
         @SerializedName("name") String name) {
 }

@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.game.friend.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
@@ -244,11 +245,11 @@ public class YggdrasilService {
                 .accept("application/json").getJson(FriendResponse.class);
     }
 
-    public FriendResponse updateFriend(String accessToken, @Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
+    public FriendResponse updateFriend(String accessToken, @Nullable String name, @Nullable UUID uuid, EnumUpdateType updateType) throws IOException {
         var url = provider.getFriendsURL().toString();
 
         return HttpRequest.PUT(url)
-                .json(new FriendUpdateRequst(name, uuid, updateType), GSON)
+                .json(new FriendUpdateRequst(name, uuid != null ? uuid.toString() : null, updateType), GSON)
                 .authorization("Bearer " + accessToken)
                 .retry(5)
                 .accept("application/json").getJson(FriendResponse.class);
@@ -295,6 +296,7 @@ public class YggdrasilService {
 
     private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
             .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
             .create();
 

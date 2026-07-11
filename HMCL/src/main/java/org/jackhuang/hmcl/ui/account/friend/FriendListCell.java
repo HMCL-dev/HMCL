@@ -45,7 +45,6 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.Locale;
-import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -80,7 +79,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
         center.getChildren().setAll(avatar, twoLineListItem);
         root.setCenter(center);
 
-        copyButton.setOnAction(event -> FXUtils.copyText(control.toUuidWithDashes(getItem().profileId())));
+        copyButton.setOnAction(event -> FXUtils.copyText(getItem().profileId().toString()));
         FXUtils.installFastTooltip(copyButton, i18n("account.copy_uuid"));
 
         deleteButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.delete.confirm"), i18n("account.friend.delete.failed")));
@@ -105,7 +104,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
 
         if (item == null || empty) return;
 
-        var uuid = UUID.fromString(control.toUuidWithDashes(item.profileId()));
+        var uuid = item.profileId();
 
         Task.supplyAsync(() -> {
             CompleteGameProfile profile = null;
