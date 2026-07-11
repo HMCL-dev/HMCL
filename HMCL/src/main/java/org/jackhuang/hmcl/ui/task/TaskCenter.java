@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -477,6 +478,14 @@ public final class TaskCenter {
     public void clearFailed() {
         checkFxThread();
         tasks.removeIf(e -> e.getStatus() == Status.FAILED || e.getStatus() == Status.CANCELLED);
+    }
+
+    /// Cancels every active (queued + running) task. Snapshots first: cancel() flips statuses, which
+    /// mutates the activeTasks view mid-iteration.
+    public void cancelAll() {
+        checkFxThread();
+        for (Entry entry : new ArrayList<>(activeTasks))
+            cancel(entry);
     }
 
     private Entry findActiveInstall(TaskKind kind, String name) {

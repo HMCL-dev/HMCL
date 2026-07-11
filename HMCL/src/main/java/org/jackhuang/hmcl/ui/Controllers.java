@@ -746,6 +746,7 @@ public final class Controllers {
         // keeps running. Cancelling the task is a separate, explicit action on the Cancel button.
         Runnable detach = () -> pane.fireEvent(new DialogCloseEvent());
         pane.setEscAction(detach);
+        pane.showBackgroundButton();
         pane.setCancelAction(() -> {
             TaskCenter.getInstance().cancel(entry);
             pane.fireEvent(new DialogCloseEvent());

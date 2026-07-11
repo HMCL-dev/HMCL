@@ -44,7 +44,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
 
 import javafx.util.Duration;
@@ -167,6 +166,10 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             container.getChildren().add(contentPlaceHolder);
         }
 
+        // Background-task floating button, above the content but below the hint/dialog layer so
+        // modal dialogs still cover it. Visible only while there are active tasks.
+        container.getChildren().add(createTaskFab());
+
         // welcome and hint layer at top
         {
             StackPane floatLayer = new StackPane();
@@ -244,69 +247,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             buttonsContainer.setAlignment(Pos.TOP_RIGHT);
             buttonsContainer.setMaxHeight(40);
             {
-                // Background task indicator
-                // TODO(反馈待定): 全自动移交后台后，前台进度弹窗不再自动出现，此标题栏指示器将成为
-                //   后台任务的主要反馈渠道。需评估是否加强其存在感（更醒目的样式、首次下载时的引导提示等），
-                //   等产品决策后再实现。
-                JFXButton btnTask = new JFXButton();
-                btnTask.setFocusTraversable(false);
-                btnTask.getStyleClass().add("jfx-decorator-button");
-                btnTask.setOnAction(e -> Controllers.navigate(TaskCenterPage.getInstance()));
-                FXUtils.installFastTooltip(btnTask, i18n("task.manage"));
-
-                // Progress ring: determinate fill while a download reports progress, spinning while
-                // the running task is indeterminate (e.g. an install). Bound to the TaskCenter.
-                JFXSpinner taskSpinner = new JFXSpinner();
-                taskSpinner.getStyleClass().add("task-indicator-spinner");
-                taskSpinner.setRadius(11);
-
-                // Smooth the ring: ease toward the aggregate so large jumps (late stage totals,
-                // parallel tasks joining the average) glide. Snap on indeterminate or regressions.
-                DoubleProperty smoothedProgress = new SimpleDoubleProperty(-1);
-                taskSpinner.progressProperty().bind(smoothedProgress);
-                Timeline[] progressTimeline = new Timeline[1];
-                FXUtils.onChangeAndOperate(TaskCenter.getInstance().runningProgressProperty(), v -> {
-                    double target = v.doubleValue();
-                    if (progressTimeline[0] != null) {
-                        progressTimeline[0].stop();
-                        progressTimeline[0] = null;
-                    }
-                    if (target < 0 || smoothedProgress.get() < 0 || target < smoothedProgress.get()) {
-                        smoothedProgress.set(target);
-                        return;
-                    }
-                    progressTimeline[0] = new Timeline(new KeyFrame(Duration.millis(400),
-                            new KeyValue(smoothedProgress, target, Interpolator.EASE_BOTH)));
-                    progressTimeline[0].play();
-                });
-
-                // Color the ring with the title fill (like every other title-bar glyph) so it stays
-                // visible on any title-bar background — the CSS -fx-stroke blended into the bar.
-                FXUtils.onChangeAndOperate(taskSpinner.skinProperty(), skin -> {
-                    if (skin != null && taskSpinner.lookup(".arc") instanceof Shape arc)
-                        arc.strokeProperty().bind(Themes.titleFillProperty());
-                });
-
-                // Center: the number of active tasks.
-                Label taskCount = new Label();
-                taskCount.getStyleClass().add("task-indicator-count");
-                taskCount.textFillProperty().bind(Themes.titleFillProperty());
-
-                StackPane taskIconPane = new StackPane();
-                taskIconPane.getChildren().addAll(taskSpinner, taskCount);
-                StackPane.setAlignment(taskCount, Pos.CENTER);
-                btnTask.setGraphic(taskIconPane);
-
-                Runnable updateTaskIndicator = () -> {
-                    int count = TaskCenter.getInstance().getEntries().size();
-                    btnTask.setVisible(count > 0);
-                    btnTask.setManaged(count > 0);
-                    taskCount.setText(String.valueOf(count));
-                };
-                updateTaskIndicator.run();
-                taskEntriesListener = change -> updateTaskIndicator.run();
-                TaskCenter.getInstance().getEntries().addListener(taskEntriesListener);
-
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
                 btnHelp.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
@@ -325,7 +265,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
-                buttonsContainer.getChildren().setAll(btnTask, btnHelp, btnMin, btnClose);
+                buttonsContainer.getChildren().setAll(btnHelp, btnMin, btnClose);
             }
             AnchorPane layer = new AnchorPane();
             layer.setPickOnBounds(false);
@@ -337,6 +277,60 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         }
 
         getChildren().add(root);
+    }
+
+    /// Floating action button for background tasks: a progress ring with the active-task count in
+    /// the center, anchored bottom-right over the content. Shown only while tasks are active; clicking
+    /// opens the Task Center. Replaces the former title-bar indicator so the primary feedback channel
+    /// for auto-backgrounded tasks is prominent.
+    private Node createTaskFab() {
+        JFXSpinner spinner = new JFXSpinner();
+        spinner.getStyleClass().add("task-fab-spinner");
+        spinner.setRadius(19);
+
+        // Smooth the ring: ease toward the aggregate so big jumps (a late stage total, a parallel
+        // task joining the average) glide. Snap on indeterminate or regressions.
+        DoubleProperty smoothed = new SimpleDoubleProperty(-1);
+        spinner.progressProperty().bind(smoothed);
+        Timeline[] timeline = new Timeline[1];
+        FXUtils.onChangeAndOperate(TaskCenter.getInstance().runningProgressProperty(), v -> {
+            double target = v.doubleValue();
+            if (timeline[0] != null) {
+                timeline[0].stop();
+                timeline[0] = null;
+            }
+            if (target < 0 || smoothed.get() < 0 || target < smoothed.get()) {
+                smoothed.set(target);
+                return;
+            }
+            timeline[0] = new Timeline(new KeyFrame(Duration.millis(400),
+                    new KeyValue(smoothed, target, Interpolator.EASE_BOTH)));
+            timeline[0].play();
+        });
+
+        Label count = new Label();
+        count.getStyleClass().add("task-fab-count");
+
+        StackPane fab = new StackPane(spinner, count);
+        fab.getStyleClass().add("task-fab");
+        FXUtils.setLimitWidth(fab, 52);
+        FXUtils.setLimitHeight(fab, 52);
+        fab.setOnMouseClicked(e -> Controllers.navigate(TaskCenterPage.getInstance()));
+        FXUtils.installFastTooltip(fab, i18n("task.manage"));
+
+        Runnable update = () -> {
+            int c = TaskCenter.getInstance().getEntries().size();
+            fab.setVisible(c > 0);
+            fab.setManaged(c > 0);
+            count.setText(String.valueOf(c));
+        };
+        update.run();
+        taskEntriesListener = change -> update.run();
+        TaskCenter.getInstance().getEntries().addListener(taskEntriesListener);
+
+        StackPane.setAlignment(fab, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(fab, new Insets(0, 20, 20, 0)); // bottom-right, PCL-style inset
+        return fab;
     }
 
     private Node createNavBar(Decorator skinnable, double leftPaneWidth, boolean canBack, boolean canClose, boolean showCloseAsHome, boolean canRefresh, String title, Node titleNode) {

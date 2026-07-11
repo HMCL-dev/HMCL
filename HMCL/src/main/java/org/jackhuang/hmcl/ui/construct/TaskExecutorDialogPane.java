@@ -48,6 +48,7 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final Label lblTitle;
     private final Label lblProgress;
     private final JFXButton btnCancel;
+    private final JFXButton btnBackground;
     private final TaskListPane taskListPane;
     private TaskListener autoCloseListener;
     private Runnable escAction;
@@ -55,6 +56,13 @@ public class TaskExecutorDialogPane extends BorderPane {
 
     public void setEscAction(Runnable action) {
         this.escAction = action;
+    }
+
+    /// Reveals the "run in background" button. Closing the dialog then only detaches the view — the
+    /// task keeps running in the Task Center. Meaningful only for managed tasks.
+    public void showBackgroundButton() {
+        btnBackground.setVisible(true);
+        btnBackground.setManaged(true);
     }
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
@@ -89,9 +97,21 @@ public class TaskExecutorDialogPane extends BorderPane {
             lblProgress = new Label();
             bottom.setLeft(lblProgress);
 
+            // Close detaches the view while the task keeps running (it is owned by the TaskCenter,
+            // not this dialog, and stays visible there). Hidden by default; shown for managed tasks
+            // so there is a visible way to dismiss the dialog other than the destructive Cancel.
+            btnBackground = new JFXButton(i18n("button.close"));
+            btnBackground.getStyleClass().add("dialog-accept");
+            btnBackground.setVisible(false);
+            btnBackground.setManaged(false);
+            btnBackground.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
             btnCancel = new JFXButton(i18n("button.cancel"));
             btnCancel.getStyleClass().add("dialog-cancel");
-            bottom.setRight(btnCancel);
+
+            HBox buttons = new HBox(8, btnBackground, btnCancel);
+            buttons.setAlignment(Pos.CENTER_RIGHT);
+            bottom.setRight(buttons);
         }
 
         setCancel(cancel);

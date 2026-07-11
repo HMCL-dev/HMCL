@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.ui.task;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXProgressBar;
-import com.jfoenix.controls.JFXSpinner;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -36,7 +33,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -85,10 +81,16 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     @SuppressWarnings({"FieldCanBeLocal", "unused"}) // strong ref keeping the weak event registration alive
     private final Consumer<FetchTask.SpeedEvent> speedHandler;
 
-    /// Smoothed value driving the overview ring: eased toward the real aggregate so large jumps
-    /// (a stage total arriving late, a parallel task joining the average) glide instead of snapping.
-    private final DoubleProperty ringProgress = new SimpleDoubleProperty(-1);
-    private Timeline ringTimeline;
+    /// Estimated time remaining ("约 m:ss"). Approximate — derived from how fast the aggregate
+    /// progress is advancing, not from bytes (there is no reliable total byte count). Empty when it
+    /// can't be estimated (indeterminate, stalled, or not enough samples yet).
+    private final StringProperty etaText = new SimpleStringProperty("");
+    private double etaLastProgress = -1;
+    private long etaLastNanos = 0;
+    private double etaVelocity = 0; // progress-fraction per second, smoothed
+
+    /// Live count of in-flight download connections (polled once a second alongside the ETA).
+    private final StringProperty threadText = new SimpleStringProperty("");
 
     private TaskCenterPage() {
         TaskCenter center = TaskCenter.getInstance();
@@ -107,7 +109,43 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
             Platform.runLater(() -> speedText.set(text));
         });
 
-        FXUtils.onChangeAndOperate(center.runningProgressProperty(), v -> animateRing(v.doubleValue()));
+        // Sample the aggregate every second to estimate remaining time. Cheap; runs for the app's
+        // lifetime like the ring, and early-returns when nothing determinate is running.
+        Timeline etaSampler = new Timeline(new KeyFrame(Duration.seconds(1), e -> sampleEta(center)));
+        etaSampler.setCycleCount(Timeline.INDEFINITE);
+        etaSampler.play();
+    }
+
+    private void sampleEta(TaskCenter center) {
+        threadText.set(i18n("task.overview.threads", FetchTask.getActiveDownloadThreads()));
+
+        double p = center.runningProgressProperty().get();
+        long now = System.nanoTime();
+        if (p < 0 || p >= 1) {
+            etaText.set("");
+            etaLastProgress = -1;
+            etaVelocity = 0;
+            return;
+        }
+        if (etaLastProgress >= 0 && now > etaLastNanos) {
+            double dt = (now - etaLastNanos) / 1e9;
+            double dp = p - etaLastProgress;
+            if (dp > 0 && dt > 0) {
+                double instant = dp / dt;
+                etaVelocity = etaVelocity <= 0 ? instant : etaVelocity * 0.7 + instant * 0.3;
+            }
+        }
+        etaLastProgress = p;
+        etaLastNanos = now;
+
+        double seconds = etaVelocity > 1e-5 ? (1 - p) / etaVelocity : -1;
+        etaText.set(seconds > 0 && seconds < 24 * 3600 ? formatDuration((long) seconds) : "");
+    }
+
+    private static String formatDuration(long seconds) {
+        if (seconds >= 3600)
+            return String.format("%d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+        return String.format("%d:%02d", seconds / 60, seconds % 60);
     }
 
     // ── overview (left) ───────────────────────────────────────────────
@@ -116,45 +154,41 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         VBox box = new VBox(18);
         box.getStyleClass().add("task-overview");
         box.setPadding(new Insets(24, 16, 24, 16));
-        box.setAlignment(Pos.TOP_CENTER);
+        box.setAlignment(Pos.CENTER); // content centers itself, so the idle ring sits in the middle
         FXUtils.setLimitWidth(box, 210);
 
-        // Big progress ring with the percentage in the center; a dim placeholder icon when idle.
-        JFXSpinner ring = new JFXSpinner();
-        ring.getStyleClass().add("task-overview-ring");
-        ring.setRadius(52);
-        ring.progressProperty().bind(ringProgress);
-
-        Label percentLabel = new Label();
-        percentLabel.getStyleClass().add("task-overview-percent");
-        percentLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-            double p = center.runningProgressProperty().get();
-            return p >= 0 ? String.format("%.0f%%", p * 100) : "";
-        }, center.runningProgressProperty()));
-
-        Node idleIcon = SVG.CHECKLIST.createIcon(40);
-        idleIcon.setOpacity(0.3);
-
-        StackPane ringPane = new StackPane(idleIcon, ring, percentLabel);
+        // Custom progress ring: sweeping pulse highlight, turn-green + check-mark on completion.
+        TaskOverviewRing ring = new TaskOverviewRing();
+        ring.progressProperty().bind(center.runningProgressProperty());
+        StackPane ringPane = new StackPane(ring);
         ringPane.setMinHeight(120);
 
-        // Idle (no active tasks): hide the ring so an indeterminate spinner doesn't whirl forever.
-        // Listen on the list directly — a local Bindings.isEmpty(...) binding has no strong holder
-        // and gets GC'd, silently freezing the idle state.
-        Runnable updateIdleState = () -> {
-            boolean empty = center.getEntries().isEmpty();
-            ring.setVisible(!empty);
-            percentLabel.setVisible(!empty);
-            idleIcon.setVisible(empty);
-        };
-        updateIdleState.run();
-        center.getEntries().addListener((ListChangeListener<TaskCenter.Entry>) change -> updateIdleState.run());
+        // Idle when nothing is active; completion flourish (green + check) when the active queue
+        // drains — but only if nothing failed/cancelled during that run (failures show in the failed
+        // section instead). After the flourish, settle back to the idle breathing state.
+        int[] failedAtStart = {center.getFailedTasks().size()};
+        boolean[] wasActive = {!center.getEntries().isEmpty()};
+        ring.setIdle(!wasActive[0]);
+        center.getEntries().addListener((ListChangeListener<TaskCenter.Entry>) change -> {
+            boolean active = !center.getEntries().isEmpty();
+            if (active && !wasActive[0]) {
+                failedAtStart[0] = center.getFailedTasks().size();
+                ring.setIdle(false);
+            } else if (!active && wasActive[0]) {
+                boolean success = center.getFailedTasks().size() == failedAtStart[0];
+                if (success)
+                    ring.playComplete(() -> ring.setIdle(true));
+                else
+                    ring.setIdle(true);
+            }
+            wasActive[0] = active;
+        });
 
-        Label caption = new Label(i18n("task.overview.progress"));
+        Label caption = new Label();
         caption.getStyleClass().add("task-overview-caption");
 
         VBox stats = new VBox(10);
-        stats.setAlignment(Pos.TOP_LEFT);
+        stats.setAlignment(Pos.CENTER);
         stats.setPadding(new Insets(8, 8, 0, 8));
 
         // Overall download speed (the only place it is shown — it is a global figure and
@@ -178,43 +212,51 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
             return remaining > 0 ? i18n("task.overview.files", remaining) : "—";
         }, center.remainingFilesProperty())));
 
-        // Download thread count (the configured connection pool size).
-        var settings = SettingsManager.settings();
-        stats.getChildren().add(createStatRow(SVG.SETTINGS, Bindings.createStringBinding(
-                () -> i18n("task.overview.threads", settings.autoDownloadThreadsProperty().get()
-                        ? FetchTask.DEFAULT_CONCURRENCY
-                        : settings.downloadThreadsProperty().get()),
-                settings.autoDownloadThreadsProperty(), settings.downloadThreadsProperty())));
+        // Estimated time remaining (approximate — see sampleEta).
+        stats.getChildren().add(createStatRow(SVG.UPDATE, Bindings.createStringBinding(
+                () -> etaText.get().isEmpty() ? "—" : i18n("task.overview.eta", etaText.get()), etaText)));
 
-        box.getChildren().addAll(ringPane, caption, stats);
-        return box;
+        // Live count of in-flight download connections (updated by the 1s sampler).
+        stats.getChildren().add(createStatRow(SVG.SETTINGS, threadText));
+
+        // Batch action: cancel every active task.
+        JFXButton cancelAllButton = new JFXButton(i18n("task.cancel_all"));
+        cancelAllButton.getStyleClass().add("dialog-cancel");
+        cancelAllButton.setOnAction(e -> center.cancelAll());
+
+        // Idle collapses everything but the ring + "Idle" caption; the remaining content, being in a
+        // center-aligned VBox, then sits centered in the panel.
+        Runnable updateIdle = () -> {
+            boolean active = !center.getEntries().isEmpty();
+            caption.setText(i18n(active ? "task.overview.progress" : "task.overview.idle"));
+            stats.setVisible(active);
+            stats.setManaged(active);
+            cancelAllButton.setVisible(active);
+            cancelAllButton.setManaged(active);
+        };
+        updateIdle.run();
+        center.getEntries().addListener((ListChangeListener<TaskCenter.Entry>) c -> updateIdle.run());
+
+        box.getChildren().addAll(ringPane, caption, stats, cancelAllButton);
+
+        // Wrap in padding so the tinted panel sits inset like the content card on the right.
+        // VGrow so it fills the full height of the left VBox (otherwise the card stops at content
+        // height and the window background shows through below it).
+        StackPane wrapper = new StackPane(box);
+        wrapper.setPadding(new Insets(12, 6, 12, 12));
+        VBox.setVgrow(wrapper, Priority.ALWAYS);
+        return wrapper;
     }
 
-    private static HBox createStatRow(SVG icon, javafx.beans.binding.StringBinding text) {
+    private static HBox createStatRow(SVG icon, javafx.beans.value.ObservableStringValue text) {
         Node iconNode = icon.createIcon(14);
         iconNode.setOpacity(0.75);
         Label label = new Label();
         label.getStyleClass().add("task-stat-label");
         label.textProperty().bind(text);
         HBox row = new HBox(8, iconNode, label);
-        row.setAlignment(Pos.CENTER_LEFT);
+        row.setAlignment(Pos.CENTER);
         return row;
-    }
-
-    private void animateRing(double target) {
-        if (ringTimeline != null) {
-            ringTimeline.stop();
-            ringTimeline = null;
-        }
-        // Snap for indeterminate transitions and regressions (e.g. a second task joining lowers the
-        // average) — only ease forward motion, PCL-style.
-        if (target < 0 || ringProgress.get() < 0 || target < ringProgress.get()) {
-            ringProgress.set(target);
-            return;
-        }
-        ringTimeline = new Timeline(new KeyFrame(Duration.millis(400),
-                new KeyValue(ringProgress, target, Interpolator.EASE_BOTH)));
-        ringTimeline.play();
     }
 
     // ── content (right): active stream + collapsible failures ────────
@@ -450,11 +492,15 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         HBox.setHgrow(label, Priority.ALWAYS);
         label.setMaxWidth(Double.MAX_VALUE);
 
+        row.getChildren().add(icon);
         Label kindTag = createKindTag(entry.getKind());
         if (kindTag != null)
-            row.getChildren().addAll(icon, kindTag, label);
-        else
-            row.getChildren().addAll(icon, label);
+            row.getChildren().add(kindTag);
+        // A status tag distinguishes a manual cancellation (muted) from a genuine failure (red).
+        Label statusTag = new Label(i18n(cancelled ? "task.status.cancelled" : "task.status.failed"));
+        statusTag.getStyleClass().addAll("tag", cancelled ? "tag-cancelled" : "tag-failed");
+        row.getChildren().add(statusTag);
+        row.getChildren().add(label);
 
         if (!cancelled) {
             row.getStyleClass().add("clickable");

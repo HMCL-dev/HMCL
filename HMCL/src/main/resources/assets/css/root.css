@@ -338,6 +338,18 @@
     -fx-font-size: 12px;
 }
 
+/* Muted variant for the cancelled status tag, distinct from the coloured kind tags. */
+.tag-cancelled {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-background-color: -monet-surface-container-highest;
+}
+
+/* Red variant for the failed status tag. */
+.tag-failed {
+    -fx-text-fill: -monet-on-error-container;
+    -fx-background-color: -monet-error-container;
+}
+
 .two-line-list-item > .first-line .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
@@ -1111,15 +1123,33 @@
 }
 
 /* ── Task Center ──────────────────────────────────────────────────────── */
-/* Title-bar download indicator: a progress ring with the active-task count in the center. */
-.task-indicator-spinner .arc {
-    -fx-stroke: -monet-primary;
-    -fx-stroke-width: 2.5;
+/* Floating background-task button (bottom-right of the content): a progress ring + active count. */
+.task-fab {
+    -fx-background-color: -monet-primary-container;
+    -fx-background-radius: 26;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 10, 0.2, 0, 3);
 }
 
-.task-indicator-count {
-    -fx-font-size: 10px;
+.task-fab:hover {
+    -fx-background-color: -monet-primary-container-transparent-50;
+}
+
+.task-fab-spinner .arc {
+    -fx-stroke: -monet-primary;
+    -fx-stroke-width: 3.5;
+}
+
+.task-fab-count {
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
+    -fx-text-fill: -monet-on-primary-container;
+}
+
+/* Overview panel (left column of the Task Center): a tinted card, distinct from the content card. */
+.task-overview {
+    -fx-background-color: -monet-surface-container-high;
+    -fx-background-radius: 4;
 }
 
 .task-card {
@@ -1169,10 +1199,23 @@
     -fx-font-size: 13px;
 }
 
-/* Overview panel (left column): big ring + stat rows. */
-.task-overview-ring .arc {
+/* Overview panel (left column): custom progress ring (track + primary arc + white pulse). */
+.task-ring-track {
+    -fx-stroke: -monet-surface-container-highest;
+}
+
+.task-ring-arc {
     -fx-stroke: -monet-primary;
-    -fx-stroke-width: 5;
+}
+
+.task-ring-pulse {
+    -fx-stroke: white;
+    /* opacity is animated in Java (sine fade along the sweep) — don't fix it here */
+}
+
+/* Center glyphs (idle pause bars, download arrow) — muted, themed. */
+.task-ring-glyph {
+    -fx-fill: -monet-on-surface-variant;
 }
 
 .task-overview-percent {
