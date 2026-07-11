@@ -243,14 +243,14 @@ public class YggdrasilService {
                 .accept("application/json").getJson(FriendResponse.class);
     }
 
-    public void updateFriend(String accessToken, @Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
+    public FriendResponse updateFriend(String accessToken, @Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
         var url = provider.getFriendsURL().toString();
 
-        HttpRequest.PUT(url)
+        return HttpRequest.PUT(url)
                 .json(new FriendUpdateRequst(name, uuid, updateType), GSON)
                 .authorization("Bearer " + accessToken)
                 .retry(5)
-                .accept("application/json").getJson(ErrorResponse.class);
+                .accept("application/json").getJson(FriendResponse.class);
     }
 
     private static String request(URI uri, Object payload) throws AuthenticationException {

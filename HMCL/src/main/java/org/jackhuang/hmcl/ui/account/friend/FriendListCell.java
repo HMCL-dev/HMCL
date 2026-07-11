@@ -77,7 +77,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
         FXUtils.installFastTooltip(copyButton, i18n("account.copy_uuid"));
         right.getChildren().addAll(copyButton);
 
-        var deleteButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
+        var deleteButton = FXUtils.newToggleButton4(SVG.PERSON_OFF);
         deleteButton.setOnAction(event -> friendListPage.tryDeleteFriend(getItem()));
         right.getChildren().addAll(deleteButton);
         right.setAlignment(Pos.CENTER_RIGHT);

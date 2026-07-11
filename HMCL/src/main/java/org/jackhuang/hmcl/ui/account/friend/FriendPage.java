@@ -36,7 +36,9 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.UserNameValidator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -52,7 +54,7 @@ public final class FriendPage extends DecoratorAnimatedPage implements Decorator
     private final FriendControl control;
 
     private final TabHeader tab;
-    private final TabHeader.Tab<FriendListPage> friendPage = new TabHeader.Tab<>("friendPage");
+    private final TabHeader.Tab<FriendListPage> friendListPage = new TabHeader.Tab<>("friendPage");
     private final TransitionPane transitionPane = new TransitionPane();
 
     @SuppressWarnings("unused")
@@ -65,16 +67,16 @@ public final class FriendPage extends DecoratorAnimatedPage implements Decorator
         this.account = account;
         this.control = control;
 
-        friendPage.setNodeSupplier(() -> new FriendListPage(account, control, this::onAddFriend));
-        tab = new TabHeader(transitionPane, friendPage);
-        tab.select(friendPage);
+        friendListPage.setNodeSupplier(() -> new FriendListPage(account, control, this::onAddFriend));
+        tab = new TabHeader(transitionPane, friendListPage);
+        tab.select(friendListPage);
 
         BorderPane left = new BorderPane();
         FXUtils.setLimitWidth(left, 200);
         VBox.setVgrow(left, Priority.ALWAYS);
         setLeft(left);
 
-        AdvancedListBox sideBar = new AdvancedListBox().addNavigationDrawerTab(tab, friendPage, i18n("account.friend"), SVG.GROUP);
+        AdvancedListBox sideBar = new AdvancedListBox().addNavigationDrawerTab(tab, friendListPage, i18n("account.friend"), SVG.GROUP);
         left.setTop(sideBar);
 
         AdvancedListBox toolbar = new AdvancedListBox().addNavigationDrawerItem(i18n("account.friend.add"), SVG.PERSON_ADD, this::onAddFriend);
@@ -86,9 +88,12 @@ public final class FriendPage extends DecoratorAnimatedPage implements Decorator
 
     private void onAddFriend() {
         Controllers.prompt(i18n("account.friend.add"), (name, resultHandler) -> {
-            Task.runAsync(() -> control.updateFriend(name, null, EnumUpdateType.ADD)).whenComplete(Schedulers.javafx(), e -> {
-                if (e == null) resultHandler.resolve();
-                else {
+            Task.supplyAsync(() -> control.updateFriend(name, null, EnumUpdateType.ADD)).whenComplete(Schedulers.javafx(), (result, e) -> {
+                if (e == null) {
+                    resultHandler.resolve();
+
+                    friendListPage.getNode().setFriends(result);
+                } else {
                     LOG.warning("Failed to add friend", e);
                     if (e.getCause() instanceof ResponseCodeException cause && cause.getData() != null) {
                         var errResponse = JsonUtils.fromJson(cause.getData(), MicrosoftService.MinecraftErrorResponse.class);
@@ -98,7 +103,7 @@ public final class FriendPage extends DecoratorAnimatedPage implements Decorator
                     } else resultHandler.reject(Accounts.localizeErrorMessage(e));
                 }
             }).start();
-        }, null);
+        }, null, new RequiredValidator(), new UserNameValidator());
     }
 
     @Override

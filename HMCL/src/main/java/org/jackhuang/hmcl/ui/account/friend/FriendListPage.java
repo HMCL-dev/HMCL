@@ -22,6 +22,7 @@ import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
+import org.jackhuang.hmcl.game.friend.FriendResponse;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -49,7 +50,6 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
     }
 
     public void refresh() {
-        getItems().clear();
         setLoading(true);
         setFailedReason(null);
         setOnFailedAction(null);
@@ -62,15 +62,7 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
                 setFailedReason(i18n("account.friend.failed"));
             } else {
                 LOG.info("Received friend list" + result);
-
-                if (result.empty()) {
-                    setFailedReason(i18n("account.friend.empty"));
-                    setOnFailedAction(event -> onAddFriend.run());
-                } else {
-                    getItems().addAll(result.friends().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.NORMAL)).toList());
-                    getItems().addAll(result.outgoingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.OUTGOING)).toList());
-                    getItems().addAll(result.incomingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.INCOMING)).toList());
-                }
+                setFriends(result);
             }
         }).start();
     }
@@ -94,15 +86,17 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
 
         btnOk.setOnAction(action -> {
             spinnerPane.showSpinner();
-            Task.runAsync(() -> control.updateFriend(control.toUuidWithoutDashes(item.profileId()), null, EnumUpdateType.REMOVE)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            Task.supplyAsync(() -> control.updateFriend(control.toUuidWithoutDashes(item.profileId()), null, EnumUpdateType.REMOVE)).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 spinnerPane.hideSpinner();
+
                 if (exception != null) {
                     LOG.warning("Failed to delete friend", exception);
                     fireEvent(new DialogCloseEvent());
                     Controllers.dialog(i18n("account.friend.delete.failed"), null, MessageDialogPane.MessageType.ERROR);
                     return;
                 }
-                getItems().remove(item);
+
+                setFriends(result);
             }).start();
         });
 
@@ -116,5 +110,18 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
                 .build();
 
         Controllers.dialog(dialog);
+    }
+
+    public void setFriends(FriendResponse result) {
+        getItems().clear();
+
+        if (result.friends().isEmpty() && result.incomingRequests().isEmpty() && result.outgoingRequests().isEmpty()) {
+            setFailedReason(i18n("account.friend.empty"));
+            setOnFailedAction(event -> onAddFriend.run());
+        } else {
+            getItems().addAll(result.friends().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.NORMAL)).toList());
+            getItems().addAll(result.outgoingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.OUTGOING)).toList());
+            getItems().addAll(result.incomingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.INCOMING)).toList());
+        }
     }
 }

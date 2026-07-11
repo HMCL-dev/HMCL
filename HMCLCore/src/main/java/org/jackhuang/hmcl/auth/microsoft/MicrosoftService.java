@@ -325,14 +325,14 @@ public class MicrosoftService {
                 .accept("application/json").getJson(FriendResponse.class);
     }
 
-    public void updateFriend(String accessToken, @Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
+    public FriendResponse updateFriend(String accessToken, @Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
         var url = "https://api.minecraftservices.com/friends";
 
-        HttpRequest.PUT(url)
+        return HttpRequest.PUT(url)
                 .json(new FriendUpdateRequst(name, uuid, updateType), GSON)
                 .authorization("Bearer " + accessToken)
                 .retry(5)
-                .accept("application/json").getJson(MinecraftErrorResponse.class);
+                .accept("application/json").getJson(FriendResponse.class);
     }
 
     public static class XboxAuthorizationException extends AuthenticationException {

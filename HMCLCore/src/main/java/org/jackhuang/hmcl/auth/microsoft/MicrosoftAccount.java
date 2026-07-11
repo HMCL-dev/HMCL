@@ -183,8 +183,8 @@ public final class MicrosoftAccount extends OAuthAccount implements FriendContro
     }
 
     @Override
-    public void updateFriend(@Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
-        service.updateFriend(session.accessToken(), name, uuid, updateType);
+    public FriendResponse updateFriend(@Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
+        return service.updateFriend(session.accessToken(), name, uuid, updateType);
     }
 
     @Override

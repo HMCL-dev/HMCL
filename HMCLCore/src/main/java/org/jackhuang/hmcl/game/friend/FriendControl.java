@@ -28,7 +28,7 @@ public interface FriendControl {
 
     FriendResponse getFriendList() throws IOException;
 
-    void updateFriend(@Nullable String name, @Nullable String uuid, @NotNull EnumUpdateType updateType) throws IOException;
+    FriendResponse updateFriend(@Nullable String name, @Nullable String uuid, @NotNull EnumUpdateType updateType) throws IOException;
 
     default String toUuidWithDashes(String uuidMayWithoutDashes) {
         if (uuidMayWithoutDashes.contains("-")) return uuidMayWithoutDashes;
