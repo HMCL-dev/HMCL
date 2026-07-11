@@ -65,7 +65,7 @@ public final class FriendPage extends DecoratorAnimatedPage implements Decorator
         this.account = account;
         this.control = control;
 
-        friendPage.setNodeSupplier(() -> new FriendListPage(account, control));
+        friendPage.setNodeSupplier(() -> new FriendListPage(account, control, this::onAddFriend));
         tab = new TabHeader(transitionPane, friendPage);
         tab.select(friendPage);
 

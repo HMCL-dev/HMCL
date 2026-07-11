@@ -36,19 +36,23 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class FriendListPage extends ListPageBase<FriendListItem> {
     private final Account account;
     private final FriendControl control;
+    private final Runnable onAddFriend;
 
-    public FriendListPage(Account account, FriendControl control) {
+    public FriendListPage(Account account, FriendControl control, Runnable onAddFriend) {
         super();
+
         this.account = account;
         this.control = control;
+        this.onAddFriend = onAddFriend;
 
         refresh();
     }
 
-    private void refresh() {
+    public void refresh() {
         getItems().clear();
         setLoading(true);
         setFailedReason(null);
+        setOnFailedAction(null);
 
         Task.supplyAsync(control::getFriendList).whenComplete(Schedulers.javafx(), (result, exception) -> {
             setLoading(false);
@@ -59,11 +63,15 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
             } else {
                 LOG.info("Received friend list" + result);
 
-                getItems().addAll(result.friends().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.NORMAL)).toList());
-                getItems().addAll(result.outgoingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.OUTGOING)).toList());
-                getItems().addAll(result.incomingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.INCOMING)).toList());
+                if (result.empty()) {
+                    setFailedReason(i18n("account.friend.empty"));
+                    setOnFailedAction(event -> onAddFriend.run());
+                } else {
+                    getItems().addAll(result.friends().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.NORMAL)).toList());
+                    getItems().addAll(result.outgoingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.OUTGOING)).toList());
+                    getItems().addAll(result.incomingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.INCOMING)).toList());
+                }
             }
-
         }).start();
     }
 

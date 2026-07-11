@@ -18,9 +18,12 @@
 package org.jackhuang.hmcl.ui.account.friend;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.ToolbarListPageSkin;
 
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class FriendListPageSkin extends ToolbarListPageSkin<FriendListItem, FriendListPage> {
     public FriendListPageSkin(FriendListPage skinnable) {
@@ -31,6 +34,8 @@ public final class FriendListPageSkin extends ToolbarListPageSkin<FriendListItem
 
     @Override
     protected List<Node> initializeToolbar(FriendListPage skinnable) {
-        return List.of();
+        return List.of(
+                createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh)
+        );
     }
 }

@@ -25,5 +25,6 @@ import java.util.List;
 @JsonSerializable
 public record FriendResponse(@SerializedName("friends") List<FriendItem> friends,
                              @SerializedName("incomingRequests") List<FriendItem> incomingRequests,
-                             @SerializedName("outgoingRequests") List<FriendItem> outgoingRequests) {
+                             @SerializedName("outgoingRequests") List<FriendItem> outgoingRequests,
+                             @SerializedName("empty") boolean empty) {
 }
