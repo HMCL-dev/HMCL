@@ -931,6 +931,11 @@ public final class SettingsManager {
         return gameSettingsPresets().getPreset(id);
     }
 
+    /// Returns the workspace-level legacy parent preset associated with a game directory.
+    public static @Nullable GameSettingsPresetID getLegacyGameSettingsPresetID(GameDirectoryID gameDirectoryID) {
+        return gameSettingsPresets().getLegacyGameSettings(gameDirectoryID);
+    }
+
     /// Returns the default game setting preset, creating one when needed.
     public static GameSettings.Preset getDefaultGameSettingsPresetOrCreate() {
         GameSettings.Preset setting = getGameSettings(settings().defaultGameSettingsPresetProperty().get());
@@ -1101,7 +1106,8 @@ public final class SettingsManager {
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
         boolean migratedGameDirectoriesSaved = loadGameDirectories(
                 migratedDetachedSettings.localGameDirectories(),
-                migratedDetachedSettings.userGameDirectories());
+                migratedDetachedSettings.userGameDirectories(),
+                migratedDetachedSettings.gameSettingsPresets());
         gameSettingsAccess = loadGameSettingsPresets(migratedDetachedSettings.gameSettingsPresets());
         launcherStateAccess = loadLauncherState(migratedDetachedSettings.launcherState());
         authlibInjectorServersAccess =
@@ -1261,10 +1267,12 @@ public final class SettingsManager {
     ///
     /// @param fallbackLocalGameDirectories the fallback store used when the local game directory file does not exist
     /// @param migratedUserGameDirectories absolute migrated directories to merge into the user-level store
+    /// @param migratedGameSettingsPresets migrated presets containing workspace-level directory associations
     /// @return whether migrated user-level game directories were saved or required no store changes
     private static boolean loadGameDirectories(
             @Nullable GameDirectories fallbackLocalGameDirectories,
-            @Nullable GameDirectories migratedUserGameDirectories) throws IOException {
+            @Nullable GameDirectories migratedUserGameDirectories,
+            @Nullable GameSettingsPresets migratedGameSettingsPresets) throws IOException {
         if (localGameDirectories != null || userGameDirectories != null) {
             throw new IllegalStateException("Game directories are already loaded");
         }
@@ -1278,6 +1286,7 @@ public final class SettingsManager {
         boolean userGameDirectoriesChanged = migratedUserGameDirectories != null
                 && LegacyConfigMigrator.mergeMigratedUserGameDirectories(
                         settings(),
+                        Objects.requireNonNull(migratedGameSettingsPresets),
                         userResult.value(),
                         migratedUserGameDirectories);
 

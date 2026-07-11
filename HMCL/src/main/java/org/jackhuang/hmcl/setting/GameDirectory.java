@@ -84,20 +84,22 @@ public final class GameDirectory implements Observable {
         this.name.set(name);
     }
 
-    /// The migrated legacy game settings preset ID, or `null` when this game directory uses the default preset.
+    /// The legacy game settings preset ID loaded from older game directory files, or `null` when absent.
+    ///
+    /// New migrations store this workspace-specific relationship in [GameSettingsPresets].
     private final ObjectProperty<@Nullable GameSettingsPresetID> legacyGameSettings;
 
-    /// Returns the migrated legacy game settings preset ID property.
+    /// Returns the legacy game settings preset ID property retained for older files.
     public ObjectProperty<@Nullable GameSettingsPresetID> legacyGameSettingsProperty() {
         return legacyGameSettings;
     }
 
-    /// Returns the migrated legacy game settings preset ID, or `null` when this game directory uses the default preset.
+    /// Returns the legacy game settings preset ID loaded from older game directory files, or `null` when absent.
     public @Nullable GameSettingsPresetID getLegacyGameSettings() {
         return legacyGameSettings.get();
     }
 
-    /// Sets the migrated legacy game settings preset ID.
+    /// Sets the legacy game settings preset ID retained for older files.
     public void setLegacyGameSettings(@Nullable GameSettingsPresetID legacyGameSettings) {
         this.legacyGameSettings.set(legacyGameSettings);
     }

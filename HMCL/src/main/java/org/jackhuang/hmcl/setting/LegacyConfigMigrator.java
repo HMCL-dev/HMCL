@@ -284,6 +284,7 @@ public final class LegacyConfigMigrator {
             GameDirectories localGameDirectories = new GameDirectories();
             GameDirectories userGameDirectories = new GameDirectories();
             for (GameDirectory gameDirectory : gameDirectories.getGameDirectories()) {
+                gameDirectory.setLegacyGameSettings(null);
                 (gameDirectory.getPath().isAbsolute() ? userGameDirectories : localGameDirectories)
                         .getGameDirectories()
                         .add(gameDirectory);
@@ -1077,14 +1078,17 @@ public final class LegacyConfigMigrator {
     /// to the reused or replacement directory ID whenever the migrated ID cannot be retained.
     ///
     /// @param launcherSettings the migrated launcher settings whose directory references may need remapping
+    /// @param gameSettingsPresets the migrated workspace-level game settings preset store
     /// @param userGameDirectories the loaded user-level game directory store
     /// @param migratedGameDirectories the migrated absolute game directories to merge
     /// @return whether the user-level store was changed
     static boolean mergeMigratedUserGameDirectories(
             LauncherSettings launcherSettings,
+            GameSettingsPresets gameSettingsPresets,
             GameDirectories userGameDirectories,
             GameDirectories migratedGameDirectories) {
         Objects.requireNonNull(launcherSettings);
+        Objects.requireNonNull(gameSettingsPresets);
         Objects.requireNonNull(userGameDirectories);
         Objects.requireNonNull(migratedGameDirectories);
 
@@ -1092,7 +1096,8 @@ public final class LegacyConfigMigrator {
         for (GameDirectory migrated : migratedGameDirectories.getGameDirectories()) {
             @Nullable GameDirectory existing = findGameDirectoryByPath(userGameDirectories, migrated.getPath());
             if (existing != null) {
-                remapGameDirectoryReferences(launcherSettings, migrated.getId(), existing.getId());
+                remapGameDirectoryReferences(
+                        launcherSettings, gameSettingsPresets, migrated.getId(), existing.getId());
                 continue;
             }
 
@@ -1103,7 +1108,8 @@ public final class LegacyConfigMigrator {
                         migrated.getName(),
                         migrated.getPath(),
                         migrated.getLegacyGameSettings());
-                remapGameDirectoryReferences(launcherSettings, migrated.getId(), appended.getId());
+                remapGameDirectoryReferences(
+                        launcherSettings, gameSettingsPresets, migrated.getId(), appended.getId());
             }
             userGameDirectories.getGameDirectories().add(appended);
             changed = true;
@@ -1135,6 +1141,7 @@ public final class LegacyConfigMigrator {
     /// Replaces launcher settings references to one migrated game directory ID.
     private static void remapGameDirectoryReferences(
             LauncherSettings launcherSettings,
+            GameSettingsPresets gameSettingsPresets,
             GameDirectoryID migratedID,
             GameDirectoryID targetID) {
         if (migratedID.equals(targetID)) {
@@ -1149,6 +1156,13 @@ public final class LegacyConfigMigrator {
         @Nullable String selectedInstance = launcherSettings.getSelectedInstance().remove(migratedID);
         if (selectedInstance != null && (selected || !launcherSettings.getSelectedInstance().containsKey(targetID))) {
             launcherSettings.getSelectedInstance().put(targetID, selectedInstance);
+        }
+
+        @Nullable GameSettingsPresetID legacyGameSettings =
+                gameSettingsPresets.getLegacyGameSettings().remove(migratedID);
+        if (legacyGameSettings != null
+                && (selected || !gameSettingsPresets.getLegacyGameSettings().containsKey(targetID))) {
+            gameSettingsPresets.getLegacyGameSettings().put(targetID, legacyGameSettings);
         }
     }
 
@@ -1355,6 +1369,8 @@ public final class LegacyConfigMigrator {
             if (legacyGameSettings == null) {
                 continue;
             }
+
+            gameSettingsPresets.getLegacyGameSettings().put(gameDirectory.getId(), legacyGameSettings);
 
             GameSettings.Preset legacyParent = gameSettingsPresets.getPreset(legacyGameSettings);
             if (legacyParent == null) {

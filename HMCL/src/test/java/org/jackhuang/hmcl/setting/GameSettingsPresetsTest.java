@@ -34,6 +34,27 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for detached game settings presets.
 @NotNullByDefault
 public final class GameSettingsPresetsTest {
+    /// Tests storing workspace-level legacy preset relationships by game directory ID.
+    @Test
+    public void storesLegacyGameSettingsByGameDirectory() {
+        GameDirectoryID gameDirectoryID =
+                GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
+        GameSettingsPresetID presetID =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174001");
+        GameSettingsPresets presets = new GameSettingsPresets();
+        presets.getLegacyGameSettings().put(gameDirectoryID, presetID);
+
+        JsonObject serialized = JsonUtils.GSON.toJsonTree(presets, GameSettingsPresets.class).getAsJsonObject();
+        GameSettingsPresets deserialized = Objects.requireNonNull(
+                JsonUtils.GSON.fromJson(serialized, GameSettingsPresets.class));
+
+        assertEquals(presetID.toString(), serialized
+                .getAsJsonObject("legacyGameSettings")
+                .get(gameDirectoryID.toString())
+                .getAsString());
+        assertEquals(presetID, deserialized.getLegacyGameSettings(gameDirectoryID));
+    }
+
     /// Tests that the default preset selection belongs to LauncherSettings.
     @Test
     public void storesDefaultGameSettingsPresetInConfig() {
@@ -135,6 +156,7 @@ public final class GameSettingsPresetsTest {
         GameDirectory gameDirectory = gameDirectories.getGameDirectories().get(0);
         GameSettings.Preset preset = presets.getPresets().get(0);
         assertEquals(gameDirectory.getLegacyGameSettings(), preset.idProperty().getValue());
+        assertEquals(preset.idProperty().getValue(), presets.getLegacyGameSettings(gameDirectory.getId()));
         assertNotEquals(gameDirectory.getId(), preset.idProperty().getValue());
         assertEquals(2048, preset.maxMemoryProperty().getValue());
     }

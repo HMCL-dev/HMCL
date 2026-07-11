@@ -85,7 +85,10 @@ public final class GameDirectoriesTest {
                       "_version": 2,
                       "configurations": {
                         "Relative": { "gameDir": "games/relative" },
-                        "Absolute": { "gameDir": "/games/absolute" }
+                        "Absolute": {
+                          "gameDir": "/games/absolute",
+                          "global": { "maxMemory": 2048 }
+                        }
                       }
                     }
                     """);
@@ -96,11 +99,18 @@ public final class GameDirectoriesTest {
                     Objects.requireNonNull(migration.detachedSettings().localGameDirectories());
             GameDirectories userDirectories =
                     Objects.requireNonNull(migration.detachedSettings().userGameDirectories());
+            GameSettingsPresets gameSettingsPresets =
+                    Objects.requireNonNull(migration.detachedSettings().gameSettingsPresets());
 
             assertEquals(1, localDirectories.getGameDirectories().size());
             assertEquals("games/relative", localDirectories.getGameDirectories().get(0).getPath().getPath());
             assertEquals(1, userDirectories.getGameDirectories().size());
-            assertEquals("/games/absolute", userDirectories.getGameDirectories().get(0).getPath().getPath());
+            GameDirectory absolute = userDirectories.getGameDirectories().get(0);
+            assertEquals("/games/absolute", absolute.getPath().getPath());
+            assertNull(absolute.getLegacyGameSettings());
+            assertEquals(
+                    LegacyConfigMigrator.getLegacyGameSettingsID("Absolute"),
+                    gameSettingsPresets.getLegacyGameSettings(absolute.getId()));
         }
     }
 
@@ -119,9 +129,10 @@ public final class GameDirectoriesTest {
         userDirectories.getGameDirectories().add(existing);
         GameDirectories migratedDirectories = new GameDirectories();
         migratedDirectories.getGameDirectories().add(migrated);
+        GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
 
         assertTrue(LegacyConfigMigrator.mergeMigratedUserGameDirectories(
-                new LauncherSettings(), userDirectories, migratedDirectories));
+                new LauncherSettings(), gameSettingsPresets, userDirectories, migratedDirectories));
         assertEquals(List.of(existing, migrated), userDirectories.getGameDirectories());
     }
 
@@ -132,10 +143,15 @@ public final class GameDirectoriesTest {
                 GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174000");
         GameDirectoryID migratedID =
                 GameDirectoryID.parse("game-directory:123e4567-e89b-12d3-a456-426614174001");
+        GameSettingsPresetID existingLegacyGameSettings =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174002");
+        GameSettingsPresetID migratedLegacyGameSettings =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174003");
         GameDirectory existing = new GameDirectory(
                 existingID,
                 LocalizedText.plain("Existing"),
-                PortablePath.of("/games/main"));
+                PortablePath.of("/games/main"),
+                existingLegacyGameSettings);
         GameDirectory migrated = new GameDirectory(
                 migratedID,
                 LocalizedText.plain("Migrated"),
@@ -147,13 +163,17 @@ public final class GameDirectoriesTest {
         LauncherSettings launcherSettings = new LauncherSettings();
         launcherSettings.selectedGameDirectoryProperty().set(migratedID);
         launcherSettings.setSelectedInstance(migratedID, "1.21.5");
+        GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
+        gameSettingsPresets.getLegacyGameSettings().put(migratedID, migratedLegacyGameSettings);
 
         assertFalse(LegacyConfigMigrator.mergeMigratedUserGameDirectories(
-                launcherSettings, userDirectories, migratedDirectories));
+                launcherSettings, gameSettingsPresets, userDirectories, migratedDirectories));
         assertEquals(List.of(existing), userDirectories.getGameDirectories());
         assertEquals(existingID, launcherSettings.selectedGameDirectoryProperty().get());
         assertNull(launcherSettings.getSelectedInstance(migratedID));
         assertEquals("1.21.5", launcherSettings.getSelectedInstance(existingID));
+        assertNull(gameSettingsPresets.getLegacyGameSettings(migratedID));
+        assertEquals(migratedLegacyGameSettings, gameSettingsPresets.getLegacyGameSettings(existingID));
     }
 
     /// Tests replacing a colliding migrated ID when its folder is different.
@@ -176,9 +196,13 @@ public final class GameDirectoriesTest {
         LauncherSettings launcherSettings = new LauncherSettings();
         launcherSettings.selectedGameDirectoryProperty().set(collidingID);
         launcherSettings.setSelectedInstance(collidingID, "1.20.1");
+        GameSettingsPresetID legacyGameSettings =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174002");
+        GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
+        gameSettingsPresets.getLegacyGameSettings().put(collidingID, legacyGameSettings);
 
         assertTrue(LegacyConfigMigrator.mergeMigratedUserGameDirectories(
-                launcherSettings, userDirectories, migratedDirectories));
+                launcherSettings, gameSettingsPresets, userDirectories, migratedDirectories));
         assertEquals(2, userDirectories.getGameDirectories().size());
         GameDirectory appended = userDirectories.getGameDirectories().get(1);
         assertNotEquals(collidingID, appended.getId());
@@ -186,6 +210,8 @@ public final class GameDirectoriesTest {
         assertEquals(appended.getId(), launcherSettings.selectedGameDirectoryProperty().get());
         assertNull(launcherSettings.getSelectedInstance(collidingID));
         assertEquals("1.20.1", launcherSettings.getSelectedInstance(appended.getId()));
+        assertNull(gameSettingsPresets.getLegacyGameSettings(collidingID));
+        assertEquals(legacyGameSettings, gameSettingsPresets.getLegacyGameSettings(appended.getId()));
     }
 
     /// Tests that built-in profiles do not store names after migration.

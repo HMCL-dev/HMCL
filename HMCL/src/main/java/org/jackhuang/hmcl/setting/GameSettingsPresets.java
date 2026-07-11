@@ -24,6 +24,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
@@ -59,6 +60,8 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
         }
 
         presets.setAll(source.getPresets());
+        legacyGameSettings.clear();
+        legacyGameSettings.putAll(source.getLegacyGameSettings());
     }
 
     /// The schema used by this game settings preset store file.
@@ -118,6 +121,24 @@ public final class GameSettingsPresets extends ObservableSetting implements Json
     /// Returns the reusable game setting presets.
     public ObservableList<GameSettings.Preset> getPresets() {
         return presets;
+    }
+
+    /// Legacy parent presets keyed by game directory ID for delayed instance settings migration.
+    ///
+    /// This relationship is stored per workspace because absolute game directory entries are shared across
+    /// workspaces while their migrated presets are not.
+    @SerializedName("legacyGameSettings")
+    private final ObservableMap<GameDirectoryID, GameSettingsPresetID> legacyGameSettings =
+            FXCollections.observableHashMap();
+
+    /// Returns legacy parent presets keyed by game directory ID.
+    public ObservableMap<GameDirectoryID, GameSettingsPresetID> getLegacyGameSettings() {
+        return legacyGameSettings;
+    }
+
+    /// Returns the legacy parent preset associated with a game directory.
+    public @Nullable GameSettingsPresetID getLegacyGameSettings(GameDirectoryID gameDirectoryID) {
+        return legacyGameSettings.get(Objects.requireNonNull(gameDirectoryID));
     }
 
     /// Creates a preset ID that does not collide with existing presets.
