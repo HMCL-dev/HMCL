@@ -68,12 +68,16 @@ public class JFXPasswordField extends PasswordField {
 
     private void initialize() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
-        if ("dalvik".equals(System.getProperty("java.vm.name").toLowerCase(Locale.ROOT))) {
-            this.setStyle("-fx-skin: \"com.jfoenix.android.skins.JFXPasswordFieldSkinAndroid\";");
-        }
-
-
         useJFXContextMenu(this);
+    }
+
+    /// Prevents the legacy JFoenix skin from continuously requesting another layout pass.
+    // https://github.com/HMCL-dev/HMCL/issues/5822
+    // TODO: This method may no longer be needed after we update JFXTextFieldSkin
+    @Override
+    protected void layoutChildren() {
+        super.layoutChildren();
+        this.setNeedsLayout(false);
     }
 
     /**
@@ -294,4 +298,3 @@ public class JFXPasswordField extends PasswordField {
     }
 
 }
-
