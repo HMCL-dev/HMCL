@@ -56,4 +56,6 @@ public interface YggdrasilProvider {
     URI getProfilePropertiesURL(UUID uuid) throws AuthenticationException;
 
     URI getFriendsURL();
+
+    URI getPresenceURL();
 }

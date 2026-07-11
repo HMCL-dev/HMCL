@@ -18,19 +18,25 @@
 package org.jackhuang.hmcl.ui.account.friend;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.scene.control.Skin;
+import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.game.friend.EnumUpdateType;
-import org.jackhuang.hmcl.game.friend.FriendControl;
-import org.jackhuang.hmcl.game.friend.FriendResponse;
+import org.jackhuang.hmcl.game.friend.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.util.StringUtils;
 
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -54,17 +60,24 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
         setFailedReason(null);
         setOnFailedAction(null);
 
-        Task.supplyAsync(control::getFriendList).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            setLoading(false);
+        Task.supplyAsync(control::getFriendList)
+                .thenApplyAsync(result -> pair(result, control.getPresence(EnumPresenceStatus.ONLINE)))
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    setLoading(false);
 
-            if (exception != null) {
-                LOG.warning("Failed to get friend list" + exception);
-                setFailedReason(i18n("account.friend.failed"));
-            } else {
-                LOG.info("Received friend list" + result);
-                setFriends(result);
-            }
-        }).start();
+                    var friends = result.key();
+                    var presence = result.value();
+
+                    LOG.info("Received friend list" + friends);
+                    LOG.info("Received presences" + presence);
+
+                    if (exception != null) {
+                        LOG.warning("Failed to get friend list" + exception);
+                        setFailedReason(i18n("account.friend.failed"));
+                    } else {
+                        setData(friends, presence);
+                    }
+                }).start();
     }
 
     @Override
@@ -81,47 +94,79 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
     }
 
     public void confirmUpdateFriend(FriendListItem item, EnumUpdateType updateType, String text, String failedText) {
-        SpinnerPane spinnerPane = new SpinnerPane();
         JFXButton btnOk = new JFXButton(i18n("button.ok"));
 
-        btnOk.setOnAction(action -> {
-            spinnerPane.showSpinner();
-            Task.supplyAsync(() -> control.updateFriend(control.toUuidWithoutDashes(item.profileId()), null, updateType)).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                spinnerPane.hideSpinner();
+        StackPane stackPane = new StackPane();
 
+        var spinner = new JFXSpinner();
+        spinner.getStyleClass().add("small-spinner");
+
+        btnOk.setOnAction(action -> {
+            stackPane.getChildren().setAll(spinner);
+
+            Task.supplyAsync(() -> control.updateFriend(null, control.toUuidWithoutDashes(item.profileId()), updateType)).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception != null) {
                     LOG.warning("Failed to update friend", exception);
                     fireEvent(new DialogCloseEvent());
-                    Controllers.dialog(failedText, null, MessageDialogPane.MessageType.ERROR);
+                    Controllers.dialog(failedText + "\n" + StringUtils.getStackTrace(exception), null, MessageDialogPane.MessageType.ERROR);
                     return;
                 }
 
-                setFriends(result);
+                setData(result, null);
+                fireEvent(new DialogCloseEvent());
             }).start();
         });
 
         btnOk.getStyleClass().add("dialog-accept");
-        spinnerPane.setContent(btnOk);
-
+        stackPane.getChildren().setAll(btnOk);
 
         var dialog = new MessageDialogPane.Builder(i18n(text, item.name()), i18n("message.question"), MessageDialogPane.MessageType.QUESTION)
-                .addAction(spinnerPane)
+                .addAction(stackPane)
                 .addCancel(null)
                 .build();
 
         Controllers.dialog(dialog);
     }
 
-    public void setFriends(FriendResponse result) {
+    private PresenceResponse lastPresence;
+
+    public void setData(FriendResponse friends, PresenceResponse nullablePresence) {
+        if (nullablePresence != null) lastPresence = nullablePresence;
+
+        var presence = lastPresence;
+
         getItems().clear();
 
-        if (result.friends().isEmpty() && result.incomingRequests().isEmpty() && result.outgoingRequests().isEmpty()) {
+        if (friends.empty()) {
             setFailedReason(i18n("account.friend.empty"));
             setOnFailedAction(event -> onAddFriend.run());
-        } else {
-            getItems().addAll(result.friends().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.NORMAL)).toList());
-            getItems().addAll(result.outgoingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.OUTGOING)).toList());
-            getItems().addAll(result.incomingRequests().stream().map(it -> new FriendListItem(it.profileId(), it.name(), FriendStatus.INCOMING)).toList());
+            return;
         }
+
+        Map<String, PresenceItem> presenceMap = presence == null || presence.presence() == null
+                ? Map.of()
+                : presence.presence().stream()
+                .collect(Collectors.toMap(PresenceItem::profileId, Function.identity()));
+
+        List<Map.Entry<List<FriendItem>, FriendStatus>> sources = List.of(
+                Map.entry(friends.friends(), FriendStatus.NORMAL),
+                Map.entry(friends.outgoingRequests(), FriendStatus.OUTGOING),
+                Map.entry(friends.incomingRequests(), FriendStatus.INCOMING)
+        );
+
+        sources.forEach(entry ->
+                getItems().addAll(entry.getKey().stream()
+                        .map(friend -> {
+                            PresenceItem p = presenceMap.get(friend.profileId());
+                            return new FriendListItem(
+                                    friend.profileId(),
+                                    friend.name(),
+                                    entry.getValue(),
+                                    p != null ? p.status() : null,
+                                    p != null ? p.lastUpdated() : null
+                            );
+                        })
+                        .toList())
+        );
     }
 }

@@ -31,13 +31,12 @@ import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
-import org.jackhuang.hmcl.game.friend.EnumUpdateType;
-import org.jackhuang.hmcl.game.friend.FriendResponse;
-import org.jackhuang.hmcl.game.friend.FriendUpdateRequst;
+import org.jackhuang.hmcl.game.friend.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -46,6 +45,7 @@ import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -335,6 +335,16 @@ public class MicrosoftService {
                 .accept("application/json").getJson(FriendResponse.class);
     }
 
+    public PresenceResponse getPresence(String accessToken, @NotNull EnumPresenceStatus status) throws IOException {
+        var url = "https://api.minecraftservices.com/presence";
+
+        return HttpRequest.POST(url)
+                .json(new PresenceRequst(status), GSON)
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").getJson(PresenceResponse.class);
+    }
+
     public static class XboxAuthorizationException extends AuthenticationException {
         private final long errorCode;
         private final String redirect;
@@ -515,6 +525,7 @@ public class MicrosoftService {
 
     private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
             .create();
 
 }

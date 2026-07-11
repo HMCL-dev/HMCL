@@ -23,16 +23,16 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.game.friend.EnumUpdateType;
-import org.jackhuang.hmcl.game.friend.FriendResponse;
-import org.jackhuang.hmcl.game.friend.FriendUpdateRequst;
+import org.jackhuang.hmcl.game.friend.*;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
 import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -41,6 +41,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -253,6 +254,16 @@ public class YggdrasilService {
                 .accept("application/json").getJson(FriendResponse.class);
     }
 
+    public PresenceResponse getPresence(String accessToken, @NotNull EnumPresenceStatus status) throws IOException {
+        var url = provider.getPresenceURL().toString();
+
+        return HttpRequest.POST(url)
+                .json(new PresenceRequst(status), GSON)
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").getJson(PresenceResponse.class);
+    }
+
     private static String request(URI uri, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
@@ -284,6 +295,7 @@ public class YggdrasilService {
 
     private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
             .create();
 
     public static final String PURCHASE_URL = "https://www.xbox.com/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj";

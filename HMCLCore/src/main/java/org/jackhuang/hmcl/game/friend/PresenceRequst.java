@@ -15,12 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.account.friend;
+package org.jackhuang.hmcl.game.friend;
 
-import org.jackhuang.hmcl.game.friend.EnumPresenceStatus;
-import org.jetbrains.annotations.Nullable;
+import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
-import java.time.Instant;
-
-public record FriendListItem(String profileId, String name, FriendStatus status, @Nullable EnumPresenceStatus presenceStatus, @Nullable Instant lastUpdated) {
+@JsonSerializable
+public record PresenceRequst(@SerializedName("status") EnumPresenceStatus status) {
 }

@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.TexturesLoader;
+import org.jackhuang.hmcl.game.friend.EnumPresenceStatus;
 import org.jackhuang.hmcl.game.friend.EnumUpdateType;
 import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -41,6 +42,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.Locale;
 import java.util.UUID;
@@ -54,7 +56,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
     private final Canvas avatar = new Canvas(32, 32);
     private final TwoLineListItem twoLineListItem = new TwoLineListItem();
 
-    private final JFXButton copyButton =  FXUtils.newToggleButton4(SVG.CONTENT_COPY);
+    private final JFXButton copyButton = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
     private final JFXButton deleteButton = FXUtils.newToggleButton4(SVG.PERSON_OFF);
     private final JFXButton acceptButton = FXUtils.newToggleButton4(SVG.PERSON_CHECK);
     private final JFXButton rejectButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
@@ -78,18 +80,16 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
         center.getChildren().setAll(avatar, twoLineListItem);
         root.setCenter(center);
 
-
-
         copyButton.setOnAction(event -> FXUtils.copyText(control.toUuidWithDashes(getItem().profileId())));
         FXUtils.installFastTooltip(copyButton, i18n("account.copy_uuid"));
 
-        deleteButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.delete.confirm"),i18n("account.friend.delete.failed")));
+        deleteButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.delete.confirm"), i18n("account.friend.delete.failed")));
         FXUtils.installFastTooltip(deleteButton, i18n("account.friend.delete"));
 
-        acceptButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.ADD, i18n("account.friend.accept.confirm"),i18n("account.friend.accept.failed")));
+        acceptButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.ADD, i18n("account.friend.accept.confirm"), i18n("account.friend.accept.failed")));
         FXUtils.installFastTooltip(acceptButton, i18n("account.friend.accept"));
 
-        rejectButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.reject.confirm"),i18n("account.friend.reject.failed")));
+        rejectButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.reject.confirm"), i18n("account.friend.reject.failed")));
         FXUtils.installFastTooltip(rejectButton, i18n("account.friend.reject"));
 
         actions.setAlignment(Pos.CENTER_RIGHT);
@@ -130,7 +130,9 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
 
         twoLineListItem.setTitle(item.name());
 
-//        twoLineListItem.setSubtitle(toString());
+        var statusText = i18n("account.friend.presence_status." + (item.presenceStatus() == null ? EnumPresenceStatus.OFFLINE : item.presenceStatus()).name().toLowerCase(Locale.ROOT));
+
+        twoLineListItem.setSubtitle(i18n("account.friend.presence_status.last_updated", I18n.formatDateTime(item.lastUpdated())) + " / " + statusText);
 
         twoLineListItem.getTags().clear();
         if (item.status() != FriendStatus.NORMAL) {

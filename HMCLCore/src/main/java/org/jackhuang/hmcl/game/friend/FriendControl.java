@@ -30,6 +30,8 @@ public interface FriendControl {
 
     FriendResponse updateFriend(@Nullable String name, @Nullable String uuid, @NotNull EnumUpdateType updateType) throws IOException;
 
+    PresenceResponse getPresence(@NotNull EnumPresenceStatus selfPresence) throws IOException;
+
     default String toUuidWithDashes(String uuidMayWithoutDashes) {
         if (uuidMayWithoutDashes.contains("-")) return uuidMayWithoutDashes;
         else return REGEX.matcher(uuidMayWithoutDashes).replaceAll("$1-$2-$3-$4-$5");

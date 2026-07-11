@@ -21,11 +21,10 @@ import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.*;
-import org.jackhuang.hmcl.game.friend.EnumUpdateType;
-import org.jackhuang.hmcl.game.friend.FriendControl;
-import org.jackhuang.hmcl.game.friend.FriendResponse;
+import org.jackhuang.hmcl.game.friend.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -232,6 +231,11 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
     @Override
     public FriendResponse updateFriend(@Nullable String name, @Nullable String uuid, EnumUpdateType updateType) throws IOException {
         return service.updateFriend(session.accessToken(), name, uuid, updateType);
+    }
+
+    @Override
+    public PresenceResponse getPresence(@NotNull EnumPresenceStatus status) throws IOException {
+        return service.getPresence(session.accessToken(), status);
     }
 
     @Override

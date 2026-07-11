@@ -92,7 +92,7 @@ public final class FriendPage extends DecoratorAnimatedPage implements Decorator
                 if (e == null) {
                     resultHandler.resolve();
 
-                    friendListPage.getNode().setFriends(result);
+                    friendListPage.getNode().setData(result, null);
                 } else {
                     LOG.warning("Failed to add friend", e);
                     if (e.getCause() instanceof ResponseCodeException cause && cause.getData() != null) {
