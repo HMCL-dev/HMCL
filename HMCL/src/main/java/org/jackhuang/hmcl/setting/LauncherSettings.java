@@ -25,7 +25,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import org.glavo.monetfx.ColorStyle;
 import org.hildan.fxgson.creators.ObservableListCreator;
 import org.hildan.fxgson.creators.ObservableMapCreator;
 import org.hildan.fxgson.creators.ObservableSetCreator;
@@ -33,11 +35,16 @@ import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
+import org.jackhuang.hmcl.theme.BuiltinBackground;
+import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.theme.ThemeReference;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -50,6 +57,7 @@ import java.util.*;
 /// game settings presets, accounts, launcher state, and authlib-injector servers, are persisted in detached
 /// JSON files managed by [SettingsManager].
 @JsonAdapter(value = LauncherSettings.Adapter.class)
+@NotNullByDefault
 public final class LauncherSettings extends ObservableSetting implements JsonSchemaSetting {
 
     /// The JSON schema supported by this launcher settings class.
@@ -63,6 +71,27 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The JSON property name for selected instance IDs keyed by game directory ID.
     static final String PROPERTY_SELECTED_INSTANCE = "selectedInstance";
+
+    /// Default launcher theme used when no stored theme reference is available.
+    public static final ThemeReference DEFAULT_THEME_REFERENCE = new ThemeReference("hmcl.default", null);
+
+    /// Theme appearance override key for theme brightness mode.
+    public static final String THEME_APPEARANCE_BRIGHTNESS_MODE = "themeBrightnessMode";
+
+    /// Theme appearance override key for theme color seed.
+    public static final String THEME_APPEARANCE_COLOR = "themeColor";
+
+    /// Theme appearance override key for theme color style.
+    public static final String THEME_APPEARANCE_COLOR_STYLE = "themeColorStyle";
+
+    /// Theme appearance override key for title-bar transparency.
+    public static final String THEME_APPEARANCE_TITLE_BAR_TRANSPARENT = "titleBarTransparent";
+
+    /// Theme appearance override key for the primary background source.
+    public static final String THEME_APPEARANCE_BACKGROUND = "background";
+
+    /// Theme appearance override key for background opacity.
+    public static final String THEME_APPEARANCE_BACKGROUND_OPACITY = "backgroundOpacity";
 
     /// Gson instance used for launcher settings and related settings objects that depend on JavaFX properties.
     public static final Gson SETTINGS_GSON = new GsonBuilder()
@@ -80,9 +109,8 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Deserializes launcher settings from JSON.
     ///
     /// @param json the JSON object to read
-    /// @return the deserialized launcher settings, or `null` if the JSON represents `null`
+    /// @return the deserialized launcher settings
     /// @throws JsonParseException if the JSON cannot be deserialized as launcher settings
-    @Nullable
     public static LauncherSettings fromJson(JsonObject json) throws JsonParseException {
         return SETTINGS_GSON.fromJson(json, LauncherSettings.class);
     }
@@ -233,23 +261,181 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     // UI
 
-    /// The configured theme brightness identifier.
-    @SerializedName("themeBrightness")
-    private final StringProperty themeBrightness = new SimpleStringProperty("light");
+    // Theme selection
 
-    /// Returns the theme brightness property.
-    public StringProperty themeBrightnessProperty() {
-        return themeBrightness;
+    /// The installed theme selected by the launcher, or `null` when older settings do not contain a theme reference.
+    @SerializedName("selectedTheme")
+    private final ObjectProperty<@Nullable ThemeReference> selectedTheme =
+            new SimpleObjectProperty<>(DEFAULT_THEME_REFERENCE);
+
+    /// Returns the selected installed theme property.
+    public ObjectProperty<@Nullable ThemeReference> selectedThemeProperty() {
+        return selectedTheme;
     }
 
-    /// The selected launcher theme color.
-    @SerializedName("themeColor")
-    private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>(ThemeColor.DEFAULT);
-
-    /// Returns the launcher theme color property.
-    public ObjectProperty<ThemeColor> themeColorProperty() {
-        return themeColor;
+    /// Returns the selected installed theme, falling back to the built-in default theme.
+    public ThemeReference getSelectedThemeOrDefault() {
+        return Objects.requireNonNullElse(selectedTheme.get(), DEFAULT_THEME_REFERENCE);
     }
+
+    // Theme appearance overrides
+
+    /// Theme appearance setting keys overridden by the launcher.
+    @SerializedName("themeAppearanceOverrides")
+    private final ObservableSet<String> themeAppearanceOverrides = FXCollections.observableSet();
+
+    /// Returns the theme appearance setting keys overridden by the launcher.
+    public ObservableSet<String> getThemeAppearanceOverrides() {
+        return themeAppearanceOverrides;
+    }
+
+    // Theme appearance values
+
+    /// The configured theme brightness mode identifier.
+    @SerializedName("themeBrightnessMode")
+    private final StringProperty themeBrightnessMode = new SimpleStringProperty("auto");
+
+    /// Returns the theme brightness mode property.
+    public StringProperty themeBrightnessModeProperty() {
+        return themeBrightnessMode;
+    }
+
+    /// The custom launcher theme color preserved when dynamic color extraction is used.
+    @SerializedName("customThemeColor")
+    private final ObjectProperty<ThemeColor> customThemeColor = new SimpleObjectProperty<>(ThemeColor.DEFAULT);
+
+    /// Returns the custom launcher theme color property.
+    public ObjectProperty<ThemeColor> customThemeColorProperty() {
+        return customThemeColor;
+    }
+
+    /// The source used to choose the launcher Monet theme color seed.
+    @SerializedName("themeColorType")
+    private final ObjectProperty<ThemeColorType> themeColorType = new RawPreservingObjectProperty<>(ThemeColorType.DEFAULT);
+
+    /// Returns the launcher theme color source type property.
+    public ObjectProperty<ThemeColorType> themeColorTypeProperty() {
+        return themeColorType;
+    }
+
+    /// The MonetFX color style used to generate the launcher color scheme.
+    @SerializedName("themeColorStyle")
+    private final ObjectProperty<ColorStyle> themeColorStyle = new RawPreservingObjectProperty<>(ColorStyle.FIDELITY);
+
+    /// Returns the launcher theme color style property.
+    public ObjectProperty<ColorStyle> themeColorStyleProperty() {
+        return themeColorStyle;
+    }
+
+    /// Whether the launcher title bar is transparent.
+    @SerializedName("titleBarTransparent")
+    private final BooleanProperty titleBarTransparent = new SimpleBooleanProperty(false);
+
+    /// Returns the transparent title-bar property.
+    public BooleanProperty titleBarTransparentProperty() {
+        return titleBarTransparent;
+    }
+
+    // Background source
+
+    /// The launcher background source type.
+    @SerializedName("backgroundType")
+    private final ObjectProperty<BackgroundType> backgroundType = new RawPreservingObjectProperty<>(BackgroundType.DEFAULT);
+
+    /// Returns the launcher background source type property.
+    public ObjectProperty<BackgroundType> backgroundTypeProperty() {
+        return backgroundType;
+    }
+
+    /// The selected built-in launcher wallpaper ID.
+    @SerializedName("builtinBackgroundId")
+    private final StringProperty builtinBackgroundId = new SimpleStringProperty(BuiltinBackground.FALLBACK.id());
+
+    /// Returns the selected built-in launcher wallpaper ID property.
+    public StringProperty builtinBackgroundIdProperty() {
+        return builtinBackgroundId;
+    }
+
+    /// The local custom launcher background image path.
+    @SerializedName("customBackgroundImagePath")
+    private final StringProperty customBackgroundImagePath = new SimpleStringProperty();
+
+    /// Returns the local custom launcher background image path property.
+    public StringProperty customBackgroundImagePathProperty() {
+        return customBackgroundImagePath;
+    }
+
+    /// The remote network launcher background image URL.
+    @SerializedName("networkBackgroundImageUrl")
+    private final StringProperty networkBackgroundImageUrl = new SimpleStringProperty();
+
+    /// Returns the remote network launcher background image URL property.
+    public StringProperty networkBackgroundImageUrlProperty() {
+        return networkBackgroundImageUrl;
+    }
+
+    /// The custom launcher background paint.
+    @SerializedName("customBackgroundPaint")
+    private final ObjectProperty<@Nullable Paint> customBackgroundPaint = new SimpleObjectProperty<>();
+
+    /// Returns the custom launcher background paint property.
+    public ObjectProperty<@Nullable Paint> customBackgroundPaintProperty() {
+        return customBackgroundPaint;
+    }
+
+    // Background appearance
+
+    /// The launcher background opacity value.
+    @SerializedName("backgroundOpacity")
+    private final DoubleProperty backgroundOpacity = new SimpleDoubleProperty(1.0);
+
+    /// Returns the custom launcher background opacity value property.
+    public DoubleProperty backgroundOpacityProperty() {
+        return backgroundOpacity;
+    }
+
+    // Background loading
+
+    /// The URL image cache policy for network launcher backgrounds.
+    @SerializedName("networkBackgroundImageCachePolicy")
+    private final ObjectProperty<NetworkBackgroundImageCachePolicy> networkBackgroundImageCachePolicy =
+            new RawPreservingObjectProperty<>(NetworkBackgroundImageCachePolicy.ENABLED);
+
+    /// Returns the URL image cache policy for network launcher backgrounds.
+    public ObjectProperty<NetworkBackgroundImageCachePolicy> networkBackgroundImageCachePolicyProperty() {
+        return networkBackgroundImageCachePolicy;
+    }
+
+    /// The fallback source used when the selected launcher background cannot be loaded.
+    @SerializedName("backgroundFallbackType")
+    private final ObjectProperty<BackgroundType> backgroundFallbackType =
+            new RawPreservingObjectProperty<>(BackgroundType.BUILTIN);
+
+    /// Returns the launcher background fallback source type property.
+    public ObjectProperty<BackgroundType> backgroundFallbackTypeProperty() {
+        return backgroundFallbackType;
+    }
+
+    /// The fallback paint used when the selected launcher background cannot be loaded.
+    @SerializedName("backgroundFallbackPaint")
+    private final ObjectProperty<Paint> backgroundFallbackPaint = new SimpleObjectProperty<>(Color.WHITE);
+
+    /// Returns the launcher background fallback paint property.
+    public ObjectProperty<Paint> backgroundFallbackPaintProperty() {
+        return backgroundFallbackPaint;
+    }
+
+    /// How the launcher displays its window while the selected background is loading.
+    @SerializedName("backgroundLoadPolicy")
+    private final ObjectProperty<BackgroundLoadPolicy> backgroundLoadPolicy =
+            new RawPreservingObjectProperty<>(BackgroundLoadPolicy.WAIT_FOR_BACKGROUND);
+
+    /// Returns the launcher background loading policy property.
+    public ObjectProperty<BackgroundLoadPolicy> backgroundLoadPolicyProperty() {
+        return backgroundLoadPolicy;
+    }
+
+    // Fonts
 
     /// The font family used by launcher log views.
     @SerializedName("logFontFamily")
@@ -278,6 +464,8 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return launcherFontFamily;
     }
 
+    // General UI
+
     /// Whether UI animations are disabled.
     @SerializedName("animationDisabled")
     private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
@@ -289,60 +477,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Returns the UI animation disable property.
     public BooleanProperty animationDisabledProperty() {
         return animationDisabled;
-    }
-
-    /// Whether the launcher title area is transparent.
-    @SerializedName("titleTransparent")
-    private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
-
-    /// Returns the transparent title area property.
-    public BooleanProperty titleTransparentProperty() {
-        return titleTransparent;
-    }
-
-    /// The launcher background source type.
-    @SerializedName("backgroundType")
-    private final ObjectProperty<BackgroundType> backgroundType = new RawPreservingObjectProperty<>(BackgroundType.DEFAULT);
-
-    /// Returns the launcher background source type property.
-    public ObjectProperty<BackgroundType> backgroundTypeProperty() {
-        return backgroundType;
-    }
-
-    /// The local launcher background image path.
-    @SerializedName("backgroundImage")
-    private final StringProperty backgroundImage = new SimpleStringProperty();
-
-    /// Returns the local launcher background image path property.
-    public StringProperty backgroundImageProperty() {
-        return backgroundImage;
-    }
-
-    /// The remote launcher background image URL.
-    @SerializedName("backgroundImageUrl")
-    private final StringProperty backgroundImageUrl = new SimpleStringProperty();
-
-    /// Returns the remote launcher background image URL property.
-    public StringProperty backgroundImageUrlProperty() {
-        return backgroundImageUrl;
-    }
-
-    /// The launcher background paint.
-    @SerializedName("backgroundPaint")
-    private final ObjectProperty<Paint> backgroundPaint = new SimpleObjectProperty<>();
-
-    /// Returns the launcher background paint property.
-    public ObjectProperty<Paint> backgroundPaintProperty() {
-        return backgroundPaint;
-    }
-
-    /// The launcher background opacity.
-    @SerializedName("backgroundOpacity")
-    private final DoubleProperty backgroundOpacity = new SimpleDoubleProperty(1.0);
-
-    /// Returns the launcher background opacity property.
-    public DoubleProperty backgroundOpacityProperty() {
-        return backgroundOpacity;
     }
 
     // Networks
@@ -448,15 +582,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The selected game directory ID.
     ///
-    /// This field is owned by [Profiles]. Code outside [Profiles] should not modify it directly.
+    /// This field is owned by [GameDirectoryManager]. Code outside [GameDirectoryManager] should not modify it directly.
     @SerializedName(PROPERTY_SELECTED_GAME_DIRECTORY)
     private final ObjectProperty<@Nullable GameDirectoryID> selectedGameDirectory =
             new SimpleObjectProperty<>(this, PROPERTY_SELECTED_GAME_DIRECTORY);
 
     /// Returns the selected game directory ID property.
     ///
-    /// This property is exposed for persistence and [Profiles] integration. Code outside [Profiles]
-    /// should use `Profiles.setSelectedProfile` instead of modifying this property directly.
+    /// This property is exposed for persistence and [GameDirectoryManager] integration. Code outside [GameDirectoryManager]
+    /// should use `GameDirectoryManager.setSelectedGameDirectory` instead of modifying this property directly.
     public ObjectProperty<@Nullable GameDirectoryID> selectedGameDirectoryProperty() {
         return selectedGameDirectory;
     }
@@ -473,29 +607,28 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// Selected instance IDs keyed by game directory ID.
     ///
-    /// This field is owned by [Profiles]. Code outside [Profiles] should not modify it directly.
+    /// This field is owned by [GameDirectoryManager]. Code outside [GameDirectoryManager] should not modify it directly.
     @SerializedName(PROPERTY_SELECTED_INSTANCE)
     private final ObservableMap<GameDirectoryID, String> selectedInstance = FXCollections.observableHashMap();
 
     /// Returns selected instance IDs keyed by game directory ID.
     ///
-    /// This map is exposed for persistence and migration code. Runtime code outside [Profiles] should
-    /// use `Profiles.getSelectedInstance` and `Profiles.setSelectedInstance` instead of mutating it.
+    /// The map stores persisted selected instance values by game directory ID.
     public ObservableMap<GameDirectoryID, String> getSelectedInstance() {
         return selectedInstance;
     }
 
     /// Returns the selected instance ID for the given game directory ID.
     ///
-    /// This method is intended for [Profiles].
-    @Nullable String getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
+    /// The value is loaded by the game repository for the matching game directory.
+    public @Nullable String getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.
     ///
-    /// This method is intended for [Profiles].
-    void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable String selectedInstance) {
+    /// Blank values remove the persisted selected instance entry.
+    public void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable String selectedInstance) {
         if (gameDirectoryId == null) {
             return;
         }

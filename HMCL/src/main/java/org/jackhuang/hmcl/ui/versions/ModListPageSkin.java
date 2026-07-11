@@ -42,8 +42,8 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -328,46 +328,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 iconPaths.add(this.localModFile.getLogoPath());
             }
 
-            iconPaths.addAll(List.of(
-                    "icon.png",
-                    "logo.png",
-                    "mod_logo.png",
-                    "pack.png",
-                    "logoFile.png",
-                    "assets/icon.png",
-                    "assets/logo.png",
-                    "assets/mod_icon.png",
-                    "assets/mod_logo.png",
-                    "META-INF/icon.png",
-                    "META-INF/logo.png",
-                    "META-INF/mod_icon.png",
-                    "textures/icon.png",
-                    "textures/logo.png",
-                    "textures/mod_icon.png",
-                    "resources/icon.png",
-                    "resources/logo.png",
-                    "resources/mod_icon.png"
-            ));
-
-            String modId = this.localModFile.getId();
-            if (StringUtils.isNotBlank(modId)) {
-                iconPaths.addAll(List.of(
-                        "assets/" + modId + "/icon.png",
-                        "assets/" + modId + "/logo.png",
-                        "assets/" + modId.replace("-", "") + "/icon.png",
-                        "assets/" + modId.replace("-", "") + "/logo.png",
-                        modId + ".png",
-                        modId + "-logo.png",
-                        modId + "-icon.png",
-                        modId + "_logo.png",
-                        modId + "_icon.png",
-                        "textures/" + modId + "/icon.png",
-                        "textures/" + modId + "/logo.png",
-                        "resources/" + modId + "/icon.png",
-                        "resources/" + modId + "/logo.png"
-                ));
-            }
-
             try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(this.localModFile.getFile())) {
                 for (String path : iconPaths) {
                     Path iconPath = fs.getPath(path);
@@ -502,7 +462,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                     Controllers.navigate(new DownloadPage(
                                             repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteAddon,
-                                            new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
+                                            new HMCLGameRepository.InstanceReference(ModListPageSkin.this.getSkinnable().getRepository(), ModListPageSkin.this.getSkinnable().getInstanceId()),
                                             org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
                                     ));
                                 });
@@ -562,7 +522,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         JFXCheckBox checkBox = new JFXCheckBox();
-        ImageContainer imageContainer = new ImageContainer(24);
+        ImageContainer imageContainer = new ImageContainer(32);
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);

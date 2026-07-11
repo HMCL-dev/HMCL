@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.modpack.MismatchedModpackTypeException;
@@ -25,8 +26,6 @@ import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.UnsupportedModpackException;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -45,26 +44,26 @@ import java.nio.file.Path;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackInstallWizardProvider implements WizardProvider {
-    private final Profile profile;
+    private final HMCLGameRepository repository;
     private final Path file;
     private final String updateVersion;
     private String iconUrl;
     private boolean hasSource;
 
-    public ModpackInstallWizardProvider(Profile profile) {
-        this(profile, null, null);
+    public ModpackInstallWizardProvider(HMCLGameRepository repository) {
+        this(repository, null, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, Path modpackFile) {
-        this(profile, modpackFile, null);
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile) {
+        this(repository, modpackFile, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, String updateVersion) {
-        this(profile, null, updateVersion);
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, String updateVersion) {
+        this(repository, null, updateVersion);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion) {
-        this.profile = profile;
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile, String updateVersion) {
+        this.repository = repository;
         this.file = modpackFile;
         this.updateVersion = updateVersion;
     }
@@ -81,7 +80,8 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
         if (StringUtils.isNotBlank(iconUrl))
             settings.put(LocalModpackPage.MODPACK_ICON_URL, iconUrl);
-        settings.put(ModpackPage.PROFILE, profile);
+        settings.put(ModpackPage.GAME_DIRECTORY, repository.getGameDirectory());
+        settings.put(ModpackPage.REPOSITORY, repository);
         hasSource = settings.containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
     }
 
@@ -95,7 +95,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
 
         if (isManuallyCreated) {
-            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset);
+            return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name, charset);
         }
 
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
@@ -107,9 +107,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
             try {
                 if (serverModpackManifest != null) {
-                    return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+                    return ModpackHelper.getUpdateTask(repository, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(name)));
                 } else {
-                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+                    return ModpackHelper.getUpdateTask(repository, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(name)));
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -121,11 +121,11 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             return null;
         } else {
             if (serverModpackManifest != null) {
-                return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
-                        .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
+                return ModpackHelper.getInstallTask(repository, serverModpackManifest, name, modpack)
+                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
             } else {
-                return ModpackHelper.getInstallTask(profile, selected, name, modpack, iconUrl)
-                        .thenRunAsync(Schedulers.javafx(), () -> Profiles.setSelectedInstance(profile, name));
+                return ModpackHelper.getInstallTask(repository, selected, name, modpack, iconUrl)
+                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
             }
         }
     }

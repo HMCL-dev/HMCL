@@ -78,7 +78,7 @@ public final class NativePatcher {
                                       JavaRuntime javaVersion,
                                       GameSettings.Effective settings,
                                       List<String> javaArguments) {
-        if (settings.get(GameSettings::useCustomNativesProperty)) {
+        if (settings.getInheritable(GameSettings::useCustomNativesProperty)) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;
 
@@ -96,8 +96,8 @@ public final class NativePatcher {
             return version.setLibraries(newLibraries);
         }
 
-        final boolean useNativeGLFW = settings.get(GameSettings::useNativeGLFWProperty);
-        final boolean useNativeOpenAL = settings.get(GameSettings::useNativeOpenALProperty);
+        final boolean useNativeGLFW = settings.getInheritable(GameSettings::useNativeGLFWProperty);
+        final boolean useNativeOpenAL = settings.getInheritable(GameSettings::useNativeOpenALProperty);
 
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && (useNativeGLFW || useNativeOpenAL)
                 && gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") >= 0) {
@@ -124,7 +124,7 @@ public final class NativePatcher {
         Architecture arch = javaVersion.getArchitecture();
         GameVersionNumber gameVersionNumber = gameVersion != null ? GameVersionNumber.asGameVersion(gameVersion) : null;
 
-        if (settings.get(GameSettings::notPatchNativesProperty))
+        if (settings.getInheritable(GameSettings::notPatchNativesProperty))
             return version;
 
         if (arch.isX86() && (os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX || os == OperatingSystem.MACOS))
