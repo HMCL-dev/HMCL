@@ -20,6 +20,15 @@
       "items": {
         "$ref": "#/$defs/preset"
       }
+    },
+    "legacyGameSettings": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/gameDirectoryID"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/gameSettingsPresetID"
+      }
     }
   },
   "$defs": {
@@ -223,6 +232,10 @@
     "gameSettingsPresetID": {
       "type": "string",
       "pattern": "^game-settings-preset:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "gameDirectoryID": {
+      "type": "string",
+      "pattern": "^game-directory:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
     },
     "localizedText": {
       "oneOf": [
