@@ -91,7 +91,7 @@ public final class Versions {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
-        Controllers.downloadTaskDialog(
+        Controllers.downloadTaskBackground(
                 new FileDownloadTask(downloadURLs, modpack)
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
@@ -112,8 +112,8 @@ public final class Versions {
                             }
                         }),
                 i18n("message.downloading"),
-                TaskCancellationAction.NORMAL,
-                i18n("task.detail.install_modpack", modpack.getFileName().toString())
+                i18n("task.detail.install_modpack", file.name()),
+                TaskCenter.RESOURCE_KEY_REPO
         );
     }
 
@@ -241,8 +241,8 @@ public final class Versions {
     public static void updateGameAssets(HMCLGameRepository repository, String version) {
         TaskExecutor executor = new GameAssetDownloadTask(repository.getDependency(), repository.getVersion(version), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
                 .executor();
-        Controllers.downloadTaskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL,
-                i18n("task.detail.redownload_assets", version));
+        Controllers.downloadTaskBackground(executor, i18n("version.manage.redownload_assets_index"),
+                i18n("task.detail.redownload_assets", version), TaskCenter.RESOURCE_KEY_REPO);
     }
 
     public static void cleanVersion(HMCLGameRepository repository, String id) {

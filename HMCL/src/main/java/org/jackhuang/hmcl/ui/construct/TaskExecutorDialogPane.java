@@ -31,10 +31,8 @@ import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -51,8 +49,7 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final Label lblProgress;
     private final JFXButton btnCancel;
     private final TaskListPane taskListPane;
-    private final JFXButton btnBackground;
-    private Runnable onBackground;
+    private TaskListener autoCloseListener;
     private Runnable escAction;
     private Runnable cancelAction;
 
@@ -77,22 +74,7 @@ public class TaskExecutorDialogPane extends BorderPane {
             lblTitle = new Label();
             lblTitle.getStyleClass().add("title-label");
 
-            btnBackground = new JFXButton();
-            btnBackground.setGraphic(SVG.DOWNLOAD.createIcon(16)); // TODO: 可替换为更合适的后台图标
-            btnBackground.getStyleClass().add("toggle-icon4");
-            FXUtils.installFastTooltip(btnBackground, i18n("task.move_to_background"));
-            btnBackground.setOnAction(e -> {
-                if (onBackground != null) {
-                    onBackground.run();
-                }
-            });
-            btnBackground.setVisible(false);
-            btnBackground.setManaged(false);
-
-            HBox spacer = new HBox();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-
-            titleBar.getChildren().setAll(lblTitle, spacer, btnBackground);
+            titleBar.getChildren().setAll(lblTitle);
 
             taskListPane = new TaskListPane();
             VBox.setVgrow(taskListPane, Priority.ALWAYS);
@@ -136,6 +118,10 @@ public class TaskExecutorDialogPane extends BorderPane {
                 escAction.run();
             }
         });
+
+        // The dialog is only a view onto the task: once closed, stop listening to the executor so
+        // discarded panes don't pile up as listeners on long-running managed tasks.
+        addEventHandler(DialogCloseEvent.CLOSE, e -> detachExecutorListeners());
     }
 
     public void setExecutor(TaskExecutor executor) {
@@ -143,19 +129,32 @@ public class TaskExecutorDialogPane extends BorderPane {
     }
 
     public void setExecutor(TaskExecutor executor, boolean autoClose) {
+        detachExecutorListeners();
         this.executor = executor;
 
         if (executor != null) {
             taskListPane.setExecutor(executor);
 
-            if (autoClose)
-                executor.addTaskListener(new TaskListener() {
+            if (autoClose) {
+                autoCloseListener = new TaskListener() {
                     @Override
                     public void onStop(boolean success, TaskExecutor executor) {
                         Platform.runLater(() -> fireEvent(new DialogCloseEvent()));
                     }
-                });
+                };
+                executor.addTaskListener(autoCloseListener);
+            }
         }
+    }
+
+    /// Removes every listener this pane attached to the executor. A managed task outlives its dialog
+    /// (the dialog is just a detachable view), so a closed pane must stop listening — otherwise each
+    /// re-opened detail dialog would leave stale listeners reacting to task events forever.
+    private void detachExecutorListeners() {
+        if (executor != null && autoCloseListener != null)
+            executor.removeTaskListener(autoCloseListener);
+        autoCloseListener = null;
+        taskListPane.detach();
     }
 
     public StringProperty titleProperty() {
@@ -174,30 +173,6 @@ public class TaskExecutorDialogPane extends BorderPane {
         this.onCancel = onCancel;
 
         runInFX(() -> btnCancel.setDisable(onCancel == null));
-    }
-
-    private final AtomicBoolean background = new AtomicBoolean(false);
-
-    public void setBackgroundAction(Runnable action) {
-        this.onBackground = action;
-        background.set(false);
-
-        btnBackground.setVisible(action != null);
-        btnBackground.setManaged(action != null);
-
-        if (action != null) {
-            btnBackground.setDisable(false);
-            btnBackground.setOnAction(e -> {
-                if (!background.compareAndSet(false, true)) {
-                    return;
-                }
-                btnBackground.setDisable(true);
-                onBackground.run();
-            });
-        } else {
-            btnBackground.setDisable(false);
-            btnBackground.setOnAction(null);
-        }
     }
 
     public void refreshTaskList() {
@@ -225,7 +200,9 @@ public class TaskExecutorDialogPane extends BorderPane {
             taskListPane.setManaged(false);
             lblProgress.setVisible(false);
             lblProgress.setManaged(false);
-            ((VBox) getCenter()).getChildren().add(lblWaiting);
+            VBox center = (VBox) getCenter();
+            if (!center.getChildren().contains(lblWaiting)) // repeated true→true calls must not add twice
+                center.getChildren().add(lblWaiting);
         } else {
             taskListPane.setVisible(true);
             taskListPane.setManaged(true);

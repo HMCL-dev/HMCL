@@ -19,12 +19,14 @@ package org.jackhuang.hmcl.ui.task;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXProgressBar;
+import com.jfoenix.controls.JFXSpinner;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -33,30 +35,31 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.main.SettingsPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.IdentityHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-/// Single, reused page that visualizes the [TaskCenter]. A singleton so its list listeners are
+/// Single, reused page that visualizes the [TaskCenter], PCL-style: an overview panel on the left
+/// (overall ring, speed, counts, remaining files, threads) and the live task stream on the right,
+/// with failures in a collapsible section at the bottom. A singleton so its list listeners are
 /// registered exactly once (navigating here repeatedly must not accumulate listeners or stale
 /// off-screen views).
 public final class TaskCenterPage extends DecoratorAnimatedPage implements DecoratorPage {
@@ -72,64 +75,214 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     private final ReadOnlyObjectWrapper<State> state =
             new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("task.manage")));
 
-    private final TransitionPane transitionPane = new TransitionPane();
+    private final VBox activeContainer = new VBox(10);
+    private final VBox failedContainer = new VBox(0);
 
-    private final TabHeader.Tab<ScrollPane> runningTab = new TabHeader.Tab<>("taskRunningTab");
-    private final TabHeader.Tab<ScrollPane> completedTab = new TabHeader.Tab<>("taskCompletedTab");
-    private final TabHeader.Tab<ScrollPane> failedTab = new TabHeader.Tab<>("taskFailedTab");
+    private final Node activeEmpty = createEmptyBox(SVG.CHECKLIST, i18n("task.empty.running"));
 
-    private final VBox runningContainer = new VBox(10);
-    private final VBox completedContainer = new VBox(8);
-    private final VBox failedContainer = new VBox(8);
-
-    private final Node runningEmpty = createEmptyBox(SVG.CHECKLIST, i18n("task.empty.running"));
-    private final Node completedEmpty = createEmptyBox(SVG.CHECK, i18n("task.empty.completed"));
-    private final Node failedEmpty = createEmptyBox(SVG.CLOSE, i18n("task.empty.failed"));
-
-    /// Live aggregate download speed; running cards bind their speed label to it.
+    /// Live aggregate download speed (global, cross-task — see FetchTask.SPEED_EVENT).
     private final StringProperty speedText = new SimpleStringProperty("");
     @SuppressWarnings({"FieldCanBeLocal", "unused"}) // strong ref keeping the weak event registration alive
     private final Consumer<FetchTask.SpeedEvent> speedHandler;
 
+    /// Smoothed value driving the overview ring: eased toward the real aggregate so large jumps
+    /// (a stage total arriving late, a parallel task joining the average) glide instead of snapping.
+    private final DoubleProperty ringProgress = new SimpleDoubleProperty(-1);
+    private Timeline ringTimeline;
+
     private TaskCenterPage() {
-        runningTab.setNodeSupplier(this::createRunningPane);
-        completedTab.setNodeSupplier(this::createCompletedPane);
-        failedTab.setNodeSupplier(this::createFailedPane);
-
-        TabHeader tabHeader = new TabHeader(transitionPane, runningTab, completedTab, failedTab);
-        tabHeader.select(runningTab);
-
-        AdvancedListBox sideBar = new AdvancedListBox()
-                .startCategory(i18n("task.manage").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tabHeader, runningTab, i18n("task.running"), SVG.ARROW_FORWARD)
-                .addNavigationDrawerTab(tabHeader, completedTab, i18n("task.completed"), SVG.CHECK)
-                .addNavigationDrawerTab(tabHeader, failedTab, i18n("task.failed"), SVG.CLOSE);
-
-        FXUtils.setLimitWidth(sideBar, 200);
-        setLeft(sideBar);
-
-        BorderPane contentWrapper = new BorderPane();
-        contentWrapper.getStyleClass().add("card-non-transparent");
-        contentWrapper.setPadding(new Insets(12));
-        contentWrapper.setCenter(transitionPane);
-
-        StackPane centerPane = new StackPane(contentWrapper);
-        centerPane.setPadding(new Insets(12));
-        setCenter(centerPane);
-
-        // Incremental binding: cards are cached per entry so a running card's TaskListPane (which
-        // attaches a listener to its executor) is created once, not rebuilt on every list change.
         TaskCenter center = TaskCenter.getInstance();
-        bindContainer(runningContainer, center.getEntries(), runningEmpty, this::createRunningCard);
-        bindContainer(completedContainer, center.getSucceededTasks(), completedEmpty, e -> createHistoryItem(e, true));
-        bindContainer(failedContainer, center.getFailedTasks(), failedEmpty, e -> createHistoryItem(e, false));
+
+        setLeft(createOverviewPane(center));
+        setCenter(createContentPane(center));
+
+        // Incremental binding: cards are cached per entry so a card is created once, not rebuilt on
+        // every list change (no flicker; status changes are handled reactively inside the card).
+        bindContainer(activeContainer, center.getEntries(), activeEmpty, this::createTaskCard);
+        bindContainer(failedContainer, center.getFailedTasks(), null, this::createFailedRow);
 
         speedHandler = FetchTask.SPEED_EVENT.registerWeak(event -> {
             long speed = event.getSpeed();
             String text = speed > 0 ? I18n.formatSpeed(speed) : "";
             Platform.runLater(() -> speedText.set(text));
         });
+
+        FXUtils.onChangeAndOperate(center.runningProgressProperty(), v -> animateRing(v.doubleValue()));
     }
+
+    // ── overview (left) ───────────────────────────────────────────────
+
+    private Node createOverviewPane(TaskCenter center) {
+        VBox box = new VBox(18);
+        box.getStyleClass().add("task-overview");
+        box.setPadding(new Insets(24, 16, 24, 16));
+        box.setAlignment(Pos.TOP_CENTER);
+        FXUtils.setLimitWidth(box, 210);
+
+        // Big progress ring with the percentage in the center; a dim placeholder icon when idle.
+        JFXSpinner ring = new JFXSpinner();
+        ring.getStyleClass().add("task-overview-ring");
+        ring.setRadius(52);
+        ring.progressProperty().bind(ringProgress);
+
+        Label percentLabel = new Label();
+        percentLabel.getStyleClass().add("task-overview-percent");
+        percentLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+            double p = center.runningProgressProperty().get();
+            return p >= 0 ? String.format("%.0f%%", p * 100) : "";
+        }, center.runningProgressProperty()));
+
+        Node idleIcon = SVG.CHECKLIST.createIcon(40);
+        idleIcon.setOpacity(0.3);
+
+        StackPane ringPane = new StackPane(idleIcon, ring, percentLabel);
+        ringPane.setMinHeight(120);
+
+        // Idle (no active tasks): hide the ring so an indeterminate spinner doesn't whirl forever.
+        // Listen on the list directly — a local Bindings.isEmpty(...) binding has no strong holder
+        // and gets GC'd, silently freezing the idle state.
+        Runnable updateIdleState = () -> {
+            boolean empty = center.getEntries().isEmpty();
+            ring.setVisible(!empty);
+            percentLabel.setVisible(!empty);
+            idleIcon.setVisible(empty);
+        };
+        updateIdleState.run();
+        center.getEntries().addListener((ListChangeListener<TaskCenter.Entry>) change -> updateIdleState.run());
+
+        Label caption = new Label(i18n("task.overview.progress"));
+        caption.getStyleClass().add("task-overview-caption");
+
+        VBox stats = new VBox(10);
+        stats.setAlignment(Pos.TOP_LEFT);
+        stats.setPadding(new Insets(8, 8, 0, 8));
+
+        // Overall download speed (the only place it is shown — it is a global figure and
+        // attributing it to a single task card would mislead when tasks run in parallel).
+        stats.getChildren().add(createStatRow(SVG.DOWNLOAD, Bindings.createStringBinding(
+                () -> speedText.get().isEmpty() ? "—" : speedText.get(), speedText)));
+
+        // "N running · M queued" — depends on the entries list (update events re-evaluate).
+        stats.getChildren().add(createStatRow(SVG.ARROW_FORWARD, Bindings.createStringBinding(() -> {
+            int runningCount = 0, queuedCount = 0;
+            for (TaskCenter.Entry e : center.getEntries()) {
+                if (e.getStatus() == TaskCenter.Status.RUNNING) runningCount++;
+                else if (e.getStatus() == TaskCenter.Status.QUEUED) queuedCount++;
+            }
+            return i18n("task.overview.counts", runningCount, queuedCount);
+        }, center.getEntries())));
+
+        // Remaining files across all running tasks.
+        stats.getChildren().add(createStatRow(SVG.CHECKLIST, Bindings.createStringBinding(() -> {
+            int remaining = center.remainingFilesProperty().get();
+            return remaining > 0 ? i18n("task.overview.files", remaining) : "—";
+        }, center.remainingFilesProperty())));
+
+        // Download thread count (the configured connection pool size).
+        var settings = SettingsManager.settings();
+        stats.getChildren().add(createStatRow(SVG.SETTINGS, Bindings.createStringBinding(
+                () -> i18n("task.overview.threads", settings.autoDownloadThreadsProperty().get()
+                        ? FetchTask.DEFAULT_CONCURRENCY
+                        : settings.downloadThreadsProperty().get()),
+                settings.autoDownloadThreadsProperty(), settings.downloadThreadsProperty())));
+
+        box.getChildren().addAll(ringPane, caption, stats);
+        return box;
+    }
+
+    private static HBox createStatRow(SVG icon, javafx.beans.binding.StringBinding text) {
+        Node iconNode = icon.createIcon(14);
+        iconNode.setOpacity(0.75);
+        Label label = new Label();
+        label.getStyleClass().add("task-stat-label");
+        label.textProperty().bind(text);
+        HBox row = new HBox(8, iconNode, label);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return row;
+    }
+
+    private void animateRing(double target) {
+        if (ringTimeline != null) {
+            ringTimeline.stop();
+            ringTimeline = null;
+        }
+        // Snap for indeterminate transitions and regressions (e.g. a second task joining lowers the
+        // average) — only ease forward motion, PCL-style.
+        if (target < 0 || ringProgress.get() < 0 || target < ringProgress.get()) {
+            ringProgress.set(target);
+            return;
+        }
+        ringTimeline = new Timeline(new KeyFrame(Duration.millis(400),
+                new KeyValue(ringProgress, target, Interpolator.EASE_BOTH)));
+        ringTimeline.play();
+    }
+
+    // ── content (right): active stream + collapsible failures ────────
+
+    private Node createContentPane(TaskCenter center) {
+        VBox column = new VBox(12);
+        column.setPadding(new Insets(16));
+
+        VBox.setVgrow(activeContainer, Priority.ALWAYS);
+        column.getChildren().add(activeContainer);
+        column.getChildren().add(createFailedSection(center));
+
+        ScrollPane scrollPane = new ScrollPane(column);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+
+        BorderPane contentWrapper = new BorderPane();
+        contentWrapper.getStyleClass().add("card-non-transparent");
+        contentWrapper.setPadding(new Insets(4));
+        contentWrapper.setCenter(scrollPane);
+
+        StackPane centerPane = new StackPane(contentWrapper);
+        centerPane.setPadding(new Insets(12));
+        return centerPane;
+    }
+
+    private Node createFailedSection(TaskCenter center) {
+        BooleanProperty expanded = new SimpleBooleanProperty(false);
+
+        Label arrow = new Label();
+        arrow.getStyleClass().add("task-stat-label");
+        arrow.textProperty().bind(Bindings.when(expanded).then("▾").otherwise("▸"));
+
+        Label title = new Label();
+        title.getStyleClass().add("task-stat-label");
+        title.textProperty().bind(Bindings.createStringBinding(
+                () -> i18n("task.failed.section", center.getFailedTasks().size()),
+                center.getFailedTasks()));
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        JFXButton clearButton = new JFXButton(i18n("task.clear"));
+        clearButton.getStyleClass().add("dialog-cancel");
+        clearButton.setOnAction(e -> {
+            center.clearFailed();
+            e.consume();
+        });
+        clearButton.visibleProperty().bind(expanded);
+        clearButton.managedProperty().bind(expanded);
+
+        HBox header = new HBox(8, arrow, title, spacer, clearButton);
+        header.getStyleClass().add("task-failed-header");
+        header.setOnMouseClicked(e -> expanded.set(!expanded.get()));
+
+        failedContainer.visibleProperty().bind(expanded);
+        failedContainer.managedProperty().bind(expanded);
+
+        VBox section = new VBox(header, failedContainer);
+
+        // The whole section only exists while there is something to inspect.
+        javafx.beans.binding.BooleanBinding hasFailed = Bindings.isNotEmpty(center.getFailedTasks());
+        section.visibleProperty().bind(hasFailed);
+        section.managedProperty().bind(hasFailed);
+        return section;
+    }
+
+    // ── incremental card binding ──────────────────────────────────────
 
     private static void bindContainer(VBox container, ObservableList<TaskCenter.Entry> source,
                                       Node emptyNode, Function<TaskCenter.Entry, Node> cardFactory) {
@@ -161,6 +314,8 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     }
 
     private static void updateEmptyState(VBox container, Node emptyNode, boolean empty) {
+        if (emptyNode == null)
+            return;
         if (empty) {
             if (!container.getChildren().contains(emptyNode))
                 container.getChildren().add(emptyNode);
@@ -181,70 +336,21 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         return box;
     }
 
-    private ScrollPane createRunningPane() {
-        ScrollPane scrollPane = new ScrollPane(runningContainer);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
-        runningContainer.setPadding(new Insets(12));
-        return scrollPane;
-    }
+    // ── task card (running / queued) ──────────────────────────────────
 
-    private static HBox createClearToolbar(Runnable onClear) {
-        HBox toolbar = new HBox();
-        toolbar.getStyleClass().add("task-toolbar");
-        toolbar.setPickOnBounds(false);
+    private Node createTaskCard(TaskCenter.Entry entry) {
+        TaskCenter center = TaskCenter.getInstance();
 
-        JFXButton btn = createToolbarButton2(i18n("task.clear"), SVG.DELETE, onClear);
-
-        toolbar.getChildren().setAll(btn);
-        return toolbar;
-    }
-
-    private ScrollPane createCompletedPane() {
-        VBox wrapper = new VBox(8);
-        wrapper.setPadding(new Insets(12));
-
-        HBox toolbar = createClearToolbar(() -> TaskCenter.getInstance().clearSucceeded());
-
-        wrapper.getChildren().addAll(toolbar, completedContainer);
-        VBox.setVgrow(completedContainer, Priority.ALWAYS);
-
-        ScrollPane scrollPane = new ScrollPane(wrapper);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
-        return scrollPane;
-    }
-
-    private ScrollPane createFailedPane() {
-        VBox wrapper = new VBox(8);
-        wrapper.setPadding(new Insets(12));
-
-        HBox toolbar = createClearToolbar(() -> TaskCenter.getInstance().clearFailed());
-
-        wrapper.getChildren().addAll(toolbar, failedContainer);
-        VBox.setVgrow(failedContainer, Priority.ALWAYS);
-
-        ScrollPane scrollPane = new ScrollPane(wrapper);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
-        return scrollPane;
-    }
-
-    // ── running card ─────────────────────────────────────────────────
-
-    private Node createRunningCard(TaskCenter.Entry entry) {
         VBox card = new VBox();
         card.getStyleClass().add("task-card");
 
         HBox header = new HBox(8);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        Label kindTag = createKindTag(entry.getKind());
-
         Label titleLabel = new Label(entry.getDisplayText());
         titleLabel.getStyleClass().add("title-label");
 
-        // Subtitle: what the task is doing right now (current sub-task), else the status word.
+        // Subtitle: the current sub-task while running, or the queue position while waiting.
         Label statusLabel = new Label();
         statusLabel.getStyleClass().add("subtitle-label");
         statusLabel.textProperty().bind(Bindings.createStringBinding(() -> {
@@ -252,8 +358,10 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
                 String msg = entry.getStatusMessage();
                 return msg != null && !msg.isEmpty() ? msg : i18n("task.status.running");
             }
-            return i18n("task.waiting");
-        }, entry.statusProperty(), entry.statusMessageProperty()));
+            if (entry.getStatus() == TaskCenter.Status.QUEUED)
+                return i18n("task.queue.position", center.queuePosition(entry));
+            return "";
+        }, entry.statusProperty(), entry.statusMessageProperty(), center.getEntries()));
 
         VBox titleBox = new VBox(2, titleLabel, statusLabel);
         HBox.setHgrow(titleBox, Priority.ALWAYS);
@@ -262,42 +370,40 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> {
-            TaskCenter.getInstance().cancel(entry);
+            center.cancel(entry);
             e.consume();
         });
         cancelButton.setOnMouseClicked(javafx.event.Event::consume);
 
-        header.getChildren().addAll(kindTag, titleBox, cancelButton);
+        // The generic OTHER kind carries no information — only show a tag when it means something.
+        Label kindTag = createKindTag(entry.getKind());
+        if (kindTag != null)
+            header.getChildren().add(kindTag);
+        header.getChildren().addAll(titleBox, cancelButton);
         card.getChildren().add(header);
 
         javafx.beans.binding.BooleanBinding isRunning = entry.statusProperty().isEqualTo(TaskCenter.Status.RUNNING);
 
-        // Overall progress bar (indeterminate when the task graph reports no aggregate progress).
-        javafx.beans.property.ReadOnlyDoubleProperty rootProgress = entry.getExecutor().getRootTask().progressProperty();
+        // Overall progress bar: the task's weighted aggregate progress (indeterminate at -1),
+        // animated by JFXProgressBar's built-in smoothing so count jumps glide.
         JFXProgressBar progressBar = new JFXProgressBar();
+        progressBar.setSmoothProgress(true);
         progressBar.setMaxWidth(Double.MAX_VALUE);
-        progressBar.progressProperty().bind(rootProgress);
+        progressBar.progressProperty().bind(entry.progressProperty());
         progressBar.visibleProperty().bind(isRunning);
         progressBar.managedProperty().bind(isRunning);
         card.getChildren().add(progressBar);
 
-        // Footer: download speed on the left (hidden when idle), percentage on the right (shown only
-        // when the task reports determinate progress).
-        Label speedLabel = new Label();
-        speedLabel.getStyleClass().add("task-card-speed");
-        speedLabel.textProperty().bind(speedText);
-        speedLabel.visibleProperty().bind(isRunning.and(speedText.isNotEmpty()));
-        speedLabel.managedProperty().bind(speedLabel.visibleProperty());
-
+        // Footer: percentage on the right (only when the task reports determinate progress).
         Label percentLabel = new Label();
         percentLabel.getStyleClass().add("task-card-speed");
         percentLabel.textProperty().bind(Bindings.createStringBinding(
-                () -> rootProgress.get() >= 0 ? String.format("%.0f%%", rootProgress.get() * 100) : "",
-                rootProgress));
+                () -> entry.progressProperty().get() >= 0 ? String.format("%.0f%%", entry.progressProperty().get() * 100) : "",
+                entry.progressProperty()));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox footer = new HBox(speedLabel, spacer, percentLabel);
+        HBox footer = new HBox(spacer, percentLabel);
         footer.setAlignment(Pos.CENTER_LEFT);
         footer.visibleProperty().bind(isRunning);
         footer.managedProperty().bind(isRunning);
@@ -314,9 +420,6 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
                     progressBar.progressProperty().unbind();
                     progressBar.visibleProperty().unbind();
                     progressBar.managedProperty().unbind();
-                    speedLabel.textProperty().unbind();
-                    speedLabel.visibleProperty().unbind();
-                    speedLabel.managedProperty().unbind();
                     percentLabel.textProperty().unbind();
                     footer.visibleProperty().unbind();
                     footer.managedProperty().unbind();
@@ -331,33 +434,29 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         return card;
     }
 
-    // ── history item (completed / failed) ────────────────────────────
+    // ── failed row ────────────────────────────────────────────────────
 
-    private Node createHistoryItem(TaskCenter.Entry entry, boolean success) {
+    private Node createFailedRow(TaskCenter.Entry entry) {
         HBox row = new HBox(8);
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("task-history-cell");
 
-        boolean cancelled = !success && entry.getException() instanceof CancellationException;
-        Node icon;
-        if (success) {
-            icon = SVG.CHECK.createIcon(14);
-        } else if (cancelled) {
-            icon = SVG.CANCEL.createIcon(14);
-        } else {
-            icon = SVG.CLOSE.createIcon(14);
-        }
-
-        Label kindTag = createKindTag(entry.getKind());
+        boolean cancelled = entry.getException() instanceof CancellationException
+                || entry.getStatus() == TaskCenter.Status.CANCELLED;
+        Node icon = (cancelled ? SVG.CANCEL : SVG.CLOSE).createIcon(14);
 
         Label label = new Label(entry.getDisplayText());
         label.getStyleClass().add("subtitle-label");
         HBox.setHgrow(label, Priority.ALWAYS);
         label.setMaxWidth(Double.MAX_VALUE);
 
-        row.getChildren().addAll(icon, kindTag, label);
+        Label kindTag = createKindTag(entry.getKind());
+        if (kindTag != null)
+            row.getChildren().addAll(icon, kindTag, label);
+        else
+            row.getChildren().addAll(icon, label);
 
-        if (!success && !cancelled) {
+        if (!cancelled) {
             row.getStyleClass().add("clickable");
             row.setOnMouseClicked(e -> showFailedTaskDialog(entry));
         }
@@ -395,14 +494,17 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
 
     // ── kind tag ─────────────────────────────────────────────────────
 
+    /// Tag for meaningful kinds; null for OTHER (a generic "task" label is pure noise).
     private static Label createKindTag(TaskCenter.TaskKind kind) {
         String text = switch (kind == null ? TaskCenter.TaskKind.OTHER : kind) {
             case GAME_INSTALL -> i18n("task.kind.game_install");
             case MODPACK_INSTALL -> i18n("task.kind.modpack_install");
             case JAVA_DOWNLOAD -> i18n("task.kind.java_download");
             case MOD_UPDATE -> i18n("task.kind.mod_update");
-            case OTHER -> i18n("task.kind.other");
+            case OTHER -> null;
         };
+        if (text == null)
+            return null;
         Label tag = new Label(text);
         tag.getStyleClass().add("tag");
         return tag;

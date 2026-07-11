@@ -390,7 +390,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     }
                 });
         Controllers.downloadTaskDialog(task, i18n("version.launch.empty.installing"), TaskCancellationAction.NORMAL,
-                i18n("task.detail.game_install"));
+                i18n("task.detail.game_install"), TaskCenter.RESOURCE_KEY_REPO);
     }
 
     private void onUpgrade() {

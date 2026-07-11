@@ -188,6 +188,43 @@ public class DownloadSettingsPage extends StackPane {
                     hintPane.setText(i18n("settings.launcher.download.threads.hint"));
                     downloadThreads.getChildren().add(hintPane);
                 }
+
+                {
+                    HBox hbox = new HBox(8);
+                    hbox.setAlignment(Pos.CENTER);
+                    hbox.setPadding(new Insets(8, 0, 0, 0));
+                    Label label = new Label(i18n("settings.launcher.background_task_concurrency"));
+
+                    JFXSlider slider = new JFXSlider(1, 16, 2);
+                    HBox.setHgrow(slider, Priority.ALWAYS);
+
+                    JFXTextField concurrencyField = new JFXTextField();
+                    FXUtils.setLimitWidth(concurrencyField, 60);
+                    FXUtils.bind(concurrencyField, settings().backgroundTaskConcurrencyProperty(), SafeStringConverter.fromInteger()
+                            .restrict(it -> it > 0)
+                            .fallbackTo(2)
+                            .asPredicate(Validator.addTo(concurrencyField)));
+
+                    AtomicBoolean changedByTextField = new AtomicBoolean(false);
+                    FXUtils.onChangeAndOperate(settings().backgroundTaskConcurrencyProperty(), value -> {
+                        changedByTextField.set(true);
+                        slider.setValue(value.intValue());
+                        changedByTextField.set(false);
+                    });
+                    slider.valueProperty().addListener((value, oldVal, newVal) -> {
+                        if (changedByTextField.get()) return;
+                        settings().backgroundTaskConcurrencyProperty().set(value.getValue().intValue());
+                    });
+
+                    hbox.getChildren().setAll(label, slider, concurrencyField);
+                    downloadThreads.getChildren().add(hbox);
+                }
+
+                {
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                    hintPane.setText(i18n("settings.launcher.background_task_concurrency.hint"));
+                    downloadThreads.getChildren().add(hintPane);
+                }
             }
 
             downloadList.getContent().addAll(fileCommonLocationSublist, downloadThreads);

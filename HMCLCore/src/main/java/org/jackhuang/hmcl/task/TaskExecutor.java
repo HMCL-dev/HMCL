@@ -43,6 +43,12 @@ public abstract class TaskExecutor {
         taskListeners.add(taskListener);
     }
 
+    /// Removes a previously added listener so short-lived views (e.g. a re-attachable task dialog)
+    /// don't keep receiving events after they are closed.
+    public void removeTaskListener(TaskListener taskListener) {
+        taskListeners.remove(taskListener);
+    }
+
     /**
      * Reason why the task execution failed.
      * If cancelled, null is returned.
@@ -67,11 +73,5 @@ public abstract class TaskExecutor {
 
     public List<Task.StagesHint> getHints() {
         return hints;
-    }
-
-    /// The root task of this executor. Its {@link Task#progressProperty()} reflects the overall
-    /// progress when the task graph reports one (otherwise it stays at -1, i.e. indeterminate).
-    public Task<?> getRootTask() {
-        return firstTask;
     }
 }

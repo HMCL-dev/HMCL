@@ -67,8 +67,23 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
             String taskName = settings.get("task_name") instanceof String n ? n : null;
             String detail = settings.get("task_detail") != null ? settings.get("task_detail").toString() : titleText;
 
+            // Resource key gates concurrency. An explicit "task_resource_key" wins; otherwise installs
+            // all share the repository-write key (serialized to protect shared repository state).
+            String resourceKey = settings.get("task_resource_key") instanceof String rk ? rk
+                    : (kind == TaskCenter.TaskKind.GAME_INSTALL || kind == TaskCenter.TaskKind.MODPACK_INSTALL
+                    ? TaskCenter.RESOURCE_KEY_REPO : null);
+
             TaskExecutor executor = task.executor();
-            TaskCenter.Entry entry = TaskCenter.getInstance().submit(executor, titleText, detail, kind, taskName);
+            TaskCenter.Entry entry = TaskCenter.getInstance().submit(executor, titleText, detail, kind, taskName, resourceKey);
+
+            // submit() de-duplicates: if it returned an entry backed by a different executor, this
+            // exact work is already queued/running. Don't attach a second terminal-toast listener
+            // (it would double-toast) or overwrite the original entry's failure presenter.
+            if (entry.getExecutor() != executor) {
+                Controllers.showToast(i18n("task.already_queued", entry.getDisplayText()));
+                endOnce.run();
+                return;
+            }
 
             // Preserve this wizard's rich, actionable failure handling (FailureCallback / friendly
             // per-exception messages): the Task Center replays it when the user inspects the failed

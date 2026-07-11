@@ -23,6 +23,8 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -42,6 +44,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
 
 import javafx.util.Duration;
@@ -69,6 +72,10 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener onWindowsStatusChange;
     private final EventHandler<MouseEvent> onTitleBarDoubleClick;
+
+    /// Strong listener registered on the immortal TaskCenter singleton; must be removed in
+    /// [#dispose()] or a replaced skin would pin its whole title-bar subtree forever.
+    private ListChangeListener<TaskCenter.Entry> taskEntriesListener;
 
     private double mouseInitX, mouseInitY, stageInitX, stageInitY, stageInitWidth, stageInitHeight;
 
@@ -238,6 +245,9 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             buttonsContainer.setMaxHeight(40);
             {
                 // Background task indicator
+                // TODO(反馈待定): 全自动移交后台后，前台进度弹窗不再自动出现，此标题栏指示器将成为
+                //   后台任务的主要反馈渠道。需评估是否加强其存在感（更醒目的样式、首次下载时的引导提示等），
+                //   等产品决策后再实现。
                 JFXButton btnTask = new JFXButton();
                 btnTask.setFocusTraversable(false);
                 btnTask.getStyleClass().add("jfx-decorator-button");
@@ -249,7 +259,33 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 JFXSpinner taskSpinner = new JFXSpinner();
                 taskSpinner.getStyleClass().add("task-indicator-spinner");
                 taskSpinner.setRadius(11);
-                taskSpinner.progressProperty().bind(TaskCenter.getInstance().runningProgressProperty());
+
+                // Smooth the ring: ease toward the aggregate so large jumps (late stage totals,
+                // parallel tasks joining the average) glide. Snap on indeterminate or regressions.
+                DoubleProperty smoothedProgress = new SimpleDoubleProperty(-1);
+                taskSpinner.progressProperty().bind(smoothedProgress);
+                Timeline[] progressTimeline = new Timeline[1];
+                FXUtils.onChangeAndOperate(TaskCenter.getInstance().runningProgressProperty(), v -> {
+                    double target = v.doubleValue();
+                    if (progressTimeline[0] != null) {
+                        progressTimeline[0].stop();
+                        progressTimeline[0] = null;
+                    }
+                    if (target < 0 || smoothedProgress.get() < 0 || target < smoothedProgress.get()) {
+                        smoothedProgress.set(target);
+                        return;
+                    }
+                    progressTimeline[0] = new Timeline(new KeyFrame(Duration.millis(400),
+                            new KeyValue(smoothedProgress, target, Interpolator.EASE_BOTH)));
+                    progressTimeline[0].play();
+                });
+
+                // Color the ring with the title fill (like every other title-bar glyph) so it stays
+                // visible on any title-bar background — the CSS -fx-stroke blended into the bar.
+                FXUtils.onChangeAndOperate(taskSpinner.skinProperty(), skin -> {
+                    if (skin != null && taskSpinner.lookup(".arc") instanceof Shape arc)
+                        arc.strokeProperty().bind(Themes.titleFillProperty());
+                });
 
                 // Center: the number of active tasks.
                 Label taskCount = new Label();
@@ -268,8 +304,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                     taskCount.setText(String.valueOf(count));
                 };
                 updateTaskIndicator.run();
-                TaskCenter.getInstance().getEntries().addListener(
-                        (ListChangeListener<TaskCenter.Entry>) change -> updateTaskIndicator.run());
+                taskEntriesListener = change -> updateTaskIndicator.run();
+                TaskCenter.getInstance().getEntries().addListener(taskEntriesListener);
 
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
@@ -613,5 +649,16 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 return PREVIOUS;
             }
         };
+    }
+
+    @Override
+    public void dispose() {
+        // Unhook from the immortal TaskCenter singleton so a replaced skin (and its whole
+        // title-bar subtree) can be garbage collected instead of piling up listeners.
+        if (taskEntriesListener != null) {
+            TaskCenter.getInstance().getEntries().removeListener(taskEntriesListener);
+            taskEntriesListener = null;
+        }
+        super.dispose();
     }
 }

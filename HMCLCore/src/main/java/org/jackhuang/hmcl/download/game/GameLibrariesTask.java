@@ -167,17 +167,35 @@ public final class GameLibrariesTask extends Task<Void> {
                         .getVersion(LibraryAnalyzer.LibraryType.FORGE)
                         .orElse(null);
                 if (forgeVersion != null && LibraryAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
-                    try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(file)) {
-                        Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
+                    // Rewrite a temp copy then move into place, so two installs sharing this library
+                    // file can't corrupt each other's in-place zip edit (the result is idempotent).
+                    Path temp = Files.createTempFile(file.getParent(), "optifine-", ".jar");
+                    try {
+                        Files.copy(file, temp, StandardCopyOption.REPLACE_EXISTING);
+                        try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(temp)) {
+                            Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
+                        }
+                        Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
                     } catch (IOException e) {
                         throw new IOException("Cannot fix optifine", e);
+                    } finally {
+                        Files.deleteIfExists(temp);
                     }
                 }
             } else if ("org.jackhuang.hmcl".equals(library.getGroupId()) && "mmc-bootstrap".equals(library.getArtifactId())) {
                 if (!Files.exists(file)) {
                     try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
+                        Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing.");
                         Files.createDirectories(file.getParent());
-                        Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), file, StandardCopyOption.REPLACE_EXISTING);
+                        // Write to a temp file then move into place to avoid a torn file if two installs
+                        // sharing this library race on the copy.
+                        Path temp = Files.createTempFile(file.getParent(), "mmc-bootstrap-", ".tmp");
+                        try {
+                            Files.copy(input, temp, StandardCopyOption.REPLACE_EXISTING);
+                            Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+                        } finally {
+                            Files.deleteIfExists(temp);
+                        }
                     }
                 }
             }

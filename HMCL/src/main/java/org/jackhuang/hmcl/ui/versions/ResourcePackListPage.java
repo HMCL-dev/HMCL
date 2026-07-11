@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -63,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -230,12 +232,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
-        Runnable action = () -> Controllers.taskDialog(Task
+        Runnable action = () -> Controllers.downloadTaskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = repository.getGameVersion(instanceId);
                             return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, resourcePacks)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            if (exception instanceof CancellationException) return ;
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                             } else if (result.isEmpty()) {
@@ -245,7 +248,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             }
                         })
                         .withStagesHints("update.checking"),
-                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
+                i18n("addon.check_update"), TaskCancellationAction.NORMAL,
+                i18n("task.detail.resourcepack_check_updates"), TaskCenter.instanceResourceKey(instanceId));
 
         if (repository.isModpack(instanceId)) {
             Controllers.confirm(

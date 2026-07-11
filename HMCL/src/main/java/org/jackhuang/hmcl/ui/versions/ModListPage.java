@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -253,7 +254,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         })
                         .withStagesHints("update.checking"),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL,
-                i18n("task.detail.mod_check_updates"));
+                i18n("task.detail.mod_check_updates"), TaskCenter.instanceResourceKey(instanceId));
 
         if (repository.isModpack(instanceId)) {
             Controllers.confirm(

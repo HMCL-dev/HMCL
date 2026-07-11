@@ -36,8 +36,10 @@ import java.net.http.HttpRequest;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -123,19 +125,40 @@ public class CacheRepository {
         }
     }
 
+    @FunctionalInterface
+    protected interface CacheWriter {
+        void writeTo(Path temp) throws IOException;
+    }
+
+    /// Atomically publishes content into the content-addressed cache path {@code cache}: writes to a
+    /// temp file in the same directory, then moves it into place. This eliminates torn reads under
+    /// concurrent callers caching the same hash — the content is identical, so whichever move wins is
+    /// correct — unlike copying/writing directly into {@code cache}.
+    protected void publishToCache(Path cache, CacheWriter writer) throws IOException {
+        if (Files.isRegularFile(cache)) return;
+        Files.createDirectories(cache.getParent());
+        Path temp = Files.createTempFile(cache.getParent(), "cache-", ".tmp");
+        try {
+            writer.writeTo(temp);
+            Files.move(temp, cache, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            if (Files.isRegularFile(cache)) return; // a concurrent caller already published it
+            throw e;
+        } finally {
+            Files.deleteIfExists(temp);
+        }
+    }
+
     public void tryCacheFile(Path path, String algorithm, String hash) throws IOException {
         checkHash(hash);
-
-        Path cache = getFile(algorithm, hash);
-        if (Files.isRegularFile(cache)) return;
-        FileUtils.copyFile(path, cache);
+        publishToCache(getFile(algorithm, hash), temp -> FileUtils.copyFile(path, temp));
     }
 
     public Path cacheFile(Path path, String algorithm, String hash) throws IOException {
         checkHash(hash);
 
         Path cache = getFile(algorithm, hash);
-        FileUtils.copyFile(path, cache);
+        publishToCache(cache, temp -> FileUtils.copyFile(path, temp));
         return cache;
     }
 
@@ -162,8 +185,12 @@ public class CacheRepository {
 
     protected Path restore(Path original, ExceptionalSupplier<Path, ? extends IOException> cacheSupplier) throws IOException {
         Path cache = cacheSupplier.get();
-        Files.delete(original);
-        Files.createLink(original, cache);
+        try {
+            Files.deleteIfExists(original);
+            Files.createLink(original, cache);
+        } catch (FileAlreadyExistsException e) {
+            // A concurrent caller restored the same file; the link already points at identical content.
+        }
         return cache;
     }
 
@@ -257,8 +284,7 @@ public class CacheRepository {
         return cacheData(info, () -> {
             String hash = DigestUtils.digestToString(SHA1, bytes);
             Path cached = getFile(SHA1, hash);
-            Files.createDirectories(cached.getParent());
-            Files.write(cached, bytes);
+            publishToCache(cached, temp -> Files.write(temp, bytes));
             return new CacheResult(hash, cached);
         });
     }

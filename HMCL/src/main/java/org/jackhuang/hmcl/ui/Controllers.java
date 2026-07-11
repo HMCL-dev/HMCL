@@ -26,6 +26,7 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -683,45 +684,87 @@ public final class Controllers {
         return pane;
     }
 
-    public static TaskExecutorDialogPane downloadTaskDialog(Task<?> task, String title, TaskCancellationAction onCancel, String detail) {
-        return downloadTaskDialog(task.executor(), title, onCancel, detail);
+    /// Submits a walk-away download straight to the background queue — no foreground dialog at all,
+    /// just a confirmation toast. For flows the user actively waits on (launch-time Java download,
+    /// update checks that navigate on completion), use [#downloadTaskDialog] instead.
+    public static void downloadTaskBackground(Task<?> task, String title, String detail, String resourceKey) {
+        downloadTaskBackground(task.executor(), title, detail, resourceKey);
     }
 
-    public static TaskExecutorDialogPane downloadTaskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel, String detail) {
-        TaskCenter.Entry entry = TaskCenter.getInstance().submit(executor, title, detail, TaskCenter.TaskKind.OTHER, null);
-        return showManagedTaskDialog(entry, onCancel);
+    public static void downloadTaskBackground(TaskExecutor executor, String title, String detail, String resourceKey) {
+        TaskCenter.Entry entry = TaskCenter.getInstance().submit(executor, title, detail, TaskCenter.TaskKind.OTHER, null, resourceKey);
+        if (entry.getStatus() == TaskCenter.Status.QUEUED)
+            showToast(i18n("task.enqueued.position", entry.getDisplayText(),
+                    TaskCenter.getInstance().queuePosition(entry)));
+        else
+            showToast(i18n("task.auto_background.enqueued", entry.getDisplayText()));
+    }
+
+    public static void downloadTaskDialog(Task<?> task, String title, TaskCancellationAction onCancel, String detail) {
+        downloadTaskDialog(task, title, onCancel, detail, null);
+    }
+
+    public static void downloadTaskDialog(Task<?> task, String title, TaskCancellationAction onCancel, String detail, String resourceKey) {
+        downloadTaskDialog(task.executor(), title, onCancel, detail, resourceKey);
+    }
+
+    public static void downloadTaskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel, String detail) {
+        downloadTaskDialog(executor, title, onCancel, detail, null);
+    }
+
+    public static void downloadTaskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel, String detail, String resourceKey) {
+        TaskCenter.Entry entry = TaskCenter.getInstance().submit(executor, title, detail, TaskCenter.TaskKind.OTHER, null, resourceKey);
+
+        // A task that couldn't start right away must not block the user with a modal "queued"
+        // dialog — a dialog whose only message is "you don't need to do anything" is noise.
+        // Confirm via toast (consistent with the wizard path); details live in the Task Center.
+        if (entry.getStatus() == TaskCenter.Status.QUEUED) {
+            showToast(i18n("task.enqueued.position", entry.getDisplayText(),
+                    TaskCenter.getInstance().queuePosition(entry)));
+            return;
+        }
+
+        showManagedTaskDialog(entry, onCancel);
     }
 
     /// Presents a foreground dialog for a managed {@link TaskCenter} entry.
     ///
-    /// The task's lifecycle is owned by the TaskCenter, not by this dialog: the background button
-    /// simply detaches the view (the task keeps running/queued), while cancel routes through the
-    /// TaskCenter so a still-queued task is dropped correctly.
+    /// The task's lifecycle is owned by the TaskCenter, not by this dialog: closing the view
+    /// (Esc, or the dialog's close button) simply detaches it (the task keeps running/queued),
+    /// while cancel routes through the TaskCenter so a still-queued task is dropped correctly.
     public static TaskExecutorDialogPane showManagedTaskDialog(TaskCenter.Entry entry, TaskCancellationAction onCancel) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
+
+        // Already finished — don't flash an empty detail dialog wired to a dead executor.
+        if (entry.getStatus().isTerminal())
+            return pane;
+
         pane.setTitle(entry.getTitle());
         pane.setExecutor(entry.getExecutor());
 
-        // Closing the dialog (Esc, or the top-right button) only detaches the view — the task keeps
-        // running. Cancelling the task is a separate, explicit action on the Cancel button.
-        Runnable detach = () -> {
-            entry.setForegroundShown(false);
-            pane.fireEvent(new DialogCloseEvent());
-        };
-        pane.setBackgroundAction(detach);
+        // Closing the dialog (Esc, or the dialog's close button) only detaches the view — the task
+        // keeps running. Cancelling the task is a separate, explicit action on the Cancel button.
+        Runnable detach = () -> pane.fireEvent(new DialogCloseEvent());
         pane.setEscAction(detach);
         pane.setCancelAction(() -> {
             TaskCenter.getInstance().cancel(entry);
             pane.fireEvent(new DialogCloseEvent());
         });
 
-        // Reflect queued vs. running: a queued task shows a "waiting" placeholder until it starts.
+        // Reflect queued vs. running, and close through the entry's own status: an executor that
+        // stopped just before this dialog attached will never fire onStop for late listeners, but
+        // the entry always transitions to a terminal status on the FX thread.
         pane.setWaitingForBackground(entry.getStatus() == TaskCenter.Status.QUEUED);
-        entry.statusProperty().addListener((obs, old, now) ->
-                pane.setWaitingForBackground(now == TaskCenter.Status.QUEUED));
+        ChangeListener<TaskCenter.Status> statusListener = (obs, old, now) -> {
+            pane.setWaitingForBackground(now == TaskCenter.Status.QUEUED);
+            if (now.isTerminal())
+                pane.fireEvent(new DialogCloseEvent());
+        };
+        entry.statusProperty().addListener(statusListener);
 
-        entry.setForegroundShown(true);
-        pane.addEventHandler(DialogCloseEvent.CLOSE, e -> entry.setForegroundShown(false));
+        // The entry outlives this view; drop the listener so closed dialogs don't accumulate.
+        pane.addEventHandler(DialogCloseEvent.CLOSE, e ->
+                entry.statusProperty().removeListener(statusListener));
 
         dialog(pane);
         pane.refreshTaskList();

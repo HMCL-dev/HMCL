@@ -301,7 +301,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                             .getInstallTask(repository, modpackFile, modpackName, modpack, null)
                                             .executor();
                                     Controllers.downloadTaskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL,
-                                            i18n("task.detail.modpack_install"));
+                                            i18n("task.detail.modpack_install"), TaskCenter.RESOURCE_KEY_REPO);
                                 }).start();
                     }
                 }

@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.Lang;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -39,9 +40,22 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         super(task);
     }
 
+    /// Dispatches an event to every listener, isolating failures: a listener that throws must not
+    /// prevent the remaining listeners from being notified, and — critically — must not derail the
+    /// executor's own completion chain (a swallowed onStop would leave schedulers waiting forever).
+    private void fireTaskEvent(Consumer<TaskListener> event) {
+        for (TaskListener listener : taskListeners) {
+            try {
+                event.accept(listener);
+            } catch (Throwable e) {
+                LOG.warning("A task listener threw an exception", e);
+            }
+        }
+    }
+
     @Override
     public TaskExecutor start() {
-        taskListeners.forEach(TaskListener::onStart);
+        fireTaskEvent(TaskListener::onStart);
         future = executeTasks(null, Collections.singleton(firstTask))
                 .thenApplyAsync(exception -> {
                     boolean success = exception == null;
@@ -61,7 +75,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         }
                     }
 
-                    taskListeners.forEach(it -> it.onStop(success, this));
+                    fireTaskEvent(it -> it.onStop(success, this));
                     return success;
                 })
                 .exceptionally(e -> {
@@ -140,7 +154,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     if (task.getSignificance().shouldLog())
                         LOG.trace("Executing task: " + task.getName());
 
-                    taskListeners.forEach(it -> it.onReady(task));
+                    fireTaskEvent(it -> it.onReady(task));
 
                     return task.getFuture(new TaskCompletableFuture() {
                         @Override
@@ -163,7 +177,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
                     task.setResult(result);
                     task.fireDoneEvent(this, false);
-                    taskListeners.forEach(it -> it.onFinished(task));
+                    fireTaskEvent(it -> it.onFinished(task));
 
                     task.setState(Task.TaskState.SUCCEEDED);
 
@@ -178,7 +192,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                                 LOG.trace("Task aborted: " + task.getName());
                             }
                             task.fireDoneEvent(this, true);
-                            taskListeners.forEach(it -> it.onFailed(task, e));
+                            fireTaskEvent(it -> it.onFailed(task, e));
                         } else {
                             task.setException(e);
                             exception = e;
@@ -186,7 +200,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                                 LOG.trace("Task failed: " + task.getName(), e);
                             }
                             task.fireDoneEvent(this, true);
-                            taskListeners.forEach(it -> it.onFailed(task, e));
+                            fireTaskEvent(it -> it.onFailed(task, e));
                         }
 
                         task.setState(Task.TaskState.FAILED);
@@ -208,12 +222,12 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     } else if (parentTask != null) {
                         task.setInheritedStage(parentTask.getInheritedStage());
                     }
-                    task.setNotifyPropertiesChanged(() -> taskListeners.forEach(it -> it.onPropertiesUpdate(task)));
+                    task.setNotifyPropertiesChanged(() -> fireTaskEvent(it -> it.onPropertiesUpdate(task)));
 
                     if (task.getSignificance().shouldLog())
                         LOG.trace("Executing task: " + task.getName());
 
-                    taskListeners.forEach(it -> it.onReady(task));
+                    fireTaskEvent(it -> it.onReady(task));
 
                     if (task.doPreExecute()) {
                         return CompletableFuture.runAsync(wrap(task::preExecute), task.getExecutor());
@@ -237,7 +251,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
                     return CompletableFuture.runAsync(wrap(() -> {
                         task.setState(Task.TaskState.RUNNING);
-                        taskListeners.forEach(it -> it.onRunning(task));
+                        fireTaskEvent(it -> it.onRunning(task));
                         task.execute();
                     }), task.getExecutor()).whenComplete((unused, throwable) -> {
                         task.setState(Task.TaskState.EXECUTED);
@@ -276,7 +290,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     }
 
                     task.fireDoneEvent(this, false);
-                    taskListeners.forEach(it -> it.onFinished(task));
+                    fireTaskEvent(it -> it.onFinished(task));
 
                     task.setState(Task.TaskState.SUCCEEDED);
 
@@ -298,7 +312,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                             }
                         }
                         task.fireDoneEvent(this, true);
-                        taskListeners.forEach(it -> it.onFailed(task, e));
+                        fireTaskEvent(it -> it.onFailed(task, e));
 
                         task.setState(Task.TaskState.FAILED);
                     }
@@ -333,9 +347,5 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
     public static void setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
         AsyncTaskExecutor.uncaughtExceptionHandler = uncaughtExceptionHandler;
-    }
-
-    public boolean isStarted() {
-        return future != null;
     }
 }

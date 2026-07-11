@@ -51,7 +51,6 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,11 +166,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         Set<String> finalExistingFiles = existingFiles;
+        String resourceKey = TaskCenter.instanceResourceKey(version);
 
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
-            Controllers.downloadTaskDialog(Task.composeAsync(() -> {
+            Controllers.downloadTaskBackground(Task.composeAsync(() -> {
                 var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.file().url()), dest);
                 task.setName(file.name());
                 return task;
@@ -186,8 +186,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 else {
                     Controllers.showToast(i18n("install.success"));
                 }
-            }), i18n("message.downloading"), TaskCancellationAction.NORMAL,
-                i18n(detailKey, file.name()));
+            }), i18n("message.downloading"),
+                i18n(detailKey, file.name()), resourceKey);
             handler.resolve();
         }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), (it) -> !finalExistingFiles.contains(it)));
 
