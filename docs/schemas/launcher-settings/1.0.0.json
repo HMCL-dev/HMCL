@@ -50,6 +50,7 @@
           "themeColor",
           "themeColorStyle",
           "titleBarTransparent",
+          "windowTransparent",
           "background",
           "backgroundOpacity"
         ]

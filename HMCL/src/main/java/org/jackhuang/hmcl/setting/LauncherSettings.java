@@ -87,6 +87,9 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Theme appearance override key for title-bar transparency.
     public static final String THEME_APPEARANCE_TITLE_BAR_TRANSPARENT = "titleBarTransparent";
 
+    /// Theme appearance override key for window transparency.
+    public static final String THEME_APPEARANCE_WINDOW_TRANSPARENT = "windowTransparent";
+
     /// Theme appearance override key for the primary background source.
     public static final String THEME_APPEARANCE_BACKGROUND = "background";
 
@@ -336,6 +339,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return titleBarTransparent;
     }
 
+    /// Whether translucent launcher backgrounds reveal content behind the window.
+    @SerializedName("windowTransparent")
+    private final BooleanProperty windowTransparent = new SimpleBooleanProperty(false);
+
+    /// Returns the window transparency property.
+    public BooleanProperty windowTransparentProperty() {
+        return windowTransparent;
+    }
+
     // Background source
 
     /// The launcher background source type.
@@ -465,15 +477,6 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     }
 
     // General UI
-
-    /// Whether translucent launcher backgrounds reveal content behind the window.
-    @SerializedName("windowTransparent")
-    private final BooleanProperty windowTransparent = new SimpleBooleanProperty(true);
-
-    /// Returns the window transparency property.
-    public BooleanProperty windowTransparentProperty() {
-        return windowTransparent;
-    }
 
     /// Whether UI animations are disabled.
     @SerializedName("animationDisabled")

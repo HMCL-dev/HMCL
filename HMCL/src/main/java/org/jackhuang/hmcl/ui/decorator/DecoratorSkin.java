@@ -55,8 +55,6 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-
 public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane root, parent;
     private final StackPane titleContainer;
@@ -138,13 +136,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         StackPane wrapper = new StackPane();
         wrapper.backgroundProperty().bind(Bindings.createObjectBinding(
-                () -> settings().windowTransparentProperty().get()
+                () -> Themes.windowTransparentProperty().get()
                         ? null
                         : new Background(new BackgroundFill(
                                 Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER),
                                 CornerRadii.EMPTY,
                                 Insets.EMPTY)),
-                settings().windowTransparentProperty(),
+                Themes.windowTransparentProperty(),
                 Themes.colorSchemeProperty()));
 
         Region backgroundNode = new Region();

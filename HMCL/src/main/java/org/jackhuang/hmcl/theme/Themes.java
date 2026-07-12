@@ -1056,6 +1056,27 @@ public final class Themes {
             FXUtils.DARK_MODE != null ? FXUtils.DARK_MODE : settings().themeBrightnessModeProperty()
     );
 
+    /// Whether the launcher window should be transparent after applying launcher and theme settings.
+    private static final BooleanBinding windowTransparent = Bindings.createBooleanBinding(
+            () -> {
+                if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT)) {
+                    return settings().windowTransparentProperty().get();
+                }
+                try {
+                    return Objects.requireNonNullElse(
+                            ThemePackManager.resolveCurrentWindowTransparent(ThemePackManager.currentResolveContext()),
+                            false);
+                } catch (IOException | RuntimeException e) {
+                    return false;
+                }
+            },
+            settings().windowTransparentProperty(),
+            settings().getThemeAppearanceOverrides(),
+            settings().selectedThemeProperty(),
+            settings().themeBrightnessModeProperty(),
+            FXUtils.DARK_MODE != null ? FXUtils.DARK_MODE : settings().themeBrightnessModeProperty()
+    );
+
     /// The title text fill derived from the current color scheme.
     private static final ObjectBinding<Color> titleFill = Bindings.createObjectBinding(
             () -> titleBarTransparent.get()
@@ -1073,6 +1094,11 @@ public final class Themes {
     /// Returns whether the title area should be transparent after applying launcher and theme settings.
     public static BooleanBinding titleBarTransparentProperty() {
         return titleBarTransparent;
+    }
+
+    /// Returns whether the launcher window should be transparent after applying launcher and theme settings.
+    public static BooleanBinding windowTransparentProperty() {
+        return windowTransparent;
     }
 
     /// Returns whether the current color scheme uses dark brightness.

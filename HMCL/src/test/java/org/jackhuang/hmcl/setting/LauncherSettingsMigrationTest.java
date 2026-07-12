@@ -137,6 +137,7 @@ public final class LauncherSettingsMigrationTest {
             assertEquals(ThemeColor.of("#336699"), launcherSettings.customThemeColorProperty().get());
             assertEquals(ThemeColorType.CUSTOM, launcherSettings.themeColorTypeProperty().get());
             assertTrue(launcherSettings.titleBarTransparentProperty().get());
+            assertTrue(launcherSettings.windowTransparentProperty().get());
             assertEquals("/pictures/background.png", launcherSettings.customBackgroundImagePathProperty().get());
             assertEquals("https://example.com/background.png",
                     launcherSettings.networkBackgroundImageUrlProperty().get());
@@ -148,6 +149,8 @@ public final class LauncherSettingsMigrationTest {
             assertTrue(launcherSettings.getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_COLOR));
             assertTrue(launcherSettings.getThemeAppearanceOverrides().contains(
                     LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT));
+            assertTrue(launcherSettings.getThemeAppearanceOverrides().contains(
+                    LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT));
             assertFalse(launcherSettings.getThemeAppearanceOverrides().contains("networkBackgroundImageCachePolicy"));
             assertEquals("/pictures/background.png", serialized.get("customBackgroundImagePath").getAsString());
             assertEquals("https://example.com/background.png",
@@ -158,6 +161,7 @@ public final class LauncherSettingsMigrationTest {
             assertEquals(ThemeColorType.CUSTOM.name(), serialized.get("themeColorType").getAsString());
             assertEquals("dark", serialized.get("themeBrightnessMode").getAsString());
             assertTrue(serialized.get("titleBarTransparent").getAsBoolean());
+            assertTrue(serialized.get("windowTransparent").getAsBoolean());
             assertEquals("#336699", serialized.get("customBackgroundPaint").getAsString());
         }
     }
