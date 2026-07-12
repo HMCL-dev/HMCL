@@ -212,6 +212,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
         @Override
         public void updateItem(RemoteVersion remoteVersion, boolean empty) {
+            RemoteVersion oldRemoteVersion = getItem();
+            
             super.updateItem(remoteVersion, empty);
 
             if (empty) {
@@ -220,12 +222,15 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
             setGraphic(pane);
 
+            if (oldRemoteVersion == remoteVersion) return;
+
             twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
                 twoLineListItem.setSubtitle(I18n.formatDateTime(remoteVersion.getReleaseDate()));
             } else {
                 twoLineListItem.setSubtitle(null);
             }
+
             twoLineListItem.getTags().clear();
 
             if (remoteVersion instanceof GameRemoteVersion) {
@@ -386,7 +391,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         list = new JFXListView<>();
                         list.getStyleClass().add("jfx-list-view-float");
 
-                        list.setFixedCellSize(65);
+                        RemoteVersionListCell dummyCell = new RemoteVersionListCell(control);
+                        dummyCell.twoLineListItem.setTitle("Dummy");
+                        dummyCell.twoLineListItem.setSubtitle("Dummy");
+                        dummyCell.imageView.setImage(VersionIconType.GRASS.getIcon());
+                        prepareNode(dummyCell.pane);
+                        list.setFixedCellSize(dummyCell.pane.prefHeight(-1));
 
                         VBox.setVgrow(list, Priority.ALWAYS);
 

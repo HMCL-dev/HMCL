@@ -27,7 +27,10 @@ import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.nio.channels.Channels;
@@ -48,7 +51,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.gson.JsonUtils.*;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.GSON;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CacheRepository {
@@ -383,46 +386,24 @@ public class CacheRepository {
         }
     }
 
-    private static final class ETagIndex {
-        private final Collection<ETagItem> eTag;
-
+    private record ETagIndex(Collection<ETagItem> eTag) {
         public ETagIndex() {
-            this.eTag = new HashSet<>();
+            this(new HashSet<>());
         }
 
-        public ETagIndex(Collection<ETagItem> eTags) {
-            this.eTag = new HashSet<>(eTags);
+        private ETagIndex(Collection<ETagItem> eTag) {
+            this.eTag = new HashSet<>(eTag);
         }
     }
 
-    private static final class ETagItem {
-        private final String url;
-        private final String eTag;
-        private final String hash;
-        @SerializedName("local")
-        private final long localLastModified;
-        @SerializedName("remote")
-        private final String remoteLastModified;
-        private final long expires;
+    private record ETagItem(String url, String eTag, String hash, @SerializedName("local") long localLastModified,
+                            @SerializedName("remote") String remoteLastModified, long expires) {
 
         /**
          * For Gson.
          */
         public ETagItem() {
             this(null, null, null, 0, null, 0L);
-        }
-
-        public ETagItem(String url, String eTag, String hash, long localLastModified, String remoteLastModified, long expires) {
-            this.url = url;
-            this.eTag = eTag;
-            this.hash = hash;
-            this.localLastModified = localLastModified;
-            this.remoteLastModified = remoteLastModified;
-            this.expires = expires;
-        }
-
-        public long getExpires() {
-            return expires;
         }
 
         public int compareTo(ETagItem other) {
@@ -438,24 +419,7 @@ public class CacheRepository {
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            return o instanceof ETagItem that
-                    && localLastModified == that.localLastModified
-                    && Objects.equals(url, that.url)
-                    && Objects.equals(eTag, that.eTag)
-                    && Objects.equals(hash, that.hash)
-                    && Objects.equals(remoteLastModified, that.remoteLastModified)
-                    && this.expires == that.expires;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(url, eTag, hash, localLastModified, remoteLastModified, expires);
-        }
-
-        @Override
-        public String toString() {
+        public @NotNull String toString() {
             return "ETagItem[" +
                     "url='" + url + '\'' +
                     ", eTag='" + eTag + '\'' +

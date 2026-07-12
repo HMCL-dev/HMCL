@@ -301,7 +301,7 @@ public class InstallerItem extends Control {
                 pane.getChildren().add(imageContainer);
 
                 if (control.style == Style.CARD) {
-                    VBox.setMargin(imageContainer, new Insets(8, 0, 16, 0));
+                    VBox.setMargin(imageContainer, new Insets(8, 0, 8, 0));
                 }
             }
 
