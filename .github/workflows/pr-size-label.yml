@@ -59,12 +59,14 @@ jobs:
             }
 
             let targetLabel
-            if (totalChanges <= 9) targetLabel = 'size/XS'
-            else if (totalChanges <= 29) targetLabel = 'size/S'
-            else if (totalChanges <= 99) targetLabel = 'size/M'
-            else if (totalChanges <= 499) targetLabel = 'size/L'
-            else if (totalChanges <= 999) targetLabel = 'size/XL'
-            else targetLabel = 'size/XXL'
+            if (totalChanges <= 9) targetLabel = '1+'
+            else if (totalChanges <= 39) targetLabel = '10+'
+            else if (totalChanges <= 99) targetLabel = '40+'
+            else if (totalChanges <= 499) targetLabel = '100+'
+            else if (totalChanges <= 999) targetLabel = '500+'
+            else if (totalChanges <= 1999) targetLabel = '1000+'
+            else if (totalChanges <= 4999) targetLabel = '2000+'
+            else targetLabel = '5000+'
 
             const currentLabels = await github.paginate(github.rest.issues.listLabelsOnIssue, {
               owner,
