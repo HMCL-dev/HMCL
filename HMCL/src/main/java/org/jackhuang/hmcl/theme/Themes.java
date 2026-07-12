@@ -945,7 +945,14 @@ public final class Themes {
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.DEFAULT,
-                BackgroundSize.DEFAULT));
+                new BackgroundSize(
+                        BackgroundSize.AUTO,
+                        BackgroundSize.AUTO,
+                        false,
+                        false,
+                        false,
+                        true)
+        ));
         return new LauncherBackground(imageBackground, MathUtils.clamp(opacity, 0., 1.));
     }
 
