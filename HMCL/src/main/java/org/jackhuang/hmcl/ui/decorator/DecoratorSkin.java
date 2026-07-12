@@ -44,6 +44,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 import javafx.util.Duration;
+import org.glavo.monetfx.ColorRole;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -53,6 +54,8 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane root, parent;
@@ -134,9 +137,33 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         root.getChildren().setAll(shadowContainer);
 
         StackPane wrapper = new StackPane();
+        wrapper.backgroundProperty().bind(Bindings.createObjectBinding(
+                () -> settings().windowTransparentProperty().get()
+                        ? null
+                        : new Background(new BackgroundFill(
+                                Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER),
+                                CornerRadii.EMPTY,
+                                Insets.EMPTY)),
+                settings().windowTransparentProperty(),
+                Themes.colorSchemeProperty()));
+
+        Region backgroundNode = new Region();
+        backgroundNode.setMouseTransparent(true);
+        backgroundNode.backgroundProperty().bind(Bindings.createObjectBinding(
+                () -> skinnable.getContentBackground() == null
+                        ? null
+                        : skinnable.getContentBackground().background(),
+                skinnable.contentBackgroundProperty()));
+        backgroundNode.opacityProperty().bind(Bindings.createDoubleBinding(
+                () -> skinnable.getContentBackground() == null
+                        ? 1.0
+                        : skinnable.getContentBackground().opacity(),
+                skinnable.contentBackgroundProperty()));
+        StackPane.setAlignment(backgroundNode, Pos.BOTTOM_CENTER);
+
         BorderPane frame = new BorderPane();
         frame.getStyleClass().addAll("jfx-decorator");
-        wrapper.getChildren().setAll(frame);
+        wrapper.getChildren().setAll(backgroundNode, frame);
         skinnable.setDrawerWrapper(wrapper);
 
         parent.getChildren().add(wrapper);
@@ -178,20 +205,20 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         titleContainer = new StackPane();
         titleContainer.setPickOnBounds(false);
         titleContainer.getStyleClass().addAll("jfx-tool-bar");
+        backgroundNode.maxHeightProperty().bind(Bindings.createDoubleBinding(
+                () -> Math.max(0.0, wrapper.getHeight()
+                        - (skinnable.isTitleTransparent() ? 0.0 : titleContainer.getHeight())),
+                wrapper.heightProperty(),
+                skinnable.titleTransparentProperty(),
+                titleContainer.heightProperty()));
 
         // Maybe, we can automatically identify whether the top part of the picture is light-coloured or dark when the title is transparent,
         // and decide whether the whole top bar should be rendered in white or black. TODO
         FXUtils.onChangeAndOperate(skinnable.titleTransparentProperty(), titleTransparent -> {
             if (titleTransparent) {
-                wrapper.backgroundProperty().bind(skinnable.contentBackgroundProperty());
-                container.backgroundProperty().unbind();
-                container.setBackground(null);
                 titleContainer.getStyleClass().remove("background");
                 titleContainer.getStyleClass().add("gray-background");
             } else {
-                container.backgroundProperty().bind(skinnable.contentBackgroundProperty());
-                wrapper.backgroundProperty().unbind();
-                wrapper.setBackground(null);
                 titleContainer.getStyleClass().add("background");
                 titleContainer.getStyleClass().remove("gray-background");
             }
