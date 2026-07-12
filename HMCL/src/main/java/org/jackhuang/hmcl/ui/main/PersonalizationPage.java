@@ -1078,6 +1078,12 @@ public class PersonalizationPage extends StackPane {
             refresh.invalidated(null);
             themeAppearanceList.getContent().add(titleBarTransparentButton);
         }
+
+        LineToggleButton windowTransparentButton = new LineToggleButton();
+        windowTransparentButton.selectedProperty().bindBidirectional(settings().windowTransparentProperty());
+        windowTransparentButton.setTitle(i18n("settings.launcher.window_transparent"));
+        themeAppearanceList.getContent().add(windowTransparentButton);
+
         content.getChildren().addAll(
                 ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")),
                 themeAppearanceList,

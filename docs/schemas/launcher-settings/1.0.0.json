@@ -137,6 +137,9 @@
     "launcherFontFamily": {
       "type": "string"
     },
+    "windowTransparent": {
+      "type": "boolean"
+    },
     "animationDisabled": {
       "type": "boolean"
     },

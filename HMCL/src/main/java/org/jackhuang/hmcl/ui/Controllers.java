@@ -26,6 +26,7 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -40,6 +41,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import org.glavo.monetfx.ColorRole;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LauncherHelper;
@@ -48,6 +50,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -397,7 +400,12 @@ public final class Controllers {
         Lang.thread(JavaManager::initialize, "Search Java", true);
 
         scene = new Scene(decorator.getDecorator());
-        scene.setFill(Color.TRANSPARENT);
+        scene.fillProperty().bind(Bindings.createObjectBinding(
+                () -> settings().windowTransparentProperty().get()
+                        ? Color.TRANSPARENT
+                        : Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER),
+                settings().windowTransparentProperty(),
+                Themes.colorSchemeProperty()));
         stage.setMinWidth(MIN_WIDTH);
         stage.setMinHeight(MIN_HEIGHT);
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());

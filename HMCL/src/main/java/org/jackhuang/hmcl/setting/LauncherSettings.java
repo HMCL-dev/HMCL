@@ -466,6 +466,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     // General UI
 
+    /// Whether translucent launcher backgrounds reveal content behind the window.
+    @SerializedName("windowTransparent")
+    private final BooleanProperty windowTransparent = new SimpleBooleanProperty(true);
+
+    /// Returns the window transparency property.
+    public BooleanProperty windowTransparentProperty() {
+        return windowTransparent;
+    }
+
     /// Whether UI animations are disabled.
     @SerializedName("animationDisabled")
     private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
