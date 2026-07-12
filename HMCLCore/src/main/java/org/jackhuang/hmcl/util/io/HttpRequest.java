@@ -155,10 +155,13 @@ public abstract class HttpRequest {
                 HttpURLConnection con = createConnection();
                 con = resolveConnection(con);
                 checkResponseCode(con);
-
-                return IOUtils.readFullyAsString("gzip".equals(con.getContentEncoding())
-                        ? IOUtils.wrapFromGZip(con.getInputStream())
-                        : con.getInputStream());
+                try {
+                    return IOUtils.readFullyAsString("gzip".equals(con.getContentEncoding())
+                            ? IOUtils.wrapFromGZip(con.getInputStream())
+                            : con.getInputStream());
+                } finally {
+                    con.disconnect();
+                }
             }, retryTimes);
         }
     }

@@ -67,6 +67,19 @@ public final class NetworkUtils {
         }
     }
 
+    public static boolean isSiteLocalAddress(URI uri) {
+        String host = uri.getHost();
+        if (StringUtils.isBlank(host))
+            return false;
+
+        try {
+            InetAddress addr = InetAddress.getByName(host);
+            return addr.isSiteLocalAddress() || addr.isLinkLocalAddress();
+        } catch (UnknownHostException e) {
+            return false;
+        }
+    }
+
     public static boolean isHttpUri(URI uri) {
         return "http".equals(uri.getScheme()) || "https".equals(uri.getScheme());
     }
@@ -335,6 +348,18 @@ public final class NetworkUtils {
                 }
 
                 WebURL redirectedUrl = WebURL.of(conn.getURL()).resolve(newURL);
+                // 安全防护：检查重定向目标是否为内网地址，防止 SSRF 攻击
+                String redirectHost = redirectedUrl.toURL().getHost();
+                if (StringUtils.isNotBlank(redirectHost)) {
+                    try {
+                        InetAddress redirectAddr = InetAddress.getByName(redirectHost);
+                        if (redirectAddr.isLoopbackAddress() || redirectAddr.isSiteLocalAddress() || redirectAddr.isLinkLocalAddress()) {
+                            throw new IOException("Redirect to internal/loopback address is blocked: " + redirectedUrl);
+                        }
+                    } catch (UnknownHostException ignored) {
+                        // 忽略无法解析的主机名
+                    }
+                }
                 HttpURLConnection redirected = (HttpURLConnection) redirectedUrl.toURL().openConnection();
                 properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
                 injectApiKey(redirectedUrl, redirected);
@@ -394,7 +419,7 @@ public final class NetworkUtils {
         StringBuilder sb = new StringBuilder();
         if (params != null) {
             for (Map.Entry<String, String> e : params.entrySet())
-                sb.append(e.getKey()).append("=").append(e.getValue()).append("&");
+                sb.append(URLEncoder.encode(e.getKey(), UTF_8)).append("=").append(URLEncoder.encode(e.getValue(), UTF_8)).append("&");
             sb.deleteCharAt(sb.length() - 1);
         }
         return doPost(u, sb.toString());

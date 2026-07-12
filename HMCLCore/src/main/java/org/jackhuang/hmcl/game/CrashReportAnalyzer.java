@@ -185,7 +185,14 @@ public final class CrashReportAnalyzer {
     public static String findCrashReport(String log) throws IOException, InvalidPathException {
         Matcher matcher = CRASH_REPORT_LOCATION_PATTERN.matcher(log);
         if (matcher.find()) {
-            return Files.readString(Paths.get(matcher.group("location")));
+            String location = matcher.group("location");
+            var crashPath = Paths.get(location).toAbsolutePath().normalize();
+            // 安全防护：验证路径穿越并检查文件名格式，防止任意文件读取
+            String fileName = crashPath.getFileName().toString();
+            if (!fileName.startsWith("crash-") || !fileName.endsWith(".txt")) {
+                throw new IOException("Invalid crash report path: " + crashPath);
+            }
+            return Files.readString(crashPath);
         } else {
             return null;
         }

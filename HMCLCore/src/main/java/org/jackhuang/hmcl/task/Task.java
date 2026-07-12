@@ -70,8 +70,7 @@ public abstract class Task<T> {
     }
 
     protected final boolean isCancelled() {
-        if (Thread.interrupted()) {
-            Thread.currentThread().interrupt();
+        if (Thread.currentThread().isInterrupted()) {
             return true;
         }
 
@@ -937,7 +936,7 @@ public abstract class Task<T> {
 
     public static <T> Task<T> composeAsync(String name, ExceptionalSupplier<Task<T>, ?> fn) {
         return new Task<T>() {
-            Task<T> then;
+            volatile Task<T> then;
 
             @Override
             public void execute() throws Exception {

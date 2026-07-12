@@ -207,6 +207,13 @@ public final class UpdateHandler {
         try {
             for (String inputArgument : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
                 if (inputArgument.startsWith("-D") || inputArgument.startsWith("-X")) {
+                    // 安全防护：过滤包含敏感信息的系统属性，防止泄露到新进程和日志
+                    String lowerArg = inputArgument.toLowerCase(Locale.ROOT);
+                    if (lowerArg.contains("password") || lowerArg.contains("token")
+                            || lowerArg.contains("secret") || lowerArg.contains("credential")
+                            || lowerArg.contains("proxy.pass")) {
+                        continue;
+                    }
                     commandline.add(inputArgument);
                 }
             }
@@ -214,6 +221,11 @@ public final class UpdateHandler {
             // ManagementFactory not available
             for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
                 if (entry.getKey() instanceof String key && key.startsWith("hmcl.")) {
+                    String lowerKey = key.toLowerCase(Locale.ROOT);
+                    if (lowerKey.contains("password") || lowerKey.contains("token")
+                            || lowerKey.contains("secret") || lowerKey.contains("credential")) {
+                        continue;
+                    }
                     commandline.add("-D" + key + "=" + entry.getValue());
                 }
             }
@@ -222,7 +234,7 @@ public final class UpdateHandler {
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
         commandline.addAll(Arrays.asList(appArgs));
-        LOG.info("Starting process: " + commandline);
+        LOG.info("Starting process for update");
         new ProcessBuilder(commandline)
                 .directory(Paths.get("").toAbsolutePath().toFile())
                 .inheritIO()

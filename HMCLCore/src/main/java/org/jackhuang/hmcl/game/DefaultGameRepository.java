@@ -51,7 +51,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class DefaultGameRepository implements GameRepository {
 
     private Path baseDirectory;
-    protected Map<String, Version> versions;
+    protected volatile Map<String, Version> versions;
     private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
     public DefaultGameRepository(Path baseDirectory) {

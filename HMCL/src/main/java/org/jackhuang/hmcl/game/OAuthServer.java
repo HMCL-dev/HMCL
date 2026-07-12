@@ -29,7 +29,9 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Locale;
@@ -128,7 +130,10 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         String code = query.get("code");
         if (code != null) {
-            if (this.state.equals(query.get("state"))) {
+            if (this.state != null && query.get("state") != null
+                    && MessageDigest.isEqual(
+                            this.state.getBytes(StandardCharsets.UTF_8),
+                            query.get("state").getBytes(StandardCharsets.UTF_8))) {
                 idToken = query.get("id_token");
                 future.complete(code);
             } else if (query.containsKey("state")) {

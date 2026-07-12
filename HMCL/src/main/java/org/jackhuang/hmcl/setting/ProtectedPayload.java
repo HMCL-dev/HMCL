@@ -166,7 +166,11 @@ final class ProtectedPayload {
                 JsonArray result = new JsonArray(WRITTEN_OBFUSCATED_PAYLOAD_SIZE);
                 for (int laneIndex = 0; laneIndex < OBFUSCATED_LANE_COUNT; laneIndex++) {
                     int start = laneIndex * laneLength;
-                    String lane = payload.substring(start, start + laneLength);
+                    // 最后一个 lane 包含剩余所有字符，防止整数除法丢失尾部数据
+                    int end = (laneIndex == OBFUSCATED_LANE_COUNT - 1)
+                            ? payload.length()
+                            : start + laneLength;
+                    String lane = payload.substring(start, end);
                     for (int i = 0; i < LANE_PADDING_COUNT; i++) {
                         result.add(JsonNull.INSTANCE);
                     }

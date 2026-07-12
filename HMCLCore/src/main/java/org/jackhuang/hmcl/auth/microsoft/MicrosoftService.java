@@ -168,8 +168,12 @@ public class MicrosoftService {
                 .retry(5)
                 .accept("application/json").createConnection();
 
-        if (request.getResponseCode() != 200) {
-            throw new ResponseCodeException("https://api.minecraftservices.com/entitlements/mcstore", request.getResponseCode());
+        try {
+            if (request.getResponseCode() != 200) {
+                throw new ResponseCodeException("https://api.minecraftservices.com/entitlements/mcstore", request.getResponseCode());
+            }
+        } finally {
+            request.disconnect();
         }
 
         // Get Minecraft Account UUID
