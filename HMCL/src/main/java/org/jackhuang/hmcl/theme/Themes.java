@@ -858,17 +858,23 @@ public final class Themes {
         LoadedBackground refreshed;
         if (loaded instanceof LoadedBackground.Image imageBackground) {
             refreshed = new LoadedBackground.Image(
-                    imageBackground.background().withOpacity(MathUtils.clamp(opacity, 0., 1.)),
+                    new LauncherBackground(
+                            imageBackground.background().background(),
+                            MathUtils.clamp(opacity, 0., 1.)),
                     imageBackground.image(),
                     imageBackground.wallpaperThemeColor(),
                     imageBackground.fallbackBackground());
         } else if (loaded instanceof LoadedBackground.ThemeColorFill themeColorFill) {
             refreshed = new LoadedBackground.ThemeColorFill(
-                    themeColorFill.background().withOpacity(MathUtils.clamp(opacity, 0., 1.)),
+                    new LauncherBackground(
+                            themeColorFill.background().background(),
+                            MathUtils.clamp(opacity, 0., 1.)),
                     themeColorFill.fallbackBackground());
         } else if (loaded instanceof LoadedBackground.Paint paintBackground) {
             refreshed = new LoadedBackground.Paint(
-                    paintBackground.background().withOpacity(MathUtils.clamp(opacity, 0., 1.)),
+                    new LauncherBackground(
+                            paintBackground.background().background(),
+                            MathUtils.clamp(opacity, 0., 1.)),
                     paintBackground.paint(),
                     paintBackground.wallpaperThemeColor(),
                     paintBackground.fallbackBackground());

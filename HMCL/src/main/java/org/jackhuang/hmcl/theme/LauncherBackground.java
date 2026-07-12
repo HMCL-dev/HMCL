@@ -36,8 +36,4 @@ public record LauncherBackground(Background background, double opacity) {
         }
     }
 
-    /// Returns a value containing the same background with a different node opacity.
-    public LauncherBackground withOpacity(double opacity) {
-        return new LauncherBackground(background, opacity);
-    }
 }

@@ -37,9 +37,7 @@ public final class LauncherBackgroundTest {
     public void changesOpacityWithoutChangingBackground() {
         Background background = new Background(
                 new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY));
-        LauncherBackground original = new LauncherBackground(background, 1.0);
-
-        LauncherBackground changed = original.withOpacity(0.4);
+        LauncherBackground changed = new LauncherBackground(background, 0.4);
 
         assertSame(background, changed.background());
         assertEquals(0.4, changed.opacity());
