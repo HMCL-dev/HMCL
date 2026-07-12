@@ -115,6 +115,9 @@ public final class Themes {
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
             }
+            if (FXUtils.ACCENT_COLOR != null) {
+                observables.add(FXUtils.ACCENT_COLOR);
+            }
             bind(observables.toArray(new Observable[0]));
         }
 
@@ -195,6 +198,7 @@ public final class Themes {
         }
         return switch (themeColorType) {
             case DEFAULT -> ThemeColor.DEFAULT;
+            case SYSTEM -> getSystemThemeColor();
             case CUSTOM -> fallback;
             case BACKGROUND -> resolveWallpaperThemeColor(fallback, backgroundType);
         };
@@ -526,6 +530,15 @@ public final class Themes {
         LOG.info("Detected system theme brightness: " + brightness);
 
         return defaultBrightness = brightness;
+    }
+
+    /// Returns the current operating system accent color, or the launcher default when unavailable.
+    public static ThemeColor getSystemThemeColor() {
+        if (FXUtils.ACCENT_COLOR == null) {
+            return ThemeColor.DEFAULT;
+        }
+        @Nullable Color accentColor = FXUtils.ACCENT_COLOR.get();
+        return accentColor != null ? ThemeColor.of(accentColor) : ThemeColor.DEFAULT;
     }
 
     /// Returns the current resolved launcher theme.
