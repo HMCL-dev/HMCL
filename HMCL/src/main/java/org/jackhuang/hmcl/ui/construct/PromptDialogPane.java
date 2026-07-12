@@ -26,6 +26,7 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.VPos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -71,7 +72,9 @@ public class PromptDialogPane extends DialogPane {
                 bindings.add(Bindings.createBooleanBinding(textField::validate, textField.textProperty()));
 
                 if (StringUtils.isNotBlank(question.question.get())) {
-                    body.addRow(rowIndex++, new Label(question.question.get()), textField);
+                    Label label = createQuestionLabel(question.question.get());
+                    GridPane.setMargin(label, new Insets(0, 0, 20, 0));
+                    body.addRow(rowIndex++, label, textField);
                 } else {
                     GridPane.setColumnSpan(textField, 2);
                     body.addRow(rowIndex++, textField);
@@ -94,7 +97,7 @@ public class PromptDialogPane extends DialogPane {
                         ((Builder.CandidatesQuestion) question).value = newValue.intValue());
                 comboBox.getSelectionModel().select(0);
                 if (StringUtils.isNotBlank(question.question.get())) {
-                    body.addRow(rowIndex++, new Label(question.question.get()), comboBox);
+                    body.addRow(rowIndex++, createQuestionLabel(question.question.get()), comboBox);
                 } else {
                     GridPane.setColumnSpan(comboBox, 2);
                     body.addRow(rowIndex++, comboBox);
@@ -111,6 +114,12 @@ public class PromptDialogPane extends DialogPane {
                 () -> bindings.stream().allMatch(BooleanBinding::get),
                 bindings.toArray(new BooleanBinding[0])
         ));
+    }
+
+    private static Label createQuestionLabel(String text) {
+        Label label = new Label(text);
+        GridPane.setValignment(label, VPos.CENTER);
+        return label;
     }
 
     @Override

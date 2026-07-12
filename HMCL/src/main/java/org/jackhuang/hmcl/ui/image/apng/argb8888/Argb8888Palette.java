@@ -12,28 +12,21 @@ import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
  * Note that the transparency of individual entries in the palette is modified in-place
  * when the trNS chunk is processed.
  *
+ * @param argbArray The colour array is public and mutable by design.
  * @see BasicArgb8888Director
  */
-public class Argb8888Palette {
+public record Argb8888Palette(int[] argbArray) {
     protected static Argb8888Palette monochromePalette = null;
     protected static Argb8888Palette greyPalette2 = null;
     protected static Argb8888Palette greyPalette4 = null;
     protected static Argb8888Palette greyPalette8 = null;
 
     /**
-     * The colour array is public and mutable by design.
-     *
-     * @see this.get()
-     */
-    public final int[] argbArray;
-
-    /**
      * Construct a new palette using the specific array passed as the argument as-is (not copied).
      *
      * @param argbArray array of colours to use as-is (it is not copied).
      */
-    public Argb8888Palette(int[] argbArray) {
-        this.argbArray = argbArray;
+    public Argb8888Palette {
     }
 
     /**
@@ -89,29 +82,33 @@ public class Argb8888Palette {
     }
 
     public static Argb8888Palette forGreyscale(int bitDepth) throws PngException {
-        switch (bitDepth) {
-            case 1:
+        return switch (bitDepth) {
+            case 1 -> {
                 if (null == monochromePalette) {
                     monochromePalette = forGreyscale(2, 0xff); // Worth it or not really?
                 }
-                return monochromePalette;
-            case 2:
+                yield monochromePalette;
+            }
+            case 2 -> {
                 if (null == greyPalette2) {
                     greyPalette2 = forGreyscale(4, 0x55);
                 }
-                return greyPalette2;
-            case 4:
+                yield greyPalette2;
+            }
+            case 4 -> {
                 if (null == greyPalette4) {
                     greyPalette4 = forGreyscale(16, 0x11);
                 }
-                return greyPalette4;
-            case 8: // TODO: need??
+                yield greyPalette4;
+            }
+            case 8 -> {
                 if (null == greyPalette8) {
                     greyPalette8 = forGreyscale(256, 0x01);
                 }
-                return greyPalette8;
-            default:
-                throw new PngIntegrityException(String.format("Valid greyscale bit depths are 1, 2, 4, 8, not %d", bitDepth));
-        }
+                yield greyPalette8;
+            }
+            default ->
+                    throw new PngIntegrityException(String.format("Valid greyscale bit depths are 1, 2, 4, 8, not %d", bitDepth));
+        };
     }
 }

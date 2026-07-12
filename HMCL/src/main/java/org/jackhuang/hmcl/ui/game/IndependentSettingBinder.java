@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -28,7 +29,6 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.MemoryStatusBar;
@@ -48,7 +48,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.DataSizeUnit.GIGABYTES;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -69,7 +68,8 @@ final class IndependentSettingBinder {
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             WeakListenerHolder listenerHolder,
-            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
+            Observable parentSettingsInvalidation) {
         ObjectProperty<@Nullable SettingProperty<String>> activeProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<String>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
@@ -84,7 +84,12 @@ final class IndependentSettingBinder {
 
         InvalidationListener refresh = observable -> {
             GameSettings setting = currentSetting.get();
-            updateParentPropertyListener(setting, activeParentProperty, propertyGetter, parentGetter, refreshHolder.value);
+            updateParentPropertyListener(
+                    setting,
+                    activeParentProperty,
+                    propertyGetter,
+                    parentGetter,
+                    refreshHolder.value);
             SettingProperty<String> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -104,6 +109,7 @@ final class IndependentSettingBinder {
         };
         InvalidationListener weakRefresh = listenerHolder.weak(refresh);
         refreshHolder.value = weakRefresh;
+        parentSettingsInvalidation.addListener(weakRefresh);
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -161,9 +167,12 @@ final class IndependentSettingBinder {
             Supplier<JFXButton> inheritanceButtonFactory,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             WeakListenerHolder listenerHolder,
-            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
+            Observable parentSettingsInvalidation) {
         ObjectProperty<@Nullable SettingProperty<Integer>> activeProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<Integer>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
+        final Holder<InvalidationListener> refreshHolder = new Holder<>();
         @Nullable JFXButton inheritButton;
         if (presetSetting) {
             inheritButton = null;
@@ -174,6 +183,12 @@ final class IndependentSettingBinder {
 
         InvalidationListener refresh = observable -> {
             GameSettings setting = currentSetting.get();
+            updateParentPropertyListener(
+                    setting,
+                    activeParentProperty,
+                    propertyGetter,
+                    parentGetter,
+                    refreshHolder.value);
             SettingProperty<Integer> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -193,6 +208,8 @@ final class IndependentSettingBinder {
             }
         };
         InvalidationListener weakRefresh = listenerHolder.weak(refresh);
+        refreshHolder.value = weakRefresh;
+        parentSettingsInvalidation.addListener(weakRefresh);
 
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -257,12 +274,16 @@ final class IndependentSettingBinder {
             @Nullable JFXButton maxMemoryButton,
             BiConsumer<JFXButton, Boolean> inheritanceButtonUpdater,
             WeakListenerHolder listenerHolder,
-            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
+            Observable parentSettingsInvalidation) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeAutoMemoryProperty = new SimpleObjectProperty<>();
         ObjectProperty<@Nullable SettingProperty<Integer>> activeMaxMemoryProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<Boolean>> activeParentAutoMemoryProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<Integer>> activeParentMaxMemoryProperty = new SimpleObjectProperty<>();
         Label physicalMemoryLabel = (Label) memoryStatusLabels.getLeft();
         Label allocatedMemoryLabel = (Label) memoryStatusLabels.getRight();
         final Holder<Boolean> updating = new Holder<>(false);
+        final Holder<InvalidationListener> refreshHolder = new Holder<>();
 
         int totalMemoryMiB = Math.max(1, (int) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
         maxMemorySlider.setValueFactory(slider -> Bindings.createStringBinding(
@@ -271,6 +292,18 @@ final class IndependentSettingBinder {
 
         InvalidationListener refresh = observable -> {
             GameSettings setting = currentSetting.get();
+            updateParentPropertyListener(
+                    setting,
+                    activeParentAutoMemoryProperty,
+                    GameSettings::autoMemoryProperty,
+                    parentGetter,
+                    refreshHolder.value);
+            updateParentPropertyListener(
+                    setting,
+                    activeParentMaxMemoryProperty,
+                    GameSettings::maxMemoryProperty,
+                    parentGetter,
+                    refreshHolder.value);
             SettingProperty<Boolean> autoMemoryProperty = activeAutoMemoryProperty.get();
             SettingProperty<Integer> maxMemoryProperty = activeMaxMemoryProperty.get();
             if (setting == null || autoMemoryProperty == null || maxMemoryProperty == null || updating.value) {
@@ -299,6 +332,8 @@ final class IndependentSettingBinder {
             }
         };
         InvalidationListener weakRefresh = listenerHolder.weak(refresh);
+        refreshHolder.value = weakRefresh;
+        parentSettingsInvalidation.addListener(weakRefresh);
 
         choiceList.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -433,8 +468,6 @@ final class IndependentSettingBinder {
             }
             refresh.invalidated(newValue);
         });
-        SettingsManager.getGameSettings().addListener(weakRefresh);
-        settings().defaultGameSettingsPresetProperty().addListener(weakRefresh);
         memoryStatusBar.memoryStatusProperty().addListener(observable -> {
             GameSettings setting = currentSetting.get();
             if (setting == null) {
@@ -468,12 +501,21 @@ final class IndependentSettingBinder {
             LineInheritableToggleButton button,
             Function<GameSettings, SettingProperty<Boolean>> propertyGetter,
             WeakListenerHolder listenerHolder,
-            Function<GameSettings.Instance, GameSettings.Preset> parentGetter) {
+            Function<GameSettings.Instance, GameSettings.Preset> parentGetter,
+            Observable parentSettingsInvalidation) {
         ObjectProperty<@Nullable SettingProperty<Boolean>> activeProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable SettingProperty<Boolean>> activeParentProperty = new SimpleObjectProperty<>();
         final Holder<Boolean> updating = new Holder<>(false);
+        final Holder<InvalidationListener> refreshHolder = new Holder<>();
 
         InvalidationListener refresh = observable -> {
             GameSettings setting = currentSetting.get();
+            updateParentPropertyListener(
+                    setting,
+                    activeParentProperty,
+                    propertyGetter,
+                    parentGetter,
+                    refreshHolder.value);
             SettingProperty<Boolean> property = activeProperty.get();
             if (setting == null || property == null || updating.value) {
                 return;
@@ -483,7 +525,9 @@ final class IndependentSettingBinder {
             try {
                 boolean overridden = isOverridden(setting, property);
                 Boolean effectiveValue = getEffectiveValue(setting, propertyGetter, parentGetter);
-                button.setRawValue(overridden ? getDirectValue(property) : Boolean.TRUE.equals(effectiveValue));
+                button.setRawValue(overridden
+                        ? getDirectValue(property)
+                        : Boolean.TRUE.equals(effectiveValue));
                 button.setOverridden(overridden);
                 button.setEffectiveValue(Boolean.TRUE.equals(effectiveValue));
             } finally {
@@ -491,6 +535,8 @@ final class IndependentSettingBinder {
             }
         };
         InvalidationListener weakRefresh = listenerHolder.weak(refresh);
+        refreshHolder.value = weakRefresh;
+        parentSettingsInvalidation.addListener(weakRefresh);
 
         button.rawValueProperty().addListener((observable, oldValue, newValue) -> {
             GameSettings setting = currentSetting.get();
@@ -503,7 +549,8 @@ final class IndependentSettingBinder {
             try {
                 setOverridden(setting, property, true);
                 property.setValue(newValue);
-                button.setEffectiveValue(Boolean.TRUE.equals(getEffectiveValue(setting, propertyGetter, parentGetter)));
+                button.setEffectiveValue(Boolean.TRUE.equals(
+                        getEffectiveValue(setting, propertyGetter, parentGetter)));
             } finally {
                 updating.value = false;
             }
@@ -522,7 +569,8 @@ final class IndependentSettingBinder {
                 if (newValue) {
                     property.setValue(button.getRawValue());
                 }
-                button.setEffectiveValue(Boolean.TRUE.equals(getEffectiveValue(setting, propertyGetter, parentGetter)));
+                button.setEffectiveValue(Boolean.TRUE.equals(
+                        getEffectiveValue(setting, propertyGetter, parentGetter)));
             } finally {
                 updating.value = false;
             }
@@ -569,47 +617,26 @@ final class IndependentSettingBinder {
             Label allocatedMemoryLabel,
             @Nullable Boolean autoMemory,
             @Nullable Integer maxMemory) {
-        memoryStatusBar.memoryAllocatedProperty().set(calculateAllocatedMemory(memoryStatusBar, autoMemory, maxMemory));
-        updateMemoryLabels(memoryStatusBar, physicalMemoryLabel, allocatedMemoryLabel, autoMemory, maxMemory);
-    }
-
-    private static double calculateAllocatedMemory(
-            MemoryStatusBar memoryStatusBar,
-            @Nullable Boolean autoMemory,
-            @Nullable Integer maxMemory) {
-        long maxMemoryBytes = Math.max(0, maxMemory != null ? maxMemory : 0) * 1024L * 1024L;
-        return HMCLGameRepository.getAllocatedMemory(
-                maxMemoryBytes,
-                memoryStatusBar.getMemoryStatus().getAvailable(),
-                Boolean.TRUE.equals(autoMemory));
-    }
-
-    private static void updateMemoryLabels(
-            MemoryStatusBar memoryStatusBar,
-            Label physicalMemoryLabel,
-            Label allocatedMemoryLabel,
-            @Nullable Boolean autoMemory,
-            @Nullable Integer maxMemory) {
         PhysicalMemoryStatus memoryStatus = memoryStatusBar.getMemoryStatus();
-        long maxMemoryBytes = Math.max(0, maxMemory != null ? maxMemory : 0) * 1024L * 1024L;
-        boolean autoMemoryEnabled = Boolean.TRUE.equals(autoMemory);
+
+        long memoryAllocated;
+        if (Boolean.TRUE.equals(autoMemory)) {
+            memoryAllocated = HMCLGameRepository.getAutoAllocatedMemory(memoryStatus.available());
+        } else if (maxMemory != null && maxMemory > 0) {
+            memoryAllocated = maxMemory * 1024L * 1024L;
+        } else {
+            memoryAllocated = GameSettings.SUGGESTED_MEMORY * 1024L * 1024L;
+        }
+
+        memoryStatusBar.memoryAllocatedProperty().set(memoryAllocated);
+
         physicalMemoryLabel.setText(i18n("settings.memory.used_per_total",
                 GIGABYTES.convertFromBytes(memoryStatus.getUsed()),
-                GIGABYTES.convertFromBytes(memoryStatus.getTotal())));
-        allocatedMemoryLabel.setText(i18n(
-                memoryStatus.hasAvailable() && maxMemoryBytes > memoryStatus.getAvailable()
-                        ? (autoMemoryEnabled
-                           ? "settings.memory.allocate.auto.exceeded"
-                           : "settings.memory.allocate.manual.exceeded")
-                        : (autoMemoryEnabled
-                           ? "settings.memory.allocate.auto"
-                           : "settings.memory.allocate.manual"),
-                GIGABYTES.convertFromBytes(maxMemoryBytes),
-                GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(
-                        maxMemoryBytes,
-                        memoryStatus.getAvailable(),
-                        autoMemoryEnabled)),
-                GIGABYTES.convertFromBytes(memoryStatus.getAvailable())));
+                GIGABYTES.convertFromBytes(memoryStatus.total())));
+        allocatedMemoryLabel.setText(
+                memoryStatus.hasAvailable() && memoryAllocated > memoryStatus.available()
+                        ? i18n("settings.memory.allocate.exceeded", GIGABYTES.convertFromBytes(memoryAllocated), GIGABYTES.convertFromBytes(memoryStatus.available()))
+                        : i18n("settings.memory.allocate", GIGABYTES.convertFromBytes(memoryAllocated)));
     }
 
     private static <T> void toggleOverride(
@@ -656,9 +683,6 @@ final class IndependentSettingBinder {
             }
             refresh.invalidated(newProperty);
         });
-        SettingsManager.getGameSettings().addListener(weakRefresh);
-        settings().defaultGameSettingsPresetProperty().addListener(weakRefresh);
-
         GameSettings setting = currentSetting.get();
         if (setting != null) {
             SettingProperty<T> property = propertyGetter.apply(setting);
