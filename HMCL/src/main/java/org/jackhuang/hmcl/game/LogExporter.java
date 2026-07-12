@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.NestedJarInspector.NestedJar;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -37,6 +38,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -81,6 +83,10 @@ public final class LogExporter {
                 try {
                     ModManager modManager = gameRepository.getModManager(versionId);
                     modManager.refresh();
+                    // Resolve the full Jar-in-Jar tree now (synchronously — this whole export runs on a
+                    // background task), so the report is accurate even when the mod manager was never
+                    // opened before the crash.
+                    modManager.scanBundledTrees();
 
                     List<LocalModFile> activeMods = modManager.getLocalFiles().stream()
                             .filter(LocalModFile::isActive)
@@ -92,22 +98,19 @@ public final class LogExporter {
                     // Mods that exist both as a standalone file and inside another active mod's
                     // Jar-in-Jar payload. Such duplicates can conflict and crash the game, so list
                     // them at the very top of the report.
+                    // Matched by exact mod id against the scanned Jar-in-Jar tree (all depths), so a
+                    // standalone mod that is also shipped inside another active mod is caught precisely
+                    // — no filename guessing, no false positives.
                     LinkedHashSet<String> duplicates = new LinkedHashSet<>();
                     for (LocalModFile host : activeMods) {
-                        if (!host.hasBundledMods()) continue;
-                        for (String bundled : host.getBundledMods()) {
-                            String bundledName = bundled.contains("/") ? bundled.substring(bundled.lastIndexOf('/') + 1) : bundled;
-                            String bundledLower = bundledName.toLowerCase(Locale.ROOT);
-                            String bundledNorm = bundledLower.replace("-", "").replace("_", "");
-                            for (LocalModFile other : activeMods) {
-                                if (other == host) continue;
-                                String id = other.getId();
-                                if (id == null || id.length() < 3) continue;
-                                String idLower = id.toLowerCase(Locale.ROOT);
-                                if (bundledLower.contains(idLower)
-                                        || bundledNorm.contains(idLower.replace("-", "").replace("_", ""))) {
-                                    duplicates.add(other.getName() + " [" + other.getFileName() + "] <-> bundled in " + host.getName() + " (" + bundledName + ")");
-                                }
+                        Set<String> bundledIds = host.getAllBundledModIds();
+                        if (bundledIds.isEmpty()) continue;
+                        for (LocalModFile other : activeMods) {
+                            if (other == host) continue;
+                            String id = other.getId();
+                            if (StringUtils.isBlank(id)) continue;
+                            if (bundledIds.contains(id)) {
+                                duplicates.add(other.getName() + " [" + other.getFileName() + "] <-> bundled in " + host.getName() + " (" + id + ")");
                             }
                         }
                     }
@@ -117,7 +120,7 @@ public final class LogExporter {
                         infoBuilder.append("None").append(System.lineSeparator());
                     } else {
                         infoBuilder.append("These mods may conflict with their bundled copies and cause crashes:").append(System.lineSeparator());
-                        infoBuilder.append("(Heuristic: matched by mod id appearing in the bundled jar file name; may include false positives.)").append(System.lineSeparator());
+                        infoBuilder.append("(Matched by exact mod id against the scanned Jar-in-Jar tree.)").append(System.lineSeparator());
                         for (String line : duplicates) {
                             infoBuilder.append("\t|-> ").append(line).append(System.lineSeparator());
                         }
@@ -155,9 +158,15 @@ public final class LogExporter {
                                 infoBuilder.append(" [").append(mod.getFileName()).append("]");
                             }
                             infoBuilder.append(System.lineSeparator());
-                            for (String bundled : mod.getBundledMods()) {
-                                String name = bundled.contains("/") ? bundled.substring(bundled.lastIndexOf('/') + 1) : bundled;
-                                infoBuilder.append("\t|-> ").append(name).append(System.lineSeparator());
+                            List<NestedJar> tree = mod.getBundledTree();
+                            if (!tree.isEmpty()) {
+                                appendJarTree(infoBuilder, tree, 1);
+                            } else {
+                                // Deep scan produced nothing usable — fall back to the declared filenames.
+                                for (String bundled : mod.getBundledMods()) {
+                                    String name = bundled.contains("/") ? bundled.substring(bundled.lastIndexOf('/') + 1) : bundled;
+                                    infoBuilder.append("\t|-> ").append(name).append(System.lineSeparator());
+                                }
                             }
                             infoBuilder.append(System.lineSeparator());
                         }
@@ -182,6 +191,27 @@ public final class LogExporter {
                 throw new UncheckedIOException(e);
             }
         });
+    }
+
+    /// Prints a mod's Jar-in-Jar tree recursively (all nesting depths), one indented line per node.
+    private static void appendJarTree(StringBuilder sb, List<NestedJar> nodes, int depth) {
+        String indent = "\t".repeat(depth);
+        for (NestedJar node : nodes) {
+            sb.append(indent).append("|-> ").append(node.displayName());
+            if (StringUtils.isNotBlank(node.id())) {
+                sb.append(" (").append(node.id()).append(")");
+            }
+            if (StringUtils.isNotBlank(node.version())) {
+                sb.append(" ").append(node.version());
+            }
+            if (StringUtils.isNotBlank(node.minecraftVersion())) {
+                sb.append(" [MC ").append(node.minecraftVersion()).append("]");
+            }
+            sb.append(System.lineSeparator());
+            if (node.hasChildren()) {
+                appendJarTree(sb, node.children(), depth + 1);
+            }
+        }
     }
 
     private static void processLogs(Path directory, String fileExtension, String logDirectory, Zipper zipper, PathMatcher logMatcher) {

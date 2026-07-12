@@ -89,6 +89,16 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         return analyzer;
     }
 
+    /// The instance's Minecraft version, or {@code null} if it can't be resolved. Used to highlight
+    /// which copy inside a multi-version Jar-in-Jar "wrapper" would actually be activated.
+    public @org.jetbrains.annotations.Nullable String getGameVersion() {
+        try {
+            return repository.getGameVersion(id).orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public LocalMod getLocalMod(String modId, ModLoaderType modLoaderType) {
         lock.lock();
         try {
@@ -262,6 +272,34 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             loaded = true;
         } finally {
             lock.unlock();
+        }
+    }
+
+    /// Resolves the full Jar-in-Jar tree for every loaded mod that declares nested jars but hasn't
+    /// been deep-scanned yet, so the dependency cascade and the bundled-dependency report see the
+    /// complete set of nested mod ids. Split out from {@link #refresh()} and meant to run on a
+    /// background thread *after* the list is shown — reaching a nested jar means extracting it, too
+    /// slow to block the first paint. Idempotent; the result is cached on each {@link LocalModFile}.
+    public void scanBundledTrees() {
+        List<LocalModFile> pending = new ArrayList<>();
+        lock.lock();
+        try {
+            if (!loaded)
+                return;
+            for (LocalModFile mod : localFiles)
+                if (mod.hasBundledMods() && mod.getBundledTree().isEmpty())
+                    pending.add(mod);
+        } finally {
+            lock.unlock();
+        }
+
+        // The slow extract/parse work runs outside the lock so it never blocks other mod operations.
+        for (LocalModFile mod : pending) {
+            try (ZipFileTree tree = CompressingUtils.openZipTree(mod.getFile())) {
+                mod.setBundledTree(NestedJarInspector.scan(tree));
+            } catch (Exception e) {
+                LOG.warning("Failed to scan Jar-in-Jar tree of " + mod.getFile(), e);
+            }
         }
     }
 

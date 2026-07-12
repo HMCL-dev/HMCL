@@ -1129,6 +1129,31 @@
     -fx-padding: 6 0 1 0;
 }
 
+/* Version string of a nested mod — dimmer than its name. */
+.mod-nested-item .mod-nested-version {
+    -fx-text-fill: -monet-outline;
+    -fx-font-size: 11px;
+}
+
+/* "N versions" badge on a grouped multi-version wrapper entry. */
+.mod-nested-item .mod-nested-badge {
+    -fx-text-fill: -monet-on-secondary-container;
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 4;
+    -fx-padding: 0 6 0 6;
+    -fx-font-size: 11px;
+}
+
+/* Marks the nested copy that matches this instance's Minecraft version. */
+.mod-nested-item .mod-nested-current {
+    -fx-text-fill: -monet-on-primary-container;
+    -fx-background-color: -monet-primary-container;
+    -fx-background-radius: 4;
+    -fx-padding: 0 6 0 6;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
 .resource-pack-list-cell:warning {
     -fx-background-color: -monet-error-container;
 }

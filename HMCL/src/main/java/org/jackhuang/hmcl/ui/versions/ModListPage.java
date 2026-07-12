@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -53,6 +55,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.GameInstanceLoadable, PageAware {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
+
+    // Bumped on the FX thread when the background Jar-in-Jar deep scan finishes, so open nested
+    // panels can rebuild with the now-resolved nested mod names/versions.
+    private final IntegerProperty bundledScanGeneration = new SimpleIntegerProperty(this, "bundledScanGeneration", 0);
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -132,7 +138,27 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 getItems().clear();
             }
             setLoading(false);
+
+            // Now that the list is on screen, resolve the deeper Jar-in-Jar layers in the background
+            // (they need each nested jar extracted, too slow to block the first paint). When done, bump
+            // the generation so open nested panels rebuild with the resolved names and the dependency
+            // cascade sees the complete set of bundled ids.
+            if (exception == null) {
+                CompletableFuture.runAsync(modManager::scanBundledTrees, Schedulers.io())
+                        .whenCompleteAsync((r, ex) -> {
+                            if (ex != null)
+                                LOG.warning("Failed to scan Jar-in-Jar trees", ex);
+                            else if (this.modManager == modManager) // still showing this instance
+                                bundledScanGeneration.set(bundledScanGeneration.get() + 1);
+                        }, Schedulers.javafx());
+            }
         }, Schedulers.javafx());
+    }
+
+    /// Bumped when the background Jar-in-Jar deep scan completes; the skin listens to rebuild any open
+    /// nested panels with the newly-resolved nested mod metadata.
+    public IntegerProperty bundledScanGenerationProperty() {
+        return bundledScanGeneration;
     }
 
     private void updateSupportedLoaders(ModManager modManager) {

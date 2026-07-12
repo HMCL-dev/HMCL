@@ -25,7 +25,6 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -52,6 +51,7 @@ import org.jackhuang.hmcl.addon.*;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.NestedJarInspector;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -385,12 +385,17 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     // alias (we don't parse "provides") won't be matched, so this errs on the side of fewer
     // warnings rather than false ones.
     private List<ModInfoObject> findActiveDependents(Collection<LocalModFile> targets) {
-        // id -> all currently-enabled files providing it (a file provides its own id).
+        // id -> all currently-enabled files providing it. A file provides its own id and, via
+        // Jar-in-Jar, every mod bundled anywhere inside it (disabling the host removes those too).
         Map<String, Set<LocalModFile>> activeProviders = new HashMap<>();
         for (ModInfoObject item : getSkinnable().getItems()) {
             LocalModFile mod = item.getModInfo();
-            if (mod.isActive() && StringUtils.isNotBlank(mod.getId()))
+            if (!mod.isActive())
+                continue;
+            if (StringUtils.isNotBlank(mod.getId()))
                 activeProviders.computeIfAbsent(mod.getId(), k -> new HashSet<>()).add(mod);
+            for (String bundledId : mod.getAllBundledModIds())
+                activeProviders.computeIfAbsent(bundledId, k -> new HashSet<>()).add(mod);
         }
 
         // Files that will end up gone: seed with the targets, then grow with dependents whose
@@ -787,6 +792,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 e.consume();
             });
 
+            // When the background Jar-in-Jar deep scan finishes, rebuild this panel if it is open so the
+            // temporary filename rows are replaced by the resolved nested-mod names/versions.
+            getSkinnable().bundledScanGenerationProperty().addListener((InvalidationListener) o -> {
+                if (expanded.get() && getItem() != null)
+                    rebuildNested(getItem());
+            });
+
             // Warn before disabling a mod that other enabled mods depend on.
             checkBox.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
                 ModInfoObject item = getItem();
@@ -830,7 +842,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             getContainer().getChildren().setAll(container);
         }
 
-        private Node createNestedRow(String path) {
+        private Node createNestedRow(String path, int indent) {
             String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
 
             Label label = new Label(name);
@@ -841,7 +853,115 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             HBox row = new HBox(8, SVG.STACKS.createIcon(16), label);
             row.getStyleClass().add("mod-nested-item");
             row.setAlignment(Pos.CENTER_LEFT);
+            if (indent > 0)
+                row.getChildren().add(0, indentSpacer(indent));
             return row;
+        }
+
+        /// Renders a level of the Jar-in-Jar tree, recursing into children (indented). Copies of the
+        /// same mod for different Minecraft versions (multi-version "wrapper" jars) are grouped into a
+        /// single row that highlights the copy matching this instance, so a 15-version wrapper reads as
+        /// one entry instead of fifteen.
+        private void appendBundledNodes(List<NestedJarInspector.NestedJar> nodes, int indent, String instanceMc) {
+            // Group by id; nodes without a parsed id stay ungrouped (rendered as-is afterwards).
+            LinkedHashMap<String, List<NestedJarInspector.NestedJar>> groups = new LinkedHashMap<>();
+            List<NestedJarInspector.NestedJar> ungrouped = new ArrayList<>();
+            for (NestedJarInspector.NestedJar node : nodes) {
+                if (node.id() != null && !node.id().isBlank())
+                    groups.computeIfAbsent(node.id(), k -> new ArrayList<>()).add(node);
+                else
+                    ungrouped.add(node);
+            }
+
+            for (List<NestedJarInspector.NestedJar> versions : groups.values()) {
+                if (versions.size() == 1) {
+                    NestedJarInspector.NestedJar node = versions.get(0);
+                    nestedBox.getChildren().add(createBundledRow(node, indent, null, matchesInstance(node, instanceMc)));
+                    if (node.hasChildren())
+                        appendBundledNodes(node.children(), indent + 1, instanceMc);
+                } else {
+                    // Multi-version: pick the copy that matches this instance (else the first) as the
+                    // representative, and only recurse into it — the others are the same mod.
+                    NestedJarInspector.NestedJar rep = versions.stream()
+                            .filter(v -> matchesInstance(v, instanceMc)).findFirst().orElse(versions.get(0));
+                    boolean active = matchesInstance(rep, instanceMc);
+                    nestedBox.getChildren().add(createBundledRow(rep, indent,
+                            i18n("addon.bundled.versions", versions.size()), active));
+                    if (rep.hasChildren())
+                        appendBundledNodes(rep.children(), indent + 1, instanceMc);
+                }
+            }
+
+            for (NestedJarInspector.NestedJar node : ungrouped) {
+                nestedBox.getChildren().add(createBundledRow(node, indent, null, false));
+                if (node.hasChildren())
+                    appendBundledNodes(node.children(), indent + 1, instanceMc);
+            }
+        }
+
+        private Node createBundledRow(NestedJarInspector.NestedJar node, int indent, String versionsBadge, boolean activeForInstance) {
+            HBox row = new HBox(8, SVG.STACKS.createIcon(16));
+            row.getStyleClass().add("mod-nested-item");
+            row.setAlignment(Pos.CENTER_LEFT);
+            if (indent > 0)
+                row.getChildren().add(0, indentSpacer(indent));
+
+            Label name = new Label(node.displayName());
+            row.getChildren().add(name);
+
+            if (node.version() != null && !node.version().isBlank()) {
+                Label version = new Label(node.version());
+                version.getStyleClass().add("mod-nested-version");
+                row.getChildren().add(version);
+            }
+            if (versionsBadge != null) {
+                Label badge = new Label(versionsBadge);
+                badge.getStyleClass().add("mod-nested-badge");
+                row.getChildren().add(badge);
+            }
+            if (activeForInstance) {
+                Label current = new Label(i18n("addon.bundled.current"));
+                current.getStyleClass().add("mod-nested-current");
+                row.getChildren().add(current);
+            }
+            return row;
+        }
+
+        /// Best-effort match of a nested jar against the instance's Minecraft version, for the
+        /// multi-version highlight. The exact copy embeds the target version in its file name / mod
+        /// version / declared constraint (e.g. {@code …-mc26.1.2-…}); we look for the instance version
+        /// as a whole token so "1.21" doesn't match "1.21.2".
+        private static boolean matchesInstance(NestedJarInspector.NestedJar node, String instanceMc) {
+            if (instanceMc == null || instanceMc.isBlank())
+                return false;
+            return containsVersionToken(node.fileName(), instanceMc)
+                    || containsVersionToken(node.version(), instanceMc)
+                    || containsVersionToken(node.minecraftVersion(), instanceMc);
+        }
+
+        private static boolean containsVersionToken(String haystack, String version) {
+            if (haystack == null)
+                return false;
+            int i = haystack.indexOf(version);
+            while (i >= 0) {
+                int end = i + version.length();
+                char after = end < haystack.length() ? haystack.charAt(end) : ' ';
+                if (after != '.' && !Character.isDigit(after)) // not a prefix of a longer version
+                    return true;
+                i = haystack.indexOf(version, i + 1);
+            }
+            return false;
+        }
+
+        // A fixed-width leading gap for one indentation level, so nested rows step inward without
+        // overriding the row's own (CSS-defined) padding.
+        private static Region indentSpacer(int indent) {
+            Region spacer = new Region();
+            double width = indent * 16;
+            spacer.setMinWidth(width);
+            spacer.setPrefWidth(width);
+            spacer.setMaxWidth(width);
+            return spacer;
         }
 
         private Node createSectionLabel(String text) {
@@ -868,8 +988,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             Runnable refresh = () -> {
                 String statusText;
                 if (installedFiles.isEmpty()) {
-                    // Not installed separately — it may instead be bundled inside this mod via Jar-in-Jar.
-                    statusText = isBundledDependency(depId, modInfo.getBundledMods())
+                    // Not installed separately — it may instead be bundled inside this mod via
+                    // Jar-in-Jar. Prefer an exact id match against the scanned tree; fall back to the
+                    // filename heuristic for nested jars whose metadata could not be parsed.
+                    boolean bundled = modInfo.getAllBundledModIds().contains(depId)
+                            || isBundledDependency(depId, modInfo.getBundledMods());
+                    statusText = bundled
                             ? i18n("addon.dependencies.bundled")
                             : i18n("addon.dependencies.missing");
                 } else if (installedFiles.stream().anyMatch(LocalModFile::isActive)) {
@@ -928,8 +1052,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             LocalModFile modInfo = item.getModInfo();
             if (modInfo.hasBundledMods()) {
                 nestedBox.getChildren().add(createSectionLabel(i18n("addon.bundled")));
-                for (String path : modInfo.getBundledMods())
-                    nestedBox.getChildren().add(createNestedRow(path));
+                List<NestedJarInspector.NestedJar> tree = modInfo.getBundledTree();
+                if (tree.isEmpty()) {
+                    // Deep scan hasn't finished yet — show the declared filenames; this panel rebuilds
+                    // when the background scan bumps bundledScanGeneration (see the cell's listener).
+                    for (String path : modInfo.getBundledMods())
+                        nestedBox.getChildren().add(createNestedRow(path, 0));
+                } else {
+                    appendBundledNodes(tree, 0, modInfo.getModManager().getGameVersion());
+                }
             }
             if (modInfo.hasDependencies()) {
                 nestedBox.getChildren().add(createSectionLabel(i18n("addon.dependencies")));

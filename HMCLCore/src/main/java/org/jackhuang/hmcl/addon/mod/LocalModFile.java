@@ -51,6 +51,10 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String fileName;
     private final String logoPath;
     private final List<String> bundledMods;
+    // Full Jar-in-Jar tree (all nesting depths), scanned eagerly by ModManager after construction so
+    // the dependency cascade and bundled-dependency report see the complete, accurate set.
+    private List<NestedJarInspector.NestedJar> bundledTree = List.of();
+    private Set<String> allBundledModIds; // flattened ids across the whole tree, computed on demand
     private final List<String> dependencies;
     private final BooleanProperty activeProperty;
 
@@ -159,6 +163,29 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     public boolean hasBundledMods() {
         return !bundledMods.isEmpty();
+    }
+
+    /// The full Jar-in-Jar tree (every nesting depth), with real parsed metadata for each node.
+    /// Populated eagerly by {@link ModManager} during the scan; empty for mods without nested jars.
+    public List<NestedJarInspector.NestedJar> getBundledTree() {
+        return bundledTree;
+    }
+
+    void setBundledTree(List<NestedJarInspector.NestedJar> bundledTree) {
+        this.bundledTree = bundledTree == null ? List.of() : bundledTree;
+        this.allBundledModIds = null;
+    }
+
+    /// Every mod id bundled anywhere in this jar's Jar-in-Jar tree (all depths). Used by the dependency
+    /// cascade and the bundled-dependency status so a dependency shipped inside a wrapper is recognized.
+    public Set<String> getAllBundledModIds() {
+        Set<String> ids = allBundledModIds;
+        if (ids == null) {
+            ids = new HashSet<>();
+            NestedJarInspector.collectIds(bundledTree, ids);
+            allBundledModIds = ids;
+        }
+        return ids;
     }
 
     public List<String> getDependencies() {
