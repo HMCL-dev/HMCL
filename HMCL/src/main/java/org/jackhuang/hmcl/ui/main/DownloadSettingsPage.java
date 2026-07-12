@@ -21,6 +21,7 @@ import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 
 import javafx.scene.control.ScrollPane;
@@ -33,14 +34,15 @@ import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
@@ -64,10 +66,10 @@ public class DownloadSettingsPage extends StackPane {
             downloadSource.getStyleClass().add("card-non-transparent");
             {
                 Function<DownloadSource, String> converter = source -> switch (source) {
-                        case DEFAULT -> i18n("settings.launcher.download_source.auto");
-                        case OFFICIAL -> i18n("download.provider.official");
-                        case MIRROR -> i18n("download.provider.mirror");
-                    };
+                    case DEFAULT -> i18n("settings.launcher.download_source.auto");
+                    case OFFICIAL -> i18n("download.provider.official");
+                    case MIRROR -> i18n("download.provider.mirror");
+                };
                 Function<DownloadSource, String> descriptionConverter = source -> {
                     String bundleKey = switch (source) {
                         case DEFAULT -> "download.provider.balanced.desc";
@@ -106,128 +108,122 @@ public class DownloadSettingsPage extends StackPane {
         {
             var downloadList = new ComponentList();
 
-            VBox downloadThreads = new VBox(16);
+            ComponentSublist fileCommonLocationSublist = new ComponentSublist(() -> {
+                MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
+                fileCommonLocation.loadChildren(Arrays.asList(
+                        new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
+                        new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
+                                .setChooserTitle(i18n("launcher.cache_directory.choose"))
+                                .setSelectionMode(FileSelector.SelectionMode.DIRECTORY)
+                                .bindBidirectional(settings().commonDirectoryProperty())
+                ));
+                fileCommonLocation.selectedDataProperty().bindBidirectional(settings().commonDirectoryTypeProperty());
+                return List.of(fileCommonLocation);
+            });
+            fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
+            fileCommonLocationSublist.setHasSubtitle(true);
+            fileCommonLocationSublist.descriptionProperty().bind(
+                    Bindings.createObjectBinding(() -> Optional.ofNullable(settings().getResolvedCommonDirectory())
+                                    .orElse(i18n("launcher.cache_directory.disabled")),
+                            settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
 
-            ComponentSublist fileCommonLocationSublist = new ComponentSublist();
+            JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
+            cleanButton.setOnAction(e -> clearCacheDirectory());
+            fileCommonLocationSublist.setHeaderRight(cleanButton);
 
-            {
-                {
-                    MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
-                    fileCommonLocation.loadChildren(Arrays.asList(
-                            new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
-                            new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
-                                    .setChooserTitle(i18n("launcher.cache_directory.choose"))
-                                    .setSelectionMode(FileSelector.SelectionMode.DIRECTORY)
-                                    .bindBidirectional(settings().commonDirectoryProperty())
-                    ));
-                    fileCommonLocation.selectedDataProperty().bindBidirectional(settings().commonDirectoryTypeProperty());
+            ComponentSublist downloadThreadsSublist = new ComponentSublist(() -> {
+                var downloadThreadsList = new RadioChoiceList<Boolean>();
+                downloadThreadsList.setChoices(
+                        new RadioChoiceList.Choice<>(i18n("settings.launcher.download.threads.auto"), true),
+                        new RadioChoiceList.Choice<>(i18n("settings.launcher.download.threads.custom"), false) {
+                            @Override
+                            protected Node createRightNode() {
+                                HBox hbox = new HBox(8);
+                                hbox.setViewOrder(-1);
+                                hbox.setAlignment(Pos.CENTER);
+                                // hbox.setPadding(new Insets(0, 0, 0, 30));
+                                hbox.disableProperty().bind(settings().autoDownloadThreadsProperty());
 
-                    fileCommonLocationSublist.getContent().add(fileCommonLocation);
-                    fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
-                    fileCommonLocationSublist.setHasSubtitle(true);
-                    fileCommonLocationSublist.descriptionProperty().bind(
-                            Bindings.createObjectBinding(() -> Optional.ofNullable(settings().getResolvedCommonDirectory())
-                                            .orElse(i18n("launcher.cache_directory.disabled")),
-                                    settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
+                                JFXSlider slider = new JFXSlider(1, 256, 64);
+                                HBox.setHgrow(slider, Priority.ALWAYS);
 
-                    JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
-                    cleanButton.setOnAction(e -> clearCacheDirectory());
-                    fileCommonLocationSublist.setHeaderRight(cleanButton);
-                }
+                                JFXTextField threadsField = new JFXTextField();
+                                FXUtils.setLimitWidth(threadsField, 60);
+                                FXUtils.bind(threadsField, settings().downloadThreadsProperty(), SafeStringConverter.fromInteger()
+                                        .restrict(it -> it > 0)
+                                        .fallbackTo(FetchTask.DEFAULT_CONCURRENCY)
+                                        .asPredicate(Validator.addTo(threadsField)));
 
-                {
-                    JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.download.threads.auto"));
-                    VBox.setMargin(chkAutoDownloadThreads, new Insets(8, 0, 0, 0));
-                    chkAutoDownloadThreads.selectedProperty().bindBidirectional(settings().autoDownloadThreadsProperty());
-                    downloadThreads.getChildren().add(chkAutoDownloadThreads);
+                                var changedByTextField = new Holder<>(false);
+                                FXUtils.onChangeAndOperate(settings().downloadThreadsProperty(), value -> {
+                                    changedByTextField.value = true;
+                                    slider.setValue(value.intValue());
+                                    changedByTextField.value = false;
+                                });
+                                slider.valueProperty().addListener((value, oldVal, newVal) -> {
+                                    if (changedByTextField.value) return;
+                                    settings().downloadThreadsProperty().set(value.getValue().intValue());
+                                });
 
-                    chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
-                        if (newValue) {
-                            settings().downloadThreadsProperty().set(FetchTask.DEFAULT_CONCURRENCY);
+                                hbox.getChildren().setAll(slider, threadsField);
+                                return hbox;
+                            }
                         }
-                    });
+                );
+
+                downloadThreadsList.selectedValueProperty().bindBidirectional(settings().autoDownloadThreadsProperty());
+
+                return List.of(downloadThreadsList);
+            });
+            downloadThreadsSublist.setTitle(i18n("settings.launcher.download.threads"));
+            downloadThreadsSublist.descriptionProperty().bind(Bindings.createStringBinding(() -> {
+                if (settings().autoDownloadThreadsProperty().get()) {
+                    return i18n("settings.launcher.download.threads.auto");
+                } else {
+                    return Integer.toString(settings().downloadThreadsProperty().get());
                 }
+            }, settings().autoDownloadThreadsProperty(), settings().downloadThreadsProperty()));
 
-                {
-                    HBox hbox = new HBox(8);
-                    hbox.setStyle("-fx-view-order: -1;"); // prevent the indicator from being covered by the hint
-                    hbox.setAlignment(Pos.CENTER);
-                    hbox.setPadding(new Insets(0, 0, 0, 30));
-                    hbox.disableProperty().bind(settings().autoDownloadThreadsProperty());
-                    Label label = new Label(i18n("settings.launcher.download.threads"));
+            // Background task concurrency: how many auto-backgrounded tasks may run at once. Modeled
+            // as a sublist to match the refactored download-threads UI above.
+            ComponentSublist backgroundTaskConcurrencySublist = new ComponentSublist(() -> {
+                HBox hbox = new HBox(8);
+                hbox.setAlignment(Pos.CENTER);
 
-                    JFXSlider slider = new JFXSlider(1, 256, 64);
-                    HBox.setHgrow(slider, Priority.ALWAYS);
+                JFXSlider slider = new JFXSlider(1, 16, 2);
+                HBox.setHgrow(slider, Priority.ALWAYS);
 
-                    JFXTextField threadsField = new JFXTextField();
-                    FXUtils.setLimitWidth(threadsField, 60);
-                    FXUtils.bind(threadsField, settings().downloadThreadsProperty(), SafeStringConverter.fromInteger()
-                            .restrict(it -> it > 0)
-                            .fallbackTo(FetchTask.DEFAULT_CONCURRENCY)
-                            .asPredicate(Validator.addTo(threadsField)));
+                JFXTextField concurrencyField = new JFXTextField();
+                FXUtils.setLimitWidth(concurrencyField, 60);
+                FXUtils.bind(concurrencyField, settings().backgroundTaskConcurrencyProperty(), SafeStringConverter.fromInteger()
+                        .restrict(it -> it > 0)
+                        .fallbackTo(2)
+                        .asPredicate(Validator.addTo(concurrencyField)));
 
-                    AtomicBoolean changedByTextField = new AtomicBoolean(false);
-                    FXUtils.onChangeAndOperate(settings().downloadThreadsProperty(), value -> {
-                        changedByTextField.set(true);
-                        slider.setValue(value.intValue());
-                        changedByTextField.set(false);
-                    });
-                    slider.valueProperty().addListener((value, oldVal, newVal) -> {
-                        if (changedByTextField.get()) return;
-                        settings().downloadThreadsProperty().set(value.getValue().intValue());
-                    });
+                var changedByTextField = new Holder<>(false);
+                FXUtils.onChangeAndOperate(settings().backgroundTaskConcurrencyProperty(), value -> {
+                    changedByTextField.value = true;
+                    slider.setValue(value.intValue());
+                    changedByTextField.value = false;
+                });
+                slider.valueProperty().addListener((value, oldVal, newVal) -> {
+                    if (changedByTextField.value) return;
+                    settings().backgroundTaskConcurrencyProperty().set(value.getValue().intValue());
+                });
 
-                    hbox.getChildren().setAll(label, slider, threadsField);
-                    downloadThreads.getChildren().add(hbox);
-                }
+                hbox.getChildren().setAll(slider, concurrencyField);
 
-                {
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
-                    hintPane.disableProperty().bind(settings().autoDownloadThreadsProperty());
-                    hintPane.setText(i18n("settings.launcher.download.threads.hint"));
-                    downloadThreads.getChildren().add(hintPane);
-                }
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                hintPane.setText(i18n("settings.launcher.background_task_concurrency.hint"));
 
-                {
-                    HBox hbox = new HBox(8);
-                    hbox.setAlignment(Pos.CENTER);
-                    hbox.setPadding(new Insets(8, 0, 0, 0));
-                    Label label = new Label(i18n("settings.launcher.background_task_concurrency"));
+                return List.of(hbox, hintPane);
+            });
+            backgroundTaskConcurrencySublist.setTitle(i18n("settings.launcher.background_task_concurrency"));
+            backgroundTaskConcurrencySublist.descriptionProperty().bind(Bindings.createStringBinding(
+                    () -> Integer.toString(settings().backgroundTaskConcurrencyProperty().get()),
+                    settings().backgroundTaskConcurrencyProperty()));
 
-                    JFXSlider slider = new JFXSlider(1, 16, 2);
-                    HBox.setHgrow(slider, Priority.ALWAYS);
-
-                    JFXTextField concurrencyField = new JFXTextField();
-                    FXUtils.setLimitWidth(concurrencyField, 60);
-                    FXUtils.bind(concurrencyField, settings().backgroundTaskConcurrencyProperty(), SafeStringConverter.fromInteger()
-                            .restrict(it -> it > 0)
-                            .fallbackTo(2)
-                            .asPredicate(Validator.addTo(concurrencyField)));
-
-                    AtomicBoolean changedByTextField = new AtomicBoolean(false);
-                    FXUtils.onChangeAndOperate(settings().backgroundTaskConcurrencyProperty(), value -> {
-                        changedByTextField.set(true);
-                        slider.setValue(value.intValue());
-                        changedByTextField.set(false);
-                    });
-                    slider.valueProperty().addListener((value, oldVal, newVal) -> {
-                        if (changedByTextField.get()) return;
-                        settings().backgroundTaskConcurrencyProperty().set(value.getValue().intValue());
-                    });
-
-                    hbox.getChildren().setAll(label, slider, concurrencyField);
-                    downloadThreads.getChildren().add(hbox);
-                }
-
-                {
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hintPane.setText(i18n("settings.launcher.background_task_concurrency.hint"));
-                    downloadThreads.getChildren().add(hintPane);
-                }
-            }
-
-            downloadList.getContent().addAll(fileCommonLocationSublist, downloadThreads);
+            downloadList.getContent().addAll(fileCommonLocationSublist, downloadThreadsSublist, backgroundTaskConcurrencySublist);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadList);
         }
 
