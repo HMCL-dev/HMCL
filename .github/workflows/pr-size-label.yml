@@ -27,11 +27,19 @@ jobs:
           const owner = context.repo.owner
           const repo = context.repo.repo
           const ignoredFilePatterns = [
+            /(?:^|\/)\.github\/.+\.ya?ml$/i,
+            /(?:^|\/)\.idea\/.+\.xml$/i,
+            /(?:^|\/)\.editorconfig$/i,
+            /(?:^|\/)\.gitignore$/i,
+            /(?:^|\/).+\.md$/i,
+            /(?:^|\/)LICENSE(?:_.*)?$/i,
             /(?:^|\/)gradlew(?:\.bat)?$/i,
             /(?:^|\/)gradle\/wrapper\/gradle-wrapper\.properties$/i,
-            /(?:^|\/)\.idea\/.+\.xml$/i,
             /(?:^|\/)lang\/.+\.properties$/i,
-            /(?:^|\/)l10n\/.+\.properties$/i
+            /(?:^|\/)l10n\/.+\.properties$/i,
+            /(?:^|\/)checkstyle\.xml$/i,
+            /(?:^|\/)org\/jackhuang\/hmcl\/ui\/SVG\.java$/i,
+            /(?:^|\/).+\.(?:png|jpe?g|gif|ico|svg|json|ttf|ttc|woff2?|webp|avif|jxl|heic|mp4|webm|mp3|ogg|wav)$/i
           ]
 
           async function processPR(issue_number) {
