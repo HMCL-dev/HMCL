@@ -50,8 +50,10 @@ public final class FabricModMetadata {
     private final List<FabricNestedJar> jars;
     private final Map<String, Object> depends;
 
-    // Loader/runtime/platform ids that are not shown as user-facing mod dependencies.
-    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "fabricloader", "fabric", "fabric-api");
+    // Loader/runtime/platform ids that are not shown as user-facing mod dependencies. Fabric API
+    // (fabric-api) is deliberately NOT here: it is a real installable mod, so it must stay in the
+    // dependency graph for the installed-status hint and the disable/remove cascade to work.
+    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "fabricloader", "fabric");
 
     public FabricModMetadata() {
         this("", "", "", "", "", Collections.emptyList(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyMap());

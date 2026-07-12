@@ -212,6 +212,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         synchronized (AddonVersion.INSTALLED_CACHE_LOCK) {
             AddonVersion.installedCacheKey = null;
             AddonVersion.installedCache = null;
+            AddonVersion.installedCacheGeneration++;
         }
     }
 
@@ -694,21 +695,30 @@ public class DownloadPage extends Control implements DecoratorPage {
         private static final Object INSTALLED_CACHE_LOCK = new Object();
         private static HMCLGameRepository.InstanceReference installedCacheKey;
         private static Map<String, Boolean> installedCache;
+        // Bumped on every invalidation so a slow background scan can tell its result went stale
+        // mid-flight and refuse to publish it (which would otherwise clobber the invalidation).
+        private static long installedCacheGeneration;
 
         private static Map<String, Boolean> getInstalledMods(HMCLGameRepository.InstanceReference version) {
             if (version == null || version.instanceId() == null)
                 return null;
 
+            long generationAtStart;
             synchronized (INSTALLED_CACHE_LOCK) {
                 if (version.equals(installedCacheKey))
                     return installedCache;
+                generationAtStart = installedCacheGeneration;
             }
 
             Map<String, Boolean> resolved = resolveInstalledMods(version);
             if (resolved != null) {
                 synchronized (INSTALLED_CACHE_LOCK) {
-                    installedCacheKey = version;
-                    installedCache = resolved;
+                    // Publish only if nothing invalidated the cache while we were scanning; otherwise
+                    // this snapshot is already stale and must not overwrite the newer state.
+                    if (generationAtStart == installedCacheGeneration) {
+                        installedCacheKey = version;
+                        installedCache = resolved;
+                    }
                 }
             }
             return resolved;

@@ -58,21 +58,16 @@ public final class QuiltModMetadata {
             }
         }
 
-        private static final class NestedJar {
-            private final String file;
-
-            public NestedJar(String file) {
-                this.file = file;
-            }
-        }
-
         private final String id;
         private final String version;
         private final Metadata metadata;
-        private final List<NestedJar> jars;
+        // Quilt declares nested jars as a plain array of path strings (e.g. ["sub.jar"]), unlike
+        // Fabric's array of {"file": "..."} objects. Modeling it as objects makes Gson throw and the
+        // whole (otherwise valid) Quilt mod fall back to UNKNOWN, losing nested mods and dependencies.
+        private final List<String> jars;
         private final JsonArray depends;
 
-        public QuiltLoader(String id, String version, Metadata metadata, List<NestedJar> jars, JsonArray depends) {
+        public QuiltLoader(String id, String version, Metadata metadata, List<String> jars, JsonArray depends) {
             this.id = id;
             this.version = version;
             this.metadata = metadata;
@@ -81,8 +76,10 @@ public final class QuiltModMetadata {
         }
     }
 
-    // Loader/runtime/platform ids that are not shown as user-facing mod dependencies.
-    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "quilt_loader", "quilt_base", "fabric", "fabric-api");
+    // Loader/runtime/platform ids that are not shown as user-facing mod dependencies. Fabric API
+    // (fabric-api) is deliberately NOT here: it is a real installable mod, so it must stay in the
+    // dependency graph for the installed-status hint and the disable/remove cascade to work.
+    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "quilt_loader", "quilt_base", "fabric");
 
     private final int schema_version;
     private final QuiltLoader quilt_loader;
@@ -108,7 +105,7 @@ public final class QuiltModMetadata {
         String homepage = root.quilt_loader.metadata.contact == null ? ""
                 : Optional.ofNullable(root.quilt_loader.metadata.contact.get("homepage")).map(jsonElement -> jsonElement.getAsJsonPrimitive().getAsString()).orElse("");
         List<String> bundledMods = root.quilt_loader.jars == null ? Collections.emptyList()
-                : root.quilt_loader.jars.stream().map(jar -> jar.file).toList();
+                : List.copyOf(root.quilt_loader.jars);
 
         List<String> dependencies = new ArrayList<>();
         if (root.quilt_loader.depends != null) {

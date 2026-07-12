@@ -25,6 +25,7 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -370,28 +371,54 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    // Finds enabled mods (other than the targets themselves) that declare a dependency on any of
-    // the targets — i.e. mods that may break if the targets are disabled.
+    // Finds enabled mods (other than the targets themselves) that would lose a required dependency
+    // if the targets are disabled/removed — i.e. mods that may break.
+    //
+    // Two subtleties are handled:
+    //   * Last provider only: an id is treated as lost only when *every* still-enabled file providing
+    //     it is among those being removed. If another enabled file also provides the id, the
+    //     dependency is still satisfied and its dependents are left alone.
+    //   * Transitive closure: once a dependent is scheduled for disabling, the ids it alone provided
+    //     become lost too, cascading to whatever depended on them (A ← B ← C disables all of B, C).
     //
     // Matching is by exact mod id. A mod that satisfies a dependency under a different "provides"
     // alias (we don't parse "provides") won't be matched, so this errs on the side of fewer
     // warnings rather than false ones.
     private List<ModInfoObject> findActiveDependents(Collection<LocalModFile> targets) {
-        Set<String> targetIds = new HashSet<>();
-        for (LocalModFile target : targets) {
-            if (StringUtils.isNotBlank(target.getId()))
-                targetIds.add(target.getId());
-        }
-        if (targetIds.isEmpty())
-            return List.of();
-
-        List<ModInfoObject> dependents = new ArrayList<>();
+        // id -> all currently-enabled files providing it (a file provides its own id).
+        Map<String, Set<LocalModFile>> activeProviders = new HashMap<>();
         for (ModInfoObject item : getSkinnable().getItems()) {
             LocalModFile mod = item.getModInfo();
-            if (targets.contains(mod) || !mod.isActive())
-                continue;
-            if (mod.getDependencies().stream().anyMatch(targetIds::contains))
-                dependents.add(item);
+            if (mod.isActive() && StringUtils.isNotBlank(mod.getId()))
+                activeProviders.computeIfAbsent(mod.getId(), k -> new HashSet<>()).add(mod);
+        }
+
+        // Files that will end up gone: seed with the targets, then grow with dependents whose
+        // required ids lose their last provider — iterating to a fixpoint for the transitive case.
+        Set<LocalModFile> doomed = new HashSet<>(targets);
+        List<ModInfoObject> dependents = new ArrayList<>();
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+
+            Set<String> lostIds = new HashSet<>();
+            for (Map.Entry<String, Set<LocalModFile>> entry : activeProviders.entrySet()) {
+                if (doomed.containsAll(entry.getValue()))
+                    lostIds.add(entry.getKey());
+            }
+            if (lostIds.isEmpty())
+                break;
+
+            for (ModInfoObject item : getSkinnable().getItems()) {
+                LocalModFile mod = item.getModInfo();
+                if (!mod.isActive() || doomed.contains(mod))
+                    continue;
+                if (mod.getDependencies().stream().anyMatch(lostIds::contains)) {
+                    dependents.add(item);
+                    doomed.add(mod);
+                    changed = true;
+                }
+            }
         }
         return dependents;
     }
@@ -714,6 +741,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         VBox nestedBox = new VBox();
         private final Rectangle nestedClip = new Rectangle();
         private Timeline nestedAnimation;
+        // Listeners the nested panel attaches to dependency-provider activeProperties so their
+        // (installed/disabled) status labels refresh live; removed whenever the panel is torn down.
+        private final List<Runnable> nestedListenerCleanups = new ArrayList<>();
         // Suppresses the expand animation while a cell is being recycled to another item.
         private boolean suppressExpandAnimation;
         BooleanProperty booleanProperty;
@@ -824,23 +854,39 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             Label name = new Label(depId);
 
             var modManager = modInfo.getModManager();
-            var loaderType = modInfo.getModLoaderType();
-            // Only call getLocalMod() when the mod actually exists — it creates an entry otherwise.
-            Set<LocalModFile> installedFiles = modManager.hasMod(depId, loaderType)
-                    ? modManager.getLocalMod(depId, loaderType).getFiles()
-                    : Set.of();
-            String statusText;
-            if (installedFiles.isEmpty()) {
-                // Not installed separately — it may instead be bundled inside this mod via Jar-in-Jar.
-                statusText = isBundledDependency(depId, modInfo.getBundledMods())
-                        ? i18n("addon.dependencies.bundled")
-                        : i18n("addon.dependencies.missing");
-            } else if (installedFiles.stream().anyMatch(LocalModFile::isActive)) {
-                statusText = i18n("addon.dependencies.installed");
-            } else {
-                statusText = i18n("addon.dependencies.disabled");
+            // A dependency may be installed under a compatible loader other than this mod's own
+            // (e.g. a Quilt mod depending on a Fabric mod), so resolve it across every loader bucket
+            // instead of only the depending mod's loaderType. Only call getLocalMod() when the mod
+            // actually exists — it creates an entry otherwise.
+            Set<LocalModFile> installedFiles = new HashSet<>();
+            for (ModLoaderType type : ModLoaderType.values()) {
+                if (modManager.hasMod(depId, type))
+                    installedFiles.addAll(modManager.getLocalMod(depId, type).getFiles());
             }
-            Label status = new Label("(" + statusText + ")");
+
+            Label status = new Label();
+            Runnable refresh = () -> {
+                String statusText;
+                if (installedFiles.isEmpty()) {
+                    // Not installed separately — it may instead be bundled inside this mod via Jar-in-Jar.
+                    statusText = isBundledDependency(depId, modInfo.getBundledMods())
+                            ? i18n("addon.dependencies.bundled")
+                            : i18n("addon.dependencies.missing");
+                } else if (installedFiles.stream().anyMatch(LocalModFile::isActive)) {
+                    statusText = i18n("addon.dependencies.installed");
+                } else {
+                    statusText = i18n("addon.dependencies.disabled");
+                }
+                status.setText("(" + statusText + ")");
+            };
+            refresh.run();
+            // Keep the status live while the panel stays open: re-evaluate whenever a provider is
+            // enabled/disabled. Listeners are dropped when the panel is torn down (clearNested).
+            for (LocalModFile file : installedFiles) {
+                InvalidationListener listener = obs -> refresh.run();
+                file.activeProperty().addListener(listener);
+                nestedListenerCleanups.add(() -> file.activeProperty().removeListener(listener));
+            }
 
             HBox row = new HBox(8, SVG.EXTENSION.createIcon(16), name, status);
             row.getStyleClass().add("mod-nested-item");
@@ -866,8 +912,17 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             return false;
         }
 
-        private void rebuildNested(ModInfoObject item) {
+        // Tears down the nested panel's content, first detaching any live status-refresh listeners
+        // so long-lived mod files don't pin recycled cells.
+        private void clearNested() {
+            for (Runnable cleanup : nestedListenerCleanups)
+                cleanup.run();
+            nestedListenerCleanups.clear();
             nestedBox.getChildren().clear();
+        }
+
+        private void rebuildNested(ModInfoObject item) {
+            clearNested();
             if (item == null)
                 return;
             LocalModFile modInfo = item.getModInfo();
@@ -899,7 +954,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             } else {
                 nestedBox.setManaged(false);
                 nestedBox.setVisible(false);
-                nestedBox.getChildren().clear();
+                clearNested();
             }
         }
 
@@ -944,7 +999,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 timeline.setOnFinished(e -> {
                     nestedBox.setManaged(false);
                     nestedBox.setVisible(false);
-                    nestedBox.getChildren().clear();
+                    clearNested();
                     nestedBox.setMinHeight(Region.USE_COMPUTED_SIZE);
                     nestedBox.setMaxHeight(Region.USE_COMPUTED_SIZE);
                     nestedAnimation = null;
