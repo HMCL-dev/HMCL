@@ -18,13 +18,10 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXSpinner;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -57,6 +54,7 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.task.TaskCenterPage;
+import org.jackhuang.hmcl.ui.task.TaskOverviewRing;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -166,10 +164,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             container.getChildren().add(contentPlaceHolder);
         }
 
-        // Background-task floating button, above the content but below the hint/dialog layer so
-        // modal dialogs still cover it. Visible only while there are active tasks.
-        container.getChildren().add(createTaskFab());
-
         // welcome and hint layer at top
         {
             StackPane floatLayer = new StackPane();
@@ -247,6 +241,31 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             buttonsContainer.setAlignment(Pos.TOP_RIGHT);
             buttonsContainer.setMaxHeight(40);
             {
+                // Background-task indicator: the Task Center's own progress ring (compact) with the
+                // active-task count in the center. Shown only while tasks are active; clicking opens
+                // the Task Center. Uses the same TaskOverviewRing + driveFrom() as the Task Center
+                // overview, so the two rings animate identically.
+                JFXButton btnTask = new JFXButton();
+                btnTask.setFocusTraversable(false);
+                btnTask.getStyleClass().add("jfx-decorator-button");
+                btnTask.setOnAction(e -> Controllers.navigate(TaskCenterPage.getInstance()));
+                FXUtils.installFastTooltip(btnTask, i18n("task.manage"));
+
+                TaskOverviewRing taskRing = new TaskOverviewRing(30, false);
+                taskEntriesListener = taskRing.driveFrom(TaskCenter.getInstance());
+
+                Label taskCount = new Label();
+                taskCount.getStyleClass().add("task-indicator-count");
+                taskCount.textFillProperty().bind(Themes.titleFillProperty());
+                taskCount.textProperty().bind(Bindings.size(TaskCenter.getInstance().getEntries()).asString());
+
+                StackPane taskIconPane = new StackPane(taskRing, taskCount);
+                btnTask.setGraphic(taskIconPane);
+
+                // Only present while something is running (mirrors the old title-bar indicator).
+                btnTask.visibleProperty().bind(Bindings.isNotEmpty(TaskCenter.getInstance().getEntries()));
+                btnTask.managedProperty().bind(btnTask.visibleProperty());
+
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
                 btnHelp.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
@@ -265,7 +284,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
-                buttonsContainer.getChildren().setAll(btnHelp, btnMin, btnClose);
+                buttonsContainer.getChildren().setAll(btnTask, btnHelp, btnMin, btnClose);
             }
             AnchorPane layer = new AnchorPane();
             layer.setPickOnBounds(false);
@@ -277,80 +296,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         }
 
         getChildren().add(root);
-    }
-
-    /// Floating action button for background tasks: a progress ring with the active-task count in
-    /// the center, anchored bottom-right over the content. Shown only while tasks are active; clicking
-    /// opens the Task Center. Replaces the former title-bar indicator so the primary feedback channel
-    /// for auto-backgrounded tasks is prominent.
-    private Node createTaskFab() {
-        JFXSpinner spinner = new JFXSpinner();
-        spinner.getStyleClass().add("task-fab-spinner");
-        spinner.setRadius(19);
-
-        // Smooth the ring: ease toward the aggregate so big jumps (a late stage total, a parallel
-        // task joining the average) glide. Snap on indeterminate or regressions.
-        DoubleProperty smoothed = new SimpleDoubleProperty(-1);
-        spinner.progressProperty().bind(smoothed);
-        Timeline[] timeline = new Timeline[1];
-        FXUtils.onChangeAndOperate(TaskCenter.getInstance().runningProgressProperty(), v -> {
-            double target = v.doubleValue();
-            if (timeline[0] != null) {
-                timeline[0].stop();
-                timeline[0] = null;
-            }
-            if (target < 0 || smoothed.get() < 0 || target < smoothed.get()) {
-                smoothed.set(target);
-                return;
-            }
-            timeline[0] = new Timeline(new KeyFrame(Duration.millis(400),
-                    new KeyValue(smoothed, target, Interpolator.EASE_BOTH)));
-            timeline[0].play();
-        });
-
-        Label count = new Label();
-        count.getStyleClass().add("task-fab-count");
-
-        StackPane fab = new StackPane(spinner, count);
-        fab.getStyleClass().add("task-fab");
-        FXUtils.setLimitWidth(fab, 52);
-        FXUtils.setLimitHeight(fab, 52);
-        // Draggable so it can be moved off a page button it happens to cover. [startX, startY,
-        // startTranslateX, startTranslateY, movedFlag]
-        double[] drag = new double[5];
-        fab.setOnMousePressed(e -> {
-            drag[0] = e.getSceneX();
-            drag[1] = e.getSceneY();
-            drag[2] = fab.getTranslateX();
-            drag[3] = fab.getTranslateY();
-            drag[4] = 0;
-            e.consume();
-        });
-        fab.setOnMouseDragged(e -> {
-            fab.setTranslateX(drag[2] + e.getSceneX() - drag[0]);
-            fab.setTranslateY(drag[3] + e.getSceneY() - drag[1]);
-            drag[4] = 1;
-            e.consume();
-        });
-        fab.setOnMouseClicked(e -> {
-            if (drag[4] == 0) // a real click, not the end of a drag
-                Controllers.navigate(TaskCenterPage.getInstance());
-        });
-        FXUtils.installFastTooltip(fab, i18n("task.manage"));
-
-        Runnable update = () -> {
-            int c = TaskCenter.getInstance().getEntries().size();
-            fab.setVisible(c > 0);
-            fab.setManaged(c > 0);
-            count.setText(String.valueOf(c));
-        };
-        update.run();
-        taskEntriesListener = change -> update.run();
-        TaskCenter.getInstance().getEntries().addListener(taskEntriesListener);
-
-        StackPane.setAlignment(fab, Pos.BOTTOM_RIGHT);
-        StackPane.setMargin(fab, new Insets(0, 20, 20, 0)); // bottom-right, PCL-style inset
-        return fab;
     }
 
     private Node createNavBar(Decorator skinnable, double leftPaneWidth, boolean canBack, boolean canClose, boolean showCloseAsHome, boolean canRefresh, String title, Node titleNode) {

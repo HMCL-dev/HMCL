@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.task;
 
 import javafx.animation.*;
 import javafx.beans.property.DoubleProperty;
+import javafx.collections.ListChangeListener;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
@@ -42,9 +43,14 @@ import org.jackhuang.hmcl.ui.SVG;
 /// Feed it a 0~1 [#progressProperty] (or -1 for indeterminate). The owner calls [#setIdle] when there
 /// are no tasks and [#playComplete] for the success flourish.
 public final class TaskOverviewRing extends StackPane {
-    private static final double SIZE = 104, CENTER = 52, RADIUS = 44, WIDTH = 6;
-    private static final double PULSE_LEN = 42; // degrees
+    private static final double PULSE_LEN = 42; // degrees, angular — size-independent
     private static final Color GREEN = Color.web("#43A047");
+
+    private final double size, center, radius, width;
+    /// When false (compact title-bar mode) the center is left empty — only the arc is drawn — so the
+    /// owner can overlay its own glyph (e.g. an active-task count) without fighting the ring's own
+    /// percent / pause / check / download center.
+    private final boolean showCenter;
 
     private final DoubleProperty progress = new SimpleDoubleProperty(-1);
     /// The value actually drawn — eased toward [#progress], or driven to 1 by the completion anim.
@@ -72,48 +78,62 @@ public final class TaskOverviewRing extends StackPane {
     private boolean completed;
     private boolean idle;
 
+    /// Full-size ring for the Task Center overview panel.
     public TaskOverviewRing() {
-        Circle track = new Circle(CENTER, CENTER, RADIUS);
+        this(104, true);
+    }
+
+    /// @param size       diameter (px) of the ring's layout box; geometry and glyphs scale with it
+    /// @param showCenter draw the percent / pause / check / download center, or leave it empty (arc only)
+    public TaskOverviewRing(double size, boolean showCenter) {
+        this.size = size;
+        this.showCenter = showCenter;
+        this.center = size / 2;
+        double f = size / 104; // everything below is authored against the 104px reference size
+        this.radius = 44 * f;
+        this.width = 6 * f;
+
+        Circle track = new Circle(center, center, radius);
         track.getStyleClass().add("task-ring-track");
         track.setFill(null);
-        track.setStrokeWidth(WIDTH);
+        track.setStrokeWidth(width);
 
         progressArc = arc("task-ring-arc");
         greenArc = arc("task-ring-arc");
         greenArc.setStroke(GREEN);
         greenArc.setOpacity(0);
         pulseArc = arc("task-ring-pulse");
-        pulseArc.setEffect(new GaussianBlur(5)); // soft edges — the segment reads as a glow, not a bar
+        pulseArc.setEffect(new GaussianBlur(5 * f)); // soft edges — the segment reads as a glow, not a bar
         pulseArc.setOpacity(0);
 
         arcLayer = new Pane(track, progressArc, greenArc, pulseArc);
-        arcLayer.setMinSize(SIZE, SIZE);
-        arcLayer.setPrefSize(SIZE, SIZE);
-        arcLayer.setMaxSize(SIZE, SIZE);
+        arcLayer.setMinSize(size, size);
+        arcLayer.setPrefSize(size, size);
+        arcLayer.setMaxSize(size, size);
 
         percentLabel = new Label();
         percentLabel.getStyleClass().add("task-overview-percent");
 
         SVGPath check = SVG.CHECK.createIcon(new SimpleObjectProperty<>(GREEN));
-        check.setScaleX(1.8);
-        check.setScaleY(1.8);
+        check.setScaleX(1.8 * f);
+        check.setScaleY(1.8 * f);
         checkPane = new StackPane(check);
         checkPane.setVisible(false);
 
-        pauseGlyph = new HBox(6, pauseBar(), pauseBar());
+        pauseGlyph = new HBox(6 * f, pauseBar(f), pauseBar(f));
         pauseGlyph.setAlignment(javafx.geometry.Pos.CENTER);
         pauseGlyph.setVisible(false);
 
         SVGPath download = SVG.DOWNLOAD.createIcon();
         download.getStyleClass().add("task-ring-glyph");
-        download.setScaleX(1.5);
-        download.setScaleY(1.5);
+        download.setScaleX(1.5 * f);
+        download.setScaleY(1.5 * f);
         downloadGlyph = new StackPane(download);
         downloadGlyph.setVisible(false);
 
         getChildren().addAll(arcLayer, percentLabel, checkPane, pauseGlyph, downloadGlyph);
-        setMinSize(SIZE, SIZE);
-        setPrefSize(SIZE, SIZE);
+        setMinSize(size, size);
+        setPrefSize(size, size);
 
         // Sweeping highlight: loops forever; refresh() maps the offset onto the filled arc and fades
         // it in/out with a sine so it appears and disappears smoothly rather than snapping.
@@ -151,20 +171,54 @@ public final class TaskOverviewRing extends StackPane {
         return progress;
     }
 
-    private static Arc arc(String styleClass) {
-        Arc arc = new Arc(CENTER, CENTER, RADIUS, RADIUS, 90, 0);
+    /// Wire this ring to a {@link TaskCenter}: bind its progress and run the idle → active →
+    /// completion-flourish → idle state machine (green + check when the queue drains cleanly). Returns
+    /// the entries listener so the owner can detach it later (e.g. on skin dispose). Both the Task
+    /// Center overview panel and the title-bar indicator drive their ring through this, so the two
+    /// stay perfectly in sync.
+    public ListChangeListener<TaskCenter.Entry> driveFrom(TaskCenter center) {
+        progress.bind(center.runningProgressProperty());
+
+        int[] failedAtStart = {center.getFailedTasks().size()};
+        boolean[] wasActive = {!center.getEntries().isEmpty()};
+        setIdle(!wasActive[0]);
+
+        ListChangeListener<TaskCenter.Entry> listener = change -> {
+            boolean active = !center.getEntries().isEmpty();
+            if (active && !wasActive[0]) {
+                failedAtStart[0] = center.getFailedTasks().size();
+                setIdle(false);
+            } else if (!active && wasActive[0]) {
+                // Completion flourish only if nothing failed/cancelled during this run (failures show
+                // in the failed section instead); guard against a new task starting mid-flourish.
+                if (center.getFailedTasks().size() == failedAtStart[0])
+                    playComplete(() -> {
+                        if (center.getEntries().isEmpty())
+                            setIdle(true);
+                    });
+                else
+                    setIdle(true);
+            }
+            wasActive[0] = active;
+        };
+        center.getEntries().addListener(listener);
+        return listener;
+    }
+
+    private Arc arc(String styleClass) {
+        Arc arc = new Arc(center, center, radius, radius, 90, 0);
         arc.setType(ArcType.OPEN);
         arc.setFill(null);
-        arc.setStrokeWidth(WIDTH);
+        arc.setStrokeWidth(width);
         arc.setStrokeLineCap(StrokeLineCap.ROUND);
         arc.getStyleClass().add(styleClass);
         return arc;
     }
 
-    private static Rectangle pauseBar() {
-        Rectangle bar = new Rectangle(5, 22);
-        bar.setArcWidth(4);
-        bar.setArcHeight(4);
+    private static Rectangle pauseBar(double f) {
+        Rectangle bar = new Rectangle(5 * f, 22 * f);
+        bar.setArcWidth(4 * f);
+        bar.setArcHeight(4 * f);
         bar.getStyleClass().add("task-ring-glyph");
         return bar;
     }
@@ -229,7 +283,7 @@ public final class TaskOverviewRing extends StackPane {
             displayProgress.set(0);
             pulseArc.setOpacity(0);
             breathe.playFromStart();
-            if (fromComplete)
+            if (fromComplete && showCenter)
                 morphCheckToPause();
             else
                 updateCenter();
@@ -317,6 +371,14 @@ public final class TaskOverviewRing extends StackPane {
 
     /// Picks the single visible center glyph for the current state.
     private void updateCenter() {
+        if (!showCenter) { // arc-only compact ring: the owner draws whatever sits in the middle
+            percentLabel.setVisible(false);
+            checkPane.setVisible(false);
+            pauseGlyph.setVisible(false);
+            downloadGlyph.setVisible(false);
+            downloadBob.stop();
+            return;
+        }
         Node show = completed ? checkPane
                 : idle ? pauseGlyph
                 : indeterminate ? downloadGlyph
@@ -363,6 +425,18 @@ public final class TaskOverviewRing extends StackPane {
     }
 
     private void morphToCheck(Runnable onFinished) {
+        if (!showCenter) {
+            // Compact mode has no center check glyph — keep the green fill, hold briefly, then hand back.
+            PauseTransition hold = new PauseTransition(Duration.millis(600));
+            completionAnim = hold;
+            hold.setOnFinished(x -> {
+                completionAnim = null;
+                if (onFinished != null)
+                    onFinished.run();
+            });
+            hold.play();
+            return;
+        }
         checkPane.setOpacity(0);
         checkPane.setScaleX(0.4);
         checkPane.setScaleY(0.4);

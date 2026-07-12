@@ -1123,27 +1123,10 @@
 }
 
 /* ── Task Center ──────────────────────────────────────────────────────── */
-/* Floating background-task button (bottom-right of the content): a progress ring + active count. */
-.task-fab {
-    -fx-background-color: -monet-primary-container;
-    -fx-background-radius: 26;
-    -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 10, 0.2, 0, 3);
-}
-
-.task-fab:hover {
-    -fx-background-color: -monet-primary-container-transparent-50;
-}
-
-.task-fab-spinner .arc {
-    -fx-stroke: -monet-primary;
-    -fx-stroke-width: 3.5;
-}
-
-.task-fab-count {
-    -fx-font-size: 14px;
+/* Title-bar background-task indicator: active-task count in the center of a compact progress ring. */
+.task-indicator-count {
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-text-fill: -monet-on-primary-container;
 }
 
 /* Overview panel (left column of the Task Center): a tinted card, distinct from the content card. */

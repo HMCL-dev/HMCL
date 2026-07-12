@@ -162,35 +162,12 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         FXUtils.setLimitWidth(box, 210);
 
         // Custom progress ring: sweeping pulse highlight, turn-green + check-mark on completion.
+        // driveFrom() binds the progress and runs the idle → active → completion → idle state machine;
+        // the title-bar indicator drives its ring through the same method so the two stay in sync.
         TaskOverviewRing ring = new TaskOverviewRing();
-        ring.progressProperty().bind(center.runningProgressProperty());
+        ring.driveFrom(center);
         StackPane ringPane = new StackPane(ring);
         ringPane.setMinHeight(120);
-
-        // Idle when nothing is active; completion flourish (green + check) when the active queue
-        // drains — but only if nothing failed/cancelled during that run (failures show in the failed
-        // section instead). After the flourish, settle back to the idle breathing state.
-        int[] failedAtStart = {center.getFailedTasks().size()};
-        boolean[] wasActive = {!center.getEntries().isEmpty()};
-        ring.setIdle(!wasActive[0]);
-        center.getEntries().addListener((ListChangeListener<TaskCenter.Entry>) change -> {
-            boolean active = !center.getEntries().isEmpty();
-            if (active && !wasActive[0]) {
-                failedAtStart[0] = center.getFailedTasks().size();
-                ring.setIdle(false);
-            } else if (!active && wasActive[0]) {
-                boolean success = center.getFailedTasks().size() == failedAtStart[0];
-                if (success)
-                    // Guard: if a task started again by the time the flourish ends, don't go idle.
-                    ring.playComplete(() -> {
-                        if (center.getEntries().isEmpty())
-                            ring.setIdle(true);
-                    });
-                else
-                    ring.setIdle(true);
-            }
-            wasActive[0] = active;
-        });
 
         // Shown only while idle (labels the pause glyph); when active the % lives in the ring center.
         Label idleCaption = new Label(i18n("task.overview.idle"));
