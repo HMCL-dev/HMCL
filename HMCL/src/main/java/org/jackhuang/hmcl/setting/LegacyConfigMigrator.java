@@ -81,12 +81,6 @@ public final class LegacyConfigMigrator {
     /// The legacy built-in profile name for the user-home game directory.
     private static final String LEGACY_HOME_PROFILE = "Home";
 
-    /// The legacy built-in current-workspace profile ID.
-    private static final GameDirectoryID LEGACY_DEFAULT_PROFILE_ID = getLegacyProfileID(LEGACY_DEFAULT_PROFILE);
-
-    /// The legacy built-in user-home profile ID.
-    private static final GameDirectoryID LEGACY_HOME_PROFILE_ID = getLegacyProfileID(LEGACY_HOME_PROFILE);
-
     /// The legacy Windows and portable configuration file name used before HMCL 3.16.
     private static final String LEGACY_CONFIG_FILENAME = "hmcl.json";
 
@@ -1359,10 +1353,10 @@ public final class LegacyConfigMigrator {
 
     /// Returns the legacy profile name used in `configurations`.
     private static @Nullable String getLegacyProfileName(GameDirectory gameDirectory) {
-        if (LEGACY_DEFAULT_PROFILE_ID.equals(gameDirectory.getId())) {
+        if (GameDirectoryManager.DEFAULT_GAME_DIRECTORY_ID.equals(gameDirectory.getId())) {
             return LEGACY_DEFAULT_PROFILE;
         }
-        if (LEGACY_HOME_PROFILE_ID.equals(gameDirectory.getId())) {
+        if (GameDirectoryManager.HOME_GAME_DIRECTORY_ID.equals(gameDirectory.getId())) {
             return LEGACY_HOME_PROFILE;
         }
         return GameDirectoryManager.getGameDirectoryCustomName(gameDirectory);
