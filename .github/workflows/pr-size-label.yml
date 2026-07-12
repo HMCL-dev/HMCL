@@ -77,7 +77,7 @@ jobs:
 
             const sizeLabels = currentLabels
               .map(label => label.name)
-              .filter(name => /^size\//.test(name))
+              .filter(name => /^\d+\+$/.test(name))
 
             for (const name of sizeLabels) {
               if (name !== targetLabel) {
@@ -115,7 +115,7 @@ jobs:
             })
 
             const unlabelledPRs = openPRs.filter(pr => {
-              return !pr.labels.some(label => /^size\//.test(label.name))
+              return !pr.labels.some(label => /^\d+\+$/.test(label.name))
             })
 
             core.info(`Found ${openPRs.length} open pull request(s), ${unlabelledPRs.length} of them lack a size label.`)
