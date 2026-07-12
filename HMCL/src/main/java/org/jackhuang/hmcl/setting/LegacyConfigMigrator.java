@@ -255,6 +255,10 @@ public final class LegacyConfigMigrator {
             renameMember(jsonObject, "bgpaint", "customBackgroundPaint");
             renameMember(jsonObject, "backgroundPaint", "customBackgroundPaint");
             migrateBackgroundOpacity(jsonObject, themeAppearanceOverrides);
+            jsonObject.addProperty("windowTransparent", true);
+            addThemeAppearanceOverride(
+                    themeAppearanceOverrides,
+                    LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT);
             writeThemeAppearanceOverrides(jsonObject, themeAppearanceOverrides);
             renameMember(jsonObject, "proxyUserName", "proxyUser");
             migrateLegacySelectedVersions(jsonObject);
