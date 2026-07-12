@@ -712,6 +712,9 @@ public final class ThemePackManager {
         if (themeColorType == ThemeColorType.DEFAULT) {
             return ThemeColorSource.DEFAULT;
         }
+        if (themeColorType == ThemeColorType.SYSTEM) {
+            return ThemeColorSource.custom(Themes.getSystemThemeColor());
+        }
         if (themeColorType == ThemeColorType.BACKGROUND) {
             if (backgroundType == BackgroundType.THEME_COLOR) {
                 return ThemeColorSource.DEFAULT;

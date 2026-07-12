@@ -500,6 +500,10 @@ public class PersonalizationPage extends StackPane {
                     i18n("settings.launcher.theme_color_type.default"),
                     ThemeColorType.DEFAULT);
 
+            var systemColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
+                    i18n("settings.launcher.theme_color_type.system"),
+                    ThemeColorType.SYSTEM);
+
             var customColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
                     i18n("settings.launcher.theme_color_type.custom"),
                     ThemeColorType.CUSTOM) {
@@ -516,7 +520,11 @@ public class PersonalizationPage extends StackPane {
 
             RadioChoiceList<ThemeColorType> themeColorChoiceList = new RadioChoiceList<>();
             themeColorChoiceList.setFallbackValue(ThemeColorType.DEFAULT);
-            themeColorChoiceList.setChoices(Arrays.asList(defaultColorChoice, customColorChoice, backgroundColorChoice));
+            themeColorChoiceList.setChoices(Arrays.asList(
+                    defaultColorChoice,
+                    systemColorChoice,
+                    customColorChoice,
+                    backgroundColorChoice));
 
             JFXButton themeColorOverrideButton = createThemeAppearanceOverrideButton();
             themeColorSublist.setTitleRight(themeColorOverrideButton);

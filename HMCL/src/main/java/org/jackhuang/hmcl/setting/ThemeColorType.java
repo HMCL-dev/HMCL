@@ -25,6 +25,9 @@ public enum ThemeColorType {
     /// Uses the built-in launcher default theme color.
     DEFAULT,
 
+    /// Follows the accent color provided by the operating system.
+    SYSTEM,
+
     /// Uses the custom launcher theme color selected by the user.
     CUSTOM,
 
