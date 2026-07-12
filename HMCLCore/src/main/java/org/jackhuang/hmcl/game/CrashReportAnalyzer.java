@@ -185,7 +185,22 @@ public final class CrashReportAnalyzer {
     public static String findCrashReport(String log) throws IOException, InvalidPathException {
         Matcher matcher = CRASH_REPORT_LOCATION_PATTERN.matcher(log);
         if (matcher.find()) {
-            return Files.readString(Paths.get(matcher.group("location")));
+            String location = matcher.group("location");
+            Path crashPath = Paths.get(location).normalize();
+
+            // 禁止绝对路径，防止读取系统任意文件（如 /etc/passwd）
+            if (crashPath.isAbsolute()) {
+                throw new IOException("Absolute crash report path not allowed: " + location);
+            }
+
+            // 禁止路径穿越，防止通过 .. 读取游戏目录外的敏感文件
+            for (Path part : crashPath) {
+                if (part.toString().equals("..")) {
+                    throw new IOException("Path traversal in crash report path: " + location);
+                }
+            }
+
+            return Files.readString(crashPath);
         } else {
             return null;
         }

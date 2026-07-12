@@ -30,6 +30,7 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -334,8 +335,25 @@ public final class NetworkUtils {
                     throw new IOException("Too much redirects");
                 }
 
-                WebURL redirectedUrl = WebURL.of(conn.getURL()).resolve(newURL);
-                HttpURLConnection redirected = (HttpURLConnection) redirectedUrl.toURL().openConnection();
+                URL originalUrl = conn.getURL();
+                WebURL redirectedUrl = WebURL.of(originalUrl).resolve(newURL);
+                URL redirectURL = redirectedUrl.toURL();
+
+                // SSRF 防护：跨 host 重定向时，禁止指向内网地址（loopback/site-local/link-local）
+                if (!Objects.equals(originalUrl.getHost(), redirectURL.getHost())) {
+                    String redirectHost = redirectURL.getHost();
+                    if (isNotBlank(redirectHost)) {
+                        try {
+                            InetAddress addr = InetAddress.getByName(redirectHost);
+                            if (addr.isLoopbackAddress() || addr.isSiteLocalAddress() || addr.isLinkLocalAddress()) {
+                                throw new IOException("Redirect to internal/loopback address is blocked: " + redirectURL);
+                            }
+                        } catch (UnknownHostException ignored) {
+                        }
+                    }
+                }
+
+                HttpURLConnection redirected = (HttpURLConnection) redirectURL.openConnection();
                 properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
                 injectApiKey(redirectedUrl, redirected);
                 redirected.setRequestMethod(method);
