@@ -51,10 +51,14 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String fileName;
     private final String logoPath;
     private final List<String> bundledMods;
-    // Full Jar-in-Jar tree (all nesting depths), scanned eagerly by ModManager after construction so
-    // the dependency cascade and bundled-dependency report see the complete, accurate set.
-    private List<NestedJarInspector.NestedJar> bundledTree = List.of();
-    private Set<String> allBundledModIds; // flattened ids across the whole tree, computed on demand
+    // Full Jar-in-Jar scan result. Written by a background scan thread and read from the FX thread
+    // (UI) and export threads, so the tree and its flattened id set are packed into one immutable
+    // holder behind a single volatile field — readers always see a consistent, fully-published pair.
+    private volatile BundledScan bundledScan = BundledScan.EMPTY;
+
+    private record BundledScan(List<NestedJarInspector.NestedJar> tree, Set<String> ids) {
+        static final BundledScan EMPTY = new BundledScan(List.of(), Set.of());
+    }
     private final List<String> dependencies;
     private final BooleanProperty activeProperty;
 
@@ -166,26 +170,26 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     /// The full Jar-in-Jar tree (every nesting depth), with real parsed metadata for each node.
-    /// Populated eagerly by {@link ModManager} during the scan; empty for mods without nested jars.
+    /// Populated by {@link ModManager}'s background scan; empty for mods without nested jars.
     public List<NestedJarInspector.NestedJar> getBundledTree() {
-        return bundledTree;
+        return bundledScan.tree();
     }
 
     void setBundledTree(List<NestedJarInspector.NestedJar> bundledTree) {
-        this.bundledTree = bundledTree == null ? List.of() : bundledTree;
-        this.allBundledModIds = null;
+        if (bundledTree == null || bundledTree.isEmpty()) {
+            this.bundledScan = BundledScan.EMPTY;
+            return;
+        }
+        // Compute the flattened ids up front (the tree is small), so the pair is published atomically.
+        Set<String> ids = new HashSet<>();
+        NestedJarInspector.collectIds(bundledTree, ids);
+        this.bundledScan = new BundledScan(List.copyOf(bundledTree), Set.copyOf(ids));
     }
 
     /// Every mod id bundled anywhere in this jar's Jar-in-Jar tree (all depths). Used by the dependency
     /// cascade and the bundled-dependency status so a dependency shipped inside a wrapper is recognized.
     public Set<String> getAllBundledModIds() {
-        Set<String> ids = allBundledModIds;
-        if (ids == null) {
-            ids = new HashSet<>();
-            NestedJarInspector.collectIds(bundledTree, ids);
-            allBundledModIds = ids;
-        }
-        return ids;
+        return bundledScan.ids();
     }
 
     public List<String> getDependencies() {

@@ -34,6 +34,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -280,26 +282,92 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     /// complete set of nested mod ids. Split out from {@link #refresh()} and meant to run on a
     /// background thread *after* the list is shown — reaching a nested jar means extracting it, too
     /// slow to block the first paint. Idempotent; the result is cached on each {@link LocalModFile}.
+    // Serializes scanBundledTrees per on-disk cache file. Static and keyed by path because
+    // DefaultGameRepository.getModManager() builds a fresh ModManager per call — the mod list page
+    // and a crash-report export may scan the SAME instance through DIFFERENT ModManager objects
+    // concurrently, and unserialized writers would corrupt the shared cache file.
+    private static final Map<Path, ReentrantLock> JIJ_SCAN_LOCKS = new ConcurrentHashMap<>();
+
     public void scanBundledTrees() {
-        List<LocalModFile> pending = new ArrayList<>();
+        List<CachedMod> snapshot;
         lock.lock();
         try {
             if (!loaded)
                 return;
-            for (LocalModFile mod : localFiles)
-                if (mod.hasBundledMods() && mod.getBundledTree().isEmpty())
-                    pending.add(mod);
+            snapshot = new ArrayList<>(cache.values());
         } finally {
             lock.unlock();
         }
 
-        // The slow extract/parse work runs outside the lock so it never blocks other mod operations.
-        for (LocalModFile mod : pending) {
-            try (ZipFileTree tree = CompressingUtils.openZipTree(mod.getFile())) {
-                mod.setBundledTree(NestedJarInspector.scan(tree));
-            } catch (Exception e) {
-                LOG.warning("Failed to scan Jar-in-Jar tree of " + mod.getFile(), e);
+        List<CachedMod> pending = new ArrayList<>();
+        for (CachedMod cm : snapshot)
+            if (cm.mod().hasBundledMods() && cm.mod().getBundledTree().isEmpty())
+                pending.add(cm);
+        if (pending.isEmpty())
+            return;
+
+        // Consult the on-disk cache so the expensive extract/scan only runs for mods whose fingerprint
+        // changed since last time. This runs outside the main lock (the slow part must not block other
+        // mod operations), but is serialized per cache file — see JIJ_SCAN_LOCKS.
+        Path cacheFile = jijCacheFile();
+        ReentrantLock scanLock = JIJ_SCAN_LOCKS.computeIfAbsent(cacheFile, k -> new ReentrantLock());
+        scanLock.lock();
+        try {
+            Map<String, NestedJarCache.Entry> persisted = NestedJarCache.load(cacheFile);
+            boolean dirty = false;
+            for (CachedMod cm : pending) {
+                if (!cm.mod().getBundledTree().isEmpty())
+                    continue; // resolved by a concurrent scan while we waited for the lock
+                String key = jijCacheKey(cm.mod().getFile());
+                NestedJarCache.Entry hit = key == null ? null : persisted.get(key);
+                if (hit != null && hit.lastModified() == cm.lastModified() && hit.size() == cm.size()) {
+                    cm.mod().setBundledTree(hit.tree()); // fingerprint match — reuse, no extraction
+                } else {
+                    try (ZipFileTree tree = CompressingUtils.openZipTree(cm.mod().getFile())) {
+                        cm.mod().setBundledTree(NestedJarInspector.scan(tree));
+                        dirty = true;
+                    } catch (Exception e) {
+                        LOG.warning("Failed to scan Jar-in-Jar tree of " + cm.mod().getFile(), e);
+                    }
+                }
             }
+
+            // A fresh scan happened — rewrite the cache from the current mods (dropping any now gone).
+            if (dirty) {
+                Map<String, NestedJarCache.Entry> fresh = new LinkedHashMap<>();
+                for (CachedMod cm : snapshot) {
+                    if (!cm.mod().hasBundledMods())
+                        continue;
+                    List<NestedJarInspector.NestedJar> tree = cm.mod().getBundledTree();
+                    if (tree.isEmpty())
+                        continue;
+                    String key = jijCacheKey(cm.mod().getFile());
+                    if (key != null)
+                        fresh.put(key, new NestedJarCache.Entry(cm.lastModified(), cm.size(), tree));
+                }
+                NestedJarCache.save(cacheFile, fresh);
+            }
+        } finally {
+            scanLock.unlock();
+        }
+    }
+
+    private Path jijCacheFile() {
+        // Under the instance's .hmcl/state — transient, rebuildable launcher data.
+        return repository.getInstanceStateDirectory(id).resolve("jij-cache.json").toAbsolutePath().normalize();
+    }
+
+    /// The mod file keyed by its path relative to the mods directory (forward-slashed for a
+    /// platform-independent key), or {@code null} if it is not under the mods directory. The
+    /// {@code .disabled} suffix is stripped so toggling a mod on/off (a pure rename that keeps
+    /// mtime+size) doesn't change its key and defeat the cache. {@code .old} is kept: an .old file
+    /// can coexist with its replacement, and stripping it would collide their keys.
+    private String jijCacheKey(Path file) {
+        try {
+            String key = getDirectory().relativize(file).toString().replace('\\', '/');
+            return StringUtils.removeSuffix(key, DISABLED_EXTENSION);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 

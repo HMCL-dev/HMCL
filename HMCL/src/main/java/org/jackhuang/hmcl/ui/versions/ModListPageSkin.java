@@ -84,6 +84,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -876,30 +877,34 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             for (List<NestedJarInspector.NestedJar> versions : groups.values()) {
                 if (versions.size() == 1) {
                     NestedJarInspector.NestedJar node = versions.get(0);
-                    nestedBox.getChildren().add(createBundledRow(node, indent, null, matchesInstance(node, instanceMc)));
+                    nestedBox.getChildren().add(createBundledRow(node, indent, null, null, matchesInstance(node, instanceMc)));
                     if (node.hasChildren())
                         appendBundledNodes(node.children(), indent + 1, instanceMc);
                 } else {
                     // Multi-version: pick the copy that matches this instance (else the first) as the
-                    // representative, and only recurse into it — the others are the same mod.
+                    // representative, and only recurse into it — the others are the same mod. The badge's
+                    // tooltip lists every collapsed copy so the rest stay discoverable.
                     NestedJarInspector.NestedJar rep = versions.stream()
                             .filter(v -> matchesInstance(v, instanceMc)).findFirst().orElse(versions.get(0));
                     boolean active = matchesInstance(rep, instanceMc);
+                    String tooltip = versions.stream()
+                            .map(v -> v.version() != null && !v.version().isBlank() ? v.version() : v.fileName())
+                            .collect(Collectors.joining("\n"));
                     nestedBox.getChildren().add(createBundledRow(rep, indent,
-                            i18n("addon.bundled.versions", versions.size()), active));
+                            i18n("addon.bundled.versions", versions.size()), tooltip, active));
                     if (rep.hasChildren())
                         appendBundledNodes(rep.children(), indent + 1, instanceMc);
                 }
             }
 
             for (NestedJarInspector.NestedJar node : ungrouped) {
-                nestedBox.getChildren().add(createBundledRow(node, indent, null, false));
+                nestedBox.getChildren().add(createBundledRow(node, indent, null, null, false));
                 if (node.hasChildren())
                     appendBundledNodes(node.children(), indent + 1, instanceMc);
             }
         }
 
-        private Node createBundledRow(NestedJarInspector.NestedJar node, int indent, String versionsBadge, boolean activeForInstance) {
+        private Node createBundledRow(NestedJarInspector.NestedJar node, int indent, String versionsBadge, String badgeTooltip, boolean activeForInstance) {
             HBox row = new HBox(8, SVG.STACKS.createIcon(16));
             row.getStyleClass().add("mod-nested-item");
             row.setAlignment(Pos.CENTER_LEFT);
@@ -917,6 +922,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             if (versionsBadge != null) {
                 Label badge = new Label(versionsBadge);
                 badge.getStyleClass().add("mod-nested-badge");
+                if (badgeTooltip != null && !badgeTooltip.isBlank())
+                    badge.setTooltip(new Tooltip(badgeTooltip));
                 row.getChildren().add(badge);
             }
             if (activeForInstance) {

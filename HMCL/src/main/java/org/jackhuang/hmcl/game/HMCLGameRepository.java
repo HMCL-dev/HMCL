@@ -329,6 +329,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     /// Returns the HMCL-managed state directory under the instance metadata directory.
+    @Override
     public Path getInstanceStateDirectory(String id) {
         return getInstanceMetadataDirectory(id).resolve(INSTANCE_STATE_DIRECTORY);
     }
