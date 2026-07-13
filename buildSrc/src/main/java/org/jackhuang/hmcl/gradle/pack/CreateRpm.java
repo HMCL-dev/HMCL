@@ -177,7 +177,7 @@ public abstract class CreateRpm extends DefaultTask {
                 fi
                 
                 %%files
-                %%dir /usr/share/java/hmcl
+                %%attr(0755,root,root) %%dir /usr/share/java/hmcl
                 %%attr(0755,root,root) %s
                 %%attr(0755,root,root) %s
                 %%attr(0644,root,root) %s
