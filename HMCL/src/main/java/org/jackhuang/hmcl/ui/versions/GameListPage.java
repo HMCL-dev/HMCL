@@ -21,11 +21,11 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -42,6 +42,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -49,6 +50,8 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -59,8 +62,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -68,6 +70,7 @@ import java.util.regex.PatternSyntaxException;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("version.manage")));
@@ -132,16 +135,22 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         return state.getReadOnlyProperty();
     }
 
-    private static class GameList extends ListPageBase<GameListItem> {
+    private static class GameList extends ListPageBase<GameListEntry> {
         private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
-        private final ObservableList<GameListItem> sourceList = FXCollections.observableArrayList();
-        private final FilteredList<GameListItem> filteredList = new FilteredList<>(sourceList);
+        private final ObservableList<GameListEntry> sourceList = FXCollections.observableArrayList();
+        private final Set<String> collapsedGroups = new HashSet<>();
+        private final InvalidationListener groupsListener = observable -> rebuildRows();
+        private List<GameListItem> versionItems = List.of();
+        private HMCLGameRepository repository;
+        private String searchText = "";
 
         public GameList() {
-            setItems(filteredList);
+            setItems(sourceList);
 
             GameDirectoryManager.registerVersionsListener(this::loadVersions);
+            settings().getInstanceGroupNames().addListener(groupsListener);
+            settings().getInstanceGroupMembership().addListener(groupsListener);
 
             setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
         }
@@ -152,15 +161,112 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> versionItems = repository.getDisplayVersions().map(instance -> new GameListItem(repository, instance.getId())).toList();
+            this.repository = repository;
+            this.versionItems = repository.getDisplayVersions()
+                    .map(instance -> new GameListItem(repository, instance.getId()))
+                    .toList();
+            rebuildRows();
 
-            sourceList.setAll(versionItems);
-
-            if (versionItems.isEmpty()) {
+            if (this.versionItems.isEmpty()) {
                 setFailedReason(i18n("version.empty.hint"));
             }
 
             setLoading(false);
+        }
+
+        private void rebuildRows() {
+            if (repository == null) {
+                return;
+            }
+
+            Predicate<GameListItem> predicate = createPredicate(searchText);
+            List<GameListItem> visibleItems = versionItems.stream().filter(predicate).toList();
+            List<LauncherSettings.InstanceGroup> groups = settings().getInstanceGroups(repository.getGameDirectory().getId());
+            if (groups.isEmpty()) {
+                sourceList.setAll(visibleItems);
+                return;
+            }
+
+            Map<String, List<GameListItem>> groupedItems = new HashMap<>();
+            List<GameListItem> ungroupedItems = new ArrayList<>();
+            for (GameListItem item : visibleItems) {
+                String groupId = settings().getInstanceGroup(repository.getGameDirectory().getId(), item.getId());
+                if (groupId == null) {
+                    ungroupedItems.add(item);
+                } else {
+                    groupedItems.computeIfAbsent(groupId, ignored -> new ArrayList<>()).add(item);
+                }
+            }
+
+            boolean searching = searchText != null && !searchText.isEmpty();
+            List<GameListEntry> rows = new ArrayList<>();
+            for (LauncherSettings.InstanceGroup group : groups) {
+                List<GameListItem> items = groupedItems.getOrDefault(group.id(), List.of());
+                if (searching && items.isEmpty()) {
+                    continue;
+                }
+                boolean expanded = searching || !collapsedGroups.contains(group.id());
+                rows.add(new GameListGroupItem(group.id(), group.name(), items.size(), expanded,
+                        () -> toggleGroup(group.id()), () -> renameGroup(group), () -> deleteGroup(group)));
+                if (expanded) {
+                    rows.addAll(items);
+                }
+            }
+
+            if (!ungroupedItems.isEmpty()) {
+                String ungroupedId = "";
+                boolean expanded = searching || !collapsedGroups.contains(ungroupedId);
+                rows.add(new GameListGroupItem(null, i18n("version.group.ungrouped"), ungroupedItems.size(), expanded,
+                        () -> toggleGroup(ungroupedId), null, null));
+                if (expanded) {
+                    rows.addAll(ungroupedItems);
+                }
+            }
+            sourceList.setAll(rows);
+        }
+
+        private void toggleGroup(String groupId) {
+            if (!collapsedGroups.add(groupId)) {
+                collapsedGroups.remove(groupId);
+            }
+            rebuildRows();
+        }
+
+        private void createGroup() {
+            if (repository == null) {
+                return;
+            }
+            Controllers.prompt(i18n("version.group.create.prompt"), (name, handler) -> {
+                try {
+                    settings().createInstanceGroup(repository.getGameDirectory().getId(), name);
+                    handler.resolve();
+                } catch (IllegalArgumentException exception) {
+                    handler.reject(i18n("version.group.name.invalid"));
+                }
+            }, "", new RequiredValidator());
+        }
+
+        private void renameGroup(LauncherSettings.InstanceGroup group) {
+            if (repository == null) {
+                return;
+            }
+            Controllers.prompt(i18n("version.group.rename.prompt"), (name, handler) -> {
+                try {
+                    settings().renameInstanceGroup(repository.getGameDirectory().getId(), group.id(), name);
+                    handler.resolve();
+                } catch (IllegalArgumentException exception) {
+                    handler.reject(i18n("version.group.name.invalid"));
+                }
+            }, group.name(), new RequiredValidator());
+        }
+
+        private void deleteGroup(LauncherSettings.InstanceGroup group) {
+            if (repository == null) {
+                return;
+            }
+            Controllers.confirm(i18n("version.group.delete.confirm", group.name()), i18n("version.group.delete"),
+                    MessageDialogPane.MessageType.WARNING,
+                    () -> settings().deleteInstanceGroup(repository.getGameDirectory().getId(), group.id()), null);
         }
 
         private Predicate<GameListItem> createPredicate(String searchText) {
@@ -206,7 +312,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                 ComponentList root = new ComponentList();
                 root.getStyleClass().add("no-padding");
-                JFXListView<GameListItem> listView = new JFXListView<>();
+                JFXListView<GameListEntry> listView = new JFXListView<>();
 
                 {
                     toolbarPane = new TransitionPane();
@@ -220,7 +326,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     searchField.setPromptText(i18n("search"));
                     HBox.setHgrow(searchField, Priority.ALWAYS);
                     PauseTransition pause = new PauseTransition(Duration.millis(100));
-                    pause.setOnFinished(e -> skinnable.filteredList.setPredicate(skinnable.createPredicate(searchField.getText())));
+                    pause.setOnFinished(e -> {
+                        skinnable.searchText = searchField.getText();
+                        skinnable.rebuildRows();
+                    });
                     searchField.textProperty().addListener((observable, oldValue, newValue) -> {
                         pause.setRate(1);
                         pause.playFromStart();
@@ -235,7 +344,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                     searchBar.getChildren().setAll(searchField, closeSearchBar);
 
-                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
+                    toolbarNormal.getChildren().setAll(
+                            createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList),
+                            createToolbarButton2(i18n("version.group.create"), SVG.CREATE_NEW_FOLDER, skinnable::createGroup),
+                            createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
 
                     toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
 

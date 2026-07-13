@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -71,6 +72,12 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// The JSON property name for selected instance IDs keyed by game directory ID.
     static final String PROPERTY_SELECTED_INSTANCE = "selectedInstance";
+
+    /// The JSON property name for instance group names keyed by game directory and group ID.
+    static final String PROPERTY_INSTANCE_GROUP_NAMES = "instanceGroupNames";
+
+    /// The JSON property name for instance group membership keyed by game directory and instance ID.
+    static final String PROPERTY_INSTANCE_GROUP_MEMBERSHIP = "instanceGroupMembership";
 
     /// Default launcher theme used when no stored theme reference is available.
     public static final ThemeReference DEFAULT_THEME_REFERENCE = new ThemeReference("hmcl.default", null);
@@ -649,6 +656,139 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
             this.selectedInstance.remove(gameDirectoryId);
         } else {
             this.selectedInstance.put(gameDirectoryId, selectedInstance);
+        }
+    }
+
+    /// Instance group names keyed by a composite game-directory and group identifier.
+    @SerializedName(PROPERTY_INSTANCE_GROUP_NAMES)
+    private final ObservableMap<String, String> instanceGroupNames = FXCollections.observableHashMap();
+
+    /// Instance group membership keyed by a composite game-directory and instance identifier.
+    @SerializedName(PROPERTY_INSTANCE_GROUP_MEMBERSHIP)
+    private final ObservableMap<String, String> instanceGroupMembership = FXCollections.observableHashMap();
+
+    /// Returns the observable instance group name store.
+    public ObservableMap<String, String> getInstanceGroupNames() {
+        return instanceGroupNames;
+    }
+
+    /// Returns the observable instance group membership store.
+    public ObservableMap<String, String> getInstanceGroupMembership() {
+        return instanceGroupMembership;
+    }
+
+    /// Returns the groups configured for a game directory, ordered by name.
+    public @Unmodifiable List<InstanceGroup> getInstanceGroups(GameDirectoryID gameDirectoryId) {
+        String prefix = instanceGroupKeyPrefix(gameDirectoryId);
+        return instanceGroupNames.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(prefix))
+                .map(entry -> new InstanceGroup(entry.getKey().substring(prefix.length()), entry.getValue()))
+                .sorted(Comparator.comparing(InstanceGroup::name, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(InstanceGroup::name)
+                        .thenComparing(InstanceGroup::id))
+                .toList();
+    }
+
+    /// Creates an empty group and returns its stable identifier.
+    public String createInstanceGroup(GameDirectoryID gameDirectoryId, String name) {
+        String normalizedName = validateInstanceGroupName(gameDirectoryId, null, name);
+        String groupId = UUID.randomUUID().toString();
+        instanceGroupNames.put(instanceGroupKey(gameDirectoryId, groupId), normalizedName);
+        return groupId;
+    }
+
+    /// Renames an existing group.
+    public void renameInstanceGroup(GameDirectoryID gameDirectoryId, String groupId, String name) {
+        String key = instanceGroupKey(gameDirectoryId, groupId);
+        if (!instanceGroupNames.containsKey(key)) {
+            throw new IllegalArgumentException("Unknown instance group: " + groupId);
+        }
+        instanceGroupNames.put(key, validateInstanceGroupName(gameDirectoryId, groupId, name));
+    }
+
+    /// Deletes a group and leaves its former instances ungrouped.
+    public void deleteInstanceGroup(GameDirectoryID gameDirectoryId, String groupId) {
+        instanceGroupNames.remove(instanceGroupKey(gameDirectoryId, groupId));
+        String prefix = instanceMembershipKeyPrefix(gameDirectoryId);
+        instanceGroupMembership.entrySet().removeIf(entry ->
+                entry.getKey().startsWith(prefix) && groupId.equals(entry.getValue()));
+    }
+
+    /// Returns the group identifier assigned to an instance, or `null` when it is ungrouped.
+    public @Nullable String getInstanceGroup(GameDirectoryID gameDirectoryId, String instanceId) {
+        @Nullable String groupId = instanceGroupMembership.get(instanceMembershipKey(gameDirectoryId, instanceId));
+        return groupId != null && instanceGroupNames.containsKey(instanceGroupKey(gameDirectoryId, groupId))
+                ? groupId
+                : null;
+    }
+
+    /// Assigns an instance to a group, or removes its assignment when `groupId` is `null`.
+    public void setInstanceGroup(GameDirectoryID gameDirectoryId, String instanceId, @Nullable String groupId) {
+        String membershipKey = instanceMembershipKey(gameDirectoryId, instanceId);
+        if (groupId == null) {
+            instanceGroupMembership.remove(membershipKey);
+        } else {
+            if (!instanceGroupNames.containsKey(instanceGroupKey(gameDirectoryId, groupId))) {
+                throw new IllegalArgumentException("Unknown instance group: " + groupId);
+            }
+            instanceGroupMembership.put(membershipKey, groupId);
+        }
+    }
+
+    /// Moves a stored group assignment after an instance is renamed.
+    public void renameInstanceGroupMember(GameDirectoryID gameDirectoryId, String oldInstanceId, String newInstanceId) {
+        @Nullable String groupId = instanceGroupMembership.remove(instanceMembershipKey(gameDirectoryId, oldInstanceId));
+        if (groupId != null) {
+            instanceGroupMembership.put(instanceMembershipKey(gameDirectoryId, newInstanceId), groupId);
+        }
+    }
+
+    /// Removes any stored group assignment for an instance.
+    public void removeInstanceGroupMember(GameDirectoryID gameDirectoryId, String instanceId) {
+        instanceGroupMembership.remove(instanceMembershipKey(gameDirectoryId, instanceId));
+    }
+
+    /// Validates and normalizes a group name for a game directory.
+    private String validateInstanceGroupName(GameDirectoryID gameDirectoryId, @Nullable String currentGroupId, String name) {
+        String normalizedName = name.trim();
+        if (normalizedName.isEmpty()) {
+            throw new IllegalArgumentException("Instance group name cannot be blank");
+        }
+        boolean duplicate = getInstanceGroups(gameDirectoryId).stream()
+                .anyMatch(group -> !group.id().equals(currentGroupId) && group.name().equalsIgnoreCase(normalizedName));
+        if (duplicate) {
+            throw new IllegalArgumentException("Duplicate instance group name: " + normalizedName);
+        }
+        return normalizedName;
+    }
+
+    /// Returns the composite key prefix for groups in a game directory.
+    private static String instanceGroupKeyPrefix(GameDirectoryID gameDirectoryId) {
+        return gameDirectoryId + "\n";
+    }
+
+    /// Returns the composite key for a group in a game directory.
+    private static String instanceGroupKey(GameDirectoryID gameDirectoryId, String groupId) {
+        return instanceGroupKeyPrefix(gameDirectoryId) + groupId;
+    }
+
+    /// Returns the composite key prefix for instance memberships in a game directory.
+    private static String instanceMembershipKeyPrefix(GameDirectoryID gameDirectoryId) {
+        return gameDirectoryId + "\n";
+    }
+
+    /// Returns the composite key for an instance membership in a game directory.
+    private static String instanceMembershipKey(GameDirectoryID gameDirectoryId, String instanceId) {
+        return instanceMembershipKeyPrefix(gameDirectoryId) + instanceId;
+    }
+
+    /// Identifies a persisted instance group and its display name.
+    @NotNullByDefault
+    public record InstanceGroup(String id, String name) {
+        /// Creates an immutable instance group descriptor.
+        public InstanceGroup {
+            Objects.requireNonNull(id);
+            Objects.requireNonNull(name);
         }
     }
 

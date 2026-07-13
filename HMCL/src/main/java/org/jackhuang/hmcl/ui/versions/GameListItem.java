@@ -23,10 +23,18 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.Objects;
+import java.util.List;
 
-public class GameListItem extends GameItem {
+/// Provides actions and selection state for an instance card in the instance list.
+@NotNullByDefault
+public final class GameListItem extends GameItem implements GameListEntry {
     private final boolean isModpack;
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
 
@@ -44,7 +52,12 @@ public class GameListItem extends GameItem {
     }
 
     public void rename() {
-        Versions.renameVersion(repository, id);
+        Versions.renameVersion(repository, id).thenAccept(newId -> {
+            if (newId != null) {
+                org.jackhuang.hmcl.setting.SettingsManager.settings().renameInstanceGroupMember(
+                        repository.getGameDirectory().getId(), id, newId);
+            }
+        });
     }
 
     public void duplicate() {
@@ -73,6 +86,36 @@ public class GameListItem extends GameItem {
 
     public void modifyGameSettings() {
         Versions.modifyGameSettings(repository, id);
+    }
+
+    /// Opens a modal group chooser and assigns this instance to the selected group.
+    public void joinGroup() {
+        LauncherSettings settings = SettingsManager.settings();
+        List<LauncherSettings.InstanceGroup> groups = settings.getInstanceGroups(getGameDirectory().getId());
+        String[] candidates = new String[groups.size() + 1];
+        candidates[0] = org.jackhuang.hmcl.util.i18n.I18n.i18n("version.group.ungrouped");
+        for (int i = 0; i < groups.size(); i++) {
+            candidates[i + 1] = groups.get(i).name();
+        }
+
+        String currentGroupId = settings.getInstanceGroup(getGameDirectory().getId(), id);
+        int selectedIndex = 0;
+        for (int i = 0; i < groups.size(); i++) {
+            if (groups.get(i).id().equals(currentGroupId)) {
+                selectedIndex = i + 1;
+                break;
+            }
+        }
+
+        PromptDialogPane.Builder.CandidatesQuestion groupQuestion =
+                new PromptDialogPane.Builder.CandidatesQuestion("", selectedIndex, candidates);
+        Controllers.prompt(new PromptDialogPane.Builder(
+                org.jackhuang.hmcl.util.i18n.I18n.i18n("version.group.join"), (questions, handler) -> {
+                    int index = groupQuestion.getValue();
+                    settings.setInstanceGroup(getGameDirectory().getId(), id,
+                            index == 0 ? null : groups.get(index - 1).id());
+                    handler.resolve();
+                }).addQuestion(groupQuestion));
     }
 
     public void generateLaunchScript() {

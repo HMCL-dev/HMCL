@@ -25,6 +25,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -33,13 +34,23 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class GameListCell extends ListCell<GameListItem> {
+/// Renders either an instance card or a collapsible group header.
+@NotNullByDefault
+public final class GameListCell extends ListCell<GameListEntry> {
 
     private final Region graphic;
+    private final Region groupGraphic;
+    private final Label groupTitle;
+    private final Label groupCount;
+    private final JFXButton groupToggle;
+    private final JFXButton groupRename;
+    private final JFXButton groupDelete;
 
     private final ImageContainer imageView;
     private final TwoLineListItem content;
@@ -54,6 +65,41 @@ public final class GameListCell extends ListCell<GameListItem> {
     private final StringProperty tag = new SimpleStringProperty();
 
     public GameListCell() {
+        BorderPane groupRoot = new BorderPane();
+        groupRoot.getStyleClass().add("md-list-cell");
+        groupRoot.setPadding(new Insets(4, 8, 4, 4));
+        groupToggle = FXUtils.newToggleButton4(SVG.KEYBOARD_ARROW_DOWN);
+        groupTitle = new Label();
+        groupTitle.setStyle("-fx-font-weight: bold;");
+        groupCount = new Label();
+        groupCount.setStyle("-fx-text-fill: -monet-on-surface-variant;");
+        HBox groupLeft = new HBox(8, groupToggle, groupTitle, groupCount);
+        groupLeft.setAlignment(Pos.CENTER_LEFT);
+        groupRoot.setLeft(groupLeft);
+        groupRename = FXUtils.newToggleButton4(SVG.EDIT);
+        groupDelete = FXUtils.newToggleButton4(SVG.DELETE);
+        FXUtils.installFastTooltip(groupRename, i18n("version.group.rename"));
+        FXUtils.installFastTooltip(groupDelete, i18n("version.group.delete"));
+        HBox groupRight = new HBox(groupRename, groupDelete);
+        groupRight.setAlignment(Pos.CENTER_RIGHT);
+        groupRoot.setRight(groupRight);
+        groupToggle.setOnAction(event -> {
+            if (getItem() instanceof GameListGroupItem group) group.toggle();
+        });
+        groupRename.setOnAction(event -> {
+            if (getItem() instanceof GameListGroupItem group) group.rename();
+        });
+        groupDelete.setOnAction(event -> {
+            if (getItem() instanceof GameListGroupItem group) group.delete();
+        });
+        groupRoot.setOnMouseClicked(event -> {
+            if (event.getTarget() != groupToggle && event.getTarget() != groupRename && event.getTarget() != groupDelete
+                    && getItem() instanceof GameListGroupItem group) {
+                group.toggle();
+            }
+        });
+        groupGraphic = groupRoot;
+
         BorderPane root = new BorderPane();
         root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8, 8, 8, 0));
@@ -67,7 +113,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                 public void fire() {
                     if (!isDisable() && !isSelected()) {
                         fireEvent(new ActionEvent());
-                        GameListItem item = GameListCell.this.getItem();
+                        GameListItem item = getGameItem();
                         if (item != null) {
                             item.getRepository().setSelectedInstance(item.getId());
                         }
@@ -109,7 +155,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             this.btnUpgrade = FXUtils.newToggleButton4(SVG.UPDATE);
             btnUpgrade.setOnAction(e -> {
-                GameListItem item = this.getItem();
+                GameListItem item = getGameItem();
                 if (item != null)
                     item.update();
             });
@@ -118,7 +164,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             this.btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
             btnLaunch.setOnAction(e -> {
-                GameListItem item = this.getItem();
+                GameListItem item = getGameItem();
                 if (item != null)
                     item.testGame();
             });
@@ -128,7 +174,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnManage.setOnAction(e -> {
-                GameListItem item = this.getItem();
+                GameListItem item = getGameItem();
                 if (item == null)
                     return;
 
@@ -143,7 +189,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
         root.setCursor(Cursor.HAND);
         container.setOnMouseClicked(e -> {
-            GameListItem item = getItem();
+            GameListItem item = getGameItem();
             if (item == null)
                 return;
 
@@ -160,8 +206,8 @@ public final class GameListCell extends ListCell<GameListItem> {
     }
 
     @Override
-    public void updateItem(GameListItem item, boolean empty) {
-        super.updateItem(item, empty);
+    public void updateItem(GameListEntry entry, boolean empty) {
+        super.updateItem(entry, empty);
 
         this.imageView.imageProperty().unbind();
         this.content.titleProperty().unbind();
@@ -170,9 +216,19 @@ public final class GameListCell extends ListCell<GameListItem> {
         this.right.getChildren().clear();
         this.chkSelected.selectedProperty().unbind();
 
-        if (empty || item == null) {
+        if (empty || entry == null) {
             setGraphic(null);
+        } else if (entry instanceof GameListGroupItem group) {
+            groupTitle.setText(group.getName());
+            groupCount.setText("(" + group.getSize() + ")");
+            groupToggle.setRotate(group.isExpanded() ? 0 : -90);
+            groupRename.setVisible(group.isManageable());
+            groupRename.setManaged(group.isManageable());
+            groupDelete.setVisible(group.isManageable());
+            groupDelete.setManaged(group.isManageable());
+            setGraphic(groupGraphic);
         } else {
+            GameListItem item = (GameListItem) entry;
             setGraphic(this.graphic);
 
             this.chkSelected.selectedProperty().bind(item.selectedProperty());
@@ -186,6 +242,11 @@ public final class GameListCell extends ListCell<GameListItem> {
         }
     }
 
+    /// Returns the instance item currently displayed by this cell, or `null` for a group header.
+    private @Nullable GameListItem getGameItem() {
+        return getItem() instanceof GameListItem item ? item : null;
+    }
+
     private static JFXPopup getPopup(GameListItem item) {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
@@ -195,6 +256,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                 new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), item::generateLaunchScript, popup),
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.SETTINGS, i18n("version.manage.manage"), item::modifyGameSettings, popup),
+                new IconedMenuItem(SVG.FOLDER, i18n("version.group.join"), item::joinGroup, popup),
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), item::rename, popup),
                 new IconedMenuItem(SVG.FOLDER_COPY, i18n("version.manage.duplicate"), item::duplicate, popup),

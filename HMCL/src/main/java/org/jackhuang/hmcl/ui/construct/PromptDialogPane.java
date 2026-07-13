@@ -95,7 +95,8 @@ public class PromptDialogPane extends DialogPane {
                 comboBox.getItems().setAll(((Builder.CandidatesQuestion) question).candidates);
                 comboBox.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) ->
                         ((Builder.CandidatesQuestion) question).value = newValue.intValue());
-                comboBox.getSelectionModel().select(0);
+                Integer selectedIndex = ((Builder.CandidatesQuestion) question).value;
+                comboBox.getSelectionModel().select(selectedIndex != null ? selectedIndex : 0);
                 if (StringUtils.isNotBlank(question.question.get())) {
                     body.addRow(rowIndex++, createQuestionLabel(question.question.get()), comboBox);
                 } else {
@@ -210,11 +211,19 @@ public class PromptDialogPane extends DialogPane {
             protected final List<String> candidates;
 
             public CandidatesQuestion(String question, String... candidates) {
+                this(question, 0, candidates);
+            }
+
+            /// Creates a candidate selection question with an initially selected index.
+            public CandidatesQuestion(String question, int selectedIndex, String... candidates) {
                 super(question);
-                this.value = null;
                 if (candidates == null || candidates.length == 0) {
                     throw new IllegalArgumentException("At least one candidate required");
                 }
+                if (selectedIndex < 0 || selectedIndex >= candidates.length) {
+                    throw new IllegalArgumentException("Selected candidate index out of range: " + selectedIndex);
+                }
+                this.value = selectedIndex;
                 this.candidates = new ArrayList<>(Arrays.asList(candidates));
             }
         }
