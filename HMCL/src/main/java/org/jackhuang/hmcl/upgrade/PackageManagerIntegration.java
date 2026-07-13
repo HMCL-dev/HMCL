@@ -45,10 +45,12 @@ public final class PackageManagerIntegration {
     }
 
     /// Parses a package-managed marker value.
-    private static boolean isEnabled(@Nullable String value) {
+    static boolean isEnabled(@Nullable String value) {
         return value != null
                 && !value.isBlank()
                 && !"0".equals(value)
-                && !"false".equalsIgnoreCase(value);
+                && !"false".equalsIgnoreCase(value)
+                && !"no".equalsIgnoreCase(value)
+                && !"off".equalsIgnoreCase(value);
     }
 }
