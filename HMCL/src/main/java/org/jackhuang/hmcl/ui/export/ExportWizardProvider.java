@@ -191,7 +191,7 @@ public final class ExportWizardProvider implements WizardProvider {
                                 "OneSix",
                                 exportInfo.getName() + "-" + exportInfo.getVersion(),
                                 null,
-                                Lang.toIntOrNull(setting.get(GameSettings::permSizeProperty)),
+                                Lang.toIntOrNull(setting.getInheritable(GameSettings::permSizeProperty)),
                                 setting.getInheritable(GameSettings::commandWrapperProperty),
                                 setting.getInheritable(GameSettings::preLaunchCommandProperty),
                                 null,

@@ -316,7 +316,12 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
 
         @Override
         protected void updateItem(World world, boolean empty) {
+            World oldWorld = getItem();
+            boolean oldEmpty = isEmpty();
+
             super.updateItem(world, empty);
+
+            if (oldWorld == world && oldEmpty == empty) return;
 
             this.content.getTags().clear();
 

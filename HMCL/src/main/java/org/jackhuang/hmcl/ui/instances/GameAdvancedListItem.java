@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.instances;
 
 import javafx.geometry.Pos;
 import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -39,6 +41,9 @@ public class GameAdvancedListItem extends AdvancedListItem {
     @SuppressWarnings("unused")
     private Consumer<Event> onInstanceIconChangedListener;
 
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
+    private Consumer<RefreshedGameInstancesEvent> onRefreshedInstancesListener;
+
     public GameAdvancedListItem() {
         this.imageContainer = new ImageContainer(LEFT_GRAPHIC_SIZE);
         imageContainer.setMouseTransparent(true);
@@ -55,6 +60,11 @@ public class GameAdvancedListItem extends AdvancedListItem {
                 onInstanceIconChangedListener = repository.onInstanceIconChanged.registerWeak(event -> {
                     this.loadInstance(repository.getSelectedInstance());
                 });
+                if (!repository.isLoaded()) {
+                    onRefreshedInstancesListener = EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class)
+                            .registerWeak(event -> loadInstance(repository.getSelectedInstance()));
+                    return;
+                }
             }
         }
         if (instanceId != null && repository != null) {

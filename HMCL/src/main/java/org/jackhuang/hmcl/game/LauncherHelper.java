@@ -549,7 +549,7 @@ public final class LauncherHelper {
                         }
 
                         if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA_LINUX_JAVA_8)) {
-                            if (!setting.get(GameSettings::useCustomNativesProperty)) {
+                            if (!setting.getInheritable(GameSettings::useCustomNativesProperty)) {
                                 FXUtils.runInFX(() -> Controllers.dialog(i18n("launch.advice.vanilla_linux_java_8"), i18n("message.error"), MessageType.ERROR, breakAction));
                                 return result;
                             } else {
@@ -586,7 +586,7 @@ public final class LauncherHelper {
                 }
 
                 // 32-bit JVM cannot make use of too much memory.
-                if (java.getBits() == Bits.BIT_32 && setting.getMaxMemory() > 1.5 * 1024) {
+                if (java.getBits() == Bits.BIT_32 && !setting.getInheritable(GameSettings::autoMemoryProperty) && setting.getMaxMemory() > 1.5 * 1024) {
                     // 1.5 * 1024 is an inaccurate number.
                     // Actual memory limit depends on operating system and memory.
                     suggestions.add(i18n("launch.advice.too_large_memory_for_32bit"));
@@ -633,7 +633,7 @@ public final class LauncherHelper {
                             suggestions.add(i18n("launch.advice.modlauncher8"));
                             break;
                         case VANILLA_X86:
-                            if (!setting.get(GameSettings::useCustomNativesProperty)
+                            if (!setting.getInheritable(GameSettings::useCustomNativesProperty)
                                     && Platform.isSupportedTranslationX86_64()) {
                                 suggestions.add(i18n("launch.advice.vanilla_x86.translation"));
                             }
@@ -645,7 +645,7 @@ public final class LauncherHelper {
 
                 // Cannot allocate too much memory exceeding free space.
                 long totalMemorySizeMB = (long) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
-                if (totalMemorySizeMB > 0 && totalMemorySizeMB < setting.getMaxMemory()) {
+                if (totalMemorySizeMB > 0 && !setting.getInheritable(GameSettings::autoMemoryProperty) && totalMemorySizeMB < setting.getMaxMemory()) {
                     suggestions.add(i18n("launch.advice.not_enough_space", totalMemorySizeMB));
                 }
 

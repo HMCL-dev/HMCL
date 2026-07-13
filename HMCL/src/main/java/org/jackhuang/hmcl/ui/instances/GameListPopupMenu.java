@@ -49,9 +49,17 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
 
+    /// Shows an instance selection popup relative to its owner.
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY,
                             HMCLGameRepository repository, List<GameInstanceManifest> versions) {
+        showAndGetPopup(owner, vAlign, hAlign, initOffsetX, initOffsetY, repository, versions);
+    }
+
+    /// Shows and returns an instance selection popup relative to its owner.
+    public static JFXPopup showAndGetPopup(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
+                                           double initOffsetX, double initOffsetY,
+                                           HMCLGameRepository repository, List<GameInstanceManifest> versions) {
         GameListPopupMenu menu = new GameListPopupMenu();
         menu.getItems().setAll(versions.stream()
                 .filter(it -> repository.hasInstance(it.id()))
@@ -59,6 +67,8 @@ public final class GameListPopupMenu extends StackPane {
                 .toList());
         JFXPopup popup = new JFXPopup(menu);
         popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
+
+        return popup;
     }
 
     private final JFXListView<GameItem> listView = new JFXListView<>();

@@ -213,6 +213,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         @Override
         public void updateItem(RemoteVersion remoteVersion, boolean empty) {
             RemoteVersion oldRemoteVersion = getItem();
+
             super.updateItem(remoteVersion, empty);
 
             if (empty) {
@@ -221,6 +222,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
             setGraphic(pane);
 
+            if (oldRemoteVersion == remoteVersion) return;
+
             twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
                 twoLineListItem.setSubtitle(I18n.formatDateTime(remoteVersion.getReleaseDate()));
@@ -228,67 +231,65 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 twoLineListItem.setSubtitle(null);
             }
 
-            if (oldRemoteVersion != remoteVersion) {
-                twoLineListItem.getTags().clear();
+            twoLineListItem.getTags().clear();
 
-                if (remoteVersion instanceof GameRemoteVersion) {
-                    RemoteVersion.Type versionType = remoteVersion.getVersionType();
-                    GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(remoteVersion.getGameVersion());
+            if (remoteVersion instanceof GameRemoteVersion) {
+                RemoteVersion.Type versionType = remoteVersion.getVersionType();
+                GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(remoteVersion.getGameVersion());
 
-                    switch (versionType) {
-                        case RELEASE -> {
-                            twoLineListItem.addTag(i18n("instance.game.release"));
-                            imageView.setImage(GameInstanceIconType.GRASS.getIcon());
-                        }
-                        case SNAPSHOT, PENDING, UNOBFUSCATED -> {
-                            if (versionType == RemoteVersion.Type.SNAPSHOT
-                                    && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
-                                twoLineListItem.addTag(i18n("instance.game.april_fools"));
-                                imageView.setImage(GameInstanceIconType.APRIL_FOOLS.getIcon());
-                            } else {
-                                twoLineListItem.addTag(i18n("instance.game.snapshot"));
-                                imageView.setImage(GameInstanceIconType.COMMAND.getIcon());
-                            }
-                        }
-                        default -> {
-                            twoLineListItem.addTag(i18n("instance.game.old"));
-                            imageView.setImage(GameInstanceIconType.CRAFT_TABLE.getIcon());
+                switch (versionType) {
+                    case RELEASE -> {
+                        twoLineListItem.addTag(i18n("instance.game.release"));
+                        imageView.setImage(GameInstanceIconType.GRASS.getIcon());
+                    }
+                    case SNAPSHOT, PENDING, UNOBFUSCATED -> {
+                        if (versionType == RemoteVersion.Type.SNAPSHOT
+                                && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
+                            twoLineListItem.addTag(i18n("instance.game.april_fools"));
+                            imageView.setImage(GameInstanceIconType.APRIL_FOOLS.getIcon());
+                        } else {
+                            twoLineListItem.addTag(i18n("instance.game.snapshot"));
+                            imageView.setImage(GameInstanceIconType.COMMAND.getIcon());
                         }
                     }
-
-                    switch (NativePatcher.checkSupportedStatus(gameVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION)) {
-                        case UNTESTED -> twoLineListItem.addTagWarning(i18n("instance.game.support_status.untested"));
-                        case UNSUPPORTED -> twoLineListItem.addTagWarning(i18n("instance.game.support_status.unsupported"));
+                    default -> {
+                        twoLineListItem.addTag(i18n("instance.game.old"));
+                        imageView.setImage(GameInstanceIconType.CRAFT_TABLE.getIcon());
                     }
-                } else {
-                    GameInstanceIconType iconType;
-                    if (remoteVersion instanceof LiteLoaderRemoteVersion)
-                        iconType = GameInstanceIconType.CHICKEN;
-                    else if (remoteVersion instanceof OptiFineRemoteVersion)
-                        iconType = GameInstanceIconType.OPTIFINE;
-                    else if (remoteVersion instanceof ForgeRemoteVersion)
-                        iconType = GameInstanceIconType.FORGE;
-                    else if (remoteVersion instanceof CleanroomRemoteVersion)
-                        iconType = GameInstanceIconType.CLEANROOM;
-                    else if (remoteVersion instanceof NeoForgeRemoteVersion)
-                        iconType = GameInstanceIconType.NEO_FORGE;
-                    else if (remoteVersion instanceof LegacyFabricRemoteVersion || remoteVersion instanceof LegacyFabricAPIRemoteVersion)
-                        iconType = GameInstanceIconType.LEGACY_FABRIC;
-                    else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)
-                        iconType = GameInstanceIconType.FABRIC;
-                    else if (remoteVersion instanceof QuiltRemoteVersion || remoteVersion instanceof QuiltAPIRemoteVersion)
-                        iconType = GameInstanceIconType.QUILT;
-                    else
-                        iconType = GameInstanceIconType.COMMAND;
-
-                    imageView.setImage(iconType.getIcon());
-                    String displayGameVersion = I18n.getDisplayVersion(GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()));
-
-                    if (twoLineListItem.getSubtitle() == null)
-                        twoLineListItem.setSubtitle(displayGameVersion);
-                    else
-                        twoLineListItem.addTag(displayGameVersion);
                 }
+
+                switch (NativePatcher.checkSupportedStatus(gameVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION)) {
+                    case UNTESTED -> twoLineListItem.addTagWarning(i18n("instance.game.support_status.untested"));
+                    case UNSUPPORTED -> twoLineListItem.addTagWarning(i18n("instance.game.support_status.unsupported"));
+                }
+            } else {
+                GameInstanceIconType iconType;
+                if (remoteVersion instanceof LiteLoaderRemoteVersion)
+                    iconType = GameInstanceIconType.CHICKEN;
+                else if (remoteVersion instanceof OptiFineRemoteVersion)
+                    iconType = GameInstanceIconType.OPTIFINE;
+                else if (remoteVersion instanceof ForgeRemoteVersion)
+                    iconType = GameInstanceIconType.FORGE;
+                else if (remoteVersion instanceof CleanroomRemoteVersion)
+                    iconType = GameInstanceIconType.CLEANROOM;
+                else if (remoteVersion instanceof NeoForgeRemoteVersion)
+                    iconType = GameInstanceIconType.NEO_FORGE;
+                else if (remoteVersion instanceof LegacyFabricRemoteVersion || remoteVersion instanceof LegacyFabricAPIRemoteVersion)
+                    iconType = GameInstanceIconType.LEGACY_FABRIC;
+                else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)
+                    iconType = GameInstanceIconType.FABRIC;
+                else if (remoteVersion instanceof QuiltRemoteVersion || remoteVersion instanceof QuiltAPIRemoteVersion)
+                    iconType = GameInstanceIconType.QUILT;
+                else
+                    iconType = GameInstanceIconType.COMMAND;
+
+                imageView.setImage(iconType.getIcon());
+                String displayGameVersion = I18n.getDisplayVersion(GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()));
+
+                if (twoLineListItem.getSubtitle() == null)
+                    twoLineListItem.setSubtitle(displayGameVersion);
+                else
+                    twoLineListItem.addTag(displayGameVersion);
             }
         }
     }

@@ -322,6 +322,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.version(remoteVersion);
             });
 
+            repository.applyDefaultIsolationSettingForNewInstance(instanceId, settings.isInstallingModdedVersion());
             return builder.buildAsync().whenComplete(any -> {
                 repository.refresh();
                 repository.applyDefaultIsolationSetting(instanceId);

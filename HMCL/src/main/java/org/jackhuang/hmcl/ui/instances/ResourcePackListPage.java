@@ -472,7 +472,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final ResourcePackListPage page;
 
         private final JFXCheckBox checkBox;
-        private final ImageContainer imageContainer = new ImageContainer(24);
+        private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);

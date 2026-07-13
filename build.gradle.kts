@@ -4,6 +4,7 @@ import org.jackhuang.hmcl.gradle.l10n.ParseLanguageSubtagRegistry
 
 plugins {
     id("checkstyle")
+    id("org.glavo.gradle-wrapper-neo") version "0.1.0"
 }
 
 group = "org.jackhuang"

@@ -54,7 +54,8 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         GameBuilder builder = dependencyManager.newGameBuilder();
 
         String name = (String) settings.get("name");
-        builder.name(new GameInstanceID(name));
+        GameInstanceID instanceId = new GameInstanceID(name);
+        builder.name(instanceId);
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
         settings.asStringMap().forEach((key, value) -> {
@@ -62,11 +63,12 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
                 builder.version(remoteVersion);
         });
 
+        repository.applyDefaultIsolationSettingForNewInstance(instanceId, settings.isInstallingModdedVersion());
         return builder.buildAsync().whenComplete(any -> {
             repository.refresh();
-            repository.applyDefaultIsolationSetting(new GameInstanceID(name));
+            repository.applyDefaultIsolationSetting(instanceId);
         })
-                .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(new GameInstanceID(name)));
+                .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(instanceId));
     }
 
     @Override
