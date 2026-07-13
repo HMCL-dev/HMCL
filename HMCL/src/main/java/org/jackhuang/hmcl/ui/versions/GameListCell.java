@@ -25,12 +25,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -43,7 +43,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Renders either an instance card or a collapsible group header.
 @NotNullByDefault
-public final class GameListCell extends ListCell<GameListEntry> {
+public final class GameListCell extends StackPane {
     /// Full height of an instance row before group animation is applied.
     private static final double INSTANCE_CELL_HEIGHT = 56;
 
@@ -66,6 +66,8 @@ public final class GameListCell extends ListCell<GameListEntry> {
     private final HBox right;
 
     private final StringProperty tag = new SimpleStringProperty();
+    /// Entry currently rendered by this row.
+    private @Nullable GameListEntry item;
 
     public GameListCell() {
         FXUtils.setOverflowHidden(this);
@@ -213,9 +215,9 @@ public final class GameListCell extends ListCell<GameListEntry> {
         });
     }
 
-    @Override
-    public void updateItem(GameListEntry entry, boolean empty) {
-        super.updateItem(entry, empty);
+    /// Updates this row to display the supplied list entry.
+    public void updateItem(@Nullable GameListEntry entry, boolean empty) {
+        this.item = entry;
 
         minHeightProperty().unbind();
         prefHeightProperty().unbind();
@@ -234,7 +236,7 @@ public final class GameListCell extends ListCell<GameListEntry> {
         this.chkSelected.selectedProperty().unbind();
 
         if (empty || entry == null) {
-            setGraphic(null);
+            setCellGraphic(null);
         } else if (entry instanceof GameListGroupItem group) {
             groupTitle.setText(group.getName());
             groupCount.setText("(" + group.getSize() + ")");
@@ -243,10 +245,10 @@ public final class GameListCell extends ListCell<GameListEntry> {
             groupRename.setManaged(group.isManageable());
             groupDelete.setVisible(group.isManageable());
             groupDelete.setManaged(group.isManageable());
-            setGraphic(groupGraphic);
+            setCellGraphic(groupGraphic);
         } else {
             GameListItem item = (GameListItem) entry;
-            setGraphic(this.graphic);
+            setCellGraphic(this.graphic);
 
             minHeightProperty().bind(item.groupVisibilityProperty().multiply(INSTANCE_CELL_HEIGHT));
             prefHeightProperty().bind(item.groupVisibilityProperty().multiply(INSTANCE_CELL_HEIGHT));
@@ -260,6 +262,20 @@ public final class GameListCell extends ListCell<GameListEntry> {
             if (item.canUpdate())
                 this.right.getChildren().add(btnUpgrade);
             this.right.getChildren().addAll(btnLaunch, btnManage);
+        }
+    }
+
+    /// Returns the entry currently displayed by this row.
+    private @Nullable GameListEntry getItem() {
+        return item;
+    }
+
+    /// Replaces the visual content of this row.
+    private void setCellGraphic(@Nullable Node graphic) {
+        if (graphic == null) {
+            getChildren().clear();
+        } else {
+            getChildren().setAll(graphic);
         }
     }
 
