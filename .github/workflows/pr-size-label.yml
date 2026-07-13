@@ -38,12 +38,11 @@ jobs:
             /(?:^|\/).+\.kts$/i,
             /(?:^|\/).+\.md$/i,
             /(?:^|\/)LICENSE(?:_.*)?$/i,
-            /(?:^|\/)gradlew(?:\.bat)?$/i,
+            /(?:^|\/)gradlew(?:\.bat|\.ps1)?$/i,
             /(?:^|\/)gradle\/wrapper\/gradle-wrapper\.properties$/i,
             /(?:^|\/)lang\/.+\.properties$/i,
             /(?:^|\/)l10n\/.+\.properties$/i,
             /(?:^|\/)checkstyle\.xml$/i,
-            /(?:^|\/)org\/jackhuang\/hmcl\/ui\/SVG\.java$/i,
             /(?:^|\/).+\.(?:png|jpe?g|gif|ico|svg|json|ttf|woff2?|webp|avif|jxl|heic|mp4|webm|mp3|ogg|wav|txt|toml)$/i
           ]
 
