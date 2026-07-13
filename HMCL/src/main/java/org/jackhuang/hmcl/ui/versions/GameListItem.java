@@ -19,8 +19,10 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -37,6 +39,8 @@ import java.util.List;
 public final class GameListItem extends GameItem implements GameListEntry {
     private final boolean isModpack;
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
+    /// Animated visibility of this instance row inside its group.
+    private final DoubleProperty groupVisibility = new SimpleDoubleProperty(this, "groupVisibility", 1);
 
     public GameListItem(HMCLGameRepository repository, String id) {
         super(repository, id);
@@ -49,6 +53,16 @@ public final class GameListItem extends GameItem implements GameListEntry {
 
     public ReadOnlyBooleanProperty selectedProperty() {
         return selected;
+    }
+
+    /// Returns the animated visibility of this instance row, from `0` to `1`.
+    public DoubleProperty groupVisibilityProperty() {
+        return groupVisibility;
+    }
+
+    /// Sets the animated visibility of this instance row.
+    public void setGroupVisibility(double groupVisibility) {
+        this.groupVisibility.set(groupVisibility);
     }
 
     public void rename() {

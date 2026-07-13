@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,10 @@ public final class GameListGroupItem implements GameListEntry {
     private final int size;
 
     /// Whether the group is currently expanded.
-    private final boolean expanded;
+    private boolean expanded;
+
+    /// Animated expansion progress used by the group arrow.
+    private final DoubleProperty expansionProgress = new SimpleDoubleProperty(this, "expansionProgress");
 
     /// Toggles expansion of this group.
     private final Runnable toggleAction;
@@ -52,6 +57,7 @@ public final class GameListGroupItem implements GameListEntry {
         this.name = name;
         this.size = size;
         this.expanded = expanded;
+        this.expansionProgress.set(expanded ? 1 : 0);
         this.toggleAction = toggleAction;
         this.renameAction = renameAction;
         this.deleteAction = deleteAction;
@@ -75,6 +81,21 @@ public final class GameListGroupItem implements GameListEntry {
     /// Returns whether the group is expanded.
     public boolean isExpanded() {
         return expanded;
+    }
+
+    /// Sets whether the group is logically expanded.
+    public void setExpanded(boolean expanded) {
+        this.expanded = expanded;
+    }
+
+    /// Returns the animated expansion progress, from `0` to `1`.
+    public DoubleProperty expansionProgressProperty() {
+        return expansionProgress;
+    }
+
+    /// Sets the animated expansion progress.
+    public void setExpansionProgress(double expansionProgress) {
+        this.expansionProgress.set(expansionProgress);
     }
 
     /// Toggles group expansion.

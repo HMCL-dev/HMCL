@@ -18,13 +18,13 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
-import javafx.animation.PauseTransition;
+import javafx.animation.*;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -45,6 +45,8 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
@@ -60,6 +62,7 @@ import org.jackhuang.hmcl.ui.directory.GameDirectoryPage;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -140,10 +143,15 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
         private final ObservableList<GameListEntry> sourceList = FXCollections.observableArrayList();
         private final Set<String> collapsedGroups = new HashSet<>();
-        private final InvalidationListener groupsListener = observable -> rebuildRows();
+        private final InvalidationListener groupsListener = observable -> {
+            finishGroupAnimation();
+            rebuildRows();
+        };
         private List<GameListItem> versionItems = List.of();
         private HMCLGameRepository repository;
         private String searchText = "";
+        private @Nullable Timeline groupAnimation;
+        private @Nullable Runnable groupAnimationFinalizer;
 
         public GameList() {
             setItems(sourceList);
@@ -175,6 +183,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         private void rebuildRows() {
+            rebuildRows(false);
+        }
+
+        private void rebuildRows(boolean preserveGroupVisibility) {
             if (repository == null) {
                 return;
             }
@@ -183,6 +195,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             List<GameListItem> visibleItems = versionItems.stream().filter(predicate).toList();
             List<LauncherSettings.InstanceGroup> groups = settings().getInstanceGroups(repository.getGameDirectory().getId());
             if (groups.isEmpty()) {
+                visibleItems.forEach(item -> item.setGroupVisibility(1));
                 sourceList.setAll(visibleItems);
                 return;
             }
@@ -209,6 +222,9 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 rows.add(new GameListGroupItem(group.id(), group.name(), items.size(), expanded,
                         () -> toggleGroup(group.id()), () -> renameGroup(group), () -> deleteGroup(group)));
                 if (expanded) {
+                    if (!preserveGroupVisibility) {
+                        items.forEach(item -> item.setGroupVisibility(1));
+                    }
                     rows.addAll(items);
                 }
             }
@@ -219,6 +235,9 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 rows.add(new GameListGroupItem(null, i18n("version.group.ungrouped"), ungroupedItems.size(), expanded,
                         () -> toggleGroup(ungroupedId), null, null));
                 if (expanded) {
+                    if (!preserveGroupVisibility) {
+                        ungroupedItems.forEach(item -> item.setGroupVisibility(1));
+                    }
                     rows.addAll(ungroupedItems);
                 }
             }
@@ -226,10 +245,106 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         private void toggleGroup(String groupId) {
-            if (!collapsedGroups.add(groupId)) {
-                collapsedGroups.remove(groupId);
+            if (searchText != null && !searchText.isEmpty()) {
+                return;
             }
-            rebuildRows();
+
+            finishGroupAnimation();
+            GameListGroupItem currentHeader = findGroupHeader(groupId);
+            if (currentHeader == null) {
+                return;
+            }
+
+            boolean expanding = !currentHeader.isExpanded();
+            GameListGroupItem animatedHeader;
+            List<GameListItem> animatedItems;
+            if (expanding) {
+                collapsedGroups.remove(groupId);
+                animatedItems = versionItems.stream()
+                        .filter(item -> belongsToGroup(item, groupId))
+                        .toList();
+                animatedItems.forEach(item -> item.setGroupVisibility(0));
+                animatedHeader = currentHeader;
+                animatedHeader.setExpanded(true);
+                animatedHeader.setExpansionProgress(0);
+                int headerIndex = sourceList.indexOf(animatedHeader);
+                sourceList.addAll(headerIndex + 1, animatedItems);
+            } else {
+                collapsedGroups.add(groupId);
+                currentHeader.setExpanded(false);
+                animatedHeader = currentHeader;
+                animatedItems = getDisplayedGroupItems(animatedHeader);
+            }
+
+            double target = expanding ? 1 : 0;
+            Runnable finalizer = () -> {
+                animatedHeader.setExpansionProgress(target);
+                animatedItems.forEach(item -> item.setGroupVisibility(target));
+                if (!expanding) {
+                    sourceList.removeAll(animatedItems);
+                }
+            };
+
+            if (!AnimationUtils.isAnimationEnabled()) {
+                finalizer.run();
+                return;
+            }
+
+            Interpolator interpolator = Motion.EASE_IN_OUT_CUBIC_EMPHASIZED;
+            List<KeyValue> values = new ArrayList<>();
+            values.add(new KeyValue(animatedHeader.expansionProgressProperty(), target, interpolator));
+            for (GameListItem item : animatedItems) {
+                values.add(new KeyValue(item.groupVisibilityProperty(), target, interpolator));
+            }
+
+            groupAnimationFinalizer = finalizer;
+            groupAnimation = new Timeline(new KeyFrame(Motion.LONG2, values.toArray(KeyValue[]::new)));
+            groupAnimation.setOnFinished(event -> completeGroupAnimation());
+            groupAnimation.play();
+        }
+
+        private boolean belongsToGroup(GameListItem item, String groupId) {
+            String itemGroupId = settings().getInstanceGroup(repository.getGameDirectory().getId(), item.getId());
+            return Objects.equals(itemGroupId, groupId.isEmpty() ? null : groupId);
+        }
+
+        private @Nullable GameListGroupItem findGroupHeader(String groupId) {
+            for (GameListEntry entry : sourceList) {
+                if (entry instanceof GameListGroupItem group
+                        && Objects.equals(group.getId(), groupId.isEmpty() ? null : groupId)) {
+                    return group;
+                }
+            }
+            return null;
+        }
+
+        private List<GameListItem> getDisplayedGroupItems(GameListGroupItem header) {
+            int headerIndex = sourceList.indexOf(header);
+            List<GameListItem> items = new ArrayList<>();
+            for (int i = headerIndex + 1; i < sourceList.size(); i++) {
+                GameListEntry entry = sourceList.get(i);
+                if (entry instanceof GameListGroupItem) {
+                    break;
+                }
+                items.add((GameListItem) entry);
+            }
+            return items;
+        }
+
+        private void finishGroupAnimation() {
+            if (groupAnimation != null) {
+                groupAnimation.stop();
+                completeGroupAnimation();
+            }
+        }
+
+        private void completeGroupAnimation() {
+            @Nullable Runnable finalizer = groupAnimationFinalizer;
+            groupAnimation = null;
+            groupAnimationFinalizer = null;
+            if (finalizer != null) {
+                finalizer.run();
+            }
         }
 
         private void createGroup() {
@@ -312,7 +427,12 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                 ComponentList root = new ComponentList();
                 root.getStyleClass().add("no-padding");
-                JFXListView<GameListEntry> listView = new JFXListView<>();
+                VBox listContent = new VBox();
+                listContent.setFillWidth(true);
+                ListChangeListener<GameListEntry> listListener = change -> updateListContent(listContent, change);
+                skinnable.getItems().addListener(listListener);
+                skinnable.listenerHolder.add(listListener);
+                updateListContent(listContent, skinnable.getItems());
 
                 {
                     toolbarPane = new TransitionPane();
@@ -362,17 +482,48 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     center.loadingProperty().bind(skinnable.loadingProperty());
                     center.failedReasonProperty().bind(skinnable.failedReasonProperty());
 
-                    listView.setCellFactory(x -> new GameListCell());
-                    listView.setItems(skinnable.getItems());
+                    ScrollPane listPane = new ScrollPane(listContent);
+                    listPane.setFitToWidth(true);
+                    listPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                    FXUtils.smoothScrolling(listPane);
 
-                    ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+                    ignoreEvent(listPane, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
-                    center.setContent(listView);
+                    center.setContent(listPane);
                     root.getContent().add(center);
                 }
 
                 pane.getChildren().setAll(root);
                 getChildren().setAll(pane);
+            }
+
+            private static void updateListContent(VBox listContent, ListChangeListener.Change<? extends GameListEntry> change) {
+                while (change.next()) {
+                    if (change.wasPermutated() || change.wasUpdated()) {
+                        updateListContent(listContent, change.getList());
+                        return;
+                    }
+                    if (change.wasRemoved()) {
+                        listContent.getChildren().remove(change.getFrom(), change.getFrom() + change.getRemovedSize());
+                    }
+                    if (change.wasAdded()) {
+                        List<Node> addedCells = change.getAddedSubList().stream()
+                                .map(GameListSkin::createListCell)
+                                .toList();
+                        listContent.getChildren().addAll(change.getFrom(), addedCells);
+                    }
+                }
+            }
+
+            private static void updateListContent(VBox listContent, List<? extends GameListEntry> entries) {
+                listContent.getChildren().setAll(entries.stream().map(GameListSkin::createListCell).toList());
+            }
+
+            private static Node createListCell(GameListEntry entry) {
+                GameListCell cell = new GameListCell();
+                cell.updateItem(entry, false);
+                cell.setMaxWidth(Double.MAX_VALUE);
+                return cell;
             }
 
             private void changeToolbar(HBox newToolbar) {

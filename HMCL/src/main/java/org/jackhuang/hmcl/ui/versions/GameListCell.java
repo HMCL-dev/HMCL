@@ -24,6 +24,7 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
@@ -43,6 +44,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// Renders either an instance card or a collapsible group header.
 @NotNullByDefault
 public final class GameListCell extends ListCell<GameListEntry> {
+    /// Full height of an instance row before group animation is applied.
+    private static final double INSTANCE_CELL_HEIGHT = 56;
 
     private final Region graphic;
     private final Region groupGraphic;
@@ -65,6 +68,9 @@ public final class GameListCell extends ListCell<GameListEntry> {
     private final StringProperty tag = new SimpleStringProperty();
 
     public GameListCell() {
+        FXUtils.setOverflowHidden(this);
+        setPadding(Insets.EMPTY);
+
         BorderPane groupRoot = new BorderPane();
         groupRoot.getStyleClass().add("md-list-cell");
         groupRoot.setPadding(new Insets(4, 8, 4, 4));
@@ -93,7 +99,9 @@ public final class GameListCell extends ListCell<GameListEntry> {
             if (getItem() instanceof GameListGroupItem group) group.delete();
         });
         groupRoot.setOnMouseClicked(event -> {
-            if (event.getTarget() != groupToggle && event.getTarget() != groupRename && event.getTarget() != groupDelete
+            if (event.getTarget() instanceof Node target
+                    && !isInside(target, groupToggle)
+                    && !isInside(target, groupRight)
                     && getItem() instanceof GameListGroupItem group) {
                 group.toggle();
             }
@@ -209,6 +217,15 @@ public final class GameListCell extends ListCell<GameListEntry> {
     public void updateItem(GameListEntry entry, boolean empty) {
         super.updateItem(entry, empty);
 
+        minHeightProperty().unbind();
+        prefHeightProperty().unbind();
+        maxHeightProperty().unbind();
+        opacityProperty().unbind();
+        groupToggle.rotateProperty().unbind();
+        setMinHeight(Region.USE_COMPUTED_SIZE);
+        setPrefHeight(Region.USE_COMPUTED_SIZE);
+        setMaxHeight(Region.USE_COMPUTED_SIZE);
+        setOpacity(1);
         this.imageView.imageProperty().unbind();
         this.content.titleProperty().unbind();
         this.content.subtitleProperty().unbind();
@@ -221,7 +238,7 @@ public final class GameListCell extends ListCell<GameListEntry> {
         } else if (entry instanceof GameListGroupItem group) {
             groupTitle.setText(group.getName());
             groupCount.setText("(" + group.getSize() + ")");
-            groupToggle.setRotate(group.isExpanded() ? 0 : -90);
+            groupToggle.rotateProperty().bind(group.expansionProgressProperty().multiply(90).subtract(90));
             groupRename.setVisible(group.isManageable());
             groupRename.setManaged(group.isManageable());
             groupDelete.setVisible(group.isManageable());
@@ -231,6 +248,10 @@ public final class GameListCell extends ListCell<GameListEntry> {
             GameListItem item = (GameListItem) entry;
             setGraphic(this.graphic);
 
+            minHeightProperty().bind(item.groupVisibilityProperty().multiply(INSTANCE_CELL_HEIGHT));
+            prefHeightProperty().bind(item.groupVisibilityProperty().multiply(INSTANCE_CELL_HEIGHT));
+            maxHeightProperty().bind(item.groupVisibilityProperty().multiply(INSTANCE_CELL_HEIGHT));
+            opacityProperty().bind(item.groupVisibilityProperty());
             this.chkSelected.selectedProperty().bind(item.selectedProperty());
             this.imageView.imageProperty().bind(item.imageProperty());
             this.content.titleProperty().bind(item.titleProperty());
@@ -245,6 +266,16 @@ public final class GameListCell extends ListCell<GameListEntry> {
     /// Returns the instance item currently displayed by this cell, or `null` for a group header.
     private @Nullable GameListItem getGameItem() {
         return getItem() instanceof GameListItem item ? item : null;
+    }
+
+    /// Returns whether a clicked node is inside the given control.
+    private static boolean isInside(Node node, Node ancestor) {
+        for (Node current = node; current != null; current = current.getParent()) {
+            if (current == ancestor) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static JFXPopup getPopup(GameListItem item) {
