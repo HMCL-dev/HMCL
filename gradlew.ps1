@@ -157,19 +157,17 @@ function Resolve-JavacExecutable {
 }
 
 function Find-AppHome {
-    param([string] $LauncherHome)
+    param(
+        [string] $LauncherHome,
+        [string] $WorkingDirectory
+    )
 
     $launcherProperties = Join-Path $LauncherHome 'gradle\wrapper\gradle-wrapper.properties'
     if (Test-Path -LiteralPath $launcherProperties -PathType Leaf) {
         return $LauncherHome
     }
 
-    $currentLocation = Get-Location
-    if ($currentLocation.Provider.Name -ne 'FileSystem') {
-        throw "The current location is not a file system directory: $currentLocation"
-    }
-
-    $searchDirectory = Get-Item -LiteralPath $currentLocation.Path
+    $searchDirectory = Get-Item -LiteralPath $WorkingDirectory
     $searchStart = $searchDirectory.FullName
     while ($null -ne $searchDirectory) {
         $propertiesFile = Join-Path $searchDirectory.FullName 'gradle\wrapper\gradle-wrapper.properties'
@@ -224,7 +222,8 @@ function ConvertTo-WindowsCommandLineArgument {
 function Invoke-NativeApplication {
     param(
         [string] $Executable,
-        [string[]] $Arguments
+        [string[]] $Arguments,
+        [string] $WorkingDirectory
     )
 
     $quotedArguments = New-Object 'System.Collections.Generic.List[string]'
@@ -235,6 +234,7 @@ function Invoke-NativeApplication {
     $startInfo = New-Object Diagnostics.ProcessStartInfo
     $startInfo.FileName = $Executable
     $startInfo.Arguments = [string]::Join(' ', $quotedArguments.ToArray())
+    $startInfo.WorkingDirectory = $WorkingDirectory
     $startInfo.UseShellExecute = $false
 
     $process = New-Object Diagnostics.Process
@@ -295,7 +295,13 @@ function Compile-WrapperSource {
 function Invoke-GradleWrapper {
     param([string[]] $GradleArguments)
 
-    $appHome = Find-AppHome -LauncherHome $script:LauncherHome
+    $currentLocation = Get-Location
+    if ($currentLocation.Provider.Name -ne 'FileSystem') {
+        throw "The current location is not a file system directory: $currentLocation"
+    }
+    $workingDirectory = $currentLocation.ProviderPath
+
+    $appHome = Find-AppHome -LauncherHome $script:LauncherHome -WorkingDirectory $workingDirectory
     $launcherWrapperDirectory = Join-Path $script:LauncherHome 'gradle\wrapper'
     $projectSource = Join-Path $appHome 'gradle\wrapper\GradleWrapperNeo.java'
     if (Test-Path -LiteralPath $projectSource -PathType Leaf) {
@@ -351,7 +357,10 @@ function Invoke-GradleWrapper {
     }
 
     $javaArguments += $GradleArguments
-    $script:WrapperExitCode = Invoke-NativeApplication -Executable $javaExecutable -Arguments $javaArguments
+    $script:WrapperExitCode = Invoke-NativeApplication `
+        -Executable $javaExecutable `
+        -Arguments $javaArguments `
+        -WorkingDirectory $workingDirectory
 }
 
 try {
