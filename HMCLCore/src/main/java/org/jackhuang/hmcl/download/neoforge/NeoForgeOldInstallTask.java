@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
+import org.jackhuang.hmcl.download.game.GameInstanceJsonDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -57,7 +57,7 @@ import java.util.zip.ZipException;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
 
-public class NeoForgeOldInstallTask extends Task<Version> {
+public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
     private class ProcessorTask extends Task<Void> {
 
@@ -110,7 +110,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                 return;
             }
 
-            Path jar = gameRepository.getArtifactFile(version, processor.getJar());
+            Path jar = gameRepository.getArtifactFile(manifest, processor.getJar());
             if (!Files.isRegularFile(jar))
                 throw new FileNotFoundException("Game processor file not found, should be downloaded in preprocess");
 
@@ -128,7 +128,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
             List<String> classpath = new ArrayList<>(processor.getClasspath().size() + 1);
             for (Artifact artifact : processor.getClasspath()) {
-                Path file = gameRepository.getArtifactFile(version, artifact);
+                Path file = gameRepository.getArtifactFile(manifest, artifact);
                 if (!Files.isRegularFile(file))
                     throw new Exception("Game processor dependency missing");
                 classpath.add(file.toString());
@@ -173,23 +173,23 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository gameRepository;
-    private final Version version;
+    private final GameInstanceManifest manifest;
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     private ForgeNewInstallProfile profile;
     private List<Processor> processors;
-    private Version neoForgeVersion;
+    private GameInstanceManifest neoForgeVersion;
     private final String selfVersion;
 
     private Path tempDir;
     private AtomicInteger processorDoneCount = new AtomicInteger(0);
 
-    NeoForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
+    NeoForgeOldInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
-        this.version = version;
+        this.manifest = manifest;
         this.installer = installer;
         this.selfVersion = selfVersion;
 
@@ -246,7 +246,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
         else if (StringUtils.isSurrounded(literal, "'", "'"))
             return StringUtils.removeSurrounding(literal, "'");
         else if (StringUtils.isSurrounded(literal, "[", "]"))
-            return gameRepository.getArtifactFile(version, Artifact.fromDescriptor(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
+            return gameRepository.getArtifactFile(manifest, Artifact.fromDescriptor(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
         else
             return plainConverter.apply(replaceTokens(var, literal));
     }
@@ -275,12 +275,12 @@ public class NeoForgeOldInstallTask extends Task<Version> {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
             processors = profile.getProcessors();
-            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), Version.class);
+            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), GameInstanceManifest.class);
 
             for (Library library : profile.getLibraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());
                 if (Files.exists(file)) {
-                    Path dest = gameRepository.getLibraryFile(version, library);
+                    Path dest = gameRepository.getLibraryFile(manifest, library);
                     FileUtils.copyFile(file, dest);
                 }
             }
@@ -288,7 +288,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
             if (profile.getPath().isPresent()) {
                 Path mainJar = profile.getPath().get().getPath(fs.getPath("maven"));
                 if (Files.exists(mainJar)) {
-                    Path dest = gameRepository.getArtifactFile(version, profile.getPath().get());
+                    Path dest = gameRepository.getArtifactFile(manifest, profile.getPath().get());
                     FileUtils.copyFile(mainJar, dest);
                 }
             }
@@ -296,7 +296,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
             throw new ArtifactMalformedException("Malformed forge installer file", ex);
         }
 
-        dependents.add(new GameLibrariesTask(dependencyManager, version, true, profile.getLibraries()));
+        dependents.add(new GameLibrariesTask(dependencyManager, manifest, true, profile.getLibraries()));
     }
 
     private Map<String, String> parseOptions(List<String> args, Map<String, String> vars) {
@@ -333,9 +333,9 @@ public class NeoForgeOldInstallTask extends Task<Version> {
             return null;
 
         LOG.info("Patching DOWNLOAD_MOJMAPS task");
-        return new VersionJsonDownloadTask(version, dependencyManager)
+        return new GameInstanceJsonDownloadTask(version, dependencyManager)
                 .thenComposeAsync(json -> {
-                    DownloadInfo mappings = fromNonNullJson(json, Version.class)
+                    DownloadInfo mappings = fromNonNullJson(json, GameInstanceManifest.class)
                             .getDownloads().get(DownloadType.CLIENT_MAPPINGS);
                     if (mappings == null) {
                         throw new Exception("client_mappings download info not found");
@@ -387,11 +387,11 @@ public class NeoForgeOldInstallTask extends Task<Version> {
         }
 
         vars.put("SIDE", "client");
-        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(gameRepository.getVersionJar(version)));
-        vars.put("MINECRAFT_VERSION", FileUtils.getAbsolutePath(gameRepository.getVersionJar(version)));
+        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(gameRepository.getInstanceJar(manifest)));
+        vars.put("MINECRAFT_VERSION", FileUtils.getAbsolutePath(gameRepository.getInstanceJar(manifest)));
         vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
-        vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLibrariesDirectory(version)));
+        vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLibrariesDirectory(manifest)));
 
         updateProgress(0, processors.size());
 
@@ -404,10 +404,11 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                 processorsTask.thenComposeAsync(
                         dependencyManager.checkLibraryCompletionAsync(neoForgeVersion, true)));
 
-        setResult(neoForgeVersion
-                .setPriority(Version.PRIORITY_LOADER)
-                .setId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
-                .setVersion(selfVersion));
+        setResult(GameInstancePatch.fromManifest(
+                neoForgeVersion,
+                LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId(),
+                selfVersion,
+                GameInstancePatch.PRIORITY_LOADER));
     }
 
     @Override

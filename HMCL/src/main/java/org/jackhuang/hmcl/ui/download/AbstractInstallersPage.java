@@ -131,7 +131,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
 
                 control.txtName.setMaxWidth(300);
-                versionNamePane.getChildren().setAll(new Label(i18n("version.name")), control.txtName);
+                versionNamePane.getChildren().setAll(new Label(i18n("instance.name")), control.txtName);
                 root.setTop(versionNamePane);
             }
 

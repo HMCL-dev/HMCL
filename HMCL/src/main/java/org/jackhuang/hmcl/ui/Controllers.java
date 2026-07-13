@@ -59,9 +59,9 @@ import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
-import org.jackhuang.hmcl.ui.versions.GameListPage;
-import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.instances.GameListPage;
+import org.jackhuang.hmcl.ui.instances.GameInstancePage;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -106,7 +106,7 @@ public final class Controllers {
 
     private static Scene scene;
     private static Stage stage;
-    private static VersionPage versionPage;
+    private static GameInstancePage gameInstancePage;
     private static Lazy<GameListPage> gameListPage = new Lazy<>(GameListPage::new);
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
@@ -142,18 +142,18 @@ public final class Controllers {
     }
 
     @FXThread
-    public static VersionPage getVersionPage() {
-        if (versionPage == null) {
-            versionPage = new VersionPage();
+    public static GameInstancePage getGameInstancePage() {
+        if (gameInstancePage == null) {
+            gameInstancePage = new GameInstancePage();
         }
-        return versionPage;
+        return gameInstancePage;
     }
 
     @FXThread
-    public static void prepareVersionPage() {
-        if (versionPage == null) {
-            LOG.info("Prepare the version page");
-            versionPage = FXUtils.prepareNode(new VersionPage());
+    public static void prepareGameInstancePage() {
+        if (gameInstancePage == null) {
+            LOG.info("Prepare the game instance page");
+            gameInstancePage = FXUtils.prepareNode(new GameInstancePage());
         }
     }
 
@@ -703,7 +703,7 @@ public final class Controllers {
                     break;
                 case "hmcl://game/launch":
                     var repository = GameDirectoryManager.getSelectedRepository();
-                    Versions.launch(repository, repository.getSelectedInstance(), LauncherHelper::setKeep);
+                    Instances.launch(repository, repository.getSelectedInstance(), LauncherHelper::setKeep);
                     break;
             }
         } else {
@@ -717,7 +717,7 @@ public final class Controllers {
 
     public static void shutdown() {
         rootPage = null;
-        versionPage = null;
+        gameInstancePage = null;
         gameListPage = null;
         downloadPage = null;
         accountListPage = null;

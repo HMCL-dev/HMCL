@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.game.GameRepository;
+
 /**
  * This event gets fired when loading versions in a .minecraft folder.
  * <br>
@@ -29,7 +31,7 @@ public final class RefreshingVersionsEvent extends Event {
     /**
      * Constructor.
      *
-     * @param source {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param source {@link GameRepository}
      */
     public RefreshingVersionsEvent(Object source) {
         super(source);

@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.download.quilt;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 
@@ -32,16 +33,16 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class QuiltAPIInstallTask extends Task<Version> {
+public final class QuiltAPIInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest manifest;
     private final QuiltAPIRemoteVersion remote;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public QuiltAPIInstallTask(DefaultDependencyManager dependencyManager, Version version, QuiltAPIRemoteVersion remoteVersion) {
+    public QuiltAPIInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, QuiltAPIRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
     }
 
@@ -59,7 +60,7 @@ public final class QuiltAPIInstallTask extends Task<Version> {
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
                 remote.getVersion().file().url(),
-                dependencyManager.getGameRepository().getModsDirectory(version.getId()).resolve("quilt-api-" + remote.getVersion().version() + ".jar"),
+                dependencyManager.getGameRepository().getModsDirectory(manifest.id()).resolve("quilt-api-" + remote.getVersion().version() + ".jar"),
                 remote.getVersion().file().getIntegrityCheck())
         );
     }

@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 import java.io.IOException;
@@ -33,23 +33,23 @@ import java.nio.file.Path;
 public abstract class Launcher {
 
     protected final GameRepository repository;
-    protected final Version version;
+    protected final GameInstanceManifest manifest;
     protected final AuthInfo authInfo;
     protected final LaunchOptions options;
     protected final ProcessListener listener;
     protected final boolean daemon;
 
-    public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
-        this(repository, version, authInfo, options, null);
+    public Launcher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options) {
+        this(repository, manifest, authInfo, options, null);
     }
 
-    public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, true);
+    public Launcher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+        this(repository, manifest, authInfo, options, listener, true);
     }
 
-    public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+    public Launcher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         this.repository = repository;
-        this.version = version;
+        this.manifest = manifest;
         this.authInfo = authInfo;
         this.options = options;
         this.listener = listener;

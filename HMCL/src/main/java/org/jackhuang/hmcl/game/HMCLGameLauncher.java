@@ -42,16 +42,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class HMCLGameLauncher extends DefaultLauncher {
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
-        this(repository, version, authInfo, options, null);
+    public HMCLGameLauncher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options) {
+        this(repository, manifest, authInfo, options, null);
     }
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, true);
+    public HMCLGameLauncher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+        this(repository, manifest, authInfo, options, listener, true);
     }
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
-        super(repository, version, authInfo, options, listener, daemon);
+    public HMCLGameLauncher(GameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+        super(repository, manifest, authInfo, options, listener, daemon);
     }
 
     @Override
@@ -66,7 +66,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (options.isDisableAutoGameOptions())
             return;
 
-        Path runDir = repository.getRunDirectory(version.getId());
+        Path runDir = repository.getRunDirectory(manifest.id());
         Path optionsFile = runDir.resolve("options.txt");
         Path configFolder = runDir.resolve("config");
 
@@ -91,7 +91,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
          *  1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
          *  1.13+       : zh_cn works fine, zh_CN will automatically switch to English
          */
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
+        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(manifest));
         if (gameVersion.compareTo("1.1") < 0)
             return;
 
@@ -161,7 +161,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (options.isAllowAutoAgent()
                 && !options.isNoGeneratedJVMArgs()
                 && !options.isNoGeneratedOptimizingJVMArgs()
-                && NativePatcher.needPatchMemoryUtil(version, options.getJava().getParsedVersion())) {
+                && NativePatcher.needPatchMemoryUtil(manifest, options.getJava().getParsedVersion())) {
             LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
             try {
                 result.add("-javaagent:" + extractLwjglUnsafeAgent());
@@ -180,7 +180,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         Library library = new Library(new Artifact("org.glavo", "lwjgl-unsafe-agent", agentVersion));
         String fileName = library.getArtifact().getFileName();
 
-        Path agentPath = repository.getLibraryFile(version, library).toAbsolutePath().normalize();
+        Path agentPath = repository.getLibraryFile(manifest, library).toAbsolutePath().normalize();
         if (agentPath.toString().contains("=")) {
             throw new IOException("Invalid library path: " + agentPath);
         }

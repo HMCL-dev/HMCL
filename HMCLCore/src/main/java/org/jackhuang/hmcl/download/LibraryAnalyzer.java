@@ -34,11 +34,11 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMark> {
-    private Version version;
+    private GameInstanceManifest manifest;
     private final Map<String, Pair<Library, String>> libraries;
 
-    private LibraryAnalyzer(Version version, Map<String, Pair<Library, String>> libraries) {
-        this.version = version;
+    private LibraryAnalyzer(GameInstanceManifest manifest, Map<String, Pair<Library, String>> libraries) {
+        this.manifest = manifest;
         this.libraries = libraries;
     }
 
@@ -60,7 +60,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
      * Maybe a guessing implementation will be provided in the future. But by now, we simply set it to JUST_EXISTED.
      */
     public LibraryMark.LibraryStatus getLibraryStatus(String type) {
-        return version.hasPatch(type) ? LibraryMark.LibraryStatus.CLEAR : LibraryMark.LibraryStatus.JUST_EXISTED;
+        return manifest.hasPatch(type) ? LibraryMark.LibraryStatus.CLEAR : LibraryMark.LibraryStatus.JUST_EXISTED;
     }
 
     @NotNull
@@ -97,17 +97,17 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public boolean hasModLauncher() {
-        return LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(version.getMainClass()) || version.getPatches().stream().anyMatch(
-                patch -> LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.getMainClass())
+        return LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass()) || manifest.getPatches().stream().anyMatch(
+                patch -> LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.mainClass())
         );
     }
 
-    private Version removingMatchedLibrary(Version version, String libraryId) {
+    private GameInstanceManifest removingMatchedLibrary(GameInstanceManifest manifest, String libraryId) {
         LibraryType type = LibraryType.fromPatchId(libraryId);
-        if (type == null) return version;
+        if (type == null) return manifest;
 
         List<Library> libraries = new ArrayList<>();
-        List<Library> rawLibraries = version.getLibraries();
+        List<Library> rawLibraries = manifest.getLibraries();
         for (Library library : rawLibraries) {
             if (type.matchLibrary(library, rawLibraries)) {
                 // skip
@@ -115,7 +115,23 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 libraries.add(library);
             }
         }
-        return version.setLibraries(libraries);
+        return manifest.withLibraries(libraries);
+    }
+
+    private GameInstancePatch removingMatchedLibrary(GameInstancePatch patch, String libraryId) {
+        LibraryType type = LibraryType.fromPatchId(libraryId);
+        if (type == null) return patch;
+
+        List<Library> libraries = new ArrayList<>();
+        List<Library> rawLibraries = patch.getLibraries();
+        for (Library library : rawLibraries) {
+            if (type.matchLibrary(library, rawLibraries)) {
+                // skip
+            } else {
+                libraries.add(library);
+            }
+        }
+        return patch.withLibraries(libraries);
     }
 
     /**
@@ -126,20 +142,24 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
      */
     public LibraryAnalyzer removeLibrary(String libraryId) {
         if (!has(libraryId)) return this;
-        version = removingMatchedLibrary(version, libraryId)
-                .setPatches(version.getPatches().stream()
-                        .filter(patch -> !libraryId.equals(patch.getId()))
-                        .map(patch -> removingMatchedLibrary(patch, libraryId))
-                        .collect(Collectors.toList()));
+        GameInstanceManifest manifest = removingMatchedLibrary(this.manifest, libraryId);
+        this.manifest = manifest.withPatches(this.manifest.getPatches().stream()
+                .filter(patch -> !libraryId.equals(patch.id()))
+                .map(patch -> removingMatchedLibrary(patch, libraryId))
+                .collect(Collectors.toList()));
         return this;
     }
 
-    public Version build() {
-        return version;
+    public GameInstanceManifest build() {
+        return manifest;
     }
 
-    public static LibraryAnalyzer analyze(Version version, String gameVersion) {
-        if (version.getInheritsFrom() != null)
+    public static LibraryAnalyzer analyze(GameInstanceManifest.Resolved resolved, String gameVersion) {
+        return analyze(resolved.standaloneManifest(), gameVersion);
+    }
+
+    public static LibraryAnalyzer analyze(GameInstanceManifest manifest, String gameVersion) {
+        if (manifest.inheritsFrom() != null)
             throw new IllegalArgumentException("LibraryAnalyzer can only analyze independent game version");
 
         Map<String, Pair<Library, String>> libraries = new HashMap<>();
@@ -148,27 +168,26 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             libraries.put(LibraryType.MINECRAFT.getPatchId(), pair(null, gameVersion));
         }
 
-        List<Library> rawLibraries = version.resolve(null).getLibraries();
+        List<Library> rawLibraries = manifest.getLibraries();
         for (Library library : rawLibraries) {
             for (LibraryType type : LibraryType.values()) {
                 if (type.matchLibrary(library, rawLibraries)) {
-                    libraries.put(type.getPatchId(), pair(library, type.patchVersion(version, library.getVersion())));
+                    libraries.put(type.getPatchId(), pair(library, type.patchVersion(manifest, library.getVersion())));
                     break;
                 }
             }
         }
 
-        for (Version patch : version.getPatches()) {
+        for (GameInstancePatch patch : manifest.getPatches()) {
             if (patch.isHidden()) continue;
-            libraries.put(patch.getId(), pair(null, patch.getVersion()));
+            libraries.put(patch.id(), pair(null, patch.version()));
         }
 
-        return new LibraryAnalyzer(version, libraries);
+        return new LibraryAnalyzer(manifest, libraries);
     }
 
-    public static boolean isModded(VersionProvider provider, Version version) {
-        Version resolvedVersion = version.resolve(provider);
-        String mainClass = resolvedVersion.getMainClass();
+    public static boolean isModded(GameInstanceManifest.Resolved resolved) {
+        String mainClass = resolved.launchManifest().mainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
                 || mainClass.startsWith("net.minecraftforge")
                 || mainClass.startsWith("net.neoforged")
@@ -223,7 +242,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
-            protected String patchVersion(Version gameVersion, String libraryVersion) {
+            protected String patchVersion(GameInstanceManifest gameVersion, String libraryVersion) {
                 Matcher matcher = FORGE_VERSION_MATCHER.matcher(libraryVersion);
                 if (matcher.find()) {
                     return matcher.group("forge");
@@ -246,14 +265,14 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
-            protected String patchVersion(Version gameVersion, String libraryVersion) {
+            protected String patchVersion(GameInstanceManifest gameVersion, String libraryVersion) {
                 String res = scanVersion(gameVersion);
                 if (res != null) {
                     return res;
                 }
 
-                for (Version patch : gameVersion.getPatches()) {
-                    res = scanVersion(patch);
+                for (GameInstancePatch patch : gameVersion.getPatches()) {
+                    res = scanPatch(patch);
                     if (res != null) {
                         return res;
                     }
@@ -267,12 +286,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 return super.patchVersion(gameVersion, libraryVersion);
             }
 
-            private String scanVersion(Version version) {
-                Optional<Arguments> optArgument = version.getArguments();
-                if (!optArgument.isPresent()) {
+            private String scanVersion(GameInstanceManifest manifest) {
+                if (manifest.arguments() == null) {
                     return null;
                 }
-                List<Argument> gameArguments = optArgument.get().game();
+                List<Argument> gameArguments = manifest.arguments().game();
                 if (gameArguments == null) {
                     return null;
                 }
@@ -287,6 +305,32 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                                 return ((StringArgument) next).argument();
                             }
                             return null; // Normally, there should not be two --fml.neoForgeVersion argument.
+                        }
+                    }
+                }
+                return null;
+            }
+
+            private String scanPatch(GameInstancePatch patch) {
+                Arguments optArgument = patch.arguments();
+                if (optArgument == null) {
+                    return null;
+                }
+                List<Argument> gameArguments = optArgument.game();
+                if (gameArguments == null) {
+                    return null;
+                }
+
+                for (int i = 0; i < gameArguments.size() - 1; i++) {
+                    Argument argument = gameArguments.get(i);
+                    if (argument instanceof StringArgument) {
+                        String argumentValue = ((StringArgument) argument).argument();
+                        if ("--fml.neoForgeVersion".equals(argumentValue) || "--fml.forgeVersion".equals(argumentValue)) {
+                            Argument next = gameArguments.get(i + 1);
+                            if (next instanceof StringArgument) {
+                                return ((StringArgument) next).argument();
+                            }
+                            return null;
                         }
                     }
                 }
@@ -341,7 +385,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             return group.matcher(library.getGroupId()).matches() && artifact.matcher(library.getArtifactId()).matches();
         }
 
-        protected String patchVersion(Version gameVersion, String libraryVersion) {
+        protected String patchVersion(GameInstanceManifest gameVersion, String libraryVersion) {
             return libraryVersion;
         }
     }

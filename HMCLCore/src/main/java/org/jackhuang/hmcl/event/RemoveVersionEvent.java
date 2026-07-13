@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 
 /**
@@ -32,7 +33,7 @@ public class RemoveVersionEvent extends Event {
 
     /**
      *
-     * @param source {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param source {@link GameRepository}
      * @param version the version id.
      */
     public RemoveVersionEvent(Object source, String version) {

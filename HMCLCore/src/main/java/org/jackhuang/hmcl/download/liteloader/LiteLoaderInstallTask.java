@@ -33,17 +33,17 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class LiteLoaderInstallTask extends Task<Version> {
+public final class LiteLoaderInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest manifest;
     private final LiteLoaderRemoteVersion remote;
     private final List<Task<?>> dependents = new ArrayList<>();
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public LiteLoaderInstallTask(DefaultDependencyManager dependencyManager, Version version, LiteLoaderRemoteVersion remoteVersion) {
+    public LiteLoaderInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, LiteLoaderRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
     }
 
@@ -65,16 +65,16 @@ public final class LiteLoaderInstallTask extends Task<Version> {
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrls().get(0)))
         );
 
-        setResult(new Version(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(),
+        setResult(new GameInstancePatch(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(),
                 remote.getSelfVersion(),
                 60000,
                 new Arguments().addGameArguments("--tweakClass", "com.mumfrey.liteloader.launch.LiteLoaderTweaker"),
                 LibraryAnalyzer.LAUNCH_WRAPPER_MAIN,
                 Lang.merge(remote.getLibraries(), Collections.singleton(library)))
-                .setLogging(Collections.emptyMap()) // Mods may log in malformed format, causing XML parser to crash. So we suppress using official log4j configuration
+                .withLogging(Collections.emptyMap()) // Mods may log in malformed format, causing XML parser to crash. So we suppress using official log4j configuration
         );
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
+        dependencies.add(new org.jackhuang.hmcl.download.game.GameLibrariesTask(dependencyManager, manifest, true, getResult().getLibraries()));
     }
 
 }

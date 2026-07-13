@@ -17,18 +17,25 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -36,16 +43,13 @@ import java.util.*;
  *
  * @author huangyuhui
  */
+@JsonAdapter(Library.Adapter.class)
 @Immutable
 public class Library implements Comparable<Library>, Validation {
-    /**
-     * <p>A possible native descriptors can be: [variant-]os[-key]</p>
-     *
-     * <p>
-     * Variant can be empty string, 'native', or 'natives'.
-     * Key can be empty string, system arch, or system arch bit count.
-     * </p>
-     */
+    /// A possible native descriptors can be: [variant-]os[-key]
+    ///
+    /// Variant can be an empty string, 'native', or 'natives'.
+    /// Key can be an empty string, system arch, or system arch bit count.
     private static final String[] POSSIBLE_NATIVE_DESCRIPTORS;
 
     static {
@@ -72,6 +76,55 @@ public class Library implements Comparable<Library>, Validation {
                 builder.setLength(0);
             }
         }
+    }
+
+    /// Parses a library from either the standard version JSON format or TLauncher library format.
+    public static Library fromJson(JsonObject json) {
+        if (json == null) {
+            throw new JsonParseException("Library must be a JSON object");
+        }
+
+        Artifact artifact = fromJsonMember(json, "name", Artifact.class);
+        String url = JsonUtils.getString(json, "url");
+        LibrariesDownloadInfo downloads = fromJsonMember(json, "downloads", LibrariesDownloadInfo.class);
+
+        if (downloads == null && (json.has("artifact") || json.has("classifies"))) {
+            LibraryDownloadInfo downloadArtifact = fromJsonMember(json, "artifact", LibraryDownloadInfo.class);
+            Map<String, LibraryDownloadInfo> classifiers = fromJsonMember(
+                    json,
+                    "classifies",
+                    JsonUtils.mapTypeOf(String.class, LibraryDownloadInfo.class).getType()
+            );
+            downloads = new LibrariesDownloadInfo(downloadArtifact, classifiers);
+        }
+
+        List<String> checksums = fromJsonMember(json, "checksums", JsonUtils.listTypeOf(String.class).getType());
+        ExtractRules extract = fromJsonMember(json, "extract", ExtractRules.class);
+        Map<String, String> natives = fromJsonMember(json, "natives", JsonUtils.mapTypeOf(String.class, String.class).getType());
+        List<CompatibilityRule> rules = fromJsonMember(json, "rules", JsonUtils.listTypeOf(CompatibilityRule.class).getType());
+
+        String hint = JsonUtils.getString(json, "hint");
+        if (hint == null) {
+            hint = JsonUtils.getString(json, "MMC-hint");
+        }
+
+        String fileName = JsonUtils.getString(json, "filename");
+        if (fileName == null) {
+            fileName = JsonUtils.getString(json, "MMC-filename");
+        }
+
+        return new Library(artifact, url, downloads, checksums, extract, natives, rules, hint, fileName);
+    }
+
+    /// Reads a JSON member using HMCL's configured Gson instance.
+    private static <T> @Nullable T fromJsonMember(JsonObject json, String name, Class<T> type) {
+        return fromJsonMember(json, name, (Type) type);
+    }
+
+    /// Reads a JSON member using HMCL's configured Gson instance.
+    private static <T> @Nullable T fromJsonMember(JsonObject json, String name, Type type) {
+        JsonElement element = json.get(name);
+        return element == null || element.isJsonNull() ? null : JsonUtils.GSON.fromJson(element, type);
     }
 
     @SerializedName("name")
@@ -294,5 +347,19 @@ public class Library implements Comparable<Library>, Validation {
     public void validate() throws JsonParseException, TolerableValidationException {
         if (artifact == null)
             throw new JsonParseException("Library.name cannot be null");
+    }
+
+    /// Gson deserializer for library JSON variants.
+    public static final class Adapter implements JsonDeserializer<Library> {
+        @Override
+        public Library deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (json == null || json.isJsonNull())
+                return null;
+
+            if (json instanceof JsonObject jsonObject)
+                return fromJson(jsonObject);
+            else
+                throw new JsonParseException("Library must be a JSON object");
+        }
     }
 }

@@ -20,7 +20,8 @@ package org.jackhuang.hmcl.download.forge;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 
 import java.time.Instant;
@@ -39,7 +40,7 @@ public class ForgeRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
         return new ForgeInstallTask(dependencyManager, baseVersion, this);
     }
 }

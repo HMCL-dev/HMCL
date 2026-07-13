@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.download.forge;
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -35,17 +36,17 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-public class ForgeOldInstallTask extends Task<Version> {
+public class ForgeOldInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest manifest;
     private final Path installer;
     private final String selfVersion;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    ForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
+    ForgeOldInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.installer = installer;
         this.selfVersion = selfVersion;
 
@@ -72,7 +73,7 @@ public class ForgeOldInstallTask extends Task<Version> {
 
             // unpack the universal jar in the installer file.
             Library forgeLibrary = new Library(installProfile.getInstall().getPath());
-            Path forgeFile = dependencyManager.getGameRepository().getLibraryFile(version, forgeLibrary);
+            Path forgeFile = dependencyManager.getGameRepository().getLibraryFile(manifest, forgeLibrary);
             Files.createDirectories(forgeFile.getParent());
 
             ZipEntry forgeEntry = zipFile.getEntry(installProfile.getInstall().getFilePath());
@@ -81,10 +82,11 @@ public class ForgeOldInstallTask extends Task<Version> {
                 is.transferTo(os);
             }
 
-            setResult(installProfile.getVersionInfo()
-                    .setPriority(Version.PRIORITY_LOADER)
-                    .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
-                    .setVersion(selfVersion));
+            setResult(GameInstancePatch.fromManifest(
+                    installProfile.getVersionInfo(),
+                    LibraryAnalyzer.LibraryType.FORGE.getPatchId(),
+                    selfVersion,
+                    GameInstancePatch.PRIORITY_LOADER));
             dependencies.add(dependencyManager.checkLibraryCompletionAsync(installProfile.getVersionInfo(), true));
         } catch (ZipException ex) {
             throw new ArtifactMalformedException("Malformed forge installer file", ex);

@@ -37,29 +37,29 @@ import java.util.List;
 
 public final class HMCLModpackInstallTask extends Task<Void> {
     private final Path zipFile;
-    private final String name;
+    private final GameInstanceID instanceId;
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependency;
     private final Modpack modpack;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public HMCLModpackInstallTask(HMCLGameRepository repository, Path zipFile, Modpack modpack, String name) {
+    public HMCLModpackInstallTask(HMCLGameRepository repository, Path zipFile, Modpack modpack, GameInstanceID instanceId) {
         this.repository = repository;
         this.dependency = repository.getDependency();
         this.zipFile = zipFile;
-        this.name = name;
+        this.instanceId = instanceId;
         this.modpack = modpack;
 
-        Path run = repository.getRunDirectory(name);
-        Path json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && Files.notExists(json))
-            throw new IllegalArgumentException("Version " + name + " already exists");
+        Path run = repository.getRunDirectory(this.instanceId);
+        Path json = repository.getModpackConfiguration(this.instanceId);
+        if (repository.hasInstance(this.instanceId) && Files.notExists(json))
+            throw new IllegalArgumentException("Instance " + instanceId + " already exists");
 
-        dependents.add(dependency.gameBuilder().name(name).gameVersion(modpack.getGameVersion()).buildAsync());
+        dependents.add(dependency.newGameBuilder().name(this.instanceId).gameVersion(modpack.getGameVersion()).buildAsync());
 
         onDone().register(event -> {
-            if (event.isFailed()) repository.removeVersionFromDisk(name);
+            if (event.isFailed()) repository.removeInstanceFromDisk(this.instanceId);
         });
 
         ModpackConfiguration<Modpack> config = null;
@@ -68,12 +68,12 @@ public final class HMCLModpackInstallTask extends Task<Void> {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(Modpack.class));
 
                 if (!HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Version " + name + " is not a HMCL modpack. Cannot update this version.");
+                    throw new IllegalArgumentException("Version " + instanceId + " is not a HMCL modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/minecraft"), it -> !"pack.json".equals(it), config));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(this.instanceId)).withStage("hmcl.modpack"));
     }
 
     @Override
@@ -89,9 +89,9 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     @Override
     public void execute() throws Exception {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
-        Version originalVersion = JsonUtils.GSON.fromJson(json, Version.class).setId(name).setJar(null);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(originalVersion, null);
-        Task<Version> libraryTask = Task.supplyAsync(() -> originalVersion);
+        GameInstanceManifest originalManifest = JsonUtils.GSON.fromJson(json, GameInstanceManifest.class).withId(instanceId).withJar(null);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(originalManifest, null);
+        Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> originalManifest);
         // reinstall libraries
         // libraries of Forge and OptiFine should be obtained by installation.
         for (LibraryAnalyzer.LibraryMark mark : analyzer) {

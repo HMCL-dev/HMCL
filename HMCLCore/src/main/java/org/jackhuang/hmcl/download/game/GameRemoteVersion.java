@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.game.ReleaseType;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -48,7 +49,7 @@ public final class GameRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
         return new GameInstallTask(dependencyManager, baseVersion, this);
     }
 

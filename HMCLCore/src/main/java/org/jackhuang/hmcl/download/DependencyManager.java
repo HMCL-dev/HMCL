@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
 
@@ -46,7 +46,7 @@ public interface DependencyManager {
      *
      * @return the task to check game completion.
      */
-    Task<?> checkGameCompletionAsync(Version version, boolean integrityCheck);
+    Task<?> checkGameCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck);
 
     /**
      * Check if libraries of this version in complete.
@@ -54,22 +54,22 @@ public interface DependencyManager {
      *
      * @return the task to check game completion.
      */
-    Task<?> checkLibraryCompletionAsync(Version version, boolean integrityCheck);
+    Task<?> checkLibraryCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck);
 
     /**
      * Check if patches of this version in complete.
      * If not, reinstall the patch if possible.
      *
-     * @param version the version to be checked
+     * @param manifest the version to be checked
      * @param integrityCheck check if some libraries are corrupt.
      * @return the task to check patches completion.
      */
-    Task<?> checkPatchCompletionAsync(Version version, boolean integrityCheck);
+    Task<?> checkPatchCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck);
 
     /**
      * The builder to build a brand new game then libraries such as Forge, LiteLoader and OptiFine.
      */
-    GameBuilder gameBuilder();
+    GameBuilder newGameBuilder();
 
     /**
      * Install a library to a version.
@@ -81,7 +81,7 @@ public interface DependencyManager {
      * @param libraryVersion the version of being installed library.
      * @return the task to install the specific library.
      */
-    Task<?> installLibraryAsync(String gameVersion, Version baseVersion, String libraryId, String libraryVersion);
+    Task<?> installLibraryAsync(String gameVersion, GameInstanceManifest baseVersion, String libraryId, String libraryVersion);
 
     /**
      * Install a library to a version.
@@ -91,7 +91,7 @@ public interface DependencyManager {
      * @param libraryVersion the remote version of being installed library.
      * @return the task to install the specific library.
      */
-    Task<?> installLibraryAsync(Version baseVersion, RemoteVersion libraryVersion);
+    Task<?> installLibraryAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion);
 
     /**
      * Get registered version list.

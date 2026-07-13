@@ -30,6 +30,7 @@ import java.util.*;
  */
 public class LaunchOptions implements Serializable {
 
+    private GameInstanceID instanceId;
     private Path gameDir;
     private JavaRuntime java;
     private String versionName;
@@ -64,6 +65,10 @@ public class LaunchOptions implements Serializable {
     private boolean allowAutoAgent;
     private boolean disableAutoGameOptions;
     private boolean daemon;
+
+    public GameInstanceID getInstanceId() {
+        return instanceId;
+    }
 
     /**
      * The game directory
@@ -309,6 +314,11 @@ public class LaunchOptions implements Serializable {
 
         public List<String> getJavaAgents() {
             return options.javaAgents;
+        }
+
+        public Builder setInstanceId(GameInstanceID instanceId) {
+            options.instanceId = instanceId;
+            return this;
         }
 
         public Builder setGameDir(Path gameDir) {

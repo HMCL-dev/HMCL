@@ -35,13 +35,13 @@ import static org.jackhuang.hmcl.download.LibraryAnalyzer.LAUNCH_WRAPPER_MAIN;
 public enum JavaVersionConstraint {
     VANILLA(true, VersionRange.all(), VersionRange.all()) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version, @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version, @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             // Give priority to the Java version requirements specified in the version JSON
-            return version == null || version.getJavaVersion() == null;
+            return version == null || version.javaVersion() == null;
         }
 
         @Override
-        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java, LibraryAnalyzer analyzer) {
+        public boolean checkJava(GameVersionNumber gameVersionNumber, GameInstanceManifest version, JavaRuntime java, LibraryAnalyzer analyzer) {
             GameJavaVersion minimumJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersionNumber);
             return minimumJavaVersion == null || java.getParsedVersion() >= minimumJavaVersion.majorVersion();
         }
@@ -49,20 +49,20 @@ public enum JavaVersionConstraint {
     // Minecraft with suggested java version recorded in game json is restrictedly constrained.
     GAME_JSON(true, VersionRange.all(), VersionRange.all()) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             if (version == null) return false;
             // We only checks for 1.7.10 and above, since 1.7.2 with Forge can only run on Java 7, but it is recorded Java 8 in game json, which is not correct.
-            return gameVersionNumber.compareTo("1.7.10") >= 0 && version.getJavaVersion() != null;
+            return gameVersionNumber.compareTo("1.7.10") >= 0 && version.javaVersion() != null;
         }
 
         @Override
-        public VersionRange<VersionNumber> getJavaVersionRange(Version version, LibraryAnalyzer analyzer) {
+        public VersionRange<VersionNumber> getJavaVersionRange(GameInstanceManifest manifest, LibraryAnalyzer analyzer) {
             String javaVersion;
-            if (Objects.requireNonNull(version.getJavaVersion()).majorVersion() >= 9) {
-                javaVersion = "" + version.getJavaVersion().majorVersion();
+            if (Objects.requireNonNull(manifest.javaVersion()).majorVersion() >= 9) {
+                javaVersion = "" + manifest.javaVersion().majorVersion();
             } else {
-                javaVersion = "1." + version.getJavaVersion().majorVersion();
+                javaVersion = "1." + manifest.javaVersion().majorVersion();
             }
             return VersionNumber.atLeast(javaVersion);
         }
@@ -70,7 +70,7 @@ public enum JavaVersionConstraint {
     // Minecraft<=1.7.2+Forge requires Java<=7, But LegacyModFixer may fix that problem. So only suggest user using Java 7.
     MODDED_JAVA_7(false, GameVersionNumber.atMost("1.7.2"), VersionNumber.atMost("1.7.999")) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
@@ -78,7 +78,7 @@ public enum JavaVersionConstraint {
     },
     MODDED_JAVA_8(false, GameVersionNumber.between("1.7.10", "1.16.999"), VersionNumber.between("1.8", "1.8.999")) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
@@ -86,7 +86,7 @@ public enum JavaVersionConstraint {
     },
     MODDED_JAVA_16(false, GameVersionNumber.between("1.17", "1.17.999"), VersionNumber.between("16", "16.999")) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
@@ -94,7 +94,7 @@ public enum JavaVersionConstraint {
     },
     MODDED_JAVA_17(false, GameVersionNumber.between("1.18", "1.20.4"), VersionNumber.between("17", "17.999")) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
@@ -102,7 +102,7 @@ public enum JavaVersionConstraint {
     },
     MODDED_JAVA_21(false, GameVersionNumber.atLeast("1.20.5"), VersionNumber.between("21", "21.999")) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
@@ -110,13 +110,13 @@ public enum JavaVersionConstraint {
     },
     CLEANROOM(true, GameVersionNumber.between("1.12.2", "1.12.999"), VersionRange.all()) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version, @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version, @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
         }
 
         @Override
-        public VersionRange<VersionNumber> getJavaVersionRange(Version version, LibraryAnalyzer analyzer) {
+        public VersionRange<VersionNumber> getJavaVersionRange(GameInstanceManifest manifest, LibraryAnalyzer analyzer) {
             if (analyzer == null || !analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
                 return VersionRange.all();
 
@@ -132,10 +132,10 @@ public enum JavaVersionConstraint {
     // LaunchWrapper<=1.12 will crash because LaunchWrapper assumes the system class loader is an instance of URLClassLoader (Java 8)
     LAUNCH_WRAPPER(true, GameVersionNumber.atMost("1.12.999"), VersionNumber.atMost("1.8.999")) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             if (version == null) return false;
-            return super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer) && LAUNCH_WRAPPER_MAIN.equals(version.getMainClass()) &&
+            return super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer) && LAUNCH_WRAPPER_MAIN.equals(version.mainClass()) &&
                     version.getLibraries().stream()
                             .filter(library -> "launchwrapper".equals(library.getArtifactId()))
                             .anyMatch(library -> VersionNumber.asVersion(library.getVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0);
@@ -147,7 +147,7 @@ public enum JavaVersionConstraint {
     // For example, JDK 9+ 64-bit cannot load 32-bit lwjgl native library.
     VANILLA_LINUX_JAVA_8(true, GameVersionNumber.atMost("1.12.999"), VersionNumber.atMost("1.8.999")) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             return OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
                     && Architecture.SYSTEM_ARCH == Architecture.X86_64
@@ -156,14 +156,14 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java, LibraryAnalyzer analyzer) {
+        public boolean checkJava(GameVersionNumber gameVersionNumber, GameInstanceManifest version, JavaRuntime java, LibraryAnalyzer analyzer) {
             return java.getArchitecture() != Architecture.X86_64 || super.checkJava(gameVersionNumber, version, java, analyzer);
         }
     },
     // Minecraft currently does not provide official support for architectures other than x86 and x86-64.
     VANILLA_X86(false, VersionRange.all(), VersionRange.all()) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             if (java == null || java.getArchitecture() != Architecture.ARM64)
                 return false;
@@ -175,14 +175,14 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java, LibraryAnalyzer analyzer) {
+        public boolean checkJava(GameVersionNumber gameVersionNumber, GameInstanceManifest version, JavaRuntime java, LibraryAnalyzer analyzer) {
             return java.getArchitecture().isX86();
         }
     },
     // Minecraft 1.16+Forge with crash because JDK-8273826
     MODLAUNCHER_8(false, GameVersionNumber.between("1.16.3", "1.17.1"), VersionRange.all()) {
         @Override
-        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             if (version == null || java == null || analyzer == null || !super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer))
                 return false;
@@ -207,7 +207,7 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java, LibraryAnalyzer analyzer) {
+        public boolean checkJava(GameVersionNumber gameVersionNumber, GameInstanceManifest version, JavaRuntime java, LibraryAnalyzer analyzer) {
             int parsedJavaVersion = java.getParsedVersion();
             if (parsedJavaVersion > 17) {
                 return false;
@@ -243,20 +243,20 @@ public enum JavaVersionConstraint {
         return gameVersionRange;
     }
 
-    public VersionRange<VersionNumber> getJavaVersionRange(Version version, LibraryAnalyzer analyzer) {
+    public VersionRange<VersionNumber> getJavaVersionRange(GameInstanceManifest manifest, LibraryAnalyzer analyzer) {
         return javaVersionRange;
     }
 
-    public final boolean appliesToVersion(@Nullable GameVersionNumber gameVersionNumber, @Nullable Version version,
+    public final boolean appliesToVersion(@Nullable GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                           @Nullable JavaRuntime java, LibraryAnalyzer analyzer) {
         return gameVersionRange.contains(gameVersionNumber)
                 && appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
     }
 
-    protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+    protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                            @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
         GameJavaVersion gameJavaVersion;
-        if (version == null || (gameJavaVersion = version.getJavaVersion()) == null) {
+        if (version == null || (gameJavaVersion = version.javaVersion()) == null) {
             return true;
         }
 
@@ -271,7 +271,7 @@ public enum JavaVersionConstraint {
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java, LibraryAnalyzer analyzer) {
+    public boolean checkJava(GameVersionNumber gameVersionNumber, GameInstanceManifest version, JavaRuntime java, LibraryAnalyzer analyzer) {
         return getJavaVersionRange(version, analyzer).contains(java.getVersionNumber());
     }
 

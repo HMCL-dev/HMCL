@@ -38,44 +38,44 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class MaintainTask extends Task<Version> {
+public class MaintainTask extends Task<GameInstanceManifest> {
     private final GameRepository repository;
-    private final Version version;
+    private final GameInstanceManifest manifest;
 
-    public MaintainTask(GameRepository repository, Version version) {
+    public MaintainTask(GameRepository repository, GameInstanceManifest manifest) {
         this.repository = repository;
-        this.version = version;
+        this.manifest = manifest;
 
-        if (version.getInheritsFrom() != null)
+        if (manifest.inheritsFrom() != null)
             throw new IllegalArgumentException("MaintainTask requires independent game version");
     }
 
     @Override
     public void execute() {
-        setResult(maintain(repository, version));
+        setResult(maintain(repository, manifest));
     }
 
-    public static Version maintain(GameRepository repository, Version version) {
-        if (version.getInheritsFrom() != null)
+    public static GameInstanceManifest maintain(GameRepository repository, GameInstanceManifest manifest) {
+        if (manifest.inheritsFrom() != null)
             throw new IllegalArgumentException("MaintainTask requires independent game version");
 
-        String mainClass = version.resolve(null).getMainClass();
+        String mainClass = manifest.resolve(repository).mainClass();
 
         if (mainClass != null && mainClass.equals(LibraryAnalyzer.LAUNCH_WRAPPER_MAIN)) {
-            version = maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(repository, unique(version), true), false);
+            manifest = maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(repository, unique(manifest), true), false);
         } else if (mainClass != null && mainClass.equals(LibraryAnalyzer.MOD_LAUNCHER_MAIN)) {
             // Forge 1.13 and OptiFine
-            version = maintainOptiFineLibrary(repository, maintainGameWithCpwModLauncher(repository, unique(version)), true);
+            manifest = maintainOptiFineLibrary(repository, maintainGameWithCpwModLauncher(repository, unique(manifest)), true);
         } else if (mainClass != null && mainClass.equals(LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN)) {
             // Forge 1.17
-            version = maintainGameWithCpwBoostrapLauncher(repository, unique(version));
+            manifest = maintainGameWithCpwBoostrapLauncher(repository, unique(manifest));
         } else {
             // Vanilla Minecraft does not need maintain
             // Fabric does not need maintain, nothing compatible with fabric now.
-            version = maintainOptiFineLibrary(repository, unique(version), false);
+            manifest = maintainOptiFineLibrary(repository, unique(manifest), false);
         }
 
-        List<Library> libraries = version.getLibraries();
+        List<Library> libraries = manifest.getLibraries();
         if (!libraries.isEmpty()) {
             // HMCL once use log4j-patch to prevent virus. But now, we only modify log4j2.xml.
             // Therefore, we remove this library.
@@ -84,23 +84,23 @@ public class MaintainTask extends Task<Version> {
                     && ("log4j-patch".equals(library.getArtifactId()) || "log4j-patch-beta9".equals(library.getArtifactId()))
                     && "1.0".equals(library.getVersion())
                     && library.getDownload() == null) {
-                version = version.setLibraries(libraries.subList(1, libraries.size()));
+                manifest = manifest.withLibraries(libraries.subList(1, libraries.size()));
             }
         }
 
-        return version;
+        return manifest;
     }
 
-    public static Version maintainPreservingPatches(GameRepository repository, Version version) {
-        if (!version.isResolvedPreservingPatches())
+    public static GameInstanceManifest maintainPreservingPatches(GameRepository repository, GameInstanceManifest manifest) {
+        if (!manifest.isResolvedPreservingPatches())
             throw new IllegalArgumentException("MaintainTask requires independent game version");
-        Version newVersion = maintain(repository, version.resolve(repository));
-        return newVersion.setPatches(version.getPatches()).markAsUnresolved();
+        GameInstanceManifest newVersion = maintain(repository, manifest.resolve(repository));
+        return newVersion.withPatches(manifest.getPatches());
     }
 
-    private static Version maintainGameWithLaunchWrapper(GameRepository repository, Version version, boolean reorderTweakClass) {
-        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
-        VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
+    private static GameInstanceManifest maintainGameWithLaunchWrapper(GameRepository repository, GameInstanceManifest manifest, boolean reorderTweakClass) {
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(manifest, null);
+        GameInstanceLibraryBuilder builder = new GameInstanceLibraryBuilder(manifest);
         String mainClass = null;
 
         // Installing Forge will override the Minecraft arguments in json, so LiteLoader and OptiFine Tweaker are being re-added.
@@ -143,24 +143,24 @@ public class MaintainTask extends Task<Version> {
             }
         }
 
-        Version ret = builder.build();
-        return mainClass == null ? ret : ret.setMainClass(mainClass);
+        GameInstanceManifest ret = builder.build();
+        return mainClass == null ? ret : ret.withMainClass(mainClass);
     }
 
-    private static Version maintainGameWithCpwModLauncher(GameRepository repository, Version version) {
-        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
-        VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
+    private static GameInstanceManifest maintainGameWithCpwModLauncher(GameRepository repository, GameInstanceManifest manifest) {
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(manifest, null);
+        GameInstanceLibraryBuilder builder = new GameInstanceLibraryBuilder(manifest);
 
-        if (!libraryAnalyzer.has(FORGE)) return version;
+        if (!libraryAnalyzer.has(FORGE)) return manifest;
 
         if (libraryAnalyzer.has(OPTIFINE)) {
             Library hmclTransformerDiscoveryService = new Library(new Artifact("org.jackhuang.hmcl", "transformer-discovery-service", "1.0"));
-            Optional<Library> optiFine = version.getLibraries().stream().filter(library -> library.is("optifine", "OptiFine")).findAny();
-            boolean libraryExisting = version.getLibraries().stream().anyMatch(library -> library.is("org.jackhuang.hmcl", "transformer-discovery-service"));
+            Optional<Library> optiFine = manifest.getLibraries().stream().filter(library -> library.is("optifine", "OptiFine")).findAny();
+            boolean libraryExisting = manifest.getLibraries().stream().anyMatch(library -> library.is("org.jackhuang.hmcl", "transformer-discovery-service"));
             optiFine.ifPresent(library -> {
                 builder.addJvmArgument("-Dhmcl.transformer.candidates=${library_directory}/" + library.getPath());
                 if (!libraryExisting) builder.addLibrary(hmclTransformerDiscoveryService);
-                Path libraryPath = repository.getLibraryFile(version, hmclTransformerDiscoveryService);
+                Path libraryPath = repository.getLibraryFile(manifest, hmclTransformerDiscoveryService);
                 try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLTransformerDiscoveryService-1.0.jar")) {
                     Files.createDirectories(libraryPath.getParent());
                     Files.copy(Objects.requireNonNull(input, "Bundled HMCLTransformerDiscoveryService is missing."), libraryPath, StandardCopyOption.REPLACE_EXISTING);
@@ -173,7 +173,7 @@ public class MaintainTask extends Task<Version> {
         return builder.build();
     }
 
-    private static String updateIgnoreList(GameRepository repository, Version version, String ignoreList) {
+    private static String updateIgnoreList(GameRepository repository, GameInstanceManifest manifest, String ignoreList) {
         String[] ignores = ignoreList.split(",");
         List<String> newIgnoreList = new ArrayList<>();
 
@@ -181,12 +181,12 @@ public class MaintainTask extends Task<Version> {
         // we need to manually ignore ${primary_jar}.
         newIgnoreList.add("${primary_jar}");
 
-        Path libraryDirectory = repository.getLibrariesDirectory(version).toAbsolutePath().normalize();
+        Path libraryDirectory = repository.getLibrariesDirectory(manifest).toAbsolutePath().normalize();
 
         // The default ignoreList is too loose and may cause some problems, we replace them with the absolute version.
         // For example, if "client-extra" is in ignoreList, and game directory contains "client-extra" component, all
         // libraries will be ignored, which is not expected.
-        for (String classpathName : repository.getClasspath(version)) {
+        for (String classpathName : repository.getClasspath(manifest)) {
             Path classpathFile = Paths.get(classpathName).toAbsolutePath();
             String fileName = classpathFile.getFileName().toString();
             if (Stream.of(ignores).anyMatch(fileName::contains)) {
@@ -205,11 +205,11 @@ public class MaintainTask extends Task<Version> {
     }
 
     // Fix wrong configurations when launching 1.17+ with Forge.
-    private static Version maintainGameWithCpwBoostrapLauncher(GameRepository repository, Version version) {
-        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
-        VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
+    private static GameInstanceManifest maintainGameWithCpwBoostrapLauncher(GameRepository repository, GameInstanceManifest manifest) {
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(manifest, null);
+        GameInstanceLibraryBuilder builder = new GameInstanceLibraryBuilder(manifest);
 
-        if (!libraryAnalyzer.has(FORGE) && !libraryAnalyzer.has(NEO_FORGE)) return version;
+        if (!libraryAnalyzer.has(FORGE) && !libraryAnalyzer.has(NEO_FORGE)) return manifest;
 
         Optional<String> bslVersion = libraryAnalyzer.getVersion(BOOTSTRAP_LAUNCHER);
 
@@ -224,7 +224,7 @@ public class MaintainTask extends Task<Version> {
                     if (jvmArg instanceof StringArgument) {
                         String jvmArgStr = jvmArg.toString();
                         if (jvmArgStr.startsWith("-DignoreList=")) {
-                            jvm.set(i, new StringArgument("-DignoreList=" + updateIgnoreList(repository, version, jvmArgStr.substring("-DignoreList=".length()))));
+                            jvm.set(i, new StringArgument("-DignoreList=" + updateIgnoreList(repository, manifest, jvmArgStr.substring("-DignoreList=".length()))));
                         }
                     }
                 }
@@ -247,20 +247,20 @@ public class MaintainTask extends Task<Version> {
         return builder.build();
     }
 
-    private static Version maintainOptiFineLibrary(GameRepository repository, Version version, boolean remove) {
-        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
-        List<Library> libraries = new ArrayList<>(version.getLibraries());
+    private static GameInstanceManifest maintainOptiFineLibrary(GameRepository repository, GameInstanceManifest manifest, boolean remove) {
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(manifest, null);
+        List<Library> libraries = new ArrayList<>(manifest.getLibraries());
 
         if (libraryAnalyzer.has(OPTIFINE)) {
             if (libraryAnalyzer.has(LITELOADER) || libraryAnalyzer.has(FORGE)) {
                 // If forge or LiteLoader installed, OptiFine Forge Tweaker is needed.
                 // And we should load the installer jar instead of patch jar.
                 if (repository != null) {
-                    for (int i = 0; i < version.getLibraries().size(); ++i) {
+                    for (int i = 0; i < manifest.getLibraries().size(); ++i) {
                         Library library = libraries.get(i);
                         if (library.is("optifine", "OptiFine")) {
                             Library newLibrary = new Library(new Artifact("optifine", "OptiFine", library.getVersion(), "installer"));
-                            if (Files.exists(repository.getLibraryFile(version, newLibrary))) {
+                            if (Files.exists(repository.getLibraryFile(manifest, newLibrary))) {
                                 libraries.set(i, null);
                                 // OptiFine should be loaded after Forge in classpath.
                                 // Although we have altered priority of OptiFine higher than Forge,
@@ -281,15 +281,15 @@ public class MaintainTask extends Task<Version> {
             }
         }
 
-        return version.setLibraries(libraries.stream().filter(Objects::nonNull).collect(Collectors.toList()));
+        return manifest.withLibraries(libraries.stream().filter(Objects::nonNull).collect(Collectors.toList()));
     }
 
-    public static Version unique(Version version) {
+    public static GameInstanceManifest unique(GameInstanceManifest manifest) {
         List<Library> libraries = new ArrayList<>();
 
         SimpleMultimap<String, Integer, List<Integer>> multimap = new SimpleMultimap<>(HashMap::new, ArrayList::new);
 
-        for (Library library : version.getLibraries()) {
+        for (Library library : manifest.getLibraries()) {
             String id = library.getGroupId() + ":" + library.getArtifactId();
             VersionNumber number = VersionNumber.asVersion(library.getVersion());
             String serialized = JsonUtils.GSON.toJson(library);
@@ -336,6 +336,6 @@ public class MaintainTask extends Task<Version> {
             }
         }
 
-        return version.setLibraries(libraries);
+        return manifest.withLibraries(libraries);
     }
 }

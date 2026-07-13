@@ -73,22 +73,22 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Legacy `VersionIconType` ordinal order used by old local settings.
-    private static final VersionIconType @Unmodifiable [] LEGACY_VERSION_ICON_TYPES = {
-            VersionIconType.DEFAULT,
-            VersionIconType.GRASS,
-            VersionIconType.CHEST,
-            VersionIconType.CHICKEN,
-            VersionIconType.COMMAND,
-            VersionIconType.OPTIFINE,
-            VersionIconType.CRAFT_TABLE,
-            VersionIconType.FABRIC,
-            VersionIconType.FORGE,
-            VersionIconType.NEO_FORGE,
-            VersionIconType.FURNACE,
-            VersionIconType.QUILT,
-            VersionIconType.APRIL_FOOLS,
-            VersionIconType.CLEANROOM,
-            VersionIconType.LEGACY_FABRIC
+    private static final GameInstanceIconType @Unmodifiable [] LEGACY_VERSION_ICON_TYPES = {
+            GameInstanceIconType.DEFAULT,
+            GameInstanceIconType.GRASS,
+            GameInstanceIconType.CHEST,
+            GameInstanceIconType.CHICKEN,
+            GameInstanceIconType.COMMAND,
+            GameInstanceIconType.OPTIFINE,
+            GameInstanceIconType.CRAFT_TABLE,
+            GameInstanceIconType.FABRIC,
+            GameInstanceIconType.FORGE,
+            GameInstanceIconType.NEO_FORGE,
+            GameInstanceIconType.FURNACE,
+            GameInstanceIconType.QUILT,
+            GameInstanceIconType.APRIL_FOOLS,
+            GameInstanceIconType.CLEANROOM,
+            GameInstanceIconType.LEGACY_FABRIC
     };
 
     /// Legacy `JavaVersionType` ordinal order used by old game settings.
@@ -130,9 +130,9 @@ public final class LegacyGameSettingsMigrator {
     /// @return the migrated instance setting, or `null` when no legacy file can be migrated
     public static @Nullable InstanceMigrationResult migrateInstanceGameSettings(
             HMCLGameRepository repository,
-            String instanceId,
+            GameInstanceID instanceId,
             @Nullable GameSettingsPresetID parent) {
-        Path instanceRoot = repository.getVersionRoot(instanceId);
+        Path instanceRoot = repository.getInstanceRoot(instanceId);
         Path file = instanceRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
         if (!Files.exists(file)) {
             return null;
@@ -488,10 +488,10 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Parses the legacy icon selection with frozen ordinal order.
-    private static VersionIconType parseLegacyVersionIconType(@Nullable JsonObject source) {
+    private static GameInstanceIconType parseLegacyVersionIconType(@Nullable JsonObject source) {
         JsonPrimitive primitive = JsonUtils.getPrimitive(source, "versionIcon");
         if (primitive == null) {
-            return VersionIconType.DEFAULT;
+            return GameInstanceIconType.DEFAULT;
         }
 
         try {
@@ -499,11 +499,11 @@ public final class LegacyGameSettingsMigrator {
                 int index = primitive.getAsInt();
                 return index >= 0 && index < LEGACY_VERSION_ICON_TYPES.length
                         ? LEGACY_VERSION_ICON_TYPES[index]
-                        : VersionIconType.DEFAULT;
+                        : GameInstanceIconType.DEFAULT;
             }
 
             String value = primitive.getAsString();
-            for (VersionIconType iconType : LEGACY_VERSION_ICON_TYPES) {
+            for (GameInstanceIconType iconType : LEGACY_VERSION_ICON_TYPES) {
                 if (iconType.name().equalsIgnoreCase(value)) {
                     return iconType;
                 }
@@ -511,7 +511,7 @@ public final class LegacyGameSettingsMigrator {
         } catch (RuntimeException ignored) {
         }
 
-        return VersionIconType.DEFAULT;
+        return GameInstanceIconType.DEFAULT;
     }
 
     /// Reads an enum property from either ordinal or name.

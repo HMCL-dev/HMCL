@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -50,10 +51,11 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
     }
 
     private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
-        GameBuilder builder = dependencyManager.gameBuilder();
+        GameBuilder builder = dependencyManager.newGameBuilder();
 
         String name = (String) settings.get("name");
-        builder.name(name);
+        GameInstanceID instanceId = new GameInstanceID(name);
+        builder.name(instanceId);
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
         settings.asStringMap().forEach((key, value) -> {
@@ -61,11 +63,12 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
                 builder.version(remoteVersion);
         });
 
-        repository.applyDefaultIsolationSettingForNewInstance(name, settings.isInstallingModdedVersion());
+        repository.applyDefaultIsolationSettingForNewInstance(instanceId, settings.isInstallingModdedVersion());
         return builder.buildAsync().whenComplete(any -> {
-            repository.refreshVersions();
+            repository.refresh();
+            repository.applyDefaultIsolationSetting(instanceId);
         })
-                .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
+                .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(instanceId));
     }
 
     @Override

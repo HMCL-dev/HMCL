@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.addon;
 
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -47,19 +48,19 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     protected final Set<@NotNull T> localFiles = new LinkedHashSet<>();
 
     protected final GameRepository repository;
-    protected final String id;
+    protected final GameInstanceID instanceId;
 
-    public LocalAddonManager(GameRepository gameRepository, String versionId) {
+    public LocalAddonManager(GameRepository gameRepository, GameInstanceID instanceId) {
         this.repository = gameRepository;
-        this.id = versionId;
+        this.instanceId = instanceId;
     }
 
     public GameRepository getRepository() {
         return repository;
     }
 
-    public String getInstanceId() {
-        return id;
+    public GameInstanceID getInstanceId() {
+        return instanceId;
     }
 
     public abstract Path getDirectory();

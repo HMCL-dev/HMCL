@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -53,7 +54,7 @@ public final class CurseCompletionTask extends Task<Void> {
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
     private final ModManager modManager;
-    private final String version;
+    private final GameInstanceID instanceId;
     private CurseManifest manifest;
     private List<Task<?>> dependencies;
 
@@ -65,29 +66,29 @@ public final class CurseCompletionTask extends Task<Void> {
      * Constructor.
      *
      * @param dependencyManager the dependency manager.
-     * @param version           the existent and physical version.
+     * @param instanceId           the existent and physical version.
      */
-    public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        this(dependencyManager, version, null);
+    public CurseCompletionTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId) {
+        this(dependencyManager, instanceId, null);
     }
 
     /**
      * Constructor.
      *
      * @param dependencyManager the dependency manager.
-     * @param version           the existent and physical version.
+     * @param instanceId           the existent and physical version.
      * @param manifest          the CurseForgeModpack manifest.
      */
-    public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest) {
+    public CurseCompletionTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId, CurseManifest manifest) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
-        this.modManager = repository.getModManager(version);
-        this.version = version;
+        this.modManager = repository.getModManager(instanceId);
+        this.instanceId = instanceId;
         this.manifest = manifest;
 
         if (manifest == null)
             try {
-                Path manifestFile = repository.getVersionRoot(version).resolve("manifest.json");
+                Path manifestFile = repository.getInstanceRoot(instanceId).resolve("manifest.json");
                 if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
             } catch (Exception e) {
@@ -112,7 +113,7 @@ public final class CurseCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path root = repository.getVersionRoot(version);
+        Path root = repository.getInstanceRoot(instanceId);
 
         // Because in China, Curse is too difficult to visit,
         // if failed, ignore it and retry next time.
@@ -140,7 +141,7 @@ public final class CurseCompletionTask extends Task<Void> {
                         .collect(Collectors.toList()));
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
 
-        Path versionRoot = repository.getVersionRoot(modManager.getInstanceId());
+        Path versionRoot = repository.getInstanceRoot(modManager.getInstanceId());
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
         Path shaderPacksRoot = versionRoot.resolve("shaderpacks");
         finished.set(0);

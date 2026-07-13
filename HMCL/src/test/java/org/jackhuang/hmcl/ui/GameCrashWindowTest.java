@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import org.jackhuang.hmcl.JavaFXLauncher;
-import org.jackhuang.hmcl.game.ClassicVersion;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.game.Log;
@@ -52,7 +53,7 @@ public class GameCrashWindowTest {
             Path workingPath = Path.of(System.getProperty("user.dir"));
 
             GameCrashWindow window = new GameCrashWindow(process, ProcessListener.ExitType.APPLICATION_ERROR, null,
-                    new ClassicVersion(),
+                    new GameInstanceManifest(new GameInstanceID("Classic")),
                     new LaunchOptions.Builder()
                             .setJava(new JavaRuntime(workingPath, new JavaInfo(Platform.SYSTEM_PLATFORM, "16", null), false, false))
                             .setGameDir(workingPath)

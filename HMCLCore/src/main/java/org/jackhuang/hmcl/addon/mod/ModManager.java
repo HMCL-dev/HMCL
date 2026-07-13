@@ -22,7 +22,9 @@ import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.meta.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.NoSuchGameInstanceException;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -68,13 +70,13 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     private boolean loaded = false;
 
-    public ModManager(GameRepository repository, String id) {
+    public ModManager(GameRepository repository, GameInstanceID id) {
         super(repository, id);
     }
 
     @Override
     public Path getDirectory() {
-        return repository.getModsDirectory(id);
+        return repository.getModsDirectory(instanceId);
     }
 
     public LibraryAnalyzer getLibraryAnalyzer() {
@@ -178,7 +180,11 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             localFiles.clear();
             localMods.clear();
 
-            analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
+            try {
+                analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedInstanceManifest(instanceId), null);
+            } catch (NoSuchGameInstanceException e) {
+                throw new IOException(e);
+            }
 
             boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                     || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
