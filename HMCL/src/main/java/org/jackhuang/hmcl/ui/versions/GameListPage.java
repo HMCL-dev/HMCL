@@ -142,7 +142,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
         private final ObservableList<GameListEntry> sourceList = FXCollections.observableArrayList();
-        private final Set<String> collapsedGroups = new HashSet<>();
         private final InvalidationListener groupsListener = observable -> {
             finishGroupAnimation();
             rebuildRows();
@@ -218,7 +217,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 if (searching && items.isEmpty()) {
                     continue;
                 }
-                boolean expanded = searching || !collapsedGroups.contains(group.id());
+                boolean expanded = searching || !settings().isInstanceGroupCollapsed(
+                        repository.getGameDirectory().getId(), group.id());
                 rows.add(new GameListGroupItem(group.id(), group.name(), items.size(), expanded,
                         () -> toggleGroup(group.id()), () -> renameGroup(group), () -> deleteGroup(group)));
                 if (expanded) {
@@ -231,7 +231,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
             if (!ungroupedItems.isEmpty()) {
                 String ungroupedId = "";
-                boolean expanded = searching || !collapsedGroups.contains(ungroupedId);
+                boolean expanded = searching || !settings().isInstanceGroupCollapsed(
+                        repository.getGameDirectory().getId(), ungroupedId);
                 rows.add(new GameListGroupItem(null, i18n("version.group.ungrouped"), ungroupedItems.size(), expanded,
                         () -> toggleGroup(ungroupedId), null, null));
                 if (expanded) {
@@ -259,7 +260,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             GameListGroupItem animatedHeader;
             List<GameListItem> animatedItems;
             if (expanding) {
-                collapsedGroups.remove(groupId);
+                settings().setInstanceGroupCollapsed(repository.getGameDirectory().getId(), groupId, false);
                 animatedItems = versionItems.stream()
                         .filter(item -> belongsToGroup(item, groupId))
                         .toList();
@@ -270,7 +271,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 int headerIndex = sourceList.indexOf(animatedHeader);
                 sourceList.addAll(headerIndex + 1, animatedItems);
             } else {
-                collapsedGroups.add(groupId);
+                settings().setInstanceGroupCollapsed(repository.getGameDirectory().getId(), groupId, true);
                 currentHeader.setExpanded(false);
                 animatedHeader = currentHeader;
                 animatedItems = getDisplayedGroupItems(animatedHeader);

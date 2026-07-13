@@ -79,6 +79,9 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// The JSON property name for instance group membership keyed by game directory and instance ID.
     static final String PROPERTY_INSTANCE_GROUP_MEMBERSHIP = "instanceGroupMembership";
 
+    /// The JSON property name for collapsed instance groups keyed by game directory and group ID.
+    static final String PROPERTY_COLLAPSED_INSTANCE_GROUPS = "collapsedInstanceGroups";
+
     /// Default launcher theme used when no stored theme reference is available.
     public static final ThemeReference DEFAULT_THEME_REFERENCE = new ThemeReference("hmcl.default", null);
 
@@ -667,6 +670,10 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     @SerializedName(PROPERTY_INSTANCE_GROUP_MEMBERSHIP)
     private final ObservableMap<String, String> instanceGroupMembership = FXCollections.observableHashMap();
 
+    /// Composite game-directory and group identifiers whose groups are collapsed.
+    @SerializedName(PROPERTY_COLLAPSED_INSTANCE_GROUPS)
+    private final ObservableSet<String> collapsedInstanceGroups = FXCollections.observableSet();
+
     /// Returns the observable instance group name store.
     public ObservableMap<String, String> getInstanceGroupNames() {
         return instanceGroupNames;
@@ -675,6 +682,25 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Returns the observable instance group membership store.
     public ObservableMap<String, String> getInstanceGroupMembership() {
         return instanceGroupMembership;
+    }
+
+    /// Returns whether a group is collapsed in the given game directory.
+    ///
+    /// A blank group ID represents the synthetic ungrouped section.
+    public boolean isInstanceGroupCollapsed(GameDirectoryID gameDirectoryId, String groupId) {
+        return collapsedInstanceGroups.contains(instanceGroupKey(gameDirectoryId, groupId));
+    }
+
+    /// Stores whether a group is collapsed in the given game directory.
+    ///
+    /// A blank group ID represents the synthetic ungrouped section.
+    public void setInstanceGroupCollapsed(GameDirectoryID gameDirectoryId, String groupId, boolean collapsed) {
+        String key = instanceGroupKey(gameDirectoryId, groupId);
+        if (collapsed) {
+            collapsedInstanceGroups.add(key);
+        } else {
+            collapsedInstanceGroups.remove(key);
+        }
     }
 
     /// Returns the groups configured for a game directory, ordered by name.
@@ -709,6 +735,7 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Deletes a group and leaves its former instances ungrouped.
     public void deleteInstanceGroup(GameDirectoryID gameDirectoryId, String groupId) {
         instanceGroupNames.remove(instanceGroupKey(gameDirectoryId, groupId));
+        collapsedInstanceGroups.remove(instanceGroupKey(gameDirectoryId, groupId));
         String prefix = instanceMembershipKeyPrefix(gameDirectoryId);
         instanceGroupMembership.entrySet().removeIf(entry ->
                 entry.getKey().startsWith(prefix) && groupId.equals(entry.getValue()));
