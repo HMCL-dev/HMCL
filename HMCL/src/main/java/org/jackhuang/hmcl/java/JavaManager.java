@@ -46,7 +46,9 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -63,15 +65,18 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- */
+/// Detects, selects, installs, and removes Java runtimes used by HMCL.
+///
+/// @author Glavo
+@NotNullByDefault
 public final class JavaManager {
 
+    /// Prevents construction of this utility class.
     private JavaManager() {
     }
 
-    private static final String[] KNOWN_VENDOR_DIRECTORIES = {
+    /// Vendor directory names searched in conventional Java installation locations.
+    private static final String @Unmodifiable [] KNOWN_VENDOR_DIRECTORIES = {
             "Java",
             "BellSoft",
             "AdoptOpenJDK",
@@ -81,8 +86,17 @@ public final class JavaManager {
             "Semeru"
     };
 
+    /// Default repository for Java runtimes managed under the HMCL user data directory.
     public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_USER_HOME.resolve("java"));
+
+    /// Repository for Java runtimes bundled under the current HMCL workspace.
     public static final HMCLJavaRepository LOCAL_REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_LOCAL_HOME.resolve("java"));
+
+    /// Returns the repository selected by the current Java auto-download directory setting.
+    private static HMCLJavaRepository getActiveRepository() {
+        Path root = Path.of(SettingsManager.settings().getResolvedJavaDirectory()).toAbsolutePath().normalize();
+        return new HMCLJavaRepository(root);
+    }
 
     public static String getMojangJavaPlatform(Platform platform) {
         if (platform.getOperatingSystem() == OperatingSystem.WINDOWS) {
@@ -231,7 +245,7 @@ public final class JavaManager {
     }
 
     public static Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
-        return REPOSITORY.getDownloadJavaTask(downloadProvider, platform, gameJavaVersion)
+        return getActiveRepository().getDownloadJavaTask(downloadProvider, platform, gameJavaVersion)
                 .thenApplyAsync(Schedulers.javafx(), java -> {
                     addJava(java);
                     return java;
@@ -239,7 +253,7 @@ public final class JavaManager {
     }
 
     public static Task<JavaRuntime> getInstallJavaTask(Platform platform, String name, Map<String, Object> update, Path archiveFile) {
-        return REPOSITORY.getInstallJavaTask(platform, name, update, archiveFile)
+        return getActiveRepository().getInstallJavaTask(platform, name, update, archiveFile)
                 .thenApplyAsync(Schedulers.javafx(), java -> {
                     addJava(java);
                     return java;
@@ -249,15 +263,35 @@ public final class JavaManager {
     public static Task<Void> getUninstallJavaTask(JavaRuntime java) {
         assert java.isManaged();
 
+        HMCLJavaRepository activeRepository = getActiveRepository();
+        @Nullable Task<Void> uninstallTask = getUninstallJavaTask(activeRepository, java);
+        if (uninstallTask != null) {
+            return uninstallTask;
+        }
+
+        if (!activeRepository.getPlatformRoot(java.getPlatform()).equals(REPOSITORY.getPlatformRoot(java.getPlatform()))) {
+            uninstallTask = getUninstallJavaTask(REPOSITORY, java);
+            if (uninstallTask != null) {
+                return uninstallTask;
+            }
+        }
+
+        return Task.completed(null);
+    }
+
+    /// Creates an uninstall task when the runtime belongs to the supplied managed repository.
+    ///
+    /// @return the uninstall task, or `null` when the runtime is outside the repository
+    private static @Nullable Task<Void> getUninstallJavaTask(HMCLJavaRepository repository, JavaRuntime java) {
         Path platformRoot;
         try {
-            platformRoot = REPOSITORY.getPlatformRoot(java.getPlatform()).toRealPath();
+            platformRoot = repository.getPlatformRoot(java.getPlatform()).toRealPath();
         } catch (Throwable ignored) {
-            return Task.completed(null);
+            return null;
         }
 
         if (!java.getBinary().startsWith(platformRoot))
-            return Task.completed(null);
+            return null;
 
         Path relativized = platformRoot.relativize(java.getBinary());
         if (relativized.getNameCount() > 1) {
@@ -270,9 +304,9 @@ public final class JavaManager {
             });
 
             String name = relativized.getName(0).toString();
-            return REPOSITORY.getUninstallJavaTask(java.getPlatform(), name);
+            return repository.getUninstallJavaTask(java.getPlatform(), name);
         } else {
-            return Task.completed(null);
+            return null;
         }
     }
 
@@ -773,17 +807,27 @@ public final class JavaManager {
         }
 
         void searchAllJavaInRepository(Platform platform) {
-            for (Path java : REPOSITORY.getAllJava(platform)) {
-                tryAddJavaExecutable(java, true);
+            HMCLJavaRepository activeRepository = getActiveRepository();
+            searchAllJavaInRepository(activeRepository, platform);
+
+            if (!activeRepository.getPlatformRoot(platform).equals(REPOSITORY.getPlatformRoot(platform))) {
+                searchAllJavaInRepository(REPOSITORY, platform);
             }
 
             for (Path java : LOCAL_REPOSITORY.getAllJava(platform)) {
                 tryAddJavaExecutable(java, true);
             }
+        }
+
+        /// Adds runtimes from one HMCL-managed repository and its legacy macOS platform directory.
+        void searchAllJavaInRepository(HMCLJavaRepository repository, Platform platform) {
+            for (Path java : repository.getAllJava(platform)) {
+                tryAddJavaExecutable(java, true);
+            }
 
             if (platform.os() == OperatingSystem.MACOS) {
                 // In the past, we used 'osx' as the checked name for macOS
-                Path platformRoot = REPOSITORY.getPlatformRoot(platform).resolveSibling("osx-" + platform.getArchitecture().getCheckedName());
+                Path platformRoot = repository.getPlatformRoot(platform).resolveSibling("osx-" + platform.getArchitecture().getCheckedName());
                 searchAllJavaInDirectory(platformRoot);
             }
         }

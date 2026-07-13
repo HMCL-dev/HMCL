@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -48,10 +49,14 @@ import java.util.function.Function;
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Displays launcher download, cache, Java directory, thread, and proxy settings.
+@NotNullByDefault
 public class DownloadSettingsPage extends StackPane {
 
+    /// Keeps weak listeners alive for the lifetime of this page.
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
+    /// Creates the download settings page and binds its controls to launcher settings.
     public DownloadSettingsPage() {
         VBox content = new VBox(10);
         content.setPadding(new Insets(10));
@@ -131,6 +136,24 @@ public class DownloadSettingsPage extends StackPane {
             cleanButton.setOnAction(e -> clearCacheDirectory());
             fileCommonLocationSublist.setHeaderRight(cleanButton);
 
+            ComponentSublist javaDirectorySublist = new ComponentSublist(() -> {
+                MultiFileItem<EnumCommonDirectory> javaDirectory = new MultiFileItem<>();
+                javaDirectory.loadChildren(Arrays.asList(
+                        new MultiFileItem.Option<>(i18n("launcher.java_directory.default"), EnumCommonDirectory.DEFAULT),
+                        new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
+                                .setChooserTitle(i18n("launcher.java_directory.choose"))
+                                .setSelectionMode(FileSelector.SelectionMode.DIRECTORY)
+                                .bindBidirectional(settings().javaDirectoryProperty())
+                ));
+                javaDirectory.selectedDataProperty().bindBidirectional(settings().javaDirectoryTypeProperty());
+                return List.of(javaDirectory);
+            });
+            javaDirectorySublist.setTitle(i18n("launcher.java_directory"));
+            javaDirectorySublist.setHasSubtitle(true);
+            javaDirectorySublist.descriptionProperty().bind(
+                    Bindings.createStringBinding(settings()::getResolvedJavaDirectory,
+                            settings().javaDirectoryProperty(), settings().javaDirectoryTypeProperty()));
+
             ComponentSublist downloadThreadsSublist = new ComponentSublist(() -> {
                 var downloadThreadsList = new RadioChoiceList<Boolean>();
                 downloadThreadsList.setChoices(
@@ -184,7 +207,7 @@ public class DownloadSettingsPage extends StackPane {
                 }
             }, settings().autoDownloadThreadsProperty(), settings().downloadThreadsProperty()));
 
-            downloadList.getContent().addAll(fileCommonLocationSublist, downloadThreadsSublist);
+            downloadList.getContent().addAll(fileCommonLocationSublist, javaDirectorySublist, downloadThreadsSublist);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadList);
         }
 
@@ -348,6 +371,7 @@ public class DownloadSettingsPage extends StackPane {
 
     }
 
+    /// Deletes cached download files from the resolved common directory.
     private void clearCacheDirectory() {
         String commonDirectory = settings().getResolvedCommonDirectory();
         if (commonDirectory != null) {

@@ -253,6 +253,39 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
                 : getDefaultCommonDirectory();
     }
 
+    /// The HMCL-managed Java directory selection mode.
+    @SerializedName("javaDirectoryType")
+    private final ObjectProperty<EnumCommonDirectory> javaDirectoryType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);
+
+    /// Returns the HMCL-managed Java directory selection mode property.
+    public ObjectProperty<EnumCommonDirectory> javaDirectoryTypeProperty() {
+        return javaDirectoryType;
+    }
+
+    /// The custom directory used to install HMCL-managed Java runtimes.
+    @SerializedName("javaDirectory")
+    private final StringProperty javaDirectory = new SimpleStringProperty();
+
+    /// Returns the custom HMCL-managed Java directory property.
+    public StringProperty javaDirectoryProperty() {
+        return javaDirectory;
+    }
+
+    /// Returns the default directory used to install HMCL-managed Java runtimes.
+    public static String getDefaultJavaDirectory() {
+        return Metadata.HMCL_USER_HOME.resolve("java").toString();
+    }
+
+    /// Resolves the effective directory used to install HMCL-managed Java runtimes.
+    public String getResolvedJavaDirectory() {
+        EnumCommonDirectory type = javaDirectoryType.get();
+        String customPath = javaDirectory.get();
+
+        return type == EnumCommonDirectory.CUSTOM && StringUtils.isNotBlank(customPath)
+                ? customPath
+                : getDefaultJavaDirectory();
+    }
+
     /// The maximum number of log lines kept in log views.
     @SerializedName("logLines")
     private final ObjectProperty<@Nullable Integer> logLines = new SimpleObjectProperty<>();

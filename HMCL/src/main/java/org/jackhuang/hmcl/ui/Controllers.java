@@ -394,6 +394,12 @@ public final class Controllers {
             dialog(i18n("launcher.cache_directory.invalid"));
         }
 
+        if (settings().javaDirectoryTypeProperty().get() == EnumCommonDirectory.CUSTOM &&
+                !FileUtils.canCreateDirectory(settings().getResolvedJavaDirectory())) {
+            settings().javaDirectoryTypeProperty().set(EnumCommonDirectory.DEFAULT);
+            dialog(i18n("launcher.java_directory.invalid"));
+        }
+
         Lang.thread(JavaManager::initialize, "Search Java", true);
 
         scene = new Scene(decorator.getDecorator());
