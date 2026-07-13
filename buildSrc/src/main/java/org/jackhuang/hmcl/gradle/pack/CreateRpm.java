@@ -204,24 +204,31 @@ public abstract class CreateRpm extends DefaultTask {
         return path.substring(1);
     }
 
-    /// Copies a file into the payload and applies POSIX permissions.
+    /// Copies a file into the payload and applies POSIX permissions when supported.
     private static void copyFile(Path source, Path target, String permissions) throws IOException {
         @Nullable Path targetParent = target.getParent();
         if (targetParent != null) {
             Files.createDirectories(targetParent);
         }
         Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-        Files.setPosixFilePermissions(target, PosixFilePermissions.fromString(permissions));
+        setPermissions(target, permissions);
     }
 
-    /// Writes a UTF-8 file into the payload and applies POSIX permissions.
+    /// Writes a UTF-8 file into the payload and applies POSIX permissions when supported.
     private static void writeFile(Path target, String content, String permissions) throws IOException {
         @Nullable Path targetParent = target.getParent();
         if (targetParent != null) {
             Files.createDirectories(targetParent);
         }
         Files.writeString(target, content, StandardCharsets.UTF_8);
-        Files.setPosixFilePermissions(target, PosixFilePermissions.fromString(permissions));
+        setPermissions(target, permissions);
+    }
+
+    /// Applies POSIX permissions when the target file system exposes the POSIX attribute view.
+    private static void setPermissions(Path target, String permissions) throws IOException {
+        if (target.getFileSystem().supportedFileAttributeViews().contains("posix")) {
+            Files.setPosixFilePermissions(target, PosixFilePermissions.fromString(permissions));
+        }
     }
 
     /// Removes the previous temporary build directory, if one exists.
@@ -279,9 +286,15 @@ public abstract class CreateRpm extends DefaultTask {
         Process process = new ProcessBuilder(command)
                 .inheritIO()
                 .start();
-        int exitCode = process.waitFor();
-        if (exitCode != 0) {
-            throw new GradleException("Command failed with exit code %d: %s".formatted(exitCode, String.join(" ", command)));
+        try {
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new GradleException("Command failed with exit code %d: %s".formatted(exitCode, String.join(" ", command)));
+            }
+        } catch (InterruptedException e) {
+            process.destroyForcibly();
+            Thread.currentThread().interrupt();
+            throw e;
         }
     }
 }
