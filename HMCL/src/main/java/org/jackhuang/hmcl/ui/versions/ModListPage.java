@@ -161,6 +161,13 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         return bundledScanGeneration;
     }
 
+    /// The instance's Minecraft version (resolved once at load, the same value used elsewhere on this
+    /// page), or null if detection failed. Used to highlight which copy of a multi-version Jar-in-Jar
+    /// wrapper matches this instance.
+    public String getGameVersion() {
+        return gameVersion;
+    }
+
     private void updateSupportedLoaders(ModManager modManager) {
         supportedLoaders.clear();
 

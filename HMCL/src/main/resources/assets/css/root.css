@@ -1154,6 +1154,26 @@
     -fx-font-weight: bold;
 }
 
+/* Secondary tag: the matched copy is not an exact build but its declared version range covers this
+   instance (what the wrapper would load). Tertiary tint to read as a qualifier of the "current" tag. */
+.mod-nested-item .mod-nested-range {
+    -fx-text-fill: -monet-on-tertiary-container;
+    -fx-background-color: -monet-tertiary-container;
+    -fx-background-radius: 4;
+    -fx-padding: 0 6 0 6;
+    -fx-font-size: 11px;
+}
+
+/* Warning tag: no bundled copy targets this instance's version — the wrapper can't load anything. */
+.mod-nested-item .mod-nested-incompatible {
+    -fx-text-fill: -monet-on-error-container;
+    -fx-background-color: -monet-error-container;
+    -fx-background-radius: 4;
+    -fx-padding: 0 6 0 6;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
 .resource-pack-list-cell:warning {
     -fx-background-color: -monet-error-container;
 }

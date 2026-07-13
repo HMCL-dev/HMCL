@@ -50,6 +50,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.*;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.MinecraftVersionMatcher;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.NestedJarInspector;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
@@ -876,35 +877,44 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             for (List<NestedJarInspector.NestedJar> versions : groups.values()) {
                 if (versions.size() == 1) {
+                    // A lone nested mod: no "current instance" highlight — that tag only makes sense to
+                    // disambiguate which copy of a multi-version wrapper is active (the group case below).
                     NestedJarInspector.NestedJar node = versions.get(0);
-                    nestedBox.getChildren().add(createBundledRow(node, indent, null, null, matchesInstance(node, instanceMc)));
+                    nestedBox.getChildren().add(createBundledRow(node, indent, null, null, MatchKind.NONE));
                     if (node.hasChildren())
                         appendBundledNodes(node.children(), indent + 1, instanceMc);
                 } else {
-                    // Multi-version: pick the copy that matches this instance (else the first) as the
-                    // representative, and only recurse into it — the others are the same mod. The badge's
-                    // tooltip lists every collapsed copy so the rest stay discoverable.
-                    NestedJarInspector.NestedJar rep = versions.stream()
-                            .filter(v -> matchesInstance(v, instanceMc)).findFirst().orElse(versions.get(0));
-                    boolean active = matchesInstance(rep, instanceMc);
+                    // Multi-version: prefer the copy whose version exactly matches this instance; else
+                    // the copy whose declared range contains it (what the wrapper would actually load);
+                    // else the first. Only the representative is recursed into — the others are the same
+                    // mod. The badge's tooltip lists every collapsed copy so the rest stay discoverable.
+                    NestedJarInspector.NestedJar exact = versions.stream()
+                            .filter(v -> MinecraftVersionMatcher.matchesExact(v, instanceMc)).findFirst().orElse(null);
+                    NestedJarInspector.NestedJar ranged = exact != null ? null : versions.stream()
+                            .filter(v -> satisfiesRange(v, instanceMc)).findFirst().orElse(null);
+                    NestedJarInspector.NestedJar rep = exact != null ? exact : ranged != null ? ranged : versions.get(0);
+                    MatchKind kind = exact != null ? MatchKind.EXACT
+                            : ranged != null ? MatchKind.RANGE
+                            : instanceMc != null && !instanceMc.isBlank() ? MatchKind.INCOMPATIBLE
+                            : MatchKind.NONE;
                     String tooltip = versions.stream()
                             .map(v -> v.version() != null && !v.version().isBlank() ? v.version() : v.fileName())
                             .collect(Collectors.joining("\n"));
                     nestedBox.getChildren().add(createBundledRow(rep, indent,
-                            i18n("addon.bundled.versions", versions.size()), tooltip, active));
+                            i18n("addon.bundled.versions", versions.size()), tooltip, kind));
                     if (rep.hasChildren())
                         appendBundledNodes(rep.children(), indent + 1, instanceMc);
                 }
             }
 
             for (NestedJarInspector.NestedJar node : ungrouped) {
-                nestedBox.getChildren().add(createBundledRow(node, indent, null, null, false));
+                nestedBox.getChildren().add(createBundledRow(node, indent, null, null, MatchKind.NONE));
                 if (node.hasChildren())
                     appendBundledNodes(node.children(), indent + 1, instanceMc);
             }
         }
 
-        private Node createBundledRow(NestedJarInspector.NestedJar node, int indent, String versionsBadge, String badgeTooltip, boolean activeForInstance) {
+        private Node createBundledRow(NestedJarInspector.NestedJar node, int indent, String versionsBadge, String badgeTooltip, MatchKind match) {
             HBox row = new HBox(8, SVG.STACKS.createIcon(16));
             row.getStyleClass().add("mod-nested-item");
             row.setAlignment(Pos.CENTER_LEFT);
@@ -926,38 +936,38 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     badge.setTooltip(new Tooltip(badgeTooltip));
                 row.getChildren().add(badge);
             }
-            if (activeForInstance) {
+            if (match == MatchKind.EXACT || match == MatchKind.RANGE) {
                 Label current = new Label(i18n("addon.bundled.current"));
                 current.getStyleClass().add("mod-nested-current");
                 row.getChildren().add(current);
             }
+            if (match == MatchKind.RANGE) {
+                // Not an exact build for this instance, but its declared version range covers it — the
+                // copy the wrapper would actually load. Tooltip shows the matched constraint.
+                Label range = new Label(i18n("addon.bundled.range"));
+                range.getStyleClass().add("mod-nested-range");
+                if (node.minecraftVersion() != null && !node.minecraftVersion().isBlank())
+                    range.setTooltip(new Tooltip(node.minecraftVersion()));
+                row.getChildren().add(range);
+            }
+            if (match == MatchKind.INCOMPATIBLE) {
+                // No bundled copy targets this instance's version — the wrapper has nothing to load.
+                Label incompatible = new Label(i18n("addon.bundled.incompatible"));
+                incompatible.getStyleClass().add("mod-nested-incompatible");
+                row.getChildren().add(incompatible);
+            }
             return row;
         }
 
-        /// Best-effort match of a nested jar against the instance's Minecraft version, for the
-        /// multi-version highlight. The exact copy embeds the target version in its file name / mod
-        /// version / declared constraint (e.g. {@code …-mc26.1.2-…}); we look for the instance version
-        /// as a whole token so "1.21" doesn't match "1.21.2".
-        private static boolean matchesInstance(NestedJarInspector.NestedJar node, String instanceMc) {
-            if (instanceMc == null || instanceMc.isBlank())
-                return false;
-            return containsVersionToken(node.fileName(), instanceMc)
-                    || containsVersionToken(node.version(), instanceMc)
-                    || containsVersionToken(node.minecraftVersion(), instanceMc);
-        }
+        /// The tag on a multi-version wrapper's representative row: an EXACT build for this instance, a
+        /// RANGE-compatible build (its declared range covers a gap version — what the wrapper would
+        /// load), INCOMPATIBLE (the instance version matches no bundled copy at all, so the wrapper
+        /// can't serve it), or NONE (a single bundled mod, or the instance version is unknown).
+        private enum MatchKind { NONE, INCOMPATIBLE, RANGE, EXACT }
 
-        private static boolean containsVersionToken(String haystack, String version) {
-            if (haystack == null)
-                return false;
-            int i = haystack.indexOf(version);
-            while (i >= 0) {
-                int end = i + version.length();
-                char after = end < haystack.length() ? haystack.charAt(end) : ' ';
-                if (after != '.' && !Character.isDigit(after)) // not a prefix of a longer version
-                    return true;
-                i = haystack.indexOf(version, i + 1);
-            }
-            return false;
+        private static boolean satisfiesRange(NestedJarInspector.NestedJar node, String instanceMc) {
+            return instanceMc != null && !instanceMc.isBlank()
+                    && MinecraftVersionMatcher.satisfies(node.loaderType(), node.minecraftVersion(), instanceMc);
         }
 
         // A fixed-width leading gap for one indentation level, so nested rows step inward without
@@ -1066,7 +1076,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     for (String path : modInfo.getBundledMods())
                         nestedBox.getChildren().add(createNestedRow(path, 0));
                 } else {
-                    appendBundledNodes(tree, 0, modInfo.getModManager().getGameVersion());
+                    // Use the page's already-resolved instance version (same value used elsewhere on
+                    // the page) rather than re-resolving on the FX thread from the raw version.
+                    appendBundledNodes(tree, 0, getSkinnable().getGameVersion());
                 }
             }
             if (modInfo.hasDependencies()) {

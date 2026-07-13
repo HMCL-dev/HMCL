@@ -91,16 +91,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         return analyzer;
     }
 
-    /// The instance's Minecraft version, or {@code null} if it can't be resolved. Used to highlight
-    /// which copy inside a multi-version Jar-in-Jar "wrapper" would actually be activated.
-    public @org.jetbrains.annotations.Nullable String getGameVersion() {
-        try {
-            return repository.getGameVersion(id).orElse(null);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     public LocalMod getLocalMod(String modId, ModLoaderType modLoaderType) {
         lock.lock();
         try {

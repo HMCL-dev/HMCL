@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.MinecraftVersionMatcher;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.mod.NestedJarInspector.NestedJar;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -35,8 +36,10 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -121,6 +124,40 @@ public final class LogExporter {
                         infoBuilder.append("These mods may conflict with their bundled copies and cause crashes:").append(System.lineSeparator());
                         infoBuilder.append("(Matched by exact mod id against the scanned Jar-in-Jar tree.)").append(System.lineSeparator());
                         for (String line : duplicates) {
+                            infoBuilder.append("\t|-> ").append(line).append(System.lineSeparator());
+                        }
+                    }
+                    infoBuilder.append(System.lineSeparator())
+                            .append("----------------------------").append(System.lineSeparator())
+                            .append(System.lineSeparator());
+
+                    // Multi-version "wrapper" mods that bundle one copy per game version but have no
+                    // copy targeting this instance's Minecraft version — the wrapper can't load
+                    // anything, a likely crash cause.
+                    String instanceMc = gameRepository.getGameVersion(versionId).orElse(null);
+                    LinkedHashSet<String> incompatible = new LinkedHashSet<>();
+                    if (StringUtils.isNotBlank(instanceMc)) {
+                        for (LocalModFile host : activeMods) {
+                            Map<String, List<NestedJar>> byId = new LinkedHashMap<>();
+                            for (NestedJar node : host.getBundledTree())
+                                if (StringUtils.isNotBlank(node.id()))
+                                    byId.computeIfAbsent(node.id(), k -> new ArrayList<>()).add(node);
+                            for (Map.Entry<String, List<NestedJar>> e : byId.entrySet()) {
+                                List<NestedJar> copies = e.getValue();
+                                if (copies.size() > 1 && copies.stream().noneMatch(n -> MinecraftVersionMatcher.matches(n, instanceMc)))
+                                    incompatible.add(e.getKey() + " (bundled in " + host.getName() + ", " + copies.size() + " versions, none for MC " + instanceMc + ")");
+                            }
+                        }
+                    }
+
+                    infoBuilder.append("=== Incompatible Multi-Version Bundles (no copy for this instance's Minecraft version) ===").append(System.lineSeparator());
+                    if (instanceMc == null) {
+                        infoBuilder.append("Skipped: could not determine this instance's Minecraft version.").append(System.lineSeparator());
+                    } else if (incompatible.isEmpty()) {
+                        infoBuilder.append("None").append(System.lineSeparator());
+                    } else {
+                        infoBuilder.append("These bundled mods have no copy targeting MC ").append(instanceMc).append(" and likely fail to load:").append(System.lineSeparator());
+                        for (String line : incompatible) {
                             infoBuilder.append("\t|-> ").append(line).append(System.lineSeparator());
                         }
                     }

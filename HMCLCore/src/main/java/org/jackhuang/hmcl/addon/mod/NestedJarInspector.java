@@ -30,11 +30,14 @@ import org.tomlj.TomlParseResult;
 import org.tomlj.TomlTable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -184,7 +187,7 @@ public final class NestedJarInspector {
         String mc = root.get("depends") instanceof JsonObject depends && depends.has("minecraft")
                 ? asVersionString(depends.get("minecraft")) : null;
 
-        return new Parsed(asString(root, "id"), asString(root, "name"), asString(root, "version"),
+        return new Parsed(asString(root, "id"), asString(root, "name"), cleanVersion(asString(root, "version")),
                 ModLoaderType.FABRIC, mc, children);
     }
 
@@ -210,7 +213,7 @@ public final class NestedJarInspector {
             }
         }
         String name = ql.get("metadata") instanceof JsonObject meta ? asString(meta, "name") : null;
-        return new Parsed(asString(ql, "id"), name, asString(ql, "version"), ModLoaderType.QUILT, mc, children);
+        return new Parsed(asString(ql, "id"), name, cleanVersion(asString(ql, "version")), ModLoaderType.QUILT, mc, children);
     }
 
     private static @Nullable Parsed fromForge(ZipFileTree tree) throws IOException {
@@ -233,7 +236,7 @@ public final class NestedJarInspector {
         if (mods != null && !mods.isEmpty() && mods.get(0) instanceof TomlTable mod) {
             id = mod.getString("modId");
             name = mod.getString("displayName");
-            version = mod.getString("version");
+            version = resolveForgeVersion(tree, mod.getString("version"));
         }
         if (id != null) {
             TomlArray deps = dependencies(toml, id);
@@ -256,6 +259,32 @@ public final class NestedJarInspector {
         }
 
         return new Parsed(id, name, version, neo ? ModLoaderType.NEO_FORGE : ModLoaderType.FORGE, mc, children);
+    }
+
+    /// Nulls out a version still holding an unresolved build placeholder (e.g. Fabric's
+    /// {@code ${version}}), so the UI and crash report show nothing rather than the raw token.
+    private static @Nullable String cleanVersion(@Nullable String version) {
+        return version != null && version.contains("${") ? null : version;
+    }
+
+    /// Forge mod versions are often the literal {@code ${file.jarVersion}}, resolved at build time
+    /// from the jar manifest's Implementation-Version (mirrors ForgeNewModMetadata). If it can't be
+    /// resolved, drop the version rather than show a raw placeholder.
+    private static @Nullable String resolveForgeVersion(ZipFileTree tree, @Nullable String version) {
+        if (version == null || !version.contains("${"))
+            return version;
+        if (version.contains("${file.jarVersion}")) {
+            var manifest = tree.getEntry("META-INF/MANIFEST.MF");
+            if (manifest != null) {
+                try (InputStream is = tree.getInputStream(manifest)) {
+                    String impl = new Manifest(is).getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+                    if (impl != null && !impl.isBlank())
+                        version = version.replace("${file.jarVersion}", impl);
+                } catch (IOException ignored) {
+                }
+            }
+        }
+        return version.contains("${") ? null : version; // any placeholder left unresolved — hide it
     }
 
     private static @Nullable TomlArray dependencies(TomlParseResult toml, String modId) {
