@@ -102,8 +102,12 @@ public final class GameLibrariesTask extends Task<Void> {
             if (!library.getDownload().validateChecksum(file, true)) {
                 return true;
             }
-            if (library.getChecksums() != null && !library.getChecksums().isEmpty() && !LibraryDownloadTask.checksumValid(file, library.getChecksums())) {
-                return true;
+            if (library.checksums() != null) {
+                if (!library.checksums().isEmpty()) {
+                    if (!LibraryDownloadTask.checksumValid(file, library.checksums())) {
+                        return true;
+                    }
+                }
             }
             if (FileUtils.getExtension(file).equals("jar")) {
                 try {
@@ -142,9 +146,9 @@ public final class GameLibrariesTask extends Task<Void> {
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/3975
-            if ("net.minecraftforge".equals(library.getGroupId()) && "minecraftforge".equals(library.getArtifactId())
+            if ("net.minecraftforge".equals(library.groupId()) && "minecraftforge".equals(library.artifactId())
                     && gameRepository instanceof DefaultGameRepository defaultGameRepository) {
-                List<FMLLib> fmlLibs = getFMLLibs(library.getVersion());
+                List<FMLLib> fmlLibs = getFMLLibs(library.version());
                 if (fmlLibs != null) {
                     Path libDir = defaultGameRepository.getBaseDirectory().resolve("lib")
                             .toAbsolutePath().normalize();
@@ -162,7 +166,7 @@ public final class GameLibrariesTask extends Task<Void> {
             }
 
             Path file = gameRepository.getLibraryFile(manifest, library);
-            if ("optifine".equals(library.getGroupId()) && Files.exists(file) && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(manifest).orElse(null)).compareTo("1.20.4") == 0) {
+            if ("optifine".equals(library.groupId()) && Files.exists(file) && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(manifest).orElse(null)).compareTo("1.20.4") == 0) {
                 String forgeVersion = LibraryAnalyzer.analyze(manifest, "1.20.4")
                         .getVersion(LibraryAnalyzer.LibraryType.FORGE)
                         .orElse(null);
@@ -173,7 +177,7 @@ public final class GameLibrariesTask extends Task<Void> {
                         throw new IOException("Cannot fix optifine", e);
                     }
                 }
-            } else if ("org.jackhuang.hmcl".equals(library.getGroupId()) && "mmc-bootstrap".equals(library.getArtifactId())) {
+            } else if ("org.jackhuang.hmcl".equals(library.groupId()) && "mmc-bootstrap".equals(library.artifactId())) {
                 if (!Files.exists(file)) {
                     try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
                         Files.createDirectories(file.getParent());
@@ -182,7 +186,7 @@ public final class GameLibrariesTask extends Task<Void> {
                 }
             }
 
-            if (shouldDownloadLibrary(gameRepository, manifest, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.getGroupId()))) {
+            if (shouldDownloadLibrary(gameRepository, manifest, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.groupId()))) {
                 dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter("hmcl.install.libraries"));
             } else {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file);

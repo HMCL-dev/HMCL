@@ -311,8 +311,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
             GameBuilder builder = dependencyManager.newGameBuilder();
 
-            String name = (String) settings.get("name");
-            GameInstanceID instanceId = new GameInstanceID(name);
+            GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
             builder.name(instanceId);
             builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
 

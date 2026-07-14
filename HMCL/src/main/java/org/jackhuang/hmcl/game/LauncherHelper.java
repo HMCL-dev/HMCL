@@ -315,7 +315,7 @@ public final class LauncherHelper {
                                 } else if (ex instanceof NotDecompressingNativesException) {
                                     message = i18n("launch.failed.decompressing_natives") + "\n" + ex.getLocalizedMessage();
                                 } else if (ex instanceof LibraryDownloadException) {
-                                    message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n";
+                                    message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().name()) + "\n";
                                     if (ex.getCause() instanceof ResponseCodeException) {
                                         ResponseCodeException rce = (ResponseCodeException) ex.getCause();
                                         int responseCode = rce.getResponseCode();

@@ -128,7 +128,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     boolean needsReInstallation = manifest.getLibraries().stream()
                             .anyMatch(library -> !library.hasDownloadURL()
-                                    && "optifine".equals(library.getGroupId())
+                                    && "optifine".equals(library.groupId())
                                     && GameLibrariesTask.shouldDownloadLibrary(repository, manifest, library, integrityCheck));
 
                     if (needsReInstallation) {

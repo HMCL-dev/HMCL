@@ -314,12 +314,12 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getLibraryFile(GameInstanceManifest manifest, Library lib) {
-        if ("local".equals(lib.getHint())) {
-            if (lib.getFileName() != null) {
-                return getInstanceRoot(manifest.id()).resolve("libraries/" + lib.getFileName());
+        if ("local".equals(lib.hint())) {
+            if (lib.filename() != null) {
+                return getInstanceRoot(manifest.id()).resolve("libraries/" + lib.filename());
             }
 
-            return getInstanceRoot(manifest.id()).resolve("libraries/" + lib.getArtifact().getFileName());
+            return getInstanceRoot(manifest.id()).resolve("libraries/" + lib.artifact().getFileName());
         }
 
         return getLibrariesDirectory(manifest).resolve(lib.getPath());

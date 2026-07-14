@@ -90,7 +90,7 @@ public class DefaultCacheRepository extends CacheRepository {
     public void tryCacheLibrary(Library library, Path jar) {
         lock.readLock().lock();
         try {
-            if (index.libraries().stream().anyMatch(it -> library.getName().equals(it.name())))
+            if (index.libraries().stream().anyMatch(it -> library.name().equals(it.name())))
                 return;
         } finally {
             lock.readLock().unlock();
@@ -103,11 +103,15 @@ public class DefaultCacheRepository extends CacheRepository {
                 String checksum = DigestUtils.digestToString("SHA-1", jar);
                 if (hash.equalsIgnoreCase(checksum))
                     cacheLibrary(library, jar, false);
-            } else if (library.getChecksums() != null && !library.getChecksums().isEmpty()) {
-                if (LibraryDownloadTask.checksumValid(jar, library.getChecksums()))
-                    cacheLibrary(library, jar, true);
             } else {
-                // or we will not cache the library
+                if (library.checksums() != null) {
+                    if (!library.checksums().isEmpty()) {
+                        if (LibraryDownloadTask.checksumValid(jar, library.checksums()))
+                            cacheLibrary(library, jar, true);
+                    }
+                } else {
+                    // or we will not cache the library
+                }
             }
         } catch (IOException e) {
             LOG.warning("Unable to calc hash value of file " + jar, e);
@@ -133,13 +137,13 @@ public class DefaultCacheRepository extends CacheRepository {
         try {
             // check if this library is from Forge
             List<LibraryIndex> libraries = index.libraries().stream()
-                    .filter(it -> it.name().equals(library.getName()))
+                    .filter(it -> it.name().equals(library.name()))
                     .toList();
             for (LibraryIndex libIndex : libraries) {
                 if (fileExists(SHA1, libIndex.hash())) {
                     Path file = getFile(SHA1, libIndex.hash());
                     if (libIndex.type().equalsIgnoreCase(LibraryIndex.TYPE_FORGE)) {
-                        if (LibraryDownloadTask.checksumValid(file, library.getChecksums()))
+                        if (LibraryDownloadTask.checksumValid(file, library.checksums()))
                             return Optional.of(file);
                     }
                 }
@@ -156,11 +160,13 @@ public class DefaultCacheRepository extends CacheRepository {
                     String checksum = DigestUtils.digestToString("SHA-1", jar);
                     if (hash.equalsIgnoreCase(checksum))
                         return Optional.of(restore(jar, () -> cacheLibrary(library, jar, false)));
-                } else if (library.getChecksums() != null && !library.getChecksums().isEmpty()) {
-                    if (LibraryDownloadTask.checksumValid(jar, library.getChecksums()))
-                        return Optional.of(restore(jar, () -> cacheLibrary(library, jar, true)));
                 } else {
-                    return Optional.of(jar);
+                    if (library.checksums() != null && !library.checksums().isEmpty()) {
+                        if (LibraryDownloadTask.checksumValid(jar, library.checksums()))
+                            return Optional.of(restore(jar, () -> cacheLibrary(library, jar, true)));
+                    } else {
+                        return Optional.of(jar);
+                    }
                 }
             } catch (IOException e) {
                 // we cannot check the hashcode or unable to move file.
@@ -190,7 +196,7 @@ public class DefaultCacheRepository extends CacheRepository {
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
-            LibraryIndex libIndex = new LibraryIndex(library.getName(), hash, forge ? LibraryIndex.TYPE_FORGE : LibraryIndex.TYPE_JAR);
+            LibraryIndex libIndex = new LibraryIndex(library.name(), hash, forge ? LibraryIndex.TYPE_FORGE : LibraryIndex.TYPE_JAR);
             index.libraries().add(libIndex);
             saveIndex();
         } finally {

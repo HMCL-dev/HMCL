@@ -289,7 +289,7 @@ public final class MultiMCInstancePatch {
             tweakers = last.getTweakers();
             libraries = last.getLibraries();
             mavenOnlyFiles = last.getMavenOnlyFiles();
-            jarModFileNames = last.getJarMods().stream().map(Library::getFileName).collect(Collectors.toList());
+            jarModFileNames = last.getJarMods().stream().map(library -> library.filename()).collect(Collectors.toList());
         }
 
         for (int i = patches.size() - 2; i >= 0; i--) {
@@ -308,7 +308,7 @@ public final class MultiMCInstancePatch {
             tweakers = Lang.merge(patch.getTweakers(), tweakers);
             libraries = Lang.merge(patch.getLibraries(), libraries);
             mavenOnlyFiles = Lang.merge(patch.getMavenOnlyFiles(), mavenOnlyFiles);
-            jarModFileNames = Lang.merge(patch.getJarMods().stream().map(Library::getFileName).collect(Collectors.toList()), jarModFileNames);
+            jarModFileNames = Lang.merge(patch.getJarMods().stream().map(library -> library.filename()).collect(Collectors.toList()), jarModFileNames);
         }
 
         mainClass = Lang.requireNonNullElse(mainClass, "net.minecraft.client.Minecraft");
@@ -360,13 +360,13 @@ public final class MultiMCInstancePatch {
         }
 
         for (Library library : libraries) {
-            Artifact artifact = library.getArtifact();
+            Artifact artifact = library.artifact();
             if ("io.github.zekerzhayard".equals(artifact.getGroup()) && "ForgeWrapper".equals(artifact.getName())) {
                 jvmArguments.add(new StringArgument("-Dforgewrapper.librariesDir=${library_directory}"));
                 jvmArguments.add(new StringArgument("-Dforgewrapper.minecraft=${primary_jar}"));
 
                 for (Library lib : libraries) {
-                    Artifact ar = lib.getArtifact();
+                    Artifact ar = lib.artifact();
                     if ("net.neoforged".equals(ar.getGroup()) && "neoforge".equals(ar.getName()) && "installer".equals(ar.getClassifier()) ||
                             "net.minecraftforge".equals(ar.getGroup()) && "forge".equals(ar.getName()) && "installer".equals(ar.getClassifier())
                     ) {

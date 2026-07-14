@@ -128,7 +128,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
     public static void alertFailureMessage(Exception exception, Runnable next) {
         if (exception instanceof LibraryDownloadException) {
-            String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n";
+            String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().name()) + "\n";
             if (exception.getCause() instanceof ResponseCodeException) {
                 ResponseCodeException rce = (ResponseCodeException) exception.getCause();
                 int responseCode = rce.getResponseCode();

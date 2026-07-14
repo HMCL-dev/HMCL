@@ -172,7 +172,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         for (Library library : rawLibraries) {
             for (LibraryType type : LibraryType.values()) {
                 if (type.matchLibrary(library, rawLibraries)) {
-                    libraries.put(type.getPatchId(), pair(library, type.patchVersion(manifest, library.getVersion())));
+                    libraries.put(type.getPatchId(), pair(library, type.patchVersion(manifest, library.version())));
                     break;
                 }
             }
@@ -215,7 +215,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                     return false;
                 }
                 for (Library l : libraries) {
-                    if ("net.legacyfabric".equals(l.getGroupId())) {
+                    if ("net.legacyfabric".equals(l.groupId())) {
                         return true;
                     }
                 }
@@ -230,7 +230,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                     return false;
                 }
                 for (Library l : libraries) {
-                    if ("net.legacyfabric".equals(l.getGroupId())) {
+                    if ("net.legacyfabric".equals(l.groupId())) {
                         return false;
                     }
                 }
@@ -382,7 +382,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         }
 
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            return group.matcher(library.getGroupId()).matches() && artifact.matcher(library.getArtifactId()).matches();
+            return group.matcher(library.groupId()).matches() && artifact.matcher(library.artifactId()).matches();
         }
 
         protected String patchVersion(GameInstanceManifest gameVersion, String libraryVersion) {

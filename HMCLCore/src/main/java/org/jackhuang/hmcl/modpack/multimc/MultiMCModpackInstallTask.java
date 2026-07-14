@@ -252,7 +252,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                 FileUtils.copyDirectory(libraries, repository.getInstanceRoot(instanceId).resolve("libraries"));
 
             for (Library library : artifact.getManifest().getLibraries()) {
-                if ("local".equals(library.getHint())) {
+                if ("local".equals(library.hint())) {
                     /* TODO: Determine whether we should erase community fields, like 'hint' and 'filename' from version json.
                         Retain them will facilitate compatibility, as some embedded libraries may check where their JAR is.
                         Meanwhile, potential compatibility issue with other launcher which never supports these fields might occur.
@@ -293,7 +293,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                     true
             ));
 
-            Artifact mainJarArtifact = artifact.getMainJar().getArtifact();
+            Artifact mainJarArtifact = artifact.getMainJar().artifact();
             String gameVersion = artifact.getGameVersion();
             if (gameVersion != null &&
                     "com.mojang".equals(mainJarArtifact.getGroup()) &&

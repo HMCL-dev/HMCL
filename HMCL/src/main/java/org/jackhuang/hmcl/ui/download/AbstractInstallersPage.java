@@ -29,6 +29,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
@@ -42,6 +43,8 @@ import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class AbstractInstallersPage extends Control implements WizardPage {
+    public static final SettingsMap.Key<GameInstanceID> INSTANCE_ID = new SettingsMap.Key<>("instanceId");
+
     public static final String FABRIC_QUILT_API_TIP = "fabricQuiltApi";
     protected final WizardController controller;
 

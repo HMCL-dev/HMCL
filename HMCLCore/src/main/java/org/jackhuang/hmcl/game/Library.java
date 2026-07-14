@@ -17,35 +17,41 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
+import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.TolerableValidationException;
-import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
+import java.io.IOException;
 import java.util.*;
 
-/**
- * A class that describes a Minecraft dependency.
- *
- * @author huangyuhui
- */
+/// A class that describes a Minecraft dependency.
+///
+/// @author huangyuhui
 @JsonAdapter(Library.Adapter.class)
-@Immutable
-public class Library implements Comparable<Library>, Validation {
+@JsonSerializable
+@NotNullByDefault
+public record Library(
+        Artifact artifact,
+        @Nullable String url,
+        @Nullable LibrariesDownloadInfo downloads,
+        @Nullable List<String> checksums,
+        @Nullable ExtractRules extract,
+        @Nullable Map<String, String> natives,
+        @Nullable List<CompatibilityRule> rules,
+        @Nullable String hint,
+        @Nullable String filename
+) implements Comparable<Library> {
     /// A possible native descriptors can be: [variant-]os[-key]
     ///
     /// Variant can be an empty string, 'native', or 'natives'.
@@ -80,11 +86,15 @@ public class Library implements Comparable<Library>, Validation {
 
     /// Parses a library from either the standard version JSON format or TLauncher library format.
     public static Library fromJson(JsonObject json) {
+        //noinspection ConstantValue
         if (json == null) {
             throw new JsonParseException("Library must be a JSON object");
         }
 
         Artifact artifact = fromJsonMember(json, "name", Artifact.class);
+        if (artifact == null)
+            throw new JsonParseException("Library.name cannot be null");
+
         String url = JsonUtils.getString(json, "url");
         LibrariesDownloadInfo downloads = fromJsonMember(json, "downloads", LibrariesDownloadInfo.class);
 
@@ -93,15 +103,15 @@ public class Library implements Comparable<Library>, Validation {
             Map<String, LibraryDownloadInfo> classifiers = fromJsonMember(
                     json,
                     "classifies",
-                    JsonUtils.mapTypeOf(String.class, LibraryDownloadInfo.class).getType()
+                    JsonUtils.mapTypeOf(String.class, LibraryDownloadInfo.class)
             );
             downloads = new LibrariesDownloadInfo(downloadArtifact, classifiers);
         }
 
-        List<String> checksums = fromJsonMember(json, "checksums", JsonUtils.listTypeOf(String.class).getType());
+        List<String> checksums = fromJsonMember(json, "checksums", JsonUtils.listTypeOf(String.class));
         ExtractRules extract = fromJsonMember(json, "extract", ExtractRules.class);
-        Map<String, String> natives = fromJsonMember(json, "natives", JsonUtils.mapTypeOf(String.class, String.class).getType());
-        List<CompatibilityRule> rules = fromJsonMember(json, "rules", JsonUtils.listTypeOf(CompatibilityRule.class).getType());
+        Map<String, String> natives = fromJsonMember(json, "natives", JsonUtils.mapTypeOf(String.class, String.class));
+        List<CompatibilityRule> rules = fromJsonMember(json, "rules", JsonUtils.listTypeOf(CompatibilityRule.class));
 
         String hint = JsonUtils.getString(json, "hint");
         if (hint == null) {
@@ -118,67 +128,40 @@ public class Library implements Comparable<Library>, Validation {
 
     /// Reads a JSON member using HMCL's configured Gson instance.
     private static <T> @Nullable T fromJsonMember(JsonObject json, String name, Class<T> type) {
-        return fromJsonMember(json, name, (Type) type);
+        return fromJsonMember(json, name, TypeToken.get(type));
     }
 
     /// Reads a JSON member using HMCL's configured Gson instance.
-    private static <T> @Nullable T fromJsonMember(JsonObject json, String name, Type type) {
+    private static <T> @Nullable T fromJsonMember(JsonObject json, String name, TypeToken<T> type) {
         JsonElement element = json.get(name);
         return element == null || element.isJsonNull() ? null : JsonUtils.GSON.fromJson(element, type);
     }
-
-    @SerializedName("name")
-    private final Artifact artifact;
-    private final String url;
-    private final LibrariesDownloadInfo downloads;
-    private final ExtractRules extract;
-    private final Map<String, String> natives;
-    private final List<CompatibilityRule> rules;
-    private final List<String> checksums;
-
-    @SerializedName(value = "hint", alternate = {"MMC-hint"})
-    private final String hint;
-
-    @SerializedName(value = "filename", alternate = {"MMC-filename"})
-    private final String fileName;
 
     public Library(Artifact artifact) {
         this(artifact, null, null);
     }
 
-    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads) {
+    public Library(Artifact artifact, @Nullable String url, @Nullable LibrariesDownloadInfo downloads) {
         this(artifact, url, downloads, null, null, null, null, null, null);
     }
 
-    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<String, String> natives, List<CompatibilityRule> rules, String hint, String filename) {
-        this.artifact = artifact;
-        this.url = url;
-        this.downloads = downloads;
-        this.extract = extract;
-        this.natives = natives;
-        this.rules = rules;
-        this.checksums = checksums;
-        this.hint = hint;
-        this.fileName = filename;
-    }
-
-    public String getGroupId() {
+    public String groupId() {
         return artifact.getGroup();
     }
 
-    public String getArtifactId() {
+    public String artifactId() {
         return artifact.getName();
     }
 
-    public String getName() {
+    public String name() {
         return artifact.toString();
     }
 
-    public String getVersion() {
+    public String version() {
         return artifact.getVersion();
     }
 
-    public String getClassifier() {
+    public @Nullable String classifier() {
         if (artifact.getClassifier() == null) {
             if (natives != null) {
                 for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
@@ -221,10 +204,10 @@ public class Library implements Comparable<Library>, Validation {
         return downloads != null && downloads.getClassifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
     }
 
-    public LibraryDownloadInfo getRawDownloadInfo() {
+    public @Nullable LibraryDownloadInfo getRawDownloadInfo() {
         if (downloads != null) {
             if (isNative())
-                return downloads.getClassifiers().get(getClassifier());
+                return downloads.getClassifiers().get(classifier());
             else
                 return downloads.getArtifact();
         } else {
@@ -232,16 +215,12 @@ public class Library implements Comparable<Library>, Validation {
         }
     }
 
-    public Artifact getArtifact() {
-        return artifact;
-    }
-
     public String getPath() {
         LibraryDownloadInfo temp = getRawDownloadInfo();
         if (temp != null && temp.getPath() != null)
             return temp.getPath();
         else
-            return artifact.setClassifier(getClassifier()).getPath();
+            return artifact.setClassifier(classifier()).getPath();
     }
 
     public LibraryDownloadInfo getDownload() {
@@ -254,7 +233,7 @@ public class Library implements Comparable<Library>, Validation {
         );
     }
 
-    private String computePath(LibraryDownloadInfo raw, String path) {
+    private String computePath(@Nullable LibraryDownloadInfo raw, String path) {
         if (raw != null) {
             String url = raw.getUrl();
             if (url != null) {
@@ -276,90 +255,86 @@ public class Library implements Comparable<Library>, Validation {
         else return url != null;
     }
 
-    public List<String> getChecksums() {
-        return checksums;
-    }
-
-    public List<CompatibilityRule> getRules() {
-        return rules;
-    }
-
-    /**
-     * Hint for how to locate the library file.
-     *
-     * @return null for default, "local" for location in version/&lt;version&gt;/libraries/filename
-     */
-    @Nullable
-    public String getHint() {
-        return hint;
-    }
-
     public Library withoutCommunityFields() {
         return new Library(artifact, url, downloads, checksums, extract, natives, rules, null, null);
     }
 
-    /**
-     * Available when hint is "local"
-     *
-     * @return the filename of the local library in version/&lt;version&gt;/libraries/$filename
-     */
-    @Nullable
-    public String getFileName() {
-        return fileName;
+    public boolean is(String groupId, String artifactId) {
+        return groupId().equals(groupId) && artifactId().equals(artifactId);
     }
 
-    public boolean is(String groupId, String artifactId) {
-        return getGroupId().equals(groupId) && getArtifactId().equals(artifactId);
+    /// Serializes this library to the standard Minecraft version JSON format.
+    public JsonObject toJsonObject() {
+        JsonObject json = new JsonObject();
+        json.addProperty("name", artifact.toString());
+
+        if (url != null)
+            json.addProperty("url", url);
+        if (downloads != null)
+            json.add("downloads", JsonUtils.GSON.toJsonTree(downloads));
+        if (checksums != null)
+            json.add("checksums", JsonUtils.GSON.toJsonTree(checksums));
+        if (extract != null)
+            json.add("extract", JsonUtils.GSON.toJsonTree(extract));
+        if (natives != null)
+            json.add("natives", JsonUtils.GSON.toJsonTree(natives));
+        if (rules != null)
+            json.add("rules", JsonUtils.GSON.toJsonTree(rules));
+        if (hint != null)
+            json.addProperty("hint", hint);
+        if (filename != null)
+            json.addProperty("filename", filename);
+
+        return json;
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).append("name", getName()).toString();
+        return new ToStringBuilder(this).append("name", name()).toString();
     }
 
     @Override
     public int compareTo(Library o) {
-        if (getName().compareTo(o.getName()) == 0)
+        if (name().compareTo(o.name()) == 0)
             return Boolean.compare(isNative(), o.isNative());
         else
-            return getName().compareTo(o.getName());
+            return name().compareTo(o.name());
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Library))
-            return false;
+        return obj instanceof Library other && name().equals(other.name()) && (isNative() == other.isNative());
 
-        Library other = (Library) obj;
-        return getName().equals(other.getName()) && (isNative() == other.isNative());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), isNative());
+        return Objects.hash(name(), isNative());
     }
 
     public Library setClassifier(String classifier) {
-        return new Library(artifact.setClassifier(classifier), url, downloads, checksums, extract, natives, rules, hint, fileName);
+        return new Library(artifact.setClassifier(classifier), url, downloads, checksums, extract, natives, rules, hint, filename);
     }
 
-    @Override
-    public void validate() throws JsonParseException, TolerableValidationException {
-        if (artifact == null)
-            throw new JsonParseException("Library.name cannot be null");
-    }
-
-    /// Gson deserializer for library JSON variants.
-    public static final class Adapter implements JsonDeserializer<Library> {
+    /// Gson adapter for library JSON variants.
+    public static final class Adapter extends TypeAdapter<@Nullable Library> {
         @Override
-        public Library deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (json == null || json.isJsonNull())
+        public @Nullable Library read(JsonReader in) throws IOException {
+            JsonElement element = JsonParser.parseReader(in);
+            if (element == null || element.isJsonNull())
                 return null;
+            if (element instanceof JsonObject jsonObject)
+                return Library.fromJson(jsonObject);
 
-            if (json instanceof JsonObject jsonObject)
-                return fromJson(jsonObject);
+            throw new JsonParseException("Expected a JSON object for Library, but got: " + element.getClass());
+        }
+
+        @Override
+        public void write(JsonWriter out, @Nullable Library value) throws IOException {
+            if (value != null)
+                JsonUtils.GSON.toJson(value.toJsonObject(), out);
             else
-                throw new JsonParseException("Library must be a JSON object");
+                out.nullValue();
         }
     }
 }

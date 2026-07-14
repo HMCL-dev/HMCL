@@ -137,8 +137,8 @@ public enum JavaVersionConstraint {
             if (version == null) return false;
             return super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer) && LAUNCH_WRAPPER_MAIN.equals(version.mainClass()) &&
                     version.getLibraries().stream()
-                            .filter(library -> "launchwrapper".equals(library.getArtifactId()))
-                            .anyMatch(library -> VersionNumber.asVersion(library.getVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0);
+                            .filter(library -> "launchwrapper".equals(library.artifactId()))
+                            .anyMatch(library -> VersionNumber.asVersion(library.version()).compareTo(VersionNumber.asVersion("1.13")) < 0);
         }
     },
     // Minecraft>=1.13 may crash when generating world on Java [1.8,1.8.0_51)

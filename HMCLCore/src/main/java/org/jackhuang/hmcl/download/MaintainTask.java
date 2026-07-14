@@ -80,9 +80,9 @@ public class MaintainTask extends Task<GameInstanceManifest> {
             // HMCL once use log4j-patch to prevent virus. But now, we only modify log4j2.xml.
             // Therefore, we remove this library.
             Library library = libraries.get(0);
-            if ("org.glavo".equals(library.getGroupId())
-                    && ("log4j-patch".equals(library.getArtifactId()) || "log4j-patch-beta9".equals(library.getArtifactId()))
-                    && "1.0".equals(library.getVersion())
+            if ("org.glavo".equals(library.groupId())
+                    && ("log4j-patch".equals(library.artifactId()) || "log4j-patch-beta9".equals(library.artifactId()))
+                    && "1.0".equals(library.version())
                     && library.getDownload() == null) {
                 manifest = manifest.withLibraries(libraries.subList(1, libraries.size()));
             }
@@ -259,7 +259,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
                     for (int i = 0; i < manifest.getLibraries().size(); ++i) {
                         Library library = libraries.get(i);
                         if (library.is("optifine", "OptiFine")) {
-                            Library newLibrary = new Library(new Artifact("optifine", "OptiFine", library.getVersion(), "installer"));
+                            Library newLibrary = new Library(new Artifact("optifine", "OptiFine", library.version(), "installer"));
                             if (Files.exists(repository.getLibraryFile(manifest, newLibrary))) {
                                 libraries.set(i, null);
                                 // OptiFine should be loaded after Forge in classpath.
@@ -290,16 +290,16 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         SimpleMultimap<String, Integer, List<Integer>> multimap = new SimpleMultimap<>(HashMap::new, ArrayList::new);
 
         for (Library library : manifest.getLibraries()) {
-            String id = library.getGroupId() + ":" + library.getArtifactId();
-            VersionNumber number = VersionNumber.asVersion(library.getVersion());
+            String id = library.groupId() + ":" + library.artifactId();
+            VersionNumber number = VersionNumber.asVersion(library.version());
             String serialized = JsonUtils.GSON.toJson(library);
 
             if (multimap.containsKey(id)) {
                 boolean duplicate = false;
                 for (int otherLibraryIndex : multimap.get(id)) {
                     Library otherLibrary = libraries.get(otherLibraryIndex);
-                    VersionNumber otherNumber = VersionNumber.asVersion(otherLibrary.getVersion());
-                    if (CompatibilityRule.equals(library.getRules(), otherLibrary.getRules())) { // rules equal, ignore older version.
+                    VersionNumber otherNumber = VersionNumber.asVersion(otherLibrary.version());
+                    if (CompatibilityRule.equals(library.rules(), otherLibrary.rules())) { // rules equal, ignore older version.
                         boolean flag = true;
                         if (number.compareTo(otherNumber) > 0) { // if this library is newer
                             // replace [otherLibrary] with [library]
