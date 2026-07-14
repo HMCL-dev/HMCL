@@ -150,7 +150,7 @@ public class DownloadSettingsPage extends StackPane {
                                 JFXTextField threadsField = new JFXTextField();
                                 FXUtils.setLimitWidth(threadsField, 60);
                                 FXUtils.bind(threadsField, settings().downloadThreadsProperty(), SafeStringConverter.fromInteger()
-                                        .restrict(it -> it > 0)
+                                        .restrict(it -> it > 0 && it < 257)
                                         .fallbackTo(FetchTask.DEFAULT_CONCURRENCY)
                                         .asPredicate(Validator.addTo(threadsField)));
 
