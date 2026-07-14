@@ -23,7 +23,8 @@ import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LinePane;
@@ -37,7 +38,8 @@ import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class ModpackPage extends SpinnerPane implements WizardPage {
-    public static final SettingsMap.Key<Profile> PROFILE = new SettingsMap.Key<>("PROFILE");
+    public static final SettingsMap.Key<GameDirectory> GAME_DIRECTORY = new SettingsMap.Key<>("GAME_DIRECTORY");
+    public static final SettingsMap.Key<HMCLGameRepository> REPOSITORY = new SettingsMap.Key<>("REPOSITORY");
 
     protected final WizardController controller;
 
@@ -59,11 +61,12 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
         {
             var archiveNamePane = new LinePane();
             {
+                FXUtils.setLimitHeight(archiveNamePane, 75);
+
                 archiveNamePane.setTitle(i18n("version.name"));
 
                 txtModpackName = new JFXTextField();
                 txtModpackName.setPrefWidth(300);
-                FXUtils.setLimitHeight(archiveNamePane, 75);
                 // BorderPane.setMargin(txtModpackName, new Insets(0, 0, 8, 32));
                 BorderPane.setAlignment(txtModpackName, Pos.CENTER_RIGHT);
                 archiveNamePane.setRight(txtModpackName);

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.glavo.site/hmcl/theme-pack/1.0.0",
+  "id": "hmcl.default",
+  "version": "1.0.0",
+  "name": {
+    "default": "Default",
+    "zh-Hans": "默认主题",
+    "zh-Hant": "預設主題"
+  },
+  "description": {
+    "default": "HMCL Default",
+    "zh-Hans": "HMCL 默认主题",
+    "zh-Hant": "HMCL 預設主題"
+  },
+  "authors": [
+    {
+      "name": "HMCL"
+    }
+  ],
+  "theme": {}
+}

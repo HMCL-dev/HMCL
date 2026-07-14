@@ -301,7 +301,7 @@ public class InstallerItem extends Control {
                 pane.getChildren().add(imageContainer);
 
                 if (control.style == Style.CARD) {
-                    VBox.setMargin(imageContainer, new Insets(8, 0, 16, 0));
+                    VBox.setMargin(imageContainer, new Insets(8, 0, 8, 0));
                 }
             }
 
@@ -338,6 +338,13 @@ public class InstallerItem extends Control {
                     throw new AssertionError("Unknown state type: " + state.getClass());
                 }
             }, control.resolvedStateProperty));
+            FXUtils.onChangeAndOperate(
+                control.resolvedStateProperty,
+                state -> statusLabel.pseudoClassStateChanged(
+                    PseudoClass.getPseudoClass("incompatible"),
+                    state instanceof IncompatibleState
+                )
+            );
             BorderPane.setMargin(statusLabel, new Insets(0, 0, 0, 8));
             BorderPane.setAlignment(statusLabel, Pos.CENTER_LEFT);
 

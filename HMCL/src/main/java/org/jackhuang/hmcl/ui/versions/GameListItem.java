@@ -21,8 +21,8 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 
 import java.util.Objects;
 
@@ -30,13 +30,13 @@ public class GameListItem extends GameItem {
     private final boolean isModpack;
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
 
-    public GameListItem(Profile profile, String id) {
-        super(profile, id);
-        this.isModpack = profile.getRepository().isModpack(id);
+    public GameListItem(HMCLGameRepository repository, String id) {
+        super(repository, id);
+        this.isModpack = repository.isModpack(id);
         selected.bind(Bindings.createBooleanBinding(
-                () -> profile == Profiles.getSelectedProfile() && Objects.equals(Profiles.getSelectedInstance(profile), id),
-                Profiles.selectedProfileProperty(),
-                Profiles.selectedInstanceProperty()));
+                () -> repository.getGameDirectory() == GameDirectoryManager.getSelectedGameDirectory() && Objects.equals(repository.getSelectedInstance(), id),
+                GameDirectoryManager.selectedGameDirectoryProperty(),
+                GameDirectoryManager.selectedInstanceProperty()));
     }
 
     public ReadOnlyBooleanProperty selectedProperty() {
@@ -44,39 +44,39 @@ public class GameListItem extends GameItem {
     }
 
     public void rename() {
-        Versions.renameVersion(profile, id);
+        Versions.renameVersion(repository, id);
     }
 
     public void duplicate() {
-        Versions.duplicateVersion(profile, id);
+        Versions.duplicateVersion(repository, id);
     }
 
     public void remove() {
-        Versions.deleteVersion(profile, id);
+        Versions.deleteVersion(repository, id);
     }
 
     public void export() {
-        Versions.exportVersion(profile, id);
+        Versions.exportVersion(repository, id);
     }
 
     public void browse() {
-        Versions.openFolder(profile, id);
+        Versions.openFolder(repository, id);
     }
 
     public void testGame() {
-        Versions.testGame(profile, id);
+        Versions.testGame(repository, id);
     }
 
     public void launch() {
-        Versions.launch(profile, id);
+        Versions.launch(repository, id);
     }
 
     public void modifyGameSettings() {
-        Versions.modifyGameSettings(profile, id);
+        Versions.modifyGameSettings(repository, id);
     }
 
     public void generateLaunchScript() {
-        Versions.generateLaunchScript(profile, id);
+        Versions.generateLaunchScript(repository, id);
     }
 
     public boolean canUpdate() {
@@ -84,6 +84,6 @@ public class GameListItem extends GameItem {
     }
 
     public void update() {
-        Versions.updateVersion(profile, id);
+        Versions.updateVersion(repository, id);
     }
 }

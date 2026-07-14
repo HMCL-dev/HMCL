@@ -19,8 +19,10 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.geometry.Pos;
 import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -34,9 +36,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class GameAdvancedListItem extends AdvancedListItem {
     private final ImageContainer imageContainer;
     private final WeakListenerHolder holder = new WeakListenerHolder();
-    private Profile profile;
-    @SuppressWarnings("unused")
+    private HMCLGameRepository repository;
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private Consumer<Event> onVersionIconChangedListener;
+
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
+    private Consumer<RefreshedVersionsEvent> onRefreshedVersionsListener;
 
     public GameAdvancedListItem() {
         this.imageContainer = new ImageContainer(LEFT_GRAPHIC_SIZE);
@@ -44,23 +49,29 @@ public class GameAdvancedListItem extends AdvancedListItem {
         AdvancedListItem.setAlignment(imageContainer, Pos.CENTER);
         setLeftGraphic(imageContainer);
 
-        holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedInstanceProperty(), this::loadVersion));
+        holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), it -> this.loadVersion()));
     }
 
-    private void loadVersion(String version) {
-        if (Profiles.getSelectedProfile() != profile) {
-            profile = Profiles.getSelectedProfile();
-            if (profile != null) {
-                onVersionIconChangedListener = profile.getRepository().onVersionIconChanged.registerWeak(event -> {
-                    this.loadVersion(Profiles.getSelectedInstance());
-                });
+    private void loadVersion() {
+        String version = GameDirectoryManager.getSelectedInstance();
+
+        boolean repositoryChanged = GameDirectoryManager.getSelectedRepository() != repository;
+        if (repositoryChanged) {
+            repository = GameDirectoryManager.getSelectedRepository();
+            onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
+                this.loadVersion();
+            });
+
+            if (!repository.isLoaded()) {
+                onRefreshedVersionsListener = EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
+                        .registerWeak(event -> loadVersion());
+                return;
             }
         }
-        if (version != null && Profiles.getSelectedProfile() != null &&
-                Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
+        if (version != null && repository != null && repository.hasVersion(version)) {
             setTitle(i18n("version.manage.manage"));
             setSubtitle(version);
-            imageContainer.setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
+            imageContainer.setImage(repository.getVersionIconImage(version));
         } else {
             setTitle(i18n("version.empty"));
             setSubtitle(i18n("version.empty.add"));
