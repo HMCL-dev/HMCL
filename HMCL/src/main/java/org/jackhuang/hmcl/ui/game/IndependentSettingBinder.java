@@ -395,9 +395,7 @@ final class IndependentSettingBinder {
                 return;
             }
 
-            if (maxMemory > totalMemoryMiB) {
-                maxMemory = totalMemoryMiB;
-            }
+            maxMemory = Math.min(maxMemory, totalMemoryMiB);
 
             updating.value = true;
             try {
