@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -42,6 +43,7 @@ import java.util.*;
 @JsonSerializable
 @NotNullByDefault
 public record Library(
+        @SerializedName("name")
         Artifact artifact,
         @Nullable String url,
         @Nullable LibrariesDownloadInfo downloads,
@@ -49,7 +51,11 @@ public record Library(
         @Nullable ExtractRules extract,
         @Nullable Map<String, String> natives,
         @Nullable List<CompatibilityRule> rules,
+
+        @SerializedName(value = "hint", alternate = {"MMC-hint"})
         @Nullable String hint,
+
+        @SerializedName(value = "filename", alternate = {"MMC-filename"})
         @Nullable String filename
 ) implements Comparable<Library> {
     /// A possible native descriptors can be: [variant-]os[-key]
@@ -137,6 +143,10 @@ public record Library(
         return element == null || element.isJsonNull() ? null : JsonUtils.GSON.fromJson(element, type);
     }
 
+    public Library {
+        Objects.requireNonNull(artifact);
+    }
+
     public Library(Artifact artifact) {
         this(artifact, null, null);
     }
@@ -170,7 +180,7 @@ public record Library(
                         return nd.replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
                     }
                 }
-            } else if (downloads != null && downloads.classifiers() != null) {
+            } else if (downloads != null) {
                 for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
                     LibraryDownloadInfo info = downloads.classifiers().get(nativeDescriptor);
                     if (info != null) {
