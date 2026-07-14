@@ -573,6 +573,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             throw new IllegalArgumentException("Unsupported icon file: " + ext);
         }
 
+        var dest = getVersionRoot(id).resolve("icon." + ext);
+        if (dest.equals(iconFile)) return;
+
         deleteIconFile(id);
 
         FileUtils.copyFile(iconFile, getVersionRoot(id).resolve("icon." + ext));
