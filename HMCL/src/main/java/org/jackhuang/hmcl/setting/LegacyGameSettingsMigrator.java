@@ -72,23 +72,23 @@ public final class LegacyGameSettingsMigrator {
         CUSTOM
     }
 
-    /// Legacy `VersionIconType` ordinal order used by old local settings.
-    private static final VersionIconType @Unmodifiable [] LEGACY_VERSION_ICON_TYPES = {
-            VersionIconType.DEFAULT,
-            VersionIconType.GRASS,
-            VersionIconType.CHEST,
-            VersionIconType.CHICKEN,
-            VersionIconType.COMMAND,
-            VersionIconType.OPTIFINE,
-            VersionIconType.CRAFT_TABLE,
-            VersionIconType.FABRIC,
-            VersionIconType.FORGE,
-            VersionIconType.NEO_FORGE,
-            VersionIconType.FURNACE,
-            VersionIconType.QUILT,
-            VersionIconType.APRIL_FOOLS,
-            VersionIconType.CLEANROOM,
-            VersionIconType.LEGACY_FABRIC
+    /// Legacy `InstanceIconType` ordinal order used by old local settings.
+    private static final InstanceIconType @Unmodifiable [] LEGACY_INSTANCE_ICON_TYPES = {
+            InstanceIconType.DEFAULT,
+            InstanceIconType.GRASS,
+            InstanceIconType.CHEST,
+            InstanceIconType.CHICKEN,
+            InstanceIconType.COMMAND,
+            InstanceIconType.OPTIFINE,
+            InstanceIconType.CRAFT_TABLE,
+            InstanceIconType.FABRIC,
+            InstanceIconType.FORGE,
+            InstanceIconType.NEO_FORGE,
+            InstanceIconType.FURNACE,
+            InstanceIconType.QUILT,
+            InstanceIconType.APRIL_FOOLS,
+            InstanceIconType.CLEANROOM,
+            InstanceIconType.LEGACY_FABRIC
     };
 
     /// Legacy `JavaVersionType` ordinal order used by old game settings.
@@ -488,22 +488,22 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Parses the legacy icon selection with frozen ordinal order.
-    private static VersionIconType parseLegacyVersionIconType(@Nullable JsonObject source) {
+    private static InstanceIconType parseLegacyVersionIconType(@Nullable JsonObject source) {
         JsonPrimitive primitive = JsonUtils.getPrimitive(source, "versionIcon");
         if (primitive == null) {
-            return VersionIconType.DEFAULT;
+            return InstanceIconType.DEFAULT;
         }
 
         try {
             if (primitive.isNumber()) {
                 int index = primitive.getAsInt();
-                return index >= 0 && index < LEGACY_VERSION_ICON_TYPES.length
-                        ? LEGACY_VERSION_ICON_TYPES[index]
-                        : VersionIconType.DEFAULT;
+                return index >= 0 && index < LEGACY_INSTANCE_ICON_TYPES.length
+                        ? LEGACY_INSTANCE_ICON_TYPES[index]
+                        : InstanceIconType.DEFAULT;
             }
 
             String value = primitive.getAsString();
-            for (VersionIconType iconType : LEGACY_VERSION_ICON_TYPES) {
+            for (InstanceIconType iconType : LEGACY_INSTANCE_ICON_TYPES) {
                 if (iconType.name().equalsIgnoreCase(value)) {
                     return iconType;
                 }
@@ -511,7 +511,7 @@ public final class LegacyGameSettingsMigrator {
         } catch (RuntimeException ignored) {
         }
 
-        return VersionIconType.DEFAULT;
+        return InstanceIconType.DEFAULT;
     }
 
     /// Reads an enum property from either ordinal or name.

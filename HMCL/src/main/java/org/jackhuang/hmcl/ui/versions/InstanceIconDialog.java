@@ -21,10 +21,11 @@ import javafx.scene.Node;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.setting.InstanceIconType;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -33,18 +34,25 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class VersionIconDialog extends DialogPane {
+public class InstanceIconDialog extends DialogPane {
+    private static final String TIP_KEY = "saveCustomGameIcons";
+
+    public static final Path INSTANCE_ICONS_DIR = Metadata.HMCL_LOCAL_HOME.resolve("instance_icons");
+
     private final HMCLGameRepository repository;
     private final String versionId;
     private final Runnable onFinish;
     private final GameSettings.Instance setting;
 
-    public VersionIconDialog(HMCLGameRepository repository, String versionId, Runnable onFinish) {
+    public InstanceIconDialog(HMCLGameRepository repository, String versionId, Runnable onFinish) {
         this.repository = repository;
         this.versionId = versionId;
         this.onFinish = onFinish;
@@ -56,21 +64,33 @@ public class VersionIconDialog extends DialogPane {
 
         pane.getChildren().setAll(
                 createCustomIcon(),
-                createIcon(VersionIconType.GRASS),
-                createIcon(VersionIconType.CHEST),
-                createIcon(VersionIconType.CHICKEN),
-                createIcon(VersionIconType.COMMAND),
-                createIcon(VersionIconType.APRIL_FOOLS),
-                createIcon(VersionIconType.OPTIFINE),
-                createIcon(VersionIconType.CRAFT_TABLE),
-                createIcon(VersionIconType.FABRIC),
-                createIcon(VersionIconType.LEGACY_FABRIC),
-                createIcon(VersionIconType.FORGE),
-                createIcon(VersionIconType.CLEANROOM),
-                createIcon(VersionIconType.NEO_FORGE),
-                createIcon(VersionIconType.FURNACE),
-                createIcon(VersionIconType.QUILT)
+                createIcon(InstanceIconType.GRASS),
+                createIcon(InstanceIconType.CHEST),
+                createIcon(InstanceIconType.CHICKEN),
+                createIcon(InstanceIconType.COMMAND),
+                createIcon(InstanceIconType.APRIL_FOOLS),
+                createIcon(InstanceIconType.OPTIFINE),
+                createIcon(InstanceIconType.CRAFT_TABLE),
+                createIcon(InstanceIconType.FABRIC),
+                createIcon(InstanceIconType.LEGACY_FABRIC),
+                createIcon(InstanceIconType.FORGE),
+                createIcon(InstanceIconType.CLEANROOM),
+                createIcon(InstanceIconType.NEO_FORGE),
+                createIcon(InstanceIconType.FURNACE),
+                createIcon(InstanceIconType.QUILT)
         );
+        if (Files.isDirectory(INSTANCE_ICONS_DIR)) {
+            try (var stream = Files.list(INSTANCE_ICONS_DIR)) {
+                pane.getChildren().addAll(
+                        stream.filter(p -> Files.isRegularFile(p) && FXUtils.IMAGE_EXTENSIONS.contains(FileUtils.getExtension(p).toLowerCase(Locale.ROOT)))
+                                .map(this::createIcon)
+                                .filter(Objects::nonNull)
+                                .toList()
+                );
+            } catch (Exception e) {
+                LOG.warning("Failed to load custom instance icons at " + INSTANCE_ICONS_DIR, e);
+            }
+        }
     }
 
     private void exploreIcon() {
@@ -80,11 +100,9 @@ public class VersionIconDialog extends DialogPane {
         if (selectedFile != null) {
             try {
                 repository.setVersionIconFile(versionId, selectedFile);
-
                 if (setting != null) {
-                    setting.iconProperty().setValue(VersionIconType.DEFAULT);
+                    setting.iconProperty().setValue(InstanceIconType.DEFAULT);
                 }
-
                 onAccept();
             } catch (IOException | IllegalArgumentException e) {
                 LOG.error("Failed to set icon file: " + selectedFile, e);
@@ -102,7 +120,7 @@ public class VersionIconDialog extends DialogPane {
         return container;
     }
 
-    private Node createIcon(VersionIconType type) {
+    private Node createIcon(InstanceIconType type) {
         ImageView imageView = new ImageView(type.getIcon());
         imageView.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(imageView);
@@ -111,6 +129,33 @@ public class VersionIconDialog extends DialogPane {
         FXUtils.onClicked(container, () -> {
             if (setting != null) {
                 setting.iconProperty().setValue(type);
+                onAccept();
+            }
+        });
+        return container;
+    }
+
+    private Node createIcon(Path path) {
+        ImageView imageView;
+        try {
+            imageView = new ImageView(FXUtils.loadImage(path, 72, 72, true, true));
+        } catch (Exception e) {
+            LOG.warning("Failed to load custom instance icon at " + path, e);
+            return null;
+        }
+        imageView.setMouseTransparent(true);
+        FXUtils.limitSize(imageView, 36, 36);
+        RipplerContainer container = new RipplerContainer(imageView);
+        FXUtils.setLimitWidth(container, 36);
+        FXUtils.setLimitHeight(container, 36);
+        FXUtils.onClicked(container, () -> {
+            try {
+                repository.setVersionIconFile(versionId, path);
+            } catch (IOException e) {
+                LOG.error("Failed to set icon file: " + path, e);
+            }
+            if (setting != null) {
+                setting.iconProperty().setValue(InstanceIconType.DEFAULT);
                 onAccept();
             }
         });

@@ -35,7 +35,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.setting.InstanceIconType;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -53,9 +53,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * @author huangyuhui
  */
 public class InstallerItem extends Control {
-    private final String id;
-    private final VersionIconType iconType;
-    private final Style style;
+    private final String           id;
+    private final InstanceIconType iconType;
+    private final Style            style;
     private final ObjectProperty<InstalledState> versionProperty = new SimpleObjectProperty<>(this, "version", null);
     private final ObjectProperty<State> resolvedStateProperty = new SimpleObjectProperty<>(this, "resolvedState", InstallableState.INSTANCE);
 
@@ -92,15 +92,15 @@ public class InstallerItem extends Control {
         this.style = style;
 
         iconType = switch (id) {
-            case "game" -> VersionIconType.GRASS;
-            case "fabric", "fabric-api" -> VersionIconType.FABRIC;
-            case "legacyfabric", "legacyfabric-api" -> VersionIconType.LEGACY_FABRIC;
-            case "forge" -> VersionIconType.FORGE;
-            case "cleanroom" -> VersionIconType.CLEANROOM;
-            case "liteloader" -> VersionIconType.CHICKEN;
-            case "optifine" -> VersionIconType.OPTIFINE;
-            case "quilt", "quilt-api" -> VersionIconType.QUILT;
-            case "neoforge" -> VersionIconType.NEO_FORGE;
+            case "game" -> InstanceIconType.GRASS;
+            case "fabric", "fabric-api" -> InstanceIconType.FABRIC;
+            case "legacyfabric", "legacyfabric-api" -> InstanceIconType.LEGACY_FABRIC;
+            case "forge" -> InstanceIconType.FORGE;
+            case "cleanroom" -> InstanceIconType.CLEANROOM;
+            case "liteloader" -> InstanceIconType.CHICKEN;
+            case "optifine" -> InstanceIconType.OPTIFINE;
+            case "quilt", "quilt-api" -> InstanceIconType.QUILT;
+            case "neoforge" -> InstanceIconType.NEO_FORGE;
             default -> null;
         };
     }

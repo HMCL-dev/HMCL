@@ -34,18 +34,7 @@ import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
-import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.setting.DefaultIsolationType;
-import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.GameWindowType;
-import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
-import org.jackhuang.hmcl.setting.GameDirectory;
-import org.jackhuang.hmcl.setting.ProxyType;
-import org.jackhuang.hmcl.setting.SettingFileUtils;
-import org.jackhuang.hmcl.setting.GameSettingsPresetID;
-import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
@@ -603,12 +592,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public Image getVersionIconImage(@Nullable String id) {
         if (id == null || !isLoaded())
-            return VersionIconType.DEFAULT.getIcon();
+            return InstanceIconType.DEFAULT.getIcon();
 
         GameSettings.Instance setting = getInstanceGameSettings(id);
-        VersionIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
+        InstanceIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), InstanceIconType.DEFAULT) : InstanceIconType.DEFAULT;
 
-        if (iconType == VersionIconType.DEFAULT) {
+        if (iconType == InstanceIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
             Optional<Path> iconFile = getVersionIconFile(id);
             if (iconFile.isPresent()) {
@@ -622,35 +611,35 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             if (LibraryAnalyzer.isModded(this, version)) {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return VersionIconType.FABRIC.getIcon();
+                    return InstanceIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return VersionIconType.QUILT.getIcon();
+                    return InstanceIconType.QUILT.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
-                    return VersionIconType.LEGACY_FABRIC.getIcon();
+                    return InstanceIconType.LEGACY_FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return VersionIconType.NEO_FORGE.getIcon();
+                    return InstanceIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return VersionIconType.FORGE.getIcon();
+                    return InstanceIconType.FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
-                    return VersionIconType.CLEANROOM.getIcon();
+                    return InstanceIconType.CLEANROOM.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return VersionIconType.CHICKEN.getIcon();
+                    return InstanceIconType.CHICKEN.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return VersionIconType.OPTIFINE.getIcon();
+                    return InstanceIconType.OPTIFINE.getIcon();
             }
 
             String gameVersion = getGameVersion(version).orElse(null);
             if (gameVersion != null) {
                 GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion);
                 if (versionNumber.isAprilFools()) {
-                    return VersionIconType.APRIL_FOOLS.getIcon();
+                    return InstanceIconType.APRIL_FOOLS.getIcon();
                 } else if (versionNumber instanceof GameVersionNumber.LegacySnapshot) {
-                    return VersionIconType.COMMAND.getIcon();
+                    return InstanceIconType.COMMAND.getIcon();
                 } else if (versionNumber instanceof GameVersionNumber.Old) {
-                    return VersionIconType.CRAFT_TABLE.getIcon();
+                    return InstanceIconType.CRAFT_TABLE.getIcon();
                 }
             }
-            return VersionIconType.GRASS.getIcon();
+            return InstanceIconType.GRASS.getIcon();
         } else {
             return iconType.getIcon();
         }
