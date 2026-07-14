@@ -26,16 +26,21 @@ import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.InstanceIconType;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.setting.TriPreference;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
+import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -43,9 +48,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstanceIconDialog extends DialogPane {
-    private static final String TIP_KEY = "saveCustomGameIcons";
 
     public static final Path INSTANCE_ICONS_DIR = Metadata.HMCL_LOCAL_HOME.resolve("instance_icons");
+
+    private static final SimpleDateFormat fileNameFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss_");
 
     private final HMCLGameRepository repository;
     private final String versionId;
@@ -98,15 +104,47 @@ public class InstanceIconDialog extends DialogPane {
         chooser.getExtensionFilters().add(FXUtils.getImageExtensionFilter());
         Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile != null) {
-            try {
-                repository.setVersionIconFile(versionId, selectedFile);
-                if (setting != null) {
-                    setting.iconProperty().setValue(InstanceIconType.DEFAULT);
-                }
-                onAccept();
-            } catch (IOException | IllegalArgumentException e) {
-                LOG.error("Failed to set icon file: " + selectedFile, e);
+            TriPreference pref = SettingsManager.settings().saveCustomGameIconsProperty().get();
+            if (pref == TriPreference.CONFIRM_EACH_TIME && !INSTANCE_ICONS_DIR.equals(selectedFile.getParent())) {
+                Controllers.askTriPreference(
+                        i18n("settings.icon.save"),
+                        (b) -> setCustomIcon(selectedFile, b),
+                        (p) -> SettingsManager.settings().saveCustomGameIconsProperty().set(p)
+                );
+            } else {
+                setCustomIcon(selectedFile, pref == TriPreference.ALWAYS);
             }
+        }
+    }
+
+    private void setCustomIcon(Path selectedFile, boolean save) {
+        try {
+            Path dest;
+            if (INSTANCE_ICONS_DIR.equals(selectedFile.getParent()) || !save) {
+                dest = selectedFile;
+            } else {
+                String date = fileNameFormat.format(new Date());
+                dest = INSTANCE_ICONS_DIR.resolve(date + selectedFile.getFileName());
+                {
+                    int i = 1;
+                    String nameBase = date + FileUtils.getNameWithoutExtension(selectedFile);
+                    String ext = FileUtils.getExtension(selectedFile);
+                    while (Files.exists(dest)) {
+                        dest = INSTANCE_ICONS_DIR.resolve(nameBase + "_" + i + "." + ext);
+                        i++;
+                    }
+                }
+                FileUtils.copyFile(selectedFile, dest);
+            }
+            repository.setVersionIconFile(versionId, dest);
+
+            if (setting != null) {
+                setting.iconProperty().setValue(InstanceIconType.DEFAULT);
+            }
+
+            onAccept();
+        } catch (IOException | IllegalArgumentException e) {
+            LOG.error("Failed to set instance icon file: " + selectedFile, e);
         }
     }
 
@@ -136,16 +174,15 @@ public class InstanceIconDialog extends DialogPane {
     }
 
     private Node createIcon(Path path) {
-        ImageView imageView;
+        ImageContainer imageContainer;
         try {
-            imageView = new ImageView(FXUtils.loadImage(path, 72, 72, true, true));
+            imageContainer = new ImageContainer(32, FXUtils.loadImage(path, 64, 64, true, true));
         } catch (Exception e) {
             LOG.warning("Failed to load custom instance icon at " + path, e);
             return null;
         }
-        imageView.setMouseTransparent(true);
-        FXUtils.limitSize(imageView, 36, 36);
-        RipplerContainer container = new RipplerContainer(imageView);
+        imageContainer.setMouseTransparent(true);
+        RipplerContainer container = new RipplerContainer(imageContainer);
         FXUtils.setLimitWidth(container, 36);
         FXUtils.setLimitHeight(container, 36);
         FXUtils.onClicked(container, () -> {
