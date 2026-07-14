@@ -660,7 +660,8 @@ public final class ThemePackManager {
                     currentColorStyle(),
                     null,
                     background,
-                    new ThemeTitleBar(currentTitleBarTransparent()));
+                    new ThemeTitleBar(currentTitleBarTransparent()),
+                    currentWindowTransparent());
             Theme theme = new Theme(
                     null,
                     null,
@@ -711,6 +712,9 @@ public final class ThemePackManager {
         if (themeColorType == ThemeColorType.DEFAULT) {
             return ThemeColorSource.DEFAULT;
         }
+        if (themeColorType == ThemeColorType.SYSTEM) {
+            return ThemeColorSource.custom(Themes.getSystemThemeColor());
+        }
         if (themeColorType == ThemeColorType.BACKGROUND) {
             if (backgroundType == BackgroundType.THEME_COLOR) {
                 return ThemeColorSource.DEFAULT;
@@ -755,6 +759,13 @@ public final class ThemePackManager {
                 : Objects.requireNonNullElse(resolveCurrentTitleBarTransparent(currentResolveContext()), false);
     }
 
+    /// Returns whether the current launcher window should be transparent.
+    private static boolean currentWindowTransparent() throws IOException {
+        return SettingsManager.settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT)
+                ? settings().windowTransparentProperty().get()
+                : Objects.requireNonNullElse(resolveCurrentWindowTransparent(currentResolveContext()), false);
+    }
+
     /// Resolves the selected theme's controlled brightness.
     ///
     /// @param context the condition resolution context
@@ -793,6 +804,16 @@ public final class ThemePackManager {
     public static @Nullable Boolean resolveCurrentTitleBarTransparent(ThemeResolveContext context) throws IOException {
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
         return appearance != null && appearance.titleBar() != null ? appearance.titleBar().transparent() : null;
+    }
+
+    /// Resolves the selected theme window transparency directive.
+    ///
+    /// @param context the condition resolution context
+    /// @return the selected theme window transparency directive, or `null` when unavailable
+    /// @throws IOException if the selected theme pack cannot be read
+    public static @Nullable Boolean resolveCurrentWindowTransparent(ThemeResolveContext context) throws IOException {
+        @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
+        return appearance != null ? appearance.windowTransparent() : null;
     }
 
     /// Resolves the current selected theme color source without extracting any wallpaper pixels.

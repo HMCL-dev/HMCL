@@ -273,30 +273,18 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             {
                 int rowIndex = 0;
 
-                if (control.versionSelection || !control.downloadSources.isEmpty()) {
+                if (control.versionSelection) {
                     searchPane.addRow(rowIndex);
                     int columns = 0;
                     Node lastNode = null;
-                    if (control.versionSelection) {
-                        JFXComboBox<String> versionsComboBox = new JFXComboBox<>();
-                        versionsComboBox.setMaxWidth(Double.MAX_VALUE);
-                        Bindings.bindContent(versionsComboBox.getItems(), control.versions);
-                        selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedVersion);
 
-                        searchPane.add(new Label(i18n("version")), columns++, rowIndex);
-                        searchPane.add(lastNode = versionsComboBox, columns++, rowIndex);
-                    }
+                    JFXComboBox<String> versionsComboBox = new JFXComboBox<>();
+                    versionsComboBox.setMaxWidth(Double.MAX_VALUE);
+                    Bindings.bindContent(versionsComboBox.getItems(), control.versions);
+                    selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedVersion);
 
-                    if (control.downloadSources.getSize() > 1) {
-                        JFXComboBox<String> downloadSourceComboBox = new JFXComboBox<>();
-                        downloadSourceComboBox.setMaxWidth(Double.MAX_VALUE);
-                        downloadSourceComboBox.getItems().setAll(control.downloadSources.get());
-                        downloadSourceComboBox.setConverter(stringConverter(I18n::i18n));
-                        selectedItemPropertyFor(downloadSourceComboBox).bindBidirectional(control.downloadSource);
-
-                        searchPane.add(new Label(i18n("settings.launcher.download_source")), columns++, rowIndex);
-                        searchPane.add(lastNode = downloadSourceComboBox, columns++, rowIndex);
-                    }
+                    searchPane.add(new Label(i18n("version")), columns++, rowIndex);
+                    searchPane.add(lastNode = versionsComboBox, columns++, rowIndex);
 
                     if (columns == 2) {
                         GridPane.setColumnSpan(lastNode, 3);
@@ -514,15 +502,23 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             pane.setCenter(spinnerPane);
             {
                 spinnerPane.loadingProperty().bind(getSkinnable().loadingProperty());
-                spinnerPane.failedReasonProperty().bind(Bindings.createStringBinding(() -> {
-                    if (getSkinnable().isFailed()) {
-                        return i18n("download.failed.refresh");
-                    } else {
-                        return null;
-                    }
-                }, getSkinnable().failedProperty()));
+                spinnerPane.failedReasonProperty().bind(
+                    Bindings.createStringBinding(() -> {
+                        if (getSkinnable().isFailed()) {
+                            return i18n("download.failed.refresh");
+                        } else if (!getSkinnable().isLoading() && getSkinnable().pageCount.get() >= 0 && getSkinnable().items.isEmpty()) {
+                            return i18n("download.failed.no_results_found"); 
+                        } else {
+                            return null;
+                        }
+                    },
+                    getSkinnable().failedProperty(), 
+                    getSkinnable().loadingProperty(), 
+                    getSkinnable().pageCount,
+                    getSkinnable().items)
+                );
                 spinnerPane.setOnFailedAction(e -> {
-                    if (getSkinnable().retrySearch != null) {
+                    if (getSkinnable().isFailed() && getSkinnable().retrySearch != null) {
                         getSkinnable().retrySearch.run();
                     }
                 });
