@@ -77,7 +77,7 @@ public final class ThemePackManager {
     private static final Path USER_THEME_PACKS_DIRECTORY = Metadata.HMCL_USER_HOME.resolve("themes");
 
     /// Default version used when exporting the current launcher appearance.
-    private static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
+    public static final String CURRENT_THEME_PACK_VERSION = "1.0.0";
 
     /// IDs of launcher-bundled theme packs in display order.
     private static final @Unmodifiable List<String> BUILTIN_THEME_PACK_IDS = List.of(
@@ -615,13 +615,14 @@ public final class ThemePackManager {
     ///
     /// @param outputFile the target theme-pack file
     /// @param packId     the exported package identifier
+    /// @param version    the exported package version
     /// @param packName   the exported package display name
     /// @param authorName the exported package author name
     /// @throws IOException if the current appearance cannot be exported
-    public static void exportCurrent(Path outputFile, String packId, String packName, String authorName) throws IOException {
+    public static void exportCurrent(Path outputFile, String packId, String version, String packName, String authorName) throws IOException {
         Objects.requireNonNull(outputFile);
 
-        ExportedThemePack themePack = createCurrent(packId, packName, authorName);
+        ExportedThemePack themePack = createCurrent(packId, version, packName, authorName);
         try {
             ThemePackExporter.export(themePack.manifest(), themePack.assets(), outputFile);
         } finally {
@@ -638,12 +639,14 @@ public final class ThemePackManager {
     /// Creates an exportable theme pack from the current launcher appearance.
     ///
     /// @param packId     the exported package identifier
+    /// @param version    the exported package version
     /// @param packName   the exported package display name
     /// @param authorName the exported package author name
     /// @return the exportable theme-pack descriptor
     /// @throws IOException if the current appearance cannot be represented as a theme pack
-    public static ExportedThemePack createCurrent(String packId, String packName, String authorName) throws IOException {
+    public static ExportedThemePack createCurrent(String packId, String version, String packName, String authorName) throws IOException {
         packId = ThemePackManifest.requirePackageId(packId);
+        version = requireNonBlank(version, "version");
         packName = requireNonBlank(packName, "packName");
         authorName = requireNonBlank(authorName, "authorName");
 
@@ -657,7 +660,8 @@ public final class ThemePackManager {
                     currentColorStyle(),
                     null,
                     background,
-                    new ThemeTitleBar(currentTitleBarTransparent()));
+                    new ThemeTitleBar(currentTitleBarTransparent()),
+                    currentWindowTransparent());
             Theme theme = new Theme(
                     null,
                     null,
@@ -668,7 +672,7 @@ public final class ThemePackManager {
                     List.of());
             ThemePackManifest manifest = new ThemePackManifest(
                     packId,
-                    CURRENT_THEME_PACK_VERSION,
+                    version,
                     LocalizedText.plain(packName),
                     List.of(new ThemePackAuthor(LocalizedText.plain(authorName))),
                     background.source() instanceof ThemeBackground.Image image ? image.path() : null,
@@ -707,6 +711,9 @@ public final class ThemePackManager {
                 ThemeColorType.DEFAULT);
         if (themeColorType == ThemeColorType.DEFAULT) {
             return ThemeColorSource.DEFAULT;
+        }
+        if (themeColorType == ThemeColorType.SYSTEM) {
+            return ThemeColorSource.custom(Themes.getSystemThemeColor());
         }
         if (themeColorType == ThemeColorType.BACKGROUND) {
             if (backgroundType == BackgroundType.THEME_COLOR) {
@@ -752,6 +759,13 @@ public final class ThemePackManager {
                 : Objects.requireNonNullElse(resolveCurrentTitleBarTransparent(currentResolveContext()), false);
     }
 
+    /// Returns whether the current launcher window should be transparent.
+    private static boolean currentWindowTransparent() throws IOException {
+        return SettingsManager.settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT)
+                ? settings().windowTransparentProperty().get()
+                : Objects.requireNonNullElse(resolveCurrentWindowTransparent(currentResolveContext()), false);
+    }
+
     /// Resolves the selected theme's controlled brightness.
     ///
     /// @param context the condition resolution context
@@ -790,6 +804,16 @@ public final class ThemePackManager {
     public static @Nullable Boolean resolveCurrentTitleBarTransparent(ThemeResolveContext context) throws IOException {
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
         return appearance != null && appearance.titleBar() != null ? appearance.titleBar().transparent() : null;
+    }
+
+    /// Resolves the selected theme window transparency directive.
+    ///
+    /// @param context the condition resolution context
+    /// @return the selected theme window transparency directive, or `null` when unavailable
+    /// @throws IOException if the selected theme pack cannot be read
+    public static @Nullable Boolean resolveCurrentWindowTransparent(ThemeResolveContext context) throws IOException {
+        @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
+        return appearance != null ? appearance.windowTransparent() : null;
     }
 
     /// Resolves the current selected theme color source without extracting any wallpaper pixels.

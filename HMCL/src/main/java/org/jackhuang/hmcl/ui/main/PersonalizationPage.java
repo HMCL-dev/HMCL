@@ -23,6 +23,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -69,6 +70,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,6 +215,60 @@ public class PersonalizationPage extends StackPane {
         refresh.invalidated(null);
     }
 
+    /// Binds a line toggle button to an inheritable theme appearance setting.
+    private static void bindThemeAppearanceToggleButton(
+            LineToggleButton button,
+            String setting,
+            BooleanProperty directProperty,
+            Supplier<Boolean> effectiveValueSupplier) {
+        JFXButton inheritButton = createThemeAppearanceOverrideButton();
+        button.setTitleTrailing(inheritButton);
+
+        Holder<Boolean> updating = new Holder<>(false);
+        InvalidationListener refresh = ignored -> {
+            if (updating.value) {
+                return;
+            }
+            updating.value = true;
+            try {
+                boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
+                button.setSelected(overridden ? directProperty.get() : effectiveValueSupplier.get());
+                updateThemeAppearanceOverrideButton(inheritButton, !overridden);
+            } finally {
+                updating.value = false;
+            }
+        };
+
+        button.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (updating.value) {
+                return;
+            }
+            updating.value = true;
+            try {
+                directProperty.set(Boolean.TRUE.equals(newValue));
+                settings().getThemeAppearanceOverrides().add(setting);
+                updateThemeAppearanceOverrideButton(inheritButton, false);
+            } finally {
+                updating.value = false;
+            }
+            refresh.invalidated(null);
+        });
+        directProperty.addListener(refresh);
+        addThemeAppearanceRefreshListener(refresh);
+
+        inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            if (!settings().getThemeAppearanceOverrides().contains(setting)) {
+                directProperty.set(button.isSelected());
+                settings().getThemeAppearanceOverrides().add(setting);
+            } else {
+                settings().getThemeAppearanceOverrides().remove(setting);
+            }
+            refresh.invalidated(null);
+            event.consume();
+        });
+        refresh.invalidated(null);
+    }
+
     /// Returns the display name for the currently selected launcher theme.
     private static String getSelectedThemeTitle() {
         ThemeReference reference = settings().getSelectedThemeOrDefault();
@@ -294,36 +350,40 @@ public class PersonalizationPage extends StackPane {
         String userName = System.getProperty("user.name").trim();
         String defaultAuthorName = StringUtils.isBlank(userName) ? "Unknown" : userName;
 
-        PromptDialogPane.Builder.StringQuestion packIdQuestion = new PromptDialogPane.Builder.StringQuestion(
-                i18n("theme_pack.export.id"),
-                "")
-                .setPromptText(defaultPackId);
         PromptDialogPane.Builder.StringQuestion packNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.name"),
                 "")
                 .setPromptText(defaultPackName);
+        PromptDialogPane.Builder.StringQuestion versionQuestion = new PromptDialogPane.Builder.StringQuestion(
+                i18n("theme_pack.export.version"),
+                "")
+                .setPromptText(ThemePackManager.CURRENT_THEME_PACK_VERSION);
         PromptDialogPane.Builder.StringQuestion authorNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.author"),
                 "")
                 .setPromptText(defaultAuthorName);
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
-                .addQuestion(packIdQuestion)
                 .addQuestion(packNameQuestion)
+                .addQuestion(versionQuestion)
                 .addQuestion(authorNameQuestion)).thenAccept(questions -> exportCurrentThemePack(
-                StringUtils.isBlank(packIdQuestion.getValue()) ? defaultPackId : packIdQuestion.getValue().trim(),
+                defaultPackId,
+                StringUtils.isBlank(versionQuestion.getValue())
+                        ? ThemePackManager.CURRENT_THEME_PACK_VERSION
+                        : versionQuestion.getValue().trim(),
                 StringUtils.isBlank(packNameQuestion.getValue()) ? defaultPackName : packNameQuestion.getValue().trim(),
                 StringUtils.isBlank(authorNameQuestion.getValue()) ? defaultAuthorName : authorNameQuestion.getValue().trim()));
     }
 
     /// Saves current launcher appearance as a theme-pack file with the given package metadata.
-    private void exportCurrentThemePack(String packId, String packName, String authorName) {
+    private void exportCurrentThemePack(String packId, String version, String packName, String authorName) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("theme_pack.export.title"));
-        String initialFileName = sanitizeThemePackFileName(packName) + ThemePackExporter.FILE_EXTENSION;
-        chooser.setInitialFileName(FileUtils.isNameValid(initialFileName)
-                ? initialFileName
-                : "theme-pack" + ThemePackExporter.FILE_EXTENSION);
+        String initialFileName = sanitizeThemePackFileName(packName);
+        chooser.setInitialFileName(
+                (FileUtils.isNameValid(initialFileName) ? initialFileName : "theme-pack")
+                + (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? "" : ThemePackExporter.FILE_EXTENSION)
+        );
         chooser.getExtensionFilters().setAll(
                 new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
 
@@ -340,6 +400,7 @@ public class PersonalizationPage extends StackPane {
             ThemePackManager.exportCurrent(
                     output,
                     packId,
+                    version,
                     packName,
                     authorName);
             Controllers.dialog(
@@ -439,6 +500,10 @@ public class PersonalizationPage extends StackPane {
                     i18n("settings.launcher.theme_color_type.default"),
                     ThemeColorType.DEFAULT);
 
+            var systemColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
+                    i18n("settings.launcher.theme_color_type.system"),
+                    ThemeColorType.SYSTEM);
+
             var customColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
                     i18n("settings.launcher.theme_color_type.custom"),
                     ThemeColorType.CUSTOM) {
@@ -455,7 +520,11 @@ public class PersonalizationPage extends StackPane {
 
             RadioChoiceList<ThemeColorType> themeColorChoiceList = new RadioChoiceList<>();
             themeColorChoiceList.setFallbackValue(ThemeColorType.DEFAULT);
-            themeColorChoiceList.setChoices(Arrays.asList(defaultColorChoice, customColorChoice, backgroundColorChoice));
+            themeColorChoiceList.setChoices(Arrays.asList(
+                    defaultColorChoice,
+                    systemColorChoice,
+                    customColorChoice,
+                    backgroundColorChoice));
 
             JFXButton themeColorOverrideButton = createThemeAppearanceOverrideButton();
             themeColorSublist.setTitleRight(themeColorOverrideButton);
@@ -1072,6 +1141,25 @@ public class PersonalizationPage extends StackPane {
             refresh.invalidated(null);
             themeAppearanceList.getContent().add(titleBarTransparentButton);
         }
+
+        LineToggleButton windowTransparentButton = new LineToggleButton();
+        windowTransparentButton.setTitle(i18n("settings.launcher.window_transparent"));
+        bindThemeAppearanceToggleButton(
+                windowTransparentButton,
+                LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT,
+                settings().windowTransparentProperty(),
+                () -> {
+                    try {
+                        return Objects.requireNonNullElse(
+                                ThemePackManager.resolveCurrentWindowTransparent(
+                                        ThemePackManager.currentResolveContext()),
+                                false);
+                    } catch (IOException | RuntimeException e) {
+                        return false;
+                    }
+                });
+        themeAppearanceList.getContent().add(windowTransparentButton);
+
         content.getChildren().addAll(
                 ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")),
                 themeAppearanceList,

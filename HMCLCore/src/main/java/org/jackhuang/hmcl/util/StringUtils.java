@@ -272,6 +272,14 @@ public final class StringUtils {
         return false;
     }
 
+    public static boolean startsWithAny(String str, Collection<String> prefixes) {
+        return prefixes.stream().anyMatch(str::startsWith);
+    }
+
+    public static boolean endsWithAny(String str, Collection<String> suffixes) {
+        return suffixes.stream().anyMatch(str::endsWith);
+    }
+
     public static Predicate<@Nullable String> compileQuery(String queryString) throws PatternSyntaxException {
         Predicate<@Nullable String> predicate;
         if (queryString.startsWith("regex:")) {

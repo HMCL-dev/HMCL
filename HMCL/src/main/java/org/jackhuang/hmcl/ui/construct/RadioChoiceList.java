@@ -97,6 +97,12 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
     }
 
     /// Replaces the displayed choices.
+    @SafeVarargs
+    public final void setChoices(Choice<T>... choices) {
+        setChoices(List.of(choices));
+    }
+
+    /// Replaces the displayed choices.
     public void setChoices(Collection<? extends Choice<T>> choices) {
         this.choices.setAll(choices);
         choiceByToggle.clear();
