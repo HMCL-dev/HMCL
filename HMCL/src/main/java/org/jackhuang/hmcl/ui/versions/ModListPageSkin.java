@@ -522,7 +522,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         JFXCheckBox checkBox = new JFXCheckBox();
-        ImageContainer imageContainer = new ImageContainer(24);
+        ImageContainer imageContainer = new ImageContainer(32);
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);

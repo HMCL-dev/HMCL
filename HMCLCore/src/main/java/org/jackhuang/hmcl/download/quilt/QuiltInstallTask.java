@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -85,12 +86,17 @@ public final class QuiltInstallTask extends Task<Version> {
 
     @Override
     public void execute() {
-        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), QuiltInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
+        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), QuiltInfo.class), remote.getSelfVersion()));
 
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
     }
 
-    private Version getPatch(QuiltInfo quiltInfo, String gameVersion, String loaderVersion) {
+    /// Creates the Quilt version patch described by the metadata response.
+    ///
+    /// @param quiltInfo the metadata returned by Quilt Meta
+    /// @param loaderVersion the Quilt Loader version
+    /// @return the version patch to install
+    static Version getPatch(QuiltInfo quiltInfo, String loaderVersion) {
         JsonObject launcherMeta = quiltInfo.launcherMeta;
         Arguments arguments = new Arguments();
 
@@ -118,7 +124,9 @@ public final class QuiltInstallTask extends Task<Version> {
         }
 
         // libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.hashed.maven), getMavenRepositoryByGroup(quiltInfo.hashed.maven), null));
-        libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.intermediary.maven), getMavenRepositoryByGroup(quiltInfo.intermediary.maven), null));
+        if (quiltInfo.intermediary != null) {
+            libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.intermediary.maven), getMavenRepositoryByGroup(quiltInfo.intermediary.maven), null));
+        }
         libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.loader.maven), getMavenRepositoryByGroup(quiltInfo.loader.maven), null));
 
         return new Version(LibraryAnalyzer.LibraryType.QUILT.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
@@ -139,11 +147,11 @@ public final class QuiltInstallTask extends Task<Version> {
     @JsonSerializable
     public static class QuiltInfo {
         private final LoaderInfo loader;
-        private final IntermediaryInfo hashed;
-        private final IntermediaryInfo intermediary;
+        private final @Nullable IntermediaryInfo hashed;
+        private final @Nullable IntermediaryInfo intermediary;
         private final JsonObject launcherMeta;
 
-        public QuiltInfo(LoaderInfo loader, IntermediaryInfo hashed, IntermediaryInfo intermediary, JsonObject launcherMeta) {
+        public QuiltInfo(LoaderInfo loader, @Nullable IntermediaryInfo hashed, @Nullable IntermediaryInfo intermediary, JsonObject launcherMeta) {
             this.loader = loader;
             this.hashed = hashed;
             this.intermediary = intermediary;
@@ -154,11 +162,11 @@ public final class QuiltInstallTask extends Task<Version> {
             return loader;
         }
 
-        public IntermediaryInfo getHashed() {
+        public @Nullable IntermediaryInfo getHashed() {
             return hashed;
         }
 
-        public IntermediaryInfo getIntermediary() {
+        public @Nullable IntermediaryInfo getIntermediary() {
             return intermediary;
         }
 
