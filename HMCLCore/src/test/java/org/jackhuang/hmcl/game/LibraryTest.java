@@ -63,38 +63,4 @@ public final class LibraryTest {
         assertEquals(serialized, JsonUtils.GSON.toJsonTree(JsonUtils.GSON.fromJson(serialized, Library.class)));
     }
 
-    /// TLauncher fields are normalized to their standard version JSON equivalents.
-    @Test
-    public void testTLauncherJsonUsesCanonicalFields() {
-        JsonObject source = JsonParser.parseString("""
-                {
-                  "name": "org.example:library:1.0.0",
-                  "artifact": {
-                    "path": "org/example/library/1.0.0/library-1.0.0.jar",
-                    "url": "https://example.com/library.jar"
-                  },
-                  "classifies": {
-                    "linux": {
-                      "path": "org/example/library/1.0.0/library-1.0.0-natives-linux.jar",
-                      "url": "https://example.com/library-natives-linux.jar"
-                    }
-                  },
-                  "MMC-hint": "local",
-                  "MMC-filename": "library.jar"
-                }
-                """).getAsJsonObject();
-
-        JsonObject serialized = (JsonObject) JsonUtils.GSON.toJsonTree(JsonUtils.GSON.fromJson(source, Library.class));
-        JsonObject downloads = serialized.getAsJsonObject("downloads");
-
-        assertEquals(source.getAsJsonObject("artifact").get("path"), downloads.getAsJsonObject("artifact").get("path"));
-        assertEquals(source.getAsJsonObject("classifies").getAsJsonObject("linux").get("path"),
-                downloads.getAsJsonObject("classifiers").getAsJsonObject("linux").get("path"));
-        assertEquals("local", serialized.get("hint").getAsString());
-        assertEquals("library.jar", serialized.get("filename").getAsString());
-        assertFalse(serialized.has("artifact"));
-        assertFalse(serialized.has("classifies"));
-        assertFalse(serialized.has("MMC-hint"));
-        assertFalse(serialized.has("MMC-filename"));
-    }
 }

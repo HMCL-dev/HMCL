@@ -39,9 +39,4 @@ public record LibrariesDownloadInfo(
     public LibrariesDownloadInfo(LibraryDownloadInfo artifact) {
         this(artifact, null);
     }
-
-    @Override
-    public Map<String, LibraryDownloadInfo> classifiers() {
-        return classifiers == null ? ImmutableSequencedMap.of() : classifiers;
-    }
 }
