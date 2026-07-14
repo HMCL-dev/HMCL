@@ -53,9 +53,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * @author huangyuhui
  */
 public class InstallerItem extends Control {
-    private final String           id;
+    private final String id;
     private final InstanceIconType iconType;
-    private final Style            style;
+    private final Style style;
     private final ObjectProperty<InstalledState> versionProperty = new SimpleObjectProperty<>(this, "version", null);
     private final ObjectProperty<State> resolvedStateProperty = new SimpleObjectProperty<>(this, "resolvedState", InstallableState.INSTANCE);
 
