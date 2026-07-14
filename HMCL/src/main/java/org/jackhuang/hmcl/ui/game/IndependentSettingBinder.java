@@ -395,11 +395,21 @@ final class IndependentSettingBinder {
                 return;
             }
 
+            if (maxMemory > totalMemoryMiB) {
+                maxMemory = totalMemoryMiB;
+            }
+
             updating.value = true;
             try {
                 setOverridden(setting, property, true);
                 property.setValue(maxMemory);
                 maxMemorySlider.setValue(maxMemoryToSliderValue(maxMemory, totalMemoryMiB));
+
+                String safeText = Integer.toString(maxMemory);
+                if (!newValue.equals(safeText)) {
+                    maxMemoryTextField.setText(safeText);
+                }
+
                 if (maxMemoryButton != null) {
                     inheritanceButtonUpdater.accept(maxMemoryButton, false);
                 }
