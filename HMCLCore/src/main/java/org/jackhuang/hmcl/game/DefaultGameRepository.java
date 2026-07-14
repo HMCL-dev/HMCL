@@ -70,24 +70,24 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public boolean hasVersion(String id) {
-        return id != null && versions.containsKey(id);
+        return id != null && versions != null && versions.containsKey(id);
     }
 
     @Override
     public Version getVersion(String id) {
         if (!hasVersion(id))
-            throw new VersionNotFoundException("Version '" + id + "' does not exist in " + versions.keySet() + ".");
+            throw new VersionNotFoundException("Version '" + id + "' does not exist in " + (versions == null ? "[]" : versions.keySet()) + ".");
         return versions.get(id);
     }
 
     @Override
     public int getVersionCount() {
-        return versions.size();
+        return versions == null ? 0 : versions.size();
     }
 
     @Override
     public Collection<Version> getVersions() {
-        return versions.values();
+        return versions == null ? Collections.emptySet() : versions.values();
     }
 
     @Override
@@ -235,7 +235,7 @@ public class DefaultGameRepository implements GameRepository {
     public boolean removeVersionFromDisk(String id) {
         if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id)) == Event.Result.DENY)
             return false;
-        if (!versions.containsKey(id))
+        if (versions == null || !versions.containsKey(id))
             return FileUtils.deleteDirectoryQuietly(getVersionRoot(id));
         Path file = getVersionRoot(id);
         if (Files.notExists(file))
@@ -456,7 +456,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getLoggingObject(String version, String assetId, LoggingInfo loggingInfo) {
-        return getAssetDirectory(version, assetId).resolve("log_configs").resolve(loggingInfo.getFile().getId());
+        return getAssetDirectory(version, assetId).resolve("log_configs").resolve(loggingInfo.file().getId());
     }
 
     protected Path reconstructAssets(String version, String assetId) throws IOException, JsonParseException {

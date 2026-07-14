@@ -240,24 +240,7 @@ public final class DiscoJavaRemoteVersion implements JavaRemoteVersion {
         return "DiscoJavaRemoteVersion " + JsonUtils.GSON.toJson(this);
     }
 
-    public static final class Links {
-        @SerializedName("pkg_info_uri")
-        private final String pkgInfoUri;
-
-        @SerializedName("pkg_download_redirect")
-        private final String pkgDownloadRedirect;
-
-        public Links(String pkgInfoUri, String pkgDownloadRedirect) {
-            this.pkgInfoUri = pkgInfoUri;
-            this.pkgDownloadRedirect = pkgDownloadRedirect;
-        }
-
-        public String getPkgInfoUri() {
-            return pkgInfoUri;
-        }
-
-        public String getPkgDownloadRedirect() {
-            return pkgDownloadRedirect;
-        }
+    public record Links(@SerializedName("pkg_info_uri") String pkgInfoUri,
+                        @SerializedName("pkg_download_redirect") String pkgDownloadRedirect) {
     }
 }
