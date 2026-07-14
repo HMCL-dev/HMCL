@@ -321,7 +321,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
 
         // Sinytra Connector
-        if (this.analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && hasMod("connectormod", ModLoaderType.NEO_FORGE)
+        if (this.analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && (hasMod("connector", ModLoaderType.NEO_FORGE) || hasMod("connectormod", ModLoaderType.NEO_FORGE))
                 || "1.20.1".equals(gameVersion) && this.analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && hasMod("connectormod", ModLoaderType.FORGE)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
