@@ -17,37 +17,31 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.ImmutableSequencedMap;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
-/**
- *
- * @author huangyuhui
- */
-@Immutable
-public final class LibrariesDownloadInfo {
+/// @author huangyuhui
+@JsonSerializable
+@NotNullByDefault
+public record LibrariesDownloadInfo(
+        LibraryDownloadInfo artifact,
+        @Nullable @Unmodifiable Map<String, LibraryDownloadInfo> classifiers) {
 
-    private final LibraryDownloadInfo artifact;
-    private final Map<String, LibraryDownloadInfo> classifiers;
+    public LibrariesDownloadInfo {
+        classifiers = classifiers == null ? null : ImmutableSequencedMap.copyOf(classifiers);
+    }
 
     public LibrariesDownloadInfo(LibraryDownloadInfo artifact) {
         this(artifact, null);
     }
 
-    public LibrariesDownloadInfo(LibraryDownloadInfo artifact, Map<String, LibraryDownloadInfo> classifiers) {
-        this.artifact = artifact;
-        this.classifiers = classifiers == null ? null : new HashMap<>(classifiers);
+    @Override
+    public Map<String, LibraryDownloadInfo> classifiers() {
+        return classifiers == null ? ImmutableSequencedMap.of() : classifiers;
     }
-
-    public LibraryDownloadInfo getArtifact() {
-        return artifact;
-    }
-
-    public Map<String, LibraryDownloadInfo> getClassifiers() {
-        return classifiers == null ? Collections.emptyMap() : Collections.unmodifiableMap(classifiers);
-    }
-
 }

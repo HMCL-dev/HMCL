@@ -20,12 +20,9 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 
-/**
- *
- * @author huangyuhui
- */
+/// @author huangyuhui
 @Immutable
-public class LibraryDownloadInfo extends DownloadInfo {
+public final class LibraryDownloadInfo extends DownloadInfo {
 
     @SerializedName("path")
     private final String path;

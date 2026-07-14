@@ -170,9 +170,9 @@ public record Library(
                         return nd.replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
                     }
                 }
-            } else if (downloads != null && downloads.getClassifiers() != null) {
+            } else if (downloads != null && downloads.classifiers() != null) {
                 for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
-                    LibraryDownloadInfo info = downloads.getClassifiers().get(nativeDescriptor);
+                    LibraryDownloadInfo info = downloads.classifiers().get(nativeDescriptor);
                     if (info != null) {
                         return nativeDescriptor;
                     }
@@ -201,15 +201,15 @@ public record Library(
             return true;
         }
 
-        return downloads != null && downloads.getClassifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
+        return downloads != null && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
     }
 
     public @Nullable LibraryDownloadInfo getRawDownloadInfo() {
         if (downloads != null) {
             if (isNative())
-                return downloads.getClassifiers().get(classifier());
+                return downloads.classifiers().get(classifier());
             else
-                return downloads.getArtifact();
+                return downloads.artifact();
         } else {
             return null;
         }
