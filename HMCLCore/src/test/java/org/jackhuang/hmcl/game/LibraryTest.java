@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -54,12 +55,12 @@ public final class LibraryTest {
                 }
                 """).getAsJsonObject();
 
-        Library library = Library.fromJson(source);
-        JsonObject serialized = library.toJsonObject();
+        Library library = JsonUtils.GSON.fromJson(source, Library.class);
+        JsonElement serialized = JsonUtils.GSON.toJsonTree(library);
 
         assertEquals(source, serialized);
         assertEquals(serialized, JsonUtils.GSON.toJsonTree(library));
-        assertEquals(serialized, JsonUtils.GSON.fromJson(serialized, Library.class).toJsonObject());
+        assertEquals(serialized, JsonUtils.GSON.toJsonTree(JsonUtils.GSON.fromJson(serialized, Library.class)));
     }
 
     /// TLauncher fields are normalized to their standard version JSON equivalents.
@@ -83,7 +84,7 @@ public final class LibraryTest {
                 }
                 """).getAsJsonObject();
 
-        JsonObject serialized = Library.fromJson(source).toJsonObject();
+        JsonObject serialized = (JsonObject) JsonUtils.GSON.toJsonTree(JsonUtils.GSON.fromJson(source, Library.class));
         JsonObject downloads = serialized.getAsJsonObject("downloads");
 
         assertEquals(source.getAsJsonObject("artifact").get("path"), downloads.getAsJsonObject("artifact").get("path"));

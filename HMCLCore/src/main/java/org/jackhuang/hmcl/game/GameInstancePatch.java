@@ -698,9 +698,9 @@ public record GameInstancePatch(
                     if (value instanceof JsonArray array) {
                         List<Library> list = new ArrayList<>(array.size());
                         for (JsonElement element : array) {
-                            if (element instanceof JsonObject object) {
-                                list.add(Library.fromJson(object));
-                            }
+                            Library library = JsonUtils.GSON.fromJson(element, Library.class);
+                            if (library != null)
+                                list.add(library);
                         }
                         libraries = List.copyOf(list);
                     }

@@ -17,29 +17,21 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.*;
-import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.*;
 
 /// A class that describes a Minecraft dependency.
 ///
 /// @author huangyuhui
-@JsonAdapter(Library.Adapter.class)
 @JsonSerializable
 @NotNullByDefault
 public record Library(
@@ -88,59 +80,6 @@ public record Library(
                 builder.setLength(0);
             }
         }
-    }
-
-    /// Parses a library from either the standard version JSON format or TLauncher library format.
-    public static Library fromJson(JsonObject json) {
-        //noinspection ConstantValue
-        if (json == null) {
-            throw new JsonParseException("Library must be a JSON object");
-        }
-
-        Artifact artifact = fromJsonMember(json, "name", Artifact.class);
-        if (artifact == null)
-            throw new JsonParseException("Library.name cannot be null");
-
-        String url = JsonUtils.getString(json, "url");
-        LibrariesDownloadInfo downloads = fromJsonMember(json, "downloads", LibrariesDownloadInfo.class);
-
-        if (downloads == null && (json.has("artifact") || json.has("classifies"))) {
-            LibraryDownloadInfo downloadArtifact = fromJsonMember(json, "artifact", LibraryDownloadInfo.class);
-            Map<String, LibraryDownloadInfo> classifiers = fromJsonMember(
-                    json,
-                    "classifies",
-                    JsonUtils.mapTypeOf(String.class, LibraryDownloadInfo.class)
-            );
-            downloads = new LibrariesDownloadInfo(downloadArtifact, classifiers);
-        }
-
-        List<String> checksums = fromJsonMember(json, "checksums", JsonUtils.listTypeOf(String.class));
-        ExtractRules extract = fromJsonMember(json, "extract", ExtractRules.class);
-        Map<String, String> natives = fromJsonMember(json, "natives", JsonUtils.mapTypeOf(String.class, String.class));
-        List<CompatibilityRule> rules = fromJsonMember(json, "rules", JsonUtils.listTypeOf(CompatibilityRule.class));
-
-        String hint = JsonUtils.getString(json, "hint");
-        if (hint == null) {
-            hint = JsonUtils.getString(json, "MMC-hint");
-        }
-
-        String fileName = JsonUtils.getString(json, "filename");
-        if (fileName == null) {
-            fileName = JsonUtils.getString(json, "MMC-filename");
-        }
-
-        return new Library(artifact, url, downloads, checksums, extract, natives, rules, hint, fileName);
-    }
-
-    /// Reads a JSON member using HMCL's configured Gson instance.
-    private static <T> @Nullable T fromJsonMember(JsonObject json, String name, Class<T> type) {
-        return fromJsonMember(json, name, TypeToken.get(type));
-    }
-
-    /// Reads a JSON member using HMCL's configured Gson instance.
-    private static <T> @Nullable T fromJsonMember(JsonObject json, String name, TypeToken<T> type) {
-        JsonElement element = json.get(name);
-        return element == null || element.isJsonNull() ? null : JsonUtils.GSON.fromJson(element, type);
     }
 
     public Library {
@@ -273,31 +212,6 @@ public record Library(
         return groupId().equals(groupId) && artifactId().equals(artifactId);
     }
 
-    /// Serializes this library to the standard Minecraft version JSON format.
-    public JsonObject toJsonObject() {
-        JsonObject json = new JsonObject();
-        json.addProperty("name", artifact.toString());
-
-        if (url != null)
-            json.addProperty("url", url);
-        if (downloads != null)
-            json.add("downloads", JsonUtils.GSON.toJsonTree(downloads));
-        if (checksums != null)
-            json.add("checksums", JsonUtils.GSON.toJsonTree(checksums));
-        if (extract != null)
-            json.add("extract", JsonUtils.GSON.toJsonTree(extract));
-        if (natives != null)
-            json.add("natives", JsonUtils.GSON.toJsonTree(natives));
-        if (rules != null)
-            json.add("rules", JsonUtils.GSON.toJsonTree(rules));
-        if (hint != null)
-            json.addProperty("hint", hint);
-        if (filename != null)
-            json.addProperty("filename", filename);
-
-        return json;
-    }
-
     @Override
     public String toString() {
         return new ToStringBuilder(this).append("name", name()).toString();
@@ -326,25 +240,4 @@ public record Library(
         return new Library(artifact.setClassifier(classifier), url, downloads, checksums, extract, natives, rules, hint, filename);
     }
 
-    /// Gson adapter for library JSON variants.
-    public static final class Adapter extends TypeAdapter<@Nullable Library> {
-        @Override
-        public @Nullable Library read(JsonReader in) throws IOException {
-            JsonElement element = JsonParser.parseReader(in);
-            if (element == null || element.isJsonNull())
-                return null;
-            if (element instanceof JsonObject jsonObject)
-                return Library.fromJson(jsonObject);
-
-            throw new JsonParseException("Expected a JSON object for Library, but got: " + element.getClass());
-        }
-
-        @Override
-        public void write(JsonWriter out, @Nullable Library value) throws IOException {
-            if (value != null)
-                JsonUtils.GSON.toJson(value.toJsonObject(), out);
-            else
-                out.nullValue();
-        }
-    }
 }
