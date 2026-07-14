@@ -117,24 +117,29 @@ public class InstanceIconDialog extends DialogPane {
         }
     }
 
+    private Path saveIcon(Path selectedFile) throws IOException {
+        String date = fileNameFormat.format(new Date());
+        Path dest = INSTANCE_ICONS_DIR.resolve(date + selectedFile.getFileName());
+        {
+            int i = 1;
+            String nameBase = date + FileUtils.getNameWithoutExtension(selectedFile);
+            String ext = FileUtils.getExtension(selectedFile);
+            while (Files.exists(dest)) {
+                dest = INSTANCE_ICONS_DIR.resolve(nameBase + "_" + i + "." + ext);
+                i++;
+            }
+        }
+        FileUtils.copyFile(selectedFile, dest);
+        return dest;
+    }
+
     private void setCustomIcon(Path selectedFile, boolean save) {
         try {
             Path dest;
             if (INSTANCE_ICONS_DIR.equals(selectedFile.getParent()) || !save) {
                 dest = selectedFile;
             } else {
-                String date = fileNameFormat.format(new Date());
-                dest = INSTANCE_ICONS_DIR.resolve(date + selectedFile.getFileName());
-                {
-                    int i = 1;
-                    String nameBase = date + FileUtils.getNameWithoutExtension(selectedFile);
-                    String ext = FileUtils.getExtension(selectedFile);
-                    while (Files.exists(dest)) {
-                        dest = INSTANCE_ICONS_DIR.resolve(nameBase + "_" + i + "." + ext);
-                        i++;
-                    }
-                }
-                FileUtils.copyFile(selectedFile, dest);
+                dest = saveIcon(selectedFile);
             }
             repository.setVersionIconFile(versionId, dest);
 
