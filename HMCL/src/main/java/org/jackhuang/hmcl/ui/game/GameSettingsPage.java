@@ -162,14 +162,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         {
             if (isPresetSetting) {
                 var presetSettings = new ComponentList();
-                rootPane.getChildren().addAll(
+                rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
+                        basicSettings,
                         ComponentList.createComponentListTitle(
                                 i18n("settings.type.global.preset"),
                                 i18n("settings.type.global.preset.help")
                         ),
                         presetSettings,
-                        ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
-                        basicSettings,
                         ComponentList.createComponentListTitle(i18n("settings.game.section.game")),
                         gameSettings,
                         ComponentList.createComponentListTitle(i18n("settings.launcher")),
