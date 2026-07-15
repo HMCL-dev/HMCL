@@ -34,7 +34,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Node;
 
-import java.net.URL;
+import java.net.URI;
 
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -59,7 +59,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
                 // Downgrade update, no need to display changelog
                 return null;
 
-            Document document = Jsoup.parse(new URL(url), 30 * 1000);
+            Document document = Jsoup.parse(URI.create(url).toURL(), 30 * 1000);
             Node node = document.selectFirst("h1[data-version=\"%s\"]".formatted(targetVersion));
 
             if (node == null || !"h1".equals(node.nodeName())) {
