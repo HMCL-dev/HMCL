@@ -29,7 +29,10 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jetbrains.annotations.Nullable;
 
 public class ComponentList extends Control implements NoPaddingComponent {
 
@@ -136,15 +139,28 @@ public class ComponentList extends Control implements NoPaddingComponent {
     }
 
     public static Node createComponentListTitle(String title) {
-        HBox node = new HBox();
+        return createComponentListTitle(title, null);
+    }
+
+    public static Node createComponentListTitle(String title, @Nullable String helpMessage) {
+        HBox node = new HBox(4);
         node.setAlignment(Pos.CENTER_LEFT);
         node.setPadding(new Insets(8, 0, 0, 0));
+
         {
             Label advanced = new Label(title);
             node.getChildren().setAll(advanced);
         }
+
+        if (helpMessage != null) {
+            var helpIcon = new StackPane(SVG.HELP.createIcon(16));
+            FXUtils.installFastTooltip(helpIcon, helpMessage);
+            node.getChildren().add(helpIcon);
+        }
+
         return node;
     }
+
 
     public static void setVgrow(Node node, Priority priority) {
         node.getProperties().put("ComponentList.vgrow", priority);
