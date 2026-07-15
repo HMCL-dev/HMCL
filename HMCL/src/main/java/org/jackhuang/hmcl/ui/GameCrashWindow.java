@@ -167,7 +167,7 @@ public class GameCrashWindow extends Stage {
                 Set<String> keywords = new HashSet<>();
                 for (Pair<Set<CrashReportAnalyzer.Result>, Set<String>> pair : (List<Pair<Set<CrashReportAnalyzer.Result>, Set<String>>>) (List<?>) taskResult) {
                     for (CrashReportAnalyzer.Result result : pair.getKey()) {
-                        results.put(result.getRule(), result);
+                        results.put(result.rule(), result);
                     }
                     keywords.addAll(pair.getValue());
                 }
@@ -184,22 +184,22 @@ public class GameCrashWindow extends Stage {
 
                 for (CrashReportAnalyzer.Result result : results.values()) {
                     String message;
-                    switch (result.getRule()) {
+                    switch (result.rule()) {
                         case TOO_OLD_JAVA:
-                            message = i18n("game.crash.reason.too_old_java", CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected"))));
+                            message = i18n("game.crash.reason.too_old_java", CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.matcher().group("expected"))));
                             break;
                         case MOD_RESOLUTION_CONFLICT:
                         case MOD_RESOLUTION_MISSING:
                         case MOD_RESOLUTION_COLLECTION:
-                            message = i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
-                                    translateFabricModId(result.getMatcher().group("sourcemod")),
-                                    parseFabricModId(result.getMatcher().group("destmod")),
-                                    parseFabricModId(result.getMatcher().group("destmod")));
+                            message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
+                                    translateFabricModId(result.matcher().group("sourcemod")),
+                                    parseFabricModId(result.matcher().group("destmod")),
+                                    parseFabricModId(result.matcher().group("destmod")));
                             break;
                         case MOD_RESOLUTION_MISSING_MINECRAFT:
-                            message = i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
-                                    translateFabricModId(result.getMatcher().group("mod")),
-                                    result.getMatcher().group("version"));
+                            message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
+                                    translateFabricModId(result.matcher().group("mod")),
+                                    result.matcher().group("version"));
                             break;
                         case MOD_FOREST_OPTIFINE:
                         case TWILIGHT_FOREST_OPTIFINE:
@@ -207,15 +207,15 @@ public class GameCrashWindow extends Stage {
                         case JADE_FOREST_OPTIFINE:
                         case NEOFORGE_FOREST_OPTIFINE:
                             message = i18n("game.crash.reason.mod", "OptiFine");
-                            LOG.info("Crash cause: " + result.getRule() + ": " + i18n("game.crash.reason.mod", "OptiFine"));
+                            LOG.info("Crash cause: " + result.rule() + ": " + i18n("game.crash.reason.mod", "OptiFine"));
                             break;
                         default:
-                            message = i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
-                                    Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))
+                            message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
+                                    Arrays.stream(result.rule().getGroupNames()).map(groupName -> result.matcher().group(groupName))
                                             .toArray());
                             break;
                     }
-                    LOG.info("Crash cause: " + result.getRule() + ": " + message);
+                    LOG.info("Crash cause: " + result.rule() + ": " + message);
                     segments.addAll(FXUtils.parseSegment(message, Controllers::onHyperlinkAction));
                     segments.add(new Text("\n\n"));
                 }
