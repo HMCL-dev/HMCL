@@ -515,12 +515,9 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         private void exportToCustomTextWithProgress() throws IOException {
             StringBuilder sb = new StringBuilder();
-            int totalMods = mods.size();
-            for (int i = 0; i < totalMods; i++) {
-                ModListPageSkin.ModInfoObject modInfo = mods.get(i);
+            for (ModListPageSkin.ModInfoObject modInfo : mods) {
                 sb.append(applyTemplate(modInfo, template));
                 sb.append(System.lineSeparator());
-                updateProgress(i + 1, totalMods);
             }
             Files.writeString(targetPath, sb.toString(), StandardCharsets.UTF_8);
         }
@@ -530,21 +527,18 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
             List<String> orderedFields = new ArrayList<>(fields);
 
-            // Header row
             List<String> headers = getFieldHeaders(orderedFields);
             for (int col = 0; col < headers.size(); col++) {
                 table.set(col, 0, headers.get(col));
             }
 
-            // Data rows with progress updates
-            int totalMods = mods.size();
-            for (int row = 0; row < totalMods; row++) {
-                ModListPageSkin.ModInfoObject mod = mods.get(row);
+            int row = 1;
+            for (ModListPageSkin.ModInfoObject mod : mods) {
                 List<String> values = getFieldValues(mod, orderedFields);
                 for (int col = 0; col < values.size(); col++) {
-                    table.set(col, row + 1, values.get(col));
+                    table.set(col, row, values.get(col));
                 }
-                updateProgress(row + 1, totalMods);
+                row++;
             }
 
             table.write(targetPath);
@@ -552,15 +546,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         private void exportToJSONWithProgress() throws IOException {
             List<Map<String, String>> jsonData = new ArrayList<>();
-            int totalMods = mods.size();
-            for (int i = 0; i < totalMods; i++) {
-                ModListPageSkin.ModInfoObject mod = mods.get(i);
+            for (ModListPageSkin.ModInfoObject mod : mods) {
                 Map<String, String> modData = new LinkedHashMap<>();
                 for (String field : fields) {
                     modData.put(field, getFieldValue(mod, field));
                 }
                 jsonData.add(modData);
-                updateProgress(i + 1, totalMods);
             }
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -736,10 +727,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
-        if (CurseForgeRemoteAddonRepository.isAvailable()) {
-            RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddonRepository.Type.MOD);
-            if (curseForgeRepo != null) {
-                try {
+        // Fetch CurseForge info
+        try {
+            if (CurseForgeRemoteAddonRepository.isAvailable()) {
+                RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddonRepository.Type.MOD);
+                if (curseForgeRepo != null) {
                     Optional<RemoteAddon.Version> curseForgeVersion = curseForgeRepo.getRemoteVersionByLocalFile(filePath);
                     if (curseForgeVersion.isPresent()) {
                         RemoteAddon.Version version = curseForgeVersion.get();
@@ -757,16 +749,17 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             LOG.warning("Failed to get CurseForge mod info for " + filePath, e);
                         }
                     }
-                } catch (IOException e) {
-                    hasNetworkError = true;
-                    LOG.warning("Failed to lookup CurseForge version for " + filePath, e);
                 }
             }
+        } catch (IOException e) {
+            hasNetworkError = true;
+            LOG.warning("Failed to lookup CurseForge version for " + filePath, e);
         }
 
-        RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddonRepository.Type.MOD);
-        if (modrinthRepo != null) {
-            try {
+        // Fetch Modrinth info
+        try {
+            RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddonRepository.Type.MOD);
+            if (modrinthRepo != null) {
                 Optional<RemoteAddon.Version> modrinthVersion = modrinthRepo.getRemoteVersionByLocalFile(filePath);
                 if (modrinthVersion.isPresent()) {
                     RemoteAddon.Version version = modrinthVersion.get();
@@ -781,10 +774,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
                     }
                 }
-            } catch (IOException e) {
-                hasNetworkError = true;
-                LOG.warning("Failed to lookup Modrinth version for " + filePath, e);
             }
+        } catch (IOException e) {
+            hasNetworkError = true;
+            LOG.warning("Failed to lookup Modrinth version for " + filePath, e);
         }
 
         RemoteModInfo result = new RemoteModInfo(
