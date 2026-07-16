@@ -52,7 +52,7 @@ if (buildNumber != null) {
     }
 }
 
-val embedResources by configurations.registering
+val embedResources = configurations.register("embedResources")
 
 dependencies {
     implementation(project(":HMCLCore"))
@@ -166,7 +166,7 @@ val hmclProperties = buildList {
 }
 
 val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
-val createPropertiesFile by tasks.registering {
+val createPropertiesFile = tasks.register("createPropertiesFile") {
     outputs.file(hmclPropertiesFile)
     hmclProperties.forEach { (k, v) -> inputs.property(k, v) }
 
@@ -258,7 +258,7 @@ tasks.processResources {
 
 fun artifactFile(ext: String) = jarPath.resolveSibling(jarPath.nameWithoutExtension + '.' + ext)
 
-val makeExecutables by tasks.registering {
+val makeExecutables = tasks.register("makeExecutables") {
     val extensions = listOf("exe", "sh")
 
     dependsOn(tasks.jar)
@@ -286,7 +286,7 @@ val makeExecutables by tasks.registering {
     }
 }
 
-val makeDeb by tasks.registering(CreateDeb::class) {
+val makeDeb = tasks.register("makeDeb", CreateDeb::class) {
     dependsOn(makeExecutables)
 
     val debFile = layout.file(provider { artifactFile("deb") })
@@ -438,19 +438,19 @@ tasks.register<CheckTranslations>("checkTranslations") {
 
 val generatedDir = layout.buildDirectory.dir("generated")
 
-val upsideDownTranslate by tasks.registering(UpsideDownTranslate::class) {
+val upsideDownTranslate = tasks.register<UpsideDownTranslate>("upsideDownTranslate") {
     inputFile.set(layout.projectDirectory.file("src/main/resources/assets/lang/I18N.properties"))
     outputFile.set(generatedDir.map { it.file("generated/i18n/I18N_en_Qabs.properties") })
 }
 
-val createLanguageList by tasks.registering(CreateLanguageList::class) {
+val createLanguageList = tasks.register<CreateLanguageList>("createLanguageList") {
     resourceBundleDir.set(layout.projectDirectory.dir("src/main/resources/assets/lang"))
     resourceBundleBaseName.set("I18N")
     additionalLanguages.set(listOf("en-Qabs"))
     outputFile.set(generatedDir.map { it.file("languages.json") })
 }
 
-val createLocaleNamesResourceBundle by tasks.registering(CreateLocaleNamesResourceBundle::class) {
+val createLocaleNamesResourceBundle = tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
     dependsOn(createLanguageList)
 
     languagesFile.set(createLanguageList.flatMap { it.outputFile })

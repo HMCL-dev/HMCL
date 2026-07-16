@@ -34,7 +34,10 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.GameSettings;
+import org.jackhuang.hmcl.setting.JavaVersionType;
+import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
@@ -57,6 +60,7 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -71,6 +75,7 @@ import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.TIME_FORMATTER;
 import static org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM;
 
 public final class LauncherHelper {
@@ -172,7 +177,7 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
-                                        || !(setting.getRenderer() instanceof Renderer.Driver renderer)
+                                        || !(setting.getRenderer(GameVersionNumber.asGameVersion(gameVersion)) instanceof Renderer.Driver renderer)
                                         || renderer.mesaDriverName() == null)
                                     return null;
 
@@ -539,7 +544,7 @@ public final class LauncherHelper {
                         }
 
                         if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA_LINUX_JAVA_8)) {
-                            if (!setting.get(GameSettings::useCustomNativesProperty)) {
+                            if (!setting.getInheritable(GameSettings::useCustomNativesProperty)) {
                                 FXUtils.runInFX(() -> Controllers.dialog(i18n("launch.advice.vanilla_linux_java_8"), i18n("message.error"), MessageType.ERROR, breakAction));
                                 return result;
                             } else {
@@ -576,7 +581,7 @@ public final class LauncherHelper {
                 }
 
                 // 32-bit JVM cannot make use of too much memory.
-                if (java.getBits() == Bits.BIT_32 && setting.getMaxMemory() > 1.5 * 1024) {
+                if (java.getBits() == Bits.BIT_32 && !setting.getInheritable(GameSettings::autoMemoryProperty) && setting.getMaxMemory() > 1.5 * 1024) {
                     // 1.5 * 1024 is an inaccurate number.
                     // Actual memory limit depends on operating system and memory.
                     suggestions.add(i18n("launch.advice.too_large_memory_for_32bit"));
@@ -623,7 +628,7 @@ public final class LauncherHelper {
                             suggestions.add(i18n("launch.advice.modlauncher8"));
                             break;
                         case VANILLA_X86:
-                            if (!setting.get(GameSettings::useCustomNativesProperty)
+                            if (!setting.getInheritable(GameSettings::useCustomNativesProperty)
                                     && Platform.isSupportedTranslationX86_64()) {
                                 suggestions.add(i18n("launch.advice.vanilla_x86.translation"));
                             }
@@ -635,7 +640,7 @@ public final class LauncherHelper {
 
                 // Cannot allocate too much memory exceeding free space.
                 long totalMemorySizeMB = (long) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
-                if (totalMemorySizeMB > 0 && totalMemorySizeMB < setting.getMaxMemory()) {
+                if (totalMemorySizeMB > 0 && !setting.getInheritable(GameSettings::autoMemoryProperty) && totalMemorySizeMB < setting.getMaxMemory()) {
                     suggestions.add(i18n("launch.advice.not_enough_space", totalMemorySizeMB));
                 }
 
@@ -966,7 +971,7 @@ public final class LauncherHelper {
         @Override
         public void onExit(int exitCode, ExitType exitType) {
             if (showLogs) {
-                logBuffer.add(new Log(String.format("[HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", exitCode, exitCode, exitType), Log4jLevel.INFO));
+                logBuffer.add(new Log(String.format("[%s] [HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", TIME_FORMATTER.format(Instant.now()), exitCode, exitCode, exitType), Log4jLevel.INFO));
                 submitLogThread.interrupt();
                 try {
                     submitLogThread.join();
