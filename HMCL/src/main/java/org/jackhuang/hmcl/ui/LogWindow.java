@@ -31,6 +31,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.Log;
@@ -164,12 +166,16 @@ public final class LogWindow extends Stage {
 
         private final ListView<Log> listView = new JFXListView<>();
         private final BooleanProperty autoScroll = new SimpleBooleanProperty();
+        private final BooleanProperty wrapText = new SimpleBooleanProperty(true);
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
         private final JFXButton btnAlwaysOnTop = FXUtils.newToggleButton4(SVG.KEEP, 20);
         private final Stage stage = LogWindow.this;
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
         private final StackPane stackPane = new StackPane();
+
+        /// Bridge cell width and computed max width
+        private final DoubleProperty maxTextWidth = new SimpleDoubleProperty(0);
 
         LogWindowImpl() {
             getStyleClass().add("log-window");
@@ -197,6 +203,30 @@ public final class LogWindow extends Stage {
                 buttonText[i].bind(Bindings.concat(levelCountMap.get(LEVELS[i]), " " + LEVELS[i].name().toLowerCase(Locale.ROOT) + "s"));
                 levelShownMap.get(LEVELS[i]).bind(showLevel[i]);
             }
+
+            // for max width computation
+            Text textForMeasuring = new Text();
+            String fontFamily = Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT);
+            double fontSize = settings().logFontSizeProperty().get();
+            textForMeasuring.setFont(Font.font(fontFamily, fontSize));
+
+            wrapText.addListener((obs, wrapTextOld, wrapTextNew) -> {
+                if (wrapTextNew) {
+                    var clippedContainer = (Region) listView.lookup(".clipped-container");
+                    if (clippedContainer != null) {
+                        maxTextWidth.bind(clippedContainer.widthProperty());
+                    }
+                } else {
+                    maxTextWidth.unbind();
+
+                    double max = 0;
+                    for (Log log : LogWindow.this.logs) {
+                        textForMeasuring.setText(log.getLog());
+                        max = Double.max(max, textForMeasuring.getLayoutBounds().getWidth() + 16); // 16: padding
+                    }
+                    maxTextWidth.set(max);
+                }
+            });
         }
 
         private void onTerminateGame() {
@@ -329,13 +359,10 @@ public final class LogWindow extends Stage {
                 listView.setCellFactory(x -> new ListCell<>() {
                     {
                         getStyleClass().add("log-window-list-cell");
-                        Region clippedContainer = (Region) listView.lookup(".clipped-container");
-                        if (clippedContainer != null) {
-                            maxWidthProperty().bind(clippedContainer.widthProperty());
-                            prefWidthProperty().bind(clippedContainer.widthProperty());
-                        }
+                        maxWidthProperty().bind(control.maxTextWidth);
+                        prefWidthProperty().bind(control.maxTextWidth);
                         setPadding(new Insets(2));
-                        setWrapText(true);
+                        wrapTextProperty().bind(control.wrapText);
                         setGraphic(null);
                     }
 
@@ -395,6 +422,10 @@ public final class LogWindow extends Stage {
                 autoScrollCheckBox.setSelected(true);
                 control.autoScroll.bind(autoScrollCheckBox.selectedProperty());
 
+                JFXCheckBox wrapTextCheckBox = new JFXCheckBox(i18n("logwindow.wrap_text"));
+                wrapTextCheckBox.setSelected(true);
+                control.wrapText.bind(wrapTextCheckBox.selectedProperty());
+
                 JFXButton exportLogsButton = new JFXButton(i18n("button.export"));
                 exportLogsButton.setOnAction(e -> getSkinnable().onExportLogs());
 
@@ -414,7 +445,7 @@ public final class LogWindow extends Stage {
 
                 JFXButton clearButton = new JFXButton(i18n("button.clear"));
                 clearButton.setOnAction(e -> getSkinnable().onClear());
-                hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
+                hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
 
                 control.getGameProcess().getProcess()
                         .onExit()
