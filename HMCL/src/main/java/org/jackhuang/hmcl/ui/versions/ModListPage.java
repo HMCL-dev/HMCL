@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
@@ -338,7 +337,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         final Path outputPath = targetPath;
         final String exportFormat = format;
         final String template = customTemplate;
-        final Set<String> fieldsSnapshot = new HashSet<>(fields);
+        final Set<String> fieldsSnapshot = new LinkedHashSet<>(fields);
 
         exportModsWithRetry(modsSnapshot, fieldsSnapshot, exportFormat, template, outputPath);
     }
