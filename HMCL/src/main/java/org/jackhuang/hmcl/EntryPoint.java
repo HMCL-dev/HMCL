@@ -17,31 +17,23 @@
  */
 package org.jackhuang.hmcl;
 
-import org.jackhuang.hmcl.setting.SambaException;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.swing.JOptionPane;
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.concurrent.CancellationException;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -71,19 +63,6 @@ public final class EntryPoint {
         addEnableNativeAccess();
         enableUnsafeMemoryAccess();
 
-        try {
-            SettingsManager.init();
-        } catch (SambaException e) {
-            showWarning(i18n("fatal.samba"));
-        } catch (IOException e) {
-            LOG.error("Failed to load config", e);
-            checkConfigOwner();
-            SwingUtils.showErrorDialog(i18n("fatal.config_loading_failure", SettingsManager.localConfigDirectory()));
-            EntryPoint.exit(1);
-        }
-
-        setupJavaFXVMOptions();
-
         Launcher.main(args);
     }
 
@@ -91,79 +70,6 @@ public final class EntryPoint {
         FileSaver.shutdown();
         LOG.shutdown();
         System.exit(exitCode);
-    }
-
-    private static void setupJavaFXVMOptions() {
-        if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU"))) {
-            LOG.info("HMCL_FORCE_GPU: true");
-            System.getProperties().putIfAbsent("prism.forceGPU", "true");
-        }
-
-        setUpAnimationFrameRate:
-        {
-            String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
-            if (animationFrameRate != null) {
-                LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
-
-                try {
-                    if (Integer.parseInt(animationFrameRate) <= 0)
-                        throw new NumberFormatException(animationFrameRate);
-
-                    System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
-                } catch (NumberFormatException e) {
-                    LOG.warning("Invalid animation frame rate: " + animationFrameRate);
-                }
-                break setUpAnimationFrameRate;
-            }
-
-            if (!settings().animationDisabledProperty().get()) {
-
-            }
-        }
-
-        String uiScale = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
-        if (uiScale != null) {
-            uiScale = uiScale.trim();
-
-            LOG.info("HMCL_UI_SCALE: " + uiScale);
-
-            try {
-                float scaleValue;
-                if (uiScale.endsWith("%")) {
-                    scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 1)) / 100.0f;
-                } else if (uiScale.endsWith("dpi") || uiScale.endsWith("DPI")) {
-                    scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 3)) / 96.0f;
-                } else {
-                    scaleValue = Float.parseFloat(uiScale);
-                }
-
-                float lowerBound;
-                float upperBound;
-
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    // JavaFX behavior may be abnormal when the DPI scaling factor is too high
-                    lowerBound = 0.25f;
-                    upperBound = 4f;
-                } else {
-                    lowerBound = 0.01f;
-                    upperBound = 10f;
-                }
-
-                if (scaleValue >= lowerBound && scaleValue <= upperBound) {
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                        System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
-                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                        LOG.warning("macOS does not support setting UI scale, so it will be ignored");
-                    } else {
-                        System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
-                    }
-                } else {
-                    LOG.warning("UI scale out of range: " + uiScale);
-                }
-            } catch (Throwable e) {
-                LOG.warning("Invalid UI scale: " + uiScale);
-            }
-        }
     }
 
     private static void createHMCLDirectories() {
@@ -293,60 +199,7 @@ public final class EntryPoint {
         }
     }
 
-    private static void checkConfigOwner() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            return;
-
-        String userName = System.getProperty("user.name");
-        Path configDirectory = SettingsManager.localConfigDirectory();
-        if (!Files.exists(configDirectory)) {
-            return;
-        }
-
-        String owner;
-        try {
-            owner = Files.getOwner(configDirectory).getName();
-        } catch (IOException ioe) {
-            LOG.warning("Failed to get file owner", ioe);
-            return;
-        }
-
-        if (Files.isWritable(configDirectory) || userName.equals("root") || userName.equals(owner))
-            return;
-
-        ArrayList<String> files = new ArrayList<>();
-        files.add(configDirectory.toString());
-        if (Files.exists(Metadata.HMCL_USER_HOME))
-            files.add(Metadata.HMCL_USER_HOME.toString());
-
-        Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
-        if (Files.exists(mcDir))
-            files.add(mcDir.toString());
-
-        String command = new CommandBuilder().addAll("sudo", "chown", "-R", userName).addAll(files).toString();
-        SwingUtils.initLookAndFeel();
-
-        Object[] options = {i18n("button.copy_and_exit"), i18n("button.cancel")};
-        int result = JOptionPane.showOptionDialog(null,
-                i18n("fatal.config_loading_failure.unix", owner, command),
-                i18n("message.error"),
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE,
-                null,
-                options,
-                options[0]);
-
-        if (result == 0) {
-            try {
-                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), null);
-            } catch (Throwable e) {
-                LOG.warning("Failed to copy command to clipboard", e);
-            }
-        }
-        EntryPoint.exit(1);
-    }
-
-    private static void showWarning(String message) {
+    static void showWarning(String message) {
         SwingUtils.initLookAndFeel();
 
         int result = JOptionPane.showOptionDialog(null, message, i18n("message.warning"), JOptionPane.OK_CANCEL_OPTION,
@@ -360,7 +213,7 @@ public final class EntryPoint {
     /**
      * Indicates that a fatal error has occurred, and that the application cannot start.
      */
-    private static void showErrorAndExit(String message) {
+    static void showErrorAndExit(String message) {
         SwingUtils.showErrorDialog(message);
         exit(1);
     }
