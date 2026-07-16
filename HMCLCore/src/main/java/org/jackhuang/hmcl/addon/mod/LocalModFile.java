@@ -192,6 +192,30 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         return bundledScan.ids();
     }
 
+    /// The subset of {@link #getAllBundledModIds()} that would actually load in an instance running
+    /// {@code instanceMinecraftVersion}: a nested copy with no Minecraft constraint always loads; one
+    /// with a constraint loads only if it covers the version (a multi-version wrapper activates just
+    /// the matching copy). Used by the dependency cascade so a wrapper counts as a provider only for
+    /// the copy the instance would really load. An unknown instance version disables the filter.
+    public Set<String> getLoadableBundledModIds(String instanceMinecraftVersion) {
+        Set<String> ids = new HashSet<>();
+        collectLoadableIds(getBundledTree(), instanceMinecraftVersion, ids);
+        return ids;
+    }
+
+    private static void collectLoadableIds(List<NestedJarInspector.NestedJar> nodes, String mc, Set<String> out) {
+        for (NestedJarInspector.NestedJar node : nodes) {
+            boolean constrained = node.minecraftVersion() != null && !node.minecraftVersion().isBlank();
+            boolean loadable = !constrained || mc == null || mc.isBlank()
+                    || MinecraftVersionMatcher.matches(node, mc);
+            if (!loadable)
+                continue; // a non-loadable copy — and anything nested under it — isn't available
+            if (node.id() != null && !node.id().isBlank())
+                out.add(node.id());
+            collectLoadableIds(node.children(), mc, out);
+        }
+    }
+
     public List<String> getDependencies() {
         return dependencies;
     }

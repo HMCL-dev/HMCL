@@ -68,6 +68,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
     private LibraryAnalyzer analyzer;
+    private Set<ModLoaderType> cachedModLoaders; // loader set the in-memory parse cache was built under
 
     private boolean loaded = false;
 
@@ -220,6 +221,18 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
             boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                     || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
+
+            // addModInfo picks its metadata reader based on the instance's loader set. If a loader was
+            // installed/changed since the last refresh, that set changed, so multi-format jars must be
+            // re-parsed under it — mtime+size alone wouldn't notice. Drop the whole in-memory parse
+            // cache in that case (the on-disk JIJ cache is keyed by jar content and stays valid).
+            Set<ModLoaderType> modLoaders = analyzer.getModLoaders();
+            if (!modLoaders.equals(cachedModLoaders)) {
+                for (CachedMod cached : cache.values())
+                    removeModInfo(cached.mod());
+                cache.clear();
+                cachedModLoaders = Set.copyOf(modLoaders);
+            }
 
             // Snapshot the current mod files on disk together with their fingerprints.
             Map<Path, long[]> current = new LinkedHashMap<>();

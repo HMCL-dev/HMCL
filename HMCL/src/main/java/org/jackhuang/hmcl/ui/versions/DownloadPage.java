@@ -203,6 +203,10 @@ public class DownloadPage extends Control implements DecoratorPage {
         synchronized (AddonVersion.INSTALLED_CACHE_LOCK) {
             if (version.equals(AddonVersion.installedCacheKey) && AddonVersion.installedCache != null)
                 AddonVersion.installedCache.put(modId.toLowerCase(Locale.ROOT), active);
+            else
+                // Cache not published yet — a warm-up scan may be mid-flight with an older snapshot.
+                // Invalidate it (see markInstalled) so this change isn't lost when that scan publishes.
+                AddonVersion.installedCacheGeneration++;
         }
     }
 
@@ -730,11 +734,17 @@ public class DownloadPage extends Control implements DecoratorPage {
             if (version == null)
                 return;
             synchronized (INSTALLED_CACHE_LOCK) {
-                if (!version.equals(installedCacheKey) || installedCache == null)
-                    return;
-                for (String id : modIds) {
-                    if (StringUtils.isNotBlank(id))
-                        installedCache.put(id.toLowerCase(Locale.ROOT), Boolean.TRUE);
+                if (version.equals(installedCacheKey) && installedCache != null) {
+                    for (String id : modIds) {
+                        if (StringUtils.isNotBlank(id))
+                            installedCache.put(id.toLowerCase(Locale.ROOT), Boolean.TRUE);
+                    }
+                } else {
+                    // Cache not published yet — a warm-up scan may be mid-flight with an older snapshot
+                    // (taken before this download). We can't apply the targeted update, so invalidate
+                    // that scan's snapshot (bump the generation, which its publish step checks) to force
+                    // a fresh read including this change, instead of silently losing it.
+                    installedCacheGeneration++;
                 }
             }
         }

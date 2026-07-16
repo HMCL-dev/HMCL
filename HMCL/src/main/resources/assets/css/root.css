@@ -1174,6 +1174,18 @@
     -fx-font-weight: bold;
 }
 
+/* Transient hint shown only during a slow (cold) bundled-id scan, explaining why disable/remove are
+   temporarily greyed. */
+.mod-scan-hint {
+    -fx-padding: 6 12 6 12;
+    -fx-alignment: center-left;
+}
+
+.mod-scan-hint .label {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-font-size: 12px;
+}
+
 .resource-pack-list-cell:warning {
     -fx-background-color: -monet-error-container;
 }

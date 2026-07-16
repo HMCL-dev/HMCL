@@ -47,8 +47,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 final class NestedJarCache {
     // Bump whenever the scanner's produced data changes (shape or values), so stale caches are
     // discarded and regenerated. v2: Forge ${file.jarVersion} placeholders resolved. v3: Fabric/Quilt
-    // ${...} placeholders nulled out too.
-    private static final int FORMAT_VERSION = 3;
+    // ${...} placeholders nulled out too. v4: nested jars declared via JarJar metadata /
+    // Embedded-Dependencies-Mod (no mods.toml) are now discovered.
+    private static final int FORMAT_VERSION = 4;
 
     private NestedJarCache() {
     }

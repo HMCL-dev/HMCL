@@ -195,56 +195,63 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             listView.getSelectionModel().getSelectedItems().addListener(listener);
             listView.getItems().addListener(listener);
 
+            JFXButton btnRemove = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
+                var selected = listView.getSelectionModel().getSelectedItems();
+                List<LocalModFile> targets = new ArrayList<>();
+                for (ModInfoObject item : selected)
+                    if (item != null) targets.add(item.getModInfo());
+                List<ModInfoObject> dependents = findActiveDependents(targets);
+                if (dependents.isEmpty()) {
+                    Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
+                            () -> skinnable.removeSelected(selected), null);
+                } else {
+                    List<ModInfoObject> selectedSnapshot = new ArrayList<>(selected);
+                    Controllers.dialog(new DependencyWarningDialog(dependents, i18n("button.remove"), List.of(
+                            new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
+                                    () -> skinnable.removeSelected(FXCollections.observableArrayList(selectedSnapshot))),
+                            new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
+                                for (ModInfoObject dependent : dependents)
+                                    dependent.getModInfo().setActive(false);
+                                skinnable.removeSelected(FXCollections.observableArrayList(selectedSnapshot));
+                            }),
+                            new CascadeOption(i18n("addon.dependencies.warning.cascade.delete"), () -> {
+                                List<ModInfoObject> all = new ArrayList<>(selectedSnapshot);
+                                all.addAll(dependents);
+                                skinnable.removeSelected(FXCollections.observableArrayList(all));
+                            })
+                    )));
+                }
+            });
+            JFXButton btnDisable = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () -> {
+                var selected = listView.getSelectionModel().getSelectedItems();
+                List<LocalModFile> targets = new ArrayList<>();
+                for (ModInfoObject item : selected)
+                    if (item != null) targets.add(item.getModInfo());
+                List<ModInfoObject> dependents = findActiveDependents(targets);
+                if (dependents.isEmpty()) {
+                    skinnable.disableSelected(selected);
+                } else {
+                    Controllers.dialog(new DependencyWarningDialog(dependents, i18n("mods.disable"), List.of(
+                            new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
+                                    () -> skinnable.disableSelected(selected)),
+                            new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
+                                skinnable.disableSelected(selected);
+                                for (ModInfoObject dependent : dependents)
+                                    dependent.getModInfo().setActive(false);
+                            })
+                    )));
+                }
+            });
+            // Disable the dependency-changing operations until the background bundled-id scan is ready,
+            // so a cascade never runs against an incomplete bundled-id set (see ModListPage).
+            btnRemove.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
+            btnDisable.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
+
             toolbarSelecting.getChildren().setAll(
-                    createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                        var selected = listView.getSelectionModel().getSelectedItems();
-                        List<LocalModFile> targets = new ArrayList<>();
-                        for (ModInfoObject item : selected)
-                            if (item != null) targets.add(item.getModInfo());
-                        List<ModInfoObject> dependents = findActiveDependents(targets);
-                        if (dependents.isEmpty()) {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
-                                    () -> skinnable.removeSelected(selected), null);
-                        } else {
-                            List<ModInfoObject> selectedSnapshot = new ArrayList<>(selected);
-                            Controllers.dialog(new DependencyWarningDialog(dependents, i18n("button.remove"), List.of(
-                                    new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
-                                            () -> skinnable.removeSelected(FXCollections.observableArrayList(selectedSnapshot))),
-                                    new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
-                                        for (ModInfoObject dependent : dependents)
-                                            dependent.getModInfo().setActive(false);
-                                        skinnable.removeSelected(FXCollections.observableArrayList(selectedSnapshot));
-                                    }),
-                                    new CascadeOption(i18n("addon.dependencies.warning.cascade.delete"), () -> {
-                                        List<ModInfoObject> all = new ArrayList<>(selectedSnapshot);
-                                        all.addAll(dependents);
-                                        skinnable.removeSelected(FXCollections.observableArrayList(all));
-                                    })
-                            )));
-                        }
-                    }),
+                    btnRemove,
                     createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
                             skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () -> {
-                        var selected = listView.getSelectionModel().getSelectedItems();
-                        List<LocalModFile> targets = new ArrayList<>();
-                        for (ModInfoObject item : selected)
-                            if (item != null) targets.add(item.getModInfo());
-                        List<ModInfoObject> dependents = findActiveDependents(targets);
-                        if (dependents.isEmpty()) {
-                            skinnable.disableSelected(selected);
-                        } else {
-                            Controllers.dialog(new DependencyWarningDialog(dependents, i18n("mods.disable"), List.of(
-                                    new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
-                                            () -> skinnable.disableSelected(selected)),
-                                    new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
-                                        skinnable.disableSelected(selected);
-                                        for (ModInfoObject dependent : dependents)
-                                            dependent.getModInfo().setActive(false);
-                                    })
-                            )));
-                        }
-                    }),
+                    btnDisable,
                     createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                             skinnable.checkUpdates(
                                     listView.getSelectionModel().getSelectedItems().stream()
@@ -313,6 +320,34 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             center.setContent(listView);
+
+            // Cold-scan hint: only while a *slow* (cold, cache-miss) bundled-id scan runs, explain why
+            // disable/remove are greyed. Shown on a ~400ms delay so a fast (warm, disk-cached) scan
+            // never flashes it.
+            JFXSpinner scanHintSpinner = new JFXSpinner();
+            scanHintSpinner.setRadius(7);
+            HBox scanHint = new HBox(8, scanHintSpinner, new Label(i18n("mods.dependency_analyzing")));
+            scanHint.getStyleClass().add("mod-scan-hint");
+            scanHint.setAlignment(Pos.CENTER_LEFT);
+            BooleanProperty showScanHint = new SimpleBooleanProperty(false);
+            scanHint.visibleProperty().bind(showScanHint);
+            scanHint.managedProperty().bind(showScanHint);
+            PauseTransition scanHintDelay = new PauseTransition(Duration.millis(400));
+            scanHintDelay.setOnFinished(e -> {
+                if (!skinnable.bundledScanReadyProperty().get())
+                    showScanHint.set(true);
+            });
+            FXUtils.onChangeAndOperate(skinnable.bundledScanReadyProperty(), ready -> {
+                if (ready) {
+                    scanHintDelay.stop();
+                    showScanHint.set(false);
+                } else {
+                    showScanHint.set(false);
+                    scanHintDelay.playFromStart(); // reveal only if still scanning after the delay
+                }
+            });
+
+            root.getContent().add(scanHint);
             root.getContent().add(center);
         }
 
@@ -387,8 +422,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     // alias (we don't parse "provides") won't be matched, so this errs on the side of fewer
     // warnings rather than false ones.
     private List<ModInfoObject> findActiveDependents(Collection<LocalModFile> targets) {
+        // Callers gate the disable/remove operations behind ModListPage.bundledScanReady, so by the
+        // time we get here the background Jar-in-Jar id scan has finished and the bundled providers
+        // below are complete.
         // id -> all currently-enabled files providing it. A file provides its own id and, via
-        // Jar-in-Jar, every mod bundled anywhere inside it (disabling the host removes those too).
+        // Jar-in-Jar, the bundled mods that would actually LOAD in this instance (disabling the host
+        // removes those too). Copies that can't load here — e.g. a wrapper's build for another
+        // Minecraft version — must not count, or disabling a real standalone provider would wrongly
+        // look still-satisfied and skip the warning.
+        String instanceMc = getSkinnable().getGameVersion();
         Map<String, Set<LocalModFile>> activeProviders = new HashMap<>();
         for (ModInfoObject item : getSkinnable().getItems()) {
             LocalModFile mod = item.getModInfo();
@@ -396,7 +438,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 continue;
             if (StringUtils.isNotBlank(mod.getId()))
                 activeProviders.computeIfAbsent(mod.getId(), k -> new HashSet<>()).add(mod);
-            for (String bundledId : mod.getAllBundledModIds())
+            for (String bundledId : mod.getLoadableBundledModIds(instanceMc))
                 activeProviders.computeIfAbsent(bundledId, k -> new HashSet<>()).add(mod);
         }
 
@@ -801,27 +843,17 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     rebuildNested(getItem());
             });
 
-            // Warn before disabling a mod that other enabled mods depend on.
-            checkBox.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
-                ModInfoObject item = getItem();
-                if (item == null || !checkBox.isSelected())
-                    return; // enabling (or empty) — nothing to warn about
-                List<LocalModFile> targets = List.of(item.getModInfo());
-                List<ModInfoObject> dependents = findActiveDependents(targets);
-                if (!dependents.isEmpty()) {
-                    e.consume(); // block the immediate toggle; let the user confirm first
-                    LocalModFile target = item.getModInfo();
-                    Controllers.dialog(new DependencyWarningDialog(dependents, i18n("mods.disable"), List.of(
-                            new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
-                                    () -> target.setActive(false)),
-                            new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
-                                target.setActive(false);
-                                for (ModInfoObject dependent : dependents)
-                                    dependent.getModInfo().setActive(false);
-                            })
-                    )));
-                }
+            // Warn before disabling a mod that other enabled mods depend on. Intercept every way the
+            // checkbox can be toggled off — mouse press and the keyboard Space/Enter — so the check
+            // isn't bypassed by keyboard users.
+            checkBox.addEventFilter(MouseEvent.MOUSE_PRESSED, this::guardDisableToggle);
+            checkBox.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.SPACE || e.getCode() == KeyCode.ENTER)
+                    guardDisableToggle(e);
             });
+            // Can't toggle until the bundled-id scan is ready — otherwise disabling a Jar-in-Jar host
+            // could miss its dependents (see ModListPage.bundledScanReady). Matches the toolbar.
+            checkBox.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
 
             nestedBox.getStyleClass().add("mod-nested-list");
             nestedBox.setVisible(false);
@@ -842,6 +874,28 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             container.setPickOnBounds(false);
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
+        }
+
+        /// Shared guard for every checkbox-toggle input path (mouse, keyboard): if disabling this mod
+        /// would break others that depend on it, block the toggle and let the user confirm/cascade.
+        private void guardDisableToggle(javafx.event.Event e) {
+            ModInfoObject item = getItem();
+            if (item == null || !checkBox.isSelected())
+                return; // enabling (or empty) — nothing to warn about
+            List<ModInfoObject> dependents = findActiveDependents(List.of(item.getModInfo()));
+            if (dependents.isEmpty())
+                return;
+            e.consume(); // block the immediate toggle; let the user confirm first
+            LocalModFile target = item.getModInfo();
+            Controllers.dialog(new DependencyWarningDialog(dependents, i18n("mods.disable"), List.of(
+                    new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
+                            () -> target.setActive(false)),
+                    new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
+                        target.setActive(false);
+                        for (ModInfoObject dependent : dependents)
+                            dependent.getModInfo().setActive(false);
+                    })
+            )));
         }
 
         private Node createNestedRow(String path, int indent) {

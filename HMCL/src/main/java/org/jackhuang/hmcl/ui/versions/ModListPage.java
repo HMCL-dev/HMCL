@@ -59,6 +59,9 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     // Bumped on the FX thread when the background Jar-in-Jar deep scan finishes, so open nested
     // panels can rebuild with the now-resolved nested mod names/versions.
     private final IntegerProperty bundledScanGeneration = new SimpleIntegerProperty(this, "bundledScanGeneration", 0);
+    // True once the background bundled-id scan has finished (or there was nothing to scan); the skin
+    // disables dependency-changing operations while it is false.
+    private final BooleanProperty bundledScanReady = new SimpleBooleanProperty(this, "bundledScanReady", true);
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -112,6 +115,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     private void loadMods(ModManager modManager) {
         setLoading(true);
+        // Gate dependency-changing operations until the background bundled-id scan finishes: until
+        // then getAllBundledModIds() is incomplete and a cascade could miss dependents provided via
+        // Jar-in-Jar.
+        bundledScanReady.set(false);
 
         // The mod set may have changed (added/removed/refreshed); drop the download page's cached
         // installed-mods snapshot so dependency status there is re-read.
@@ -146,11 +153,18 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             if (exception == null) {
                 CompletableFuture.runAsync(modManager::scanBundledTrees, Schedulers.io())
                         .whenCompleteAsync((r, ex) -> {
+                            if (this.modManager != modManager) // instance switched — a newer load governs
+                                return;
                             if (ex != null)
                                 LOG.warning("Failed to scan Jar-in-Jar trees", ex);
-                            else if (this.modManager == modManager) // still showing this instance
+                            else
                                 bundledScanGeneration.set(bundledScanGeneration.get() + 1);
+                            // Ready even on failure: with no bundled data the cascade is as complete as
+                            // it will get; keeping the ops disabled forever would be worse.
+                            bundledScanReady.set(true);
                         }, Schedulers.javafx());
+            } else {
+                bundledScanReady.set(true); // load failed — nothing to scan, don't leave ops disabled
             }
         }, Schedulers.javafx());
     }
@@ -159,6 +173,13 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     /// nested panels with the newly-resolved nested mod metadata.
     public IntegerProperty bundledScanGenerationProperty() {
         return bundledScanGeneration;
+    }
+
+    /// False while the background bundled-id scan is still running after a (re)load; true once it has
+    /// finished (or there was nothing to scan). The skin disables the dependency-changing operations
+    /// (disable / remove) while false, so a cascade never runs against an incomplete bundled-id set.
+    public BooleanProperty bundledScanReadyProperty() {
+        return bundledScanReady;
     }
 
     /// The instance's Minecraft version (resolved once at load, the same value used elsewhere on this

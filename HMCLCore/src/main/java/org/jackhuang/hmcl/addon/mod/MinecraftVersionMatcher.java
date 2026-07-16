@@ -53,14 +53,15 @@ public final class MinecraftVersionMatcher {
     }
 
     /// Whether a bundled copy is an exact build for {@code instanceVersion}: the version appears as a
-    /// whole token in the copy's file name / declared version / mc constraint (so "1.21" won't match
-    /// "1.21.2").
+    /// whole token in the copy's file name or declared version (so "1.21" won't match "1.21.2"). The
+    /// declared MC *constraint* is deliberately NOT searched — it is a range, and finding the version
+    /// text inside it (e.g. {@code 1.21} in {@code [1.20,1.21)} or {@code <1.21}) would wrongly count
+    /// an excluded endpoint as an exact match. Range membership is judged by {@link #satisfies}.
     public static boolean matchesExact(NestedJar node, String instanceVersion) {
         if (instanceVersion == null || instanceVersion.isBlank())
             return false;
         return containsVersionToken(node.fileName(), instanceVersion)
-                || containsVersionToken(node.version(), instanceVersion)
-                || containsVersionToken(node.minecraftVersion(), instanceVersion);
+                || containsVersionToken(node.version(), instanceVersion);
     }
 
     public static boolean containsVersionToken(String haystack, String version) {

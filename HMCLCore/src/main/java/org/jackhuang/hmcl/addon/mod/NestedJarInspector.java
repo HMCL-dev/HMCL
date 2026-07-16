@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.jar.Attributes;
@@ -87,10 +88,10 @@ public final class NestedJarInspector {
     /// Scans the full Jar-in-Jar tree of an already-open mod jar. Returns an empty list when the mod
     /// declares no nested jars (or isn't a Fabric/Quilt/Forge/NeoForge mod).
     public static List<NestedJar> scan(ZipFileTree modTree) {
-        Parsed top = parse(modTree);
-        if (top == null || top.childPaths.isEmpty())
+        List<String> childPaths = childJarPaths(modTree);
+        if (childPaths.isEmpty())
             return List.of();
-        return scanChildren(modTree, top.childPaths, 1, new int[]{MAX_NODES});
+        return scanChildren(modTree, childPaths, 1, new int[]{MAX_NODES});
     }
 
     /// Flattens every non-blank mod id in the tree (all depths) into {@code out}.
@@ -121,9 +122,10 @@ public final class NestedJarInspector {
                 parentTree.extractTo(childPath, temp);
                 try (ZipFileTree childTree = CompressingUtils.openZipTree(temp)) {
                     Parsed m = parse(childTree);
-                    List<NestedJar> grandchildren = m != null && depth < MAX_DEPTH && !m.childPaths.isEmpty()
-                            ? scanChildren(childTree, m.childPaths, depth + 1, budget)
-                            : List.of();
+                    List<String> grandchildPaths = depth < MAX_DEPTH ? childJarPaths(childTree) : List.of();
+                    List<NestedJar> grandchildren = grandchildPaths.isEmpty()
+                            ? List.of()
+                            : scanChildren(childTree, grandchildPaths, depth + 1, budget);
                     result.add(m == null
                             ? new NestedJar(childPath, baseName(childPath), null, null, null, ModLoaderType.UNKNOWN, null, grandchildren)
                             : new NestedJar(childPath, baseName(childPath), m.id, m.name, m.version, m.loaderType, m.minecraftVersion, grandchildren));
@@ -152,10 +154,50 @@ public final class NestedJarInspector {
         return slash >= 0 ? path.substring(slash + 1) : path;
     }
 
-    // ── format detection ──────────────────────────────────────────────
-    /// The metadata of a single jar plus the entry paths of the jars it nests directly.
+    /// Every nested-jar entry path a jar declares, across *all* mechanisms and independent of whether
+    /// it has a parseable mods.toml: Fabric/Quilt `jars`, Forge JarJar metadata, and the manifest's
+    /// {@code Embedded-Dependencies-Mod}. A bare "wrapper" jar (no mods.toml, just a manifest/JarJar
+    /// pointer to the real mod) declares nested jars only through the last two, so we must not gate
+    /// this on the metadata reader succeeding.
+    private static List<String> childJarPaths(ZipFileTree tree) {
+        LinkedHashSet<String> paths = new LinkedHashSet<>();
+        try {
+            JsonObject fabric = readJson(tree, "fabric.mod.json");
+            if (fabric != null && fabric.get("jars") instanceof JsonArray jars)
+                for (JsonElement e : jars)
+                    if (e.isJsonObject() && e.getAsJsonObject().has("file"))
+                        paths.add(e.getAsJsonObject().get("file").getAsString());
+
+            JsonObject quilt = readJson(tree, "quilt.mod.json");
+            if (quilt != null && quilt.get("quilt_loader") instanceof JsonObject ql && ql.get("jars") instanceof JsonArray qjars)
+                for (JsonElement e : qjars)
+                    if (e.isJsonPrimitive())
+                        paths.add(e.getAsString());
+
+            JsonObject jarjar = readJson(tree, "META-INF/jarjar/metadata.json");
+            if (jarjar != null && jarjar.get("jars") instanceof JsonArray jjars)
+                for (JsonElement e : jjars)
+                    if (e.isJsonObject() && e.getAsJsonObject().has("path"))
+                        paths.add(e.getAsJsonObject().get("path").getAsString());
+
+            var manifest = tree.getEntry("META-INF/MANIFEST.MF");
+            if (manifest != null) {
+                try (InputStream is = tree.getInputStream(manifest)) {
+                    String embedded = new Manifest(is).getMainAttributes().getValue("Embedded-Dependencies-Mod");
+                    if (embedded != null && !embedded.isBlank())
+                        paths.add(embedded);
+                } catch (IOException ignored) {
+                }
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to read nested jar declarations", e);
+        }
+        return new ArrayList<>(paths);
+    }
+
+    // ── format detection (metadata only; child paths come from childJarPaths) ────────────
     private record Parsed(@Nullable String id, @Nullable String name, @Nullable String version,
-                          ModLoaderType loaderType, @Nullable String minecraftVersion, List<String> childPaths) {
+                          ModLoaderType loaderType, @Nullable String minecraftVersion) {
     }
 
     private static @Nullable Parsed parse(ZipFileTree tree) {
@@ -177,31 +219,16 @@ public final class NestedJarInspector {
         JsonObject root = readJson(tree, "fabric.mod.json");
         if (root == null)
             return null;
-
-        List<String> children = new ArrayList<>();
-        if (root.get("jars") instanceof JsonArray jars) {
-            for (JsonElement e : jars)
-                if (e.isJsonObject() && e.getAsJsonObject().has("file"))
-                    children.add(e.getAsJsonObject().get("file").getAsString());
-        }
         String mc = root.get("depends") instanceof JsonObject depends && depends.has("minecraft")
                 ? asVersionString(depends.get("minecraft")) : null;
-
         return new Parsed(asString(root, "id"), asString(root, "name"), cleanVersion(asString(root, "version")),
-                ModLoaderType.FABRIC, mc, children);
+                ModLoaderType.FABRIC, mc);
     }
 
     private static @Nullable Parsed fromQuilt(ZipFileTree tree) throws IOException {
         JsonObject root = readJson(tree, "quilt.mod.json");
         if (root == null || !(root.get("quilt_loader") instanceof JsonObject ql))
             return null;
-
-        List<String> children = new ArrayList<>();
-        if (ql.get("jars") instanceof JsonArray jars) {
-            for (JsonElement e : jars)
-                if (e.isJsonPrimitive())
-                    children.add(e.getAsString());
-        }
         String mc = null;
         if (ql.get("depends") instanceof JsonArray depends) {
             for (JsonElement e : depends) {
@@ -213,7 +240,7 @@ public final class NestedJarInspector {
             }
         }
         String name = ql.get("metadata") instanceof JsonObject meta ? asString(meta, "name") : null;
-        return new Parsed(asString(ql, "id"), name, cleanVersion(asString(ql, "version")), ModLoaderType.QUILT, mc, children);
+        return new Parsed(asString(ql, "id"), name, cleanVersion(asString(ql, "version")), ModLoaderType.QUILT, mc);
     }
 
     private static @Nullable Parsed fromForge(ZipFileTree tree) throws IOException {
@@ -249,16 +276,7 @@ public final class NestedJarInspector {
                 }
             }
         }
-
-        List<String> children = new ArrayList<>();
-        JsonObject jarjar = readJson(tree, "META-INF/jarjar/metadata.json");
-        if (jarjar != null && jarjar.get("jars") instanceof JsonArray jars) {
-            for (JsonElement e : jars)
-                if (e.isJsonObject() && e.getAsJsonObject().has("path"))
-                    children.add(e.getAsJsonObject().get("path").getAsString());
-        }
-
-        return new Parsed(id, name, version, neo ? ModLoaderType.NEO_FORGE : ModLoaderType.FORGE, mc, children);
+        return new Parsed(id, name, version, neo ? ModLoaderType.NEO_FORGE : ModLoaderType.FORGE, mc);
     }
 
     /// Nulls out a version still holding an unresolved build placeholder (e.g. Fabric's
