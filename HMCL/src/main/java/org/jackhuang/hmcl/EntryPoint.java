@@ -59,8 +59,6 @@ public final class EntryPoint {
 
         checkWine();
 
-        setupJavaFXVMOptions();
-
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             System.getProperties().putIfAbsent("apple.awt.application.appearance", "system");
             if (!isInsideMacAppBundle())
@@ -82,6 +80,8 @@ public final class EntryPoint {
             SwingUtils.showErrorDialog(i18n("fatal.config_loading_failure", SettingsManager.localConfigDirectory()));
             EntryPoint.exit(1);
         }
+
+        setupJavaFXVMOptions();
 
         Launcher.main(args);
     }
