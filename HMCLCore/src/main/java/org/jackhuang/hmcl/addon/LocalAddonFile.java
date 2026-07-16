@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.addon;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -77,7 +78,7 @@ public abstract class LocalAddonFile {
         }
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             StringBuilder builder = new StringBuilder();
             for (Part part : parts) {
                 builder.append(part.text);
