@@ -70,26 +70,16 @@ public abstract class LocalAddonFile {
     ) {
     }
 
-    public static class Description {
-        private final List<LocalAddonFile.Description.Part> parts;
-
+    public record Description(List<Part> parts) {
         public Description(String text) {
-            this.parts = new ArrayList<>();
-            this.parts.add(new LocalAddonFile.Description.Part(text, "black"));
-        }
-
-        public Description(List<LocalAddonFile.Description.Part> parts) {
-            this.parts = parts;
-        }
-
-        public List<LocalAddonFile.Description.Part> getParts() {
-            return parts;
+            this(new ArrayList<>());
+            this.parts.add(new Part(text, "black"));
         }
 
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            for (LocalAddonFile.Description.Part part : parts) {
+            for (Part part : parts) {
                 builder.append(part.text);
             }
             return builder.toString();
@@ -99,25 +89,15 @@ public abstract class LocalAddonFile {
             return toString().lines().map(String::trim).filter(StringUtils::isNotBlank).collect(Collectors.joining(" | "));
         }
 
-        public static class Part {
-            private final String text;
-            private final String color;
+        public record Part(String text, String color) {
+
+            public Part {
+                Objects.requireNonNull(text);
+                Objects.requireNonNull(color);
+            }
 
             public Part(String text) {
                 this(text, "");
-            }
-
-            public Part(String text, String color) {
-                this.text = Objects.requireNonNull(text);
-                this.color = Objects.requireNonNull(color);
-            }
-
-            public String getText() {
-                return text;
-            }
-
-            public String getColor() {
-                return color;
             }
         }
     }

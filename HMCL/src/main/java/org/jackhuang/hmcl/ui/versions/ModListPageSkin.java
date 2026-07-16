@@ -485,7 +485,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 getActions().add(officialPageButton);
             }
 
-            if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().getMcmod())) {
+            if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().mcmod())) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
                 searchButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
@@ -576,7 +576,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {
-                String chineseName = modTranslations.getName();
+                String chineseName = modTranslations.name();
                 if (StringUtils.containsChinese(chineseName)) {
                     if (StringUtils.containsEmoji(chineseName)) {
                         StringBuilder builder = new StringBuilder();
