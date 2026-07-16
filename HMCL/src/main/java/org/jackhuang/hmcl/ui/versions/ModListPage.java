@@ -466,19 +466,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .toList();
             }
 
-            final int totalTasks;
-            {
-                int temp = 0;
-                if (needsRemoteInfo) temp += modsToProcess.size();
-                if (needsSha1) temp += modsToProcess.size();
-                if (needsSha512) temp += modsToProcess.size();
-                totalTasks = temp;
-            }
-
+            final int totalTasks = modsToProcess.size();
             if (totalTasks == 0) return;
 
             Semaphore semaphore = new Semaphore(3);
-
             AtomicInteger completedTasks = new AtomicInteger(0);
             List<CompletableFuture<Void>> futures = new ArrayList<>();
 
@@ -486,11 +477,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 LocalModFile mod = modInfo.getModInfo();
                 Path filePath = mod.getFile();
 
-                if (needsRemoteInfo) {
-                    futures.add(CompletableFuture.runAsync(() -> {
+                futures.add(CompletableFuture.runAsync(() -> {
+                    try {
+                        semaphore.acquire();
                         try {
-                            semaphore.acquire();
-                            try {
+                            if (needsRemoteInfo) {
                                 RemoteModInfo remoteInfo = getRemoteModInfo(mod);
                                 if (remoteInfo.hasNetworkError) {
                                     networkErrorCount.incrementAndGet();
@@ -498,56 +489,24 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                                 } else {
                                     failedModPaths.remove(filePath);
                                 }
-                            } finally {
-                                semaphore.release();
                             }
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        } catch (Exception e) {
-                            LOG.warning("Failed to prefetch remote info for " + filePath, e);
-                        } finally {
-                            updateProgress(completedTasks.incrementAndGet(), totalTasks);
-                        }
-                    }, Schedulers.io()));
-                }
-
-                if (needsSha1) {
-                    futures.add(CompletableFuture.runAsync(() -> {
-                        try {
-                            semaphore.acquire();
-                            try {
+                            if (needsSha1) {
                                 computeSha1Cached(filePath);
-                            } finally {
-                                semaphore.release();
                             }
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        } catch (Exception e) {
-                            LOG.warning("Failed to prefetch SHA1 for " + filePath, e);
-                        } finally {
-                            updateProgress(completedTasks.incrementAndGet(), totalTasks);
-                        }
-                    }, Schedulers.io()));
-                }
-
-                if (needsSha512) {
-                    futures.add(CompletableFuture.runAsync(() -> {
-                        try {
-                            semaphore.acquire();
-                            try {
+                            if (needsSha512) {
                                 computeSha512Cached(filePath);
-                            } finally {
-                                semaphore.release();
                             }
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        } catch (Exception e) {
-                            LOG.warning("Failed to prefetch SHA512 for " + filePath, e);
                         } finally {
-                            updateProgress(completedTasks.incrementAndGet(), totalTasks);
+                            semaphore.release();
                         }
-                    }, Schedulers.io()));
-                }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } catch (Exception e) {
+                        LOG.warning("Failed to prefetch data for " + filePath, e);
+                    } finally {
+                        updateProgress(completedTasks.incrementAndGet(), totalTasks);
+                    }
+                }, Schedulers.io()));
             }
 
             // Wait for all prefetch tasks to complete
@@ -768,85 +727,73 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             return cached;
         }
 
-        // Use ConcurrentHashMap to safely collect results from parallel operations
-        Map<String, String> results = new ConcurrentHashMap<>();
-        results.put("curseForgeUrl", "");
-        results.put("curseForgeFileUrl", "");
-        results.put("curseForgeDownloadPage", "");
-        results.put("modrinthUrl", "");
-        results.put("modrinthFileUrl", "");
-
-        AtomicBoolean hasNetworkError = new AtomicBoolean(false);
+        String curseForgeUrl = "";
+        String curseForgeFileUrl = "";
+        String curseForgeDownloadPage = "";
+        String modrinthUrl = "";
+        String modrinthFileUrl = "";
+        boolean hasNetworkError = false;
 
         DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
-        // Fetch CurseForge and Modrinth info in parallel
-        CompletableFuture<Void> curseForgeFuture = CompletableFuture.runAsync(() -> {
-            try {
-                if (CurseForgeRemoteAddonRepository.isAvailable()) {
-                    RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddonRepository.Type.MOD);
-                    if (curseForgeRepo != null) {
-                        Optional<RemoteAddon.Version> curseForgeVersion = curseForgeRepo.getRemoteVersionByLocalFile(filePath);
-                        if (curseForgeVersion.isPresent()) {
-                            RemoteAddon.Version version = curseForgeVersion.get();
-                            results.put("curseForgeFileUrl", version.file() != null && version.file().url() != null ? version.file().url() : "");
-                            try {
-                                RemoteAddon addon = curseForgeRepo.getModById(downloadProvider, version.modid());
-                                if (addon != null) {
-                                    String url = addon.pageUrl() != null ? addon.pageUrl() : "";
-                                    results.put("curseForgeUrl", url);
-                                    if (version.self() instanceof CurseForgeRemoteAddonRepository.CurseAddon.LatestFile latestFile) {
-                                        results.put("curseForgeDownloadPage", url + "/download/" + latestFile.id());
-                                    }
-                                }
-                            } catch (IOException e) {
-                                hasNetworkError.set(true);
-                                LOG.warning("Failed to get CurseForge mod info for " + filePath, e);
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                hasNetworkError.set(true);
-                LOG.warning("Failed to lookup CurseForge version for " + filePath, e);
-            }
-        }, Schedulers.io());
-
-        CompletableFuture<Void> modrinthFuture = CompletableFuture.runAsync(() -> {
-            try {
-                RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddonRepository.Type.MOD);
-                if (modrinthRepo != null) {
-                    Optional<RemoteAddon.Version> modrinthVersion = modrinthRepo.getRemoteVersionByLocalFile(filePath);
-                    if (modrinthVersion.isPresent()) {
-                        RemoteAddon.Version version = modrinthVersion.get();
-                        results.put("modrinthFileUrl", version.file() != null && version.file().url() != null ? version.file().url() : "");
+        if (CurseForgeRemoteAddonRepository.isAvailable()) {
+            RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddonRepository.Type.MOD);
+            if (curseForgeRepo != null) {
+                try {
+                    Optional<RemoteAddon.Version> curseForgeVersion = curseForgeRepo.getRemoteVersionByLocalFile(filePath);
+                    if (curseForgeVersion.isPresent()) {
+                        RemoteAddon.Version version = curseForgeVersion.get();
+                        curseForgeFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
                         try {
-                            RemoteAddon addon = modrinthRepo.getModById(downloadProvider, version.modid());
+                            RemoteAddon addon = curseForgeRepo.getModById(downloadProvider, version.modid());
                             if (addon != null) {
-                                results.put("modrinthUrl", addon.pageUrl() != null ? addon.pageUrl() : "");
+                                curseForgeUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
+                                if (version.self() instanceof CurseForgeRemoteAddonRepository.CurseAddon.LatestFile latestFile) {
+                                    curseForgeDownloadPage = curseForgeUrl + "/download/" + latestFile.id();
+                                }
                             }
                         } catch (IOException e) {
-                            hasNetworkError.set(true);
-                            LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
+                            hasNetworkError = true;
+                            LOG.warning("Failed to get CurseForge mod info for " + filePath, e);
                         }
+                    }
+                } catch (IOException e) {
+                    hasNetworkError = true;
+                    LOG.warning("Failed to lookup CurseForge version for " + filePath, e);
+                }
+            }
+        }
+
+        RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddonRepository.Type.MOD);
+        if (modrinthRepo != null) {
+            try {
+                Optional<RemoteAddon.Version> modrinthVersion = modrinthRepo.getRemoteVersionByLocalFile(filePath);
+                if (modrinthVersion.isPresent()) {
+                    RemoteAddon.Version version = modrinthVersion.get();
+                    modrinthFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
+                    try {
+                        RemoteAddon addon = modrinthRepo.getModById(downloadProvider, version.modid());
+                        if (addon != null) {
+                            modrinthUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
+                        }
+                    } catch (IOException e) {
+                        hasNetworkError = true;
+                        LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
                     }
                 }
             } catch (IOException e) {
-                hasNetworkError.set(true);
+                hasNetworkError = true;
                 LOG.warning("Failed to lookup Modrinth version for " + filePath, e);
             }
-        }, Schedulers.io());
-
-        // Wait for both futures to complete
-        CompletableFuture.allOf(curseForgeFuture, modrinthFuture).join();
+        }
 
         RemoteModInfo result = new RemoteModInfo(
-                results.get("curseForgeUrl"),
-                results.get("curseForgeFileUrl"),
-                results.get("curseForgeDownloadPage"),
-                results.get("modrinthUrl"),
-                results.get("modrinthFileUrl"),
-                hasNetworkError.get());
+                curseForgeUrl,
+                curseForgeFileUrl,
+                curseForgeDownloadPage,
+                modrinthUrl,
+                modrinthFileUrl,
+                hasNetworkError);
         remoteModInfoCache.put(filePath, result);
         return result;
     }
