@@ -327,12 +327,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             extension = ".txt";
         }
         FileChooser.ExtensionFilter filter = format.equals("csv")
-                ? new FileChooser.ExtensionFilter(i18n("extension.csv"), "*" + extension)
+                ? new FileChooser.ExtensionFilter(i18n("mods.export.format.csv"), "*" + extension)
                 : format.equals("json")
-                        ? new FileChooser.ExtensionFilter(i18n("extension.json"), "*" + extension)
-                        : new FileChooser.ExtensionFilter(i18n("extension.txt"), "*" + extension);
+                        ? new FileChooser.ExtensionFilter(i18n("mods.export.format.json"), "*" + extension)
+                        : new FileChooser.ExtensionFilter(i18n("mods.export.format.txt"), "*" + extension);
         chooser.getExtensionFilters().setAll(filter);
-        chooser.setInitialFileName(instanceId + "-mods" + extension);
+        chooser.setInitialFileName(instanceId + "_mods" + extension);
         Path targetPath = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
         if (targetPath == null) return;
 
