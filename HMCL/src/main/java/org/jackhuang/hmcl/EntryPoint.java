@@ -41,6 +41,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.CancellationException;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -98,17 +99,25 @@ public final class EntryPoint {
             System.getProperties().putIfAbsent("prism.forceGPU", "true");
         }
 
-        String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
-        if (animationFrameRate != null) {
-            LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
+        setUpAnimationFrameRate:
+        {
+            String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
+            if (animationFrameRate != null) {
+                LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
 
-            try {
-                if (Integer.parseInt(animationFrameRate) <= 0)
-                    throw new NumberFormatException(animationFrameRate);
+                try {
+                    if (Integer.parseInt(animationFrameRate) <= 0)
+                        throw new NumberFormatException(animationFrameRate);
 
-                System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
-            } catch (NumberFormatException e) {
-                LOG.warning("Invalid animation frame rate: " + animationFrameRate);
+                    System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
+                } catch (NumberFormatException e) {
+                    LOG.warning("Invalid animation frame rate: " + animationFrameRate);
+                }
+                break setUpAnimationFrameRate;
+            }
+
+            if (!settings().animationDisabledProperty().get()) {
+
             }
         }
 

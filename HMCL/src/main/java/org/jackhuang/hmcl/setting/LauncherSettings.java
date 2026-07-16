@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.theme.BuiltinBackground;
 import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemeReference;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
@@ -480,11 +479,7 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// Whether UI animations are disabled.
     @SerializedName("animationDisabled")
-    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
-            FXUtils.REDUCED_MOTION == Boolean.TRUE
-                    || !JavaRuntime.CURRENT_JIT_ENABLED
-                    || !FXUtils.GPU_ACCELERATION_ENABLED
-    );
+    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(!JavaRuntime.CURRENT_JIT_ENABLED);
 
     /// Returns the UI animation disable property.
     public BooleanProperty animationDisabledProperty() {
