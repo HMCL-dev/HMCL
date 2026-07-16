@@ -47,13 +47,19 @@ import javafx.util.Duration;
 import org.glavo.monetfx.ColorRole;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
+import org.jackhuang.hmcl.ui.task.TaskCenterPage;
+import org.jackhuang.hmcl.ui.task.TaskOverviewRing;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane root, parent;
@@ -64,6 +70,10 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener onWindowsStatusChange;
     private final EventHandler<MouseEvent> onTitleBarDoubleClick;
+
+    /// Strong listener registered on the immortal TaskCenter singleton; must be removed in
+    /// [#dispose()] or a replaced skin would pin its whole title-bar subtree forever.
+    private ListChangeListener<TaskCenter.Entry> taskEntriesListener;
 
     private double mouseInitX, mouseInitY, stageInitX, stageInitY, stageInitWidth, stageInitHeight;
 
@@ -256,6 +266,31 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             buttonsContainer.setAlignment(Pos.TOP_RIGHT);
             buttonsContainer.setMaxHeight(40);
             {
+                // Background-task indicator: the Task Center's own progress ring (compact) with the
+                // active-task count in the center. Shown only while tasks are active; clicking opens
+                // the Task Center. Uses the same TaskOverviewRing + driveFrom() as the Task Center
+                // overview, so the two rings animate identically.
+                JFXButton btnTask = new JFXButton();
+                btnTask.setFocusTraversable(false);
+                btnTask.getStyleClass().add("jfx-decorator-button");
+                btnTask.setOnAction(e -> Controllers.navigate(TaskCenterPage.getInstance()));
+                FXUtils.installFastTooltip(btnTask, i18n("task.manage"));
+
+                TaskOverviewRing taskRing = new TaskOverviewRing(30, false);
+                taskEntriesListener = taskRing.driveFrom(TaskCenter.getInstance());
+
+                Label taskCount = new Label();
+                taskCount.getStyleClass().add("task-indicator-count");
+                taskCount.textFillProperty().bind(Themes.titleFillProperty());
+                taskCount.textProperty().bind(Bindings.size(TaskCenter.getInstance().getEntries()).asString());
+
+                StackPane taskIconPane = new StackPane(taskRing, taskCount);
+                btnTask.setGraphic(taskIconPane);
+
+                // Only present while something is running (mirrors the old title-bar indicator).
+                btnTask.visibleProperty().bind(Bindings.isNotEmpty(TaskCenter.getInstance().getEntries()));
+                btnTask.managedProperty().bind(btnTask.visibleProperty());
+
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
                 btnHelp.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
@@ -274,7 +309,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
-                buttonsContainer.getChildren().setAll(btnHelp, btnMin, btnClose);
+                buttonsContainer.getChildren().setAll(btnTask, btnHelp, btnMin, btnClose);
             }
             AnchorPane layer = new AnchorPane();
             layer.setPickOnBounds(false);
@@ -598,5 +633,16 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 return PREVIOUS;
             }
         };
+    }
+
+    @Override
+    public void dispose() {
+        // Unhook from the immortal TaskCenter singleton so a replaced skin (and its whole
+        // title-bar subtree) can be garbage collected instead of piling up listeners.
+        if (taskEntriesListener != null) {
+            TaskCenter.getInstance().getEntries().removeListener(taskEntriesListener);
+            taskEntriesListener = null;
+        }
+        super.dispose();
     }
 }

@@ -20,10 +20,14 @@ package org.jackhuang.hmcl.task;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class TaskExecutor {
     protected final Task<?> firstTask;
-    protected final List<TaskListener> taskListeners = new ArrayList<>(0);
+    // CopyOnWriteArrayList: listeners may be added from the FX thread (e.g. TaskCenter / TaskListPane)
+    // while the executor iterates them from a worker thread on completion. A plain ArrayList would
+    // race (ConcurrentModificationException / lost updates).
+    protected final List<TaskListener> taskListeners = new CopyOnWriteArrayList<>();
     protected volatile boolean cancelled = false;
     protected Exception exception;
     private final List<Task.StagesHint> hints;
@@ -37,6 +41,12 @@ public abstract class TaskExecutor {
 
     public void addTaskListener(TaskListener taskListener) {
         taskListeners.add(taskListener);
+    }
+
+    /// Removes a previously added listener so short-lived views (e.g. a re-attachable task dialog)
+    /// don't keep receiving events after they are closed.
+    public void removeTaskListener(TaskListener taskListener) {
+        taskListeners.remove(taskListener);
     }
 
     /**

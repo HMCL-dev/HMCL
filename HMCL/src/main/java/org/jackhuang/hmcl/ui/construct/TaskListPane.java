@@ -87,6 +87,7 @@ public final class TaskListPane extends StackPane {
     private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 26);
 
     private TaskExecutor executor;
+    private TaskListener listener;
     private final JFXListView<Node> listView = new JFXListView<>();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     private final Map<String, StageNode> stageNodes = new HashMap<>();
@@ -127,8 +128,9 @@ public final class TaskListPane extends StackPane {
     }
 
     public void setExecutor(TaskExecutor executor) {
+        detach();
         this.executor = executor;
-        executor.addTaskListener(new TaskListener() {
+        this.listener = new TaskListener() {
             @Override
             public void onStart() {
                 Platform.runLater(() -> {
@@ -159,8 +161,11 @@ public final class TaskListPane extends StackPane {
 
             @Override
             public void onRunning(Task<?> task) {
-                if (!task.getSignificance().shouldShow() || task.getName() == null)
+                if (!task.getSignificance().shouldShow())
                     return;
+                if (task.getName() == null) {
+                    task.setName(i18n("task.unnamed"));
+                }
 
                 if (task instanceof GameAssetDownloadTask) {
                     task.setName(i18n("assets.download_all"));
@@ -274,7 +279,17 @@ public final class TaskListPane extends StackPane {
                     });
                 }
             }
-        });
+        };
+        executor.addTaskListener(listener);
+    }
+
+    /// Stops listening to the current executor. Called when the owning dialog closes so a discarded
+    /// pane no longer receives (and reacts to) task events; without this, every re-opened task detail
+    /// dialog would leave one more never-removed listener on the executor.
+    public void detach() {
+        if (executor != null && listener != null)
+            executor.removeTaskListener(listener);
+        listener = null;
     }
 
     private final class Cell extends ListCell<Node> {
@@ -521,5 +536,15 @@ public final class TaskListPane extends StackPane {
             message.set(throwable.getLocalizedMessage());
             progress.set(0.);
         }
+    }
+
+    public void refresh() {
+        if (executor == null) return;
+        Platform.runLater(() -> {
+            stageNodes.clear();
+            listView.getItems().clear();
+            addStagesHints(executor.getHints());
+            updateProgressNodePadding();
+        });
     }
 }

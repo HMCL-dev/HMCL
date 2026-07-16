@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -161,8 +162,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                 });
             }
         });
-        Controllers.taskDialog(executor, i18n("install.installer.install_offline"), TaskCancellationAction.NO_CANCEL);
-        executor.start();
+        Controllers.downloadTaskDialog(executor, i18n("install.installer.install_offline"), TaskCancellationAction.NO_CANCEL,
+                i18n("task.detail.install_offline"), TaskCenter.RESOURCE_KEY_REPO);
     }
 
     private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerItem, InstallerListPage> {

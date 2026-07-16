@@ -185,7 +185,7 @@ public class DefaultCacheRepository extends CacheRepository {
             hash = DigestUtils.digestToString(SHA1, path);
 
         Path cache = getFile(SHA1, hash);
-        FileUtils.copyFile(path, cache);
+        publishToCache(cache, temp -> FileUtils.copyFile(path, temp));
 
         Lock writeLock = lock.writeLock();
         writeLock.lock();

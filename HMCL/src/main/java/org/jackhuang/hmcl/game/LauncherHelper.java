@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.setting.JavaVersionType;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
@@ -697,7 +698,7 @@ public final class LauncherHelper {
                 MessageType.QUESTION)
                 .yesOrNo(() -> {
                     DownloadProvider downloadProvider = repository.getDependency().getDownloadProvider();
-                    Controllers.taskDialog(JavaManager.getDownloadJavaTask(downloadProvider, SYSTEM_PLATFORM, javaVersion)
+                    Controllers.downloadTaskDialog(JavaManager.getDownloadJavaTask(downloadProvider, SYSTEM_PLATFORM, javaVersion)
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     future.complete(result);
@@ -709,7 +710,8 @@ public final class LauncherHelper {
                                     }
                                     future.completeExceptionally(new CancellationException());
                                 }
-                            }), i18n("download.java"), new TaskCancellationAction(() -> future.completeExceptionally(new CancellationException())));
+                            }), i18n("download.java"), new TaskCancellationAction(() -> future.completeExceptionally(new CancellationException())),
+                            i18n("task.detail.java_download"), TaskCenter.RESOURCE_KEY_JAVA);
                 }, () -> future.completeExceptionally(new CancellationException())).build());
 
         return future;

@@ -511,6 +511,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return downloadThreads;
     }
 
+    /// The maximum number of background tasks that may run concurrently.
+    @SerializedName("backgroundTaskConcurrency")
+    private final IntegerProperty backgroundTaskConcurrency = new SimpleIntegerProperty(2);
+
+    /// Returns the maximum concurrent background task count property.
+    public IntegerProperty backgroundTaskConcurrencyProperty() {
+        return backgroundTaskConcurrency;
+    }
+
     /// The selected game version list download source.
     @SerializedName("versionListSource")
     private final ObjectProperty<DownloadSource> versionListSource = new RawPreservingObjectProperty<>(DownloadSource.DEFAULT);

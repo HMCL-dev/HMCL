@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
@@ -204,7 +205,8 @@ public final class JavaDownloadDialog extends StackPane {
                         }
                     });
 
-            Controllers.taskDialog(task, i18n("download.java.process"), TaskCancellationAction.NORMAL);
+            Controllers.downloadTaskDialog(task, i18n("download.java.process"), TaskCancellationAction.NORMAL,
+                    i18n("task.detail.java_download"), TaskCenter.RESOURCE_KEY_JAVA);
         }
     }
 
@@ -372,7 +374,7 @@ public final class JavaDownloadDialog extends StackPane {
             if (version == null)
                 return;
 
-            Controllers.taskDialog(new GetTask(downloadProvider.injectURLWithCandidates(version.getLinks().pkgInfoUri()))
+            Controllers.downloadTaskDialog(new GetTask(downloadProvider.injectURLWithCandidates(version.getLinks().pkgInfoUri()))
                     .setExecutor(Schedulers.io())
                     .thenComposeAsync(json -> {
                         DiscoResult<DiscoRemoteFileInfo> result = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoRemoteFileInfo.class));
@@ -435,7 +437,8 @@ public final class JavaDownloadDialog extends StackPane {
                                 Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
                             }
                         }
-                    })), i18n("java.download"), TaskCancellationAction.NORMAL);
+                    })), i18n("java.download"), TaskCancellationAction.NORMAL,
+                    i18n("task.detail.java_download"), TaskCenter.RESOURCE_KEY_JAVA);
 
         }
 

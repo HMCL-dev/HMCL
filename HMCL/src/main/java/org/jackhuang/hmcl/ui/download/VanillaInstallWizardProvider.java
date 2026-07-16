@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
@@ -73,6 +74,12 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         settings.put("title", i18n("install.new_game.installation"));
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
+
+        String name = (String) settings.get("name");
+        settings.put("task_detail", i18n("task.detail.install_game", name));
+        settings.put("backgroundable", true);
+        settings.put("task_kind", TaskCenter.TaskKind.GAME_INSTALL);
+        settings.put("task_name", name);
 
         return finishVersionDownloadingAsync(settings);
     }

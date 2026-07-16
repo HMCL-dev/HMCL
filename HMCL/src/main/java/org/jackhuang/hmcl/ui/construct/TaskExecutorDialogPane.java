@@ -21,8 +21,10 @@ import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.task.*;
@@ -46,7 +48,22 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final Label lblTitle;
     private final Label lblProgress;
     private final JFXButton btnCancel;
+    private final JFXButton btnBackground;
     private final TaskListPane taskListPane;
+    private TaskListener autoCloseListener;
+    private Runnable escAction;
+    private Runnable cancelAction;
+
+    public void setEscAction(Runnable action) {
+        this.escAction = action;
+    }
+
+    /// Reveals the "run in background" button. Closing the dialog then only detaches the view — the
+    /// task keeps running in the Task Center. Meaningful only for managed tasks.
+    public void showBackgroundButton() {
+        btnBackground.setVisible(true);
+        btnBackground.setManaged(true);
+    }
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
         this.getStyleClass().add("task-executor-dialog-layout");
@@ -58,13 +75,19 @@ public class TaskExecutorDialogPane extends BorderPane {
         this.setCenter(center);
         center.setPadding(new Insets(16));
         {
+            HBox titleBar = new HBox();
+            titleBar.setAlignment(Pos.CENTER_LEFT);
+            titleBar.setSpacing(8);
+
             lblTitle = new Label();
-            lblTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: BOLD;");
+            lblTitle.getStyleClass().add("title-label");
+
+            titleBar.getChildren().setAll(lblTitle);
 
             taskListPane = new TaskListPane();
             VBox.setVgrow(taskListPane, Priority.ALWAYS);
 
-            center.getChildren().setAll(lblTitle, taskListPane);
+            center.getChildren().setAll(titleBar, taskListPane);
         }
 
         BorderPane bottom = new BorderPane();
@@ -74,15 +97,31 @@ public class TaskExecutorDialogPane extends BorderPane {
             lblProgress = new Label();
             bottom.setLeft(lblProgress);
 
+            // Close detaches the view while the task keeps running (it is owned by the TaskCenter,
+            // not this dialog, and stays visible there). Hidden by default; shown for managed tasks
+            // so there is a visible way to dismiss the dialog other than the destructive Cancel.
+            btnBackground = new JFXButton(i18n("button.close"));
+            btnBackground.getStyleClass().add("dialog-accept");
+            btnBackground.setVisible(false);
+            btnBackground.setManaged(false);
+            btnBackground.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
             btnCancel = new JFXButton(i18n("button.cancel"));
             btnCancel.getStyleClass().add("dialog-cancel");
-            bottom.setRight(btnCancel);
+
+            HBox buttons = new HBox(8, btnBackground, btnCancel);
+            buttons.setAlignment(Pos.CENTER_RIGHT);
+            bottom.setRight(buttons);
         }
 
         setCancel(cancel);
 
         btnCancel.setDisable(onCancel.getCancellationAction() == null);
         btnCancel.setOnAction(e -> {
+            if (cancelAction != null) {
+                cancelAction.run();
+                return;
+            }
             if (executor != null)
                 executor.cancel();
             onCancel.getCancellationAction().accept(this);
@@ -93,7 +132,16 @@ public class TaskExecutorDialogPane extends BorderPane {
             Platform.runLater(() -> lblProgress.setText(message));
         });
 
-        onEscPressed(this, btnCancel::fire);
+        escAction = btnCancel::fire;
+        onEscPressed(this, () -> {
+            if (escAction != null) {
+                escAction.run();
+            }
+        });
+
+        // The dialog is only a view onto the task: once closed, stop listening to the executor so
+        // discarded panes don't pile up as listeners on long-running managed tasks.
+        addEventHandler(DialogCloseEvent.CLOSE, e -> detachExecutorListeners());
     }
 
     public void setExecutor(TaskExecutor executor) {
@@ -101,19 +149,32 @@ public class TaskExecutorDialogPane extends BorderPane {
     }
 
     public void setExecutor(TaskExecutor executor, boolean autoClose) {
+        detachExecutorListeners();
         this.executor = executor;
 
         if (executor != null) {
             taskListPane.setExecutor(executor);
 
-            if (autoClose)
-                executor.addTaskListener(new TaskListener() {
+            if (autoClose) {
+                autoCloseListener = new TaskListener() {
                     @Override
                     public void onStop(boolean success, TaskExecutor executor) {
                         Platform.runLater(() -> fireEvent(new DialogCloseEvent()));
                     }
-                });
+                };
+                executor.addTaskListener(autoCloseListener);
+            }
         }
+    }
+
+    /// Removes every listener this pane attached to the executor. A managed task outlives its dialog
+    /// (the dialog is just a detachable view), so a closed pane must stop listening — otherwise each
+    /// re-opened detail dialog would leave stale listeners reacting to task events forever.
+    private void detachExecutorListeners() {
+        if (executor != null && autoCloseListener != null)
+            executor.removeTaskListener(autoCloseListener);
+        autoCloseListener = null;
+        taskListPane.detach();
     }
 
     public StringProperty titleProperty() {
@@ -132,5 +193,45 @@ public class TaskExecutorDialogPane extends BorderPane {
         this.onCancel = onCancel;
 
         runInFX(() -> btnCancel.setDisable(onCancel == null));
+    }
+
+    public void refreshTaskList() {
+        taskListPane.refresh();
+    }
+
+    public void setCancelAction(Runnable action) {
+        this.cancelAction = action;
+    }
+
+    public void setCancelText(String text) {
+        btnCancel.setText(text);
+    }
+
+    private Label lblWaiting;
+
+    public void setWaitingForBackground(boolean waiting) {
+        if (waiting) {
+            if (lblWaiting == null) {
+                lblWaiting = new Label(i18n("task.waiting_for_background"));
+                lblWaiting.getStyleClass().add("task-empty-label");
+                lblWaiting.setWrapText(true);
+            }
+            taskListPane.setVisible(false);
+            taskListPane.setManaged(false);
+            lblProgress.setVisible(false);
+            lblProgress.setManaged(false);
+            VBox center = (VBox) getCenter();
+            if (!center.getChildren().contains(lblWaiting)) // repeated true→true calls must not add twice
+                center.getChildren().add(lblWaiting);
+        } else {
+            taskListPane.setVisible(true);
+            taskListPane.setManaged(true);
+            lblProgress.setVisible(true);
+            lblProgress.setManaged(true);
+            lblProgress.setText("");
+            if (lblWaiting != null) {
+                ((VBox) getCenter()).getChildren().remove(lblWaiting);
+            }
+        }
     }
 }

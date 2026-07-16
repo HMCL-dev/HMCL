@@ -720,6 +720,16 @@ public abstract class FetchTask<T> extends Task<T> {
         return downloadExecutorConcurrency;
     }
 
+    /// The number of download connections currently in flight (Java 21+: permits taken from the
+    /// semaphore; otherwise the thread pool's active count). For live UI, not exact accounting.
+    public static int getActiveDownloadThreads() {
+        if (SEMAPHORE != null)
+            return Math.max(0, Math.min(downloadExecutorConcurrency, downloadExecutorConcurrency - SEMAPHORE.availablePermits()));
+        if (DOWNLOAD_EXECUTOR instanceof ThreadPoolExecutor threadPool)
+            return threadPool.getActiveCount();
+        return 0;
+    }
+
     private static volatile boolean initialized = false;
 
     public static void notifyInitialized() {

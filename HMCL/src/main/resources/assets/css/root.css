@@ -329,6 +329,27 @@
     -fx-pref-height: 0;
 }
 
+.tag {
+    -fx-text-fill: -monet-on-secondary-container;
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
+    -fx-padding: 2;
+    -fx-font-weight: normal;
+    -fx-font-size: 12px;
+}
+
+/* Muted variant for the cancelled status tag, distinct from the coloured kind tags. */
+.tag-cancelled {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-background-color: -monet-surface-container-highest;
+}
+
+/* Red variant for the failed status tag. */
+.tag-failed {
+    -fx-text-fill: -monet-on-error-container;
+    -fx-background-color: -monet-error-container;
+}
+
 .two-line-list-item > .first-line .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
@@ -1103,6 +1124,107 @@
 
 .md-list-cell:selected {
     -fx-background-color: -monet-secondary-container;
+}
+
+/* ── Task Center ──────────────────────────────────────────────────────── */
+/* Title-bar background-task indicator: active-task count in the center of a compact progress ring. */
+.task-indicator-count {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* Overview panel (left column of the Task Center): a tinted card, distinct from the content card. */
+.task-overview {
+    -fx-background-color: -monet-surface-container-high;
+    -fx-background-radius: 4;
+}
+
+.task-card {
+    -fx-background-color: -monet-surface-container-high;
+    -fx-background-radius: 8;
+    -fx-padding: 12 16 12 16;
+    -fx-spacing: 10;
+    -fx-cursor: hand;
+}
+
+.task-card:hover {
+    -fx-background-color: -monet-surface-container-highest;
+}
+
+.task-card .jfx-progress-bar {
+    -fx-pref-width: 9999;
+}
+
+.task-card-speed {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-font-size: 12px;
+}
+
+.task-history-cell {
+    -fx-padding: 10 12 10 12;
+    -fx-spacing: 10;
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 0 0 1 0;
+}
+
+.task-history-cell.clickable {
+    -fx-cursor: hand;
+}
+
+.task-history-cell.clickable:hover {
+    -fx-background-color: -monet-surface-container-high;
+}
+
+.task-empty-box {
+    -fx-spacing: 12;
+    -fx-alignment: center;
+    -fx-padding: 32;
+}
+
+.task-empty-label {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-font-size: 13px;
+}
+
+/* Overview panel (left column): custom progress ring (track + primary arc + white pulse). */
+.task-ring-track {
+    -fx-stroke: -monet-surface-container-highest;
+}
+
+.task-ring-arc {
+    -fx-stroke: -monet-primary;
+}
+
+.task-ring-pulse {
+    -fx-stroke: white;
+    /* opacity is animated in Java (sine fade along the sweep) — don't fix it here */
+}
+
+/* Center glyphs (idle pause bars, download arrow) — muted, themed. */
+.task-ring-glyph {
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.task-overview-percent {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.task-overview-caption {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-font-size: 12px;
+}
+
+.task-stat-label {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-font-size: 12.5px;
+}
+
+.task-failed-header {
+    -fx-cursor: hand;
+    -fx-padding: 8 12 8 12;
+    -fx-background-color: -monet-surface-container-high;
+    -fx-background-radius: 8;
 }
 
 .mod-info-list-cell:warning {

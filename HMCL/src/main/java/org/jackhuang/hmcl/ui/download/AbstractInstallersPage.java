@@ -127,7 +127,9 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             {
                 HBox versionNamePane = new HBox(8);
                 versionNamePane.getStyleClass().add("card-non-transparent");
-                versionNamePane.setStyle("-fx-padding: 20 8 20 16");
+                // Bottom padding reserves room for the text field's validation message; without it
+                // the red "name already exists" hint overflows below the card and gets clipped.
+                versionNamePane.setStyle("-fx-padding: 20 8 36 16");
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
 
                 control.txtName.setMaxWidth(300);

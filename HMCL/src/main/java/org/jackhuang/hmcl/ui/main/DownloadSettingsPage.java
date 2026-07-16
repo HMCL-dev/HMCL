@@ -184,7 +184,46 @@ public class DownloadSettingsPage extends StackPane {
                 }
             }, settings().autoDownloadThreadsProperty(), settings().downloadThreadsProperty()));
 
-            downloadList.getContent().addAll(fileCommonLocationSublist, downloadThreadsSublist);
+            // Background task concurrency: how many auto-backgrounded tasks may run at once. Modeled
+            // as a sublist to match the refactored download-threads UI above.
+            ComponentSublist backgroundTaskConcurrencySublist = new ComponentSublist(() -> {
+                HBox hbox = new HBox(8);
+                hbox.setAlignment(Pos.CENTER);
+
+                JFXSlider slider = new JFXSlider(1, 16, 2);
+                HBox.setHgrow(slider, Priority.ALWAYS);
+
+                JFXTextField concurrencyField = new JFXTextField();
+                FXUtils.setLimitWidth(concurrencyField, 60);
+                FXUtils.bind(concurrencyField, settings().backgroundTaskConcurrencyProperty(), SafeStringConverter.fromInteger()
+                        .restrict(it -> it > 0)
+                        .fallbackTo(2)
+                        .asPredicate(Validator.addTo(concurrencyField)));
+
+                var changedByTextField = new Holder<>(false);
+                FXUtils.onChangeAndOperate(settings().backgroundTaskConcurrencyProperty(), value -> {
+                    changedByTextField.value = true;
+                    slider.setValue(value.intValue());
+                    changedByTextField.value = false;
+                });
+                slider.valueProperty().addListener((value, oldVal, newVal) -> {
+                    if (changedByTextField.value) return;
+                    settings().backgroundTaskConcurrencyProperty().set(value.getValue().intValue());
+                });
+
+                hbox.getChildren().setAll(slider, concurrencyField);
+
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                hintPane.setText(i18n("settings.launcher.background_task_concurrency.hint"));
+
+                return List.of(hbox, hintPane);
+            });
+            backgroundTaskConcurrencySublist.setTitle(i18n("settings.launcher.background_task_concurrency"));
+            backgroundTaskConcurrencySublist.descriptionProperty().bind(Bindings.createStringBinding(
+                    () -> Integer.toString(settings().backgroundTaskConcurrencyProperty().get()),
+                    settings().backgroundTaskConcurrencyProperty()));
+
+            downloadList.getContent().addAll(fileCommonLocationSublist, downloadThreadsSublist, backgroundTaskConcurrencySublist);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadList);
         }
 
