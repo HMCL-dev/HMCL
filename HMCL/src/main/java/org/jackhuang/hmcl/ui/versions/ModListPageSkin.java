@@ -301,6 +301,40 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
+    private static final class FieldInfo {
+        final String id;
+        final String i18nKey;
+        final boolean selectedByDefault;
+
+        FieldInfo(String id, String i18nKey, boolean selectedByDefault) {
+            this.id = id;
+            this.i18nKey = i18nKey;
+            this.selectedByDefault = selectedByDefault;
+        }
+    }
+
+    private static final List<FieldInfo> FIELD_INFOS = List.of(
+            new FieldInfo("name", "mods.export.field.name", true),
+            new FieldInfo("version", "mods.export.field.version", true),
+            new FieldInfo("modid", "mods.export.field.modid", true),
+            new FieldInfo("gameVersion", "mods.export.field.game_version", false),
+            new FieldInfo("authors", "mods.export.field.authors", false),
+            new FieldInfo("description", "mods.export.field.description", false),
+            new FieldInfo("url", "mods.export.field.url", false),
+            new FieldInfo("active", "mods.export.field.active", false),
+            new FieldInfo("modLoaderType", "mods.export.field.mod_loader_type", false),
+            new FieldInfo("mcmodId", "mods.export.field.mcmod_id", false),
+            new FieldInfo("abbr", "mods.export.field.abbr", false),
+            new FieldInfo("chineseName", "mods.export.field.chinese_name", false),
+            new FieldInfo("sha1", "SHA1", false),
+            new FieldInfo("sha512", "SHA512", false),
+            new FieldInfo("curseForgeUrl", "mods.export.field.curseforge_url", false),
+            new FieldInfo("curseForgeFileUrl", "mods.export.field.curseforge_file_url", false),
+            new FieldInfo("curseForgeDownloadPage", "mods.export.field.curseforge_download_page", false),
+            new FieldInfo("modrinthUrl", "mods.export.field.modrinth_url", false),
+            new FieldInfo("modrinthFileUrl", "mods.export.field.modrinth_file_url", false)
+    );
+
     private void showExportDialog() {
         ToggleGroup formatGroup = new ToggleGroup();
         JFXRadioButton csvRadio = new JFXRadioButton("CSV");
@@ -311,45 +345,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         customRadio.setToggleGroup(formatGroup);
         csvRadio.setSelected(true);
 
-        JFXCheckBox chkName = new JFXCheckBox(i18n("mods.export.field.name"));
-        JFXCheckBox chkVersion = new JFXCheckBox(i18n("mods.export.field.version"));
-        JFXCheckBox chkId = new JFXCheckBox(i18n("mods.export.field.modid"));
-        JFXCheckBox chkGameVersion = new JFXCheckBox(i18n("mods.export.field.game_version"));
-        JFXCheckBox chkAuthors = new JFXCheckBox(i18n("mods.export.field.authors"));
-        JFXCheckBox chkDescription = new JFXCheckBox(i18n("mods.export.field.description"));
-        JFXCheckBox chkUrl = new JFXCheckBox(i18n("mods.export.field.url"));
-        JFXCheckBox chkActive = new JFXCheckBox(i18n("mods.export.field.active"));
-        JFXCheckBox chkModLoaderType = new JFXCheckBox(i18n("mods.export.field.mod_loader_type"));
-        JFXCheckBox chkMcmodId = new JFXCheckBox(i18n("mods.export.field.mcmod_id"));
-        JFXCheckBox chkAbbr = new JFXCheckBox(i18n("mods.export.field.abbr"));
-        JFXCheckBox chkChineseName = new JFXCheckBox(i18n("mods.export.field.chinese_name"));
-        JFXCheckBox chkSha1 = new JFXCheckBox("SHA1");
-        JFXCheckBox chkSha512 = new JFXCheckBox("SHA512");
-        JFXCheckBox chkCurseForgeUrl = new JFXCheckBox(i18n("mods.export.field.curseforge_url"));
-        JFXCheckBox chkCurseForgeFileUrl = new JFXCheckBox(i18n("mods.export.field.curseforge_file_url"));
-        JFXCheckBox chkCurseForgeDownloadPage = new JFXCheckBox(i18n("mods.export.field.curseforge_download_page"));
-        JFXCheckBox chkModrinthUrl = new JFXCheckBox(i18n("mods.export.field.modrinth_url"));
-        JFXCheckBox chkModrinthFileUrl = new JFXCheckBox(i18n("mods.export.field.modrinth_file_url"));
-
-        chkName.setSelected(true);
-        chkVersion.setSelected(true);
-        chkId.setSelected(true);
-        chkGameVersion.setSelected(false);
-        chkAuthors.setSelected(false);
-        chkDescription.setSelected(false);
-        chkUrl.setSelected(false);
-        chkActive.setSelected(false);
-        chkModLoaderType.setSelected(false);
-        chkMcmodId.setSelected(false);
-        chkAbbr.setSelected(false);
-        chkChineseName.setSelected(false);
-        chkSha1.setSelected(false);
-        chkSha512.setSelected(false);
-        chkCurseForgeUrl.setSelected(false);
-        chkCurseForgeFileUrl.setSelected(false);
-        chkCurseForgeDownloadPage.setSelected(false);
-        chkModrinthUrl.setSelected(false);
-        chkModrinthFileUrl.setSelected(false);
+        Map<String, JFXCheckBox> checkBoxes = new LinkedHashMap<>();
+        VBox fieldsBox = new VBox(8);
+        for (FieldInfo info : FIELD_INFOS) {
+            JFXCheckBox checkBox = new JFXCheckBox(i18n(info.i18nKey));
+            checkBox.setSelected(info.selectedByDefault);
+            checkBoxes.put(info.id, checkBox);
+            fieldsBox.getChildren().add(checkBox);
+        }
+        fieldsBox.setAlignment(Pos.CENTER_LEFT);
 
         Label formatLabel = new Label(i18n("mods.export.format"));
         Label fieldsLabel = new Label(i18n("mods.export.fields"));
@@ -357,15 +361,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         JFXTextField templateTextField = new JFXTextField("- {name}, {version}, {modid}");
 
-        // Create clickable placeholder buttons
         Label placeholdersLabel = new Label(i18n("mods.export.placeholders"));
         FlowPane placeholdersPane = new FlowPane(5, 5);
         placeholdersPane.setAlignment(Pos.CENTER_LEFT);
-        String[] placeholders = {"name", "version", "modid", "gameVersion", "authors", 
-                "description", "url", "active", "modLoaderType", "mcmodId", "abbr", "chineseName", "sha1", "sha512",
-                "curseForgeUrl", "curseForgeFileUrl", "curseForgeDownloadPage", "modrinthUrl", "modrinthFileUrl"};
-        for (String placeholder : placeholders) {
-            String placeholderText = "{" + placeholder + "}";
+        for (FieldInfo info : FIELD_INFOS) {
+            String placeholderText = "{" + info.id + "}";
             JFXButton btn = FXUtils.newBorderButton(placeholderText);
             btn.setOnAction(ev -> FXUtils.copyText(placeholderText));
             placeholdersPane.getChildren().add(btn);
@@ -374,22 +374,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         HBox formatBox = new HBox(10, csvRadio, jsonRadio, customRadio);
         formatBox.setAlignment(Pos.CENTER_LEFT);
 
-        VBox fieldsBox = new VBox(8,
-                chkName, chkVersion, chkId, chkGameVersion, chkAuthors,
-                chkDescription, chkUrl, chkActive, chkModLoaderType,
-                chkMcmodId, chkAbbr, chkChineseName,
-                chkSha1, chkSha512,
-                chkCurseForgeUrl, chkCurseForgeFileUrl, chkCurseForgeDownloadPage,
-                chkModrinthUrl, chkModrinthFileUrl);
-        fieldsBox.setAlignment(Pos.CENTER_LEFT);
-
         VBox templateBox = new VBox(5, templateLabel, templateTextField, placeholdersLabel, placeholdersPane);
         templateBox.setAlignment(Pos.CENTER_LEFT);
         templateBox.setMaxWidth(360);
         templateBox.setVisible(false);
         templateBox.setManaged(false);
 
-        // Toggle visibility of fields vs template based on format selection
         csvRadio.setOnAction(e -> {
             fieldsLabel.setVisible(true);
             fieldsLabel.setManaged(true);
@@ -444,25 +434,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 customTemplate = templateTextField.getText();
             } else {
                 format = csvRadio.isSelected() ? "csv" : "json";
-                if (chkName.isSelected()) fields.add("name");
-                if (chkVersion.isSelected()) fields.add("version");
-                if (chkId.isSelected()) fields.add("modid");
-                if (chkGameVersion.isSelected()) fields.add("gameVersion");
-                if (chkAuthors.isSelected()) fields.add("authors");
-                if (chkDescription.isSelected()) fields.add("description");
-                if (chkUrl.isSelected()) fields.add("url");
-                if (chkActive.isSelected()) fields.add("active");
-                if (chkModLoaderType.isSelected()) fields.add("modLoaderType");
-                if (chkMcmodId.isSelected()) fields.add("mcmodId");
-                if (chkAbbr.isSelected()) fields.add("abbr");
-                if (chkChineseName.isSelected()) fields.add("chineseName");
-                if (chkSha1.isSelected()) fields.add("sha1");
-                if (chkSha512.isSelected()) fields.add("sha512");
-                if (chkCurseForgeUrl.isSelected()) fields.add("curseForgeUrl");
-                if (chkCurseForgeFileUrl.isSelected()) fields.add("curseForgeFileUrl");
-                if (chkCurseForgeDownloadPage.isSelected()) fields.add("curseForgeDownloadPage");
-                if (chkModrinthUrl.isSelected()) fields.add("modrinthUrl");
-                if (chkModrinthFileUrl.isSelected()) fields.add("modrinthFileUrl");
+                checkBoxes.forEach((id, chk) -> {
+                    if (chk.isSelected()) {
+                        fields.add(id);
+                    }
+                });
             }
 
             dialogLayout.fireEvent(new DialogCloseEvent());
