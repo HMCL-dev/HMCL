@@ -17,21 +17,28 @@
  */
 package org.jackhuang.hmcl;
 
+import org.jackhuang.hmcl.setting.SambaException;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.swing.JOptionPane;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -64,6 +71,17 @@ public final class EntryPoint {
         verifyJavaFX();
         addEnableNativeAccess();
         enableUnsafeMemoryAccess();
+
+        try {
+            SettingsManager.init();
+        } catch (SambaException e) {
+            showWarning(i18n("fatal.samba"));
+        } catch (IOException e) {
+            LOG.error("Failed to load config", e);
+            checkConfigOwner();
+            SwingUtils.showErrorDialog(i18n("fatal.config_loading_failure", SettingsManager.localConfigDirectory()));
+            EntryPoint.exit(1);
+        }
 
         Launcher.main(args);
     }
@@ -225,15 +243,8 @@ public final class EntryPoint {
 
     private static void checkWine() {
         if (OperatingSystem.isRunningUnderWine()) {
-            SwingUtils.initLookAndFeel();
             LOG.warning("HMCL is running under Wine or its distributions!");
-
-            int result = JOptionPane.showOptionDialog(null, i18n("fatal.wine_warning"), i18n("message.warning"), JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.WARNING_MESSAGE, null, null, null);
-
-            if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) {
-                exit(1);
-            }
+            showWarning(i18n("fatal.wine_warning"));
         }
     }
 
@@ -270,6 +281,70 @@ public final class EntryPoint {
             } catch (Throwable e) {
                 LOG.warning("Failed to enable unsafe memory access", e);
             }
+        }
+    }
+
+    private static void checkConfigOwner() {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            return;
+
+        String userName = System.getProperty("user.name");
+        Path configDirectory = SettingsManager.localConfigDirectory();
+        if (!Files.exists(configDirectory)) {
+            return;
+        }
+
+        String owner;
+        try {
+            owner = Files.getOwner(configDirectory).getName();
+        } catch (IOException ioe) {
+            LOG.warning("Failed to get file owner", ioe);
+            return;
+        }
+
+        if (Files.isWritable(configDirectory) || userName.equals("root") || userName.equals(owner))
+            return;
+
+        ArrayList<String> files = new ArrayList<>();
+        files.add(configDirectory.toString());
+        if (Files.exists(Metadata.HMCL_USER_HOME))
+            files.add(Metadata.HMCL_USER_HOME.toString());
+
+        Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
+        if (Files.exists(mcDir))
+            files.add(mcDir.toString());
+
+        String command = new CommandBuilder().addAll("sudo", "chown", "-R", userName).addAll(files).toString();
+        SwingUtils.initLookAndFeel();
+
+        Object[] options = {i18n("button.copy_and_exit"), i18n("button.cancel")};
+        int result = JOptionPane.showOptionDialog(null,
+                i18n("fatal.config_loading_failure.unix", owner, command),
+                i18n("message.error"),
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (result == 0) {
+            try {
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), null);
+            } catch (Throwable e) {
+                LOG.warning("Failed to copy command to clipboard", e);
+            }
+        }
+        EntryPoint.exit(1);
+    }
+
+    private static void showWarning(String message) {
+        SwingUtils.initLookAndFeel();
+
+        int result = JOptionPane.showOptionDialog(null, message, i18n("message.warning"), JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.WARNING_MESSAGE, null, null, null);
+
+        if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) {
+            exit(1);
         }
     }
 

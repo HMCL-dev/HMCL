@@ -29,8 +29,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.DataFormat;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -50,17 +48,11 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.net.CookieHandler;
 import java.net.CookieManager;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -98,18 +90,7 @@ public final class Launcher extends Application {
         }
 
         try {
-            try {
-                SettingsManager.init();
-                initializeSettingsRuntime();
-            } catch (SambaException e) {
-                showAlert(AlertType.WARNING, i18n("fatal.samba"));
-            } catch (IOException e) {
-                LOG.error("Failed to load config", e);
-                checkConfigInTempDir();
-                checkConfigOwner();
-                showAlert(AlertType.ERROR, i18n("fatal.config_loading_failure", SettingsManager.localConfigDirectory()));
-                EntryPoint.exit(1);
-            }
+            initializeSettingsRuntime();
 
             // https://lapcatsoftware.com/articles/app-translocation.html
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
@@ -272,48 +253,6 @@ public final class Launcher extends Application {
                 && !confirmWithCountdown(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), 5)) {
             EntryPoint.exit(0);
         }
-    }
-
-    private static void checkConfigOwner() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            return;
-
-        String userName = System.getProperty("user.name");
-        Path configDirectory = SettingsManager.localConfigDirectory();
-        if (!Files.exists(configDirectory)) {
-            return;
-        }
-
-        String owner;
-        try {
-            owner = Files.getOwner(configDirectory).getName();
-        } catch (IOException ioe) {
-            LOG.warning("Failed to get file owner", ioe);
-            return;
-        }
-
-        if (Files.isWritable(configDirectory) || userName.equals("root") || userName.equals(owner))
-            return;
-
-        ArrayList<String> files = new ArrayList<>();
-        files.add(configDirectory.toString());
-        if (Files.exists(Metadata.HMCL_USER_HOME))
-            files.add(Metadata.HMCL_USER_HOME.toString());
-
-        Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
-        if (Files.exists(mcDir))
-            files.add(mcDir.toString());
-
-        String command = new CommandBuilder().addAll("sudo", "chown", "-R", userName).addAll(files).toString();
-        ButtonType copyAndExit = new ButtonType(i18n("button.copy_and_exit"));
-
-        if (showAlert(AlertType.ERROR,
-                i18n("fatal.config_loading_failure.unix", owner, command),
-                copyAndExit, ButtonType.CLOSE) == copyAndExit) {
-            Clipboard.getSystemClipboard()
-                    .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
-        }
-        EntryPoint.exit(1);
     }
 
     @Override
