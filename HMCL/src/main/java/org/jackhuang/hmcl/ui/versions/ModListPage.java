@@ -407,7 +407,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         @Override
         public void execute() throws Exception {
-            networkErrorCount = 0;
+            networkErrorCount.set(0);
 
             prefetchDataWithProgress();
 
@@ -419,9 +419,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 exportToCustomTextWithProgress();
             }
 
-            setResult(networkErrorCount);
-
-            System.gc();
+            setResult(networkErrorCount.get());
         }
 
         private void prefetchDataWithProgress() {
@@ -472,7 +470,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             try {
                                 RemoteModInfo remoteInfo = getRemoteModInfo(mod);
                                 if (remoteInfo.hasNetworkError) {
-                                    networkErrorCount++;
+                                    networkErrorCount.incrementAndGet();
                                     failedModPaths.add(filePath);
                                 } else {
                                     failedModPaths.remove(filePath);
