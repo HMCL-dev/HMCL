@@ -313,6 +313,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     /// @param fields The set of field names to export (used for csv/json)
     /// @param customTemplate The custom format template string (used when format is "custom")
     public void exportMods(List<ModListPageSkin.ModInfoObject> selectedMods, String format, Set<String> fields, String customTemplate) {
+        remoteModInfoCache.clear();
+        sha1Cache.clear();
+        sha512Cache.clear();
+
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.export.title"));
         String extension;
@@ -337,7 +341,26 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         final Path outputPath = targetPath;
         final String exportFormat = format;
         final String template = customTemplate;
-        final Set<String> fieldsSnapshot = new LinkedHashSet<>(fields);
+
+        final Set<String> fieldsSnapshot = new LinkedHashSet<>();
+        if (format.equals("custom") && customTemplate != null) {
+            int i = 0;
+            while (i < customTemplate.length()) {
+                if (customTemplate.charAt(i) == '{') {
+                    int end = customTemplate.indexOf('}', i);
+                    if (end != -1) {
+                        fieldsSnapshot.add(customTemplate.substring(i + 1, end));
+                        i = end + 1;
+                    } else {
+                        i++;
+                    }
+                } else {
+                    i++;
+                }
+            }
+        } else {
+            fieldsSnapshot.addAll(fields);
+        }
 
         exportModsWithRetry(modsSnapshot, fieldsSnapshot, exportFormat, template, outputPath);
     }
