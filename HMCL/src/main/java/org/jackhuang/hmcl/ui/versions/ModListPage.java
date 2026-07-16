@@ -390,7 +390,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         private final String template;
         private final Path targetPath;
         private final Set<Path> failedModPaths = ConcurrentHashMap.newKeySet();
-        private int networkErrorCount = 0;
+        private final AtomicInteger networkErrorCount = new AtomicInteger(0);
 
         ExportTask(List<ModListPageSkin.ModInfoObject> mods, Set<String> fields, String format, String template, Path targetPath) {
             this.mods = mods;
