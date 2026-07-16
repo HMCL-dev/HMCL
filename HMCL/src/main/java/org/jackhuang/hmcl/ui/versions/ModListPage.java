@@ -477,33 +477,34 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 LocalModFile mod = modInfo.getModInfo();
                 Path filePath = mod.getFile();
 
+                try {
+                    semaphore.acquire();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+
                 futures.add(CompletableFuture.runAsync(() -> {
                     try {
-                        semaphore.acquire();
-                        try {
-                            if (needsRemoteInfo) {
-                                RemoteModInfo remoteInfo = getRemoteModInfo(mod);
-                                if (remoteInfo.hasNetworkError) {
-                                    networkErrorCount.incrementAndGet();
-                                    failedModPaths.add(filePath);
-                                } else {
-                                    failedModPaths.remove(filePath);
-                                }
+                        if (needsRemoteInfo) {
+                            RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                            if (remoteInfo.hasNetworkError) {
+                                networkErrorCount.incrementAndGet();
+                                failedModPaths.add(filePath);
+                            } else {
+                                failedModPaths.remove(filePath);
                             }
-                            if (needsSha1) {
-                                computeSha1Cached(filePath);
-                            }
-                            if (needsSha512) {
-                                computeSha512Cached(filePath);
-                            }
-                        } finally {
-                            semaphore.release();
                         }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
+                        if (needsSha1) {
+                            computeSha1Cached(filePath);
+                        }
+                        if (needsSha512) {
+                            computeSha512Cached(filePath);
+                        }
                     } catch (Exception e) {
                         LOG.warning("Failed to prefetch data for " + filePath, e);
                     } finally {
+                        semaphore.release();
                         updateProgress(completedTasks.incrementAndGet(), totalTasks);
                     }
                 }, Schedulers.io()));
