@@ -20,11 +20,15 @@
   "themes" : [
     {
       "id" : "2021-08-26",
-      "name" : "HMCL 3.15",
+      "name" : {
+        "default" : "Current Theme",
+        "zh-Hans" : "当前主题",
+        "zh-Hant" : "當前主題"
+      },
       "description" : {
-        "default" : "HMCL 3.15 classic appearance",
-        "zh-Hans" : "HMCL 3.15 经典外观",
-        "zh-Hant" : "HMCL 3.15 經典外觀"
+        "default" : "HMCL current theme",
+        "zh-Hans" : "HMCL 当前主题",
+        "zh-Hant" : "HMCL 當前主題"
       },
       "color" : "#5C6BC0",
       "brightness" : "light",
