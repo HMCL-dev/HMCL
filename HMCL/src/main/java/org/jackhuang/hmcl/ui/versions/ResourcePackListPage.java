@@ -592,7 +592,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             FXUtils.onChange(description.heightProperty(), newVal -> {
-                double maxHeight = stage.getHeight() * 0.5;
+                double maxHeight = Controllers.windowHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });
