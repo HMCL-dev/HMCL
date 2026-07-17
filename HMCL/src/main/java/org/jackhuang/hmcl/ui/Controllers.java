@@ -132,10 +132,6 @@ public final class Controllers {
         void run() throws Exception;
     }
 
-    public static Scene getScene() {
-        return scene;
-    }
-
     public static @Nullable Stage getStage() {
         return stage;
     }
