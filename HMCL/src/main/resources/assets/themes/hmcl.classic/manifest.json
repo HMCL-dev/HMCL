@@ -4,13 +4,23 @@
   "version" : "1.0.0",
   "name" : {
     "default" : "Classic",
+    "es" : "Clásico",
+    "ja" : "クラシック",
+    "ru" : "Классическая",
+    "uk" : "Класична",
     "zh-Hans" : "经典主题",
-    "zh-Hant" : "經典主題"
+    "zh-Hant" : "經典主題",
+    "lzh" : "舊觀"
   },
   "description" : {
     "default" : "Classic HMCL launcher themes",
+    "es" : "Temas clásicos del launcher HMCL",
+    "ja" : "HMCL ランチャーのクラシックテーマ",
+    "ru" : "Классические темы лаунчера HMCL",
+    "uk" : "Класичні теми лаунчера HMCL",
     "zh-Hans" : "HMCL 启动器经典主题",
-    "zh-Hant" : "HMCL 啟動器經典主題"
+    "zh-Hant" : "HMCL 啟動器經典主題",
+    "lzh" : "HMCL 啟動器之舊觀"
   },
   "authors": [
     {
@@ -25,13 +35,23 @@
       "id" : "2021-08-26",
       "name" : {
         "default" : "Current Theme",
+        "es": "Tema actual",
+        "ja": "現在のテーマ",
+        "ru": "Текущая тема",
+        "uk": "Поточна тема",
         "zh-Hans" : "当前主题",
-        "zh-Hant" : "當前主題"
+        "zh-Hant" : "當前主題",
+        "lzh": "今觀"
       },
       "description" : {
         "default" : "HMCL current theme",
+        "es": "Tema actual de HMCL",
+        "ja": "HMCL の現在のテーマ",
+        "ru": "Текущая тема HMCL",
+        "uk": "Поточна тема HMCL",
         "zh-Hans" : "HMCL 当前主题",
-        "zh-Hant" : "HMCL 當前主題"
+        "zh-Hant" : "HMCL 當前主題",
+        "lzh": "HMCL 之今觀"
       },
       "color" : "#5C6BC0",
       "brightness" : "light",
@@ -50,8 +70,13 @@
       "name" : "HMCL 3.3",
       "description" : {
         "default" : "HMCL 3.3 classic appearance",
+        "es": "Apariencia clásica de HMCL 3.3",
+        "ja": "HMCL 3.3 のクラシックな外観",
+        "ru": "Классический вид HMCL 3.3",
+        "uk": "Класичний вигляд HMCL 3.3",
         "zh-Hans" : "HMCL 3.3 经典外观",
-        "zh-Hant" : "HMCL 3.3 經典外觀"
+        "zh-Hant" : "HMCL 3.3 經典外觀",
+        "lzh": "HMCL 3.3 之舊觀"
       },
       "color" : "#5C6BC0",
       "brightness" : "light",
@@ -72,8 +97,13 @@
       },
       "description" : {
         "default" : "HMCL 2.3 classic appearance",
+        "es": "Apariencia clásica de HMCL 2.3",
+        "ja": "HMCL 2.3 のクラシックな外観",
+        "ru": "Классический вид HMCL 2.3",
+        "uk": "Класичний вигляд HMCL 2.3",
         "zh-Hans" : "HMCL 2.3 经典外观",
-        "zh-Hant" : "HMCL 2.3 經典外觀"
+        "zh-Hant" : "HMCL 2.3 經典外觀",
+        "lzh": "HMCL 2.3 之舊觀"
       },
       "color" : "#E67E22",
       "brightness" : "light",
