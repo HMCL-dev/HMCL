@@ -140,6 +140,14 @@ public final class Controllers {
         return stage;
     }
 
+    public static ReadOnlyDoubleProperty windowWidthProperty() {
+        return stageWidth;
+    }
+
+    public static ReadOnlyDoubleProperty windowHeightProperty() {
+        return stageHeight;
+    }
+
     @FXThread
     public static VersionPage getVersionPage() {
         if (versionPage == null) {

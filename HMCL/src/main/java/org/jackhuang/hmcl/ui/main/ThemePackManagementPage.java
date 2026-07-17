@@ -41,7 +41,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.*;
@@ -415,8 +414,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// @param themePack the installed theme pack to display
         private ThemePackInfoDialog(ThemePackManagementPage page, ThemePackManager.InstalledThemePack themePack) {
             ThemePackManifest manifest = themePack.manifest();
-            Stage stage = Controllers.getStage();
-            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+            maxWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
 
             HBox heading = new HBox(8);
             heading.setAlignment(Pos.CENTER_LEFT);
@@ -481,7 +479,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             scrollPane.setPrefViewportWidth(520);
             scrollPane.setPrefViewportHeight(Math.min(360, manifest.themes().size() * 86));
-            scrollPane.maxHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.55));
+            scrollPane.maxHeightProperty().bind(Controllers.windowHeightProperty().multiply(0.55));
 
             StackPane body = new StackPane(scrollPane);
             body.setPadding(new Insets(10, 0, 0, 0));
