@@ -23,6 +23,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -88,10 +89,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private final HBox toolbarSelecting;
 
     private final JFXListView<ModInfoObject> listView;
-    private final JFXTextField searchField;
 
-    @FXThread
-    private boolean isSearching = false;
+    private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+    private final JFXTextField searchField;
+    private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
@@ -118,18 +119,21 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
-            PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished(e -> search());
+            searchPause.setOnFinished(e -> search());
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                pause.setRate(1);
-                pause.playFromStart();
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    searchPause.setRate(1);
+                    searchPause.playFromStart();
+                }
             });
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
                         changeToolbar(toolbarNormal);
 
-                        isSearching = false;
+                        searchPause.stop();
+
+                        isSearching.set(false);
                         searchField.clear();
                         Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                     });
@@ -192,7 +196,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
                     selectedItem -> {
                         if (selectedItem == null)
-                            changeToolbar(isSearching ? searchBar : toolbarNormal);
+                            changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
                         else
                             changeToolbar(toolbarSelecting);
                     });
@@ -223,12 +227,22 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             StackPane placeholderContainer = new StackPane();
             placeholderContainer.getStyleClass().add("notice-pane");
             Label placeholderLabel = new Label(i18n("mods.empty"));
+            placeholderLabel.textProperty().bind(
+                Bindings.createStringBinding(() -> {
+                    if (isSearching.get()) {
+                        return i18n("search.no_results_found");
+                    } else {
+                        return i18n("mods.empty");
+                    }
+                },
+                isSearching)
+            );
             placeholderContainer.getChildren().add(placeholderLabel);
             listView.setPlaceholder(placeholderContainer);
             
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
-                if (isSearching) {
+                if (isSearching.get()) {
                     search();
                 }
             });
@@ -271,7 +285,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     }
 
     private void search() {
-        isSearching = true;
+        isSearching.set(true);
 
         Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
 

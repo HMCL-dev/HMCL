@@ -266,7 +266,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final HBox toolbarNormal = new HBox();
         private final HBox toolbarSelecting = new HBox();
 
-        private boolean isSearching;
+        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+        private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
         private ResourcePackListPageSkin(ResourcePackListPage control) {
             super(control);
@@ -309,18 +310,21 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 searchBar.setPadding(new Insets(0, 5, 0, 5));
                 searchField.setPromptText(i18n("search"));
                 HBox.setHgrow(searchField, Priority.ALWAYS);
-                PauseTransition pause = new PauseTransition(Duration.millis(100));
-                pause.setOnFinished(e -> search());
+                searchPause.setOnFinished(e -> search());
                 FXUtils.onChange(searchField.textProperty(), newValue -> {
-                    pause.setRate(1);
-                    pause.playFromStart();
+                    if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                        searchPause.setRate(1);
+                        searchPause.playFromStart();
+                    }
                 });
 
                 JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                         () -> {
                             changeToolbar(toolbarNormal);
 
-                            isSearching = false;
+                            searchPause.stop();
+
+                            isSearching.set(false);
                             searchField.clear();
                             Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                         });
@@ -346,7 +350,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
                         selectedItem -> {
                             if (selectedItem == null)
-                                changeToolbar(isSearching ? searchBar : toolbarNormal);
+                                changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
                             else
                                 changeToolbar(toolbarSelecting);
                         });
@@ -375,6 +379,16 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 StackPane placeholderContainer = new StackPane();
                 placeholderContainer.getStyleClass().add("notice-pane");
                 Label placeholderLabel = new Label(i18n("resourcepack.empty"));
+                placeholderLabel.textProperty().bind(
+                    Bindings.createStringBinding(() -> {
+                        if (isSearching.get()) {
+                            return i18n("search.no_results_found");
+                        } else {
+                            return i18n("resourcepack.empty");
+                        }
+                    },
+                    isSearching)
+                );
                 placeholderContainer.getChildren().add(placeholderLabel);
                 listView.setPlaceholder(placeholderContainer);
 
@@ -410,7 +424,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
 
         private void search() {
-            isSearching = true;
+            isSearching.set(true);
 
             Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
 

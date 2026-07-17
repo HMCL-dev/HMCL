@@ -25,6 +25,7 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -52,6 +53,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +85,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
     private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
     private final JFXTextField searchField;
+    private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
     private static final AtomicInteger lastShiftClickIndex = new AtomicInteger(-1);
     final Consumer<Integer> toggleSelect;
@@ -149,14 +152,17 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
-            PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished(e -> filteredList.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
+            searchPause.setOnFinished(e -> filteredList.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                pause.setRate(1);
-                pause.playFromStart();
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    searchPause.setRate(1);
+                    searchPause.playFromStart();
+                }
             });
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
+                        searchPause.stop();
+
                         isSearching.set(false);
                         searchField.clear();
                     });
@@ -198,6 +204,16 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             StackPane placeholderContainer = new StackPane();
             placeholderContainer.getStyleClass().add("notice-pane");
             Label placeholderLabel = new Label(i18n("datapack.empty"));
+            placeholderLabel.textProperty().bind(
+                Bindings.createStringBinding(() -> {
+                    if (isSearching.get()) {
+                        return i18n("search.no_results_found");
+                    } else {
+                        return i18n("datapack.empty");
+                    }
+                },
+                isSearching)
+            );
             placeholderContainer.getChildren().add(placeholderLabel);
             listView.setPlaceholder(placeholderContainer);
 
