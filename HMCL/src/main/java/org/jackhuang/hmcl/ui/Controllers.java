@@ -136,7 +136,7 @@ public final class Controllers {
         return scene;
     }
 
-    public static Stage getStage() {
+    public static @Nullable Stage getStage() {
         return stage;
     }
 

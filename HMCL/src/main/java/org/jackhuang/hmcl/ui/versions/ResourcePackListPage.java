@@ -566,8 +566,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            Stage stage = Controllers.getStage();
-            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+            maxWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
             imageContainer.setImage(packInfoObject.getIcon());
