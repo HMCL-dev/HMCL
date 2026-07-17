@@ -214,7 +214,18 @@ public final class Controllers {
     }
 
     public static void saveWindowStates() {
-        saveWindowBounds();
+        if (stageX != null) {
+            state().setX(toContentX(stageX.get()) / SCREEN.getBounds().getWidth());
+        }
+        if (stageY != null) {
+            state().setY(toContentY(stageY.get()) / SCREEN.getBounds().getHeight());
+        }
+        if (stageHeight != null) {
+            state().setHeight(toContentHeight(stageHeight.get()));
+        }
+        if (stageWidth != null) {
+            state().setWidth(toContentWidth(stageWidth.get()));
+        }
     }
 
     private static void saveWindowBounds() {
@@ -234,7 +245,7 @@ public final class Controllers {
 
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
-        saveWindowBounds();
+        saveWindowStates();
         stageX = null;
         stageY = null;
         stageHeight = null;
