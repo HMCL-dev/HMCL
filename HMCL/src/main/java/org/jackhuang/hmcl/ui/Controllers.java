@@ -98,10 +98,10 @@ public final class Controllers {
     public static final int MIN_HEIGHT = MIN_CONTENT_HEIGHT + CUSTOM_DECORATION_SHADOW_EXTENT;
     public static final Screen SCREEN = Screen.getPrimary();
     private static InvalidationListener stageSizeChangeListener;
-    private static DoubleProperty stageX = new SimpleDoubleProperty();
-    private static DoubleProperty stageY = new SimpleDoubleProperty();
-    private static DoubleProperty stageWidth = new SimpleDoubleProperty();
-    private static DoubleProperty stageHeight = new SimpleDoubleProperty();
+    private static final DoubleProperty stageX = new SimpleDoubleProperty();
+    private static final DoubleProperty stageY = new SimpleDoubleProperty();
+    private static final DoubleProperty stageWidth = new SimpleDoubleProperty();
+    private static final DoubleProperty stageHeight = new SimpleDoubleProperty();
 
     private static Scene scene;
     private static Stage stage;
@@ -214,74 +214,15 @@ public final class Controllers {
     }
 
     public static void saveWindowStates() {
-        if (stageX != null) {
-            state().setX(toContentX(stageX.get()) / SCREEN.getBounds().getWidth());
-        }
-        if (stageY != null) {
-            state().setY(toContentY(stageY.get()) / SCREEN.getBounds().getHeight());
-        }
-        if (stageHeight != null) {
-            state().setHeight(toContentHeight(stageHeight.get()));
-        }
-        if (stageWidth != null) {
-            state().setWidth(toContentWidth(stageWidth.get()));
-        }
-    }
-
-    private static void saveWindowBounds() {
-        if (stageX != null) {
-            state().setX(toContentX(stageX.get()) / SCREEN.getBounds().getWidth());
-        }
-        if (stageY != null) {
-            state().setY(toContentY(stageY.get()) / SCREEN.getBounds().getHeight());
-        }
-        if (stageHeight != null) {
-            state().setHeight(toContentHeight(stageHeight.get()));
-        }
-        if (stageWidth != null) {
-            state().setWidth(toContentWidth(stageWidth.get()));
-        }
+        state().setX(stageX.get());
+        state().setY(stageX.get());
+        state().setHeight(stageHeight.get());
+        state().setWidth(stageWidth.get());
     }
 
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
         saveWindowStates();
-        stageX = null;
-        stageY = null;
-        stageHeight = null;
-        stageWidth = null;
-    }
-
-    private static double toContentX(double stageX) {
-        return stageX + CUSTOM_DECORATION_SHADOW_SIZE;
-    }
-
-    private static double toContentY(double stageY) {
-        return stageY + CUSTOM_DECORATION_SHADOW_SIZE;
-    }
-
-    private static double toStageX(double contentX) {
-        return contentX - CUSTOM_DECORATION_SHADOW_SIZE;
-    }
-
-    private static double toStageY(double contentY) {
-        return contentY - CUSTOM_DECORATION_SHADOW_SIZE;
-    }
-
-    private static double toContentWidth(double stageWidth) {
-        return Math.max(0.0, stageWidth - CUSTOM_DECORATION_SHADOW_EXTENT);
-    }
-
-    private static double toContentHeight(double stageHeight) {
-        return Math.max(0.0, stageHeight - CUSTOM_DECORATION_SHADOW_EXTENT);
-    }
-
-    private static double toStageWidth(double contentWidth) {
-        return contentWidth + CUSTOM_DECORATION_SHADOW_EXTENT;
-    }
-
-    private static double toStageHeight(double contentHeight) {
-        return contentHeight + CUSTOM_DECORATION_SHADOW_EXTENT;
     }
 
     public static void initialize(Stage stage) {
@@ -304,38 +245,23 @@ public final class Controllers {
         Controllers.stage = stage;
 
         stageSizeChangeListener = o -> {
-            ReadOnlyDoubleProperty sourceProperty = (ReadOnlyDoubleProperty) o;
-            DoubleProperty targetProperty;
-            switch (sourceProperty.getName()) {
-                case "x": {
-                    targetProperty = stageX;
-                    break;
-                }
-                case "y": {
-                    targetProperty = stageY;
-                    break;
-                }
-                case "width": {
-                    targetProperty = stageWidth;
-                    break;
-                }
-                case "height": {
-                    targetProperty = stageHeight;
-                    break;
-                }
-                default: {
-                    targetProperty = null;
-                }
-            }
-
-            if (targetProperty != null
-                    && Controllers.stage != null
+            if (Controllers.stage != null
                     && !Controllers.stage.isIconified()
                     // https://github.com/HMCL-dev/HMCL/issues/4290
                     && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ||
                     !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
             ) {
-                targetProperty.set(sourceProperty.get());
+                ReadOnlyDoubleProperty property = (ReadOnlyDoubleProperty) o;
+                switch (property.getName()) {
+                    case "x" ->
+                            stageX.set((property.get() + CUSTOM_DECORATION_SHADOW_SIZE) / SCREEN.getBounds().getWidth());
+                    case "y" ->
+                            stageY.set((property.get() + CUSTOM_DECORATION_SHADOW_SIZE) / SCREEN.getBounds().getWidth());
+                    case "width" ->
+                            stageWidth.set(Math.max(0.0, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT) / SCREEN.getBounds().getWidth());
+                    case "height" ->
+                            stageHeight.set(Math.max(0.0, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT) / SCREEN.getBounds().getWidth());
+                }
             }
         };
 
@@ -343,8 +269,8 @@ public final class Controllers {
 
         double initContentWidth = Math.max(MIN_CONTENT_WIDTH, state().getWidth());
         double initContentHeight = Math.max(MIN_CONTENT_HEIGHT, state().getHeight());
-        double initWidth = toStageWidth(initContentWidth);
-        double initHeight = toStageHeight(initContentHeight);
+        double initWidth = initContentWidth + CUSTOM_DECORATION_SHADOW_EXTENT;
+        double initHeight = initContentHeight + CUSTOM_DECORATION_SHADOW_EXTENT;
 
         {
             double initContentX = state().getX() * SCREEN.getBounds().getWidth();
@@ -371,8 +297,8 @@ public final class Controllers {
                         * SCREEN.getBounds().getHeight();
             }
 
-            double initX = toStageX(initContentX);
-            double initY = toStageY(initContentY);
+            double initX = initContentX - CUSTOM_DECORATION_SHADOW_SIZE;
+            double initY = initContentY - CUSTOM_DECORATION_SHADOW_SIZE;
             stage.setX(initX);
             stage.setY(initY);
             stageX.set(initX);
