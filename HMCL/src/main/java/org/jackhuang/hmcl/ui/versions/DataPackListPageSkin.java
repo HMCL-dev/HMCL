@@ -164,6 +164,8 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                         searchField.clear();
                         searchPause.stop();
 
+                        filteredList.setPredicate(null);
+
                         isSearching.set(false);
                     });
             FXUtils.onEscPressed(searchField, closeSearchBar::fire);
