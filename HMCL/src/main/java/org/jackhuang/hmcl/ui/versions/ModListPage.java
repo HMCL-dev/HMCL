@@ -136,6 +136,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
+            if (this.modManager != modManager)
+                return; // instance switched while this (slower) load was in flight — a newer load governs
             updateSupportedLoaders(modManager);
 
             if (exception == null) {

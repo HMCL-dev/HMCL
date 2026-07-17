@@ -138,15 +138,7 @@ public final class LogExporter {
                     LinkedHashSet<String> incompatible = new LinkedHashSet<>();
                     if (StringUtils.isNotBlank(instanceMc)) {
                         for (LocalModFile host : activeMods) {
-                            Map<String, List<NestedJar>> byId = new LinkedHashMap<>();
-                            for (NestedJar node : host.getBundledTree())
-                                if (StringUtils.isNotBlank(node.id()))
-                                    byId.computeIfAbsent(node.id(), k -> new ArrayList<>()).add(node);
-                            for (Map.Entry<String, List<NestedJar>> e : byId.entrySet()) {
-                                List<NestedJar> copies = e.getValue();
-                                if (copies.size() > 1 && copies.stream().noneMatch(n -> MinecraftVersionMatcher.matches(n, instanceMc)))
-                                    incompatible.add(e.getKey() + " (bundled in " + host.getName() + ", " + copies.size() + " versions, none for MC " + instanceMc + ")");
-                            }
+                            collectIncompatibleBundles(host.getBundledTree(), instanceMc, host.getName(), incompatible);
                         }
                     }
 
@@ -227,6 +219,23 @@ public final class LogExporter {
                 throw new UncheckedIOException(e);
             }
         });
+    }
+
+    /// Flags same-id multi-version groups at *any* nesting depth whose copies none fit this instance's
+    /// Minecraft version — the wrapper would then fail to load that mod. Mirrors the mod list's
+    /// per-level grouping (which recurses), so a group nested two+ levels deep isn't missed.
+    private static void collectIncompatibleBundles(List<NestedJar> siblings, String instanceMc, String hostName, LinkedHashSet<String> out) {
+        Map<String, List<NestedJar>> byId = new LinkedHashMap<>();
+        for (NestedJar node : siblings)
+            if (StringUtils.isNotBlank(node.id()))
+                byId.computeIfAbsent(node.id(), k -> new ArrayList<>()).add(node);
+        for (Map.Entry<String, List<NestedJar>> e : byId.entrySet()) {
+            List<NestedJar> copies = e.getValue();
+            if (copies.size() > 1 && copies.stream().noneMatch(n -> MinecraftVersionMatcher.matches(n, instanceMc)))
+                out.add(e.getKey() + " (bundled in " + hostName + ", " + copies.size() + " versions, none for MC " + instanceMc + ")");
+        }
+        for (NestedJar node : siblings)
+            collectIncompatibleBundles(node.children(), instanceMc, hostName, out);
     }
 
     /// Prints a mod's Jar-in-Jar tree recursively (all nesting depths), one indented line per node.

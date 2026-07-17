@@ -39,7 +39,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class LocalModFile extends LocalAddonFile implements Comparable<LocalModFile> {
 
-    private Path file;
+    // Renamed on the FX thread when the mod is toggled (enableMod/disableMod) while background scans
+    // read it via getFile() — volatile so they see the current path, not a stale one.
+    private volatile Path file;
     private final ModManager modManager;
     private final LocalMod mod;
     private final String name;

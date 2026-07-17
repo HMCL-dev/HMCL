@@ -431,10 +431,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         // Minecraft version — must not count, or disabling a real standalone provider would wrongly
         // look still-satisfied and skip the warning.
         String instanceMc = getSkinnable().getGameVersion();
+        // Targets count as providers even if currently inactive: the checkbox guard runs AFTER the
+        // toggle has applied (onAction), so the target is already disabled at this point — skipping it
+        // would drop its ids from the provider map entirely and the "last provider lost" check could
+        // never fire for it.
+        Set<LocalModFile> targetSet = new HashSet<>(targets);
         Map<String, Set<LocalModFile>> activeProviders = new HashMap<>();
         for (ModInfoObject item : getSkinnable().getItems()) {
             LocalModFile mod = item.getModInfo();
-            if (!mod.isActive())
+            if (!mod.isActive() && !targetSet.contains(mod))
                 continue;
             if (StringUtils.isNotBlank(mod.getId()))
                 activeProviders.computeIfAbsent(mod.getId(), k -> new HashSet<>()).add(mod);
@@ -843,14 +848,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     rebuildNested(getItem());
             });
 
-            // Warn before disabling a mod that other enabled mods depend on. Intercept every way the
-            // checkbox can be toggled off — mouse press and the keyboard Space/Enter — so the check
-            // isn't bypassed by keyboard users.
-            checkBox.addEventFilter(MouseEvent.MOUSE_PRESSED, this::guardDisableToggle);
-            checkBox.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-                if (e.getCode() == KeyCode.SPACE || e.getCode() == KeyCode.ENTER)
-                    guardDisableToggle(e);
-            });
+            // Warn before disabling a mod that other enabled mods depend on. Hook onAction rather than
+            // the raw input events so EVERY activation path is covered — mouse, keyboard, and the
+            // accessibility FIRE action used by screen readers. onAction fires only on user activation,
+            // not on the programmatic active changes the cascade makes, so it doesn't re-enter.
+            checkBox.setOnAction(e -> guardDisableToggle());
             // Can't toggle until the bundled-id scan is ready — otherwise disabling a Jar-in-Jar host
             // could miss its dependents (see ModListPage.bundledScanReady). Matches the toolbar.
             checkBox.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
@@ -876,17 +878,19 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             getContainer().getChildren().setAll(container);
         }
 
-        /// Shared guard for every checkbox-toggle input path (mouse, keyboard): if disabling this mod
-        /// would break others that depend on it, block the toggle and let the user confirm/cascade.
-        private void guardDisableToggle(javafx.event.Event e) {
+        /// Guards disabling a mod that others depend on, for every activation path (mouse / keyboard /
+        /// accessibility). onAction fires after the toggle has applied, so when disabling would break
+        /// dependents we revert it and let the user confirm/cascade first; cancelling leaves the mod
+        /// enabled.
+        private void guardDisableToggle() {
             ModInfoObject item = getItem();
-            if (item == null || !checkBox.isSelected())
+            if (item == null || checkBox.isSelected())
                 return; // enabling (or empty) — nothing to warn about
-            List<ModInfoObject> dependents = findActiveDependents(List.of(item.getModInfo()));
-            if (dependents.isEmpty())
-                return;
-            e.consume(); // block the immediate toggle; let the user confirm first
             LocalModFile target = item.getModInfo();
+            List<ModInfoObject> dependents = findActiveDependents(List.of(target));
+            if (dependents.isEmpty())
+                return; // no dependents — let the disable stand
+            target.setActive(true); // undo the just-applied disable; the checkbox re-checks via its binding
             Controllers.dialog(new DependencyWarningDialog(dependents, i18n("mods.disable"), List.of(
                     new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
                             () -> target.setActive(false)),
@@ -1044,15 +1048,16 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         private Node createDependencyRow(LocalModFile modInfo, String depId) {
             Label name = new Label(depId);
 
-            var modManager = modInfo.getModManager();
             // A dependency may be installed under a compatible loader other than this mod's own
-            // (e.g. a Quilt mod depending on a Fabric mod), so resolve it across every loader bucket
-            // instead of only the depending mod's loaderType. Only call getLocalMod() when the mod
-            // actually exists — it creates an entry otherwise.
+            // (e.g. a Quilt mod depending on a Fabric mod), so match by id across ALL loaded mods.
+            // Resolved from the page's own item list — pure FX-side data — rather than through
+            // ModManager.hasMod/getLocalMod: those take the manager lock, and an in-flight refresh
+            // holds it for its whole parse, which would freeze the FX thread on panel expansion.
             Set<LocalModFile> installedFiles = new HashSet<>();
-            for (ModLoaderType type : ModLoaderType.values()) {
-                if (modManager.hasMod(depId, type))
-                    installedFiles.addAll(modManager.getLocalMod(depId, type).getFiles());
+            for (ModInfoObject item : getSkinnable().getItems()) {
+                LocalModFile file = item.getModInfo();
+                if (depId.equals(file.getId()))
+                    installedFiles.add(file);
             }
 
             Label status = new Label();

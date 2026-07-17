@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -291,6 +292,10 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     // concurrently, and unserialized writers would corrupt the shared cache file.
     private static final Map<Path, ReentrantLock> JIJ_SCAN_LOCKS = new ConcurrentHashMap<>();
 
+    // Mod files whose Jar-in-Jar scan threw, so they aren't re-extracted on every refresh of this
+    // manager. Not persisted — a transient failure gets retried on the next launcher start.
+    private final Set<Path> jijScanFailed = ConcurrentHashMap.newKeySet();
+
     public void scanBundledTrees() {
         List<CachedMod> snapshot;
         lock.lock();
@@ -304,7 +309,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
         List<CachedMod> pending = new ArrayList<>();
         for (CachedMod cm : snapshot)
-            if (cm.mod().hasBundledMods() && cm.mod().getBundledTree().isEmpty())
+            if (cm.mod().hasBundledMods() && cm.mod().getBundledTree().isEmpty()
+                    && !jijScanFailed.contains(cm.mod().getFile()))
                 pending.add(cm);
         if (pending.isEmpty())
             return;
@@ -318,6 +324,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         try {
             Map<String, NestedJarCache.Entry> persisted = NestedJarCache.load(cacheFile);
             boolean dirty = false;
+            Set<String> truncatedKeys = new HashSet<>();
             for (CachedMod cm : pending) {
                 if (!cm.mod().getBundledTree().isEmpty())
                     continue; // resolved by a concurrent scan while we waited for the lock
@@ -327,17 +334,31 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     cm.mod().setBundledTree(hit.tree()); // fingerprint match — reuse, no extraction
                 } else {
                     try (ZipFileTree tree = CompressingUtils.openZipTree(cm.mod().getFile())) {
-                        cm.mod().setBundledTree(NestedJarInspector.scan(tree));
+                        NestedJarInspector.ScanResult scanResult = NestedJarInspector.scan(tree);
+                        cm.mod().setBundledTree(scanResult.tree());
+                        if (scanResult.truncated() && key != null)
+                            truncatedKeys.add(key);
                         dirty = true;
                     } catch (Exception e) {
+                        // "File is gone" is the signature of a benign race — the user toggled the mod
+                        // (rename to/from .disabled) while we were scanning. Don't blacklist for that:
+                        // the next refresh sees the new path and succeeds. Everything else is remembered
+                        // for this manager's lifetime so refreshes stop re-attempting the expensive
+                        // extraction; a transient cause (AV lock on a fresh download) heals on the next
+                        // launcher start.
+                        if (!(e instanceof NoSuchFileException || e instanceof FileNotFoundException))
+                            jijScanFailed.add(cm.mod().getFile());
                         LOG.warning("Failed to scan Jar-in-Jar tree of " + cm.mod().getFile(), e);
                     }
                 }
             }
 
-            // A fresh scan happened — rewrite the cache from the current mods (dropping any now gone).
+            // A fresh scan happened — rewrite the cache file.
             if (dirty) {
-                Map<String, NestedJarCache.Entry> fresh = new LinkedHashMap<>();
+                // Merge into what's on disk rather than rebuilding solely from this manager's snapshot:
+                // another manager (e.g. a crash-report export) may have persisted entries for mods this
+                // snapshot predates, and those must not be dropped.
+                Map<String, NestedJarCache.Entry> fresh = new LinkedHashMap<>(persisted);
                 for (CachedMod cm : snapshot) {
                     if (!cm.mod().hasBundledMods())
                         continue;
@@ -348,6 +369,16 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     if (key != null)
                         fresh.put(key, new NestedJarCache.Entry(cm.lastModified(), cm.size(), tree));
                 }
+                // A truncated tree must not be persisted: the host file's fingerprint wouldn't change,
+                // so the incomplete result would be reused forever. Left un-cached, it is re-scanned
+                // (and the budget warning re-logged) on the next launcher start.
+                fresh.keySet().removeAll(truncatedKeys);
+                // Prune entries whose mod file is gone (neither the enabled nor the disabled name exists).
+                fresh.keySet().removeIf(key -> {
+                    Path modFile = getDirectory().resolve(key);
+                    return !Files.exists(modFile)
+                            && !Files.exists(modFile.resolveSibling(modFile.getFileName() + DISABLED_EXTENSION));
+                });
                 NestedJarCache.save(cacheFile, fresh);
             }
         } finally {

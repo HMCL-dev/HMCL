@@ -69,9 +69,25 @@ public final class MinecraftVersionMatcher {
             return false;
         int i = haystack.indexOf(version);
         while (i >= 0) {
+            char before = i > 0 ? haystack.charAt(i - 1) : ' ';
             int end = i + version.length();
             char after = end < haystack.length() ? haystack.charAt(end) : ' ';
-            if (after != '.' && !Character.isDigit(after)) // not a prefix of a longer version
+            // Must be a whole version token: not a prefix of a longer dotted version (trailing check),
+            // and not the tail of a larger unrelated number (leading check — else "1.20" would match
+            // inside a mod version like "9.1.20").
+            boolean leadingOk = before != '.' && !Character.isDigit(before);
+            boolean trailingOk;
+            if (Character.isDigit(after)) {
+                trailingOk = false;
+            } else if (after == '.') {
+                // A '.' continues the version only when a digit follows ("1.20" in "1.20.1"); a
+                // non-digit follower is an extension dot ("fabric-api-1.20.jar") — a valid boundary.
+                char next = end + 1 < haystack.length() ? haystack.charAt(end + 1) : ' ';
+                trailingOk = !Character.isDigit(next);
+            } else {
+                trailingOk = true;
+            }
+            if (leadingOk && trailingOk)
                 return true;
             i = haystack.indexOf(version, i + 1);
         }
@@ -101,7 +117,7 @@ public final class MinecraftVersionMatcher {
 
             if (s.charAt(0) != '[' && s.charAt(0) != '(') {
                 // A bare version is a soft minimum requirement in Maven / Forge.
-                if (v.compareTo(GameVersionNumber.asGameVersion(s)) >= 0)
+                if (GameVersionNumber.isKnown(s) && v.compareTo(GameVersionNumber.asGameVersion(s)) >= 0)
                     return true;
                 continue;
             }
@@ -112,13 +128,18 @@ public final class MinecraftVersionMatcher {
             int comma = body.indexOf(',');
             if (comma < 0) {
                 String only = body.trim(); // [a] — exact
-                if (!only.isEmpty() && v.compareTo(GameVersionNumber.asGameVersion(only)) == 0)
+                if (!only.isEmpty() && GameVersionNumber.isKnown(only) && v.compareTo(GameVersionNumber.asGameVersion(only)) == 0)
                     return true;
                 continue;
             }
 
             String loStr = body.substring(0, comma).trim();
             String hiStr = body.substring(comma + 1).trim();
+            // An unparseable bound must fail the interval closed. Otherwise a real version compares as
+            // "less than" the unknown sentinel, so a garbled upper bound would silently match everything.
+            if ((!loStr.isEmpty() && !GameVersionNumber.isKnown(loStr))
+                    || (!hiStr.isEmpty() && !GameVersionNumber.isKnown(hiStr)))
+                continue;
             boolean ok = true;
             if (!loStr.isEmpty()) {
                 int c = v.compareTo(GameVersionNumber.asGameVersion(loStr));
@@ -196,6 +217,10 @@ public final class MinecraftVersionMatcher {
             return vs.equals(prefix) || vs.startsWith(prefix + ".");
         }
 
+        // Fail closed on an unparseable bound: a real version compares as "less than" the unknown
+        // sentinel, so "<garbage" / "<=garbage" would otherwise match everything.
+        if (!GameVersionNumber.isKnown(ver))
+            return false;
         int c = v.compareTo(GameVersionNumber.asGameVersion(ver));
         return switch (op) {
             case "", "=", "==" -> c == 0; // bare version is an exact match in Fabric

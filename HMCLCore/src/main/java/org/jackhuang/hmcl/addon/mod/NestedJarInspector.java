@@ -85,13 +85,22 @@ public final class NestedJarInspector {
         }
     }
 
-    /// Scans the full Jar-in-Jar tree of an already-open mod jar. Returns an empty list when the mod
+    /// A full tree scan's outcome: the tree, plus whether the node budget cut it short. A truncated
+    /// tree is still useful for display, but callers must NOT persist it as if it were complete —
+    /// the host file's fingerprint wouldn't change, so the incompleteness would become permanent.
+    public record ScanResult(List<NestedJar> tree, boolean truncated) {
+        public static final ScanResult EMPTY = new ScanResult(List.of(), false);
+    }
+
+    /// Scans the full Jar-in-Jar tree of an already-open mod jar. Returns an empty result when the mod
     /// declares no nested jars (or isn't a Fabric/Quilt/Forge/NeoForge mod).
-    public static List<NestedJar> scan(ZipFileTree modTree) {
+    public static ScanResult scan(ZipFileTree modTree) {
         List<String> childPaths = childJarPaths(modTree);
         if (childPaths.isEmpty())
-            return List.of();
-        return scanChildren(modTree, childPaths, 1, new int[]{MAX_NODES});
+            return ScanResult.EMPTY;
+        boolean[] truncated = {false};
+        List<NestedJar> tree = scanChildren(modTree, childPaths, 1, new int[]{MAX_NODES}, truncated);
+        return new ScanResult(tree, truncated[0]);
     }
 
     /// Flattens every non-blank mod id in the tree (all depths) into {@code out}.
@@ -103,11 +112,12 @@ public final class NestedJarInspector {
         }
     }
 
-    private static List<NestedJar> scanChildren(ZipFileTree parentTree, List<String> childPaths, int depth, int[] budget) {
+    private static List<NestedJar> scanChildren(ZipFileTree parentTree, List<String> childPaths, int depth, int[] budget, boolean[] truncated) {
         List<NestedJar> result = new ArrayList<>();
         for (String childPath : childPaths) {
             if (budget[0] <= 0) {
                 LOG.warning("Jar-in-Jar node budget exhausted; stopping scan at " + childPath);
+                truncated[0] = true;
                 break;
             }
             budget[0]--;
@@ -125,7 +135,7 @@ public final class NestedJarInspector {
                     List<String> grandchildPaths = depth < MAX_DEPTH ? childJarPaths(childTree) : List.of();
                     List<NestedJar> grandchildren = grandchildPaths.isEmpty()
                             ? List.of()
-                            : scanChildren(childTree, grandchildPaths, depth + 1, budget);
+                            : scanChildren(childTree, grandchildPaths, depth + 1, budget, truncated);
                     result.add(m == null
                             ? new NestedJar(childPath, baseName(childPath), null, null, null, ModLoaderType.UNKNOWN, null, grandchildren)
                             : new NestedJar(childPath, baseName(childPath), m.id, m.name, m.version, m.loaderType, m.minecraftVersion, grandchildren));
