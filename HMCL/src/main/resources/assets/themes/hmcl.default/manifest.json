@@ -25,7 +25,10 @@
   },
   "authors": [
     {
-      "name": "HMCL"
+      "name": {
+        "default": "HMCL",
+        "en-Qabs": "ꞀƆWH"
+      }
     }
   ],
   "theme": {}

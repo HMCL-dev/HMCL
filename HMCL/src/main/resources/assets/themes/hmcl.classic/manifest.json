@@ -12,9 +12,12 @@
     "zh-Hans" : "HMCL 启动器经典主题",
     "zh-Hant" : "HMCL 啟動器經典主題"
   },
-  "authors" : [
+  "authors": [
     {
-      "name" : "HMCL"
+      "name": {
+        "default": "HMCL",
+        "en-Qabs": "ꞀƆWH"
+      }
     }
   ],
   "themes" : [
