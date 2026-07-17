@@ -158,6 +158,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         FXUtils.runInFX(() -> selectedVersion.set(versionID));
     }
 
+    public DownloadPage.DownloadCallback getCallback() {
+        return callback;
+    }
+
     private void search(String userGameVersion, RemoteAddonRepository.Category category, int pageOffset, String searchFilter, RemoteAddonRepository.SortType sort) {
         retrySearch = null;
         setLoading(true);
