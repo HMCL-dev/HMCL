@@ -219,6 +219,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             listView.setCellFactory(x -> new ModInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("mods.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+            
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
                 if (isSearching) {

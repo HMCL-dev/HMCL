@@ -33,6 +33,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
@@ -193,6 +194,13 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
             listView.setCellFactory(x -> new DataPackInfoListCell(listView, getSkinnable().readOnly));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("datapack.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+
             this.listView.setItems(filteredList);
             listView.getItems().addListener(listener);
 

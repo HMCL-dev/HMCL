@@ -371,6 +371,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
                 listView.setCellFactory(x -> new ResourcePackListCell(listView, control));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+                StackPane placeholderContainer = new StackPane();
+                placeholderContainer.getStyleClass().add("notice-pane");
+                Label placeholderLabel = new Label(i18n("resourcepack.empty"));
+                placeholderContainer.getChildren().add(placeholderLabel);
+                listView.setPlaceholder(placeholderContainer);
+
                 Bindings.bindContent(listView.getItems(), control.getItems());
 
                 listView.setOnContextMenuRequested(event -> {
