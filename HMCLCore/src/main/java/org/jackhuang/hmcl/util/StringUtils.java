@@ -116,6 +116,25 @@ public final class StringUtils {
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
+    public static String capitalizeWords(String str) {
+        if (str == null || str.isEmpty())
+            return str;
+        String[] words = str.replace('-', ' ').replace('_', ' ').split(" ");
+        for (int i = 0; i < words.length; i++) {
+            words[i] = capitalizeFirst(words[i]);
+        }
+        return String.join(" ", words);
+    }
+
+    public static boolean containsDigit(String str) {
+        int l = str.length();
+        for (int i = 0; i < l; i++) {
+            char c = str.charAt(i);
+            if ('0' <= c && c <= '9') return true;
+        }
+        return false;
+    }
+
     public static String substringBeforeLast(String str, char delimiter) {
         return substringBeforeLast(str, delimiter, str);
     }
@@ -606,11 +625,23 @@ public final class StringUtils {
         return true;
     }
 
+    public static boolean isAlphabetic(char ch) {
+        return ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z';
+    }
+
+    public static boolean isAlphabetic(String str) {
+        int length = str.length();
+        for (int i = 0; i < length; i++) {
+            if (!isAlphabetic(str.charAt(i))) return false;
+        }
+        return true;
+    }
+
     public static boolean isAlphabeticOrNumber(String str) {
         int length = str.length();
         for (int i = 0; i < length; i++) {
             char ch = str.charAt(i);
-            if (!(ch >= '0' && ch <= '9') && !(ch >= 'a' && ch <= 'z') && !(ch >= 'A' && ch <= 'Z'))
+            if (!(ch >= '0' && ch <= '9') && !isAlphabetic(ch))
                 return false;
         }
         return true;
