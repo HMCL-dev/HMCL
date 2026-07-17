@@ -29,7 +29,7 @@ import java.nio.file.Path;
 
 /// @author Glavo
 public enum NBTFileType {
-    COMPRESSED("dat", "dat_old") {
+    COMPRESSED("nbt", "dat", "dat_old") {
         @Override
         public Tag read(Path file) throws IOException {
             return NBTCodec.of().readTag(file);
