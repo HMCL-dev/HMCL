@@ -131,10 +131,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     () -> {
                         changeToolbar(toolbarNormal);
 
+                        searchField.clear();
                         searchPause.stop();
 
                         isSearching.set(false);
-                        searchField.clear();
                         Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                     });
 

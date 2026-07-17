@@ -161,10 +161,10 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             });
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
+                        searchField.clear();
                         searchPause.stop();
 
                         isSearching.set(false);
-                        searchField.clear();
                     });
             FXUtils.onEscPressed(searchField, closeSearchBar::fire);
             searchBar.getChildren().addAll(searchField, closeSearchBar);

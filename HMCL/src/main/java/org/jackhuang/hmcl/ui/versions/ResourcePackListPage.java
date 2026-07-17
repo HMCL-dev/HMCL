@@ -322,10 +322,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         () -> {
                             changeToolbar(toolbarNormal);
 
+                            searchField.clear();
                             searchPause.stop();
 
                             isSearching.set(false);
-                            searchField.clear();
                             Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                         });
 
