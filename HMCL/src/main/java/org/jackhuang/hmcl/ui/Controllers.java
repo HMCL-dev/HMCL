@@ -36,9 +36,7 @@ import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
+import javafx.stage.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
@@ -73,6 +71,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -585,7 +584,7 @@ public final class Controllers {
 
     /// Shows a warning that confirms backing up a read-only settings file before overwriting it.
     ///
-    /// @param text the file-specific read-only warning
+    /// @param text      the file-specific read-only warning
     /// @param overwrite the action that backs up and overwrites the file
     public static void confirmBackupAndOverwrite(String text, ThrowingRunnable overwrite) {
         dialog(new MessageDialogPane.Builder(
@@ -692,6 +691,22 @@ public final class Controllers {
 
     public static void showToast(String content) {
         decorator.showToast(content);
+    }
+
+    public static @Nullable Path showDialog(DirectoryChooser directoryChooser) {
+        return FileUtils.toPath(directoryChooser.showDialog(stage));
+    }
+
+    public static @Nullable Path showOpenDialog(FileChooser fileChooser) {
+        return FileUtils.toPath(fileChooser.showOpenDialog(stage));
+    }
+
+    public static @Nullable Path showSaveDialog(FileChooser fileChooser) {
+        return FileUtils.toPath(fileChooser.showSaveDialog(stage));
+    }
+
+    public static @Nullable List<Path> showOpenMultipleDialog(FileChooser fileChooser) {
+        return FileUtils.toPaths(fileChooser.showOpenMultipleDialog(stage));
     }
 
     public static void onHyperlinkAction(String href) {

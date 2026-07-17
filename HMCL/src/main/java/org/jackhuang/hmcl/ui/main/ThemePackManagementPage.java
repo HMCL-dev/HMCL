@@ -159,7 +159,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         chooser.getExtensionFilters().setAll(
                 new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
 
-        @Nullable Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        @Nullable Path file = Controllers.showOpenDialog(chooser);
         if (file == null) {
             return;
         }

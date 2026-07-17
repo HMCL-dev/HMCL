@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +170,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         fileChooser.setTitle(i18n("button.save_as"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension));
         fileChooser.setInitialFileName(file.file().filename());
-        Path dest = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
+        Path dest = Controllers.showSaveDialog(fileChooser);
         if (dest == null) {
             return;
         }

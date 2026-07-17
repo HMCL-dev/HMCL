@@ -91,8 +91,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("datapack.add.title"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.datapack"), "*.zip"));
-        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
-
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
         if (res != null) {
             installMultiDataPack(res);
         }
