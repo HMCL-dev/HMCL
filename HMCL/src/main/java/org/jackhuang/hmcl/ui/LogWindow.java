@@ -175,7 +175,6 @@ public final class LogWindow extends Stage {
         LogWindowImpl() {
             getStyleClass().add("log-window");
 
-            listView.getStyleClass().add("no-horizontal-scrollbar");
             listView.getProperties().put("no-smooth-scrolling", true);
             listView.setItems(FXCollections.observableList(new CircularArrayList<>(logs.size())));
 
@@ -336,13 +335,18 @@ public final class LogWindow extends Stage {
                                 if (nowWrap) {
                                     maxWidthProperty().bind(clippedContainer.widthProperty());
                                     prefWidthProperty().bind(clippedContainer.widthProperty());
+                                    listView.getStyleClass().add("no-horizontal-scrollbar");
                                 } else {
                                     maxWidthProperty().unbind();
                                     prefWidthProperty().unbind();
 
                                     setMaxWidth(Region.USE_PREF_SIZE);
                                     setPrefWidth(Region.USE_COMPUTED_SIZE);
+                                    listView.getStyleClass().remove("no-horizontal-scrollbar");
                                 }
+
+                                // only for horizontal scrollbar
+                                listView.requestLayout();
                             });
                         }
                         setPadding(new Insets(2));
