@@ -96,7 +96,7 @@ public final class Controllers {
     public static final int MIN_CONTENT_HEIGHT = 450 + 2 + 40; // bg height + border width*2 + toolbar height
     public static final int MIN_WIDTH = MIN_CONTENT_WIDTH + CUSTOM_DECORATION_SHADOW_EXTENT;
     public static final int MIN_HEIGHT = MIN_CONTENT_HEIGHT + CUSTOM_DECORATION_SHADOW_EXTENT;
-    public static final Screen SCREEN = Screen.getPrimary();
+    public static final Rectangle2D PRIMARY_SCREEN_BOUNDS = Screen.getPrimary().getBounds();
     private static InvalidationListener stageSizeChangeListener;
     private static final DoubleProperty contentX = new SimpleDoubleProperty();
     private static final DoubleProperty contentY = new SimpleDoubleProperty();
@@ -218,8 +218,8 @@ public final class Controllers {
     }
 
     public static void saveWindowStates() {
-        state().setX(contentX.get() / SCREEN.getBounds().getWidth());
-        state().setY(contentY.get() / SCREEN.getBounds().getHeight());
+        state().setX(contentX.get() / PRIMARY_SCREEN_BOUNDS.getWidth());
+        state().setY(contentY.get() / PRIMARY_SCREEN_BOUNDS.getHeight());
         state().setHeight(contentHeight.get());
         state().setWidth(contentWidth.get());
     }
@@ -240,7 +240,7 @@ public final class Controllers {
                 LOG.info("Enable sub-pixel antialiasing");
                 System.getProperties().put("prism.lcdtext", "true");
             } else if ("gray".equalsIgnoreCase(fontAntiAliasing)
-                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && SCREEN.getOutputScaleX() > 1) {
+                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Screen.getPrimary().getOutputScaleX() > 1) {
                 LOG.info("Disable sub-pixel antialiasing");
                 System.getProperties().put("prism.lcdtext", "false");
             }
@@ -273,13 +273,13 @@ public final class Controllers {
         double initHeight = initContentHeight + CUSTOM_DECORATION_SHADOW_EXTENT;
 
         {
-            double initContentX = state().getX() * SCREEN.getBounds().getWidth();
-            double initContentY = state().getY() * SCREEN.getBounds().getHeight();
+            double initContentX = state().getX() * PRIMARY_SCREEN_BOUNDS.getWidth();
+            double initContentY = state().getY() * PRIMARY_SCREEN_BOUNDS.getHeight();
 
             boolean invalid = true;
             double border = 20D;
             for (Screen screen : Screen.getScreens()) {
-                Rectangle2D bound = screen.getBounds();
+                Rectangle2D bound = PRIMARY_SCREEN_BOUNDS;
 
                 if (bound.getMinX() + border <= initContentX + initContentWidth
                         && initContentX <= bound.getMaxX() - border
@@ -291,10 +291,10 @@ public final class Controllers {
             }
 
             if (invalid) {
-                initContentX = (0.5D - initContentWidth / SCREEN.getBounds().getWidth() / 2)
-                        * SCREEN.getBounds().getWidth();
-                initContentY = (0.5D - initContentHeight / SCREEN.getBounds().getHeight() / 2)
-                        * SCREEN.getBounds().getHeight();
+                initContentX = (0.5D - initContentWidth / PRIMARY_SCREEN_BOUNDS.getWidth() / 2)
+                        * PRIMARY_SCREEN_BOUNDS.getWidth();
+                initContentY = (0.5D - initContentHeight / PRIMARY_SCREEN_BOUNDS.getHeight() / 2)
+                        * PRIMARY_SCREEN_BOUNDS.getHeight();
             }
 
             double initX = initContentX - CUSTOM_DECORATION_SHADOW_SIZE;
