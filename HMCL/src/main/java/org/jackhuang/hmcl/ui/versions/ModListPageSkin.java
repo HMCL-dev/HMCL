@@ -90,8 +90,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
     private final JFXListView<ModInfoObject> listView;
 
+    /// Whether the search mechanism is currently active.
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
     private final JFXTextField searchField;
+
+    /// Timer for debouncing search input to avoid executing search on every keystroke.
     private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
     ModListPageSkin(ModListPage skinnable) {

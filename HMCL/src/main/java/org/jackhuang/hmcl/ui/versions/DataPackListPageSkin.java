@@ -82,9 +82,13 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     private final JFXListView<DataPackInfoObject> listView;
     private final FilteredList<DataPackInfoObject> filteredList;
 
+    /// Whether the search mechanism is currently active.
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
     private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
     private final JFXTextField searchField;
+
+    /// Timer for debouncing search input to avoid executing search on every keystroke.
     private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
     private static final AtomicInteger lastShiftClickIndex = new AtomicInteger(-1);

@@ -266,7 +266,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final HBox toolbarNormal = new HBox();
         private final HBox toolbarSelecting = new HBox();
 
+        /// Whether the search mechanism is currently active.
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
+        /// Timer for debouncing search input to avoid executing search on every keystroke.
         private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
         private ResourcePackListPageSkin(ResourcePackListPage control) {
