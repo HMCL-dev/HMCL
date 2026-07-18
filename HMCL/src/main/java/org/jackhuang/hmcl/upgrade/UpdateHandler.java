@@ -43,8 +43,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -126,23 +124,6 @@ public final class UpdateHandler {
                         if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
                             throw new IOException("Current JAR is not verified");
                         }
-
-                        CompletableFuture<Void> future = new CompletableFuture<>();
-
-                        Platform.runLater(() -> {
-                            try {
-                                Controllers.saveWindowStates();
-                            } finally {
-                                future.complete(null);
-                            }
-                        });
-
-                        try {
-                            future.get();
-                        } catch (ExecutionException | InterruptedException ignored) {
-                            // Ignore
-                        }
-
 
                         try {
                             FileSaver.waitForAllSaves();

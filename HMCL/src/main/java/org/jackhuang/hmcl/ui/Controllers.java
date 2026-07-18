@@ -217,16 +217,8 @@ public final class Controllers {
         return decorator;
     }
 
-    public static void saveWindowStates() {
-        state().setX(contentX.get() / PRIMARY_SCREEN_BOUNDS.getWidth());
-        state().setY(contentY.get() / PRIMARY_SCREEN_BOUNDS.getHeight());
-        state().setHeight(contentHeight.get());
-        state().setWidth(contentWidth.get());
-    }
-
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
-        saveWindowStates();
     }
 
     public static void initialize(Stage stage) {
@@ -247,25 +239,6 @@ public final class Controllers {
         }
 
         Controllers.stage = stage;
-
-        stageSizeChangeListener = o -> {
-            if (Controllers.stage != null
-                    && !Controllers.stage.isIconified()
-                    // https://github.com/HMCL-dev/HMCL/issues/4290
-                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ||
-                    !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
-            ) {
-                ReadOnlyDoubleProperty property = (ReadOnlyDoubleProperty) o;
-                switch (property.getName()) {
-                    case "x" -> contentX.set(property.get() + CUSTOM_DECORATION_SHADOW_SIZE);
-                    case "y" -> contentY.set(property.get() + CUSTOM_DECORATION_SHADOW_SIZE);
-                    case "width" -> contentWidth.set(Math.max(MIN_CONTENT_WIDTH, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT));
-                    case "height" -> contentHeight.set(Math.max(MIN_CONTENT_HEIGHT, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT));
-                }
-            }
-        };
-
-        WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
 
         double initContentWidth = Math.max(MIN_CONTENT_WIDTH, state().getWidth());
         double initContentHeight = Math.max(MIN_CONTENT_HEIGHT, state().getHeight());
@@ -309,6 +282,47 @@ public final class Controllers {
         stage.setWidth(initWidth);
         contentHeight.set(initContentHeight);
         contentWidth.set(initContentWidth);
+
+        stageSizeChangeListener = o -> {
+            ReadOnlyDoubleProperty property = (ReadOnlyDoubleProperty) o;
+            Stage currentStage = property.getBean() instanceof Stage s ? s : null;
+            if (currentStage == null)
+                return;
+
+            boolean saveState = !currentStage.isIconified()
+                    // https://github.com/HMCL-dev/HMCL/issues/4290
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    || !currentStage.isFullScreen() && !currentStage.isMaximized());
+
+            switch (property.getName()) {
+                case "x" -> {
+                    double value = property.get() + CUSTOM_DECORATION_SHADOW_SIZE;
+                    contentX.set(value);
+                    if (saveState)
+                        state().setX(value / PRIMARY_SCREEN_BOUNDS.getWidth());
+                }
+                case "y" -> {
+                    double value = property.get() + CUSTOM_DECORATION_SHADOW_SIZE;
+                    contentY.set(value);
+                    if (saveState)
+                        state().setY(value / PRIMARY_SCREEN_BOUNDS.getHeight());
+                }
+                case "width" -> {
+                    double value = Math.max(MIN_CONTENT_WIDTH, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT);
+                    contentWidth.set(value);
+                    if (saveState)
+                        state().setWidth(value);
+                }
+                case "height" -> {
+                    double value = Math.max(MIN_CONTENT_HEIGHT, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT);
+                    contentHeight.set(value);
+                    if (saveState)
+                        state().setHeight(value);
+                }
+            }
+        };
+
+        WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
         stage.xProperty().addListener(weakListener);
         stage.yProperty().addListener(weakListener);
         stage.heightProperty().addListener(weakListener);
