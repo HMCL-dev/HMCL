@@ -31,8 +31,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.Log;
@@ -174,9 +172,6 @@ public final class LogWindow extends Stage {
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
         private final StackPane stackPane = new StackPane();
 
-        /// Bridge cell width and computed max width
-        private final DoubleProperty maxTextWidth = new SimpleDoubleProperty(0);
-
         LogWindowImpl() {
             getStyleClass().add("log-window");
 
@@ -203,30 +198,6 @@ public final class LogWindow extends Stage {
                 buttonText[i].bind(Bindings.concat(levelCountMap.get(LEVELS[i]), " " + LEVELS[i].name().toLowerCase(Locale.ROOT) + "s"));
                 levelShownMap.get(LEVELS[i]).bind(showLevel[i]);
             }
-
-            // for max width computation
-            Text textForMeasuring = new Text();
-            String fontFamily = Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT);
-            double fontSize = settings().logFontSizeProperty().get();
-            textForMeasuring.setFont(Font.font(fontFamily, fontSize));
-
-            wrapText.addListener((obs, wrapTextOld, wrapTextNew) -> {
-                if (wrapTextNew) {
-                    var clippedContainer = (Region) listView.lookup(".clipped-container");
-                    if (clippedContainer != null) {
-                        maxTextWidth.bind(clippedContainer.widthProperty());
-                    }
-                } else {
-                    maxTextWidth.unbind();
-
-                    double max = 0;
-                    for (Log log : LogWindow.this.logs) {
-                        textForMeasuring.setText(log.getLog());
-                        max = Double.max(max, textForMeasuring.getLayoutBounds().getWidth() + 16); // 16: padding
-                    }
-                    maxTextWidth.set(max);
-                }
-            });
         }
 
         private void onTerminateGame() {
@@ -359,8 +330,21 @@ public final class LogWindow extends Stage {
                 listView.setCellFactory(x -> new ListCell<>() {
                     {
                         getStyleClass().add("log-window-list-cell");
-                        maxWidthProperty().bind(control.maxTextWidth);
-                        prefWidthProperty().bind(control.maxTextWidth);
+                        Region clippedContainer = (Region) listView.lookup(".clipped-container");
+                        if (clippedContainer != null) {
+                            wrapTextProperty().addListener((obs, oldWrap, nowWrap) -> {
+                                if (nowWrap) {
+                                    maxWidthProperty().bind(clippedContainer.widthProperty());
+                                    prefWidthProperty().bind(clippedContainer.widthProperty());
+                                } else {
+                                    maxWidthProperty().unbind();
+                                    prefWidthProperty().unbind();
+
+                                    setMaxWidth(Region.USE_PREF_SIZE);
+                                    setPrefWidth(Region.USE_COMPUTED_SIZE);
+                                }
+                            });
+                        }
                         setPadding(new Insets(2));
                         wrapTextProperty().bind(control.wrapText);
                         setGraphic(null);
