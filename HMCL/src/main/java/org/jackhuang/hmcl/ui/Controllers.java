@@ -279,7 +279,7 @@ public final class Controllers {
             boolean invalid = true;
             double border = 20D;
             for (Screen screen : Screen.getScreens()) {
-                Rectangle2D bound = PRIMARY_SCREEN_BOUNDS;
+                Rectangle2D bound = screen.getBounds();
 
                 if (bound.getMinX() + border <= initContentX + initContentWidth
                         && initContentX <= bound.getMaxX() - border
