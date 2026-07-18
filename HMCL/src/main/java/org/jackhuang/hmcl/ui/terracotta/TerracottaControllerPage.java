@@ -95,7 +95,7 @@ public class TerracottaControllerPage extends StackPane {
          Consider moving UI into multiple files for each state respectively. */
     public TerracottaControllerPage() {
         focusedBinding = BindingMapping.of(this.sceneProperty())
-                .flatMap(it -> it != null ? it.windowProperty() : null)
+                .flatMap(it -> it != null ? it.windowProperty() : new SimpleObjectProperty<>())
                 .flatMap(it -> it != null ? it.focusedProperty() : null, () -> false);
 
         FXUtils.onChange(focusedBinding, focused -> {
