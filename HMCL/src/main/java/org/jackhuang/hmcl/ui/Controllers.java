@@ -98,10 +98,10 @@ public final class Controllers {
     public static final int MIN_HEIGHT = MIN_CONTENT_HEIGHT + CUSTOM_DECORATION_SHADOW_EXTENT;
     public static final Screen SCREEN = Screen.getPrimary();
     private static InvalidationListener stageSizeChangeListener;
-    private static final DoubleProperty stageX = new SimpleDoubleProperty();
-    private static final DoubleProperty stageY = new SimpleDoubleProperty();
-    private static final DoubleProperty stageWidth = new SimpleDoubleProperty();
-    private static final DoubleProperty stageHeight = new SimpleDoubleProperty();
+    private static final DoubleProperty contentX = new SimpleDoubleProperty();
+    private static final DoubleProperty contentY = new SimpleDoubleProperty();
+    private static final DoubleProperty contentWidth = new SimpleDoubleProperty();
+    private static final DoubleProperty contentHeight = new SimpleDoubleProperty();
 
     private static Scene scene;
     private static Stage stage;
@@ -137,11 +137,11 @@ public final class Controllers {
     }
 
     public static ReadOnlyDoubleProperty windowWidthProperty() {
-        return stageWidth;
+        return contentWidth;
     }
 
     public static ReadOnlyDoubleProperty windowHeightProperty() {
-        return stageHeight;
+        return contentHeight;
     }
 
     @FXThread
@@ -218,10 +218,10 @@ public final class Controllers {
     }
 
     public static void saveWindowStates() {
-        state().setX(stageX.get());
-        state().setY(stageX.get());
-        state().setHeight(stageHeight.get());
-        state().setWidth(stageWidth.get());
+        state().setX(contentX.get() / SCREEN.getBounds().getWidth());
+        state().setY(contentY.get() / SCREEN.getBounds().getHeight());
+        state().setHeight(contentHeight.get());
+        state().setWidth(contentWidth.get());
     }
 
     public static void onApplicationStop() {
@@ -257,14 +257,10 @@ public final class Controllers {
             ) {
                 ReadOnlyDoubleProperty property = (ReadOnlyDoubleProperty) o;
                 switch (property.getName()) {
-                    case "x" ->
-                            stageX.set((property.get() + CUSTOM_DECORATION_SHADOW_SIZE) / SCREEN.getBounds().getWidth());
-                    case "y" ->
-                            stageY.set((property.get() + CUSTOM_DECORATION_SHADOW_SIZE) / SCREEN.getBounds().getWidth());
-                    case "width" ->
-                            stageWidth.set(Math.max(0.0, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT) / SCREEN.getBounds().getWidth());
-                    case "height" ->
-                            stageHeight.set(Math.max(0.0, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT) / SCREEN.getBounds().getWidth());
+                    case "x" -> contentX.set(property.get() + CUSTOM_DECORATION_SHADOW_SIZE);
+                    case "y" -> contentY.set(property.get() + CUSTOM_DECORATION_SHADOW_SIZE);
+                    case "width" -> contentWidth.set(Math.max(MIN_CONTENT_WIDTH, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT));
+                    case "height" -> contentHeight.set(Math.max(MIN_CONTENT_HEIGHT, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT));
                 }
             }
         };
@@ -305,14 +301,14 @@ public final class Controllers {
             double initY = initContentY - CUSTOM_DECORATION_SHADOW_SIZE;
             stage.setX(initX);
             stage.setY(initY);
-            stageX.set(initX);
-            stageY.set(initY);
+            contentX.set(initX);
+            contentY.set(initY);
         }
 
         stage.setHeight(initHeight);
         stage.setWidth(initWidth);
-        stageHeight.set(initHeight);
-        stageWidth.set(initWidth);
+        contentHeight.set(initHeight);
+        contentWidth.set(initWidth);
         stage.xProperty().addListener(weakListener);
         stage.yProperty().addListener(weakListener);
         stage.heightProperty().addListener(weakListener);
