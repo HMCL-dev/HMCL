@@ -307,8 +307,8 @@ public final class Controllers {
 
         stage.setHeight(initHeight);
         stage.setWidth(initWidth);
-        contentHeight.set(initHeight);
-        contentWidth.set(initWidth);
+        contentHeight.set(initContentHeight);
+        contentWidth.set(initContentWidth);
         stage.xProperty().addListener(weakListener);
         stage.yProperty().addListener(weakListener);
         stage.heightProperty().addListener(weakListener);
