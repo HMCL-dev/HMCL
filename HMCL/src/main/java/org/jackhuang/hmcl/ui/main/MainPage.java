@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
@@ -30,6 +31,7 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
@@ -232,14 +234,37 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
-            menuButton.setOnAction(e -> GameListPopupMenu.show(
+            menuButton.setOnAction(e -> {
+                JFXPopup popup = GameListPopupMenu.showAndGetPopup(
                     menuButton,
                     JFXPopup.PopupVPosition.BOTTOM,
                     JFXPopup.PopupHPosition.RIGHT,
                     0,
                     -menuButton.getHeight(),
                     repository, versions
-            ));
+                );
+
+                if (popup != null) {
+                    Node graphic = menuButton.getGraphic();
+                    if (graphic != null) {
+                        if (AnimationUtils.isAnimationEnabled()) {
+                            Duration duration = Duration.millis(200);
+                            RotateTransition rotateOpen = new RotateTransition(duration, graphic);
+                            rotateOpen.setToAngle(-180);
+                            FXUtils.playAnimation(graphic, "arrow-rotation", rotateOpen);
+
+                            popup.setOnHidden(windowEvent -> {
+                                RotateTransition rotateClose = new RotateTransition(duration, graphic);
+                                rotateClose.setToAngle(0);
+                                FXUtils.playAnimation(graphic, "arrow-rotation", rotateClose);
+                            });
+                        } else {
+                            graphic.setRotate(-180);
+                            popup.setOnHidden(windowEvent -> graphic.setRotate(0));
+                        }
+                    }
+                }
+            });
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
 

@@ -404,6 +404,10 @@
     -fx-cursor: hand;
 }
 
+.installer-item-status:incompatible {
+    -fx-opacity: 0.6;
+}
+
 .installer-item-wrapper {
     -fx-background-color: -monet-surface;
     -fx-background-radius: 4;

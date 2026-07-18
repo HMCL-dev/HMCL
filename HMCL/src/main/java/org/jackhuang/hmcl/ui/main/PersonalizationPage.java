@@ -23,6 +23,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -204,6 +205,60 @@ public class PersonalizationPage extends StackPane {
         inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
             if (!settings().getThemeAppearanceOverrides().contains(setting)) {
                 directProperty.setValue(effectiveValueSupplier.get());
+                settings().getThemeAppearanceOverrides().add(setting);
+            } else {
+                settings().getThemeAppearanceOverrides().remove(setting);
+            }
+            refresh.invalidated(null);
+            event.consume();
+        });
+        refresh.invalidated(null);
+    }
+
+    /// Binds a line toggle button to an inheritable theme appearance setting.
+    private static void bindThemeAppearanceToggleButton(
+            LineToggleButton button,
+            String setting,
+            BooleanProperty directProperty,
+            Supplier<Boolean> effectiveValueSupplier) {
+        JFXButton inheritButton = createThemeAppearanceOverrideButton();
+        button.setTitleTrailing(inheritButton);
+
+        Holder<Boolean> updating = new Holder<>(false);
+        InvalidationListener refresh = ignored -> {
+            if (updating.value) {
+                return;
+            }
+            updating.value = true;
+            try {
+                boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
+                button.setSelected(overridden ? directProperty.get() : effectiveValueSupplier.get());
+                updateThemeAppearanceOverrideButton(inheritButton, !overridden);
+            } finally {
+                updating.value = false;
+            }
+        };
+
+        button.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (updating.value) {
+                return;
+            }
+            updating.value = true;
+            try {
+                directProperty.set(Boolean.TRUE.equals(newValue));
+                settings().getThemeAppearanceOverrides().add(setting);
+                updateThemeAppearanceOverrideButton(inheritButton, false);
+            } finally {
+                updating.value = false;
+            }
+            refresh.invalidated(null);
+        });
+        directProperty.addListener(refresh);
+        addThemeAppearanceRefreshListener(refresh);
+
+        inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            if (!settings().getThemeAppearanceOverrides().contains(setting)) {
+                directProperty.set(button.isSelected());
                 settings().getThemeAppearanceOverrides().add(setting);
             } else {
                 settings().getThemeAppearanceOverrides().remove(setting);
@@ -445,6 +500,10 @@ public class PersonalizationPage extends StackPane {
                     i18n("settings.launcher.theme_color_type.default"),
                     ThemeColorType.DEFAULT);
 
+            var systemColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
+                    i18n("settings.launcher.theme_color_type.system"),
+                    ThemeColorType.SYSTEM);
+
             var customColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
                     i18n("settings.launcher.theme_color_type.custom"),
                     ThemeColorType.CUSTOM) {
@@ -461,7 +520,11 @@ public class PersonalizationPage extends StackPane {
 
             RadioChoiceList<ThemeColorType> themeColorChoiceList = new RadioChoiceList<>();
             themeColorChoiceList.setFallbackValue(ThemeColorType.DEFAULT);
-            themeColorChoiceList.setChoices(Arrays.asList(defaultColorChoice, customColorChoice, backgroundColorChoice));
+            themeColorChoiceList.setChoices(Arrays.asList(
+                    defaultColorChoice,
+                    systemColorChoice,
+                    customColorChoice,
+                    backgroundColorChoice));
 
             JFXButton themeColorOverrideButton = createThemeAppearanceOverrideButton();
             themeColorSublist.setTitleRight(themeColorOverrideButton);
@@ -1078,6 +1141,25 @@ public class PersonalizationPage extends StackPane {
             refresh.invalidated(null);
             themeAppearanceList.getContent().add(titleBarTransparentButton);
         }
+
+        LineToggleButton windowTransparentButton = new LineToggleButton();
+        windowTransparentButton.setTitle(i18n("settings.launcher.window_transparent"));
+        bindThemeAppearanceToggleButton(
+                windowTransparentButton,
+                LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT,
+                settings().windowTransparentProperty(),
+                () -> {
+                    try {
+                        return Objects.requireNonNullElse(
+                                ThemePackManager.resolveCurrentWindowTransparent(
+                                        ThemePackManager.currentResolveContext()),
+                                false);
+                    } catch (IOException | RuntimeException e) {
+                        return false;
+                    }
+                });
+        themeAppearanceList.getContent().add(windowTransparentButton);
+
         content.getChildren().addAll(
                 ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")),
                 themeAppearanceList,
@@ -1089,7 +1171,8 @@ public class PersonalizationPage extends StackPane {
 
             LineToggleButton animationButton = new LineToggleButton();
             appearanceList.getContent().add(animationButton);
-            animationButton.selectedProperty().bindBidirectional(settings().animationDisabledProperty());
+            animationButton.setSelected(settings().isAnimationDisabled());
+            FXUtils.onChange(animationButton.selectedProperty(), value -> settings().animationDisabledProperty().set(value));
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
 

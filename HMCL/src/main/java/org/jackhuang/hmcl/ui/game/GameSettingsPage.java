@@ -162,11 +162,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         {
             if (isPresetSetting) {
                 var presetSettings = new ComponentList();
-                rootPane.getChildren().addAll(
-                        ComponentList.createComponentListTitle(i18n("settings.type.global.preset")),
-                        presetSettings,
-                        ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
+                rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.game.section.basic")),
                         basicSettings,
+                        ComponentList.createComponentListTitle(
+                                i18n("settings.type.global.preset"),
+                                i18n("settings.type.global.preset.help")
+                        ),
+                        presetSettings,
                         ComponentList.createComponentListTitle(i18n("settings.game.section.game")),
                         gameSettings,
                         ComponentList.createComponentListTitle(i18n("settings.launcher")),
@@ -195,6 +197,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var parentGameSettingsPane = new LineSelectButton<GameSettings.@Nullable Preset>();
                 basicSettings.getContent().add(parentGameSettingsPane);
                 parentGameSettingsPane.setTitle(i18n("settings.type.global.preset"));
+                parentGameSettingsPane.setSubtitle(i18n("settings.type.global.preset.subtitle"));
                 parentGameSettingsPane.setConverter(setting -> setting != null
                         ? PresetManagementPane.getPresetDisplayName(setting)
                         : i18n("settings.type.global.preset.default"));
@@ -1923,7 +1926,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             }
 
             memorySelectedValue.set(resolveEffectiveSetting(setting)
-                    .get(GameSettings::autoMemoryProperty));
+                    .getInheritable(GameSettings::autoMemoryProperty));
         };
         InvalidationListener weakRefresh = holder.weak(refresh);
         refreshHolder.value = weakRefresh;

@@ -29,8 +29,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.DataFormat;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -49,6 +47,9 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -60,7 +61,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -98,18 +98,7 @@ public final class Launcher extends Application {
         }
 
         try {
-            try {
-                SettingsManager.init();
-                initializeSettingsRuntime();
-            } catch (SambaException e) {
-                showAlert(AlertType.WARNING, i18n("fatal.samba"));
-            } catch (IOException e) {
-                LOG.error("Failed to load config", e);
-                checkConfigInTempDir();
-                checkConfigOwner();
-                showAlert(AlertType.ERROR, i18n("fatal.config_loading_failure", SettingsManager.localConfigDirectory()));
-                EntryPoint.exit(1);
-            }
+            initializeSettingsRuntime();
 
             // https://lapcatsoftware.com/articles/app-translocation.html
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
@@ -274,48 +263,6 @@ public final class Launcher extends Application {
         }
     }
 
-    private static void checkConfigOwner() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            return;
-
-        String userName = System.getProperty("user.name");
-        Path configDirectory = SettingsManager.localConfigDirectory();
-        if (!Files.exists(configDirectory)) {
-            return;
-        }
-
-        String owner;
-        try {
-            owner = Files.getOwner(configDirectory).getName();
-        } catch (IOException ioe) {
-            LOG.warning("Failed to get file owner", ioe);
-            return;
-        }
-
-        if (Files.isWritable(configDirectory) || userName.equals("root") || userName.equals(owner))
-            return;
-
-        ArrayList<String> files = new ArrayList<>();
-        files.add(configDirectory.toString());
-        if (Files.exists(Metadata.HMCL_USER_HOME))
-            files.add(Metadata.HMCL_USER_HOME.toString());
-
-        Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
-        if (Files.exists(mcDir))
-            files.add(mcDir.toString());
-
-        String command = new CommandBuilder().addAll("sudo", "chown", "-R", userName).addAll(files).toString();
-        ButtonType copyAndExit = new ButtonType(i18n("button.copy_and_exit"));
-
-        if (showAlert(AlertType.ERROR,
-                i18n("fatal.config_loading_failure.unix", owner, command),
-                copyAndExit, ButtonType.CLOSE) == copyAndExit) {
-            Clipboard.getSystemClipboard()
-                    .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
-        }
-        EntryPoint.exit(1);
-    }
-
     @Override
     public void stop() throws Exception {
         Controllers.onApplicationStop();
@@ -376,6 +323,19 @@ public final class Launcher extends Application {
 
             Lang.thread(SystemInfo::initialize, "Detection System Information", true);
 
+            try {
+                SettingsManager.init();
+            } catch (SambaException e) {
+                EntryPoint.showWarning(i18n("fatal.samba"));
+            } catch (IOException e) {
+                LOG.error("Failed to load config", e);
+                checkConfigOwner();
+                SwingUtils.showErrorDialog(i18n("fatal.config_loading_failure", SettingsManager.localConfigDirectory()));
+                EntryPoint.exit(1);
+            }
+
+            setupJavaFXVMOptions();
+
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
@@ -406,6 +366,128 @@ public final class Launcher extends Application {
             Controllers.shutdown();
             Lang.executeDelayed(System::gc, TimeUnit.SECONDS, 5, true);
         });
+    }
+
+    private static void setupJavaFXVMOptions() {
+        if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU"))) {
+            LOG.info("HMCL_FORCE_GPU: true");
+            System.getProperties().putIfAbsent("prism.forceGPU", "true");
+        }
+
+        setUpAnimationFrameRate:
+        {
+            String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
+            if (animationFrameRate != null) {
+                LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
+
+                try {
+                    if (Integer.parseInt(animationFrameRate) <= 0)
+                        throw new NumberFormatException(animationFrameRate);
+
+                    System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
+                } catch (NumberFormatException e) {
+                    LOG.warning("Invalid animation frame rate: " + animationFrameRate);
+                }
+                break setUpAnimationFrameRate;
+            }
+        }
+
+        String uiScale = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
+        if (uiScale != null) {
+            uiScale = uiScale.trim();
+
+            LOG.info("HMCL_UI_SCALE: " + uiScale);
+
+            try {
+                float scaleValue;
+                if (uiScale.endsWith("%")) {
+                    scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 1)) / 100.0f;
+                } else if (uiScale.endsWith("dpi") || uiScale.endsWith("DPI")) {
+                    scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 3)) / 96.0f;
+                } else {
+                    scaleValue = Float.parseFloat(uiScale);
+                }
+
+                float lowerBound;
+                float upperBound;
+
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    // JavaFX behavior may be abnormal when the DPI scaling factor is too high
+                    lowerBound = 0.25f;
+                    upperBound = 4f;
+                } else {
+                    lowerBound = 0.01f;
+                    upperBound = 10f;
+                }
+
+                if (scaleValue >= lowerBound && scaleValue <= upperBound) {
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                        System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
+                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                        LOG.warning("macOS does not support setting UI scale, so it will be ignored");
+                    } else {
+                        System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
+                    }
+                } else {
+                    LOG.warning("UI scale out of range: " + uiScale);
+                }
+            } catch (Throwable e) {
+                LOG.warning("Invalid UI scale: " + uiScale);
+            }
+        }
+    }
+
+    private static void checkConfigOwner() {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            return;
+
+        String userName = System.getProperty("user.name");
+        Path configDirectory = SettingsManager.localConfigDirectory();
+        if (!Files.exists(configDirectory)) {
+            return;
+        }
+
+        String owner;
+        try {
+            owner = Files.getOwner(configDirectory).getName();
+        } catch (IOException ioe) {
+            LOG.warning("Failed to get file owner", ioe);
+            return;
+        }
+
+        if (Files.isWritable(configDirectory) || userName.equals("root") || userName.equals(owner))
+            return;
+
+        ArrayList<String> files = new ArrayList<>();
+        files.add(configDirectory.toString());
+        if (Files.exists(Metadata.HMCL_USER_HOME))
+            files.add(Metadata.HMCL_USER_HOME.toString());
+
+        Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
+        if (Files.exists(mcDir))
+            files.add(mcDir.toString());
+
+        String command = new CommandBuilder().addAll("sudo", "chown", "-R", userName).addAll(files).toString();
+        SwingUtils.initLookAndFeel();
+
+        Object[] options = {i18n("button.copy_and_exit"), i18n("button.cancel")};
+        int result = JOptionPane.showOptionDialog(null,
+                i18n("fatal.config_loading_failure.unix", owner, command),
+                i18n("message.error"),
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (result == 0) {
+            try {
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), null);
+            } catch (Throwable e) {
+                LOG.warning("Failed to copy command to clipboard", e);
+            }
+        }
+        EntryPoint.exit(1);
     }
 
     public static final CrashReporter CRASH_REPORTER = new CrashReporter(true);

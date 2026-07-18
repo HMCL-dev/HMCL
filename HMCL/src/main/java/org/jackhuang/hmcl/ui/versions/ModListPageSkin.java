@@ -379,11 +379,14 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ModInfoDialog(ModInfoObject modInfo) {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
+            titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
             Stage stage = Controllers.getStage();
+            prefWidthProperty().bind(stage.widthProperty().multiply(0.7));
             maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
 
             var imageContainer = new ImageContainer(40);
+            titleContainer.setAlignment(Pos.CENTER_LEFT);
             modInfo.loadIcon(imageContainer, null);
 
             TwoLineListItem title = new TwoLineListItem();
@@ -392,13 +395,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             else
                 title.setTitle(modInfo.getModInfo().getName());
 
-            StringJoiner subtitle = new StringJoiner(" | ");
-            subtitle.add(FileUtils.getName(modInfo.getModInfo().getFile()));
+            StringJoiner subtitle = new StringJoiner("\n");
+            subtitle.add(i18n("archive.file.name") + ": " + FileUtils.getName(modInfo.getModInfo().getFile()));
             if (StringUtils.isNotBlank(modInfo.getModInfo().getGameVersion())) {
-                subtitle.add(modInfo.getModInfo().getGameVersion());
+                subtitle.add(i18n("mods.game.version") + ": " + modInfo.getModInfo().getGameVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                subtitle.add(modInfo.getModInfo().getVersion());
+                subtitle.add(i18n("archive.version") + ": " + modInfo.getModInfo().getVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
                 subtitle.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());

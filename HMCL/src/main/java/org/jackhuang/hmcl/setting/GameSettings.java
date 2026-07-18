@@ -67,7 +67,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public sealed abstract class GameSettings extends ObservableSetting {
     /// Suggested maximum heap memory in MiB.
-    static final int SUGGESTED_MEMORY;
+    public static final int SUGGESTED_MEMORY;
 
     static {
         double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
@@ -331,6 +331,11 @@ public sealed abstract class GameSettings extends ObservableSetting {
     }
 
     /// Creates a new inheritable property.
+    protected final <T extends @Nullable Object> InheritableProperty<@Nullable T> newInheritableProperty(String name) {
+        return new SimpleInheritableProperty<>(this, name, null);
+    }
+
+    /// Creates a new inheritable property with the given default value.
     protected final <T extends @UnknownNullability Object> InheritableProperty<T> newInheritableProperty(String name, T defaultValue) {
         return new SimpleInheritableProperty<>(this, name, defaultValue);
     }
@@ -388,10 +393,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// User customized JVM options.
     @SerializedName(PROPERTY_JVM_OPTIONS)
-    private final SettingProperty<String> jvmOptions = newSettingProperty(PROPERTY_JVM_OPTIONS, "");
+    private final InheritableProperty<String> jvmOptions = newInheritableProperty(PROPERTY_JVM_OPTIONS, "");
 
     /// Returns the user customized JVM options property.
-    public SettingProperty<String> jvmOptionsProperty() {
+    public InheritableProperty<String> jvmOptionsProperty() {
         return jvmOptions;
     }
 
@@ -448,10 +453,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// If `true`, HMCL will automatically adjust memory allocation.
     @SerializedName(PROPERTY_AUTO_MEMORY)
-    private final SettingProperty<Boolean> autoMemory = newSettingProperty(PROPERTY_AUTO_MEMORY, true);
+    private final InheritableProperty<Boolean> autoMemory = newInheritableProperty(PROPERTY_AUTO_MEMORY, true);
 
     /// Returns the automatic memory allocation property.
-    public SettingProperty<Boolean> autoMemoryProperty() {
+    public InheritableProperty<Boolean> autoMemoryProperty() {
         return autoMemory;
     }
 
@@ -460,10 +465,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// The minimum heap memory in MiB.
     @SerializedName(PROPERTY_MIN_MEMORY)
-    private final SettingProperty<@Nullable Integer> minMemory = newSettingProperty(PROPERTY_MIN_MEMORY);
+    private final InheritableProperty<@Nullable Integer> minMemory = newInheritableProperty(PROPERTY_MIN_MEMORY);
 
     /// Returns the minimum heap memory property.
-    public SettingProperty<@Nullable Integer> minMemoryProperty() {
+    public InheritableProperty<@Nullable Integer> minMemoryProperty() {
         return minMemory;
     }
 
@@ -472,10 +477,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// The maximum heap memory in MiB.
     @SerializedName(PROPERTY_MAX_MEMORY)
-    private final SettingProperty<@Nullable Integer> maxMemory = newSettingProperty(PROPERTY_MAX_MEMORY, SUGGESTED_MEMORY);
+    private final InheritableProperty<@Nullable Integer> maxMemory = newInheritableProperty(PROPERTY_MAX_MEMORY, SUGGESTED_MEMORY);
 
     /// Returns the maximum heap memory property.
-    public SettingProperty<@Nullable Integer> maxMemoryProperty() {
+    public InheritableProperty<@Nullable Integer> maxMemoryProperty() {
         return maxMemory;
     }
 
@@ -484,10 +489,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// The permanent generation or metaspace size in MiB.
     @SerializedName(PROPERTY_PERM_SIZE)
-    private final SettingProperty<String> permSize = newSettingProperty(PROPERTY_PERM_SIZE, "");
+    private final InheritableProperty<String> permSize = newInheritableProperty(PROPERTY_PERM_SIZE, "");
 
     /// Returns the permanent generation or metaspace size property.
-    public SettingProperty<String> permSizeProperty() {
+    public InheritableProperty<String> permSizeProperty() {
         return permSize;
     }
 
@@ -593,10 +598,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// User customized arguments passed to the game.
     @SerializedName(PROPERTY_GAME_ARGS)
-    private final SettingProperty<String> gameArguments = newSettingProperty(PROPERTY_GAME_ARGS, "");
+    private final InheritableProperty<String> gameArguments = newInheritableProperty(PROPERTY_GAME_ARGS, "");
 
     /// Returns the customized game arguments property.
-    public SettingProperty<String> gameArgumentsProperty() {
+    public InheritableProperty<String> gameArgumentsProperty() {
         return gameArguments;
     }
 
@@ -643,10 +648,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// User customized environment variables passed to the game.
     @SerializedName(PROPERTY_ENVIRONMENT_VARIABLES)
-    private final SettingProperty<String> environmentVariables = newSettingProperty(PROPERTY_ENVIRONMENT_VARIABLES, "");
+    private final InheritableProperty<String> environmentVariables = newInheritableProperty(PROPERTY_ENVIRONMENT_VARIABLES, "");
 
     /// Returns the customized environment variables property.
-    public SettingProperty<String> environmentVariablesProperty() {
+    public InheritableProperty<String> environmentVariablesProperty() {
         return environmentVariables;
     }
 
@@ -763,10 +768,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// If `true`, HMCL does not patch native libraries.
     @SerializedName(PROPERTY_NOT_PATCH_NATIVES)
-    private final SettingProperty<Boolean> notPatchNatives = newSettingProperty(PROPERTY_NOT_PATCH_NATIVES, false);
+    private final InheritableProperty<Boolean> notPatchNatives = newInheritableProperty(PROPERTY_NOT_PATCH_NATIVES, false);
 
     /// Returns the native library patching property.
-    public SettingProperty<Boolean> notPatchNativesProperty() {
+    public InheritableProperty<Boolean> notPatchNativesProperty() {
         return notPatchNatives;
     }
 
@@ -775,10 +780,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// If `true`, HMCL leaves native library management to the user.
     @SerializedName(PROPERTY_USE_CUSTOM_NATIVES)
-    private final SettingProperty<Boolean> useCustomNatives = newSettingProperty(PROPERTY_USE_CUSTOM_NATIVES, false);
+    private final InheritableProperty<Boolean> useCustomNatives = newInheritableProperty(PROPERTY_USE_CUSTOM_NATIVES, false);
 
     /// Returns the custom native libraries property.
-    public SettingProperty<Boolean> useCustomNativesProperty() {
+    public InheritableProperty<Boolean> useCustomNativesProperty() {
         return useCustomNatives;
     }
 
@@ -787,10 +792,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// The path to the native library directory, or an empty string for the default path.
     @SerializedName(PROPERTY_NATIVES_DIRECTORY)
-    private final SettingProperty<String> nativesDirectory = newSettingProperty(PROPERTY_NATIVES_DIRECTORY, "");
+    private final InheritableProperty<String> nativesDirectory = newInheritableProperty(PROPERTY_NATIVES_DIRECTORY, "");
 
     /// Returns the native library directory property.
-    public SettingProperty<String> nativesDirectoryProperty() {
+    public InheritableProperty<String> nativesDirectoryProperty() {
         return nativesDirectory;
     }
 
@@ -799,10 +804,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// If `true`, HMCL will use native GLFW.
     @SerializedName(PROPERTY_USE_NATIVE_GLFW)
-    private final SettingProperty<Boolean> useNativeGLFW = newSettingProperty(PROPERTY_USE_NATIVE_GLFW, false);
+    private final InheritableProperty<Boolean> useNativeGLFW = newInheritableProperty(PROPERTY_USE_NATIVE_GLFW, false);
 
     /// Returns the native GLFW property.
-    public SettingProperty<Boolean> useNativeGLFWProperty() {
+    public InheritableProperty<Boolean> useNativeGLFWProperty() {
         return useNativeGLFW;
     }
 
@@ -811,10 +816,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// If `true`, HMCL will use native OpenAL.
     @SerializedName(PROPERTY_USE_NATIVE_OPENAL)
-    private final SettingProperty<Boolean> useNativeOpenAL = newSettingProperty(PROPERTY_USE_NATIVE_OPENAL, false);
+    private final InheritableProperty<Boolean> useNativeOpenAL = newInheritableProperty(PROPERTY_USE_NATIVE_OPENAL, false);
 
     /// Returns the native OpenAL property.
-    public SettingProperty<Boolean> useNativeOpenALProperty() {
+    public InheritableProperty<Boolean> useNativeOpenALProperty() {
         return useNativeOpenAL;
     }
 
@@ -898,11 +903,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
             return instance;
         }
 
-        /// Returns the effective value for a property whose override state is tracked by the property itself.
-        public <T extends @UnknownNullability Object> T get(Function<GameSettings, SettingProperty<T>> propertyGetter) {
-            return inherited(preset, instance, propertyGetter);
-        }
-
         /// Returns the effective value for an inheritable property.
         public <T extends @UnknownNullability Object> T getInheritable(
                 Function<GameSettings, InheritableProperty<T>> propertyGetter) {
@@ -981,7 +981,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// Returns the effective maximum heap memory in MiB.
         public int getMaxMemory() {
-            Integer value = get(GameSettings::maxMemoryProperty);
+            Integer value = getInheritable(GameSettings::maxMemoryProperty);
             return value != null && value > 0 ? value : SUGGESTED_MEMORY;
         }
 
