@@ -21,6 +21,7 @@ import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ListChangeListener;
@@ -380,8 +381,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
             titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
-            prefWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
-            maxWidthProperty().bind(Controllers.windowHeightProperty().multiply(0.7));
+            DoubleBinding widthBinding = Controllers.windowWidthProperty().multiply(0.7);
+            prefWidthProperty().bind(widthBinding);
+            maxWidthProperty().bind(widthBinding);
 
             var imageContainer = new ImageContainer(40);
             titleContainer.setAlignment(Pos.CENTER_LEFT);
