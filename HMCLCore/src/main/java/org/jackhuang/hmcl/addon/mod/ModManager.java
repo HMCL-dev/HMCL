@@ -30,9 +30,13 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -65,8 +69,16 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
     private LibraryAnalyzer analyzer;
+    private Set<ModLoaderType> cachedModLoaders; // loader set the in-memory parse cache was built under
 
     private boolean loaded = false;
+
+    // Caches parsed mods by file path + fingerprint, so repeated refreshes only re-parse the
+    // files that were actually added, removed, or changed instead of rescanning everything.
+    private final Map<Path, CachedMod> cache = new HashMap<>();
+
+    private record CachedMod(long lastModified, long size, LocalModFile mod) {
+    }
 
     public ModManager(GameRepository repository, String id) {
         super(repository, id);
@@ -100,14 +112,14 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
-    private void addModInfo(Path file) {
+    private LocalModFile addModInfo(Path file) {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
 
         List<Pair<ModMetadataReader, ModLoaderType>> readersMap = READERS.get(extension);
         if (readersMap == null) {
             // Is not a mod file.
-            return;
+            return null;
         }
 
         Set<ModLoaderType> modLoaderTypes = analyzer.getModLoaders();
@@ -169,38 +181,227 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         if (!modInfo.isOld()) {
             localFiles.add(modInfo);
         }
+
+        return modInfo;
+    }
+
+    private void removeModInfo(LocalModFile modInfo) {
+        localFiles.remove(modInfo);
+
+        LocalMod mod = modInfo.getMod();
+        mod.getFiles().remove(modInfo);
+        mod.getOldFiles().remove(modInfo);
+        if (mod.getFiles().isEmpty() && mod.getOldFiles().isEmpty()) {
+            localMods.remove(pair(mod.getId(), mod.getModLoaderType()));
+        }
+    }
+
+    private static boolean isModCandidate(Path file) {
+        String name = StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
+        int dot = name.lastIndexOf('.');
+        return dot >= 0 && READERS.containsKey(name.substring(dot + 1));
+    }
+
+    private void collectModFiles(Path file, Map<Path, long[]> current) {
+        if (!isModCandidate(file)) // pure string check first, so non-mod files cost no syscall
+            return;
+        try {
+            BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
+            if (attributes.isRegularFile())
+                current.put(file, new long[]{attributes.lastModifiedTime().toMillis(), attributes.size()});
+        } catch (IOException e) {
+            LOG.warning("Failed to stat mod file " + file, e);
+        }
     }
 
     @Override
     public void refresh() throws IOException {
         lock.lock();
         try {
-            localFiles.clear();
-            localMods.clear();
-
             analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
 
             boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                     || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
 
+            // addModInfo picks its metadata reader based on the instance's loader set. If a loader was
+            // installed/changed since the last refresh, that set changed, so multi-format jars must be
+            // re-parsed under it — mtime+size alone wouldn't notice. Drop the whole in-memory parse
+            // cache in that case (the on-disk JIJ cache is keyed by jar content and stays valid).
+            Set<ModLoaderType> modLoaders = analyzer.getModLoaders();
+            if (!modLoaders.equals(cachedModLoaders)) {
+                for (CachedMod cached : cache.values())
+                    removeModInfo(cached.mod());
+                cache.clear();
+                cachedModLoaders = Set.copyOf(modLoaders);
+            }
+
+            // Snapshot the current mod files on disk together with their fingerprints.
+            Map<Path, long[]> current = new LinkedHashMap<>();
             if (Files.isDirectory(getDirectory())) {
                 try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
                     for (Path subitem : modsDirectoryStream) {
                         if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
                             try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
                                 for (Path subsubitem : subitemDirectoryStream) {
-                                    addModInfo(subsubitem);
+                                    collectModFiles(subsubitem, current);
                                 }
                             }
                         } else {
-                            addModInfo(subitem);
+                            collectModFiles(subitem, current);
                         }
                     }
                 }
             }
+
+            // Drop cached mods whose file was removed or changed.
+            Iterator<Map.Entry<Path, CachedMod>> iterator = cache.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<Path, CachedMod> entry = iterator.next();
+                long[] stamp = current.get(entry.getKey());
+                CachedMod cached = entry.getValue();
+                if (stamp == null || stamp[0] != cached.lastModified() || stamp[1] != cached.size()) {
+                    removeModInfo(cached.mod());
+                    iterator.remove();
+                }
+            }
+
+            // Parse only the files that are new or changed; reuse the rest from the cache.
+            for (Map.Entry<Path, long[]> entry : current.entrySet()) {
+                if (cache.containsKey(entry.getKey()))
+                    continue;
+                LocalModFile modInfo = addModInfo(entry.getKey());
+                if (modInfo != null) {
+                    cache.put(entry.getKey(), new CachedMod(entry.getValue()[0], entry.getValue()[1], modInfo));
+                }
+            }
+
             loaded = true;
         } finally {
             lock.unlock();
+        }
+    }
+
+    /// Resolves the full Jar-in-Jar tree for every loaded mod that declares nested jars but hasn't
+    /// been deep-scanned yet, so the dependency cascade and the bundled-dependency report see the
+    /// complete set of nested mod ids. Split out from {@link #refresh()} and meant to run on a
+    /// background thread *after* the list is shown — reaching a nested jar means extracting it, too
+    /// slow to block the first paint. Idempotent; the result is cached on each {@link LocalModFile}.
+    // Serializes scanBundledTrees per on-disk cache file. Static and keyed by path because
+    // DefaultGameRepository.getModManager() builds a fresh ModManager per call — the mod list page
+    // and a crash-report export may scan the SAME instance through DIFFERENT ModManager objects
+    // concurrently, and unserialized writers would corrupt the shared cache file.
+    private static final Map<Path, ReentrantLock> JIJ_SCAN_LOCKS = new ConcurrentHashMap<>();
+
+    // Mod files whose Jar-in-Jar scan threw, so they aren't re-extracted on every refresh of this
+    // manager. Not persisted — a transient failure gets retried on the next launcher start.
+    private final Set<Path> jijScanFailed = ConcurrentHashMap.newKeySet();
+
+    public void scanBundledTrees() {
+        List<CachedMod> snapshot;
+        lock.lock();
+        try {
+            if (!loaded)
+                return;
+            snapshot = new ArrayList<>(cache.values());
+        } finally {
+            lock.unlock();
+        }
+
+        List<CachedMod> pending = new ArrayList<>();
+        for (CachedMod cm : snapshot)
+            if (cm.mod().hasBundledMods() && cm.mod().getBundledTree().isEmpty()
+                    && !jijScanFailed.contains(cm.mod().getFile()))
+                pending.add(cm);
+        if (pending.isEmpty())
+            return;
+
+        // Consult the on-disk cache so the expensive extract/scan only runs for mods whose fingerprint
+        // changed since last time. This runs outside the main lock (the slow part must not block other
+        // mod operations), but is serialized per cache file — see JIJ_SCAN_LOCKS.
+        Path cacheFile = jijCacheFile();
+        ReentrantLock scanLock = JIJ_SCAN_LOCKS.computeIfAbsent(cacheFile, k -> new ReentrantLock());
+        scanLock.lock();
+        try {
+            Map<String, NestedJarCache.Entry> persisted = NestedJarCache.load(cacheFile);
+            boolean dirty = false;
+            Set<String> truncatedKeys = new HashSet<>();
+            for (CachedMod cm : pending) {
+                if (!cm.mod().getBundledTree().isEmpty())
+                    continue; // resolved by a concurrent scan while we waited for the lock
+                String key = jijCacheKey(cm.mod().getFile());
+                NestedJarCache.Entry hit = key == null ? null : persisted.get(key);
+                if (hit != null && hit.lastModified() == cm.lastModified() && hit.size() == cm.size()) {
+                    cm.mod().setBundledTree(hit.tree()); // fingerprint match — reuse, no extraction
+                } else {
+                    try (ZipFileTree tree = CompressingUtils.openZipTree(cm.mod().getFile())) {
+                        NestedJarInspector.ScanResult scanResult = NestedJarInspector.scan(tree);
+                        cm.mod().setBundledTree(scanResult.tree());
+                        if (scanResult.truncated() && key != null)
+                            truncatedKeys.add(key);
+                        dirty = true;
+                    } catch (Exception e) {
+                        // "File is gone" is the signature of a benign race — the user toggled the mod
+                        // (rename to/from .disabled) while we were scanning. Don't blacklist for that:
+                        // the next refresh sees the new path and succeeds. Everything else is remembered
+                        // for this manager's lifetime so refreshes stop re-attempting the expensive
+                        // extraction; a transient cause (AV lock on a fresh download) heals on the next
+                        // launcher start.
+                        if (!(e instanceof NoSuchFileException || e instanceof FileNotFoundException))
+                            jijScanFailed.add(cm.mod().getFile());
+                        LOG.warning("Failed to scan Jar-in-Jar tree of " + cm.mod().getFile(), e);
+                    }
+                }
+            }
+
+            // A fresh scan happened — rewrite the cache file.
+            if (dirty) {
+                // Merge into what's on disk rather than rebuilding solely from this manager's snapshot:
+                // another manager (e.g. a crash-report export) may have persisted entries for mods this
+                // snapshot predates, and those must not be dropped.
+                Map<String, NestedJarCache.Entry> fresh = new LinkedHashMap<>(persisted);
+                for (CachedMod cm : snapshot) {
+                    if (!cm.mod().hasBundledMods())
+                        continue;
+                    List<NestedJarInspector.NestedJar> tree = cm.mod().getBundledTree();
+                    if (tree.isEmpty())
+                        continue;
+                    String key = jijCacheKey(cm.mod().getFile());
+                    if (key != null)
+                        fresh.put(key, new NestedJarCache.Entry(cm.lastModified(), cm.size(), tree));
+                }
+                // A truncated tree must not be persisted: the host file's fingerprint wouldn't change,
+                // so the incomplete result would be reused forever. Left un-cached, it is re-scanned
+                // (and the budget warning re-logged) on the next launcher start.
+                fresh.keySet().removeAll(truncatedKeys);
+                // Prune entries whose mod file is gone (neither the enabled nor the disabled name exists).
+                fresh.keySet().removeIf(key -> {
+                    Path modFile = getDirectory().resolve(key);
+                    return !Files.exists(modFile)
+                            && !Files.exists(modFile.resolveSibling(modFile.getFileName() + DISABLED_EXTENSION));
+                });
+                NestedJarCache.save(cacheFile, fresh);
+            }
+        } finally {
+            scanLock.unlock();
+        }
+    }
+
+    private Path jijCacheFile() {
+        // Under the instance's .hmcl/state — transient, rebuildable launcher data.
+        return repository.getInstanceStateDirectory(id).resolve("jij-cache.json").toAbsolutePath().normalize();
+    }
+
+    /// The mod file keyed by its path relative to the mods directory (forward-slashed for a
+    /// platform-independent key), or {@code null} if it is not under the mods directory. The
+    /// {@code .disabled} suffix is stripped so toggling a mod on/off (a pure rename that keeps
+    /// mtime+size) doesn't change its key and defeat the cache. {@code .old} is kept: an .old file
+    /// can coexist with its replacement, and stripping it would collide their keys.
+    private String jijCacheKey(Path file) {
+        try {
+            String key = getDirectory().relativize(file).toString().replace('\\', '/');
+            return StringUtils.removeSuffix(key, DISABLED_EXTENSION);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 
@@ -233,9 +434,18 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             Files.createDirectories(modsDirectory);
 
             Path newFile = modsDirectory.resolve(file.getFileName());
+
+            CachedMod previous = cache.remove(newFile);
+            if (previous != null) {
+                removeModInfo(previous.mod());
+            }
+
             FileUtils.copyFile(file, newFile);
 
-            addModInfo(newFile);
+            LocalModFile modInfo = addModInfo(newFile);
+            if (modInfo != null) {
+                cache.put(newFile, new CachedMod(Files.getLastModifiedTime(newFile).toMillis(), Files.size(newFile), modInfo));
+            }
         } finally {
             lock.unlock();
         }

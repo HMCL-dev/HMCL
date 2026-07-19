@@ -1109,6 +1109,87 @@
     -fx-background-color: -monet-error-container;
 }
 
+.mod-nested-list {
+    -fx-spacing: 2;
+    -fx-padding: 2 0 4 42;
+}
+
+.mod-nested-item {
+    -fx-padding: 3 8 3 0;
+}
+
+.mod-nested-item .label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.mod-nested-item .svg {
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.mod-nested-section {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 0 1 0;
+}
+
+/* Version string of a nested mod — dimmer than its name. */
+.mod-nested-item .mod-nested-version {
+    -fx-text-fill: -monet-outline;
+    -fx-font-size: 11px;
+}
+
+/* "N versions" badge on a grouped multi-version wrapper entry. */
+.mod-nested-item .mod-nested-badge {
+    -fx-text-fill: -monet-on-secondary-container;
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 4;
+    -fx-padding: 0 6 0 6;
+    -fx-font-size: 11px;
+}
+
+/* Marks the nested copy that matches this instance's Minecraft version. */
+.mod-nested-item .mod-nested-current {
+    -fx-text-fill: -monet-on-primary-container;
+    -fx-background-color: -monet-primary-container;
+    -fx-background-radius: 4;
+    -fx-padding: 0 6 0 6;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* Secondary tag: the matched copy is not an exact build but its declared version range covers this
+   instance (what the wrapper would load). Tertiary tint to read as a qualifier of the "current" tag. */
+.mod-nested-item .mod-nested-range {
+    -fx-text-fill: -monet-on-tertiary-container;
+    -fx-background-color: -monet-tertiary-container;
+    -fx-background-radius: 4;
+    -fx-padding: 0 6 0 6;
+    -fx-font-size: 11px;
+}
+
+/* Warning tag: no bundled copy targets this instance's version — the wrapper can't load anything. */
+.mod-nested-item .mod-nested-incompatible {
+    -fx-text-fill: -monet-on-error-container;
+    -fx-background-color: -monet-error-container;
+    -fx-background-radius: 4;
+    -fx-padding: 0 6 0 6;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* Transient hint shown only during a slow (cold) bundled-id scan, explaining why disable/remove are
+   temporarily greyed. */
+.mod-scan-hint {
+    -fx-padding: 6 12 6 12;
+    -fx-alignment: center-left;
+}
+
+.mod-scan-hint .label {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-font-size: 12px;
+}
+
 .resource-pack-list-cell:warning {
     -fx-background-color: -monet-error-container;
 }

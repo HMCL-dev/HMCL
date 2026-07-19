@@ -17,15 +17,19 @@
  */
 package org.jackhuang.hmcl.addon.mod;
 
-import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LocalMod {
 
     private final String id;
     private final ModLoaderType modLoaderType;
-    private final HashSet<LocalModFile> files = new HashSet<>();
-    private final HashSet<LocalModFile> oldFiles = new HashSet<>();
+    // Mutated on IO threads (ModManager.refresh/addModInfo under its lock) while iterated lock-free on
+    // the FX thread (dependency panel, active-change listeners) — must be concurrent sets, or an
+    // in-flight refresh corrupts an FX-side iteration (ConcurrentModificationException at best).
+    private final Set<LocalModFile> files = ConcurrentHashMap.newKeySet();
+    private final Set<LocalModFile> oldFiles = ConcurrentHashMap.newKeySet();
 
     public LocalMod(String id, ModLoaderType modLoaderType) {
         this.id = id;
@@ -40,11 +44,11 @@ public class LocalMod {
         return modLoaderType;
     }
 
-    public HashSet<LocalModFile> getFiles() {
+    public Set<LocalModFile> getFiles() {
         return files;
     }
 
-    public HashSet<LocalModFile> getOldFiles() {
+    public Set<LocalModFile> getOldFiles() {
         return oldFiles;
     }
 

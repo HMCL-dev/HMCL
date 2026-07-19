@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -53,6 +55,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.GameInstanceLoadable, PageAware {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
+
+    // Bumped on the FX thread when the background Jar-in-Jar deep scan finishes, so open nested
+    // panels can rebuild with the now-resolved nested mod names/versions.
+    private final IntegerProperty bundledScanGeneration = new SimpleIntegerProperty(this, "bundledScanGeneration", 0);
+    // True once the background bundled-id scan has finished (or there was nothing to scan); the skin
+    // disables dependency-changing operations while it is false.
+    private final BooleanProperty bundledScanReady = new SimpleBooleanProperty(this, "bundledScanReady", true);
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -94,11 +103,26 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         this.gameVersion = repository.getGameVersion(resolved).orElse(null);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         modded.set(analyzer.hasModLoader());
-        loadMods(repository.getModManager(instanceId));
+
+        // Reuse the existing ModManager (and its incremental scan cache) when reopening the same
+        // instance, so navigating back to the mod list doesn't rescan every jar from scratch.
+        ModManager manager = this.modManager;
+        if (manager == null || manager.getRepository() != repository || !instanceId.equals(manager.getInstanceId())) {
+            manager = repository.getModManager(instanceId);
+        }
+        loadMods(manager);
     }
 
     private void loadMods(ModManager modManager) {
         setLoading(true);
+        // Gate dependency-changing operations until the background bundled-id scan finishes: until
+        // then getAllBundledModIds() is incomplete and a cascade could miss dependents provided via
+        // Jar-in-Jar.
+        bundledScanReady.set(false);
+
+        // The mod set may have changed (added/removed/refreshed); drop the download page's cached
+        // installed-mods snapshot so dependency status there is re-read.
+        DownloadPage.invalidateInstalledMods();
 
         this.modManager = modManager;
         CompletableFuture.supplyAsync(() -> {
@@ -112,6 +136,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
+            if (this.modManager != modManager)
+                return; // instance switched while this (slower) load was in flight — a newer load governs
             updateSupportedLoaders(modManager);
 
             if (exception == null) {
@@ -121,7 +147,48 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 getItems().clear();
             }
             setLoading(false);
+
+            // Now that the list is on screen, resolve the deeper Jar-in-Jar layers in the background
+            // (they need each nested jar extracted, too slow to block the first paint). When done, bump
+            // the generation so open nested panels rebuild with the resolved names and the dependency
+            // cascade sees the complete set of bundled ids.
+            if (exception == null) {
+                CompletableFuture.runAsync(modManager::scanBundledTrees, Schedulers.io())
+                        .whenCompleteAsync((r, ex) -> {
+                            if (this.modManager != modManager) // instance switched — a newer load governs
+                                return;
+                            if (ex != null)
+                                LOG.warning("Failed to scan Jar-in-Jar trees", ex);
+                            else
+                                bundledScanGeneration.set(bundledScanGeneration.get() + 1);
+                            // Ready even on failure: with no bundled data the cascade is as complete as
+                            // it will get; keeping the ops disabled forever would be worse.
+                            bundledScanReady.set(true);
+                        }, Schedulers.javafx());
+            } else {
+                bundledScanReady.set(true); // load failed — nothing to scan, don't leave ops disabled
+            }
         }, Schedulers.javafx());
+    }
+
+    /// Bumped when the background Jar-in-Jar deep scan completes; the skin listens to rebuild any open
+    /// nested panels with the newly-resolved nested mod metadata.
+    public IntegerProperty bundledScanGenerationProperty() {
+        return bundledScanGeneration;
+    }
+
+    /// False while the background bundled-id scan is still running after a (re)load; true once it has
+    /// finished (or there was nothing to scan). The skin disables the dependency-changing operations
+    /// (disable / remove) while false, so a cascade never runs against an incomplete bundled-id set.
+    public BooleanProperty bundledScanReadyProperty() {
+        return bundledScanReady;
+    }
+
+    /// The instance's Minecraft version (resolved once at load, the same value used elsewhere on this
+    /// page), or null if detection failed. Used to highlight which copy of a multi-version Jar-in-Jar
+    /// wrapper matches this instance.
+    public String getGameVersion() {
+        return gameVersion;
     }
 
     private void updateSupportedLoaders(ModManager modManager) {

@@ -99,6 +99,17 @@ public interface GameRepository extends VersionProvider {
     Path getVersionRoot(String id);
 
     /**
+     * The HMCL-managed per-instance <em>state</em> directory — transient, rebuildable data owned by
+     * the launcher (as opposed to user config). Defaults to {@code <versionRoot>/.hmcl/state};
+     * {@code HMCLGameRepository} overrides it with the same location from its own constants.
+     *
+     * @param id the version id
+     */
+    default Path getInstanceStateDirectory(String id) {
+        return getVersionRoot(id).resolve(".hmcl").resolve("state");
+    }
+
+    /**
      * Gets the current running directory of the given version for game.
      *
      * @param id the version id

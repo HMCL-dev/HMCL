@@ -39,7 +39,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class LocalModFile extends LocalAddonFile implements Comparable<LocalModFile> {
 
-    private Path file;
+    // Renamed on the FX thread when the mod is toggled (enableMod/disableMod) while background scans
+    // read it via getFile() — volatile so they see the current path, not a stale one.
+    private volatile Path file;
     private final ModManager modManager;
     private final LocalMod mod;
     private final String name;
@@ -50,6 +52,16 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String url;
     private final String fileName;
     private final String logoPath;
+    private final List<String> bundledMods;
+    // Full Jar-in-Jar scan result. Written by a background scan thread and read from the FX thread
+    // (UI) and export threads, so the tree and its flattened id set are packed into one immutable
+    // holder behind a single volatile field — readers always see a consistent, fully-published pair.
+    private volatile BundledScan bundledScan = BundledScan.EMPTY;
+
+    private record BundledScan(List<NestedJarInspector.NestedJar> tree, Set<String> ids) {
+        static final BundledScan EMPTY = new BundledScan(List.of(), Set.of());
+    }
+    private final List<String> dependencies;
     private final BooleanProperty activeProperty;
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
@@ -57,6 +69,10 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+        this(modManager, mod, file, name, description, authors, version, gameVersion, url, logoPath, List.of(), List.of());
+    }
+
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath, List<String> bundledMods, List<String> dependencies) {
         super();
         this.modManager = modManager;
         this.mod = mod;
@@ -68,6 +84,8 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         this.gameVersion = gameVersion;
         this.url = url;
         this.logoPath = logoPath;
+        this.bundledMods = bundledMods == null ? List.of() : List.copyOf(bundledMods);
+        this.dependencies = dependencies == null ? List.of() : List.copyOf(dependencies);
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
@@ -143,6 +161,69 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     public String getLogoPath() {
         return logoPath;
+    }
+
+    public List<String> getBundledMods() {
+        return bundledMods;
+    }
+
+    public boolean hasBundledMods() {
+        return !bundledMods.isEmpty();
+    }
+
+    /// The full Jar-in-Jar tree (every nesting depth), with real parsed metadata for each node.
+    /// Populated by {@link ModManager}'s background scan; empty for mods without nested jars.
+    public List<NestedJarInspector.NestedJar> getBundledTree() {
+        return bundledScan.tree();
+    }
+
+    void setBundledTree(List<NestedJarInspector.NestedJar> bundledTree) {
+        if (bundledTree == null || bundledTree.isEmpty()) {
+            this.bundledScan = BundledScan.EMPTY;
+            return;
+        }
+        // Compute the flattened ids up front (the tree is small), so the pair is published atomically.
+        Set<String> ids = new HashSet<>();
+        NestedJarInspector.collectIds(bundledTree, ids);
+        this.bundledScan = new BundledScan(List.copyOf(bundledTree), Set.copyOf(ids));
+    }
+
+    /// Every mod id bundled anywhere in this jar's Jar-in-Jar tree (all depths). Used by the dependency
+    /// cascade and the bundled-dependency status so a dependency shipped inside a wrapper is recognized.
+    public Set<String> getAllBundledModIds() {
+        return bundledScan.ids();
+    }
+
+    /// The subset of {@link #getAllBundledModIds()} that would actually load in an instance running
+    /// {@code instanceMinecraftVersion}: a nested copy with no Minecraft constraint always loads; one
+    /// with a constraint loads only if it covers the version (a multi-version wrapper activates just
+    /// the matching copy). Used by the dependency cascade so a wrapper counts as a provider only for
+    /// the copy the instance would really load. An unknown instance version disables the filter.
+    public Set<String> getLoadableBundledModIds(String instanceMinecraftVersion) {
+        Set<String> ids = new HashSet<>();
+        collectLoadableIds(getBundledTree(), instanceMinecraftVersion, ids);
+        return ids;
+    }
+
+    private static void collectLoadableIds(List<NestedJarInspector.NestedJar> nodes, String mc, Set<String> out) {
+        for (NestedJarInspector.NestedJar node : nodes) {
+            boolean constrained = node.minecraftVersion() != null && !node.minecraftVersion().isBlank();
+            boolean loadable = !constrained || mc == null || mc.isBlank()
+                    || MinecraftVersionMatcher.matches(node, mc);
+            if (!loadable)
+                continue; // a non-loadable copy — and anything nested under it — isn't available
+            if (node.id() != null && !node.id().isBlank())
+                out.add(node.id());
+            collectLoadableIds(node.children(), mc, out);
+        }
+    }
+
+    public List<String> getDependencies() {
+        return dependencies;
+    }
+
+    public boolean hasDependencies() {
+        return !dependencies.isEmpty();
     }
 
     public BooleanProperty activeProperty() {

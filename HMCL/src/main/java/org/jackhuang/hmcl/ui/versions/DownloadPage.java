@@ -33,7 +33,9 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -57,6 +59,7 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends Control implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -83,6 +86,13 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.mod = translations.getModByCurseForgeId(addon.slug());
         this.instanceReference = instanceReference;
         this.callback = callback;
+
+        // Warm up the installed-mods cache for this instance as soon as its download page is opened,
+        // so dependency installation status is ready without reading the mods on every page.
+        if (instanceReference != null && instanceReference.instanceId() != null) {
+            Task.supplyAsync(Schedulers.io(), () -> AddonVersion.getInstalledMods(instanceReference)).start();
+        }
+
         loadAddonVersions();
 
         this.state.set(State.fromTitle(addon.title()));
@@ -161,6 +171,52 @@ public class DownloadPage extends Control implements DecoratorPage {
             saveAs(file);
         } else {
             this.callback.download(page.getDownloadProvider(), instanceReference.repository(), instanceReference.instanceId(), addon, file);
+        }
+    }
+
+    // Called when a mod has actually been downloaded into the instance, to refresh just that mod's
+    // entry in the cached installed-mods map (used for dependency installation status).
+    //
+    // Thread-safety: the cached map is only structurally mutated here and in setModActive, both of
+    // which are invoked on the JavaFX thread; background code only builds fresh maps / clears the
+    // reference under INSTALLED_CACHE_LOCK. Keep these mutators on the FX thread.
+    public static void markModInstalled(HMCLGameRepository.InstanceReference version, RemoteAddon addon) {
+        if (version == null || addon == null)
+            return;
+        Set<String> ids = new HashSet<>();
+        if (StringUtils.isNotBlank(addon.slug()))
+            ids.add(addon.slug());
+        RemoteAddonRepository.Type type = addon.repoType();
+        if (type != null) {
+            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(type).getModByCurseForgeId(addon.slug());
+            if (mod != null)
+                ids.addAll(mod.getModIds());
+        }
+        AddonVersion.markInstalled(version, ids);
+    }
+
+    // Called when a mod is enabled/disabled in the instance, to keep the cached installed-mods map
+    // in sync so the download page's dependency status reflects it without a re-scan.
+    public static void setModActive(HMCLGameRepository.InstanceReference version, String modId, boolean active) {
+        if (version == null || StringUtils.isBlank(modId))
+            return;
+        synchronized (AddonVersion.INSTALLED_CACHE_LOCK) {
+            if (version.equals(AddonVersion.installedCacheKey) && AddonVersion.installedCache != null)
+                AddonVersion.installedCache.put(modId.toLowerCase(Locale.ROOT), active);
+            else
+                // Cache not published yet — a warm-up scan may be mid-flight with an older snapshot.
+                // Invalidate it (see markInstalled) so this change isn't lost when that scan publishes.
+                AddonVersion.installedCacheGeneration++;
+        }
+    }
+
+    // Drops the cached installed-mods map (e.g. after mods are added/removed), so it is rebuilt
+    // from disk on the next access.
+    public static void invalidateInstalledMods() {
+        synchronized (AddonVersion.INSTALLED_CACHE_LOCK) {
+            AddonVersion.installedCacheKey = null;
+            AddonVersion.installedCache = null;
+            AddonVersion.installedCacheGeneration++;
         }
     }
 
@@ -373,7 +429,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         public final RemoteAddon addon;
 
-        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.InstanceReference instanceReference) {
+        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.InstanceReference instanceReference, Map<String, Boolean> installedMods) {
             this.addon = addon;
 
             HBox pane = new HBox(8);
@@ -403,6 +459,24 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(type).getModByCurseForgeId(addon.slug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
                 content.setSubtitle(addon.description());
+                if (installedMods != null) {
+                    Set<String> candidates = new HashSet<>();
+                    if (StringUtils.isNotBlank(addon.slug()))
+                        candidates.add(addon.slug().toLowerCase(Locale.ROOT));
+                    if (mod != null)
+                        for (String modId : mod.getModIds())
+                            candidates.add(modId.toLowerCase(Locale.ROOT));
+                    Boolean active = null;
+                    for (String candidate : candidates) {
+                        if (installedMods.containsKey(candidate)) {
+                            active = installedMods.get(candidate);
+                            if (active)
+                                break;
+                        }
+                    }
+                    content.addTag(i18n(active == null ? "addon.dependencies.missing"
+                            : active ? "addon.dependencies.installed" : "addon.dependencies.disabled"));
+                }
                 for (String category : addon.categories()) {
                     if (page.shouldDisplayCategory(category))
                         content.addTag(page.getLocalizedCategory(category, null));
@@ -569,6 +643,10 @@ public class DownloadPage extends Control implements DecoratorPage {
         private void loadDependencies(RemoteAddon.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
             Task.composeAsync(() -> {
+                // Which mods are already installed in the current instance (cached per instance),
+                // so required dependencies can show their installation status in real time.
+                Map<String, Boolean> installedMods = getInstalledMods(selfPage.instanceReference);
+
                 // TODO: Massive tasks may cause OOM.
                 EnumMap<RemoteAddon.DependencyType, Pair<Label, List<DependencyAddonItem>>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
                 List<Task<?>> queue = new ArrayList<>(version.dependencies().size());
@@ -590,7 +668,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 if (dep == RemoteAddon.BROKEN) {
                                     return;
                                 }
-                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.instanceReference);
+                                // Only required dependencies need the installation-status hint.
+                                Map<String, Boolean> statusSource = dependency.getType() == RemoteAddon.DependencyType.REQUIRED
+                                        ? installedMods : null;
+                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.instanceReference, statusSource);
                                 dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));
@@ -613,6 +694,83 @@ public class DownloadPage extends Control implements DecoratorPage {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
                 }
             }).start();
+        }
+
+        // Caches the installed-mods map for the most recently used instance, so it is read once
+        // when entering an instance's download page (or switching instances) instead of every time
+        // a mod's dependency list is shown.
+        private static final Object INSTALLED_CACHE_LOCK = new Object();
+        private static HMCLGameRepository.InstanceReference installedCacheKey;
+        private static Map<String, Boolean> installedCache;
+        // Bumped on every invalidation so a slow background scan can tell its result went stale
+        // mid-flight and refuse to publish it (which would otherwise clobber the invalidation).
+        private static long installedCacheGeneration;
+
+        private static Map<String, Boolean> getInstalledMods(HMCLGameRepository.InstanceReference version) {
+            if (version == null || version.instanceId() == null)
+                return null;
+
+            long generationAtStart;
+            synchronized (INSTALLED_CACHE_LOCK) {
+                if (version.equals(installedCacheKey))
+                    return installedCache;
+                generationAtStart = installedCacheGeneration;
+            }
+
+            Map<String, Boolean> resolved = resolveInstalledMods(version);
+            if (resolved != null) {
+                synchronized (INSTALLED_CACHE_LOCK) {
+                    // Publish only if nothing invalidated the cache while we were scanning; otherwise
+                    // this snapshot is already stale and must not overwrite the newer state.
+                    if (generationAtStart == installedCacheGeneration) {
+                        installedCacheKey = version;
+                        installedCache = resolved;
+                    }
+                }
+            }
+            return resolved;
+        }
+
+        // Targeted cache update: mark the given mod ids as installed-and-enabled for the instance,
+        // so a freshly downloaded mod's dependency status updates without re-reading every mod.
+        static void markInstalled(HMCLGameRepository.InstanceReference version, Collection<String> modIds) {
+            if (version == null)
+                return;
+            synchronized (INSTALLED_CACHE_LOCK) {
+                if (version.equals(installedCacheKey) && installedCache != null) {
+                    for (String id : modIds) {
+                        if (StringUtils.isNotBlank(id))
+                            installedCache.put(id.toLowerCase(Locale.ROOT), Boolean.TRUE);
+                    }
+                } else {
+                    // Cache not published yet — a warm-up scan may be mid-flight with an older snapshot
+                    // (taken before this download). We can't apply the targeted update, so invalidate
+                    // that scan's snapshot (bump the generation, which its publish step checks) to force
+                    // a fresh read including this change, instead of silently losing it.
+                    installedCacheGeneration++;
+                }
+            }
+        }
+
+        // Builds a map of installed mod id (lower-cased) -> whether any of its files is enabled,
+        // for the given instance. Returns null when there is no instance to check against.
+        private static Map<String, Boolean> resolveInstalledMods(HMCLGameRepository.InstanceReference version) {
+            if (version == null || version.instanceId() == null)
+                return null;
+            try {
+                ModManager modManager = version.repository().getModManager(version.instanceId());
+                Map<String, Boolean> installed = new HashMap<>();
+                for (LocalModFile file : modManager.getLocalFiles()) {
+                    String id = file.getId();
+                    if (StringUtils.isBlank(id))
+                        continue;
+                    installed.merge(id.toLowerCase(Locale.ROOT), file.isActive(), Boolean::logicalOr);
+                }
+                return installed;
+            } catch (Exception e) {
+                LOG.warning("Failed to resolve installed mods for dependency status", e);
+                return null;
+            }
         }
     }
 

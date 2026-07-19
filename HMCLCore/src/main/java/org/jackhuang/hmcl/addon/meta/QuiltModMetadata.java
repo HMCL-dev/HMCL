@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.addon.meta;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
@@ -30,7 +32,11 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Immutable
@@ -55,13 +61,25 @@ public final class QuiltModMetadata {
         private final String id;
         private final String version;
         private final Metadata metadata;
+        // Quilt declares nested jars as a plain array of path strings (e.g. ["sub.jar"]), unlike
+        // Fabric's array of {"file": "..."} objects. Modeling it as objects makes Gson throw and the
+        // whole (otherwise valid) Quilt mod fall back to UNKNOWN, losing nested mods and dependencies.
+        private final List<String> jars;
+        private final JsonArray depends;
 
-        public QuiltLoader(String id, String version, Metadata metadata) {
+        public QuiltLoader(String id, String version, Metadata metadata, List<String> jars, JsonArray depends) {
             this.id = id;
             this.version = version;
             this.metadata = metadata;
+            this.jars = jars;
+            this.depends = depends;
         }
     }
+
+    // Loader/runtime/platform ids that are not shown as user-facing mod dependencies. Fabric API
+    // (fabric-api) is deliberately NOT here: it is a real installable mod, so it must stay in the
+    // dependency graph for the installed-status hint and the disable/remove cascade to work.
+    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "quilt_loader", "quilt_base", "fabric");
 
     private final int schema_version;
     private final QuiltLoader quilt_loader;
@@ -82,17 +100,41 @@ public final class QuiltModMetadata {
             throw new IOException("File " + modFile + " is not a supported Quilt mod.");
         }
 
+        String authors = root.quilt_loader.metadata.contributors == null ? ""
+                : root.quilt_loader.metadata.contributors.entrySet().stream().map(entry -> String.format("%s (%s)", entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString())).collect(Collectors.joining(", "));
+        String homepage = root.quilt_loader.metadata.contact == null ? ""
+                : Optional.ofNullable(root.quilt_loader.metadata.contact.get("homepage")).map(jsonElement -> jsonElement.getAsJsonPrimitive().getAsString()).orElse("");
+        List<String> bundledMods = root.quilt_loader.jars == null ? Collections.emptyList()
+                : List.copyOf(root.quilt_loader.jars);
+
+        List<String> dependencies = new ArrayList<>();
+        if (root.quilt_loader.depends != null) {
+            for (JsonElement element : root.quilt_loader.depends) {
+                String id = null;
+                if (element.isJsonPrimitive()) {
+                    id = element.getAsString();
+                } else if (element.isJsonObject() && element.getAsJsonObject().has("id")) {
+                    id = element.getAsJsonObject().getAsJsonPrimitive("id").getAsString();
+                }
+                if (id != null && !IGNORED_DEPENDENCIES.contains(id)) {
+                    dependencies.add(id);
+                }
+            }
+        }
+
         return new LocalModFile(
                 modManager,
                 modManager.getLocalMod(root.quilt_loader.id, ModLoaderType.QUILT),
                 modFile,
                 root.quilt_loader.metadata.name,
                 new LocalAddonFile.Description(root.quilt_loader.metadata.description),
-                root.quilt_loader.metadata.contributors.entrySet().stream().map(entry -> String.format("%s (%s)", entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString())).collect(Collectors.joining(", ")),
+                authors,
                 root.quilt_loader.version,
                 "",
-                Optional.ofNullable(root.quilt_loader.metadata.contact.get("homepage")).map(jsonElement -> jsonElement.getAsJsonPrimitive().getAsString()).orElse(""),
-                root.quilt_loader.metadata.icon
+                homepage,
+                root.quilt_loader.metadata.icon,
+                bundledMods,
+                dependencies
         );
     }
 }
