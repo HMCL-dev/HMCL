@@ -153,7 +153,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     LOG.info("Fetching " + candidate);
                     Response<ProjectSearchResult> response = HttpRequest.GET(candidate.toString())
                             .getJson(Response.typeOf(ProjectSearchResult.class));
-                    return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
+                    return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toAddon), (int) Math.ceil((double) response.totalHits / pageSize));
                 } catch (IOException e) {
                     LOG.warning("Failed to search addons: " + candidate, e);
 
@@ -464,7 +464,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
             return modRepository.getRemoteVersionsById(downloadProvider, projectId());
         }
 
-        public RemoteAddon toMod() {
+        public RemoteAddon toAddon() {
             Type type = switch (projectType) {
                 case "modpack" -> Type.MODPACK;
                 case "resourcepack" -> Type.RESOURCE_PACK;

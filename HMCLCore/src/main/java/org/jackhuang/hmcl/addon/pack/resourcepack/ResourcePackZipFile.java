@@ -15,19 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.resourcepack;
+package org.jackhuang.hmcl.addon.pack.resourcepack;
 
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.meta.PackMcMeta;
+import org.jackhuang.hmcl.addon.pack.PackMcMeta;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
@@ -36,21 +35,18 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
-    private final PackMcMeta meta;
-    private final @Nullable Image icon;
 
-    public ResourcePackZipFile(ResourcePackManager manager, Path path) throws IOException {
-        super(manager, path);
-
-        PackMcMeta metaTemp = null;
+    public static @Nullable ResourcePackZipFile load(ResourcePackManager manager, Path path) throws IOException {
+        PackMcMeta meta = null;
         byte[] iconData = null;
 
         try (var zipFileTree = CompressingUtils.openZipTree(path)) {
             try {
-                metaTemp = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
+                meta = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
             } catch (Exception e) {
                 LOG.warning("Failed to parse resource pack meta", e);
             }
+            if (meta == null) return null;
 
             var iconEntry = zipFileTree.getEntry("/pack.png");
             if (iconEntry != null) {
@@ -61,32 +57,20 @@ final class ResourcePackZipFile extends ResourcePackFile {
                 }
             }
         }
-        this.meta = metaTemp;
 
-        Image iconTemp = null;
+        Image icon = null;
         if (iconData != null) {
             try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                iconTemp = new Image(inputStream, 64, 64, true, true);
+                icon = new Image(inputStream, 64, 64, true, true);
             } catch (Exception e) {
                 LOG.warning("Failed to load resource pack icon", e);
             }
         }
-        this.icon = iconTemp;
+        return new ResourcePackZipFile(manager, path, meta, icon);
     }
 
-    @Override
-    public PackMcMeta getMeta() {
-        return meta;
-    }
-
-    @Override
-    public @Nullable Image getIcon() {
-        return icon;
-    }
-
-    @Override
-    public void delete() throws IOException {
-        Files.deleteIfExists(file);
+    private ResourcePackZipFile(ResourcePackManager manager, Path path, PackMcMeta meta, @Nullable Image icon) {
+        super(manager, path, meta, icon);
     }
 
     @Override

@@ -15,30 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.mod;
+package org.jackhuang.hmcl.addon.shader;
 
-import org.jackhuang.hmcl.addon.LoaderType;
+import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
-public enum ModLoaderType implements LoaderType {
-    UNKNOWN,
-    FORGE("forge"),
-    CLEANROOM("cleanroom"),
-    NEO_FORGE("neoforge"),
-    FABRIC("fabric"),
-    QUILT("quilt"),
-    LITE_LOADER("liteloader"),
-    LEGACY_FABRIC("legacy-fabric");
-
-    private final Set<String> names;
-
-    ModLoaderType(String... names) {
-        this.names = Set.of(names);
-    }
-
-    @Override
-    public Set<String> names() {
-        return names;
-    }
+@JsonSerializable
+public record ShaderPackMeta(@Nullable String name, @Nullable String version,
+                             @SerializedName(value = "shaderDescription") @Nullable String description) {
 }

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2025  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -37,13 +37,12 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.addon.*;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackFile;
-import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.addon.shader.ShaderFile;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -54,19 +53,19 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -75,75 +74,53 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.GameInstanceLoadable {
-
-    public static final Lazy<Image> UNKNOWN_PACK_IMAGE = new Lazy<>(() ->
-            FXUtils.newBuiltinImage("/assets/img/unknown_pack.png", 64, 64, false, false));
-
-    private static final String TIP_KEY = "resourcePackWarning";
-    private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
-        return switch (compatibility) {
-            case TOO_NEW -> i18n("resourcepack.warning.too_new");
-            case TOO_OLD -> i18n("resourcepack.warning.too_old");
-            case INVALID -> i18n("resourcepack.warning.invalid");
-            case MISSING_PACK_META -> i18n("resourcepack.warning.missing_pack_meta");
-            case MISSING_GAME_META -> i18n("resourcepack.warning.missing_game_meta");
-            default -> null;
-        };
-    }
-
-    private HMCLGameRepository repository;
-    private String instanceId;
-
-    private Path resourcePackDirectory;
-    private ResourcePackManager resourcePackManager;
+public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionPage.GameInstanceLoadable {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    public ResourcePackListPage() {
-        FXUtils.applyDragListener(this, ResourcePackFile::isFileResourcePack, this::addFiles);
+    private Path shadersDir;
+    private HMCLGameRepository repository;
+    private String instanceId;
+
+    public ShaderListPage() {
+        FXUtils.applyDragListener(this, ShaderFile::isFileShaderPack, this::addFiles);
     }
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new ResourcePackListPageSkin(this);
+        return new ShaderListPageSkin(this);
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+    public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
         this.repository = repository;
         this.instanceId = instanceId;
-        this.resourcePackManager = new ResourcePackManager(repository, instanceId);
-        this.resourcePackDirectory = this.resourcePackManager.getDirectory();
-
+        this.shadersDir = repository.getShadersDirectory(instanceId);
         refresh();
     }
 
     public void refresh() {
-        if (resourcePackManager == null) return;
-        setDisable(false);
+        if (shadersDir == null) return;
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             lock.lock();
-            try {
-                if (!ResourcePackManager.isMcVersionSupported(resourcePackManager.getMinecraftVersion())) return null;
-                resourcePackManager.refresh();
-                return resourcePackManager.arePacksEnabled(resourcePackManager.getLocalFiles().stream())
-                        .map(ResourcePackInfoObject::new)
-                        .toList();
+            try (var stream = Files.list(shadersDir)) {
+                return stream.map(file -> {
+                    try {
+                        return ShaderFile.fromFile(file);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to load shader pack " + file, e);
+                        return null;
+                    }
+                }).filter(Objects::nonNull).toList();
             } finally {
                 lock.unlock();
             }
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                if (result != null) {
-                    getItems().setAll(result);
-                } else { // Unsupported mc version
-                    getItems().clear();
-                    setDisable(true);
-                }
+                getItems().setAll(result);
             } else {
-                LOG.warning("Failed to load resource packs", exception);
+                LOG.warning("Failed to load shader packs", exception);
                 getItems().clear();
             }
             setLoading(false);
@@ -151,35 +128,74 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     public void addFiles(List<Path> files) {
-        if (resourcePackManager == null) return;
-
+        if (shadersDir == null) return;
         List<Path> failures = new ArrayList<>();
         Task.runAsync(() -> {
-            for (Path file : files) {
-                try {
-                    resourcePackManager.importResourcePack(file);
-                } catch (Exception e) {
-                    LOG.warning("Failed to add resource pack " + file, e);
-                    failures.add(file);
+            lock.lock();
+            try {
+                for (Path file : files) {
+                    if (ShaderFile.isFileShaderPack(file)) {
+                        try {
+                            FileUtils.copyTo(file, shadersDir);
+                        } catch (Exception e) {
+                            LOG.warning("Failed to add shader pack " + file, e);
+                            failures.add(file);
+                        }
+                    } else {
+                        LOG.warning("Failed to add shader pack", new IllegalArgumentException("File '" + file + "' is not a shader pack"));
+                        failures.add(file);
+                    }
                 }
+            } finally {
+                lock.unlock();
             }
         }).withRunAsync(Schedulers.javafx(), () -> {
             if (!failures.isEmpty()) {
-                StringBuilder failure = new StringBuilder(i18n("resourcepack.add.failed"));
-                for (Path file: failures) {
+                StringBuilder failure = new StringBuilder(i18n("shaderpack.add.failed"));
+                for (Path file : failures) {
                     failure.append("\n").append(file.toString());
                 }
                 Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             }
             refresh();
         }).start();
+    }
 
+    public void removeFiles(List<ShaderFile> selectedItems) {
+        try {
+            for (var shader : selectedItems) {
+                shader.delete();
+            }
+        } catch (IOException e) {
+            Controllers.dialog(i18n("shaderpack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            LOG.warning("Failed to delete shader packs", e);
+        }
+        refresh();
+    }
+
+    public void checkUpdates(Collection<ShaderFile> shaderPacks) {
+        if (shadersDir == null) return;
+
+        Controllers.taskDialog(
+                Task.composeAsync(() -> {
+                    Optional<String> gameVersion = repository.getGameVersion(instanceId);
+                    return gameVersion.map(g -> new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), g, shaderPacks)).orElse(null);
+                }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception != null || result == null) {
+                        Controllers.dialog(I18n.i18n("addon.check_update.failed_check"), I18n.i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                    } else if (result.isEmpty()) {
+                        Controllers.dialog(I18n.i18n("addon.check_update.empty"));
+                    } else {
+                        Controllers.navigateForward(new AddonUpdatesPage(shadersDir, result));
+                    }
+                }).withStagesHints("update.checking"),
+                I18n.i18n("addon.check_update"), TaskCancellationAction.NORMAL);
     }
 
     private void onAddFiles() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("resourcepack.add"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.resourcepack"), "*.zip"));
+        fileChooser.setTitle(i18n("shaderpack.add"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.shaderpack"), "*.zip"));
         List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
         if (files != null && !files.isEmpty()) {
             addFiles(files);
@@ -187,82 +203,30 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void onDownload() {
-        Controllers.getDownloadPage().showResourcePackDownloads().selectVersion(instanceId);
+        Controllers.getDownloadPage().showShaderDownloads().selectVersion(instanceId);
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
     private void onOpenFolder() {
-        if (resourcePackDirectory != null) {
-            FXUtils.openFolder(resourcePackDirectory);
+        if (shadersDir != null) {
+            FXUtils.openFolder(shadersDir);
         }
     }
 
-    private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
-            Controllers.confirm(
-                    i18n("resourcepack.warning.manipulate"),
-                    i18n("message.warning"),
-                    MessageDialogPane.MessageType.WARNING,
-                    () -> {
-                        SettingsManager.state().getShownTips().put(TIP_KEY, true);
-                        setSelectedEnabled(selectedItems, true);
-                    }, null);
-        } else {
-            if (resourcePackManager == null) return;
-            if (enabled) {
-                resourcePackManager.enableResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList());
-            } else {
-                resourcePackManager.disableResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList());
-            }
-            for (ResourcePackInfoObject item : selectedItems) {
-                item.enabledProperty().set(enabled);
-            }
+    private static Image getOrCreateIcon(ShaderFile shaderFile) {
+        Image image = shaderFile.getIcon();
+        if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
+                (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
+            image = switch (shaderFile.getLoaderType()) {
+                case OPTIFINE_IRIS -> FXUtils.newBuiltinImage("/assets/img/opti-iris.png");
+                default -> ResourcePackListPage.UNKNOWN_PACK_IMAGE.get();
+            };
         }
+        return image;
     }
 
-    private void removeSelected(List<ResourcePackInfoObject> selectedItems) {
-        try {
-            if (resourcePackManager != null) {
-                if (resourcePackManager.removeResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList())) {
-                    refresh();
-                }
-            }
-        } catch (IOException e) {
-            Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-            LOG.warning("Failed to delete resource packs", e);
-        }
-    }
-
-    public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
-        Runnable action = () -> Controllers.taskDialog(Task
-                        .composeAsync(() -> {
-                            Optional<String> gameVersion = repository.getGameVersion(instanceId);
-                            return gameVersion.map(g -> new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), g, resourcePacks)).orElse(null);
-                        })
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                            if (exception != null || result == null) {
-                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                            } else if (result.isEmpty()) {
-                                Controllers.dialog(i18n("addon.check_update.empty"));
-                            } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(resourcePackDirectory, result));
-                            }
-                        })
-                        .withStagesHints("update.checking"),
-                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
-
-        if (repository.isModpack(instanceId)) {
-            Controllers.confirm(
-                    i18n("resourcepack.update_in_modpack.warning"), null,
-                    MessageDialogPane.MessageType.WARNING,
-                    action, null);
-        } else {
-            action.run();
-        }
-    }
-
-    private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
-        private final JFXListView<ResourcePackInfoObject> listView;
+    private static final class ShaderListPageSkin extends SkinBase<ShaderListPage> {
+        private final JFXListView<ShaderFile> listView;
         private final JFXTextField searchField = new JFXTextField();
 
         private final TransitionPane toolbarPane = new TransitionPane();
@@ -272,7 +236,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private boolean isSearching;
 
-        private ResourcePackListPageSkin(ResourcePackListPage control) {
+        public ShaderListPageSkin(ShaderListPage control) {
             super(control);
 
             StackPane pane = new StackPane();
@@ -289,18 +253,12 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 // Toolbar Selecting
                 toolbarSelecting.getChildren().setAll(
                         createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                                control.removeSelected(listView.getSelectionModel().getSelectedItems());
-                            }, null);
+                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
+                                            control.removeFiles(listView.getSelectionModel().getSelectedItems()),
+                                    null);
                         }),
-                        createToolbarButton2(i18n("button.enable"), SVG.CHECK, () ->
-                                control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
-                        createToolbarButton2(i18n("button.disable"), SVG.CLOSE, () ->
-                                control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                                control.checkUpdates(
-                                        listView.getSelectionModel().getSelectedItems().stream().map(ResourcePackInfoObject::getFile).toList()
-                                )
+                                control.checkUpdates(listView.getSelectionModel().getSelectedItems().stream().toList())
                         ),
                         createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                                 listView.getSelectionModel().selectAll()),
@@ -338,10 +296,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 toolbarNormal.setPickOnBounds(false);
                 toolbarNormal.getChildren().setAll(
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
-                        createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
+                        createToolbarButton2(i18n("shaderpack.add"), SVG.ADD, control::onAddFiles),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, control::onOpenFolder),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                                control.checkUpdates(listView.getItems().stream().map(ResourcePackInfoObject::getFile).toList())
+                                control.checkUpdates(listView.getItems().stream().toList())
                         ),
                         createToolbarButton2(i18n("download"), SVG.DOWNLOAD, control::onDownload),
                         createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
@@ -373,15 +331,15 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.loadingProperty().bind(control.loadingProperty());
 
-                listView.setCellFactory(x -> new ResourcePackListCell(listView, control));
+                listView.setCellFactory(x -> new ShaderListCell(listView, control));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
                 Bindings.bindContent(listView.getItems(), control.getItems());
 
                 listView.setOnContextMenuRequested(event -> {
-                    ResourcePackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+                    ShaderFile selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ResourcePackInfoDialog(control, selectedItem));
+                        Controllers.dialog(new ShaderInfoDialog(control, selectedItem));
                     }
                 });
 
@@ -426,99 +384,40 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 }
 
                 // Do we need to search in the background thread?
-                for (ResourcePackInfoObject item : getSkinnable().getItems()) {
-                    ResourcePackFile resourcePack = item.getFile();
-                    LocalAddonFile.Description description = resourcePack.getDescription();
-                    Stream<String> descriptionParts = description == null
-                            ? Stream.empty()
-                            : description.parts().stream().map(LocalAddonFile.Description.Part::text);
-                    if (predicate.test(resourcePack.getFileNameWithExtension())
-                            || predicate.test(resourcePack.getFileName())
-                            || descriptionParts.anyMatch(predicate)) {
+                for (ShaderFile item : getSkinnable().getItems()) {
+                    var meta = item.getMeta();
+                    if (predicate.test(item.getFile().getFileName().toString())
+                            || predicate.test(item.getName())
+                            || (meta != null && (predicate.test(meta.version()) || predicate.test(meta.description())))) {
                         listView.getItems().add(item);
                     }
                 }
             }
         }
+
     }
 
-    public static class ResourcePackInfoObject {
-        private final ResourcePackFile file;
-        private final BooleanProperty enabled;
+    private static final class ShaderListCell extends MDListCell<ShaderFile> {
 
-        public ResourcePackInfoObject(Pair<ResourcePackFile, Boolean> pair) {
-            this.file = pair.key();
-            this.enabled = new SimpleBooleanProperty(this, "enabled", pair.value());
-        }
+        private final ShaderListPage page;
 
-        public ResourcePackFile getFile() {
-            return file;
-        }
-
-        public BooleanProperty enabledProperty() {
-            return enabled;
-        }
-
-        Image getIcon() {
-            Image image = file.getIcon();
-            if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
-                    (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
-                image = UNKNOWN_PACK_IMAGE.get();
-            }
-            return image;
-        }
-    }
-
-    private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
-        private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
-
-        private final ResourcePackListPage page;
-
-        private final JFXCheckBox checkBox;
-        private final ImageContainer imageContainer = new ImageContainer(32);
+        private final ImageContainer imageContainer = new ImageContainer(24);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
 
-        private ResourcePackInfoObject object = null;
-
-        private BooleanProperty booleanProperty = null;
-
-        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
+        public ShaderListCell(JFXListView<ShaderFile> listView, ShaderListPage page) {
             super(listView);
             this.page = page;
-
-            getStyleClass().add("resource-pack-list-cell");
 
             HBox root = new HBox(8);
             root.setPickOnBounds(false);
             root.setAlignment(Pos.CENTER_LEFT);
 
-            checkBox = new JFXCheckBox() {
-                @Override
-                public void fire() {
-                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && object != null && !object.getFile().isCompatible()) {
-                        Controllers.confirm(
-                                i18n("resourcepack.warning.manipulate"),
-                                i18n("message.info"),
-                                MessageDialogPane.MessageType.INFO,
-                                () -> {
-                                    super.fire();
-                                    SettingsManager.state().getShownTips().put(TIP_KEY, true);
-                                }, null);
-                    } else {
-                        super.fire();
-                    }
-                }
-            };
-            checkBox.setOnAction(e -> {
-                if (object != null) object.file.setEnabled(checkBox.isSelected());
-            });
-
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
 
-            root.getChildren().setAll(checkBox, imageContainer, content, btnReveal, btnInfo);
+            root.getChildren().setAll(imageContainer, content, btnReveal, btnInfo);
 
             setSelectable();
 
@@ -527,46 +426,31 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
 
         @Override
-        protected void updateControl(ResourcePackInfoObject item, boolean empty) {
-            pseudoClassStateChanged(WARNING, false);
-
+        protected void updateControl(ShaderFile item, boolean empty) {
             if (empty || item == null) return;
 
-            this.object = item;
-            ResourcePackFile file = item.getFile();
-            imageContainer.setImage(item.getIcon());
+            imageContainer.setImage(getOrCreateIcon(item));
 
             content.getTags().clear();
-            content.setTitle(file.getFileName());
-            {
-                var description = file.getDescription();
-                content.setSubtitle(description != null ? description.toStringSingleLine() : "");
-            }
+            content.setTitle(item.getFileName());
+            content.setSubtitle(item.getMeta() == null || item.getMeta().name() == null ? "" : item.getMeta().name());
+            content.addTag(switch (item.getLoaderType()) {
+                case OPTIFINE_IRIS -> i18n("shaderpack.loader.optifine_iris");
+                case APERTURE -> i18n("shaderpack.loader.aperture");
+            });
+            if (item.getMeta() != null && item.getMeta().version() != null)
+                content.addTag(item.getMeta().version());
 
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
-            btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getFile()));
+            btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(item.getFile()));
 
-            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(this.page, item)));
-
-            if (booleanProperty != null) {
-                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
-            }
-            checkBox.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
-
-            {
-                var compatibility = file.getCompatibility();
-                if (compatibility != ResourcePackFile.Compatibility.COMPATIBLE) {
-                    pseudoClassStateChanged(WARNING, true);
-                    content.addTagWarning(getWarning(compatibility));
-                }
-            }
+            btnInfo.setOnAction(e -> Controllers.dialog(new ShaderInfoDialog(this.page, item)));
         }
     }
 
-    private static final class ResourcePackInfoDialog extends JFXDialogLayout {
+    private static final class ShaderInfoDialog extends JFXDialogLayout {
 
-        ResourcePackInfoDialog(ResourcePackListPage page, ResourcePackInfoObject packInfoObject) {
-            ResourcePackFile pack = packInfoObject.getFile();
+        public ShaderInfoDialog(ShaderListPage page, ShaderFile shaderFile) {
 
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
@@ -575,20 +459,22 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
-            imageContainer.setImage(packInfoObject.getIcon());
+            imageContainer.setImage(getOrCreateIcon(shaderFile));
 
             TwoLineListItem title = new TwoLineListItem();
-            title.setTitle(pack.getFileName());
-            title.setSubtitle(pack.getFileNameWithExtension());
-            var compatibility = pack.getCompatibility();
-            if (compatibility != ResourcePackFile.Compatibility.COMPATIBLE) {
-                title.addTagWarning(getWarning(compatibility));
-            }
+            title.setTitle(shaderFile.getFileName());
+            title.setSubtitle(shaderFile.getFile().getFileName().toString());
+            title.addTag(switch (shaderFile.getLoaderType()) {
+                case OPTIFINE_IRIS -> i18n("shaderpack.loader.optifine_iris");
+                case APERTURE -> i18n("shaderpack.loader.aperture");
+            });
 
             titleContainer.getChildren().setAll(imageContainer, title);
             setHeading(titleContainer);
 
-            Label description = new Label(Objects.requireNonNullElse(pack.getDescription(), "").toString());
+            Label description = new Label();
+            if (shaderFile.getMeta() != null && shaderFile.getMeta().description() != null)
+                description.setText(shaderFile.getMeta().description());
             description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
 
@@ -606,13 +492,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             setBody(descriptionPane);
 
             for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
-                    pair("addon.curseforge", CurseForgeRemoteAddonRepository.RESOURCE_PACKS),
-                    pair("addon.modrinth", ModrinthRemoteAddonRepository.RESOURCE_PACKS)
+                    pair("addon.curseforge", CurseForgeRemoteAddonRepository.SHADERS),
+                    pair("addon.modrinth", ModrinthRemoteAddonRepository.SHADER_PACKS)
             )) {
                 RemoteAddonRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                 Task.runAsync(() -> {
-                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(pack.getFile());
+                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(shaderFile.getFile());
                     if (versionOptional.isPresent()) {
                         RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                         FXUtils.runInFX(() -> {
@@ -620,8 +506,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                 fireEvent(new DialogCloseEvent());
                                 Controllers.navigate(new DownloadPage(
                                         repository instanceof CurseForgeRemoteAddonRepository
-                                                ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(false)
-                                                : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(false),
+                                                ? HMCLLocalizedDownloadListPage.ofCurseForgeShaderPack(false)
+                                                : HMCLLocalizedDownloadListPage.ofModrinthShaderPack(false),
                                         remoteAddon,
                                         new HMCLGameRepository.InstanceReference(page.repository, page.instanceId),
                                         null
@@ -643,5 +529,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             onEscPressed(this, okButton::fire);
         }
+
     }
 }

@@ -463,10 +463,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
                                     Controllers.navigate(new DownloadPage(
-                                            repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
+                                            repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(false) : HMCLLocalizedDownloadListPage.ofModrinthMod(false),
                                             remoteAddon,
                                             new HMCLGameRepository.InstanceReference(ModListPageSkin.this.getSkinnable().getRepository(), ModListPageSkin.this.getSkinnable().getInstanceId()),
-                                            org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
+                                            null
                                     ));
                                 });
                                 button.setDisable(false);
@@ -488,7 +488,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 getActions().add(officialPageButton);
             }
 
-            if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().getMcmod())) {
+            if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().mcmod())) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
                 searchButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
@@ -579,7 +579,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {
-                String chineseName = modTranslations.getName();
+                String chineseName = modTranslations.name();
                 if (StringUtils.containsChinese(chineseName)) {
                     if (StringUtils.containsEmoji(chineseName)) {
                         StringBuilder builder = new StringBuilder();

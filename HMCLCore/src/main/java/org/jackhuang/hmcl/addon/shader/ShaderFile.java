@@ -1,0 +1,121 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.addon.shader;
+
+import javafx.scene.image.Image;
+import org.jackhuang.hmcl.addon.LocalAddonFile;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+public sealed abstract class ShaderFile extends LocalAddonFile implements Comparable<ShaderFile> permits ShaderZipFile, ShaderFolder {
+    public static @Nullable ShaderFile fromFile(Path file) throws IOException {
+        return Files.isRegularFile(file) ? ShaderZipFile.load(file) : ShaderFolder.load(file);
+    }
+
+    public static boolean isFileShaderPack(Path file) {
+        if (Files.isDirectory(file)) return Files.isDirectory(file.resolve("shaders"));
+        if (Files.isRegularFile(file)) {
+            try (var zipSystem = CompressingUtils.createReadOnlyZipFileSystem(file)) {
+                Path root = zipSystem.getRootDirectories().iterator().next();
+                try (Stream<Path> stream = Files.walk(root)) {
+                    return stream.filter(path -> path.endsWith("shaders")).anyMatch(Files::isDirectory);
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to check if file is shader pack", e);
+            }
+        }
+        return false;
+    }
+
+    protected Path file;
+    protected final String fileNameWithoutExtension;
+    protected final ShaderLoaderType loaderType;
+    protected final @Nullable ShaderPackMeta shaderPackMeta;
+    protected final @Nullable Image icon;
+
+    protected ShaderFile(Path file, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta, @Nullable Image icon) {
+        this.file = file;
+        this.fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
+        this.loaderType = loaderType;
+        this.shaderPackMeta = shaderPackMeta;
+        this.icon = icon;
+    }
+
+    @Override
+    public Path getFile() {
+        return file;
+    }
+
+    @Override
+    public String getFileName() {
+        return fileNameWithoutExtension;
+    }
+
+    public ShaderLoaderType getLoaderType() {
+        return loaderType;
+    }
+
+    public @Nullable ShaderPackMeta getMeta() {
+        return shaderPackMeta;
+    }
+
+    public @Nullable Image getIcon() {
+        return icon;
+    }
+
+    public @NotNull String getName() {
+        return Optional.ofNullable(getMeta()).map(ShaderPackMeta::name).orElse(getFile().getFileName().toString());
+    }
+
+    @Override
+    public boolean isDisabled() {
+        return false;
+    }
+
+    @Override
+    public void markDisabled() {
+        // NO-OP
+    }
+
+    @Override
+    public boolean keepOldFiles() {
+        return false;
+    }
+
+    @Override
+    public void setOld(boolean old) throws IOException {
+        if (old) file = LocalAddonManager.backupFile(file);
+        else file = LocalAddonManager.restoreFile(file);
+    }
+
+    @Override
+    public int compareTo(@NotNull ShaderFile other) {
+        return fileNameWithoutExtension.compareTo(other.fileNameWithoutExtension);
+    }
+}
