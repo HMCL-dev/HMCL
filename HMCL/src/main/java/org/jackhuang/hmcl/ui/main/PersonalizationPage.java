@@ -1197,24 +1197,39 @@ public class PersonalizationPage extends StackPane {
 
                     {
                         HBox hBox = new HBox();
-                        hBox.setSpacing(8);
+                        hBox.setSpacing(3);
 
                         FontComboBox cboFont = new FontComboBox();
                         cboFont.setValue(settings().launcherFontFamilyProperty().get());
                         FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
+
+                        JFXTextField txtFontSize = new JFXTextField();
+                        FXUtils.setLimitWidth(txtFontSize, 50);
+                        FXUtils.bind(txtFontSize, settings().launcherFontSizeProperty(), SafeStringConverter.fromFiniteDouble()
+                                .restrict(it -> it > 0)
+                                .fallbackTo(FontManager.DEFAULT_FONT_SIZE)
+                                .asPredicate(Validator.addTo(txtFontSize)));
 
                         JFXButton clearButton = FXUtils.newToggleButton4(SVG.RESTORE);
                         clearButton.setOnAction(e -> cboFont.setValue(null));
 
                         FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
 
-                        hBox.getChildren().setAll(cboFont, clearButton);
+                        hBox.getChildren().setAll(cboFont, txtFontSize, clearButton);
 
                         borderPane.setRight(hBox);
                     }
                 }
 
-                vbox.getChildren().add(new Label("Hello Minecraft! Launcher"));
+                Label lblFontDisplay = new Label("Hello Minecraft! Launcher");
+                lblFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
+                        () -> Font.font(
+                                Lang.requireNonNullElse(settings().launcherFontFamilyProperty().get(),
+                                        Font.getDefault().getFamily()),
+                                settings().launcherFontSizeProperty().get()),
+                        settings().launcherFontFamilyProperty(), settings().launcherFontSizeProperty()));
+
+                vbox.getChildren().add(lblFontDisplay);
 
                 fontPane.getContent().add(vbox);
             }

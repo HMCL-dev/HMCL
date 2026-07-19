@@ -476,6 +476,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return launcherFontFamily;
     }
 
+    /// The launcher chrome font size.
+    @SerializedName("launcherFontSize")
+    private final DoubleProperty launcherFontSize = new SimpleDoubleProperty(FontManager.DEFAULT_FONT_SIZE);
+
+    /// Returns the launcher chrome font size property.
+    public DoubleProperty launcherFontSizeProperty() {
+        return launcherFontSize;
+    }
+
     // General UI
 
     /// Whether UI animations are disabled.

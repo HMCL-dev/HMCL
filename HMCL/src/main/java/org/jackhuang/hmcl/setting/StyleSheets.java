@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Locale;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -61,6 +62,7 @@ public final class StyleSheets {
         stylesheets = FXCollections.observableList(Arrays.asList(array));
 
         FontManager.fontProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
+        settings().launcherFontSizeProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
         Themes.colorSchemeProperty().addListener(o -> {
             stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet());
             stylesheets.set(BRIGHTNESS_SHEET_INDEX, getBrightnessStyleSheet());
@@ -90,48 +92,65 @@ public final class StyleSheets {
         final String defaultCss = "/assets/css/font.css";
         final FontManager.FontReference font = FontManager.getFont();
 
-        if (font == null || "System".equals(font.family()))
+        final boolean hasCustomFont = font != null && !"System".equals(font.family());
+        final double fontSize = settings().launcherFontSizeProperty().get();
+
+        if (!hasCustomFont && fontSize == FontManager.DEFAULT_FONT_SIZE)
             return defaultCss;
-
-        String fontFamily = font.family();
-        String style = font.style();
-        String weight = null;
-        String posture = null;
-
-        if (style != null) {
-            style = style.toLowerCase(Locale.ROOT);
-
-            if (style.contains("thin"))
-                weight = "100";
-            else if (style.contains("extralight") || style.contains("extra light") || style.contains("ultralight") | style.contains("ultra light"))
-                weight = "200";
-            else if (style.contains("medium"))
-                weight = "500";
-            else if (style.contains("semibold") || style.contains("semi bold") || style.contains("demibold") || style.contains("demi bold"))
-                weight = "600";
-            else if (style.contains("extrabold") || style.contains("extra bold") || style.contains("ultrabold") || style.contains("ultra bold"))
-                weight = "800";
-            else if (style.contains("black") || style.contains("heavy"))
-                weight = "900";
-            else if (style.contains("light"))
-                weight = "lighter";
-            else if (style.contains("bold"))
-                weight = "bold";
-
-            posture = style.contains("italic") || style.contains("oblique") ? "italic" : null;
-        }
 
         StringBuilder builder = new StringBuilder();
         builder.append(".root {");
-        builder.append("-fx-font-family:\"").append(fontFamily).append("\";");
 
-        if (weight != null)
-            builder.append("-fx-font-weight:").append(weight).append(";");
+        if (hasCustomFont) {
+            String fontFamily = font.family();
+            String style = font.style();
+            String weight = null;
+            String posture = null;
 
-        if (posture != null)
-            builder.append("-fx-font-style:").append(posture).append(";");
+            if (style != null) {
+                style = style.toLowerCase(Locale.ROOT);
 
-        builder.append('}');
+                if (style.contains("thin"))
+                    weight = "100";
+                else if (style.contains("extralight") || style.contains("extra light") || style.contains("ultralight") | style.contains("ultra light"))
+                    weight = "200";
+                else if (style.contains("medium"))
+                    weight = "500";
+                else if (style.contains("semibold") || style.contains("semi bold") || style.contains("demibold") || style.contains("demi bold"))
+                    weight = "600";
+                else if (style.contains("extrabold") || style.contains("extra bold") || style.contains("ultrabold") || style.contains("ultra bold"))
+                    weight = "800";
+                else if (style.contains("black") || style.contains("heavy"))
+                    weight = "900";
+                else if (style.contains("light"))
+                    weight = "lighter";
+                else if (style.contains("bold"))
+                    weight = "bold";
+
+                posture = style.contains("italic") || style.contains("oblique") ? "italic" : null;
+            }
+
+            builder.append("-fx-font-family:\"").append(fontFamily).append("\";");
+
+            if (weight != null)
+                builder.append("-fx-font-weight:").append(weight).append(";");
+
+            if (posture != null)
+                builder.append("-fx-font-style:").append(posture).append(";");
+        }
+
+        if (fontSize != FontManager.DEFAULT_FONT_SIZE) {
+            builder.append("-fx-font-size:").append(fontSize).append("px;");
+            builder.append('}');
+            // Override Modena UA which sets explicit font-size on common controls,
+            // blocking inheritance from .root. The ".root " prefix gives higher
+            // specificity than Modena's plain ".label" etc., and author sheets
+            // have higher priority than user-agent sheets.
+            builder.append(".root .label,.root .button,.root .check-box,.root .radio-button,.root .hyperlink{")
+                    .append("-fx-font-size:").append(fontSize).append("px;}");
+        } else {
+            builder.append('}');
+        }
 
         return toStyleSheetUri(builder.toString(), defaultCss);
     }

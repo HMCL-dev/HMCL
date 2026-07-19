@@ -138,6 +138,9 @@
     "launcherFontFamily": {
       "type": "string"
     },
+    "launcherFontSize": {
+      "type": "number"
+    },
     "windowTransparent": {
       "type": "boolean"
     },
