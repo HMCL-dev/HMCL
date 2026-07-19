@@ -39,6 +39,10 @@ public interface RemoteAddonRepository {
 
     Type getType();
 
+    String getApiBaseUrl();
+
+    String getBaseUrl();
+
     enum SortType {
         POPULARITY,
         NAME,
@@ -99,6 +103,10 @@ public interface RemoteAddonRepository {
     RemoteAddon.File getModFile(String modId, String fileId) throws IOException;
 
     Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException;
+
+    String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException;
+
+    String getVersionPageUrl(RemoteAddon.Version version) throws IOException;
 
     Stream<Category> getCategories() throws IOException;
 

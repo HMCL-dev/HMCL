@@ -17,27 +17,40 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
-import javafx.scene.image.Image;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
  */
 public final class HTMLRenderer {
-    private static final String INDENT = "  ";
+
     private static URI resolveLink(Node linkNode) {
         String href = linkNode.absUrl("href");
         if (href.isEmpty())
@@ -50,6 +63,42 @@ public final class HTMLRenderer {
         }
     }
 
+    /// @see org.jsoup.internal.StringUtil#isWhitespace(int)
+    public static boolean isWhitespace(int c) {
+        return c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\r';
+    }
+
+    /// @see org.jsoup.internal.StringUtil#isInvisibleChar(int)
+    public static boolean isInvisibleChar(int c) {
+        return c == 8203 || c == 173; // zero width sp, soft hyphen
+        // previously also included zw non join, zw join - but removing those breaks semantic meaning of text
+    }
+
+    /// @see org.jsoup.internal.StringUtil#normaliseWhitespace(String)
+    /// @see org.jsoup.internal.StringUtil#isActuallyWhitespace(int)
+    public static String normaliseWhitespace(String str) {
+        var accum = new StringBuilder();
+        boolean lastWasWhite = false;
+        int len = str.length();
+        int i = 0;
+        while (i < len) {
+            int c = str.codePointAt(i);
+            if (isWhitespace(c)) { // Ignore &nbsp;
+                if (lastWasWhite) {
+                    i += Character.charCount(c);
+                    continue;
+                }
+                accum.append(' ');
+                lastWasWhite = true;
+            } else if (!isInvisibleChar(c)) {
+                accum.appendCodePoint(c);
+                lastWasWhite = false;
+            }
+            i += Character.charCount(c);
+        }
+        return accum.toString();
+    }
+
     private final List<javafx.scene.Node> children = new ArrayList<>();
     private final List<Node> stack = new ArrayList<>();
 
@@ -58,11 +107,16 @@ public final class HTMLRenderer {
     private boolean underline;
     private boolean strike;
     private boolean highlight;
-    private int indentLevel;
+    private boolean preformatted;
+    private boolean code;
+    private int listDepth;
     private String headerLevel;
     private Node hyperlink;
+    private String fxStyle;
 
     private final Consumer<URI> onClickHyperlink;
+
+    private boolean rendered;
 
     public HTMLRenderer(Consumer<URI> onClickHyperlink) {
         this.onClickHyperlink = onClickHyperlink;
@@ -74,42 +128,32 @@ public final class HTMLRenderer {
         underline = false;
         strike = false;
         highlight = false;
+        preformatted = false;
+        code = false;
+        listDepth = 0;
         headerLevel = null;
         hyperlink = null;
+        fxStyle = null;
 
+        var declarations = new SimpleCssDeclarations();
         for (Node node : stack) {
             String nodeName = node.nodeName();
             switch (nodeName) {
-                case "b":
-                case "strong":
-                    bold = true;
-                    break;
-                case "i":
-                case "em":
-                    italic = true;
-                    break;
-                case "ins":
-                    underline = true;
-                    break;
-                case "del":
-                    strike = true;
-                    break;
-                case "mark":
-                    highlight = true;
-                    break;
-                case "a":
-                    hyperlink = node;
-                    break;
-                case "h1":
-                case "h2":
-                case "h3":
-                case "h4":
-                case "h5":
-                case "h6":
-                    headerLevel = nodeName;
-                    break;
+                case "b", "strong" -> bold = true;
+                case "i", "em" -> italic = true;
+                case "ins" -> underline = true;
+                case "del" -> strike = true;
+                case "mark" -> highlight = true;
+                case "pre" -> preformatted = true;
+                case "code" -> code = true;
+                case "a" -> hyperlink = node;
+                case "h1", "h2", "h3", "h4", "h5", "h6" -> headerLevel = nodeName;
+                case "li" -> listDepth++;
             }
+
+            declarations.add(node.attr("style"));
         }
+        fxStyle = declarations.asString();
     }
 
     private void pushNode(Node node) {
@@ -123,6 +167,8 @@ public final class HTMLRenderer {
     }
 
     private void applyStyle(Text text) {
+        var styleBuilder = new StringBuilder();
+
         if (hyperlink != null) {
             URI target = resolveLink(hyperlink);
             if (target != null) {
@@ -144,14 +190,29 @@ public final class HTMLRenderer {
         if (italic)
             text.getStyleClass().add("html-italic");
 
+        if (code) {
+            text.getStyleClass().add("html-code");
+            styleBuilder.append("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)));
+        }
+
         if (headerLevel != null)
             text.getStyleClass().add("html-" + headerLevel);
+
+        if (fxStyle != null)
+            styleBuilder.append(fxStyle);
+        text.setStyle(styleBuilder.toString());
     }
 
     private void appendText(String text) {
         Text textNode = new Text(text);
         applyStyle(textNode);
-        children.add(textNode);
+        if (code) {
+            var codeFlow = new TextFlow(textNode);
+            codeFlow.getStyleClass().add("html-code-block");
+            children.add(codeFlow);
+        } else {
+            children.add(textNode);
+        }
     }
 
     private void appendAutoLineBreak(String text) {
@@ -185,20 +246,33 @@ public final class HTMLRenderer {
             }
 
             try {
-                Image image = FXUtils.getRemoteImageTask(src, width, height, true, true)
-                        .run();
-                if (image == null)
-                    throw new AssertionError("Image loading task returned null");
+                ImageView imageView = new ImageView();
 
-                ImageView imageView = new ImageView(image);
+                FXUtils.getRemoteImageTask(
+                        src, width, height, true, true
+                ).whenComplete(Schedulers.javafx(), (res, e) -> {
+                    if (e != null) {
+                        LOG.warning("Failed to load image: " + src, e);
+                        return;
+                    }
+                    if (res == null) {
+                        LOG.warning("Failed to load image: " + src, new AssertionError("Image loading task returned null, which should never happen"));
+                    }
+                    imageView.setImage(res);
+                }).start();
+                imageView.setPreserveRatio(true);
+
+                ImagePane imagePane = new ImagePane(imageView, alt);
+
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
                     if (target != null) {
-                        FXUtils.onClicked(imageView, () -> onClickHyperlink.accept(target));
-                        imageView.setCursor(Cursor.HAND);
+                        FXUtils.onClicked(imagePane, () -> onClickHyperlink.accept(target));
+                        imagePane.setCursor(Cursor.HAND);
                     }
                 }
-                children.add(imageView);
+
+                children.add(imagePane);
                 return;
             } catch (Throwable e) {
                 LOG.warning("Failed to load image: " + src, e);
@@ -209,59 +283,196 @@ public final class HTMLRenderer {
             appendText(alt);
     }
 
-    public void appendNode(Node node) {
-        if (node instanceof TextNode) {
-            appendText(((TextNode) node).text());
+    private void appendTable(Node table) {
+        var childElements = ((Element) table).children();
+        List<Element> captions = new ArrayList<>();
+
+        List<Element> head = new ArrayList<>();
+        List<List<Element>> body = new ArrayList<>();
+        List<Element> foot = new ArrayList<>();
+
+        boolean hasHead = false;
+        boolean hasBody = false;
+        boolean hasFoot = false;
+        int columnCount = 0;
+        for (Element child : childElements) {
+            switch (child.nodeName()) {
+                case "caption" -> captions.add(child);
+                case "thead" -> {
+                    if (hasHead) continue;
+                    hasHead = true;
+                    for (Element e : child.children()) {
+                        if (e.nameIs("tr")) {
+                            head.clear();
+                            head.addAll(
+                                    e.children().stream()
+                                            .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                                            .toList()
+                            );
+                            break;
+                        }
+                        if (e.nameIs("th") || e.nameIs("td")) {
+                            head.add(e);
+                        }
+                    }
+                    columnCount = Math.max(columnCount, head.size());
+                }
+                case "tbody" -> {
+                    if (hasBody) continue;
+                    hasBody = true;
+                    body.clear();
+                    for (Element e : child.children()) {
+                        if (e.nameIs("tr")) {
+                            List<Element> row = e.children().stream()
+                                    .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                                    .toList();
+                            columnCount = Math.max(columnCount, row.size());
+                            if (!row.isEmpty()) body.add(row);
+                        }
+                    }
+                }
+                case "tfoot" -> {
+                    if (hasFoot) continue;
+                    hasFoot = true;
+                    for (Element e : child.children()) {
+                        if (e.nameIs("tr")) {
+                            foot.clear();
+                            foot.addAll(
+                                    e.children().stream()
+                                            .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                                            .toList()
+                            );
+                            break;
+                        }
+                        if (e.nameIs("th") || e.nameIs("td")) {
+                            foot.add(e);
+                        }
+                    }
+                    columnCount = Math.max(columnCount, foot.size());
+                }
+                case "tr" -> {
+                    if (hasBody) continue;
+                    List<Element> row = child.children().stream()
+                            .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                            .toList();
+                    columnCount = Math.max(columnCount, row.size());
+                    if (!row.isEmpty()) body.add(row);
+                }
+            }
+        }
+
+        head = Lang.copyWithSize(head, columnCount, null);
+
+        List<List<Element>> rows = new ArrayList<>(hasFoot ? body.size() + 1 : body.size());
+        for (List<Element> row : body)
+            rows.add(Lang.copyWithSize(row, columnCount, null));
+        if (hasFoot)
+            rows.add(Lang.copyWithSize(foot, columnCount, null));
+
+        TableView<List<Element>> tableView = FXUtils.newAutoHeightTable(FXCollections.observableList(rows));
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        for (int i = 0; i < columnCount; i++) {
+            int finalI = i;
+            TableColumn<List<Element>, Element> c = new TableColumn<>();
+            Element e = head.get(i);
+            if (e != null) {
+                var box = new VBox(new HTMLRenderer(onClickHyperlink).appendNode(e).mergeLineBreaks().render());
+                box.setAlignment(Pos.CENTER_LEFT);
+                c.setGraphic(box);
+            }
+            c.setCellFactory(param -> new TableCell<>() {
+                @Override
+                protected void updateItem(Element item, boolean empty) {
+                    if (item == getItem()) return;
+                    super.updateItem(item, empty);
+                    if (item == null) {
+                        setGraphic(null);
+                    } else {
+                        setGraphic(new Pane(new HTMLRenderer(onClickHyperlink).appendNode(item).mergeLineBreaks().render()));
+                    }
+                }
+            });
+            c.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().get(finalI)));
+            tableView.getColumns().add(c);
+        }
+
+        children.add(tableView);
+
+        for (Element caption : captions) {
+            appendAutoLineBreak("\n\n");
+            appendChildren(caption);
+            appendAutoLineBreak("\n");
+        }
+    }
+
+    private void appendOrderedList(Node node) {
+        pushNode(node);
+        int ordinal = 0;
+        for (Node childNode : node.childNodes()) {
+            if (childNode.nameIs("li")) {
+                appendText("\n " + "  ".repeat(listDepth) + ++ordinal + ". ");
+                appendChildren(childNode);
+                continue;
+            }
+            appendNode(childNode);
+        }
+        popNode();
+    }
+
+    private void appendChildren(Node node) {
+        if (node.childNodeSize() > 0) {
+            if (node.nameIs("table")) {
+                appendTable(node);
+            } else if (node.nameIs("ol")) {
+                appendOrderedList(node);
+            } else {
+                pushNode(node);
+                for (Node childNode : node.childNodes()) {
+                    appendNode(childNode);
+                }
+                popNode();
+            }
+        }
+    }
+
+    public HTMLRenderer appendNode(Node node) {
+        if (node instanceof TextNode n) {
+            appendText(preformatted ? n.getWholeText() : normaliseWhitespace(n.getWholeText()));
         }
 
         String name = node.nodeName();
         switch (name) {
-            case "img":
+            case "img" -> {
+                if (!children.isEmpty())
+                    appendAutoLineBreak("\n");
                 appendImage(node);
-                break;
-            case "li":
-                appendText("\n" + INDENT.repeat(indentLevel) + " \u2022 ");
-                break;
-            case "dt":
-                appendText(" ");
-                break;
-            case "p":
-            case "h1":
-            case "h2":
-            case "h3":
-            case "h4":
-            case "h5":
-            case "h6":
-            case "tr":
+                appendAutoLineBreak("\n");
+            }
+            case "li" -> appendText("\n " + "  ".repeat(listDepth) + "\u2022 ");
+            case "dt" -> appendText(" ");
+            case "p" -> {
+                var n = node.parent();
+                if (!children.isEmpty() && (n == null || !n.nameIs("li")))
+                    appendAutoLineBreak("\n\n");
+            }
+            case "h1", "h2", "h3", "h4", "h5", "h6" -> {
                 if (!children.isEmpty())
                     appendAutoLineBreak("\n\n");
-                break;
+            }
         }
 
-        if (node.childNodeSize() > 0) {
-            boolean isLiNode = "li".equals(name);
-            if (isLiNode) indentLevel++;
-            pushNode(node);
-            for (Node childNode : node.childNodes()) {
-                appendNode(childNode);
-            }
-            popNode();
-            if (isLiNode) indentLevel--;
-        }
+        appendChildren(node);
 
         switch (name) {
-            case "br":
-            case "dd":
-            case "p":
-            case "h1":
-            case "h2":
-            case "h3":
-            case "h4":
-            case "h5":
-            case "h6":
-                appendAutoLineBreak("\n");
-                break;
+            case "br", "dd", "h1", "h2", "h3", "h4", "h5", "h6" -> appendAutoLineBreak("\n");
+            case "p" -> {
+                var n = node.parent();
+                if (n == null || !n.nameIs("li"))
+                    appendAutoLineBreak("\n");
+            }
         }
+
+        return this;
     }
 
     private static boolean isSpacing(String text) {
@@ -276,7 +487,7 @@ public final class HTMLRenderer {
         return true;
     }
 
-    public void mergeLineBreaks() {
+    public HTMLRenderer mergeLineBreaks() {
         for (int i = 0; i < this.children.size(); i++) {
             javafx.scene.Node child = this.children.get(i);
             if (child instanceof AutoLineBreak) {
@@ -303,12 +514,27 @@ public final class HTMLRenderer {
                 }
             }
         }
+        return this;
     }
 
     public TextFlow render() {
+        if (rendered) throw new IllegalStateException("Should not render twice");
         TextFlow textFlow = new TextFlow();
         textFlow.getStyleClass().add("html");
         textFlow.getChildren().setAll(children);
+        for (javafx.scene.Node node : children) {
+            if (node instanceof ImagePane imgPane) {
+                ImageView img = imgPane.imageView;
+                InvalidationListener listener = __ -> img.setFitWidth(Math.min(textFlow.getWidth() * 0.9, img.getImage() == null ? 0D : img.getImage().getWidth()));
+                textFlow.widthProperty().addListener(listener);
+                img.imageProperty().addListener(listener);
+            } else if (node instanceof TableView<?> table) {
+                table.prefWidthProperty().bind(textFlow.widthProperty().multiply(0.8));
+            } else if (node instanceof TextFlow codeFlow) {
+                codeFlow.maxWidthProperty().bind(textFlow.widthProperty().multiply(0.8));
+            }
+        }
+        rendered = true;
         return textFlow;
     }
 
@@ -316,5 +542,50 @@ public final class HTMLRenderer {
         public AutoLineBreak(String text) {
             super(text);
         }
+    }
+
+    private static final class ImagePane extends StackPane {
+
+        public final ImageView imageView;
+
+        public ImagePane(ImageView imageView, @Nullable String alt) {
+            super();
+            this.imageView = imageView;
+
+            if (StringUtils.isNotBlank(alt)) getChildren().add(new Text(alt));
+            getChildren().add(imageView);
+        }
+
+    }
+
+    private static final class SimpleCssDeclarations {
+
+        private static final Map<String, String> cssPropertyMapping = Map.of(
+                "color", "-fx-fill",
+                "font-size", "-fx-font-size"
+        );
+
+        private final Map<String, String> declarations = new HashMap<>();
+
+        public void add(String inlineCss) {
+            if (StringUtils.isBlank(inlineCss)) return;
+            Arrays.stream(inlineCss.split(";")).filter(StringUtils::isNotBlank).forEach(s -> {
+                String[] declaration = s.split(":", 2);
+                if (declaration.length != 2) return;
+                declaration[0] = declaration[0].trim();
+                declaration[1] = declaration[1].trim();
+                String mappedKey = cssPropertyMapping.get(declaration[0].toLowerCase(Locale.ROOT));
+                if (mappedKey != null) {
+                    declarations.put(mappedKey, declaration[1]);
+                } // Ignore unsupported fields
+            });
+        }
+
+        public String asString() {
+            StringBuilder sb = new StringBuilder();
+            declarations.forEach((property, value) -> sb.append(property).append(": ").append(value).append(";"));
+            return sb.toString();
+        }
+
     }
 }

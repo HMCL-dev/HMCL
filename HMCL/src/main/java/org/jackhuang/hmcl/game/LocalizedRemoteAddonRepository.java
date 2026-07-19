@@ -41,6 +41,16 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     protected abstract SortType getBackedRemoteModRepositorySortOrder();
 
     @Override
+    public String getApiBaseUrl() {
+        return getBackedRemoteModRepository().getApiBaseUrl();
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return getBackedRemoteModRepository().getBaseUrl();
+    }
+
+    @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         if (!StringUtils.containsChinese(searchFilter)) {
             return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
@@ -135,5 +145,15 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     @Override
     public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
         return getBackedRemoteModRepository().getRemoteVersionsById(downloadProvider, id);
+    }
+
+    @Override
+    public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
+        return getBackedRemoteModRepository().getAddonChangelog(downloadProvider, addonId, versionId);
+    }
+
+    @Override
+    public String getVersionPageUrl(RemoteAddon.Version version) throws IOException {
+        return getBackedRemoteModRepository().getVersionPageUrl(version);
     }
 }

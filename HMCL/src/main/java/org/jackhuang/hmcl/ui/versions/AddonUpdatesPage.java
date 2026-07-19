@@ -19,27 +19,29 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.JFXCheckBoxTableCell;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -83,26 +85,42 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         enabledColumn.setMinWidth(40);
 
         TableColumn<AddonUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("addon.check_update.file"));
-        fileNameColumn.setPrefWidth(200);
+        fileNameColumn.setPrefWidth(180);
         setupCellValueFactory(fileNameColumn, AddonUpdateObject::fileNameProperty);
 
         TableColumn<AddonUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("addon.check_update.current_version"));
-        currentVersionColumn.setPrefWidth(200);
+        currentVersionColumn.setPrefWidth(180);
         setupCellValueFactory(currentVersionColumn, AddonUpdateObject::currentVersionProperty);
 
         TableColumn<AddonUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("addon.check_update.target_version"));
-        targetVersionColumn.setPrefWidth(200);
+        targetVersionColumn.setPrefWidth(180);
         setupCellValueFactory(targetVersionColumn, AddonUpdateObject::targetVersionProperty);
 
         TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("addon.check_update.source"));
         setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceProperty);
+
+        TableColumn<AddonUpdateObject, String> changelogColumn = new TableColumn<>(i18n("addon.changelog"));
+        {
+            var oldCellFactory = changelogColumn.getCellFactory();
+            changelogColumn.setCellFactory(param -> {
+                TableCell<AddonUpdateObject, String> cell = oldCellFactory.call(param);
+                cell.getStyleClass().add("addon-changelog-table-cell");
+                cell.setOnMouseClicked(event -> {
+                    AddonUpdateObject object;
+                    if (cell.isEmpty() || cell.getTableRow() == null || (object = cell.getTableRow().getItem()) == null) return;
+                    Controllers.dialog(new AddonChangelog(object));
+                });
+                return cell;
+            });
+            changelogColumn.setCellValueFactory(__ -> new SimpleStringProperty(i18n("button.view")));
+        }
 
         objects = FXCollections.observableList(updates.stream().map(AddonUpdateObject::new).collect(Collectors.toList()));
         FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
         TableView<AddonUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
-        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn);
+        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn, changelogColumn);
         setMargin(table, new Insets(10, 10, 5, 10));
 
         setCenter(table);
@@ -198,6 +216,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         final StringProperty currentVersion = new SimpleStringProperty();
         final StringProperty targetVersion = new SimpleStringProperty();
         final StringProperty source = new SimpleStringProperty();
+        String changelog = null;
 
         public AddonUpdateObject(LocalAddonFile.AddonUpdate data) {
             this.data = data;
@@ -277,6 +296,88 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         public void setSource(String source) {
             this.source.set(source);
+        }
+    }
+
+    private static final class AddonChangelog extends JFXDialogLayout {
+
+        public AddonChangelog(AddonUpdateObject object) {
+            RemoteAddon.Version targetVersion = object.data.targetVersion();
+
+            this.setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + targetVersion.name())));
+
+            VBox box = new VBox(8);
+            box.setPadding(new Insets(8));
+
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setFitToWidth(true);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            FXUtils.setOverflowHidden(scrollPane, 8);
+
+            loadChangelog(object, spinnerPane, scrollPane);
+            spinnerPane.setOnFailedAction(e -> loadChangelog(object, spinnerPane, scrollPane));
+
+            spinnerPane.setContent(scrollPane);
+            box.getChildren().add(spinnerPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
+
+            this.setBody(box);
+
+            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
+            versionPageBtn.setDisable(true);
+            loadVersionPageUrl(object, versionPageBtn);
+
+            JFXButton closeButton = new JFXButton(i18n("button.ok"));
+            closeButton.getStyleClass().add("dialog-accept");
+            closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            setActions(versionPageBtn, closeButton);
+
+            this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.7));
+            this.prefHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.7));
+
+            onEscPressed(this, closeButton::fire);
+        }
+
+        private void loadChangelog(AddonUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
+            spinnerPane.setLoading(true);
+            RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
+            Task.supplyAsync(() -> {
+                if (object.changelog != null) {
+                    return object.changelog;
+                }
+                RemoteAddon.Version version = object.data.targetVersion();
+                if (repo == null) return null;
+                return StringUtils.convertToHtml(
+                        repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.modid(), version.versionId()),
+                        "238222".equals(object.data.targetVersion().modid())
+                );
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null) {
+                    object.changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo == null ? "" : repo.getBaseUrl()));
+                    FXUtils.smoothScrolling(scrollPane);
+                    spinnerPane.setFailedReason(null);
+                } else {
+                    spinnerPane.setFailedReason(i18n("download.failed.refresh"));
+                }
+                spinnerPane.setLoading(false);
+            }).start();
+        }
+
+        private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
+            Task.supplyAsync(() -> {
+                RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
+                return repo == null ? null : repo.getVersionPageUrl(object.data.targetVersion());
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null && StringUtils.isNotBlank(result)) {
+                    button.setOnAction(__ -> Controllers.openUriInBrowser(result));
+                    button.setDisable(false);
+                } else {
+                    LOG.warning("Failed to load addon version page url", exception);
+                }
+            }).start();
         }
     }
 

@@ -17,6 +17,18 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.ext.ins.InsExtension;
+import org.commonmark.node.IndentedCodeBlock;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.NodeRenderer;
+import org.commonmark.renderer.html.HtmlNodeRendererContext;
+import org.commonmark.renderer.html.HtmlRenderer;
+import org.commonmark.renderer.html.HtmlWriter;
+
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
@@ -581,11 +593,7 @@ public final class StringUtils {
     }
 
     public static String repeats(char ch, int repeat) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < repeat; i++) {
-            result.append(ch);
-        }
-        return result.toString();
+        return String.valueOf(ch).repeat(Math.max(0, repeat));
     }
 
     public static String truncate(String str, int limit) {
@@ -628,6 +636,51 @@ public final class StringUtils {
     public static List<String> deserializeStringList(String json) {
         if (json == null || json.isBlank()) return List.of();
         return JsonUtils.fromNonNullJson(json, JsonUtils.listTypeOf(String.class));
+    }
+
+    private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().extensions(List.of(
+            InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
+    )).build();
+
+    private static final HtmlRenderer HTML_RENDERER_RAW_INDENTED_BLOCK = HtmlRenderer.builder()
+            .extensions(List.of(InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()))
+            .nodeRendererFactory(IndentedBlockRawRenderer::new)
+            .build();
+
+    private static final Parser MD_PARSER = Parser.builder().extensions(List.of(
+            AutolinkExtension.create(), InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
+    )).build();
+
+    public static String convertToHtml(String str, boolean rawIndentedBlocks) {
+        if (str == null) return null;
+        if (isBlank(str)) return "";
+
+        if (rawIndentedBlocks)
+            return HTML_RENDERER_RAW_INDENTED_BLOCK.render(MD_PARSER.parse(str));
+        return HTML_RENDERER.render(MD_PARSER.parse(str));
+    }
+
+    private static final class IndentedBlockRawRenderer implements NodeRenderer {
+
+        private final HtmlWriter html;
+
+        public IndentedBlockRawRenderer(HtmlNodeRendererContext context) {
+            this.html = context.getWriter();
+        }
+
+        @Override
+        public Set<Class<? extends Node>> getNodeTypes() {
+            return Set.of(IndentedCodeBlock.class);
+        }
+
+        @Override
+        public void render(Node node) {
+            IndentedCodeBlock block = (IndentedCodeBlock) node;
+            html.line();
+            html.raw(block.getLiteral());
+            html.line();
+        }
+
     }
 
     public static class LevCalculator {

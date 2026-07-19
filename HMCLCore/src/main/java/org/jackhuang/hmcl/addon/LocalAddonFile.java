@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.addon;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -53,9 +54,14 @@ public abstract class LocalAddonFile {
     public abstract void delete() throws IOException;
 
     @Nullable
-    public abstract AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException;
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
+        return null;
+    }
 
+    @NotNullByDefault
     public record AddonUpdate(
+            RemoteAddon.Source source,
+            RemoteAddonRepository.Type repoType,
             LocalAddonFile localAddonFile,
             RemoteAddon.Version currentVersion,
             RemoteAddon.Version targetVersion,

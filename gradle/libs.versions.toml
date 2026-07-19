@@ -25,6 +25,7 @@ nayuki-qrcodegen = "1.8.0"
 jwebp = "0.2.0"
 weburl = "0.2.0"
 uuid-tools = "0.2.0"
+commonmark = "0.27.1"
 
 # testing
 junit = "6.0.1"
@@ -62,6 +63,11 @@ nayuki-qrcodegen = { module = "io.nayuki:qrcodegen", version.ref = "nayuki-qrcod
 jwebp = { module = "org.glavo:webp", version.ref = "jwebp" }
 weburl = { module = "org.glavo:weburl", version.ref = "weburl" }
 uuid-tools = { module = "org.glavo:uuid-tools", version.ref = "uuid-tools" }
+commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
+commonmark-autolink = { module = "org.commonmark:commonmark-ext-autolink", version.ref = "commonmark" }
+commonmark-underline = { module = "org.commonmark:commonmark-ext-ins", version.ref = "commonmark" }
+commonmark-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
+commonmark-table = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
 
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
