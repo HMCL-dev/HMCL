@@ -7,7 +7,6 @@ These rules apply to all Java code written or modified in this repository.
 - Every class declared in a newly added Java source file must be annotated with JetBrains Annotations `@NotNullByDefault`.
 - When writing or modifying Java code, any type, field, parameter, return value, local variable, or generic type argument that may be `null` must be explicitly annotated with `@Nullable`.
 - Nullability in code being written or modified must never be implicit.
-- Do not use the preceding two requirements as code-review criteria.
 
 ## Immutability
 
