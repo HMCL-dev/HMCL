@@ -21,13 +21,14 @@ import com.jfoenix.controls.JFXButton;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.SVGContainer;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -48,17 +49,19 @@ public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
         root.setPickOnBounds(false);
         RipplerContainer container = new RipplerContainer(root);
 
+        SVGContainer left = SVG.FOLDER.createIcon(20);
+        left.setMouseTransparent(true);
+        BorderPane.setMargin(left, new Insets(0, 6, 0, 6));
+        BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+        root.setLeft(left);
+
         FXUtils.onChangeAndOperate(skinnable.selectedProperty(), active -> {
             skinnable.pseudoClassStateChanged(SELECTED, active);
+
+            left.setIcon(active ? SVG.FOLDER_FILL : SVG.FOLDER, Motion.SHORT4);
         });
 
         FXUtils.onClicked(getSkinnable(), () -> GameDirectoryManager.setSelectedGameDirectory(skinnable.getGameDirectory()));
-
-        Node left = SVG.FOLDER.createIcon(20);
-        left.setMouseTransparent(true);
-        BorderPane.setMargin(left, new Insets(0, 6, 0, 6));
-        root.setLeft(left);
-        BorderPane.setAlignment(left, Pos.CENTER_LEFT);
 
         TwoLineListItem item = new TwoLineListItem();
         item.setPickOnBounds(false);
