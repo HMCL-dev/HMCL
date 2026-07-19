@@ -21,7 +21,7 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-public enum VersionIconType {
+public enum InstanceIconType {
     DEFAULT("/assets/img/grass.png"),
 
     GRASS("/assets/img/grass.png"),
@@ -42,21 +42,21 @@ public enum VersionIconType {
 
     // Please append new items at last
 
-    public static VersionIconType getIconType(ModLoaderType modLoaderType) {
+    public static InstanceIconType getIconType(ModLoaderType modLoaderType) {
         return switch (modLoaderType) {
-            case FORGE -> VersionIconType.FORGE;
-            case NEO_FORGE -> VersionIconType.NEO_FORGE;
-            case FABRIC -> VersionIconType.FABRIC;
-            case QUILT -> VersionIconType.QUILT;
-            case LITE_LOADER -> VersionIconType.CHICKEN;
-            case CLEANROOM -> VersionIconType.CLEANROOM;
-            default -> VersionIconType.COMMAND;
+            case FORGE -> InstanceIconType.FORGE;
+            case NEO_FORGE -> InstanceIconType.NEO_FORGE;
+            case FABRIC -> InstanceIconType.FABRIC;
+            case QUILT -> InstanceIconType.QUILT;
+            case LITE_LOADER -> InstanceIconType.CHICKEN;
+            case CLEANROOM -> InstanceIconType.CLEANROOM;
+            default -> InstanceIconType.COMMAND;
         };
     }
 
     private final String resourceUrl;
 
-    VersionIconType(String resourceUrl) {
+    InstanceIconType(String resourceUrl) {
         this.resourceUrl = resourceUrl;
     }
 

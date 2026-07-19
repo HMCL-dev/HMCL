@@ -50,7 +50,7 @@ import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.VersionIconDialog;
+import org.jackhuang.hmcl.ui.versions.InstanceIconDialog;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
@@ -2821,7 +2821,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         if (repository == null || instanceId == null)
             return;
 
-        Controllers.dialog(new VersionIconDialog(repository, instanceId, this::loadIcon));
+        Controllers.dialog(new InstanceIconDialog(repository, instanceId, this::loadIcon));
     }
 
     private void onDeleteIcon() {
@@ -2831,7 +2831,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         repository.deleteIconFile(instanceId);
         GameSettings.Instance localGameSettings = repository.getInstanceGameSettingsOrCreate(instanceId);
         if (localGameSettings != null) {
-            localGameSettings.iconProperty().setValue(VersionIconType.DEFAULT);
+            localGameSettings.iconProperty().setValue(InstanceIconType.DEFAULT);
         }
         loadIcon();
     }

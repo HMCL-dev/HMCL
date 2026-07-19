@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
@@ -75,7 +76,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
@@ -649,6 +652,24 @@ public final class Controllers {
     public static void dialogLater(Region content) {
         if (decorator != null)
             decorator.showDialogLater(content);
+    }
+
+    public static void askTriPreference(String text, @Nullable Consumer<Boolean> resConsumer, @Nullable Consumer<TriPreference> prefConsumer) {
+        var r = Objects.requireNonNullElse(resConsumer, (__) -> {});
+        var p = Objects.requireNonNullElse(prefConsumer, (__) -> {});
+
+        var check = new JFXCheckBox(i18n("button.do_not_show_again"));
+        var dialog = new MessageDialogPane.Builder(text, i18n("message.question"), MessageDialogPane.MessageType.QUESTION)
+                .addActionNoClosing(check)
+                .yesOrNo(() -> {
+                    r.accept(true);
+                    p.accept(check.isSelected() ? TriPreference.ALWAYS : TriPreference.CONFIRM_EACH_TIME);
+                }, () -> {
+                    r.accept(false);
+                    p.accept(check.isSelected() ? TriPreference.NEVER : TriPreference.CONFIRM_EACH_TIME);
+                })
+                .build();
+        dialog(dialog);
     }
 
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
