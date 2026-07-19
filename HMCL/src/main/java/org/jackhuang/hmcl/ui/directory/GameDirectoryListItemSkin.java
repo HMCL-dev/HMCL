@@ -49,7 +49,7 @@ public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
         root.setPickOnBounds(false);
         RipplerContainer container = new RipplerContainer(root);
 
-        SVGContainer left = (skinnable.selectedProperty().get() ? SVG.FOLDER_FILL : SVG.FOLDER).createIcon(20);
+        SVGContainer left = (skinnable.isSelected() ? SVG.FOLDER_FILL : SVG.FOLDER).createIcon(20);
         left.setMouseTransparent(true);
         BorderPane.setMargin(left, new Insets(0, 6, 0, 6));
         BorderPane.setAlignment(left, Pos.CENTER_LEFT);
