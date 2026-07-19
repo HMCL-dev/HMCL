@@ -58,6 +58,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -257,6 +258,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
+    @NotNullByDefault
     private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
         private final JFXListView<ResourcePackInfoObject> listView;
         private final JFXTextField searchField = new JFXTextField();
