@@ -55,6 +55,15 @@ public final class SettingsManager {
     private SettingsManager() {
     }
 
+    /// Saves deferred launcher state changes before stopping asynchronous file persistence.
+    public static void shutdown() {
+        if (launcherState != null && launcherState.isSavable() && launcherState.isSavePending()) {
+            STATE_FILE.save(launcherState);
+            launcherState.setSavePending(false);
+        }
+        FileSaver.shutdown();
+    }
+
     /// The local directory storing per-workspace configuration files.
     private static final Path LOCAL_CONFIG_FILES_DIRECTORY = Metadata.HMCL_LOCAL_HOME.resolve("config");
 
