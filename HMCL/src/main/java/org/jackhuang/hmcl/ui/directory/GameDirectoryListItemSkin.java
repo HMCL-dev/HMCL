@@ -57,8 +57,11 @@ public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
 
         FXUtils.onChangeAndOperate(skinnable.selectedProperty(), active -> {
             skinnable.pseudoClassStateChanged(SELECTED, active);
-
-            left.setIcon(active ? SVG.FOLDER_FILL : SVG.FOLDER, Motion.SHORT4);
+            
+            SVG targetIcon = active ? SVG.FOLDER_FILL : SVG.FOLDER;
+            if (left.getIcon() != targetIcon) {
+                left.setIcon(targetIcon, Motion.SHORT4);
+            }
         });
 
         FXUtils.onClicked(getSkinnable(), () -> GameDirectoryManager.setSelectedGameDirectory(skinnable.getGameDirectory()));
