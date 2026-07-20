@@ -50,7 +50,7 @@ public record Library(
         @SerializedName(value = "filename", alternate = {"MMC-filename"})
         @Nullable String filename
 ) implements Comparable<Library> {
-    /// A possible native descriptors can be: [variant-]os[-key]
+    /// A possible native descriptors can be: `[variant-]os[-key]`
     ///
     /// Variant can be an empty string, 'native', or 'natives'.
     /// Key can be an empty string, system arch, or system arch bit count.
