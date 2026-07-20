@@ -442,19 +442,22 @@ public class DownloadPage extends Control implements DecoratorPage {
                         case Alpha:
                             content.addTag(i18n("addon.channel.alpha"));
                             SVGContainer alphaIcon = SVG.ALPHA_CIRCLE.createIcon(24);
-                            alphaIcon.lookup(".svg").setStyle("-fx-fill: #ff496e;");
+                            alphaIcon.getStyleClass().add("addon-channel-icon");
+                            alphaIcon.getStyleClass().add("alpha");
                             graphicPane.getChildren().setAll(alphaIcon);
                             break;
                         case Beta:
                             content.addTag(i18n("addon.channel.beta"));
                             SVGContainer betaIcon = SVG.BETA_CIRCLE.createIcon(24);
-                            betaIcon.lookup(".svg").setStyle("-fx-fill: #ffa347;");
+                            betaIcon.getStyleClass().add("addon-channel-icon");
+                            betaIcon.getStyleClass().add("beta");
                             graphicPane.getChildren().setAll(betaIcon);
                             break;
                         case Release:
                             content.addTag(i18n("addon.channel.release"));
                             SVGContainer releaseIcon = SVG.RELEASE_CIRCLE.createIcon(24);
-                            releaseIcon.lookup(".svg").setStyle("-fx-fill: #1bd96a;");
+                            releaseIcon.getStyleClass().add("addon-channel-icon");
+                            releaseIcon.getStyleClass().add("release");
                             graphicPane.getChildren().setAll(releaseIcon);
                             break;
                     }

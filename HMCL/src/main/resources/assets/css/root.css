@@ -429,6 +429,18 @@
     -fx-alignment: center;
 }
 
+.addon-channel-icon.alpha .svg {
+    -fx-fill: #ff496e;
+}
+
+.addon-channel-icon.beta .svg {
+    -fx-fill: #ffa347;
+}
+
+.addon-channel-icon.release .svg {
+    -fx-fill: #1bd96a;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Main Page                                                                   *
