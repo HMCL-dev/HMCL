@@ -53,8 +53,6 @@ public class GameAdvancedListItem extends AdvancedListItem {
     }
 
     private void loadVersion() {
-        System.err.println(Thread.currentThread().getName());
-
         String version = GameDirectoryManager.getSelectedInstance();
 
         boolean repositoryChanged = GameDirectoryManager.getSelectedRepository() != repository;
