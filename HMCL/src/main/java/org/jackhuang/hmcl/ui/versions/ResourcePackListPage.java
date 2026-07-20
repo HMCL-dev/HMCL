@@ -35,7 +35,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.*;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -57,7 +56,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,7 +175,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("resourcepack.add"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"));
-        List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
         if (files != null && !files.isEmpty()) {
             addFiles(files);
         }
@@ -593,8 +591,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            Stage stage = Controllers.getStage();
-            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+            maxWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
             imageContainer.setImage(packInfoObject.getIcon());
@@ -620,7 +617,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             FXUtils.onChange(description.heightProperty(), newVal -> {
-                double maxHeight = stage.getHeight() * 0.5;
+                double maxHeight = Controllers.windowHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });
