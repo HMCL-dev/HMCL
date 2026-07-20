@@ -176,7 +176,7 @@ public final class ModpackHelper {
         };
 
         return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, name)
-                .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                .whenComplete(Schedulers.javafx(), success, failure)
                 .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
@@ -221,12 +221,12 @@ public final class ModpackHelper {
 
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return modpack.getInstallTask(repository.getDependency(), zipFile, name, iconUrl)
-                    .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                    .whenComplete(Schedulers.javafx(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
             return modpack.getInstallTask(repository.getDependency(), zipFile, name, iconUrl)
-                    .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                    .whenComplete(Schedulers.javafx(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(repository, (McbbsModpackManifest) modpack.getManifest(), name))
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
