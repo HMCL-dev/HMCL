@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.SVGContainer;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
@@ -440,15 +441,21 @@ public class DownloadPage extends Control implements DecoratorPage {
                     switch (dataItem.versionType()) {
                         case Alpha:
                             content.addTag(i18n("addon.channel.alpha"));
-                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(24));
+                            SVGContainer alphaIcon = SVG.ALPHA_CIRCLE.createIcon(24);
+                            alphaIcon.lookup(".svg").setStyle("-fx-fill: #ff496e;");
+                            graphicPane.getChildren().setAll(alphaIcon);
                             break;
                         case Beta:
                             content.addTag(i18n("addon.channel.beta"));
-                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(24));
+                            SVGContainer betaIcon = SVG.BETA_CIRCLE.createIcon(24);
+                            betaIcon.lookup(".svg").setStyle("-fx-fill: #ffa347;");
+                            graphicPane.getChildren().setAll(betaIcon);
                             break;
                         case Release:
                             content.addTag(i18n("addon.channel.release"));
-                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(24));
+                            SVGContainer releaseIcon = SVG.RELEASE_CIRCLE.createIcon(24);
+                            releaseIcon.lookup(".svg").setStyle("-fx-fill: #1bd96a;");
+                            graphicPane.getChildren().setAll(releaseIcon);
                             break;
                     }
 
