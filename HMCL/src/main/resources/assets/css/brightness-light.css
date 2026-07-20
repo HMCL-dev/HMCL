@@ -21,3 +21,15 @@
     -fixed-log-fatal-background: #F7A699;
     -fixed-log-selected: #f2f2f2;
 }
+
+.addon-channel-icon.alpha .svg {
+    -fx-fill: #cb2245;
+}
+
+.addon-channel-icon.beta .svg {
+    -fx-fill: #e08325;
+}
+
+.addon-channel-icon.release .svg {
+    -fx-fill: #00af5c;
+}
