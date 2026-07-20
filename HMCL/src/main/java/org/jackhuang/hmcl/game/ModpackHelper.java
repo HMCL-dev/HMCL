@@ -231,7 +231,7 @@ public final class ModpackHelper {
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
             return modpack.getInstallTask(repository.getDependency(), zipFile, name, iconUrl)
-                    .whenComplete(Schedulers.javafx(), success, failure)
+                    .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
