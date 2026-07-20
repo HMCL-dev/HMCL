@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -67,7 +68,7 @@ public final class EntryPoint {
     }
 
     public static void exit(int exitCode) {
-        SettingsManager.shutdown();
+        FileSaver.shutdown();
         LOG.shutdown();
         System.exit(exitCode);
     }
