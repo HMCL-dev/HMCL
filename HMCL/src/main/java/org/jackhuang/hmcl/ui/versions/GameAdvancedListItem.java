@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.application.Platform;
 import javafx.geometry.Pos;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
