@@ -55,13 +55,18 @@ public final class SettingsManager {
     private SettingsManager() {
     }
 
-    /// Saves deferred launcher state changes before stopping asynchronous file persistence.
+    /// Saves deferred launcher state changes and shutdown file saver.
     public static void shutdown() {
-        if (launcherState != null && launcherState.isSavable() && launcherState.isSavePending()) {
-            STATE_FILE.save(launcherState);
-            launcherState.setSavePending(false);
-        }
+        savePendingChanges();
         FileSaver.shutdown();
+    }
+
+    /// Saves deferred launcher state changes.
+    public static void savePendingChanges() {
+        if (launcherState != null && launcherState.isSavable() && launcherState.isSavePending()) {
+            launcherState.setSavePending(false);
+            STATE_FILE.save(launcherState);
+        }
     }
 
     /// The local directory storing per-workspace configuration files.

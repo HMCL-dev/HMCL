@@ -20,10 +20,12 @@ package org.jackhuang.hmcl.upgrade;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
+import org.glavo.chardet.prober.statemachine.SMModel;
 import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -43,6 +45,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -123,6 +128,21 @@ public final class UpdateHandler {
                     try {
                         if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
                             throw new IOException("Current JAR is not verified");
+                        }
+
+                        var latch = new CountDownLatch(1);
+                        Platform.runLater(() -> {
+                            try {
+                                SettingsManager.savePendingChanges();
+                            } finally {
+                                latch.countDown();
+                            }
+                        });
+
+                        try {
+                            latch.await();
+                        } catch (InterruptedException ignored) {
+                            // Ignore
                         }
 
                         try {
