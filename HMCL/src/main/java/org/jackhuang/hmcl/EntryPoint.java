@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl;
 
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
