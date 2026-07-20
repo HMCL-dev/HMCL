@@ -25,6 +25,7 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -33,6 +34,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
@@ -51,7 +53,9 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -68,6 +72,7 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+@NotNullByDefault
 final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
     private final TransitionPane toolbarPane;
@@ -79,9 +84,14 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     private final JFXListView<DataPackInfoObject> listView;
     private final FilteredList<DataPackInfoObject> filteredList;
 
+    /// Whether the search mechanism is currently active.
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
     private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
     private final JFXTextField searchField;
+
+    /// Timer for debouncing search input to avoid executing search on every keystroke.
+    private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
     private static final AtomicInteger lastShiftClickIndex = new AtomicInteger(-1);
     final Consumer<Integer> toggleSelect;
@@ -148,16 +158,21 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
-            PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished(e -> filteredList.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
+            searchPause.setOnFinished(e -> filteredList.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                pause.setRate(1);
-                pause.playFromStart();
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    searchPause.setRate(1);
+                    searchPause.playFromStart();
+                }
             });
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
-                        isSearching.set(false);
                         searchField.clear();
+                        searchPause.stop();
+
+                        filteredList.setPredicate(null);
+
+                        isSearching.set(false);
                     });
             FXUtils.onEscPressed(searchField, closeSearchBar::fire);
             searchBar.getChildren().addAll(searchField, closeSearchBar);
@@ -193,6 +208,23 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
             listView.setCellFactory(x -> new DataPackInfoListCell(listView, getSkinnable().readOnly));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("datapack.empty"));
+            placeholderLabel.textProperty().bind(
+                Bindings.createStringBinding(() -> {
+                    if (isSearching.get()) {
+                        return i18n("search.no_results_found");
+                    } else {
+                        return i18n("datapack.empty");
+                    }
+                },
+                isSearching)
+            );
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+
             this.listView.setItems(filteredList);
             listView.getItems().addListener(listener);
 

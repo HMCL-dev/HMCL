@@ -470,6 +470,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                             case QUILT:
                                 content.addTag(i18n("install.installer.quilt"));
                                 break;
+                            case LEGACY_FABRIC:
+                                content.addTag(i18n("install.installer.legacyfabric"));
+                                break;
                         }
                     }
 
