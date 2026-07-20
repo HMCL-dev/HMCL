@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
@@ -68,14 +69,17 @@ public class GameAdvancedListItem extends AdvancedListItem {
                 return;
             }
         }
-        if (version != null && repository != null && repository.hasVersion(version)) {
-            setTitle(i18n("version.manage.manage"));
-            setSubtitle(version);
-            imageContainer.setImage(repository.getVersionIconImage(version));
-        } else {
-            setTitle(i18n("version.empty"));
-            setSubtitle(i18n("version.empty.add"));
-            imageContainer.setImage(VersionIconType.DEFAULT.getIcon());
-        }
+
+        Platform.runLater(() -> {
+            if (version != null && repository != null && repository.hasVersion(version)) {
+                setTitle(i18n("version.manage.manage"));
+                setSubtitle(version);
+                imageContainer.setImage(repository.getVersionIconImage(version));
+            } else {
+                setTitle(i18n("version.empty"));
+                setSubtitle(i18n("version.empty.add"));
+                imageContainer.setImage(VersionIconType.DEFAULT.getIcon());
+            }
+        });
     }
 }
