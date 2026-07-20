@@ -53,23 +53,23 @@ public class GameAdvancedListItem extends AdvancedListItem {
     }
 
     private void loadVersion() {
-        String version = GameDirectoryManager.getSelectedInstance();
-
-        boolean repositoryChanged = GameDirectoryManager.getSelectedRepository() != repository;
-        if (repositoryChanged) {
-            repository = GameDirectoryManager.getSelectedRepository();
-            onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
-                this.loadVersion();
-            });
-
-            if (!repository.isLoaded()) {
-                onRefreshedVersionsListener = EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
-                        .registerWeak(event -> loadVersion());
-                return;
-            }
-        }
-
         FXUtils.runInFX(() -> {
+            String version = GameDirectoryManager.getSelectedInstance();
+
+            boolean repositoryChanged = GameDirectoryManager.getSelectedRepository() != repository;
+            if (repositoryChanged) {
+                repository = GameDirectoryManager.getSelectedRepository();
+                onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
+                    this.loadVersion();
+                });
+
+                if (!repository.isLoaded()) {
+                    onRefreshedVersionsListener = EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
+                            .registerWeak(event -> loadVersion());
+                    return;
+                }
+            }
+
             if (version != null && repository != null && repository.hasVersion(version)) {
                 setTitle(i18n("version.manage.manage"));
                 setSubtitle(version);
