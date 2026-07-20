@@ -558,8 +558,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
                 changeToolbar(toolbarNormal);
-                searchField.clear();
 
+                searchField.clear();
+                pause.stop();
+
+                skinnable.filteredList.setPredicate(null);
                 isSearching.set(false);
             });
             onEscPressed(searchField, closeSearchBar::fire);
