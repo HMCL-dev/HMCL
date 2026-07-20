@@ -274,8 +274,8 @@ public final class Controllers {
             double initY = initContentY - CUSTOM_DECORATION_SHADOW_SIZE;
             stage.setX(initX);
             stage.setY(initY);
-            contentX.set(initX);
-            contentY.set(initY);
+            contentX.set(initContentX);
+            contentY.set(initContentY);
         }
 
         stage.setHeight(initHeight);
