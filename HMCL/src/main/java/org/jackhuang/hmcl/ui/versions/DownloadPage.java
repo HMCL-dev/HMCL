@@ -440,22 +440,27 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     SVG svg = null;
                     String styleClass = null;
-                    switch (dataItem.versionType()) {
-                        case Alpha:
-                            content.addTag(i18n("addon.channel.alpha"));
-                            svg = SVG.ALPHA_CIRCLE;
-                            styleClass = "alpha";
-                            break;
-                        case Beta:
-                            content.addTag(i18n("addon.channel.beta"));
-                            svg = SVG.BETA_CIRCLE;
-                            styleClass = "beta";
-                            break;
-                        case Release:
-                            content.addTag(i18n("addon.channel.release"));
-                            svg = SVG.RELEASE_CIRCLE;
-                            styleClass = "release";
-                            break;
+                    if (dataItem.versionType() != null) {
+                        switch (dataItem.versionType()) {
+                            case Alpha:
+                                content.addTag(i18n("addon.channel.alpha"));
+                                svg = SVG.ALPHA_CIRCLE;
+                                styleClass = "alpha";
+                                break;
+                            case Beta:
+                                content.addTag(i18n("addon.channel.beta"));
+                                svg = SVG.BETA_CIRCLE;
+                                styleClass = "beta";
+                                break;
+                            case Release:
+                                content.addTag(i18n("addon.channel.release"));
+                                svg = SVG.RELEASE_CIRCLE;
+                                styleClass = "release";
+                                break;
+                            default:
+                                styleClass = "";
+                                break;
+                        }
                     }
                     if (svg != null) {
                         SVGContainer icon = svg.createIcon(24);
