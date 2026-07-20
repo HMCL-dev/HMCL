@@ -597,16 +597,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             StackPane placeholderContainer = new StackPane();
             placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("search.no_results_found"));
+            Label placeholderLabel = new Label();
             placeholderLabel.textProperty().bind(
-                Bindings.createStringBinding(() -> {
-                    if (isSearching.get()) {
-                        return i18n("search.no_results_found");
-                    } else {
-                        return i18n("");
-                    }
-                },
-                isSearching)
+                Bindings.when(isSearching).then(i18n("search.no_results_found")).otherwise("")
             );
             placeholderContainer.getChildren().add(placeholderLabel);
             listView.setPlaceholder(placeholderContainer);
