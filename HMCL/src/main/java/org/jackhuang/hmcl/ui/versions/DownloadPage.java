@@ -438,28 +438,29 @@ public class DownloadPage extends Control implements DecoratorPage {
                     content.setTitle(dataItem.name());
                     content.setSubtitle(I18n.formatDateTime(dataItem.datePublished()));
 
+                    SVG svg = null;
+                    String styleClass = null;
                     switch (dataItem.versionType()) {
                         case Alpha:
                             content.addTag(i18n("addon.channel.alpha"));
-                            SVGContainer alphaIcon = SVG.ALPHA_CIRCLE.createIcon(24);
-                            alphaIcon.getStyleClass().add("addon-channel-icon");
-                            alphaIcon.getStyleClass().add("alpha");
-                            graphicPane.getChildren().setAll(alphaIcon);
+                            svg = SVG.ALPHA_CIRCLE;
+                            styleClass = "alpha";
                             break;
                         case Beta:
                             content.addTag(i18n("addon.channel.beta"));
-                            SVGContainer betaIcon = SVG.BETA_CIRCLE.createIcon(24);
-                            betaIcon.getStyleClass().add("addon-channel-icon");
-                            betaIcon.getStyleClass().add("beta");
-                            graphicPane.getChildren().setAll(betaIcon);
+                            svg = SVG.BETA_CIRCLE;
+                            styleClass = "beta";
                             break;
                         case Release:
                             content.addTag(i18n("addon.channel.release"));
-                            SVGContainer releaseIcon = SVG.RELEASE_CIRCLE.createIcon(24);
-                            releaseIcon.getStyleClass().add("addon-channel-icon");
-                            releaseIcon.getStyleClass().add("release");
-                            graphicPane.getChildren().setAll(releaseIcon);
+                            svg = SVG.RELEASE_CIRCLE;
+                            styleClass = "release";
                             break;
+                    }
+                    if (svg != null) {
+                        SVGContainer icon = svg.createIcon(24);
+                        icon.getStyleClass().addAll("addon-channel-icon", styleClass);
+                        graphicPane.getChildren().setAll(icon);
                     }
 
                     for (ModLoaderType modLoaderType : dataItem.loaders()) {
