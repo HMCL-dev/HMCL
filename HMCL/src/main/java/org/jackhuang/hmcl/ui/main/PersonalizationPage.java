@@ -387,7 +387,7 @@ public class PersonalizationPage extends StackPane {
         chooser.getExtensionFilters().setAll(
                 new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
 
-        @Nullable Path output = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
+        @Nullable Path output = Controllers.showSaveDialog(chooser);
         if (output == null) {
             return;
         }

@@ -149,7 +149,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         fileChooser.setTitle(i18n("schematics.add.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
                 i18n("extension.schematic"), "*.litematic"));
-        List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
         if (files != null && !files.isEmpty()) {
             addFiles(files);
         }

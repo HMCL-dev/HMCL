@@ -21,6 +21,7 @@ import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -36,7 +37,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.*;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -408,9 +408,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
             titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
-            Stage stage = Controllers.getStage();
-            prefWidthProperty().bind(stage.widthProperty().multiply(0.7));
-            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+            DoubleBinding widthBinding = Controllers.windowWidthProperty().multiply(0.7);
+            prefWidthProperty().bind(widthBinding);
+            maxWidthProperty().bind(widthBinding);
 
             var imageContainer = new ImageContainer(40);
             titleContainer.setAlignment(Pos.CENTER_LEFT);
@@ -448,7 +448,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             description.heightProperty().addListener((obs, oldVal, newVal) -> {
-                double maxHeight = stage.getHeight() * 0.5;
+                double maxHeight = Controllers.windowHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });
