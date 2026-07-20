@@ -68,14 +68,17 @@ public class GameAdvancedListItem extends AdvancedListItem {
                 return;
             }
         }
-        if (version != null && repository != null && repository.hasVersion(version)) {
-            setTitle(i18n("version.manage.manage"));
-            setSubtitle(version);
-            imageContainer.setImage(repository.getVersionIconImage(version));
-        } else {
-            setTitle(i18n("version.empty"));
-            setSubtitle(i18n("version.empty.add"));
-            imageContainer.setImage(VersionIconType.DEFAULT.getIcon());
-        }
+
+        FXUtils.runInFX(() -> {
+            if (version != null && repository != null && repository.hasVersion(version)) {
+                setTitle(i18n("version.manage.manage"));
+                setSubtitle(version);
+                imageContainer.setImage(repository.getVersionIconImage(version));
+            } else {
+                setTitle(i18n("version.empty"));
+                setSubtitle(i18n("version.empty.add"));
+                imageContainer.setImage(VersionIconType.DEFAULT.getIcon());
+            }
+        });
     }
 }
