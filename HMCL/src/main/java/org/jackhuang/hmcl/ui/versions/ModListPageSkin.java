@@ -23,6 +23,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -61,6 +62,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -80,6 +82,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+@NotNullByDefault
 final class ModListPageSkin extends SkinBase<ModListPage> {
 
     private final TransitionPane toolbarPane;
@@ -88,10 +91,14 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private final HBox toolbarSelecting;
 
     private final JFXListView<ModInfoObject> listView;
+
+    /// Whether the search mechanism is currently active.
+    private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
     private final JFXTextField searchField;
 
-    @FXThread
-    private boolean isSearching = false;
+    /// Timer for debouncing search input to avoid executing search on every keystroke.
+    private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
@@ -118,19 +125,22 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
-            PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished(e -> search());
+            searchPause.setOnFinished(e -> search());
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                pause.setRate(1);
-                pause.playFromStart();
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    searchPause.setRate(1);
+                    searchPause.playFromStart();
+                }
             });
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
                         changeToolbar(toolbarNormal);
 
-                        isSearching = false;
                         searchField.clear();
+                        searchPause.stop();
+
+                        isSearching.set(false);
                         Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                     });
 
@@ -192,7 +202,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
                     selectedItem -> {
                         if (selectedItem == null)
-                            changeToolbar(isSearching ? searchBar : toolbarNormal);
+                            changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
                         else
                             changeToolbar(toolbarSelecting);
                     });
@@ -219,9 +229,26 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             listView.setCellFactory(x -> new ModInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("mods.empty"));
+            placeholderLabel.textProperty().bind(
+                Bindings.createStringBinding(() -> {
+                    if (isSearching.get()) {
+                        return i18n("search.no_results_found");
+                    } else {
+                        return i18n("mods.empty");
+                    }
+                },
+                isSearching)
+            );
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+            
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
-                if (isSearching) {
+                if (isSearching.get()) {
                     search();
                 }
             });
@@ -264,7 +291,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     }
 
     private void search() {
-        isSearching = true;
+        isSearching.set(true);
 
         Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
 

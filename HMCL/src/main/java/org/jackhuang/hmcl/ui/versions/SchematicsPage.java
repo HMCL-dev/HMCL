@@ -636,6 +636,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     private final class SchematicsPageSkin extends ToolbarListPageSkin<Item, SchematicsPage> {
         SchematicsPageSkin() {
             super(SchematicsPage.this);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("schematics.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
         }
 
         @Override
