@@ -207,7 +207,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     /// Saves the edited game directory or adds a new entry to the appropriate game directory store.
     private void onSave() {
         if (Objects.equals(Path.of(getLocation()).getRoot(), Path.of(getLocation()))) {
-            Platform.runLater(() -> Controllers.confirm(i18n("profile.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING,
+            Platform.runLater(() -> Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING,
                     () -> {
                         if (gameDirectory != null) {
                             LocalizedText name = LocalizedText.plain(txtGameDirectoryName.getText());
