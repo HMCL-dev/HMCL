@@ -130,7 +130,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 versionNamePane.setStyle("-fx-padding: 20 8 20 16");
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
 
-                control.txtName.setMaxWidth(300);
+                control.txtName.setPrefWidth(300);
                 versionNamePane.getChildren().setAll(new Label(i18n("version.name")), control.txtName);
                 root.setTop(versionNamePane);
             }
