@@ -47,6 +47,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -220,11 +221,29 @@ public final class UpdateHandler {
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
         commandline.addAll(Arrays.asList(appArgs));
-        LOG.info("Starting process: " + commandline);
+        LOG.info("Starting process: " + maskCommandline(commandline));
         new ProcessBuilder(commandline)
                 .directory(Paths.get("").toAbsolutePath().toFile())
                 .inheritIO()
                 .start();
+    }
+
+    private static String maskCommandline(List<String> commandline) {
+        return commandline.stream().map(str -> {
+            if (str.startsWith("-D")) {
+                String key = str.split("=")[0].replace("-D", "");
+                String value = str.split("=")[1];
+                if (key.contains("http.proxy") ||
+                        key.startsWith("https.proxy") ||
+                        key.startsWith("socksProxy") ||
+                        key.equals("hmcl.microsoft.auth.id") ||
+                        key.equals("hmcl.curseforge.apikey")
+                ) {
+                    return "-D" + key + "=" + value.charAt(0) + "*".repeat(value.length() - 1);
+                }
+            }
+            return str;
+        }).collect(Collectors.joining(" "));
     }
 
     private static Optional<Path> tryRename(Path path, String newVersion) {
