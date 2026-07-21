@@ -1720,8 +1720,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
 
-            FXUtils.runInFX(() -> fireEvent(new VersionPage.WorkingDirChangedEvent()));
-
             refresh.invalidated(instance);
         });
 
@@ -1748,7 +1746,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             LineComponent line,
             Property<String> textProperty,
             Node editor) {
-        if (isPresetSetting) {
+        if (isPresetSetting) {`
             bindInheritableStringProperty(line, textProperty, GameSettings::runningDirectoryProperty);
             return;
         }
@@ -1829,6 +1827,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 instance.runningDirectoryProperty().setValue(newValue != null ? newValue : "");
             } finally {
                 updating.value = false;
+            }
+        });
+
+        textProperty.addListener((observable, oldValue, newValue) -> {
+            if (!Objects.equals(oldValue, newValue)) {
+                FXUtils.runInFX(() -> fireEvent(new VersionPage.WorkingDirChangedEvent()));
             }
         });
 
