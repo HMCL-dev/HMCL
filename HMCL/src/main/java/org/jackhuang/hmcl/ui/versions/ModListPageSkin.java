@@ -21,8 +21,10 @@ import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -35,16 +37,14 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.addon.*;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -62,6 +62,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -81,6 +82,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+@NotNullByDefault
 final class ModListPageSkin extends SkinBase<ModListPage> {
 
     private final TransitionPane toolbarPane;
@@ -89,10 +91,14 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private final HBox toolbarSelecting;
 
     private final JFXListView<ModInfoObject> listView;
+
+    /// Whether the search mechanism is currently active.
+    private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
     private final JFXTextField searchField;
 
-    @FXThread
-    private boolean isSearching = false;
+    /// Timer for debouncing search input to avoid executing search on every keystroke.
+    private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
@@ -119,19 +125,22 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
-            PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished(e -> search());
+            searchPause.setOnFinished(e -> search());
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                pause.setRate(1);
-                pause.playFromStart();
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    searchPause.setRate(1);
+                    searchPause.playFromStart();
+                }
             });
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
                         changeToolbar(toolbarNormal);
 
-                        isSearching = false;
                         searchField.clear();
+                        searchPause.stop();
+
+                        isSearching.set(false);
                         Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                     });
 
@@ -144,7 +153,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                     createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
-                    createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                    createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                             skinnable.checkUpdates(
                                     listView.getItems().stream()
                                             .map(ModInfoObject::getModInfo)
@@ -178,7 +187,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
                     createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                             skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                    createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                             skinnable.checkUpdates(
                                     listView.getSelectionModel().getSelectedItems().stream()
                                             .map(ModInfoObject::getModInfo)
@@ -193,7 +202,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
                     selectedItem -> {
                         if (selectedItem == null)
-                            changeToolbar(isSearching ? searchBar : toolbarNormal);
+                            changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
                         else
                             changeToolbar(toolbarSelecting);
                     });
@@ -220,9 +229,26 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             listView.setCellFactory(x -> new ModInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("mods.empty"));
+            placeholderLabel.textProperty().bind(
+                Bindings.createStringBinding(() -> {
+                    if (isSearching.get()) {
+                        return i18n("search.no_results_found");
+                    } else {
+                        return i18n("mods.empty");
+                    }
+                },
+                isSearching)
+            );
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+            
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
-                if (isSearching) {
+                if (isSearching.get()) {
                     search();
                 }
             });
@@ -265,7 +291,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     }
 
     private void search() {
-        isSearching = true;
+        isSearching.set(true);
 
         Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
 
@@ -329,46 +355,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 iconPaths.add(this.localModFile.getLogoPath());
             }
 
-            iconPaths.addAll(List.of(
-                    "icon.png",
-                    "logo.png",
-                    "mod_logo.png",
-                    "pack.png",
-                    "logoFile.png",
-                    "assets/icon.png",
-                    "assets/logo.png",
-                    "assets/mod_icon.png",
-                    "assets/mod_logo.png",
-                    "META-INF/icon.png",
-                    "META-INF/logo.png",
-                    "META-INF/mod_icon.png",
-                    "textures/icon.png",
-                    "textures/logo.png",
-                    "textures/mod_icon.png",
-                    "resources/icon.png",
-                    "resources/logo.png",
-                    "resources/mod_icon.png"
-            ));
-
-            String modId = this.localModFile.getId();
-            if (StringUtils.isNotBlank(modId)) {
-                iconPaths.addAll(List.of(
-                        "assets/" + modId + "/icon.png",
-                        "assets/" + modId + "/logo.png",
-                        "assets/" + modId.replace("-", "") + "/icon.png",
-                        "assets/" + modId.replace("-", "") + "/logo.png",
-                        modId + ".png",
-                        modId + "-logo.png",
-                        modId + "-icon.png",
-                        modId + "_logo.png",
-                        modId + "_icon.png",
-                        "textures/" + modId + "/icon.png",
-                        "textures/" + modId + "/logo.png",
-                        "resources/" + modId + "/icon.png",
-                        "resources/" + modId + "/logo.png"
-                ));
-            }
-
             try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(this.localModFile.getFile())) {
                 for (String path : iconPaths) {
                     Path iconPath = fs.getPath(path);
@@ -420,11 +406,14 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ModInfoDialog(ModInfoObject modInfo) {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
+            titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
-            Stage stage = Controllers.getStage();
-            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+            DoubleBinding widthBinding = Controllers.windowWidthProperty().multiply(0.7);
+            prefWidthProperty().bind(widthBinding);
+            maxWidthProperty().bind(widthBinding);
 
             var imageContainer = new ImageContainer(40);
+            titleContainer.setAlignment(Pos.CENTER_LEFT);
             modInfo.loadIcon(imageContainer, null);
 
             TwoLineListItem title = new TwoLineListItem();
@@ -433,13 +422,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             else
                 title.setTitle(modInfo.getModInfo().getName());
 
-            StringJoiner subtitle = new StringJoiner(" | ");
-            subtitle.add(FileUtils.getName(modInfo.getModInfo().getFile()));
+            StringJoiner subtitle = new StringJoiner("\n");
+            subtitle.add(i18n("archive.file.name") + ": " + FileUtils.getName(modInfo.getModInfo().getFile()));
             if (StringUtils.isNotBlank(modInfo.getModInfo().getGameVersion())) {
-                subtitle.add(modInfo.getModInfo().getGameVersion());
+                subtitle.add(i18n("mods.game.version") + ": " + modInfo.getModInfo().getGameVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                subtitle.add(modInfo.getModInfo().getVersion());
+                subtitle.add(i18n("archive.version") + ": " + modInfo.getModInfo().getVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
                 subtitle.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
@@ -459,7 +448,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             description.heightProperty().addListener((obs, oldVal, newVal) -> {
-                double maxHeight = stage.getHeight() * 0.5;
+                double maxHeight = Controllers.windowHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });
@@ -467,18 +456,18 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(descriptionPane);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
-                        pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
-                        pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
+                for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
+                        pair("addon.curseforge", CurseForgeRemoteAddonRepository.MODS),
+                        pair("addon.modrinth", ModrinthRemoteAddonRepository.MODS)
                 )) {
-                    RemoteModRepository repository = item.getValue();
+                    RemoteAddonRepository repository = item.getValue();
                     JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                     Task.runAsync(() -> {
-                        Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
+                        Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
+                            RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                             FXUtils.runInFX(() -> {
-                                for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
+                                for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
                                     String loaderName = switch (modLoaderType) {
                                         case FORGE -> i18n("install.installer.forge");
                                         case CLEANROOM -> i18n("install.installer.cleanroom");
@@ -501,9 +490,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
                                     Controllers.navigate(new DownloadPage(
-                                            repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
-                                            remoteMod,
-                                            new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
+                                            repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
+                                            remoteAddon,
+                                            new HMCLGameRepository.InstanceReference(ModListPageSkin.this.getSkinnable().getRepository(), ModListPageSkin.this.getSkinnable().getInstanceId()),
                                             org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
                                     ));
                                 });
@@ -563,7 +552,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         JFXCheckBox checkBox = new JFXCheckBox();
-        ImageContainer imageContainer = new ImageContainer(24);
+        ImageContainer imageContainer = new ImageContainer(32);
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);

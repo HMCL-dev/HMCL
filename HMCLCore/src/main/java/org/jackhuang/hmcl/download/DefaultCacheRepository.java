@@ -21,7 +21,8 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.game.LibraryDownloadTask;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
@@ -37,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -90,7 +90,7 @@ public class DefaultCacheRepository extends CacheRepository {
     public void tryCacheLibrary(Library library, Path jar) {
         lock.readLock().lock();
         try {
-            if (index.getLibraries().stream().anyMatch(it -> library.getName().equals(it.getName())))
+            if (index.libraries().stream().anyMatch(it -> library.getName().equals(it.name())))
                 return;
         } finally {
             lock.readLock().unlock();
@@ -132,13 +132,13 @@ public class DefaultCacheRepository extends CacheRepository {
 
         try {
             // check if this library is from Forge
-            List<LibraryIndex> libraries = index.getLibraries().stream()
-                    .filter(it -> it.getName().equals(library.getName()))
-                    .collect(Collectors.toList());
+            List<LibraryIndex> libraries = index.libraries().stream()
+                    .filter(it -> it.name().equals(library.getName()))
+                    .toList();
             for (LibraryIndex libIndex : libraries) {
-                if (fileExists(SHA1, libIndex.getHash())) {
-                    Path file = getFile(SHA1, libIndex.getHash());
-                    if (libIndex.getType().equalsIgnoreCase(LibraryIndex.TYPE_FORGE)) {
+                if (fileExists(SHA1, libIndex.hash())) {
+                    Path file = getFile(SHA1, libIndex.hash());
+                    if (libIndex.type().equalsIgnoreCase(LibraryIndex.TYPE_FORGE)) {
                         if (LibraryDownloadTask.checksumValid(file, library.getChecksums()))
                             return Optional.of(file);
                     }
@@ -181,7 +181,7 @@ public class DefaultCacheRepository extends CacheRepository {
      */
     public Path cacheLibrary(Library library, Path path, boolean forge) throws IOException {
         String hash = library.getDownload().getSha1();
-        if (hash == null)
+        if (!DigestUtils.isSha1Digest(hash))
             hash = DigestUtils.digestToString(SHA1, path);
 
         Path cache = getFile(SHA1, hash);
@@ -191,7 +191,7 @@ public class DefaultCacheRepository extends CacheRepository {
         writeLock.lock();
         try {
             LibraryIndex libIndex = new LibraryIndex(library.getName(), hash, forge ? LibraryIndex.TYPE_FORGE : LibraryIndex.TYPE_JAR);
-            index.getLibraries().add(libIndex);
+            index.libraries().add(libIndex);
             saveIndex();
         } finally {
             writeLock.unlock();
@@ -225,22 +225,15 @@ public class DefaultCacheRepository extends CacheRepository {
     ///         ]
     ///     }
     /// }
-    ///```
+    /// ```
     /// assets and versions will not be included in index.
-    private static final class Index implements Validation {
-        private final Set<LibraryIndex> libraries;
-
+    private record Index(@NotNull Set<LibraryIndex> libraries) implements Validation {
         public Index() {
             this(new HashSet<>());
         }
 
-        public Index(Set<LibraryIndex> libraries) {
+        private Index(Set<LibraryIndex> libraries) {
             this.libraries = Objects.requireNonNull(libraries);
-        }
-
-        @NotNull
-        public Set<LibraryIndex> getLibraries() {
-            return libraries;
         }
 
         @Override
@@ -250,55 +243,15 @@ public class DefaultCacheRepository extends CacheRepository {
         }
     }
 
-    private static final class LibraryIndex implements Validation {
-        private final String name;
-        private final String hash;
-        private final String type;
-
+    private record LibraryIndex(@NotNull String name, @NotNull String hash, @NotNull String type) implements Validation {
         public LibraryIndex() {
             this("", "", "");
-        }
-
-        public LibraryIndex(String name, String hash, String type) {
-            this.name = name;
-            this.hash = hash;
-            this.type = type;
-        }
-
-        @NotNull
-        public String getName() {
-            return name;
-        }
-
-        @NotNull
-        public String getHash() {
-            return hash;
-        }
-
-        @NotNull
-        public String getType() {
-            return type;
         }
 
         @Override
         public void validate() throws JsonParseException, TolerableValidationException {
             if (name == null || hash == null || type == null)
                 throw new JsonParseException("Index.LibraryIndex.* cannot be null");
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            LibraryIndex that = (LibraryIndex) o;
-            return Objects.equals(name, that.name) &&
-                    Objects.equals(hash, that.hash) &&
-                    Objects.equals(type, that.type);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(name, hash, type);
         }
 
         public static final String TYPE_FORGE = "forge";

@@ -25,11 +25,11 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -51,13 +51,13 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware {
+public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.GameInstanceLoadable, PageAware {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
     private final ReentrantLock lock = new ReentrantLock();
 
     private ModManager modManager;
-    private Profile profile;
+    private HMCLGameRepository repository;
     private String instanceId;
     private String gameVersion;
 
@@ -86,16 +86,15 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     @Override
-    public void loadVersion(Profile profile, String id) {
-        this.profile = profile;
-        this.instanceId = id;
+    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+        this.repository = repository;
+        this.instanceId = instanceId;
 
-        HMCLGameRepository repository = profile.getRepository();
-        Version resolved = repository.getResolvedPreservingPatchesVersion(id);
+        Version resolved = repository.getResolvedPreservingPatchesVersion(instanceId);
         this.gameVersion = repository.getGameVersion(resolved).orElse(null);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         modded.set(analyzer.hasModLoader());
-        loadMods(profile.getRepository().getModManager(id));
+        loadMods(repository.getModManager(instanceId));
     }
 
     private void loadMods(ModManager modManager) {
@@ -164,7 +163,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         }
 
         // Sinytra Connector
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE)
+        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && (modManager.hasMod("connector", ModLoaderType.NEO_FORGE) || modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE))
                 || "1.20.1".equals(gameVersion) && analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
@@ -174,7 +173,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.add.title"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.litemod"));
-        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
 
         if (res == null) return;
 
@@ -232,30 +231,30 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void openModFolder() {
-        FXUtils.openFolder(profile.getRepository().getRunDirectory(instanceId).resolve("mods"));
+        FXUtils.openFolder(repository.getRunDirectory(instanceId).resolve("mods"));
     }
 
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+                            Optional<String> gameVersion = repository.getGameVersion(instanceId);
                             return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, mods)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
-                                Controllers.dialog(i18n("mods.check_updates.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                             } else if (result.isEmpty()) {
-                                Controllers.dialog(i18n("mods.check_updates.empty"));
+                                Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
                                 Controllers.navigateForward(new AddonUpdatesPage<>(modManager, result));
                             }
                         })
                         .withStagesHints("update.checking"),
-                i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
+                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (profile.getRepository().isModpack(instanceId)) {
+        if (repository.isModpack(instanceId)) {
             Controllers.confirm(
                     i18n("mods.update_modpack_mod.warning"), null,
                     MessageDialogPane.MessageType.WARNING,
@@ -291,8 +290,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         this.modded.set(modded);
     }
 
-    public Profile getProfile() {
-        return this.profile;
+    public GameDirectory getGameDirectory() {
+        return this.repository.getGameDirectory();
+    }
+
+    public HMCLGameRepository getRepository() {
+        return this.repository;
     }
 
     public String getInstanceId() {

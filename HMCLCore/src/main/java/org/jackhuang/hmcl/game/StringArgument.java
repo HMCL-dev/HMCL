@@ -24,6 +24,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.JsonAdapter;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -38,17 +39,7 @@ import java.util.regex.Pattern;
  */
 @JsonAdapter(StringArgument.Serializer.class)
 @Immutable
-public final class StringArgument implements Argument {
-
-    private final String argument;
-
-    public StringArgument(String argument) {
-        this.argument = argument;
-    }
-
-    public String getArgument() {
-        return argument;
-    }
+public record StringArgument(String argument) implements Argument {
 
     @Override
     public List<String> toString(Map<String, String> keys, Map<String, Boolean> features) {
@@ -63,14 +54,14 @@ public final class StringArgument implements Argument {
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return argument;
     }
 
     public static final class Serializer implements JsonSerializer<StringArgument> {
         @Override
         public JsonElement serialize(StringArgument src, Type typeOfSrc, JsonSerializationContext context) {
-            return new JsonPrimitive(src.getArgument());
+            return new JsonPrimitive(src.argument());
         }
     }
 }

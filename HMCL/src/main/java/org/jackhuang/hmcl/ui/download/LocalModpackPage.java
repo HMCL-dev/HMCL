@@ -24,9 +24,8 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -56,7 +55,7 @@ public final class LocalModpackPage extends ModpackPage {
     public LocalModpackPage(WizardController controller) {
         super(controller);
 
-        Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
+        HMCLGameRepository repository = controller.getSettings().get(ModpackPage.REPOSITORY);
 
         String name = controller.getSettings().get(MODPACK_NAME);
         if (name != null) {
@@ -67,15 +66,15 @@ public final class LocalModpackPage extends ModpackPage {
                 if (installAsVersion) {
                     txtModpackName.getValidators().setAll(
                             new RequiredValidator(),
-                            new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
+                            new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
                 } else {
                     txtModpackName.getValidators().setAll(
                             new RequiredValidator(),
                             new Validator(i18n("install.new_game.already_exists"), str -> !ModpackHelper.isExternalGameNameConflicts(str)
-                                    && Profiles.getProfiles().stream()
+                                    && GameDirectoryManager.getGameDirectories().stream()
                                             .noneMatch(existingProfile ->
-                                                    str.equals(Profiles.getProfileCustomName(existingProfile)))),
+                                                    str.equals(GameDirectoryManager.getGameDirectoryCustomName(existingProfile)))),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
                 }
             });
@@ -91,7 +90,7 @@ public final class LocalModpackPage extends ModpackPage {
             FileChooser chooser = new FileChooser();
             chooser.setTitle(i18n("modpack.choose"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-            selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+            selectedFile = Controllers.showOpenDialog(chooser);
             if (selectedFile == null) {
                 controller.onEnd();
                 return;

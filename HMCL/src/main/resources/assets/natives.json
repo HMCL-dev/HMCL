@@ -902,6 +902,17 @@
         }
       }
     },
+    "org.lwjgl:lwjgl-sdl:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-sdl:3.4.1:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-sdl/3.4.1/lwjgl-sdl-3.4.1-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-sdl/3.4.1/lwjgl-sdl-3.4.1-natives-linux-arm64.jar",
+          "sha1": "b5a62eb82113b0227077fb270128487a80a20299",
+          "size": 1434288
+        }
+      }
+    },
     "org.lwjgl.lwjgl:lwjgl-platform:2.9.0:natives": {
       "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3",
       "downloads": {
@@ -2637,6 +2648,7 @@
     "org.lwjgl:lwjgl-shaderc:3.4.1:natives-linux": null,
     "org.lwjgl:lwjgl-spvc:3.4.1:natives-linux": null,
     "org.lwjgl:lwjgl-vma:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-sdl:3.4.1:natives-linux": null,
     "net.java.dev.jna:jna:5.8.0": {
       "name": "net.java.dev.jna:jna:5.13.0",
       "downloads": {
@@ -4381,6 +4393,28 @@
           "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-vulkan/3.4.1/lwjgl-vulkan-3.4.1.jar",
           "sha1": "d0601fdc38890755e5638048c14cc0f7b990964b",
           "size": 8356700
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-sdl:3.4.1": {
+      "name": "org.lwjgl:lwjgl-sdl:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-sdl/3.4.1/lwjgl-sdl-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-sdl/3.4.1/lwjgl-sdl-3.4.1.jar",
+          "sha1": "ec28db6e949478044c649fea25eae43b1b161971",
+          "size": 983498
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-sdl:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-sdl:3.4.1:natives-linux-riscv64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-sdl/3.4.1/lwjgl-sdl-3.4.1-natives-linux-riscv64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-sdl/3.4.1/lwjgl-sdl-3.4.1-natives-linux-riscv64.jar",
+          "sha1": "d443cd6e73467f437d0be30a3ece7b6fe162a10a",
+          "size": 1207531
         }
       }
     },
@@ -6424,6 +6458,28 @@
           "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-vulkan/3.4.1/lwjgl-vulkan-3.4.1.jar",
           "sha1": "d0601fdc38890755e5638048c14cc0f7b990964b",
           "size": 8356700
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-sdl:3.4.1": {
+      "name": "org.lwjgl:lwjgl-sdl:3.4.1",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-sdl/3.4.1/lwjgl-sdl-3.4.1.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-sdl/3.4.1/lwjgl-sdl-3.4.1.jar",
+          "sha1": "ec28db6e949478044c649fea25eae43b1b161971",
+          "size": 983498
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-sdl:3.4.1:natives-linux": {
+      "name": "org.lwjgl:lwjgl-sdl:3.4.1:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-sdl/3.4.1/lwjgl-sdl-3.4.1-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-sdl/3.4.1/lwjgl-sdl-3.4.1-natives-freebsd.jar",
+          "sha1": "1616d4bd1f5ae03faa9c815c728f74d186526eee",
+          "size": 1241210
         }
       }
     },

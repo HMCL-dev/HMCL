@@ -43,7 +43,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jackhuang.hmcl.util.skin.NormalizedSkin;
 import org.jetbrains.annotations.Nullable;
@@ -57,8 +56,8 @@ import java.util.concurrent.CancellationException;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AccountListItem extends RadioButton {
 
@@ -86,8 +85,8 @@ public class AccountListItem extends RadioButton {
             String name = account.getProfileName();
             return StringUtils.isBlank(name) ? account.getProfileID().toString() : name;
         }, account);
-        if (account instanceof ClassicAccount classicAccount && !(account instanceof OfflineAccount)) {
-            title.bind(Bindings.concat(classicAccount.getLoginName(), " - ", profileName));
+        if (account instanceof ClassicAccount classicAccount) {
+            title.bind(Bindings.concat(profileName, " - ", classicAccount.getLoginName()));
         } else {
             title.bind(profileName);
         }
@@ -151,7 +150,7 @@ public class AccountListItem extends RadioButton {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("account.skin.upload"));
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("account.skin.file"), "*.png"));
-        Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile == null) {
             return null;
         }

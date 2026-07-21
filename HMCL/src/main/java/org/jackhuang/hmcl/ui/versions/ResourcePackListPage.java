@@ -35,16 +35,15 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.mod.*;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
-import org.jackhuang.hmcl.resourcepack.ResourcePackFile;
-import org.jackhuang.hmcl.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.addon.*;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -57,7 +56,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -74,7 +73,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.VersionLoadable {
+public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.GameInstanceLoadable {
 
     private static final String TIP_KEY = "resourcePackWarning";
     private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
@@ -88,7 +87,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         };
     }
 
-    private Profile profile;
+    private HMCLGameRepository repository;
     private String instanceId;
 
     private Path resourcePackDirectory;
@@ -106,10 +105,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     @Override
-    public void loadVersion(Profile profile, String version) {
-        this.profile = profile;
-        this.instanceId = version;
-        this.resourcePackManager = new ResourcePackManager(profile.getRepository(), version);
+    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+        this.repository = repository;
+        this.instanceId = instanceId;
+        this.resourcePackManager = new ResourcePackManager(repository, instanceId);
         this.resourcePackDirectory = this.resourcePackManager.getDirectory();
 
         refresh();
@@ -176,7 +175,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("resourcepack.add"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"));
-        List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
         if (files != null && !files.isEmpty()) {
             addFiles(files);
         }
@@ -232,22 +231,22 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+                            Optional<String> gameVersion = repository.getGameVersion(instanceId);
                             return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, resourcePacks)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {
-                                Controllers.dialog(i18n("mods.check_updates.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                             } else if (result.isEmpty()) {
-                                Controllers.dialog(i18n("mods.check_updates.empty"));
+                                Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
                                 Controllers.navigateForward(new AddonUpdatesPage<>(resourcePackManager, result));
                             }
                         })
                         .withStagesHints("update.checking"),
-                i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
+                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (profile.getRepository().isModpack(instanceId)) {
+        if (repository.isModpack(instanceId)) {
             Controllers.confirm(
                     i18n("resourcepack.update_in_modpack.warning"), null,
                     MessageDialogPane.MessageType.WARNING,
@@ -257,6 +256,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
+    @NotNullByDefault
     private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
         private final JFXListView<ResourcePackInfoObject> listView;
         private final JFXTextField searchField = new JFXTextField();
@@ -266,7 +266,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final HBox toolbarNormal = new HBox();
         private final HBox toolbarSelecting = new HBox();
 
-        private boolean isSearching;
+        /// Whether the search mechanism is currently active.
+        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
+        /// Timer for debouncing search input to avoid executing search on every keystroke.
+        private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
         private ResourcePackListPageSkin(ResourcePackListPage control) {
             super(control);
@@ -293,7 +297,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
                         createToolbarButton2(i18n("button.disable"), SVG.CLOSE, () ->
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
-                        createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 control.checkUpdates(
                                         listView.getSelectionModel().getSelectedItems().stream().map(ResourcePackInfoObject::getFile).toList()
                                 )
@@ -309,19 +313,22 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 searchBar.setPadding(new Insets(0, 5, 0, 5));
                 searchField.setPromptText(i18n("search"));
                 HBox.setHgrow(searchField, Priority.ALWAYS);
-                PauseTransition pause = new PauseTransition(Duration.millis(100));
-                pause.setOnFinished(e -> search());
+                searchPause.setOnFinished(e -> search());
                 FXUtils.onChange(searchField.textProperty(), newValue -> {
-                    pause.setRate(1);
-                    pause.playFromStart();
+                    if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                        searchPause.setRate(1);
+                        searchPause.playFromStart();
+                    }
                 });
 
                 JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                         () -> {
                             changeToolbar(toolbarNormal);
 
-                            isSearching = false;
                             searchField.clear();
+                            searchPause.stop();
+
+                            isSearching.set(false);
                             Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                         });
 
@@ -336,7 +343,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
                         createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, control::onOpenFolder),
-                        createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 control.checkUpdates(listView.getItems().stream().map(ResourcePackInfoObject::getFile).toList())
                         ),
                         createToolbarButton2(i18n("download"), SVG.DOWNLOAD, control::onDownload),
@@ -346,7 +353,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
                         selectedItem -> {
                             if (selectedItem == null)
-                                changeToolbar(isSearching ? searchBar : toolbarNormal);
+                                changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
                             else
                                 changeToolbar(toolbarSelecting);
                         });
@@ -371,6 +378,23 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
                 listView.setCellFactory(x -> new ResourcePackListCell(listView, control));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+                StackPane placeholderContainer = new StackPane();
+                placeholderContainer.getStyleClass().add("notice-pane");
+                Label placeholderLabel = new Label(i18n("resourcepack.empty"));
+                placeholderLabel.textProperty().bind(
+                    Bindings.createStringBinding(() -> {
+                        if (isSearching.get()) {
+                            return i18n("search.no_results_found");
+                        } else {
+                            return i18n("resourcepack.empty");
+                        }
+                    },
+                    isSearching)
+                );
+                placeholderContainer.getChildren().add(placeholderLabel);
+                listView.setPlaceholder(placeholderContainer);
+
                 Bindings.bindContent(listView.getItems(), control.getItems());
 
                 listView.setOnContextMenuRequested(event -> {
@@ -403,7 +427,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
 
         private void search() {
-            isSearching = true;
+            isSearching.set(true);
 
             Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
 
@@ -471,7 +495,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final ResourcePackListPage page;
 
         private final JFXCheckBox checkBox;
-        private final ImageContainer imageContainer = new ImageContainer(24);
+        private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
@@ -567,8 +591,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            Stage stage = Controllers.getStage();
-            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+            maxWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
             imageContainer.setImage(packInfoObject.getIcon());
@@ -594,32 +617,32 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             FXUtils.onChange(description.heightProperty(), newVal -> {
-                double maxHeight = stage.getHeight() * 0.5;
+                double maxHeight = Controllers.windowHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });
 
             setBody(descriptionPane);
 
-            for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
-                    pair("mods.curseforge", CurseForgeRemoteModRepository.RESOURCE_PACKS),
-                    pair("mods.modrinth", ModrinthRemoteModRepository.RESOURCE_PACKS)
+            for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
+                    pair("addon.curseforge", CurseForgeRemoteAddonRepository.RESOURCE_PACKS),
+                    pair("addon.modrinth", ModrinthRemoteAddonRepository.RESOURCE_PACKS)
             )) {
-                RemoteModRepository repository = item.getValue();
+                RemoteAddonRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                 Task.runAsync(() -> {
-                    Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
+                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
                     if (versionOptional.isPresent()) {
-                        RemoteMod remoteMod = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().getModid());
+                        RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                         FXUtils.runInFX(() -> {
                             button.setOnAction(e -> {
                                 fireEvent(new DialogCloseEvent());
                                 Controllers.navigate(new DownloadPage(
-                                        repository instanceof CurseForgeRemoteModRepository
+                                        repository instanceof CurseForgeRemoteAddonRepository
                                                 ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
                                                 : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
-                                        remoteMod,
-                                        new Profile.ProfileVersion(page.profile, page.instanceId),
+                                        remoteAddon,
+                                        new HMCLGameRepository.InstanceReference(page.repository, page.instanceId),
                                         org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
                                 ));
                             });

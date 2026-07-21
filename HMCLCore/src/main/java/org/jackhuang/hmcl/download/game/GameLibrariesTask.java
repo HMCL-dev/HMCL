@@ -174,9 +174,11 @@ public final class GameLibrariesTask extends Task<Void> {
                     }
                 }
             } else if ("org.jackhuang.hmcl".equals(library.getGroupId()) && "mmc-bootstrap".equals(library.getArtifactId())) {
-                try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
-                    Files.createDirectories(file.getParent());
-                    Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), file, StandardCopyOption.REPLACE_EXISTING);
+                if (!Files.exists(file)) {
+                    try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
+                        Files.createDirectories(file.getParent());
+                        Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), file, StandardCopyOption.REPLACE_EXISTING);
+                    }
                 }
             }
 

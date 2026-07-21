@@ -38,13 +38,12 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -57,6 +56,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.*;
@@ -67,15 +67,15 @@ import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
-public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
+public class DownloadListPage extends Control implements DecoratorPage, VersionPage.GameInstanceLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean versionSelection;
-    private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
+    private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
     private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
     private final IntegerProperty pageCount = new SimpleIntegerProperty(-1);
-    private final ListProperty<RemoteMod> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final ObservableList<String> versions = FXCollections.observableArrayList();
     private final StringProperty selectedVersion = new SimpleStringProperty();
     private final DownloadPage.DownloadCallback callback;
@@ -86,16 +86,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     protected final StringProperty downloadSource = new SimpleStringProperty();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private int searchID = 0;
-    protected RemoteModRepository repository;
+    protected RemoteAddonRepository repository;
     private final DownloadProvider downloadProvider;
 
     private Runnable retrySearch;
 
-    public DownloadListPage(RemoteModRepository repository) {
+    public DownloadListPage(RemoteAddonRepository repository) {
         this(repository, null, false);
     }
 
-    public DownloadListPage(RemoteModRepository repository, DownloadPage.DownloadCallback callback, boolean versionSelection) {
+    public DownloadListPage(RemoteAddonRepository repository, DownloadPage.DownloadCallback callback, boolean versionSelection) {
         this.repository = repository;
         this.callback = callback;
         this.versionSelection = versionSelection;
@@ -111,22 +111,22 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     @Override
-    public void loadVersion(Profile profile, String version) {
-        this.version.set(new Profile.ProfileVersion(profile, version));
+    public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
+        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId));
 
         setLoading(false);
         setFailed(false);
 
         if (!searchInitialized) {
             searchInitialized = true;
-            search("", null, 0, "", RemoteModRepository.SortType.POPULARITY);
+            search("", null, 0, "", RemoteAddonRepository.SortType.POPULARITY);
         }
 
         if (versionSelection) {
-            versions.setAll(profile.getRepository().getDisplayVersions()
+            versions.setAll(repository.getDisplayVersions()
                     .map(Version::getId)
                     .collect(Collectors.toList()));
-            selectedVersion.set(Profiles.getSelectedInstance(profile));
+            selectedVersion.set(repository.getSelectedInstance());
         }
     }
 
@@ -158,23 +158,23 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         FXUtils.runInFX(() -> selectedVersion.set(versionID));
     }
 
-    private void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, RemoteModRepository.SortType sort) {
+    private void search(String userGameVersion, RemoteAddonRepository.Category category, int pageOffset, String searchFilter, RemoteAddonRepository.SortType sort) {
         retrySearch = null;
         setLoading(true);
         setFailed(false);
 
         int currentSearchID = searchID = searchID + 1;
         Task.supplyAsync(() -> {
-            Profile.ProfileVersion version = this.version.get();
-            if (StringUtils.isBlank(version.version())) {
+            HMCLGameRepository.InstanceReference instanceReference = this.instanceReference.get();
+            if (StringUtils.isBlank(instanceReference.instanceId())) {
                 return userGameVersion;
             } else {
-                return StringUtils.isNotBlank(version.version())
-                        ? version.profile().getRepository().getGameVersion(version.version()).orElse("")
+                return StringUtils.isNotBlank(instanceReference.instanceId())
+                        ? instanceReference.repository().getGameVersion(instanceReference.instanceId()).orElse("")
                         : "";
             }
         }).thenApplyAsync(
-                gameVersion -> repository.search(downloadProvider, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)
+                gameVersion -> repository.search(downloadProvider, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteAddonRepository.SortOrder.DESC)
         ).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (searchID != currentSearchID) {
                 return;
@@ -194,7 +194,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     protected String getLocalizedCategory(String category, Object self) {
-        return repository instanceof ModrinthRemoteModRepository
+        return repository instanceof ModrinthRemoteAddonRepository
                 ? i18n("modrinth.category." + category)
                 : i18n("curse.category." + category);
     }
@@ -211,18 +211,18 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     protected String getLocalizedOfficialPage() {
-        if (repository instanceof ModrinthRemoteModRepository) {
-            return i18n("mods.modrinth");
+        if (repository instanceof ModrinthRemoteAddonRepository) {
+            return i18n("addon.modrinth");
         } else {
-            return i18n("mods.curseforge");
+            return i18n("addon.curseforge");
         }
     }
 
-    protected Profile.ProfileVersion getProfileVersion() {
+    protected HMCLGameRepository.InstanceReference getInstanceReference() {
         if (versionSelection) {
-            return new Profile.ProfileVersion(version.get().profile(), selectedVersion.get());
+            return new HMCLGameRepository.InstanceReference(instanceReference.get().repository(), selectedVersion.get());
         } else {
-            return version.get();
+            return instanceReference.get();
         }
     }
 
@@ -237,7 +237,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
-        private final JFXListView<RemoteMod> listView = new JFXListView<>();
+        private final JFXListView<RemoteAddon> listView = new JFXListView<>();
         private final RemoteImageLoader iconLoader;
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
@@ -320,16 +320,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 Label lblGameVersion = new Label(i18n("world.game_version"));
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 
-                ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().version)
-                        .map(version -> version.version() == null);
+                ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().instanceReference)
+                        .map(instanceReference -> instanceReference.instanceId() == null);
                 lblGameVersion.managedProperty().bind(hasVersion);
                 lblGameVersion.visibleProperty().bind(hasVersion);
                 gameVersionField.managedProperty().bind(hasVersion);
                 gameVersionField.visibleProperty().bind(hasVersion);
                 FXUtils.installFastTooltip(gameVersionField, i18n("search.enter"));
 
-                FXUtils.onChangeAndOperate(getSkinnable().version, version -> {
-                    if (StringUtils.isNotBlank(version.version())) {
+                FXUtils.onChangeAndOperate(getSkinnable().instanceReference, instanceReference -> {
+                    if (StringUtils.isNotBlank(instanceReference.instanceId())) {
                         GridPane.setColumnSpan(nameField, 3);
                     } else {
                         GridPane.setColumnSpan(nameField, 1);
@@ -342,7 +342,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 categoryStackPane.getChildren().setAll(categoryComboBox);
                 categoryComboBox.prefWidthProperty().bind(categoryStackPane.widthProperty());
                 categoryComboBox.getStyleClass().add("fit-width");
-                categoryComboBox.setPromptText(i18n("mods.category"));
+                categoryComboBox.setPromptText(i18n("addon.category"));
                 categoryComboBox.getSelectionModel().select(0);
                 categoryComboBox.setConverter(stringConverter(getSkinnable()::getLocalizedCategoryIndent));
                 FXUtils.onChangeAndOperate(getSkinnable().downloadSource, downloadSource -> {
@@ -357,7 +357,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                                 List<CategoryIndented> result = new ArrayList<>();
                                 result.add(CategoryIndented.ALL);
-                                for (RemoteModRepository.Category category : Lang.toIterable(categories)) {
+                                for (RemoteAddonRepository.Category category : Lang.toIterable(categories)) {
                                     resolveCategory(category, 0, result);
                                 }
                                 categoryComboBox.getItems().setAll(result);
@@ -366,14 +366,14 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 });
 
                 StackPane sortStackPane = new StackPane();
-                JFXComboBox<RemoteModRepository.SortType> sortComboBox = new JFXComboBox<>();
+                JFXComboBox<RemoteAddonRepository.SortType> sortComboBox = new JFXComboBox<>();
                 sortStackPane.getChildren().setAll(sortComboBox);
                 sortComboBox.prefWidthProperty().bind(sortStackPane.widthProperty());
                 sortComboBox.getStyleClass().add("fit-width");
                 sortComboBox.setConverter(stringConverter(sortType -> i18n("curse.sort." + sortType.name().toLowerCase(Locale.ROOT))));
-                sortComboBox.getItems().setAll(RemoteModRepository.SortType.values());
+                sortComboBox.getItems().setAll(RemoteAddonRepository.SortType.values());
                 sortComboBox.getSelectionModel().select(0);
-                searchPane.addRow(rowIndex++, new Label(i18n("mods.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
+                searchPane.addRow(rowIndex++, new Label(i18n("addon.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
 
                 IntegerProperty filterID = new SimpleIntegerProperty(this, "Filter ID", 0);
                 IntegerProperty currentFilterID = new SimpleIntegerProperty(this, "Current Filter ID", -1);
@@ -514,15 +514,23 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             pane.setCenter(spinnerPane);
             {
                 spinnerPane.loadingProperty().bind(getSkinnable().loadingProperty());
-                spinnerPane.failedReasonProperty().bind(Bindings.createStringBinding(() -> {
-                    if (getSkinnable().isFailed()) {
-                        return i18n("download.failed.refresh");
-                    } else {
-                        return null;
-                    }
-                }, getSkinnable().failedProperty()));
+                spinnerPane.failedReasonProperty().bind(
+                    Bindings.createStringBinding(() -> {
+                        if (getSkinnable().isFailed()) {
+                            return i18n("download.failed.refresh");
+                        } else if (!getSkinnable().isLoading() && getSkinnable().pageCount.get() >= 0 && getSkinnable().items.isEmpty()) {
+                            return i18n("download.failed.no_results_found"); 
+                        } else {
+                            return null;
+                        }
+                    },
+                    getSkinnable().failedProperty(), 
+                    getSkinnable().loadingProperty(), 
+                    getSkinnable().pageCount,
+                    getSkinnable().items)
+                );
                 spinnerPane.setOnFailedAction(e -> {
-                    if (getSkinnable().retrySearch != null) {
+                    if (getSkinnable().isFailed() && getSkinnable().retrySearch != null) {
                         getSkinnable().retrySearch.run();
                     }
                 });
@@ -559,9 +567,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         wrapper.getStyleClass().add("card-no-padding");
 
                         FXUtils.onClicked(wrapper, () -> {
-                            RemoteMod item = getItem();
+                            RemoteAddon item = getItem();
                             if (item != null)
-                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getProfileVersion(), getSkinnable().callback));
+                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getInstanceReference(), getSkinnable().callback));
                         });
 
                         setPrefWidth(0);
@@ -571,24 +579,24 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
 
                     @Override
-                    protected void updateItem(RemoteMod item, boolean empty) {
+                    protected void updateItem(RemoteAddon item, boolean empty) {
                         super.updateItem(item, empty);
                         if (empty || item == null) {
                             setGraphic(null);
                         } else {
-                            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(item.getSlug());
-                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.getTitle());
-                            String description = item.getDescription();
+                            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(item.slug());
+                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.title());
+                            String description = item.description();
                             if (description != null) {
                                 description = description.replaceAll("\\R", " ");
                             }
                             content.setSubtitle(description);
                             content.getTags().clear();
-                            for (String category : item.getCategories()) {
+                            for (String category : item.categories()) {
                                 if (getSkinnable().shouldDisplayCategory(category))
                                     content.addTag(getSkinnable().getLocalizedCategory(category, null));
                             }
-                            iconLoader.load(imageContainer.imageProperty(), item.getIconUrl());
+                            iconLoader.load(imageContainer.imageProperty(), item.iconUrl());
                             setGraphic(wrapper);
                         }
                     }
@@ -598,13 +606,13 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             getChildren().setAll(pane);
         }
 
-        private record CategoryIndented(int indent, RemoteModRepository.Category category) {
+        private record CategoryIndented(int indent, RemoteAddonRepository.Category category) {
             private static final CategoryIndented ALL = new CategoryIndented(0, null);
         }
 
-        private static void resolveCategory(RemoteModRepository.Category category, int indent, List<CategoryIndented> result) {
+        private static void resolveCategory(RemoteAddonRepository.Category category, int indent, List<CategoryIndented> result) {
             result.add(new CategoryIndented(indent, category));
-            for (RemoteModRepository.Category subcategory : category.subcategories()) {
+            for (RemoteAddonRepository.Category subcategory : category.subcategories()) {
                 resolveCategory(subcategory, indent + 1, result);
             }
         }

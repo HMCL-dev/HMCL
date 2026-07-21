@@ -21,6 +21,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests HTTP download retry and resume behavior.
 @NotNullByDefault
 public final class FetchTaskTest {
-    /// Marks HTTP client dependencies as initialized for isolated unit tests.
+    /// Marks HTTP connection dependencies as initialized for isolated unit tests.
     @org.junit.jupiter.api.BeforeAll
     public static void notifyFetchTaskInitialized() {
         FetchTask.notifyInitialized();
@@ -257,7 +257,7 @@ public final class FetchTaskTest {
         }
 
         @Override
-        protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) {
+        protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) {
             Charset charset = NetworkUtils.getCharsetFromContentType(response == null
                     ? null
                     : response.headers().firstValue("content-type").orElse(null));

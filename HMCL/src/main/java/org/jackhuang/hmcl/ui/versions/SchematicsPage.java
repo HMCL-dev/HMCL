@@ -34,8 +34,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.schematic.LitematicFile;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -62,7 +62,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable {
+public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.GameInstanceLoadable {
 
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
@@ -87,8 +87,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     @Override
-    public void loadVersion(Profile profile, String version) {
-        this.schematicsDirectory = profile.getRepository().getSchematicsDirectory(version);
+    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+        this.schematicsDirectory = repository.getSchematicsDirectory(instanceId);
 
         refresh();
     }
@@ -149,7 +149,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         fileChooser.setTitle(i18n("schematics.add.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
                 i18n("extension.schematic"), "*.litematic"));
-        List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
         if (files != null && !files.isEmpty()) {
             addFiles(files);
         }
@@ -636,6 +636,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     private final class SchematicsPageSkin extends ToolbarListPageSkin<Item, SchematicsPage> {
         SchematicsPageSkin() {
             super(SchematicsPage.this);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("schematics.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
         }
 
         @Override

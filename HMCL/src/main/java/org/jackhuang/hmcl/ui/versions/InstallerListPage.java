@@ -22,8 +22,8 @@ import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -42,8 +42,8 @@ import java.util.concurrent.CompletableFuture;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class InstallerListPage extends ListPageBase<InstallerItem> implements VersionPage.VersionLoadable {
-    private Profile profile;
+public class InstallerListPage extends ListPageBase<InstallerItem> implements VersionPage.GameInstanceLoadable {
+    private HMCLGameRepository repository;
     private String versionId;
     private Version version;
     private String gameVersion;
@@ -61,16 +61,16 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     }
 
     @Override
-    public void loadVersion(Profile profile, String versionId) {
-        this.profile = profile;
-        this.versionId = versionId;
-        this.version = profile.getRepository().getVersion(versionId);
+    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+        this.repository = repository;
+        this.versionId = instanceId;
+        this.version = repository.getVersion(instanceId);
         this.gameVersion = null;
 
         CompletableFuture.supplyAsync(() -> {
-            gameVersion = profile.getRepository().getGameVersion(version).orElse(null);
+            gameVersion = repository.getGameVersion(version).orElse(null);
 
-            return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId), gameVersion);
+            return LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(instanceId), gameVersion);
         }).thenAcceptAsync(analyzer -> {
             itemsProperty().clear();
 
@@ -98,13 +98,13 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                 }
 
                 item.setOnInstall(() -> {
-                    Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
+                    Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(repository, gameVersion, version, libraryId, libraryVersion));
                 });
 
-                item.setOnRemove(() -> profile.getDependency().removeLibraryAsync(version, libraryId)
-                        .thenComposeAsync(profile.getRepository()::saveAsync)
-                        .withComposeAsync(profile.getRepository().refreshVersionsAsync())
-                        .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
+                item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(version, libraryId)
+                        .thenComposeAsync(repository::saveAsync)
+                        .withComposeAsync(repository.refreshVersionsAsync())
+                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.versionId))
                         .start());
 
                 itemsProperty().add(item);
@@ -123,10 +123,10 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
                 InstallerItem installerItem = new InstallerItem(libraryId, InstallerItem.Style.LIST_ITEM);
                 installerItem.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
-                installerItem.setOnRemove(() -> profile.getDependency().removeLibraryAsync(version, libraryId)
-                        .thenComposeAsync(profile.getRepository()::saveAsync)
-                        .withComposeAsync(profile.getRepository().refreshVersionsAsync())
-                        .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
+                installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(version, libraryId)
+                        .thenComposeAsync(repository::saveAsync)
+                        .withComposeAsync(repository.refreshVersionsAsync())
+                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.versionId))
                         .start());
 
                 itemsProperty().add(installerItem);
@@ -137,21 +137,21 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     public void installOffline() {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.modloader.installer"), "*.jar", "*.exe"));
-        Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        Path file = Controllers.showOpenDialog(chooser);
         if (file != null) doInstallOffline(file);
     }
 
     private void doInstallOffline(Path file) {
-        Task<?> task = profile.getDependency().installLibraryAsync(version, file)
-                .thenComposeAsync(profile.getRepository()::saveAsync)
-                .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
+        Task<?> task = repository.getDependency().installLibraryAsync(version, file)
+                .thenComposeAsync(repository::saveAsync)
+                .thenComposeAsync(repository.refreshVersionsAsync());
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override
             public void onStop(boolean success, TaskExecutor executor) {
                 runInFX(() -> {
                     if (success) {
-                        loadVersion(profile, versionId);
+                        loadInstance(repository, versionId);
                         Controllers.dialog(i18n("install.success"));
                     } else {
                         if (executor.getException() == null)

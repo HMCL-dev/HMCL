@@ -22,7 +22,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.mod.DataPack;
+import org.jackhuang.hmcl.addon.datapack.DataPack;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -91,8 +91,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("datapack.add.title"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.datapack"), "*.zip"));
-        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
-
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
         if (res != null) {
             installMultiDataPack(res);
         }

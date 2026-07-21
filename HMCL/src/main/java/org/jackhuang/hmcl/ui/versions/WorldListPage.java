@@ -27,6 +27,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
@@ -35,8 +36,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -61,12 +62,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class WorldListPage extends ListPageBase<World> implements VersionPage.VersionLoadable {
+public final class WorldListPage extends ListPageBase<World> implements VersionPage.GameInstanceLoadable {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
 
     private Path savesDir;
     private List<World> worlds;
-    private Profile profile;
+    private HMCLGameRepository repository;
     private String instanceId;
     private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
 
@@ -86,10 +87,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     @Override
-    public void loadVersion(Profile profile, String id) {
-        this.profile = profile;
-        this.instanceId = id;
-        this.savesDir = profile.getRepository().getSavesDirectory(id);
+    public void loadInstance(HMCLGameRepository repository, String instanceId) {
+        this.repository = repository;
+        this.instanceId = instanceId;
+        this.savesDir = repository.getSavesDirectory(instanceId);
         refresh();
     }
 
@@ -99,7 +100,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         } else if (showAll.get()) {
             getItems().setAll(worlds);
         } else {
-            GameVersionNumber gameVersion = profile.getRepository().getGameVersion(instanceId).map(GameVersionNumber::asGameVersion).orElse(null);
+            GameVersionNumber gameVersion = repository.getGameVersion(instanceId).map(GameVersionNumber::asGameVersion).orElse(null);
             getItems().setAll(worlds.stream()
                     .filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
                     .toList());
@@ -107,7 +108,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void refresh() {
-        if (profile == null || instanceId == null)
+        if (repository == null || instanceId == null)
             return;
 
         int currentRefresh = ++refreshCount;
@@ -115,7 +116,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             // Ensure the game version number is parsed
-            profile.getRepository().getGameVersion(instanceId);
+            repository.getGameVersion(instanceId);
             return World.getWorlds(savesDir);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
@@ -123,7 +124,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 return;
             }
 
-            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+            Optional<String> gameVersion = repository.getGameVersion(instanceId);
             supportQuickPlay.set(World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
 
             worlds = result;
@@ -140,7 +141,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("world.add.title"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.world"), "*.zip"));
-        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
 
         if (res == null || res.isEmpty()) return;
         installWorld(res.get(0));
@@ -177,7 +178,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     private void showManagePage(World world) {
-        Controllers.navigate(new WorldManagePage(world, profile, instanceId));
+        Controllers.navigate(new WorldManagePage(world, repository, instanceId));
     }
 
     public void export(World world) {
@@ -197,11 +198,11 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void launch(World world) {
-        Versions.launchAndEnterWorld(profile, instanceId, world.getFileName());
+        Versions.launchAndEnterWorld(repository, instanceId, world.getFileName());
     }
 
     public void generateLaunchScript(World world) {
-        Versions.generateLaunchScriptForQuickEnterWorld(profile, instanceId, world.getFileName());
+        Versions.generateLaunchScriptForQuickEnterWorld(repository, instanceId, world.getFileName());
     }
 
     public BooleanProperty showAllProperty() {
@@ -216,6 +217,12 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         WorldListPageSkin() {
             super(WorldListPage.this);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("world.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
         }
 
         @Override
@@ -314,7 +321,12 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         @Override
         protected void updateItem(World world, boolean empty) {
+            World oldWorld = getItem();
+            boolean oldEmpty = isEmpty();
+
             super.updateItem(world, empty);
+
+            if (oldWorld == world && oldEmpty == empty) return;
 
             this.content.getTags().clear();
 

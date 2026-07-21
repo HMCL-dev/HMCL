@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public final class NetworkUtils {
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
 
-    public static final Duration TIMEOUT = Duration.ofSeconds(30);
+    public static final Duration TIMEOUT = Duration.ofSeconds(10);
     public static final int TIMEOUT_MILLIS = (int) TIMEOUT.toMillis();
 
     private NetworkUtils() {
@@ -163,6 +164,45 @@ public final class NetworkUtils {
         }
     }
 
+    private static final List<Pair<String, String>> API_KEYS;
+
+    static {
+        if (CurseForgeRemoteAddonRepository.API_KEY.isEmpty()) {
+            API_KEYS = List.of();
+        } else {
+            API_KEYS = List.of(
+                    pair("api.curseforge.com", CurseForgeRemoteAddonRepository.API_KEY),
+                    pair("forgecdn.net", CurseForgeRemoteAddonRepository.API_KEY)
+            );
+        }
+    }
+
+    private static boolean matchDomainSuffix(String domain, String suffix) {
+        return domain.endsWith(suffix)
+                && (domain.length() == suffix.length() || domain.charAt(domain.length() - suffix.length() - 1) == '.');
+    }
+
+    public static void injectApiKey(WebURL url, URLConnection connection) {
+        if (!(connection instanceof HttpURLConnection))
+            return;
+
+        if (connection.getRequestProperty("x-api-key") != null) {
+            return;
+        }
+
+        String host = url.getHost();
+        if (host == null || host.isEmpty())
+            return;
+
+        for (Pair<String, String> pair : API_KEYS) {
+            String hostSuffix = pair.getKey();
+            if (matchDomainSuffix(host, hostSuffix)) {
+                connection.addRequestProperty("x-api-key", pair.getValue());
+                return;
+            }
+        }
+    }
+
     public static URLConnection createConnection(WebURL url) throws IOException {
         URLConnection connection;
         try {
@@ -176,6 +216,7 @@ public final class NetworkUtils {
             httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
             httpConnection.setRequestProperty("User-Agent", USER_AGENT);
             httpConnection.setInstanceFollowRedirects(false);
+            injectApiKey(url, connection);
         }
         return connection;
     }
@@ -293,10 +334,10 @@ public final class NetworkUtils {
                     throw new IOException("Too much redirects");
                 }
 
-                HttpURLConnection redirected = (HttpURLConnection) new URL(conn.getURL(), encodeLocation(newURL))
-                        .openConnection();
-                properties
-                        .forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
+                WebURL redirectedUrl = WebURL.of(conn.getURL()).resolve(newURL);
+                HttpURLConnection redirected = (HttpURLConnection) redirectedUrl.toURL().openConnection();
+                properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
+                injectApiKey(redirectedUrl, redirected);
                 redirected.setRequestMethod(method);
                 conn = redirected;
                 ++redirect;
