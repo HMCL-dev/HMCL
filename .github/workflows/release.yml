@@ -86,7 +86,7 @@ jobs:
         env:
           GH_DOWNLOAD_BASE_URL: https://github.com/${{ github.repository }}/releases/download
           CNB_DOWNLOAD_BASE_URL: https://cnb.cool/HMCL-dev/HMCL/-/releases/download
-      - name: Create GitHub release
+      - name: Create GitHub Release Draft
         if: ${{ env.continue == 'true' }}
         run: |
           gh release create "${{ env.HMCL_TAG_NAME }}" \
@@ -98,6 +98,12 @@ jobs:
             --title "${{ env.HMCL_TAG_NAME }}" \
             --notes-file RELEASE_NOTE \
             --prerelease
+            --draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish GitHub Release
+        run: |
+          gh release edit "${{ env.HMCL_TAG_NAME }}" --draft=false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install git-cnb
