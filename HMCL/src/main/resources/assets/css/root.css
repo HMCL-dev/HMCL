@@ -306,6 +306,10 @@
     -fx-padding: 4 0 4 0;
 }
 
+.popup-item:active {
+    -fx-background-color: -monet-secondary-container-transparent-50;
+}
+
 .two-line-list-item > .first-line > .title {
     -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;

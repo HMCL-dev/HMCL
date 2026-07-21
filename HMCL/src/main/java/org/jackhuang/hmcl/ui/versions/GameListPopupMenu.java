@@ -49,7 +49,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
-    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+    private static final PseudoClass ACTIVE = PseudoClass.getPseudoClass("active");
 
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY,
@@ -132,6 +132,7 @@ public final class GameListPopupMenu extends StackPane {
             RipplerContainer ripplerContainer = new RipplerContainer(container);
 
             rootPane = new StackPane();
+            rootPane.getStyleClass().add("popup-item");
             rootPane.getStyleClass().add("advanced-list-item");
             rootPane.getChildren().setAll(ripplerContainer);
             rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(5));
@@ -166,7 +167,7 @@ public final class GameListPopupMenu extends StackPane {
                 this.content.titleProperty().bind(item.titleProperty());
                 this.content.subtitleProperty().bind(item.subtitleProperty());
                 this.tag.bind(item.tagProperty());
-                rootPane.pseudoClassStateChanged(SELECTED, Objects.equals(item.getId(), item.getRepository().getSelectedInstance()));
+                rootPane.pseudoClassStateChanged(ACTIVE, Objects.equals(item.getId(), item.getRepository().getSelectedInstance()));
             }
         }
     }
