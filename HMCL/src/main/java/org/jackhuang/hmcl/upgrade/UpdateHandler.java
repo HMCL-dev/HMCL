@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -43,8 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -127,22 +127,20 @@ public final class UpdateHandler {
                             throw new IOException("Current JAR is not verified");
                         }
 
-                        CompletableFuture<Void> future = new CompletableFuture<>();
-
+                        var latch = new CountDownLatch(1);
                         Platform.runLater(() -> {
                             try {
-                                Controllers.saveWindowStates();
+                                SettingsManager.savePendingChanges();
                             } finally {
-                                future.complete(null);
+                                latch.countDown();
                             }
                         });
 
                         try {
-                            future.get();
-                        } catch (ExecutionException | InterruptedException ignored) {
+                            latch.await();
+                        } catch (InterruptedException ignored) {
                             // Ignore
                         }
-
 
                         try {
                             FileSaver.waitForAllSaves();

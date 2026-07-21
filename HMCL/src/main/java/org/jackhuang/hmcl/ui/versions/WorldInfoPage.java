@@ -639,7 +639,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"));
         fileChooser.setInitialFileName("icon.png");
 
-        Path iconPath = FileUtils.toPath(fileChooser.showOpenDialog(Controllers.getStage()));
+        Path iconPath = Controllers.showOpenDialog(fileChooser);
         if (iconPath == null) return;
 
         Image image;
