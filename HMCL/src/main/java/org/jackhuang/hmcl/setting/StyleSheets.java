@@ -60,7 +60,7 @@ public final class StyleSheets {
         });
     }
 
-    private static String toStyleSheetUri(String styleSheet, String fallback) {
+    private static String toStyleSheetUri(String styleSheet) {
         return "data:text/css;charset=UTF-8;base64," + Base64.getEncoder().encodeToString(styleSheet.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -111,7 +111,7 @@ public final class StyleSheets {
 
         builder.append('}');
 
-        return toStyleSheetUri(builder.toString(), defaultCss);
+        return toStyleSheetUri(builder.toString());
     }
 
     private static String getBrightnessStyleSheet() {
@@ -162,7 +162,7 @@ public final class StyleSheets {
         addColor(builder, scheme, ColorRole.INVERSE_SURFACE, 0.8);
 
         builder.append("}\n");
-        return toStyleSheetUri(builder.toString(), blueCss);
+        return toStyleSheetUri(builder.toString());
     }
 
     public static void init(Scene scene) {
