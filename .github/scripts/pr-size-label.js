@@ -3,7 +3,6 @@ module.exports = async ({ github, context, core }) => {
     const repo = context.repo.repo;
     const ignoredFilePatterns = [
         /(?:^|\/)\.cnb\/.+\.ya?ml$/i,
-        /(?:^|\/)\.gemini\/.+\.ya?ml$/i,
         /(?:^|\/)\.gitee\/.+\.ya?ml$/i,
         /(?:^|\/)\.github\/.+\.ya?ml$/i,
         /(?:^|\/)\.idea\/.+\.xml$/i,
