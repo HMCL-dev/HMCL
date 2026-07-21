@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -102,29 +101,19 @@ public final class UpdateHandler {
             throw new IOException("Current JAR is not verified");
         }
 
-        if (Controllers.getStage() != null) {
-            CompletableFuture<Void> future = new CompletableFuture<>();
-
-            Platform.runLater(() -> {
-                try {
-                    Controllers.saveWindowStates();
-                } finally {
-                    future.complete(null);
-                }
-            });
-
+        var latch = new CountDownLatch(1);
+        Platform.runLater(() -> {
             try {
-                future.get();
-            } catch (ExecutionException | InterruptedException ignored) {
-                // Ignore
+                SettingsManager.savePendingChanges();
+            } finally {
+                latch.countDown();
             }
+        });
 
-
-            try {
-                FileSaver.waitForAllSaves();
-            } catch (InterruptedException ignored) {
-                // Ignore
-            }
+        try {
+            latch.await();
+        } catch (InterruptedException ignored) {
+            // Ignore
         }
 
         requestUpdate(downloaded, getCurrentLocation(), silent);
