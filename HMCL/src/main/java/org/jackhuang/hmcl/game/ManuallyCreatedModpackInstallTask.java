@@ -44,10 +44,7 @@ public class ManuallyCreatedModpackInstallTask extends Task<Path> {
 
     @Override
     public void execute() throws Exception {
-        Path subdirectory;
-        try (FileSystem fs = CompressingUtils.readonly(zipFile).setEncoding(charset).build()) {
-            subdirectory = ModpackHelper.findMinecraftDirectoryInManuallyCreatedModpack(zipFile.toString(), fs);
-        }
+        Path subdirectory = Path.of(ModpackHelper.findMinecraftDirectoryInManuallyCreatedModpack(zipFile.toString(), zipFile));
 
         Path dest = Paths.get("externalgames").resolve(name);
 
