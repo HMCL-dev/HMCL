@@ -245,6 +245,7 @@ public final class UpdateHandler {
                     }
                 }
             }
+
             return str;
         }).collect(Collectors.joining(" "));
     }
