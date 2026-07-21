@@ -49,7 +49,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
         AdvancedListItem.setAlignment(imageContainer, Pos.CENTER);
         setLeftGraphic(imageContainer);
 
-        holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), it -> this.loadVersion()));
+        holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), it -> FXUtils.runInFX(this::loadVersion)));
     }
 
     private void loadVersion() {
@@ -59,25 +59,24 @@ public class GameAdvancedListItem extends AdvancedListItem {
         if (repositoryChanged) {
             repository = GameDirectoryManager.getSelectedRepository();
             onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
-                this.loadVersion();
+                FXUtils.runInFX(this::loadVersion);
             });
 
             if (!repository.isLoaded()) {
                 onRefreshedVersionsListener = EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
-                        .registerWeak(event -> loadVersion());
+                        .registerWeak(event -> FXUtils.runInFX(this::loadVersion));
                 return;
             }
         }
-        FXUtils.runInFX(() -> {
-            if (version != null && repository != null && repository.hasVersion(version)) {
-                setTitle(i18n("version.manage.manage"));
-                setSubtitle(version);
-                imageContainer.setImage(repository.getVersionIconImage(version));
-            } else {
-                setTitle(i18n("version.empty"));
-                setSubtitle(i18n("version.empty.add"));
-                imageContainer.setImage(VersionIconType.DEFAULT.getIcon());
-            }
-        });
+
+        if (version != null && repository != null && repository.hasVersion(version)) {
+            setTitle(i18n("version.manage.manage"));
+            setSubtitle(version);
+            imageContainer.setImage(repository.getVersionIconImage(version));
+        } else {
+            setTitle(i18n("version.empty"));
+            setSubtitle(i18n("version.empty.add"));
+            imageContainer.setImage(VersionIconType.DEFAULT.getIcon());
+        }
     }
 }
