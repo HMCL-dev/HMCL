@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -254,24 +255,15 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
             BorderPane pane = new BorderPane();
 
-            GridPane searchPane = new GridPane();
+            VBox searchPane = new VBox(8);
             pane.setTop(searchPane);
             searchPane.getStyleClass().addAll("card");
             BorderPane.setMargin(searchPane, new Insets(10, 10, 0, 10));
 
-            ColumnConstraints nameColumn = new ColumnConstraints();
-            nameColumn.setMinWidth(USE_PREF_SIZE);
-            ColumnConstraints column1 = new ColumnConstraints();
-            column1.setHgrow(Priority.ALWAYS);
-            ColumnConstraints column2 = new ColumnConstraints();
-            column2.setHgrow(Priority.ALWAYS);
-            searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2);
-
-            searchPane.setHgap(16);
-            searchPane.setVgap(10);
+            searchPane.setMaxWidth(Double.MAX_VALUE);
 
             {
-                int rowIndex = 0;
+                BooleanProperty isExpanded = new SimpleBooleanProperty(false);
 
                 if (control.versionSelection || !control.downloadSources.isEmpty()) {
                     searchPane.addRow(rowIndex);
@@ -306,6 +298,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 }
 
                 JFXTextField nameField = new JFXTextField();
+                HBox.setHgrow(nameField, Priority.ALWAYS);
+                nameField.setMaxWidth(Double.MAX_VALUE);
                 nameField.setPromptText(getSkinnable().supportChinese.get() ? i18n("search.hint.chinese") : i18n("search.hint.english"));
                 if (getSkinnable().supportChinese.get()) {
                     FXUtils.installFastTooltip(nameField, i18n("search.hint.chinese"));
@@ -313,15 +307,40 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     FXUtils.installFastTooltip(nameField, i18n("search.hint.english"));
                 }
 
+                JFXButton btnExpand = FXUtils.newToggleButton4(SVG.ARROW_DROP_DOWN);
+                btnExpand.setOnAction(e -> {
+                    isExpanded.set(!isExpanded.get());
+                    btnExpand.setGraphic(isExpanded.get() ? SVG.ARROW_DROP_UP.createIcon() : SVG.ARROW_DROP_DOWN.createIcon());
+                });
+
+                if (control.versionSelection) {
+                    JFXComboBox<String> versionsComboBox = new JFXComboBox<>();
+                    versionsComboBox.setPrefWidth(200);
+                    Bindings.bindContent(versionsComboBox.getItems(), control.versions);
+                    selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedVersion);
+                    rowBox1.getChildren().addAll(new Label(i18n("version")), versionsComboBox, new Label(i18n("mods.name")), nameField, btnExpand);
+                } else {
+                    rowBox1.getChildren().addAll(new Label(i18n("mods.name")), nameField, btnExpand);
+                }
+
+                searchPane.getChildren().add(rowBox1);
+
+                HBox rowBox2 = new HBox(16);
+                rowBox2.setAlignment(Pos.CENTER_LEFT);
+                rowBox2.setMaxWidth(Double.MAX_VALUE);
+
+                rowBox2.visibleProperty().bind(isExpanded);
+                rowBox2.managedProperty().bind(isExpanded);
+
                 JFXComboBox<String> gameVersionField = new JFXComboBox<>();
-                gameVersionField.setMaxWidth(Double.MAX_VALUE);
+                gameVersionField.setPrefWidth(100);
                 gameVersionField.setEditable(true);
                 gameVersionField.getItems().setAll(GameVersionNumber.getDefaultGameVersions());
                 Label lblGameVersion = new Label(i18n("world.game_version"));
-                searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
+                lblGameVersion.setMinWidth(USE_PREF_SIZE);
 
                 ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().instanceReference)
-                        .map(instanceReference -> instanceReference.instanceId() == null);
+                    .map(instanceReference -> instanceReference.instanceId() == null);
                 lblGameVersion.managedProperty().bind(hasVersion);
                 lblGameVersion.visibleProperty().bind(hasVersion);
                 gameVersionField.managedProperty().bind(hasVersion);
@@ -337,6 +356,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 });
 
                 StackPane categoryStackPane = new StackPane();
+                categoryStackPane.setPrefWidth(100);
                 JFXComboBox<CategoryIndented> categoryComboBox = new JFXComboBox<>();
                 categoryComboBox.getItems().setAll(CategoryIndented.ALL);
                 categoryStackPane.getChildren().setAll(categoryComboBox);
@@ -366,6 +386,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 });
 
                 StackPane sortStackPane = new StackPane();
+                sortStackPane.setPrefWidth(100);
                 JFXComboBox<RemoteAddonRepository.SortType> sortComboBox = new JFXComboBox<>();
                 sortStackPane.getChildren().setAll(sortComboBox);
                 sortComboBox.prefWidthProperty().bind(sortStackPane.widthProperty());
@@ -373,7 +394,15 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 sortComboBox.setConverter(stringConverter(sortType -> i18n("curse.sort." + sortType.name().toLowerCase(Locale.ROOT))));
                 sortComboBox.getItems().setAll(RemoteAddonRepository.SortType.values());
                 sortComboBox.getSelectionModel().select(0);
-                searchPane.addRow(rowIndex++, new Label(i18n("addon.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
+
+                Label categoryLabel = new Label(i18n("addon.category"));
+                categoryLabel.setMinWidth(Region.USE_PREF_SIZE);
+                Label sortLabel = new Label(i18n("search.sort"));
+                sortLabel.setMinWidth(Region.USE_PREF_SIZE);
+
+                rowBox2.getChildren().addAll(lblGameVersion, gameVersionField, categoryLabel, categoryStackPane, sortLabel, sortStackPane);
+
+                searchPane.getChildren().add(rowBox2);
 
                 IntegerProperty filterID = new SimpleIntegerProperty(this, "Filter ID", 0);
                 IntegerProperty currentFilterID = new SimpleIntegerProperty(this, "Current Filter ID", -1);
@@ -405,7 +434,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 ));
 
                 HBox actionsBox = new HBox(8);
-                GridPane.setColumnSpan(actionsBox, 4);
                 actionsBox.setAlignment(Pos.CENTER);
                 {
                     AggregatedObservableList<Node> actions = new AggregatedObservableList<>();
@@ -501,7 +529,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     Bindings.bindContent(actionsBox.getChildren(), actions.getAggregatedList());
                 }
 
-                searchPane.addRow(rowIndex++, actionsBox);
+                searchPane.getChildren().add(actionsBox);
 
                 FXUtils.onChange(control.downloadSource, v -> searchAction.handle(null));
                 nameField.setOnAction(searchAction);
