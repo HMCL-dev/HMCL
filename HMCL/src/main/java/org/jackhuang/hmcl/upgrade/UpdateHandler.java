@@ -231,15 +231,18 @@ public final class UpdateHandler {
     private static String maskCommandline(List<String> commandline) {
         return commandline.stream().map(str -> {
             if (str.startsWith("-D")) {
-                String key = str.split("=")[0].replace("-D", "");
-                String value = str.split("=")[1];
-                if (key.contains("http.proxy") ||
-                        key.startsWith("https.proxy") ||
-                        key.startsWith("socksProxy") ||
-                        key.equals("hmcl.microsoft.auth.id") ||
-                        key.equals("hmcl.curseforge.apikey")
-                ) {
-                    return "-D" + key + "=" + value.charAt(0) + "*".repeat(value.length() - 1);
+                int eqIdx = str.indexOf('=');
+                if (eqIdx != -1) {
+                    String key = str.substring(2, eqIdx);
+                    String value = str.substring(eqIdx + 1);
+                    if (key.contains("http.proxy") ||
+                            key.startsWith("https.proxy") ||
+                            key.startsWith("socksProxy") ||
+                            key.equals("hmcl.microsoft.auth.id") ||
+                            key.equals("hmcl.curseforge.apikey")
+                    ) {
+                        return "-D" + key + "=" + (value.isEmpty() ? "" : value.charAt(0) + "*".repeat(value.length() - 1));
+                    }
                 }
             }
             return str;
