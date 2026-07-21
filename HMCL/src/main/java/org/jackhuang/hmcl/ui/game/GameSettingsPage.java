@@ -1719,7 +1719,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             } finally {
                 updating.value = false;
             }
-
             refresh.invalidated(instance);
         });
 
@@ -1746,7 +1745,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             LineComponent line,
             Property<String> textProperty,
             Node editor) {
-        if (isPresetSetting) {`
+        if (isPresetSetting) {
             bindInheritableStringProperty(line, textProperty, GameSettings::runningDirectoryProperty);
             return;
         }
