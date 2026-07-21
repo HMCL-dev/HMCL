@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXListView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -53,6 +52,9 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -635,27 +637,40 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     private final class SchematicsPageSkin extends ToolbarListPageSkin<Item, SchematicsPage> {
         SchematicsPageSkin() {
-            super(SchematicsPage.this);
+            super(SchematicsPage.this, true);
 
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("schematics.empty"));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
-        }
+            listView.setCellFactory(x -> new Cell());
 
-        @Override
-        protected List<Node> initializeToolbar(SchematicsPage skinnable) {
-            return Arrays.asList(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
-                    createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, skinnable::onCreateDirectory)
+            setupSkin(
+                    new Node[]{
+                            createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, getSkinnable()::refresh),
+                            createToolbarButton2(i18n("schematics.add"), SVG.ADD, getSkinnable()::onAddFiles),
+                            createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, getSkinnable()::onCreateDirectory),
+                            createToolbarButton2(i18n("search"), SVG.SEARCH, this::startSearch)
+                    },
+                    null
             );
         }
 
         @Override
-        protected ListCell<Item> createListCell(JFXListView<Item> listView) {
-            return new Cell();
+        protected String getEmptyPlaceholderText() {
+            return i18n("schematics.empty");
+        }
+
+        @Override
+        protected Predicate<SchematicsPage.Item> updateSearchPredicate(String searchText) {
+            if (searchText == null || searchText.isEmpty()) return item -> true;
+            if (searchText.startsWith("regex:")) {
+                String regex = searchText.substring("regex:".length());
+                try {
+                    Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+                    return item -> pattern.matcher(item.getName() + item.getDescription()).find();
+                } catch (PatternSyntaxException e) {
+                    return item -> false;
+                }
+            } else {
+                return item -> (item.getName() + item.getDescription()).toLowerCase(Locale.ROOT).contains(searchText.toLowerCase(Locale.ROOT));
+            }
         }
     }
 }

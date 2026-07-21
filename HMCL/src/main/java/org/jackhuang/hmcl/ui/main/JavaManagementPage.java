@@ -37,8 +37,8 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -50,16 +50,17 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
-import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -193,11 +194,10 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     private static final class JavaPageSkin extends ToolbarListPageSkin<JavaRuntime, JavaManagementPage> {
 
         JavaPageSkin(JavaManagementPage skinnable) {
-            super(skinnable);
-        }
+            super(skinnable, false);
 
-        @Override
-        protected List<Node> initializeToolbar(JavaManagementPage skinnable) {
+            listView.setCellFactory(x -> new JavaItemCell(listView));
+
             ArrayList<Node> res = new ArrayList<>(4);
 
             res.add(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, JavaManager::refresh));
@@ -216,12 +216,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             }
             res.add(disableJava);
 
-            return res;
-        }
-
-        @Override
-        protected ListCell<JavaRuntime> createListCell(JFXListView<JavaRuntime> listView) {
-            return new JavaItemCell(listView);
+            setupSkin(res.toArray(new Node[0]), null);
         }
     }
 

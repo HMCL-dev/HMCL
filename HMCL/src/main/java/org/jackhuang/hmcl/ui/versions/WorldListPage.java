@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -27,7 +26,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
@@ -52,9 +50,12 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -216,31 +217,43 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private final class WorldListPageSkin extends ToolbarListPageSkin<World, WorldListPage> {
 
         WorldListPageSkin() {
-            super(WorldListPage.this);
+            super(WorldListPage.this, true);
+            listView.setCellFactory(x -> new WorldListCell(getSkinnable()));
 
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("world.empty"));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(WorldListPage skinnable) {
             JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
-            chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
+            chkShowAll.selectedProperty().bindBidirectional(getSkinnable().showAllProperty());
 
-            return Arrays.asList(
-                    chkShowAll,
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
-                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
+            setupSkin(
+                    new Node[]{
+                            chkShowAll,
+                            createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, getSkinnable()::refresh),
+                            createToolbarButton2(i18n("world.add"), SVG.ADD, getSkinnable()::add),
+                            createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, getSkinnable()::download),
+                            createToolbarButton2(i18n("search"), SVG.SEARCH, this::startSearch)
+                    },
+                    null
             );
         }
 
         @Override
-        protected ListCell<World> createListCell(JFXListView<World> listView) {
-            return new WorldListCell(getSkinnable());
+        protected Predicate<World> updateSearchPredicate(String searchText) {
+            if (searchText == null || searchText.isEmpty()) return item -> true;
+            if (searchText.startsWith("regex:")) {
+                String regex = searchText.substring("regex:".length());
+                try {
+                    Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+                    return item -> pattern.matcher(item.getWorldName()).find();
+                } catch (PatternSyntaxException e) {
+                    return item -> false;
+                }
+            } else {
+                return item -> item.getWorldName().toLowerCase(Locale.ROOT).contains(searchText.toLowerCase(Locale.ROOT));
+            }
+        }
+
+        @Override
+        protected String getEmptyPlaceholderText() {
+            return i18n("world.empty");
         }
     }
 
