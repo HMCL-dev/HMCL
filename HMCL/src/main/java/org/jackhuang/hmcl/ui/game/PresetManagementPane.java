@@ -287,14 +287,14 @@ final class PresetManagementPane extends ComponentSublist {
         /// Creates the remove button shown on the right side of the option.
         @Override
         protected Node createRightNode() {
-            JFXButton renameButton = FXUtils.newToggleButton4(SVG.EDIT, 14);
+            JFXButton renameButton = FXUtils.newToggleButton4(SVG.EDIT, 18);
             renameButton.setOnAction(event -> {
                 renamePreset(getValue());
                 event.consume();
             });
             FXUtils.installFastTooltip(renameButton, i18n("settings.type.global.preset.rename"));
 
-            JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER, 14);
+            JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER, 18);
             removeButton.disableProperty().bind(Bindings.createBooleanBinding(
                     () -> SettingsManager.getGameSettings().size() <= 1,
                     SettingsManager.getGameSettings()));
