@@ -137,7 +137,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     public void installOffline() {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.modloader.installer"), "*.jar", "*.exe"));
-        Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        Path file = Controllers.showOpenDialog(chooser);
         if (file != null) doInstallOffline(file);
     }
 

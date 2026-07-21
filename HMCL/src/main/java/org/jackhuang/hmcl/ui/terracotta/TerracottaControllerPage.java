@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.terracotta;
 
 import com.jfoenix.controls.JFXProgressBar;
+import javafx.beans.binding.Binding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -56,6 +57,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -84,15 +86,22 @@ public class TerracottaControllerPage extends StackPane {
         });
     }
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private final Binding<Boolean> focusedBinding;
+    @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
     /* FIXME: It's sucked to have such a long logic, containing UI for all states defined in TerracottaState, with unclear control flows.
          Consider moving UI into multiple files for each state respectively. */
     public TerracottaControllerPage() {
-        holder.add(FXUtils.observeWeak(() -> {
+        focusedBinding = BindingMapping.of(this.sceneProperty())
+                .flatMap(it -> it != null ? it.windowProperty() : new SimpleObjectProperty<>())
+                .flatMap(it -> it != null ? it.focusedProperty() : null, () -> false);
+
+        FXUtils.onChange(focusedBinding, focused -> {
             // Run daemon process only if HMCL is focused and is displaying current node.
-            TerracottaManager.switchDaemon(getScene() != null && Controllers.getStage().isFocused());
-        }, this.sceneProperty(), Controllers.getStage().focusedProperty()));
+            TerracottaManager.switchDaemon(getScene() != null && focused);
+        });
 
         TransitionPane transition = new TransitionPane();
 

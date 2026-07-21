@@ -266,7 +266,7 @@ public final class Launcher extends Application {
     @Override
     public void stop() throws Exception {
         Controllers.onApplicationStop();
-        FileSaver.shutdown();
+        SettingsManager.shutdown();
         LOG.shutdown();
     }
 

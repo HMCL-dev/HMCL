@@ -173,7 +173,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.add.title"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.litemod"));
-        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
 
         if (res == null) return;
 
