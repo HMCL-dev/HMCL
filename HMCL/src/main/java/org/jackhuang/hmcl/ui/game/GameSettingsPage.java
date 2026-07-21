@@ -1831,7 +1831,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         textProperty.addListener((observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
-                FXUtils.runInFX(() -> fireEvent(new VersionPage.WorkingDirChangedEvent()));
+                fireEvent(new VersionPage.WorkingDirChangedEvent());
             }
         });
 
