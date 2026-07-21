@@ -22,8 +22,11 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -32,6 +35,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
@@ -506,6 +510,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Toolbar shown during normal browsing.
         private final HBox toolbarNormal = new HBox();
 
+        /// Whether the search mechanism is currently active.
+        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
         /// Search input.
         private final JFXTextField searchField = new JFXTextField();
 
@@ -543,13 +550,20 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             pause.setOnFinished(event ->
                     skinnable.filteredList.setPredicate(skinnable.createPredicate(searchField.getText())));
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                pause.setRate(1);
-                pause.playFromStart();
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    pause.setRate(1);
+                    pause.playFromStart();
+                }
             });
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
                 changeToolbar(toolbarNormal);
+
                 searchField.clear();
+                pause.stop();
+
+                skinnable.filteredList.setPredicate(null);
+                isSearching.set(false);
             });
             onEscPressed(searchField, closeSearchBar::fire);
 
@@ -584,6 +598,15 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             listView.getStyleClass().add("no-horizontal-scrollbar");
             ignoreEvent(listView, KeyEvent.KEY_PRESSED, event -> event.getCode() == KeyCode.ESCAPE);
 
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label();
+            placeholderLabel.textProperty().bind(
+                Bindings.when(isSearching).then(i18n("search.no_results_found")).otherwise("")
+            );
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+
             center.setContent(listView);
             root.getContent().add(center);
         }
@@ -595,6 +618,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
                 if (newToolbar == searchBar) {
                     runInFX(searchField::requestFocus);
+
+                    isSearching.set(true);
                 }
             }
         }
