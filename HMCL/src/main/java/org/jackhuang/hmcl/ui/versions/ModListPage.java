@@ -163,7 +163,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         }
 
         // Sinytra Connector
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE)
+        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && (modManager.hasMod("connector", ModLoaderType.NEO_FORGE) || modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE))
                 || "1.20.1".equals(gameVersion) && analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
@@ -173,7 +173,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.add.title"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.litemod"));
-        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
 
         if (res == null) return;
 

@@ -47,7 +47,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
@@ -118,7 +117,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
             fileChooser.setInitialFileName(name.get() + ".zip");
         }
-        Path file = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
+        Path file = Controllers.showSaveDialog(fileChooser);
         if (file == null) {
             controller.onEnd();
             return;

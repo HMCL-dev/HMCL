@@ -164,6 +164,7 @@ public final class LogWindow extends Stage {
 
         private final ListView<Log> listView = new JFXListView<>();
         private final BooleanProperty autoScroll = new SimpleBooleanProperty();
+        private final BooleanProperty wrapText = new SimpleBooleanProperty(true);
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
         private final JFXButton btnAlwaysOnTop = FXUtils.newToggleButton4(SVG.KEEP, 20);
@@ -174,7 +175,6 @@ public final class LogWindow extends Stage {
         LogWindowImpl() {
             getStyleClass().add("log-window");
 
-            listView.getStyleClass().add("no-horizontal-scrollbar");
             listView.getProperties().put("no-smooth-scrolling", true);
             listView.setItems(FXCollections.observableList(new CircularArrayList<>(logs.size())));
 
@@ -331,11 +331,26 @@ public final class LogWindow extends Stage {
                         getStyleClass().add("log-window-list-cell");
                         Region clippedContainer = (Region) listView.lookup(".clipped-container");
                         if (clippedContainer != null) {
-                            maxWidthProperty().bind(clippedContainer.widthProperty());
-                            prefWidthProperty().bind(clippedContainer.widthProperty());
+                            wrapTextProperty().addListener((obs, oldWrap, nowWrap) -> {
+                                if (nowWrap) {
+                                    maxWidthProperty().bind(clippedContainer.widthProperty());
+                                    prefWidthProperty().bind(clippedContainer.widthProperty());
+                                    listView.getStyleClass().add("no-horizontal-scrollbar");
+                                } else {
+                                    maxWidthProperty().unbind();
+                                    prefWidthProperty().unbind();
+
+                                    setMaxWidth(Region.USE_PREF_SIZE);
+                                    setPrefWidth(Region.USE_COMPUTED_SIZE);
+                                    listView.getStyleClass().remove("no-horizontal-scrollbar");
+                                }
+
+                                // only for horizontal scrollbar
+                                listView.requestLayout();
+                            });
                         }
                         setPadding(new Insets(2));
-                        setWrapText(true);
+                        wrapTextProperty().bind(control.wrapText);
                         setGraphic(null);
                     }
 
@@ -395,6 +410,10 @@ public final class LogWindow extends Stage {
                 autoScrollCheckBox.setSelected(true);
                 control.autoScroll.bind(autoScrollCheckBox.selectedProperty());
 
+                JFXCheckBox wrapTextCheckBox = new JFXCheckBox(i18n("logwindow.wrap_text"));
+                wrapTextCheckBox.setSelected(true);
+                control.wrapText.bind(wrapTextCheckBox.selectedProperty());
+
                 JFXButton exportLogsButton = new JFXButton(i18n("button.export"));
                 exportLogsButton.setOnAction(e -> getSkinnable().onExportLogs());
 
@@ -414,7 +433,7 @@ public final class LogWindow extends Stage {
 
                 JFXButton clearButton = new JFXButton(i18n("button.clear"));
                 clearButton.setOnAction(e -> getSkinnable().onClear());
-                hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
+                hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
 
                 control.getGameProcess().getProcess()
                         .onExit()

@@ -265,9 +265,37 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             {
                 BooleanProperty isExpanded = new SimpleBooleanProperty(false);
 
-                HBox rowBox1 = new HBox(16);
-                rowBox1.setAlignment(Pos.CENTER_LEFT);
-                rowBox1.setMaxWidth(Double.MAX_VALUE);
+                if (control.versionSelection || !control.downloadSources.isEmpty()) {
+                    searchPane.addRow(rowIndex);
+                    int columns = 0;
+                    Node lastNode = null;
+                    if (control.versionSelection) {
+                        JFXComboBox<String> versionsComboBox = new JFXComboBox<>();
+                        versionsComboBox.setMaxWidth(Double.MAX_VALUE);
+                        Bindings.bindContent(versionsComboBox.getItems(), control.versions);
+                        selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedVersion);
+
+                        searchPane.add(new Label(i18n("version")), columns++, rowIndex);
+                        searchPane.add(lastNode = versionsComboBox, columns++, rowIndex);
+                    }
+
+                    if (control.downloadSources.getSize() > 1) {
+                        JFXComboBox<String> downloadSourceComboBox = new JFXComboBox<>();
+                        downloadSourceComboBox.setMaxWidth(Double.MAX_VALUE);
+                        downloadSourceComboBox.getItems().setAll(control.downloadSources.get());
+                        downloadSourceComboBox.setConverter(stringConverter(I18n::i18n));
+                        selectedItemPropertyFor(downloadSourceComboBox).bindBidirectional(control.downloadSource);
+
+                        searchPane.add(new Label(i18n("settings.launcher.download_source")), columns++, rowIndex);
+                        searchPane.add(lastNode = downloadSourceComboBox, columns++, rowIndex);
+                    }
+
+                    if (columns == 2) {
+                        GridPane.setColumnSpan(lastNode, 3);
+                    }
+
+                    rowIndex++;
+                }
 
                 JFXTextField nameField = new JFXTextField();
                 HBox.setHgrow(nameField, Priority.ALWAYS);
