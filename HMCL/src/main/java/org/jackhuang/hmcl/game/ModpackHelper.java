@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
+
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -46,9 +47,11 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -122,6 +125,40 @@ public final class ModpackHelper {
         }
 
         throw new UnsupportedModpackException(file.toString());
+    }
+
+    /// 存储解析启动器包装 ZIP 后的结果
+    /// @param innerPath 包装文件系统内的整合包条目路径
+    /// @param wrapperFs 包装文件系统；当不再需要 [innerPath] 时必须被关闭
+    public record LauncherWrapper(Path innerPath, FileSystem wrapperFs) implements Closeable {
+        /// 关闭包装的 [FileSystem]。
+        @Override
+        public void close() throws IOException {
+            wrapperFs.close();
+        }
+    }
+
+    /// 检测 [file] 是否为 HMCL 启动器包装 ZIP（其内部嵌入了实际的整合包 `modpack.zip` 或 `modpack.mrpack`）
+    /// 返回一个包含内部条目路径和包装文件系统的 [LauncherWrapper]，
+    /// 如果 [file] 不是包装 ZIP，则返回 `null`
+    @Nullable
+    public static LauncherWrapper unwrapIfLauncherWrapper(Path file, Charset charset) {
+        FileSystem outerFs = null;
+        try {
+            outerFs = CompressingUtils.createReadOnlyZipFileSystem(file, charset);
+            for (String innerName : new String[]{"modpack.zip", "modpack.mrpack"}) {
+                Path entryPath = outerFs.getPath("/" + innerName);
+                if (Files.isRegularFile(entryPath)) {
+                    LauncherWrapper result = new LauncherWrapper(entryPath, outerFs);
+                    outerFs = null;
+                    return result;
+                }
+            }
+        } catch (IOException ignored) {
+        } finally {
+            IOUtils.closeQuietly(outerFs);
+        }
+        return null;
     }
 
     public static Path findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, FileSystem fs) throws IOException, UnsupportedModpackException {

@@ -39,9 +39,14 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -51,6 +56,11 @@ public final class LocalModpackPage extends ModpackPage {
     private final BooleanProperty installAsVersion = new SimpleBooleanProperty(true);
     private Modpack manifest = null;
     private Charset charset;
+
+    private final AtomicReference<FileSystem> wrapperFsRef = new AtomicReference<>();
+    @Nullable
+    private volatile Path resolvedModpackFile;
+    private volatile boolean cleanedUp;
 
     public LocalModpackPage(WizardController controller) {
         super(controller);
@@ -103,10 +113,32 @@ public final class LocalModpackPage extends ModpackPage {
         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile))
                 .thenApplyAsync(encoding -> {
                     charset = encoding;
-                    manifest = ModpackHelper.readModpackManifest(selectedFile, encoding);
+                    Path actualFile = selectedFile;
+                    if (selectedFile.getFileSystem() == FileSystems.getDefault()) {
+                        var wrapper = ModpackHelper.unwrapIfLauncherWrapper(selectedFile, encoding);
+                        if (wrapper != null) {
+                            actualFile = wrapper.innerPath();
+                            resolvedModpackFile = actualFile;
+                            wrapperFsRef.set(wrapper.wrapperFs());
+                        }
+                    }
+                    manifest = ModpackHelper.readModpackManifest(actualFile, encoding);
                     return manifest;
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
+                    FileSystem fs = wrapperFsRef.getAndSet(null);
+                    if (fs != null) {
+                        if (exception != null || cleanedUp) {
+                            IOUtils.closeQuietly(fs);
+                        } else {
+                            Path innerPath = resolvedModpackFile;
+                            if (innerPath != null) {
+                                controller.getSettings().put(MODPACK_FILE, innerPath);
+                            }
+                            controller.getSettings().put(MODPACK_WRAPPER_FS, fs);
+                        }
+                    }
+
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
                         nameProperty.set(FileUtils.getName(selectedFile));
@@ -145,7 +177,12 @@ public final class LocalModpackPage extends ModpackPage {
 
     @Override
     public void cleanup(SettingsMap settings) {
+        cleanedUp = true;
         settings.remove(MODPACK_FILE);
+        // 同时从 AtomicReference（后台任务可能尚未转移）
+        // 和 settings（可能已被 whenComplete 转移）中关闭 FS。
+        IOUtils.closeQuietly(wrapperFsRef.getAndSet(null));
+        IOUtils.closeQuietly(settings.remove(MODPACK_WRAPPER_FS));
     }
 
     protected void onInstall() {
@@ -178,6 +215,7 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("MODPACK_FILE");
+    public static final SettingsMap.Key<FileSystem> MODPACK_WRAPPER_FS = new SettingsMap.Key<>("MODPACK_WRAPPER_FS");
     public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
     public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
     public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");
