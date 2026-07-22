@@ -100,6 +100,9 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private void loadMods(ModManager modManager) {
         setLoading(true);
 
+        if (this.modManager != modManager) {
+            getItems().clear();
+        }
         this.modManager = modManager;
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
@@ -112,6 +115,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
+            if (this.modManager != modManager) {
+                return;
+            }
+
             updateSupportedLoaders(modManager);
 
             if (exception == null) {
@@ -236,6 +243,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
+        if (isLoading()) {
+            return;
+        }
+
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = repository.getGameVersion(instanceId);
