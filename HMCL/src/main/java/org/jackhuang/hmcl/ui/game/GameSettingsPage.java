@@ -1720,6 +1720,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
             refresh.invalidated(instance);
+
+            fireEvent(new VersionPage.WorkingDirChangedEvent());
         });
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
@@ -1808,6 +1810,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
             refresh.invalidated(instance);
+
+            fireEvent(new VersionPage.WorkingDirChangedEvent());
+
             event.consume();
         });
 
@@ -1827,12 +1832,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             } finally {
                 updating.value = false;
             }
-        });
 
-        textProperty.addListener((observable, oldValue, newValue) -> {
-            if (!Objects.equals(oldValue, newValue)) {
-                fireEvent(new VersionPage.WorkingDirChangedEvent());
-            }
+            fireEvent(new VersionPage.WorkingDirChangedEvent());
         });
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
