@@ -240,13 +240,4 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
         ret.setOnAction(e -> onClick.run());
         return ret;
     }
-
-    public static JFXButton createDecoratorButton(String tooltip, SVG svg, Runnable onClick) {
-        JFXButton ret = new JFXButton();
-        ret.getStyleClass().add("jfx-decorator-button");
-        ret.setGraphic(svg.createIcon(20));
-        FXUtils.installFastTooltip(ret, tooltip);
-        ret.setOnAction(e -> onClick.run());
-        return ret;
-    }
 }
