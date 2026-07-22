@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -102,8 +103,15 @@ public final class LocalModpackPage extends ModpackPage {
         showSpinner();
         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile))
                 .thenApplyAsync(encoding -> {
-                    charset = encoding;
-                    manifest = ModpackHelper.readModpackManifest(selectedFile, encoding);
+                    Optional<Path> bundledModpack = ModpackHelper.extractBundledModpack(selectedFile, encoding);
+                    Path modpackFile = bundledModpack.orElse(selectedFile);
+                    if (bundledModpack.isPresent()) {
+                        controller.getSettings().put(MODPACK_FILE, modpackFile);
+                        charset = CompressingUtils.findSuitableEncoding(modpackFile);
+                    } else {
+                        charset = encoding;
+                    }
+                    manifest = ModpackHelper.readModpackManifest(modpackFile, charset);
                     return manifest;
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
