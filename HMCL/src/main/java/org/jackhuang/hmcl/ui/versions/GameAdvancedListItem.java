@@ -49,7 +49,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
         AdvancedListItem.setAlignment(imageContainer, Pos.CENTER);
         setLeftGraphic(imageContainer);
 
-        holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), it -> FXUtils.runInFX(this::loadVersion)));
+        holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), it -> this.loadVersion()));
     }
 
     private void loadVersion() {
@@ -68,7 +68,6 @@ public class GameAdvancedListItem extends AdvancedListItem {
                 return;
             }
         }
-
         if (version != null && repository != null && repository.hasVersion(version)) {
             setTitle(i18n("version.manage.manage"));
             setSubtitle(version);
