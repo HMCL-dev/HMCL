@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.scene.Node;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
@@ -32,6 +33,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WebPage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -39,8 +41,11 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -50,11 +55,22 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class LocalModpackPage extends ModpackPage {
 
     private final BooleanProperty installAsVersion = new SimpleBooleanProperty(true);
+    /// The extracted bundled modpack while this page owns its lifecycle.
+    private volatile @Nullable Path temporaryModpackFile;
+    /// Whether the outer wizard page has been closed.
+    private volatile boolean disposed;
     private Modpack manifest = null;
     private Charset charset;
 
     public LocalModpackPage(WizardController controller) {
         super(controller);
+
+        if (controller.getDisplayer() instanceof Node displayer) {
+            displayer.addEventHandler(Navigator.NavigationEvent.EXITED, event -> {
+                disposed = true;
+                cleanup(controller.getSettings());
+            });
+        }
 
         HMCLGameRepository repository = controller.getSettings().get(ModpackPage.REPOSITORY);
 
@@ -106,6 +122,7 @@ public final class LocalModpackPage extends ModpackPage {
                     Optional<Path> bundledModpack = ModpackHelper.extractBundledModpack(selectedFile, encoding);
                     Path modpackFile = bundledModpack.orElse(selectedFile);
                     if (bundledModpack.isPresent()) {
+                        temporaryModpackFile = modpackFile;
                         controller.getSettings().put(MODPACK_FILE, modpackFile);
                         charset = CompressingUtils.findSuitableEncoding(modpackFile);
                     } else {
@@ -115,7 +132,10 @@ public final class LocalModpackPage extends ModpackPage {
                     return manifest;
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
-                    if (exception instanceof ManuallyCreatedModpackException) {
+                    if (disposed || !controller.getPages().contains(this)) {
+                        cleanup(controller.getSettings());
+                        return;
+                    } else if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
                         nameProperty.set(FileUtils.getName(selectedFile));
                         installAsVersion.set(false);
@@ -131,6 +151,7 @@ public final class LocalModpackPage extends ModpackPage {
 
                         controller.getSettings().put(MODPACK_MANUALLY_CREATED, true);
                     } else if (exception != null) {
+                        cleanup(controller.getSettings());
                         LOG.warning("Failed to read modpack manifest", exception);
                         Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                         Platform.runLater(controller::onEnd);
@@ -153,7 +174,23 @@ public final class LocalModpackPage extends ModpackPage {
 
     @Override
     public void cleanup(SettingsMap settings) {
+        deleteTemporaryModpackFile(temporaryModpackFile);
         settings.remove(MODPACK_FILE);
+    }
+
+    /// Deletes a temporary bundled modpack and logs a failed attempt.
+    ///
+    /// @param file the temporary file, or `null` when no file was extracted
+    static void deleteTemporaryModpackFile(@Nullable Path file) {
+        if (file == null) {
+            return;
+        }
+
+        try {
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            LOG.warning("Failed to delete temporary bundled modpack " + file, e);
+        }
     }
 
     protected void onInstall() {
@@ -168,6 +205,8 @@ public final class LocalModpackPage extends ModpackPage {
                     .yesOrNo(() -> {
                         controller.getSettings().put(MODPACK_NAME, name);
                         controller.getSettings().put(MODPACK_CHARSET, charset);
+                        controller.getSettings().put(TEMPORARY_MODPACK_FILE, temporaryModpackFile);
+                        temporaryModpackFile = null;
                         controller.onFinish();
                     }, () -> {
                         // The user selects Cancel and does nothing.
@@ -176,6 +215,8 @@ public final class LocalModpackPage extends ModpackPage {
         } else {
             controller.getSettings().put(MODPACK_NAME, name);
             controller.getSettings().put(MODPACK_CHARSET, charset);
+            controller.getSettings().put(TEMPORARY_MODPACK_FILE, temporaryModpackFile);
+            temporaryModpackFile = null;
             controller.onFinish();
         }
     }
@@ -191,4 +232,6 @@ public final class LocalModpackPage extends ModpackPage {
     public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");
     public static final SettingsMap.Key<Boolean> MODPACK_MANUALLY_CREATED = new SettingsMap.Key<>("MODPACK_MANUALLY_CREATED");
     public static final SettingsMap.Key<String> MODPACK_ICON_URL = new SettingsMap.Key<>("MODPACK_ICON_URL");
+    /// The bundled modpack temporary file transferred to the installation task.
+    static final SettingsMap.Key<Path> TEMPORARY_MODPACK_FILE = new SettingsMap.Key<>("TEMPORARY_MODPACK_FILE");
 }
