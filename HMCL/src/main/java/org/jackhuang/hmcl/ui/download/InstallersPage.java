@@ -143,4 +143,15 @@ public class InstallersPage extends AbstractInstallersPage {
         txtName.setText(nameBuilder.toString());
         isNameModifiedByUser = false;
     }
+
+    @Override
+    protected boolean showExtendPane() {
+        return true;
+    }
+
+    @Override
+    protected void resetDefaultName() {
+        isNameModifiedByUser = false;
+        setTxtNameWithLoaders();
+    }
 }

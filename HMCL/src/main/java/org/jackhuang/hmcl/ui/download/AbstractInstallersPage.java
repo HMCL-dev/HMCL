@@ -27,11 +27,14 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -112,6 +115,30 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
         return new InstallersPageSkin(this);
     }
 
+    /**
+     * Determines whether to display the extension pane.
+     * <p>
+     * This method controls the visibility of the extension pane in the UI.
+     * When this method returns {@code true} and the pane is visible, users can 
+     * interact with the features inside it, which includes triggering the 
+     * "Reset to Default Name" button handled by {@link #resetDefaultName()}.
+     * </p>
+     *
+     * @return {@code true} if the extension pane should be displayed; {@code false} otherwise.
+     */
+    protected abstract boolean showExtendPane();
+
+    /**
+     * Resets the name to its default value.
+     * <p>
+     * This method contains the business logic for the "Reset to Default Name" button 
+     * located within the extension pane. This logic can only be triggered by the user 
+     * clicking the corresponding button after {@link #showExtendPane()} returns 
+     * {@code true} and the extension pane is successfully displayed.
+     * </p>
+     */
+    protected abstract void resetDefaultName();
+
     protected static class InstallersPageSkin extends SkinBase<AbstractInstallersPage> {
         /**
          * Constructor for all SkinBase instances.
@@ -127,11 +154,27 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             {
                 HBox versionNamePane = new HBox(8);
                 versionNamePane.getStyleClass().add("card-non-transparent");
-                versionNamePane.setStyle("-fx-padding: 20 8 20 16");
+                versionNamePane.setStyle("-fx-padding: 20 16 20 16");
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
 
-                control.txtName.setMaxWidth(300);
-                versionNamePane.getChildren().setAll(new Label(i18n("version.name")), control.txtName);
+                HBox.setHgrow(control.txtName, Priority.ALWAYS);
+
+                versionNamePane.getChildren().addAll(new Label(i18n("version.name")), control.txtName);
+                
+                if (control.showExtendPane()) {
+                    JFXButton clearButton = FXUtils.newToggleButton4(SVG.CLOSE);
+                    FXUtils.installFastTooltip(clearButton, i18n("button.clear"));
+                    clearButton.disableProperty().bind(control.txtName.textProperty().isEmpty().or(control.txtName.disableProperty()));
+                    clearButton.setOnAction(e -> control.txtName.clear());
+
+                    JFXButton resetButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                    FXUtils.installFastTooltip(resetButton, i18n("button.reset"));
+                    resetButton.disableProperty().bind(control.txtName.disableProperty());
+                    resetButton.setOnAction(e -> control.resetDefaultName());
+                    
+                    versionNamePane.getChildren().addAll(clearButton, resetButton);
+                }
+
                 root.setTop(versionNamePane);
             }
 
