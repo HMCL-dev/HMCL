@@ -147,10 +147,20 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         });
 
         @Nullable Path temporaryModpackFile = settings.remove(LocalModpackPage.TEMPORARY_MODPACK_FILE);
-        @Nullable Task<?> task = finishModpackInstallingAsync(settings);
-        if (task == null) {
-            LocalModpackPage.deleteTemporaryModpackFile(temporaryModpackFile);
-        } else if (temporaryModpackFile != null) {
+        @Nullable Task<?> task = null;
+        try {
+            task = finishModpackInstallingAsync(settings);
+        } finally {
+            if (task == null && temporaryModpackFile != null) {
+                @Nullable LocalModpackPage owner = settings.get(LocalModpackPage.MODPACK_FILE_OWNER);
+                if (owner == null) {
+                    LocalModpackPage.deleteTemporaryModpackFile(temporaryModpackFile);
+                } else {
+                    owner.restoreTemporaryModpackFile(temporaryModpackFile);
+                }
+            }
+        }
+        if (task != null && temporaryModpackFile != null) {
             task.onDone().register(() -> LocalModpackPage.deleteTemporaryModpackFile(temporaryModpackFile));
         }
         return task;

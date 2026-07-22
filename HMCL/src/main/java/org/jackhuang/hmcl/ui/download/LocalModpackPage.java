@@ -116,6 +116,8 @@ public final class LocalModpackPage extends ModpackPage {
             controller.getSettings().put(MODPACK_FILE, selectedFile);
         }
 
+        controller.getSettings().put(MODPACK_FILE_OWNER, this);
+
         showSpinner();
         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile))
                 .thenApplyAsync(encoding -> {
@@ -123,7 +125,6 @@ public final class LocalModpackPage extends ModpackPage {
                     Path modpackFile = bundledModpack.orElse(selectedFile);
                     if (bundledModpack.isPresent()) {
                         temporaryModpackFile = modpackFile;
-                        controller.getSettings().put(MODPACK_FILE, modpackFile);
                         charset = CompressingUtils.findSuitableEncoding(modpackFile);
                     } else {
                         charset = encoding;
@@ -132,10 +133,16 @@ public final class LocalModpackPage extends ModpackPage {
                     return manifest;
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
-                    if (disposed || !controller.getPages().contains(this)) {
+                    if (disposed || !controller.getPages().contains(this)
+                            || controller.getSettings().get(MODPACK_FILE_OWNER) != this) {
                         cleanup(controller.getSettings());
                         return;
-                    } else if (exception instanceof ManuallyCreatedModpackException) {
+                    }
+
+                    controller.getSettings().put(MODPACK_FILE,
+                            temporaryModpackFile != null ? temporaryModpackFile : selectedFile);
+
+                    if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
                         nameProperty.set(FileUtils.getName(selectedFile));
                         installAsVersion.set(false);
@@ -175,7 +182,11 @@ public final class LocalModpackPage extends ModpackPage {
     @Override
     public void cleanup(SettingsMap settings) {
         deleteTemporaryModpackFile(temporaryModpackFile);
-        settings.remove(MODPACK_FILE);
+        if (settings.get(MODPACK_FILE_OWNER) == this) {
+            settings.remove(MODPACK_FILE_OWNER);
+            settings.remove(MODPACK_FILE);
+            deleteTemporaryModpackFile(settings.remove(TEMPORARY_MODPACK_FILE));
+        }
     }
 
     /// Deletes a temporary bundled modpack and logs a failed attempt.
@@ -193,6 +204,13 @@ public final class LocalModpackPage extends ModpackPage {
         }
     }
 
+    /// Restores ownership when installation does not create a task.
+    ///
+    /// @param file the temporary bundled modpack
+    void restoreTemporaryModpackFile(Path file) {
+        temporaryModpackFile = file;
+    }
+
     protected void onInstall() {
         String name = txtModpackName.getText();
 
@@ -205,8 +223,10 @@ public final class LocalModpackPage extends ModpackPage {
                     .yesOrNo(() -> {
                         controller.getSettings().put(MODPACK_NAME, name);
                         controller.getSettings().put(MODPACK_CHARSET, charset);
-                        controller.getSettings().put(TEMPORARY_MODPACK_FILE, temporaryModpackFile);
-                        temporaryModpackFile = null;
+                        if (temporaryModpackFile != null) {
+                            controller.getSettings().put(TEMPORARY_MODPACK_FILE, temporaryModpackFile);
+                            temporaryModpackFile = null;
+                        }
                         controller.onFinish();
                     }, () -> {
                         // The user selects Cancel and does nothing.
@@ -215,8 +235,10 @@ public final class LocalModpackPage extends ModpackPage {
         } else {
             controller.getSettings().put(MODPACK_NAME, name);
             controller.getSettings().put(MODPACK_CHARSET, charset);
-            controller.getSettings().put(TEMPORARY_MODPACK_FILE, temporaryModpackFile);
-            temporaryModpackFile = null;
+            if (temporaryModpackFile != null) {
+                controller.getSettings().put(TEMPORARY_MODPACK_FILE, temporaryModpackFile);
+                temporaryModpackFile = null;
+            }
             controller.onFinish();
         }
     }
@@ -232,6 +254,8 @@ public final class LocalModpackPage extends ModpackPage {
     public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");
     public static final SettingsMap.Key<Boolean> MODPACK_MANUALLY_CREATED = new SettingsMap.Key<>("MODPACK_MANUALLY_CREATED");
     public static final SettingsMap.Key<String> MODPACK_ICON_URL = new SettingsMap.Key<>("MODPACK_ICON_URL");
+    /// The local page that currently owns the selected modpack settings.
+    static final SettingsMap.Key<LocalModpackPage> MODPACK_FILE_OWNER = new SettingsMap.Key<>("MODPACK_FILE_OWNER");
     /// The bundled modpack temporary file transferred to the installation task.
     static final SettingsMap.Key<Path> TEMPORARY_MODPACK_FILE = new SettingsMap.Key<>("TEMPORARY_MODPACK_FILE");
 }
