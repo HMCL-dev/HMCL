@@ -294,9 +294,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                     control.checkUpdates(
                                             listView.getSelectionModel().getSelectedItems().stream().map(ResourcePackInfoObject::getFile).toList()
                                     )
-                            ),
-                            createSelectAllButton(),
-                            createCancelSelectionButton()
+                            )
                     }
             );
         }

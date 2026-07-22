@@ -96,8 +96,7 @@ final class DataPackListPageSkin extends ToolbarListPageSkin<DataPackListPageSki
                         createToolbarButton2(i18n("search"), SVG.SEARCH, this::startSearch)
                 },
                 new Node[]{
-                        removeButton, enableButton, disableButton,
-                        createSelectAllButton(), createCancelSelectionButton()
+                        removeButton, enableButton, disableButton
                 }
         );
 

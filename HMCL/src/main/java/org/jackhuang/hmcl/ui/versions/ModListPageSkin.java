@@ -115,9 +115,7 @@ final class ModListPageSkin extends ToolbarListPageSkin<ModListPageSkin.ModInfoO
                                 skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 skinnable.checkUpdates(listView.getSelectionModel().getSelectedItems().stream().map(ModInfoObject::getModInfo).toList())
-                        ),
-                        createSelectAllButton(),
-                        createCancelSelectionButton()
+                        )
                 }
         );
 

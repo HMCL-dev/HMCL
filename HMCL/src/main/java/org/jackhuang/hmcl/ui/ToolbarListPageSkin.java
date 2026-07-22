@@ -135,6 +135,18 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
             selectingToolbar.setAlignment(Pos.CENTER_LEFT);
             selectingToolbar.setPickOnBounds(false);
             selectingToolbar.getChildren().setAll(selectingBtns);
+
+            JFXButton cancel = createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () -> listView.getSelectionModel().clearSelection());
+
+            JFXButton selectAll = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
+            ListChangeListener<Object> listener = change -> {
+                selectAll.setDisable(!listView.getItems().isEmpty()
+                        && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+            };
+            listView.getSelectionModel().getSelectedItems().addListener(listener);
+            listView.getItems().addListener(listener);
+
+            selectingToolbar.getChildren().addAll(selectAll, cancel);
         }
 
         toolbarPane.setContent(normalToolbar, ContainerAnimations.FADE);
@@ -207,21 +219,6 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
 
     protected void startSearch() {
         isSearching.set(true);
-    }
-
-    protected JFXButton createSelectAllButton() {
-        JFXButton selectAll = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
-        ListChangeListener<Object> listener = change -> {
-            selectAll.setDisable(!listView.getItems().isEmpty()
-                    && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
-        };
-        listView.getSelectionModel().getSelectedItems().addListener(listener);
-        listView.getItems().addListener(listener);
-        return selectAll;
-    }
-
-    protected JFXButton createCancelSelectionButton() {
-        return createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () -> listView.getSelectionModel().clearSelection());
     }
 
     protected Predicate<E> updateSearchPredicate(String query) {
