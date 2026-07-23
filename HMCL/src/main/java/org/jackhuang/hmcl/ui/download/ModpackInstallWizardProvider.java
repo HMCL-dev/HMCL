@@ -36,12 +36,10 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -97,6 +95,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
 
         if (isManuallyCreated) {
+            if (selected == null || name == null || charset == null) {
+                return null;
+            }
             return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset);
         }
 
@@ -148,18 +149,17 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
         });
 
-        @Nullable FileSystem wrapperFs = settings.remove(LocalModpackPage.MODPACK_WRAPPER_FS);
+        ModpackHelper.LauncherWrapper wrapper = settings.get(LocalModpackPage.MODPACK_WRAPPER);
         try {
             Task<?> task = finishModpackInstallingAsync(settings);
-            if (task != null && wrapperFs != null) {
-                FileSystem fs = wrapperFs;
-                wrapperFs = null;
-                task = task.whenComplete(Schedulers.defaultScheduler(),
-                        ignored -> IOUtils.closeQuietly(fs));
+            if (task != null && wrapper != null) {
+                ModpackHelper.LauncherWrapper ownedWrapper = wrapper;
+                wrapper = null;
+                task = task.whenComplete(Schedulers.defaultScheduler(), ignored -> IOUtils.closeQuietly(ownedWrapper));
             }
             return task;
         } finally {
-            IOUtils.closeQuietly(wrapperFs);
+            IOUtils.closeQuietly(wrapper);
         }
     }
 

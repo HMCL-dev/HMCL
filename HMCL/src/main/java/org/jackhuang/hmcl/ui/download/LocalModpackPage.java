@@ -24,6 +24,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
+import org.jackhuang.hmcl.game.ModpackHelper.LauncherWrapper;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -44,9 +45,9 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -58,9 +59,8 @@ public final class LocalModpackPage extends ModpackPage {
     private Modpack manifest = null;
     private Charset charset;
 
-    private final AtomicReference<FileSystem> wrapperFsRef = new AtomicReference<>();
-    @Nullable
-    private volatile Path resolvedModpackFile;
+    private final AtomicReference<LauncherWrapper> wrapperRef = new AtomicReference<>();
+
     private volatile boolean cleanedUp;
 
     public LocalModpackPage(WizardController controller) {
@@ -101,11 +101,12 @@ public final class LocalModpackPage extends ModpackPage {
             FileChooser chooser = new FileChooser();
             chooser.setTitle(i18n("modpack.choose"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-            selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
-            if (selectedFile == null) {
+            Path chosenFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+            if (chosenFile == null) {
                 controller.onEnd();
                 return;
             }
+            selectedFile = chosenFile;
 
             controller.getSettings().put(MODPACK_FILE, selectedFile);
         }
@@ -116,28 +117,28 @@ public final class LocalModpackPage extends ModpackPage {
                     charset = encoding;
                     Path actualFile = selectedFile;
                     if (selectedFile.getFileSystem() == FileSystems.getDefault()) {
-                        var wrapper = ModpackHelper.unwrapIfLauncherWrapper(selectedFile, encoding);
+                        LauncherWrapper wrapper = ModpackHelper.unwrapIfLauncherWrapper(selectedFile, encoding);
                         if (wrapper != null) {
                             actualFile = wrapper.innerPath();
-                            resolvedModpackFile = actualFile;
-                            wrapperFsRef.set(wrapper.wrapperFs());
+                            wrapperRef.set(wrapper);
                         }
                     }
                     manifest = ModpackHelper.readModpackManifest(actualFile, encoding);
                     return manifest;
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
-                    FileSystem fs = wrapperFsRef.getAndSet(null);
-                    if (fs != null) {
+                    LauncherWrapper wrapper = wrapperRef.getAndSet(null);
+                    if (wrapper != null) {
                         if (exception != null || cleanedUp) {
-                            IOUtils.closeQuietly(fs);
+                            IOUtils.closeQuietly(wrapper);
                         } else {
-                            Path innerPath = resolvedModpackFile;
-                            if (innerPath != null) {
-                                controller.getSettings().put(MODPACK_FILE, innerPath);
-                            }
-                            controller.getSettings().put(MODPACK_WRAPPER_FS, fs);
+                            controller.getSettings().put(MODPACK_FILE, wrapper.innerPath());
+                            controller.getSettings().put(MODPACK_WRAPPER, wrapper);
                         }
+                    }
+
+                    if (cleanedUp) {
+                        return;
                     }
 
                     if (exception instanceof ManuallyCreatedModpackException) {
@@ -161,17 +162,18 @@ public final class LocalModpackPage extends ModpackPage {
                         Platform.runLater(controller::onEnd);
                     } else {
                         hideSpinner();
-                        controller.getSettings().put(MODPACK_MANIFEST, manifest);
-                        nameProperty.set(manifest.getName());
-                        versionProperty.set(manifest.getVersion());
-                        authorProperty.set(manifest.getAuthor());
+                        Modpack parsedManifest = Objects.requireNonNull(manifest);
+                        controller.getSettings().put(MODPACK_MANIFEST, parsedManifest);
+                        nameProperty.set(parsedManifest.getName());
+                        versionProperty.set(parsedManifest.getVersion());
+                        authorProperty.set(parsedManifest.getAuthor());
 
                         if (name == null) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
-                            txtModpackName.setText(manifest.getName().trim());
+                            txtModpackName.setText(parsedManifest.getName().trim());
                         }
 
-                        btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));
+                        btnDescription.setVisible(StringUtils.isNotBlank(parsedManifest.getDescription()));
                     }
                 }).start();
     }
@@ -180,13 +182,16 @@ public final class LocalModpackPage extends ModpackPage {
     public void cleanup(SettingsMap settings) {
         cleanedUp = true;
         settings.remove(MODPACK_FILE);
-        // 同时从 AtomicReference（后台任务可能尚未转移）
-        // 和 settings（可能已被 whenComplete 转移）中关闭 FS。
-        IOUtils.closeQuietly(wrapperFsRef.getAndSet(null));
-        IOUtils.closeQuietly(settings.remove(MODPACK_WRAPPER_FS));
+        IOUtils.closeQuietly(wrapperRef.getAndSet(null));
+        IOUtils.closeQuietly(settings.remove(MODPACK_WRAPPER));
     }
 
     protected void onInstall() {
+        Charset detectedCharset = charset;
+        if (detectedCharset == null) {
+            return;
+        }
+
         String name = txtModpackName.getText();
 
         // Check for non-ASCII characters.
@@ -197,7 +202,7 @@ public final class LocalModpackPage extends ModpackPage {
                     MessageDialogPane.MessageType.QUESTION)
                     .yesOrNo(() -> {
                         controller.getSettings().put(MODPACK_NAME, name);
-                        controller.getSettings().put(MODPACK_CHARSET, charset);
+                        controller.getSettings().put(MODPACK_CHARSET, detectedCharset);
                         controller.onFinish();
                     }, () -> {
                         // The user selects Cancel and does nothing.
@@ -205,7 +210,7 @@ public final class LocalModpackPage extends ModpackPage {
                     .build());
         } else {
             controller.getSettings().put(MODPACK_NAME, name);
-            controller.getSettings().put(MODPACK_CHARSET, charset);
+            controller.getSettings().put(MODPACK_CHARSET, detectedCharset);
             controller.onFinish();
         }
     }
@@ -216,7 +221,9 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("MODPACK_FILE");
-    public static final SettingsMap.Key<FileSystem> MODPACK_WRAPPER_FS = new SettingsMap.Key<>("MODPACK_WRAPPER_FS");
+    public static final SettingsMap.Key<LauncherWrapper> MODPACK_WRAPPER =
+            new SettingsMap.Key<>("MODPACK_WRAPPER");
+
     public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
     public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
     public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");

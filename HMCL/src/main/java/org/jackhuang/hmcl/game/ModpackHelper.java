@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -127,14 +128,39 @@ public final class ModpackHelper {
         throw new UnsupportedModpackException(file.toString());
     }
 
-    /// 存储解析启动器包装 ZIP 后的结果
-    /// @param innerPath 包装文件系统内的整合包条目路径
-    /// @param wrapperFs 包装文件系统；当不再需要 [innerPath] 时必须被关闭
-    public record LauncherWrapper(Path innerPath, FileSystem wrapperFs) implements Closeable {
-        /// 关闭包装的 [FileSystem]。
-        @Override
+    /// Owns the launcher wrapper file system and the embedded modpack path within it.
+    ///
+    /// The owner is safe to close repeatedly and from competing terminal paths.
+    public static final class LauncherWrapper implements Closeable {
+        /// Embedded modpack path backed by the wrapper file system.
+        private final Path innerPath;
+
+        /// Wrapper file system, atomically cleared by the first close operation.
+        private final AtomicReference<@Nullable FileSystem> wrapperFsRef;
+
+        /// Creates an owner for an embedded modpack path and its backing file system.
+        ///
+        /// @param innerPath embedded modpack path
+        /// @param wrapperFs backing wrapper file system
+        private LauncherWrapper(Path innerPath, FileSystem wrapperFs) {
+            this.innerPath = innerPath;
+            this.wrapperFsRef = new AtomicReference<>(wrapperFs);
+        }
+
+        /// Returns the embedded modpack path.
+        ///
+        /// The path is valid only until this owner is closed.
+        public Path innerPath() {
+            return innerPath;
+        }
+
+        /// Closes the backing wrapper file system if it is still open.
+
         public void close() throws IOException {
-            wrapperFs.close();
+            FileSystem wrapperFs = wrapperFsRef.getAndSet(null);
+            if (wrapperFs != null) {
+                wrapperFs.close();
+            }
         }
     }
 

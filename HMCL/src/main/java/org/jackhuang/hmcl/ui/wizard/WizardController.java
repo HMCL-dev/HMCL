@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.wizard;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -55,19 +56,20 @@ public class WizardController implements Navigation {
 
     @Override
     public void onStart() {
-        Objects.requireNonNull(provider);
+        WizardProvider activeProvider = Objects.requireNonNull(provider);
+        stopped = false;
 
         settings.clear();
-        provider.start(settings);
+        activeProvider.start(settings);
 
         pages.clear();
         Node page = navigatingTo(0);
-        pages.push(page);
 
         if (stopped) { // navigatingTo may stop this wizard.
             return;
         }
 
+        pages.push(page);
         if (page instanceof WizardPage)
             ((WizardPage) page).onNavigate(settings);
 
@@ -87,12 +89,11 @@ public class WizardController implements Navigation {
     }
 
     public void onNext(Node page, NavigationDirection direction) {
-        pages.push(page);
-
         if (stopped) { // navigatingTo may stop this wizard.
             return;
         }
 
+        pages.push(page);
         if (page instanceof WizardPage)
             ((WizardPage) page).onNavigate(settings);
 
@@ -107,7 +108,7 @@ public class WizardController implements Navigation {
 
     public void onPrev(boolean cleanUp, NavigationDirection direction) {
         if (!canPrev()) {
-            if (provider.cancelIfCannotGoBack()) {
+            if (Objects.requireNonNull(provider).cancelIfCannotGoBack()) {
                 onCancel();
                 return;
             } else {
@@ -134,7 +135,8 @@ public class WizardController implements Navigation {
 
     @Override
     public void onFinish() {
-        Object result = provider.finish(settings);
+        WizardProvider activeProvider = Objects.requireNonNull(provider);
+        @Nullable Object result = activeProvider.finish(settings);
         if (result instanceof Summary) displayer.navigateTo(((Summary) result).getComponent(), NavigationDirection.NEXT);
         else if (result instanceof Task<?>) displayer.handleTask(settings, ((Task<?>) result));
         else if (result != null) throw new IllegalStateException("Unrecognized wizard result: " + result);
@@ -143,8 +145,17 @@ public class WizardController implements Navigation {
     @Override
     public void onEnd() {
         stopped = true;
+        while (!pages.isEmpty()) {
+            Node page = pages.pop();
+            if (page instanceof WizardPage wizardPage) {
+                try {
+                    wizardPage.cleanup(settings);
+                } catch (RuntimeException e) {
+                    LOG.warning("Failed to clean up wizard page " + page, e);
+                }
+            }
+        }
         settings.clear();
-        pages.clear();
         displayer.onEnd();
     }
 
@@ -155,6 +166,6 @@ public class WizardController implements Navigation {
     }
 
     protected Node navigatingTo(int step) {
-        return provider.createPage(this, step, settings);
+        return Objects.requireNonNull(provider).createPage(this, step, settings);
     }
 }
