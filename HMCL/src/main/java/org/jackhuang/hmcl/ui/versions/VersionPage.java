@@ -223,6 +223,12 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         }).start();
     }
 
+    private void resetInstance() {
+        Controllers.confirm(i18n("version.manage.reset.confirm"), i18n("message.confirm"), () -> {
+            Versions.resetVersion(getProfile(), getVersion());
+        }, null);
+    }
+
     private void clearJunkFiles() {
         Versions.cleanVersion(getRepository(), getVersion());
     }
@@ -323,7 +329,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
                         new IconedMenuItem(null, i18n("version.manage.remove_assets"), control::clearAssets, managementPopup),
                         new IconedMenuItem(null, i18n("version.manage.remove_libraries"), control::clearLibraries, managementPopup),
-                        new IconedMenuItem(null, i18n("version.manage.clean"), control::clearJunkFiles, managementPopup).addTooltip(i18n("version.manage.clean.tooltip"))
+                        new IconedMenuItem(null, i18n("version.manage.clean"), control::clearJunkFiles, managementPopup).addTooltip(i18n("version.manage.clean.tooltip")),
+                        new IconedMenuItem(null, i18n("version.manage.reset"), control::resetInstance, managementPopup)
                 );
 
                 AdvancedListBox toolbar = new AdvancedListBox()
