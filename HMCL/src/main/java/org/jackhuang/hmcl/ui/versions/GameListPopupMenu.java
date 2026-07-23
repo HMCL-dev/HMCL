@@ -103,7 +103,7 @@ public final class GameListPopupMenu extends StackPane {
 
         private final ImageContainer imageView;
         private final TwoLineListItem content;
-        private final StackPane rootPane;;
+        private final StackPane rootPane;
 
         private final StringProperty tag = new SimpleStringProperty();
 
