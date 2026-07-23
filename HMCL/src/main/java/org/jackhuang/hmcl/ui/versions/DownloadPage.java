@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
@@ -164,6 +165,36 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
+    /// Check whether the given version's file is already installed in the instance.
+    boolean isVersionInstalled(RemoteAddon.Version version) {
+        if (instanceReference == null || StringUtils.isBlank(instanceReference.instanceId())) {
+            return false;
+        }
+
+        HMCLGameRepository repository = instanceReference.repository();
+        String instanceId = instanceReference.instanceId();
+
+        String subdirectory = switch (type) {
+            case MOD -> "mods";
+            case RESOURCE_PACK -> "resourcepacks";
+            case SHADER_PACK -> "shaderpacks";
+            default -> null;
+        };
+        if (subdirectory == null) return false;
+
+        Path runDirectory = repository.hasVersion(instanceId)
+                ? repository.getRunDirectory(instanceId)
+                : repository.getBaseDirectory();
+
+        String filename = version.file().filename();
+        Path targetPath = runDirectory.resolve(subdirectory).resolve(filename);
+
+        // Check for the file itself, disabled, or old version
+        return java.nio.file.Files.exists(targetPath)
+                || java.nio.file.Files.exists(targetPath.resolveSibling(filename + LocalAddonManager.DISABLED_EXTENSION))
+                || java.nio.file.Files.exists(targetPath.resolveSibling(filename + LocalAddonManager.OLD_EXTENSION));
+    }
+
     public void saveAs(RemoteAddon.Version file) {
         String extension = StringUtils.substringAfterLast(file.file().filename(), '.');
 
@@ -286,7 +317,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                             if (targetLoaders.contains(loader)) {
                                                 list.getContent().addAll(
                                                         ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                        new AddonItem(control.addon, modVersion, control)
+                                                        new AddonItem(control.addon, modVersion, control, control.isVersionInstalled(modVersion))
                                                 );
                                                 break resolve;
                                             }
@@ -294,7 +325,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     } else {
                                         list.getContent().addAll(
                                                 ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                new AddonItem(control.addon, modVersion, control)
+                                                new AddonItem(control.addon, modVersion, control, control.isVersionInstalled(modVersion))
                                         );
                                         break;
                                     }
@@ -311,7 +342,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     List<RemoteAddon.Version> versions = control.versions.get(gv);
                                     if (versions != null) {
                                         for (RemoteAddon.Version v : versions) {
-                                            items.add(new AddonItem(control.addon, v, control));
+                                            items.add(new AddonItem(control.addon, v, control, control.isVersionInstalled(v)));
                                         }
                                     }
                                 }
@@ -420,7 +451,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonItem extends StackPane {
 
-        AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage) {
+        AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage, boolean installed) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
@@ -436,6 +467,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                     HBox.setHgrow(content, Priority.ALWAYS);
                     content.setTitle(dataItem.name());
                     content.setSubtitle(I18n.formatDateTime(dataItem.datePublished()));
+
+                    if (installed) {
+                        content.addTagInstalled(i18n("addon.installed"));
+                    }
 
                     switch (dataItem.versionType()) {
                         case Alpha:
@@ -496,6 +531,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     private static final class AddonVersion extends JFXDialogLayout {
         public AddonVersion(RemoteAddon mod, RemoteAddon.Version version, DownloadPage selfPage) {
             RemoteAddonRepository.Type type = selfPage.type;
+            boolean installed = selfPage.isVersionInstalled(version);
 
             String title = switch (type) {
                 case WORLD -> "world.download.title";
@@ -508,9 +544,15 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            AddonItem addonItem = new AddonItem(mod, version, selfPage);
+            AddonItem addonItem = new AddonItem(mod, version, selfPage, installed);
             addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(addonItem);
+
+            if (installed) {
+                Label installedHint = new Label(i18n("addon.installed"));
+                installedHint.getStyleClass().add("subtitle-label");
+                box.getChildren().add(installedHint);
+            }
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList();
@@ -531,7 +573,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             JFXButton downloadButton = null;
             if (selfPage.callback != null) {
-                downloadButton = new JFXButton(type == RemoteAddonRepository.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
+                String buttonText = type == RemoteAddonRepository.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install");
+                downloadButton = new JFXButton(buttonText);
                 downloadButton.getStyleClass().add("dialog-accept");
                 downloadButton.setOnAction(e -> {
                     if (type == RemoteAddonRepository.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {

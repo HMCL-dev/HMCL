@@ -40,8 +40,13 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.addon.LocalAddonFile;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -89,6 +94,14 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     protected RemoteAddonRepository repository;
     private final DownloadProvider downloadProvider;
 
+    /// Set of mod IDs for locally installed mods (populated when instance loads).
+    /// Used to match RemoteAddon slugs to installed mods via ModTranslations.
+    private Set<String> installedModIds = Set.of();
+
+    /// Set of lowercase file names (without extension) for locally installed addons.
+    /// Used for resource pack and shader pack installed detection.
+    private Set<String> installedFileNames = Set.of();
+
     private Runnable retrySearch;
 
     public DownloadListPage(RemoteAddonRepository repository) {
@@ -100,6 +113,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.callback = callback;
         this.versionSelection = versionSelection;
         this.downloadProvider = DownloadProviders.getDownloadProvider();
+
+        // When version selection changes, reload installed data for the new instance
+        if (versionSelection) {
+            selectedVersion.addListener((obs, oldVal, newVal) -> loadInstalledData());
+        }
     }
 
     public DownloadProvider getDownloadProvider() {
@@ -128,6 +146,122 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     .collect(Collectors.toList()));
             selectedVersion.set(repository.getSelectedInstance());
         }
+
+        loadInstalledData();
+    }
+
+    /// Asynchronously load installed addon data from the current instance,
+    /// so that the search list can mark installed addons.
+    private void loadInstalledData() {
+        HMCLGameRepository.InstanceReference ref = getInstanceReference();
+        if (ref == null || StringUtils.isBlank(ref.instanceId())) {
+            installedModIds = Set.of();
+            installedFileNames = Set.of();
+            return;
+        }
+
+        HMCLGameRepository repo = ref.repository();
+        String instanceId = ref.instanceId();
+
+        if (repository.getType() == RemoteAddonRepository.Type.MOD) {
+            Task.supplyAsync(Schedulers.io(), () -> {
+                ModManager modManager = repo.getModManager(instanceId);
+                modManager.refresh();
+                return modManager.getLocalFiles().stream()
+                        .map(LocalModFile::getId)
+                        .filter(StringUtils::isNotBlank)
+                        .collect(Collectors.toSet());
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null) {
+                    installedModIds = result;
+                    // Refresh the list view to update installed tags
+                    if (!items.isEmpty()) {
+                        listViewRefresh();
+                    }
+                } else {
+                    installedModIds = Set.of();
+                }
+            }).start();
+        }
+
+        // For all types, build file name set from the target directory
+        String subdirectory = getSubdirectoryName();
+        if (subdirectory != null) {
+            Task.supplyAsync(Schedulers.io(), () -> {
+                java.nio.file.Path dir = repo.hasVersion(instanceId)
+                        ? repo.getRunDirectory(instanceId).resolve(subdirectory)
+                        : repo.getBaseDirectory().resolve(subdirectory);
+                if (!java.nio.file.Files.isDirectory(dir)) {
+                    return Set.<String>of();
+                }
+                try (var stream = java.nio.file.Files.list(dir)) {
+                    return stream
+                            .map(java.nio.file.Path::getFileName)
+                            .map(java.nio.file.Path::toString)
+                            .map(name -> org.jackhuang.hmcl.util.StringUtils.removeSuffix(
+                                    name, LocalAddonManager.DISABLED_EXTENSION, LocalAddonManager.OLD_EXTENSION))
+                            .map(name -> org.jackhuang.hmcl.util.io.FileUtils.getNameWithoutExtension(name).toLowerCase(Locale.ROOT))
+                            .filter(StringUtils::isNotBlank)
+                            .collect(Collectors.toSet());
+                } catch (java.io.IOException e) {
+                    return Set.<String>of();
+                }
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null) {
+                    installedFileNames = result;
+                    if (!items.isEmpty()) {
+                        listViewRefresh();
+                    }
+                } else {
+                    installedFileNames = Set.of();
+                }
+            }).start();
+        }
+    }
+
+    /// Get the subdirectory name for the addon type (mods, resourcepacks, shaderpacks).
+    private @Nullable String getSubdirectoryName() {
+        return switch (repository.getType()) {
+            case MOD -> "mods";
+            case RESOURCE_PACK -> "resourcepacks";
+            case SHADER_PACK -> "shaderpacks";
+            default -> null;
+        };
+    }
+
+    /// Check whether a RemoteAddon is installed in the current instance.
+    boolean isAddonInstalled(RemoteAddon addon) {
+        // For mods: check via ModTranslations mod ID mapping
+        if (repository.getType() == RemoteAddonRepository.Type.MOD) {
+            ModTranslations.Mod mod = ModTranslations.MOD.getModByCurseForgeId(addon.slug());
+            if (mod != null) {
+                for (String modId : mod.getModIds()) {
+                    if (installedModIds.contains(modId)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // For all types: check file name heuristic
+        String slugLower = addon.slug().toLowerCase(Locale.ROOT);
+        String titleLower = addon.title().toLowerCase(Locale.ROOT);
+        if (installedFileNames.contains(slugLower) || installedFileNames.contains(titleLower)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// Force the ListView to refresh by triggering a items change.
+    /// This is needed because installed tags are computed from external data
+    /// that changes independently of the items list.
+    private void listViewRefresh() {
+        ObservableList<RemoteAddon> currentItems = items.get();
+        if (currentItems.isEmpty()) return;
+        // Trigger a minimal change to force cell updateItem calls
+        RemoteAddon first = currentItems.get(0);
+        currentItems.set(0, first);
     }
 
     public boolean isFailed() {
@@ -592,6 +726,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                             }
                             content.setSubtitle(description);
                             content.getTags().clear();
+                            if (getSkinnable().isAddonInstalled(item)) {
+                                content.addTagInstalled(i18n("addon.installed"));
+                            }
                             for (String category : item.categories()) {
                                 if (getSkinnable().shouldDisplayCategory(category))
                                     content.addTag(getSkinnable().getLocalizedCategory(category, null));

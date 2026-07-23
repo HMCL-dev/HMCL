@@ -197,8 +197,14 @@ public class TwoLineListItem extends VBox {
 
     private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");
 
+    private static final PseudoClass INSTALLED_PSEUDO_CLASS = PseudoClass.getPseudoClass("installed");
+
     public void addTagWarning(String tag) {
         addTag(tag, WARNING_PSEUDO_CLASS);
+    }
+
+    public void addTagInstalled(String tag) {
+        addTag(tag, INSTALLED_PSEUDO_CLASS);
     }
 
     @Override

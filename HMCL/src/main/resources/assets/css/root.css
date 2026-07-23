@@ -343,6 +343,11 @@
     -fx-background-color: -fixed-warning-tag-background;
 }
 
+.two-line-list-item > .first-line .tag:installed {
+    -fx-text-fill: -monet-on-tertiary-container;
+    -fx-background-color: -monet-tertiary-container;
+}
+
 .two-line-item-second-large {
 
 }
