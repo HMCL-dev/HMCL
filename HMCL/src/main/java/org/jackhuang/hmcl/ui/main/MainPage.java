@@ -19,17 +19,18 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
@@ -49,6 +50,7 @@ import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.EnumUpdateMode;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -57,6 +59,7 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -65,6 +68,7 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.upgrade.HMCLDownloadTask;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -76,12 +80,15 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.download.RemoteVersion.Type.RELEASE;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -92,6 +99,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
 
+    private final SimpleObjectProperty<UpdateBubble.State> updateState = new SimpleObjectProperty<>(UpdateBubble.State.NOTIFY);
+    private final SimpleObjectProperty<Exception> exception = new SimpleObjectProperty<>();
+    private Path downloadedHmcl = null;
     private final StringProperty currentGame = new SimpleStringProperty(this, "currentGame");
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
     private final BooleanProperty showUpdateDialog = new SimpleBooleanProperty(this, "showUpdateDialog");
@@ -100,12 +110,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private HMCLGameRepository repository;
 
     private TransitionPane announcementPane;
-    private final StackPane updatePane;
+    private final UpdateBubble updateBubble = new UpdateBubble();
     private final JFXButton menuButton;
 
-    private RemoteVersion lastShownVersion;
+    public static final EnumUpdateMode UPDATE_MODE = settings().updateModeProperty().get();
 
     {
+        latestVersion.bind(UpdateChecker.latestVersionProperty());
+        FXUtils.onChange(showUpdateProperty(), MainPage.this::doAnimation);
+        FXUtils.onChange(showUpdateProperty(), MainPage.this::doUpdateIfNeeded);
+
         HBox titleNode = new HBox(8);
         titleNode.setPadding(new Insets(0, 0, 0, 2));
         titleNode.setAlignment(Pos.CENTER_LEFT);
@@ -170,42 +184,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             getChildren().add(announcementPane);
         }
 
-        updatePane = new StackPane();
-        updatePane.setVisible(false);
-        updatePane.getStyleClass().add("bubble");
-        FXUtils.setLimitWidth(updatePane, 230);
-        FXUtils.setLimitHeight(updatePane, 55);
-        StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
-        FXUtils.onClicked(updatePane, this::onUpgrade);
-        updatePane.setCursor(Cursor.HAND);
-        FXUtils.onChange(showUpdateProperty(), this::doAnimation);
-        FXUtils.onChange(showUpdateDialogProperty(), this::showUpdateDialog);
-
-        {
-            HBox hBox = new HBox();
-            hBox.setSpacing(12);
-            hBox.setAlignment(Pos.CENTER_LEFT);
-            StackPane.setAlignment(hBox, Pos.CENTER_LEFT);
-            StackPane.setMargin(hBox, new Insets(9, 12, 9, 16));
-            {
-                TwoLineListItem prompt = new TwoLineListItem();
-                prompt.setSubtitle(i18n("update.bubble.subtitle"));
-                prompt.setPickOnBounds(false);
-                prompt.titleProperty().bind(BindingMapping.of(latestVersionProperty()).map(latestVersion ->
-                        latestVersion == null ? "" : i18n("update.bubble.title", latestVersion.version())));
-
-                hBox.getChildren().setAll(SVG.UPDATE.createIcon(20), prompt);
-            }
-
-            JFXButton closeUpdateButton = new JFXButton();
-            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(10));
-            StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
-            closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
-            StackPane.setMargin(closeUpdateButton, new Insets(5));
-            closeUpdateButton.setOnAction(e -> closeUpdateBubble());
-
-            updatePane.getChildren().setAll(hBox, closeUpdateButton);
-        }
 
         HBox launchPane = new HBox();
         launchPane.getStyleClass().add("launch-pane");
@@ -302,22 +280,52 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchPane.getChildren().setAll(launchButton, menuButton);
         }
 
-        getChildren().addAll(updatePane, launchPane);
+        getChildren().addAll(updateBubble, launchPane);
 
     }
 
-    private void showUpdateDialog(boolean show) {
-        if (show && getLatestVersion() != null && !Objects.equals(getLatestVersion(), lastShownVersion)
-                && !Objects.equals(state().getPromptedVersion(), getLatestVersion().version())
-        ) {
-            lastShownVersion = getLatestVersion();
-            Controllers.dialogLater(new MessageDialogPane.Builder("", i18n("update.bubble.title", getLatestVersion().version()), MessageDialogPane.MessageType.INFO)
-                    .addAction(i18n("button.view"), () -> {
-                        state().setPromptedVersion(getLatestVersion().version());
-                        onUpgrade();
-                    })
-                    .addCancel(null)
-                    .build());
+    private void doUpdateIfNeeded(Boolean show) {
+        if (!show) return;
+
+        var mode = UPDATE_MODE;
+        if (mode == EnumUpdateMode.NOTIFY) return;
+
+        updateState.set(UpdateBubble.State.DOWNLOADING);
+
+        try {
+            downloadedHmcl = Files.createTempFile("hmcl-update-", ".jar");
+            var downloadTask = new HMCLDownloadTask(latestVersion.get(), downloadedHmcl);
+            downloadTask.whenComplete((e) -> {
+                if (e != null) {
+                    javafx.application.Platform.runLater(() -> {
+                        exception.set(e);
+                    });
+                } else {
+                    javafx.application.Platform.runLater(() -> {
+                        updateState.set(UpdateBubble.State.SUCCESS);
+                    });
+
+                    if (mode == EnumUpdateMode.SILENT) {
+                        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                            try {
+                                UpdateHandler.finishUpdate(downloadedHmcl, true);
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }));
+                    } else if (mode == EnumUpdateMode.AUTO) {
+                        try {
+                            UpdateHandler.finishUpdate(downloadedHmcl, false);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }
+
+                }
+            }).start();
+        } catch (IOException e) {
+            LOG.warning("Failed to update", e);
+            exception.set(e);
         }
     }
 
@@ -327,16 +335,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
             Timeline nowAnimation = new Timeline();
             nowAnimation.getKeyFrames().addAll(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(updatePane.translateXProperty(), show ? 260 : 0, SINE)),
+                            new KeyValue(updateBubble.translateXProperty(), show ? 260 : 0, SINE)),
                     new KeyFrame(duration,
-                            new KeyValue(updatePane.translateXProperty(), show ? 0 : 260, SINE)));
+                            new KeyValue(updateBubble.translateXProperty(), show ? 0 : 260, SINE)));
             if (show) nowAnimation.getKeyFrames().add(
-                    new KeyFrame(Duration.ZERO, e -> updatePane.setVisible(true)));
+                    new KeyFrame(Duration.ZERO, e -> updateBubble.setVisible(true)));
             else nowAnimation.getKeyFrames().add(
-                    new KeyFrame(duration, e -> updatePane.setVisible(false)));
+                    new KeyFrame(duration, e -> updateBubble.setVisible(false)));
             nowAnimation.play();
         } else {
-            updatePane.setVisible(show);
+            updateBubble.setVisible(show);
         }
     }
 
@@ -434,32 +442,99 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return showUpdate;
     }
 
-    public void setShowUpdate(boolean showUpdate) {
-        this.showUpdate.set(showUpdate);
-    }
+    private class UpdateBubble extends StackPane {
+        public UpdateBubble() {
+            this.setVisible(false);
+            this.getStyleClass().add("bubble");
+            FXUtils.setLimitWidth(this, 260);
+            FXUtils.setLimitHeight(this, 55);
+            StackPane.setAlignment(this, Pos.TOP_RIGHT);
 
-    public boolean isShowUpdateDialog() {
-        return showUpdateDialog.get();
-    }
+            HBox hBox = new HBox();
+            hBox.setSpacing(12);
+            hBox.setAlignment(Pos.CENTER_LEFT);
+            StackPane.setAlignment(hBox, Pos.CENTER_LEFT);
+            StackPane.setMargin(hBox, new Insets(9, 12, 9, 16));
 
-    public BooleanProperty showUpdateDialogProperty() {
-        return showUpdateDialog;
-    }
+            TwoLineListItem item = new TwoLineListItem();
+            item.setPickOnBounds(false);
 
-    public void setShowUpdateDialog(boolean showUpdateDialog) {
-        this.showUpdateDialog.set(showUpdateDialog);
-    }
+            JFXButton closeUpdateButton = new JFXButton();
+            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(20));
+            StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
+            closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
+            StackPane.setMargin(closeUpdateButton, new Insets(10));
+            closeUpdateButton.setOnAction(e -> closeUpdateBubble());
 
-    public RemoteVersion getLatestVersion() {
-        return latestVersion.get();
-    }
+            FXUtils.onClicked(this, this::onClink);
 
-    public ObjectProperty<RemoteVersion> latestVersionProperty() {
-        return latestVersion;
-    }
+            var invalidationListener = (InvalidationListener) observable -> {
+                item.titleProperty().unbind();
+                if (updateState.get() == State.NOTIFY) {
+                    item.setSubtitle(i18n("update.bubble.notify.subtitle"));
+                    item.titleProperty().bind(BindingMapping.of(latestVersion).map(latestVersion ->
+                            latestVersion == null ? "" : i18n("update.bubble.notify.title", latestVersion.version())));
+                    hBox.getChildren().setAll(SVG.UPDATE.createIcon(32), item);
+                    this.getChildren().setAll(hBox, closeUpdateButton);
+                } else if (updateState.get() == State.DOWNLOADING) {
+                    item.setSubtitle(i18n("update.bubble.downloading.subtitle"));
+                    item.setTitle(i18n("update.bubble.downloading.title"));
+                    hBox.getChildren().setAll(new JFXSpinner(), item);
 
-    public void setLatestVersion(RemoteVersion latestVersion) {
-        this.latestVersion.set(latestVersion);
+                    this.getChildren().setAll(hBox);
+                } else if (updateState.get() == State.SUCCESS) {
+                    var mode = UPDATE_MODE;
+
+                    if (mode == EnumUpdateMode.SILENT) {
+                        item.setSubtitle(i18n("update.bubble.success.subtitle.silent"));
+                    } else if (mode == EnumUpdateMode.AUTO) {
+                        item.setSubtitle(i18n("update.bubble.success.subtitle.auto"));
+                    } else {
+                        item.setSubtitle(i18n("update.bubble.success.subtitle.download"));
+                    }
+
+                    item.setTitle(i18n("update.bubble.success.title"));
+                    hBox.getChildren().setAll(SVG.CHECK_CIRCLE.createIcon(32), item);
+                    this.getChildren().setAll(hBox);
+                } else if (updateState.get() == State.FAILED) {
+                    item.setSubtitle(i18n("update.bubble.failed.subtitle"));
+                    item.setTitle(i18n("update.failed"));
+                    hBox.getChildren().setAll(SVG.ERROR.createIcon(32), item);
+                    this.getChildren().setAll(hBox, closeUpdateButton);
+                }
+            };
+            invalidationListener.invalidated(null);
+            updateState.addListener(invalidationListener);
+        }
+
+        public enum State {
+            NOTIFY,
+            DOWNLOADING,
+            SUCCESS,
+            FAILED,
+        }
+
+        public void onClink() {
+            if (updateState.get() == State.NOTIFY) {
+                onUpgrade();
+            } else if (updateState.get() == State.DOWNLOADING) {
+                Controllers.dialog(new UpgradeDialog(latestVersion.get(), null));
+            } else if (updateState.get() == State.SUCCESS && !UPDATE_MODE.equals(EnumUpdateMode.SILENT)) {
+                Task.runAsync(() -> {
+                    try {
+                        UpdateHandler.finishUpdate(downloadedHmcl, false);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to apply update", e);
+                        javafx.application.Platform.runLater(() -> {
+                            Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageDialogPane.MessageType.ERROR);
+                        });
+                    }
+                }).start();
+            } else if (updateState.get() == State.FAILED) {
+                var e = StringUtils.getStackTrace(exception.get());
+                Controllers.dialog(e, i18n("update.failed"), MessageDialogPane.MessageType.ERROR);
+            }
+        }
     }
 
     public void initVersions(HMCLGameRepository repository, List<Version> versions) {

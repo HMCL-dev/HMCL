@@ -49,7 +49,6 @@ import org.jackhuang.hmcl.ui.nbt.NBTFileType;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -120,7 +119,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     });
 
             FXUtils.onChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), mainPage::setCurrentGame);
-            mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
 
             GameDirectoryManager.registerVersionsListener(repository -> {
                 GameDirectory gameDirectory = repository.getGameDirectory();
