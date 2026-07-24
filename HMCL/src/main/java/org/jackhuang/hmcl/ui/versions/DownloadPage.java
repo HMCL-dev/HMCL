@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.SVGContainer;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
@@ -435,19 +436,34 @@ public class DownloadPage extends Control implements DecoratorPage {
                     content.setTitle(dataItem.name());
                     content.setSubtitle(I18n.formatDateTime(dataItem.datePublished()));
 
-                    switch (dataItem.versionType()) {
-                        case Alpha:
-                            content.addTag(i18n("addon.channel.alpha"));
-                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(24));
-                            break;
-                        case Beta:
-                            content.addTag(i18n("addon.channel.beta"));
-                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(24));
-                            break;
-                        case Release:
-                            content.addTag(i18n("addon.channel.release"));
-                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(24));
-                            break;
+                    SVG svg = null;
+                    String styleClass = null;
+                    if (dataItem.versionType() != null) {
+                        switch (dataItem.versionType()) {
+                            case Alpha:
+                                content.addTag(i18n("addon.channel.alpha"));
+                                svg = SVG.ALPHA_CIRCLE;
+                                styleClass = "alpha";
+                                break;
+                            case Beta:
+                                content.addTag(i18n("addon.channel.beta"));
+                                svg = SVG.BETA_CIRCLE;
+                                styleClass = "beta";
+                                break;
+                            case Release:
+                                content.addTag(i18n("addon.channel.release"));
+                                svg = SVG.RELEASE_CIRCLE;
+                                styleClass = "release";
+                                break;
+                            default:
+                                styleClass = "";
+                                break;
+                        }
+                    }
+                    if (svg != null) {
+                        SVGContainer icon = svg.createIcon(24);
+                        icon.getStyleClass().addAll("addon-channel-icon", styleClass);
+                        graphicPane.getChildren().setAll(icon);
                     }
 
                     for (ModLoaderType modLoaderType : dataItem.loaders()) {
