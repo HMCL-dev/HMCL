@@ -273,14 +273,14 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 System.out.println("[DEBUG] checkInstalledInList: directory does not exist: " + finalTargetDir);
                 return false;
             }
-            String slug = addon.slug().toLowerCase();
+            String slug = addon.slug().toLowerCase(Locale.ROOT);
             // Also match slugs where hyphens/underscores are removed (e.g. slug "fresh-animations" matches filename "FreshAnimations_v1.10.4.zip")
             String slugNormalized = slug.replaceAll("[^a-z0-9]", "");
             try (var list = Files.list(finalTargetDir)) {
                 boolean found = list.map(Path::getFileName)
                         .map(Path::toString)
                         .anyMatch(name -> {
-                            String lowerName = name.toLowerCase();
+                            String lowerName = name.toLowerCase(Locale.ROOT);
                             boolean match = lowerName.contains(slug) || lowerName.replaceAll("[^a-z0-9]", "").contains(slugNormalized);
                             if (match) System.out.println("[DEBUG] checkInstalledInList: matched " + name + " for slug " + slug);
                             return match;
