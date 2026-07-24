@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXSnackbar;
 import com.jfoenix.controls.JFXSnackbarLayout;
+import com.jfoenix.skins.JFXDatePickerContent;
+import com.jfoenix.skins.JFXDatePickerSkin;
 import javafx.animation.Interpolator;
 import javafx.beans.property.BooleanProperty;
 import javafx.scene.Node;
@@ -40,6 +42,8 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import java.util.Stack;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 
@@ -72,15 +76,26 @@ public class DecoratorController {
 
             Node newTarget;
 
-            JFXDialogPane currentDialogPane = null;
-            if (decorator.getDrawerWrapper() != null) {
-                currentDialogPane = (JFXDialogPane) decorator.getDrawerWrapper().getProperties().get(DialogUtils.PROPERTY_DIALOG_PANE_INSTANCE);
-            }
+            {
+                Stack<JFXDatePickerContent> stack = null;
+                if (decorator.getDrawerWrapper() != null) {
+                    //noinspection unchecked
+                    stack = (Stack<JFXDatePickerContent>) decorator.getDrawerWrapper().getProperties().get(JFXDatePickerSkin.PROPERTY_DATE_PICKER_CONTENTS);
+                }
+                if (stack != null && !stack.isEmpty()) {
+                    newTarget = stack.peek();
+                } else {
+                    JFXDialogPane currentDialogPane = null;
+                    if (decorator.getDrawerWrapper() != null) {
+                        currentDialogPane = (JFXDialogPane) decorator.getDrawerWrapper().getProperties().get(DialogUtils.PROPERTY_DIALOG_PANE_INSTANCE);
+                    }
 
-            if (currentDialogPane != null && currentDialogPane.peek().isPresent()) {
-                newTarget = currentDialogPane.peek().get();
-            } else {
-                newTarget = navigator.getCurrentPage();
+                    if (currentDialogPane != null && currentDialogPane.peek().isPresent()) {
+                        newTarget = currentDialogPane.peek().get();
+                    } else {
+                        newTarget = navigator.getCurrentPage();
+                    }
+                }
             }
             boolean needsRedirect = true;
 
