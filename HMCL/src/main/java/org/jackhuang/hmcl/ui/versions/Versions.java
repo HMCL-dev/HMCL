@@ -17,11 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
-
 import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -29,8 +28,10 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.QuickPlayOption;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -92,6 +93,7 @@ public final class Versions {
         }
         Controllers.taskDialog(
                 new FileDownloadTask(downloadURLs, modpack)
+                        .setName(file.name())
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 ModpackInstallWizardProvider installWizardProvider;
