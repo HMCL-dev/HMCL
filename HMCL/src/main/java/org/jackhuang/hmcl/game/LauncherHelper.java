@@ -934,7 +934,9 @@ public final class LauncherHelper {
             if (forbiddenAccessToken != null)
                 log = log.replace(forbiddenAccessToken, "<access token>");
 
-            Log4jLevel level = isErrorStream && !log.startsWith("[authlib-injector]") ? Log4jLevel.ERROR : null;
+            Log4jLevel level = log.startsWith("[authlib-injector]")
+                    ? Log4jLevel.guessLevel(log)
+                    : Log4jLevel.guessLevel(log, isErrorStream);
             if (showLogs) {
                 if (level == null)
                     level = Lang.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);

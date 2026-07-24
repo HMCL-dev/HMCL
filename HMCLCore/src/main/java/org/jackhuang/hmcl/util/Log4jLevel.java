@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,66 +51,54 @@ public enum Log4jLevel {
     public static final Pattern MINECRAFT_LOGGER = Pattern.compile("\\[(?<timestamp>[0-9:]+)] \\[[^/]+/(?<level>[^]]+)]");
     public static final Pattern MINECRAFT_LOGGER_CATEGORY = Pattern.compile("\\[(?<timestamp>[0-9:]+)] \\[[^/]+/(?<level>[^]]+)] \\[(?<category>[^]]+)]");
     public static final String JAVA_SYMBOL = "([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$][a-zA-Z\\d_$]*";
+    private static final String WRAPPED_PRINT_STREAM = "[java.lang.Throwable$WrappedPrintStream:println";
+
+    private static final String[] INFO_MARKERS = markers(
+            Level.INFO,
+            Level.CONFIG,
+            Level.FINE,
+            Level.FINER,
+            Level.FINEST
+    );
+    private static final String[] ERROR_MARKERS = markers(Level.SEVERE);
+    private static final String[] WARN_MARKERS = markers(Level.WARNING);
 
     public static Log4jLevel guessLevel(String line) {
         Log4jLevel level = null;
         Matcher m = MINECRAFT_LOGGER.matcher(line);
         if (m.find()) {
-            // New style logs from log4j
-            String levelStr = m.group("level");
-            if (null != levelStr)
-                switch (levelStr) {
-                    case "INFO":
-                        level = INFO;
-                        break;
-                    case "WARN":
-                        level = WARN;
-                        break;
-                    case "ERROR":
-                        level = ERROR;
-                        break;
-                    case "FATAL":
-                        level = FATAL;
-                        break;
-                    case "TRACE":
-                        level = TRACE;
-                        break;
-                    case "DEBUG":
-                        level = DEBUG;
-                        break;
-                    default:
-                        break;
-                }
+            level = parseLevel(m.group("level"));
             Matcher m2 = MINECRAFT_LOGGER_CATEGORY.matcher(line);
             if (m2.find()) {
                 String level2Str = m2.group("category");
-                if (null != level2Str)
-                    switch (level2Str) {
-                        case "STDOUT":
-                            level = INFO;
-                            break;
-                        case "STDERR":
-                            level = ERROR;
-                            break;
-                    }
-            }
-
-            if (line.contains("STDERR]") || line.contains("[STDERR/]")) {
-                level = ERROR;
+                if (level2Str != null) {
+                    level = switch (level2Str) {
+                        case "STDOUT" -> INFO;
+                        case "STDERR" -> guessStderrLevel(line, level);
+                        default -> level;
+                    };
+                }
+            } else if (line.contains("STDERR]") || line.contains("[STDERR/]")) {
+                level = guessStderrLevel(line, level);
             }
         } else {
-            if (line.contains("[INFO]") || line.contains("[CONFIG]") || line.contains("[FINE]")
-                    || line.contains("[FINER]") || line.contains("[FINEST]"))
+            if (containsAny(line, INFO_MARKERS)) {
                 level = INFO;
-            if (line.contains("[SEVERE]") || line.contains("[STDERR]"))
+            }
+            if (containsAny(line, ERROR_MARKERS) || line.contains("[STDERR]")) {
                 level = ERROR;
-            if (line.contains("[WARNING]"))
+            }
+            if (containsAny(line, WARN_MARKERS)) {
                 level = WARN;
-            if (line.contains("[DEBUG]"))
+            }
+            if (line.contains("[DEBUG]")) {
                 level = DEBUG;
+            }
         }
-        if (line.contains("overwriting existing"))
+
+        if (line.contains("overwriting existing")) {
             level = FATAL;
+        }
 
         /*if (line.contains("Exception in thread")
                 || line.matches("\\s+at " + JAVA_SYMBOL)
@@ -120,17 +109,52 @@ public enum Log4jLevel {
         return level;
     }
 
-    public static boolean isError(Log4jLevel a) {
-        return a != null && a.lessOrEqual(Log4jLevel.ERROR);
+    public static Log4jLevel guessLevel(String line, boolean isErrorStream) {
+        Log4jLevel level = guessLevel(line);
+        return level != null || !isErrorStream ? level : ERROR;
     }
 
-    public static Log4jLevel mergeLevel(Log4jLevel a, Log4jLevel b) {
-        if (a == null)
-            return b;
-        else if (b == null)
-            return a;
-        else
-            return a.level < b.level ? a : b;
+    private static Log4jLevel parseLevel(String level) {
+        return switch (level) {
+            case "FATAL" -> FATAL;
+            case "ERROR" -> ERROR;
+            case "WARN" -> WARN;
+            case "INFO" -> INFO;
+            case "DEBUG" -> DEBUG;
+            case "TRACE" -> TRACE;
+            case "ALL" -> ALL;
+            default -> null;
+        };
+    }
+
+    private static Log4jLevel guessStderrLevel(String line, Log4jLevel fallback) {
+        if (line.contains(WRAPPED_PRINT_STREAM) && fallback != null) {
+            return fallback;
+        }
+        return ERROR;
+    }
+
+    private static String[] markers(Level... levels) {
+        String[] markers = new String[levels.length * 2];
+        int i = 0;
+        for (Level level : levels) {
+            markers[i++] = '[' + level.getName() + ']';
+            markers[i++] = '[' + level.getLocalizedName() + ']';
+        }
+        return markers;
+    }
+
+    private static boolean containsAny(String line, String[] markers) {
+        for (String marker : markers) {
+            if (line.contains(marker)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isError(Log4jLevel a) {
+        return a != null && a.lessOrEqual(Log4jLevel.ERROR);
     }
 
     public static boolean guessLogLineError(String log) {
