@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.modpack.*;
@@ -51,11 +52,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -93,6 +96,47 @@ public final class ModpackHelper {
     public static boolean isFileModpackByExtension(Path file) {
         String ext = FileUtils.getExtension(file);
         return "zip".equals(ext) || "mrpack".equals(ext);
+    }
+
+    /// Extracts a bundled modpack from a launcher distribution ZIP to a temporary file.
+    ///
+    /// This follows the launcher startup convention: a root `modpack.zip` entry takes precedence
+    /// over a root `modpack.mrpack` entry. Other entry names and nested paths are ignored.
+    ///
+    /// @param file the archive selected for modpack import
+    /// @param charset the encoding used for entry names in the outer archive
+    /// @return the extracted temporary file, or an empty optional when the archive is not a launcher distribution
+    /// @throws IOException if the outer archive or bundled modpack cannot be read
+    public static Optional<Path> extractBundledModpack(Path file, Charset charset) throws IOException {
+        if (!"zip".equalsIgnoreCase(FileUtils.getExtension(file))) {
+            return Optional.empty();
+        }
+
+        try (ZipArchiveReader zipFile = CompressingUtils.openZipFile(file, charset)) {
+            @Nullable ZipArchiveEntry bundledModpack = zipFile.getEntry("modpack.zip");
+            if (bundledModpack == null) {
+                bundledModpack = zipFile.getEntry("modpack.mrpack");
+            }
+
+            if (bundledModpack == null || bundledModpack.isDirectory() || bundledModpack.isUnixSymlink()) {
+                return Optional.empty();
+            }
+
+            String extension = FileUtils.getExtension(bundledModpack.getName());
+            Path extractedFile = Files.createTempFile("hmcl-bundled-modpack-", "." + extension);
+            extractedFile.toFile().deleteOnExit();
+            try (InputStream input = zipFile.getInputStream(bundledModpack)) {
+                Files.copy(input, extractedFile, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                try {
+                    Files.deleteIfExists(extractedFile);
+                } catch (IOException cleanupException) {
+                    e.addSuppressed(cleanupException);
+                }
+                throw e;
+            }
+            return Optional.of(extractedFile);
+        }
     }
 
     public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException, ManuallyCreatedModpackException {

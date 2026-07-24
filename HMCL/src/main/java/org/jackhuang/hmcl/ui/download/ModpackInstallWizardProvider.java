@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -145,7 +146,24 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
         });
 
-        return finishModpackInstallingAsync(settings);
+        @Nullable Path temporaryModpackFile = settings.remove(LocalModpackPage.TEMPORARY_MODPACK_FILE);
+        @Nullable Task<?> task = null;
+        try {
+            task = finishModpackInstallingAsync(settings);
+        } finally {
+            if (task == null && temporaryModpackFile != null) {
+                @Nullable LocalModpackPage owner = settings.get(LocalModpackPage.MODPACK_FILE_OWNER);
+                if (owner == null) {
+                    LocalModpackPage.deleteTemporaryModpackFile(temporaryModpackFile);
+                } else {
+                    owner.restoreTemporaryModpackFile(temporaryModpackFile);
+                }
+            }
+        }
+        if (task != null && temporaryModpackFile != null) {
+            task.onDone().register(() -> LocalModpackPage.deleteTemporaryModpackFile(temporaryModpackFile));
+        }
+        return task;
     }
 
     private static Node createModpackInstallPage(WizardController controller) {
