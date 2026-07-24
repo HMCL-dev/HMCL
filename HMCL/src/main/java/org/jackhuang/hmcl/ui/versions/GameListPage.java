@@ -22,7 +22,8 @@ import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -51,9 +52,9 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryListItem;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryPage;
+import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -84,6 +85,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
         {
             ScrollPane pane = new ScrollPane();
+            FXUtils.smoothScrolling(pane);
             VBox.setVgrow(pane, Priority.ALWAYS);
             {
                 AdvancedListItem addGameDirectoryItem = new AdvancedListItem();
