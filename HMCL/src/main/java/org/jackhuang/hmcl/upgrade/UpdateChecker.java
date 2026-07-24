@@ -56,6 +56,9 @@ public final class UpdateChecker {
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
     public static void init() {
+        if (PackageManagerIntegration.isPackageManaged())
+            return;
+
         requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get());
     }
 
@@ -102,6 +105,9 @@ public final class UpdateChecker {
     }
 
     public static void requestCheckUpdate(UpdateChannel channel, boolean preview) {
+        if (PackageManagerIntegration.isPackageManaged())
+            return;
+
         Platform.runLater(() -> {
             if (isCheckingUpdate())
                 return;

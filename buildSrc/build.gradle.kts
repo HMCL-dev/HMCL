@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.jna)
     implementation(libs.kala.compress.tar)
     implementation(libs.kala.compress.ar)
+    compileOnly(libs.jetbrains.annotations)
 }
 
 java {
