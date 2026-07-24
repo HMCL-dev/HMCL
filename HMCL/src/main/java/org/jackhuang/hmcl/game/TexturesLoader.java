@@ -31,8 +31,12 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.auth.offline.Skin;
-import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.auth.offline.OfflineSkinConfig;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.game.skin.TextureModel;
+import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -188,17 +192,15 @@ public final class TexturesLoader {
 
     public static ObservableValue<LoadedTexture> skinBinding(Account account) {
         LoadedTexture uuidFallback = getDefaultSkin(account.getProfileID());
-        if (account instanceof OfflineAccount) {
-            OfflineAccount offlineAccount = (OfflineAccount) account;
+        if (account instanceof OfflineAccount offlineAccount) {
 
             SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
             InvalidationListener listener = o -> {
-                Skin skin = offlineAccount.getSkin();
-                String profileName = offlineAccount.getProfileName();
+                OfflineSkinConfig skin = offlineAccount.getSkin();
 
                 binding.set(uuidFallback);
                 if (skin != null) {
-                    skin.load(profileName).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    skin.load().setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
                         } else if (result != null && result.skin() != null && result.skin().image() != null) {
@@ -267,15 +269,12 @@ public final class TexturesLoader {
                 0, 0, size, size);
     }
 
-    private static final class SkinBindingChangeListener implements ChangeListener<LoadedTexture> {
+    private record SkinBindingChangeListener(WeakReference<Canvas> canvasRef,
+                                             ObservableValue<LoadedTexture> binding) implements ChangeListener<LoadedTexture> {
         static final WeakHashMap<Canvas, SkinBindingChangeListener> hole = new WeakHashMap<>();
 
-        final WeakReference<Canvas> canvasRef;
-        final ObservableValue<LoadedTexture> binding;
-
-        SkinBindingChangeListener(Canvas canvas, ObservableValue<LoadedTexture> binding) {
-            this.canvasRef = new WeakReference<>(canvas);
-            this.binding = binding;
+        private SkinBindingChangeListener(Canvas canvasRef, ObservableValue<LoadedTexture> binding) {
+            this(new WeakReference<>(canvasRef), binding);
         }
 
         @Override

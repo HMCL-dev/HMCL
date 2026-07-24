@@ -15,16 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.auth.yggdrasil;
+package org.jackhuang.hmcl.game.skin;
 
-import org.jackhuang.hmcl.util.Immutable;
-import org.jetbrains.annotations.Nullable;
+import javafx.scene.image.Image;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.nio.file.Path;
 
-@Immutable
-public record Texture(@Nullable String url, @Nullable Map<String, String> metadata) {
-    public Texture() {
-        this(null, null);
+public record TextureObject(@NotNull Image image, @NotNull String url) {
+    public TextureObject of(Path path) {
+        return new TextureObject(new Image(path.toString()), FileUtils.getAbsolutePath(path));
     }
 }
