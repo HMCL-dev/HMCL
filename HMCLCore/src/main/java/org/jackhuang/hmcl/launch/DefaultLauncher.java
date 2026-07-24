@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.launch;
 
 import org.glavo.uuid.UUIDs;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
@@ -681,29 +682,15 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
-            env.put("INST_FORGE", "1");
+        for (ModLoaderType type : analyzer.getModLoaders()) {
+            if (type == ModLoaderType.NEO_FORGE) env.put("INST_NEOFORGE", "1");
+            else if (type == ModLoaderType.LEGACY_FABRIC) env.put("INST_LEGACYFABRIC", "1");
+            else if (type == ModLoaderType.LITE_LOADER) env.put("INST_LITELOADER", "1");
+            else env.put("INST_" + type.name().toUpperCase(Locale.ROOT), "1");
         }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
-            env.put("INST_CLEANROOM", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
-            env.put("INST_NEOFORGE", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER)) {
-            env.put("INST_LITELOADER", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC)) {
-            env.put("INST_FABRIC", "1");
-        }
+
         if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE)) {
             env.put("INST_OPTIFINE", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
-            env.put("INST_QUILT", "1");
-        }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
-            env.put("INST_LEGACYFABRIC", "1");
         }
 
         env.putAll(options.getEnvironmentVariables());
