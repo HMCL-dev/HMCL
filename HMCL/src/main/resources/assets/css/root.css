@@ -345,7 +345,7 @@
 
 .two-line-list-item > .first-line .tag:installed {
     -fx-text-fill: -monet-on-tertiary-container;
-    -fx-background-color: -monet-tertiary-container;
+    -fx-background-color: green;
 }
 
 .two-line-item-second-large {
