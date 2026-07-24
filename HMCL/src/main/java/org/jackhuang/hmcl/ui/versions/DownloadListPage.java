@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -59,6 +60,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -234,6 +238,65 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     @Override
     protected Skin<?> createDefaultSkin() {
         return new ModDownloadListPageSkin(this);
+    }
+
+    private static void checkInstalledInList(DownloadListPage page, RemoteAddon addon, java.util.function.Consumer<Boolean> callback) {
+        HMCLGameRepository.InstanceReference ref = page.getInstanceReference();
+        System.out.println("[DEBUG] checkInstalledInList: addon=" + addon.slug() + ", repoType=" + page.repository.getType() + ", ref=" + ref);
+        if (ref.repository() == null || ref.instanceId() == null) {
+            System.out.println("[DEBUG] checkInstalledInList: ref is null, returning false");
+            callback.accept(false);
+            return;
+        }
+
+        Path targetDir;
+        switch (page.repository.getType()) {
+            case MOD:
+                targetDir = ref.repository().getModsDirectory(ref.instanceId());
+                break;
+            case RESOURCE_PACK:
+                targetDir = ref.repository().getResourcePackDirectory(ref.instanceId());
+                break;
+            case SHADER_PACK:
+                targetDir = ref.repository().getShaderPackDirectory(ref.instanceId());
+                break;
+            default:
+                System.out.println("[DEBUG] checkInstalledInList: unsupported type, returning false");
+                callback.accept(false);
+                return;
+        }
+
+        System.out.println("[DEBUG] checkInstalledInList: targetDir=" + targetDir);
+        Path finalTargetDir = targetDir;
+        Task.supplyAsync(() -> {
+            if (!Files.isDirectory(finalTargetDir)) {
+                System.out.println("[DEBUG] checkInstalledInList: directory does not exist: " + finalTargetDir);
+                return false;
+            }
+            String slug = addon.slug().toLowerCase(Locale.ROOT);
+            // Also match slugs where hyphens/underscores are removed (e.g. slug "fresh-animations" matches filename "FreshAnimations_v1.10.4.zip")
+            String slugNormalized = slug.replaceAll("[^a-z0-9]", "");
+            try (var list = Files.list(finalTargetDir)) {
+                boolean found = list.map(Path::getFileName)
+                        .map(Path::toString)
+                        .anyMatch(name -> {
+                            String lowerName = name.toLowerCase(Locale.ROOT);
+                            boolean match = lowerName.contains(slug) || lowerName.replaceAll("[^a-z0-9]", "").contains(slugNormalized);
+                            if (match) System.out.println("[DEBUG] checkInstalledInList: matched " + name + " for slug " + slug);
+                            return match;
+                        });
+                System.out.println("[DEBUG] checkInstalledInList: result=" + found + " for slug=" + slug + " (normalized=" + slugNormalized + ")");
+                return found;
+            } catch (IOException e) {
+                System.out.println("[DEBUG] checkInstalledInList: IOException=" + e.getMessage());
+                return false;
+            }
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception != null) {
+                System.out.println("[DEBUG] checkInstalledInList: exception=" + exception.getMessage());
+            }
+            callback.accept(result != null && result);
+        }).start();
     }
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
@@ -548,6 +611,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                     private final TwoLineListItem content = new TwoLineListItem();
                     private final ImageContainer imageContainer = new ImageContainer(40);
+                    private final Label installedLabel = new Label();
 
                     {
                         setPadding(PADDING);
@@ -559,7 +623,14 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                         imageContainer.setMouseTransparent(true);
 
-                        container.getChildren().setAll(imageContainer, content);
+                        installedLabel.setGraphic(SVG.CHECK_CIRCLE.createIcon(16));
+                        installedLabel.setText(i18n("addon.installed"));
+                        installedLabel.getStyleClass().add("label-installed");
+                        installedLabel.setVisible(false);
+                        installedLabel.setManaged(false);
+                        installedLabel.setMouseTransparent(true);
+
+                        container.getChildren().setAll(imageContainer, content, installedLabel);
                         HBox.setHgrow(content, Priority.ALWAYS);
 
                         this.graphic = new RipplerContainer(container);
@@ -597,6 +668,18 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                     content.addTag(getSkinnable().getLocalizedCategory(category, null));
                             }
                             iconLoader.load(imageContainer.imageProperty(), item.iconUrl());
+
+                            // Check installed status
+                            installedLabel.setVisible(false);
+                            installedLabel.setManaged(false);
+                            RemoteAddon currentItem = item;
+                            checkInstalledInList(getSkinnable(), item, installed -> {
+                                if (getItem() == currentItem) {
+                                    installedLabel.setVisible(installed);
+                                    installedLabel.setManaged(installed);
+                                }
+                            });
+
                             setGraphic(wrapper);
                         }
                     }
