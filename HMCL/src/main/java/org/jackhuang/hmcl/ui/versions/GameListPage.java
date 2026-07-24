@@ -142,7 +142,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
             GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
-            setOnFailedAction(e -> Versions.addNewGame());
+            setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
         }
 
         @FXThread
