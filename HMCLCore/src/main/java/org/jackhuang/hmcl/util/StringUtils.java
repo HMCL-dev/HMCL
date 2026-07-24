@@ -17,12 +17,16 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.glavo.chardet.UniversalDetector;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -628,6 +632,17 @@ public final class StringUtils {
     public static List<String> deserializeStringList(String json) {
         if (json == null || json.isBlank()) return List.of();
         return JsonUtils.fromNonNullJson(json, JsonUtils.listTypeOf(String.class));
+    }
+
+    public static Charset detectMaybeNativeTextEncoding(byte[] data) {
+        var detector = new UniversalDetector();
+        detector.handleData(data);
+        detector.dataEnd();
+        var detected = detector.getDetectedCharset();
+        if (detected == null || !detected.isSupported()) return OperatingSystem.NATIVE_CHARSET;
+        var charset = detected.getCharset();
+        if (charset == StandardCharsets.UTF_8 || charset == StandardCharsets.US_ASCII) return StandardCharsets.UTF_8;
+        return OperatingSystem.NATIVE_CHARSET;
     }
 
     public static class LevCalculator {
