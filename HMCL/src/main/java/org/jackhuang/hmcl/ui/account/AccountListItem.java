@@ -62,11 +62,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class AccountListItem extends RadioButton {
 
     private final Account account;
+    private final DropHandler dropHandler;
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
 
-    public AccountListItem(Account account) {
+    public AccountListItem(Account account, DropHandler dropHandler) {
         this.account = account;
+        this.dropHandler = dropHandler;
         getStyleClass().clear();
         setUserData(account);
 
@@ -196,6 +198,15 @@ public class AccountListItem extends RadioButton {
 
     public Account getAccount() {
         return account;
+    }
+
+    public DropHandler getDropHandler() {
+        return dropHandler;
+    }
+
+    @FunctionalInterface
+    public interface DropHandler {
+        void onDrop(AccountListItem draggedItem, AccountListItem targetItem, boolean afterTarget);
     }
 
     public String getTitle() {

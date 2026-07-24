@@ -182,6 +182,22 @@ public final class Accounts {
         }
     }
 
+    private static void sortAccountsByCustomOrder() {
+        Map<AccountID, Integer> customOrder = new HashMap<>();
+        List<AccountID> orderedAccountIDs = settings().getAccountSortOrder();
+        for (int i = 0; i < orderedAccountIDs.size(); i++) {
+            customOrder.putIfAbsent(orderedAccountIDs.get(i), i);
+        }
+
+        accounts.sort(Comparator.comparing(account -> customOrder.getOrDefault(account.getAccountID(), Integer.MAX_VALUE)));
+    }
+
+    private static void updateAccountSortOrder() {
+        settings().setAccountSortOrder(accounts.stream()
+                .map(Account::getAccountID)
+                .toList());
+    }
+
     private static void updateAccountMetadataRecords() {
         // don't update the underlying account records before data loading is completed
         // otherwise it might cause data loss
@@ -334,6 +350,8 @@ public final class Accounts {
             }
         }
 
+        sortAccountsByCustomOrder();
+
         AccountID selectedAccountID = settings().selectedAccountProperty().get();
         if (selected == null && selectedAccountID != null) {
             for (Account account : accounts) {
@@ -408,7 +426,10 @@ public final class Accounts {
                 settings().selectedAccountProperty().set(null);
         }));
         accounts.addListener(listener);
-        accounts.addListener(onInvalidating(Accounts::updateAccountMetadataRecords));
+        accounts.addListener(onInvalidating(() -> {
+            Accounts.updateAccountMetadataRecords();
+            Accounts.updateAccountSortOrder();
+        }));
 
         initialized = true;
 
@@ -440,6 +461,12 @@ public final class Accounts {
 
     public static ObservableList<Account> getAccounts() {
         return accounts;
+    }
+
+    public static void setAccountSortOrder(Collection<Account> order) {
+        settings().setAccountSortOrder(order.stream()
+                .map(Account::getAccountID)
+                .toList());
     }
 
     public static Account getSelectedAccount() {
