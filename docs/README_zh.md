@@ -1,4 +1,5 @@
 <!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=BADGES -->
 <!-- #PROPERTY NAME=TITLE -->
 <div align="center">
     <img src="/HMCL/src/main/resources/assets/img/icon@8x.png" alt="HMCL Logo" width="64"/>
@@ -10,6 +11,8 @@
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=BADGES -->
 <div align="center">
+
+<a href="https://trendshift.io/repositories/6783" target="_blank"><img src="https://trendshift.io/api/badge/repositories/6783" alt="HMCL-dev%2FHMCL | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
 [![GitHub](https://img.shields.io/badge/GitHub-repo-blue?style=flat-square&logo=github)](https://github.com/HMCL-dev/HMCL)
 [![CNB](https://img.shields.io/badge/CNB-mirror-ff6200?style=flat-square&logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
