@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -33,11 +30,9 @@ import org.jackhuang.hmcl.util.SettingsMap;
 
 import java.util.Optional;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends AbstractInstallersPage {
-    protected final BooleanProperty compatible = new SimpleBooleanProperty();
     protected final GameRepository repository;
     protected final String gameVersion;
     protected final Version version;
@@ -60,7 +55,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
             });
         }
 
-        installable.bind(Bindings.createBooleanBinding(() -> compatible.get() && txtName.validate(), txtName.textProperty(), compatible));
+        installable.bind(Bindings.createBooleanBinding(() -> txtName.validate(), txtName.textProperty()));
     }
 
     @Override
@@ -81,31 +76,14 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     @Override
     protected void reload() {
-        Version resolved = version.resolvePreservingPatches(repository);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
-        String game = analyzer.getVersion(MINECRAFT).orElse(null);
-        String currentGameVersion = Lang.nonNull(getVersion("game"), game);
-
-        boolean compatible = true;
-
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
-            String version = analyzer.getVersion(libraryId).orElse(null);
-            String libraryVersion = Lang.requireNonNullElse(getVersion(libraryId), version);
-            boolean alreadyInstalled = version != null && !(controller.getSettings().get(libraryId) instanceof UpdateInstallerWizardProvider.RemoveVersionAction);
-            if (!"game".equals(libraryId) && currentGameVersion != null && !currentGameVersion.equals(game) && getVersion(libraryId) == null && alreadyInstalled) {
-                // For third-party libraries, if game version is being changed, and the library is not being reinstalled,
-                // warns the user that we should update the library.
-                library.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, true));
-                compatible = false;
-            } else if (alreadyInstalled || getVersion(libraryId) != null) {
-                library.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
+            if (controller.getSettings().containsKey(libraryId)) {
+                library.versionProperty().set(new InstallerItem.InstalledState(getVersion(libraryId), false, false));
             } else {
                 library.versionProperty().set(null);
             }
         }
-
-        this.compatible.set(compatible);
     }
 
     @Override
