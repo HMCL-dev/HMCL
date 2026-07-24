@@ -244,10 +244,10 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             center.setAlignment(Pos.CENTER_LEFT);
 
             label.setAlignment(Pos.CENTER);
-            label.setMinSize(24, 24);
-            label.setMaxSize(24, 24);
-            label.setPrefSize(24, 24);
-            label.setStyle("-fx-background-color: -monet-secondary-container; -fx-background-radius: 2; -fx-padding: 2; -fx-font-weight: normal; -fx-font-size: 12px;");
+            FXUtils.setLimitWidth(label, 32);
+            FXUtils.setLimitHeight(label, 32);
+
+            label.setStyle("-fx-background-color: -monet-secondary-container; -fx-background-radius: 2; -fx-padding: 2; -fx-font-weight: normal; -fx-font-size: 16px;");
 
             this.content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
@@ -304,15 +304,14 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 int parsedVersion = item.getParsedVersion();
                 label.setText(parsedVersion >= 0 ? String.valueOf(parsedVersion) : "?");
 
-                content.setTitle((item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
+                String vendor = JavaInfo.normalizeVendor(item.getVendor());
+
+                content.setTitle((vendor != null ? vendor : i18n("message.unknown")) + " " + (item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
 
                 if (oldItem != item) {
                     content.getTags().clear();
-                    content.addTag(i18n("java.info.architecture") + ": " + item.getArchitecture().getDisplayName());
-                    String vendor = JavaInfo.normalizeVendor(item.getVendor());
-                    if (vendor != null)
-                        content.addTag(i18n("java.info.vendor") + ": " + vendor);
+                    content.addTag(item.getArchitecture().getDisplayName());                    
                 }
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;
