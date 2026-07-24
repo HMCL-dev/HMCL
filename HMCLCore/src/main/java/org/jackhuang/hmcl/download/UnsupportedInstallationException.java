@@ -36,4 +36,6 @@ public class UnsupportedInstallationException extends Exception {
     public static final int FORGE_1_17_OPTIFINE_H1_PRE2 = 2;
 
     public static final int FABRIC_NOT_COMPATIBLE_WITH_FORGE = 3;
+
+    public static final int CLEANROOM_NOT_COMPATIBLE_WITH_FORGE = 4;
 }

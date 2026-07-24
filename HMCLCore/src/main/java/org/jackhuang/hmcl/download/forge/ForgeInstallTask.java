@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.jackhuang.hmcl.download.UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE;
 import static org.jackhuang.hmcl.download.UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER;
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
@@ -154,9 +155,17 @@ public final class ForgeInstallTask extends Task<Version> {
      * @throws IOException if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
-    public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
+    public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException, UnsupportedInstallationException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
-        if (!gameVersion.isPresent()) throw new IOException();
+        if (gameVersion.isEmpty()) throw new IOException();
+
+        Version resolved = version.resolvePreservingPatches(dependencyManager.getGameRepository());
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion.get());
+
+        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
+            throw new UnsupportedInstallationException(CLEANROOM_NOT_COMPATIBLE_WITH_FORGE);
+        }
+
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);

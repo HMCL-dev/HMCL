@@ -157,6 +157,9 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             }
         } else if (exception instanceof UnsupportedInstallationException) {
             switch (((UnsupportedInstallationException) exception).getReason()) {
+                case UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE:
+                    Controllers.dialog(i18n("install.failed.cleanroom_not_compatible_with_forge"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+                    break;
                 case UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2:
                     Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
                     break;
