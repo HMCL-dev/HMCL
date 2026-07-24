@@ -24,7 +24,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
-import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
@@ -50,9 +49,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -162,24 +159,23 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
     private final class WorldBackupsPageSkin extends ToolbarListPageSkin<BackupInfo, WorldBackupsPage> {
 
         WorldBackupsPageSkin() {
-            super(WorldBackupsPage.this);
+            super(WorldBackupsPage.this, false);
 
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("world.backup.empty"));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
+            JFXButton createBackup = createToolbarButton2(i18n("world.backup.create.new_one"), SVG.ARCHIVE, getSkinnable()::createBackup);
+            createBackup.disableProperty().bind(getSkinnable().readOnly);
+
+            setupSkin(
+                    new Node[] {
+                            createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, getSkinnable()::refresh),
+                            createBackup
+                    },
+                    null
+            );
         }
 
         @Override
-        protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
-            JFXButton createBackup = createToolbarButton2(i18n("world.backup.create.new_one"), SVG.ARCHIVE, skinnable::createBackup);
-            createBackup.disableProperty().bind(getSkinnable().readOnly);
-
-            return Arrays.asList(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createBackup
-            );
+        protected String getEmptyPlaceholderText() {
+            return i18n("world.backup.empty");
         }
     }
 

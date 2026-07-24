@@ -17,43 +17,26 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextField;
-import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
-import javafx.collections.FXCollections;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryListItem;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryPage;
+import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -65,8 +48,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static org.jackhuang.hmcl.ui.FXUtils.*;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage {
@@ -135,14 +116,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     private static class GameList extends ListPageBase<GameListItem> {
         private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
-        private final ObservableList<GameListItem> sourceList = FXCollections.observableArrayList();
-        private final FilteredList<GameListItem> filteredList = new FilteredList<>(sourceList);
-
         public GameList() {
-            setItems(filteredList);
-
             GameDirectoryManager.registerVersionsListener(this::loadVersions);
-
             setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
         }
 
@@ -154,31 +129,13 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
             List<GameListItem> versionItems = repository.getDisplayVersions().map(instance -> new GameListItem(repository, instance.getId())).toList();
 
-            sourceList.setAll(versionItems);
+            getItems().setAll(versionItems); // 直接更新源数据
 
             if (versionItems.isEmpty()) {
                 setFailedReason(i18n("version.empty.hint"));
             }
 
             setLoading(false);
-        }
-
-        private Predicate<GameListItem> createPredicate(String searchText) {
-            if (searchText == null || searchText.isEmpty()) {
-                return item -> true;
-            }
-
-            if (searchText.startsWith("regex:")) {
-                String regex = searchText.substring("regex:".length());
-                try {
-                    Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-                    return item -> pattern.matcher(item.id).find();
-                } catch (PatternSyntaxException e) {
-                    return item -> false;
-                }
-            } else {
-                return item -> item.id.toLowerCase(Locale.ROOT).contains(searchText.toLowerCase(Locale.ROOT));
-            }
         }
 
         public void refreshList() {
@@ -190,87 +147,40 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             return new GameListSkin(this);
         }
 
-        private static class GameListSkin extends SkinBase<GameList> {
-            private final TransitionPane toolbarPane;
-            private final HBox searchBar;
-            private final HBox toolbarNormal;
-
-            private final JFXTextField searchField;
+        private static class GameListSkin extends ToolbarListPageSkin<GameListItem, GameList> {
 
             public GameListSkin(GameList skinnable) {
-                super(skinnable);
+                super(skinnable, true);
+                listView.setCellFactory(x -> new GameListCell());
 
-                StackPane pane = new StackPane();
-                pane.setPadding(new Insets(10));
-                pane.getStyleClass().addAll("notice-pane");
-
-                ComponentList root = new ComponentList();
-                root.getStyleClass().add("no-padding");
-                JFXListView<GameListItem> listView = new JFXListView<>();
-
-                {
-                    toolbarPane = new TransitionPane();
-
-                    searchBar = new HBox();
-                    toolbarNormal = new HBox();
-
-                    searchBar.setAlignment(Pos.CENTER);
-                    searchBar.setPadding(new Insets(0, 5, 0, 5));
-                    searchField = new JFXTextField();
-                    searchField.setPromptText(i18n("search"));
-                    HBox.setHgrow(searchField, Priority.ALWAYS);
-                    PauseTransition pause = new PauseTransition(Duration.millis(100));
-                    pause.setOnFinished(e -> skinnable.filteredList.setPredicate(skinnable.createPredicate(searchField.getText())));
-                    searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                        pause.setRate(1);
-                        pause.playFromStart();
-                    });
-
-                    JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
-                        changeToolbar(toolbarNormal);
-                        searchField.clear();
-                    });
-
-                    onEscPressed(searchField, closeSearchBar::fire);
-
-                    searchBar.getChildren().setAll(searchField, closeSearchBar);
-
-                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
-
-                    toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
-
-                    FXUtils.setOverflowHidden(toolbarPane, 8);
-
-                    root.getContent().add(toolbarPane);
-                }
-
-                {
-                    SpinnerPane center = new SpinnerPane();
-                    ComponentList.setVgrow(center, Priority.ALWAYS);
-                    center.loadingProperty().bind(skinnable.loadingProperty());
-                    center.failedReasonProperty().bind(skinnable.failedReasonProperty());
-
-                    listView.setCellFactory(x -> new GameListCell());
-                    listView.setItems(skinnable.getItems());
-
-                    ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-
-                    center.setContent(listView);
-                    root.getContent().add(center);
-                }
-
-                pane.getChildren().setAll(root);
-                getChildren().setAll(pane);
+                setupSkin(
+                        new Node[]{
+                                createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList),
+                                createToolbarButton2(i18n("search"), SVG.SEARCH, this::startSearch)
+                        },
+                        null
+                );
             }
 
-            private void changeToolbar(HBox newToolbar) {
-                Node oldToolbar = toolbarPane.getCurrentNode();
-                if (newToolbar != oldToolbar) {
-                    toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
-                    if (newToolbar == searchBar) {
-                        runInFX(searchField::requestFocus);
+            @Override
+            protected Predicate<GameListItem> updateSearchPredicate(String searchText) {
+                if (searchText == null || searchText.isEmpty()) return item -> true;
+                if (searchText.startsWith("regex:")) {
+                    String regex = searchText.substring("regex:".length());
+                    try {
+                        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+                        return item -> pattern.matcher(item.id).find();
+                    } catch (PatternSyntaxException e) {
+                        return item -> false;
                     }
+                } else {
+                    return item -> item.id.toLowerCase(Locale.ROOT).contains(searchText.toLowerCase(Locale.ROOT));
                 }
+            }
+
+            @Override
+            protected String getEmptyPlaceholderText() {
+                return i18n("version.empty.hint");
             }
         }
     }

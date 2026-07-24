@@ -17,41 +17,38 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
-import javafx.animation.PauseTransition;
-import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXListView;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import javafx.util.Duration;
-import org.jackhuang.hmcl.addon.*;
+import org.jackhuang.hmcl.addon.LocalAddonFile;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -66,9 +63,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -76,6 +71,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.GameInstanceLoadable {
 
     private static final String TIP_KEY = "resourcePackWarning";
+
     private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
         return switch (compatibility) {
             case TOO_NEW -> i18n("resourcepack.warning.too_new");
@@ -161,7 +157,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }).withRunAsync(Schedulers.javafx(), () -> {
             if (!failures.isEmpty()) {
                 StringBuilder failure = new StringBuilder(i18n("resourcepack.add.failed"));
-                for (Path file: failures) {
+                for (Path file : failures) {
                     failure.append("\n").append(file.toString());
                 }
                 Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -257,207 +253,74 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     @NotNullByDefault
-    private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
-        private final JFXListView<ResourcePackInfoObject> listView;
-        private final JFXTextField searchField = new JFXTextField();
-
-        private final TransitionPane toolbarPane = new TransitionPane();
-        private final HBox searchBar = new HBox();
-        private final HBox toolbarNormal = new HBox();
-        private final HBox toolbarSelecting = new HBox();
-
-        /// Whether the search mechanism is currently active.
-        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
-
-        /// Timer for debouncing search input to avoid executing search on every keystroke.
-        private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
+    private static final class ResourcePackListPageSkin extends ToolbarListPageSkin<ResourcePackInfoObject, ResourcePackListPage> {
 
         private ResourcePackListPageSkin(ResourcePackListPage control) {
-            super(control);
+            super(control, true);
 
-            StackPane pane = new StackPane();
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
+            listView.setCellFactory(x -> new ResourcePackListCell(listView, control));
+            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-            ComponentList root = new ComponentList();
-            root.getStyleClass().add("no-padding");
+            listView.setOnContextMenuRequested(event -> {
+                ResourcePackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+                if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
+                    listView.getSelectionModel().clearSelection();
+                    Controllers.dialog(new ResourcePackInfoDialog(control, selectedItem));
+                }
+            });
 
-            listView = new JFXListView<>();
-
-            {
-
-                // Toolbar Selecting
-                toolbarSelecting.getChildren().setAll(
-                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                                control.removeSelected(listView.getSelectionModel().getSelectedItems());
-                            }, null);
-                        }),
-                        createToolbarButton2(i18n("button.enable"), SVG.CHECK, () ->
-                                control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
-                        createToolbarButton2(i18n("button.disable"), SVG.CLOSE, () ->
-                                control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
-                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                                control.checkUpdates(
-                                        listView.getSelectionModel().getSelectedItems().stream().map(ResourcePackInfoObject::getFile).toList()
-                                )
-                        ),
-                        createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
-                                listView.getSelectionModel().selectAll()),
-                        createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
-                                listView.getSelectionModel().clearSelection())
-                );
-
-                // Search Bar
-                searchBar.setAlignment(Pos.CENTER);
-                searchBar.setPadding(new Insets(0, 5, 0, 5));
-                searchField.setPromptText(i18n("search"));
-                HBox.setHgrow(searchField, Priority.ALWAYS);
-                searchPause.setOnFinished(e -> search());
-                FXUtils.onChange(searchField.textProperty(), newValue -> {
-                    if (isSearching.get() || !StringUtils.isBlank(newValue)) {
-                        searchPause.setRate(1);
-                        searchPause.playFromStart();
-                    }
-                });
-
-                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
-                        () -> {
-                            changeToolbar(toolbarNormal);
-
-                            searchField.clear();
-                            searchPause.stop();
-
-                            isSearching.set(false);
-                            Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
-                        });
-
-                onEscPressed(searchField, closeSearchBar::fire);
-
-                searchBar.getChildren().setAll(searchField, closeSearchBar);
-
-                // Toolbar Normal
-                toolbarNormal.setAlignment(Pos.CENTER_LEFT);
-                toolbarNormal.setPickOnBounds(false);
-                toolbarNormal.getChildren().setAll(
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
-                        createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
-                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, control::onOpenFolder),
-                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                                control.checkUpdates(listView.getItems().stream().map(ResourcePackInfoObject::getFile).toList())
-                        ),
-                        createToolbarButton2(i18n("download"), SVG.DOWNLOAD, control::onDownload),
-                        createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
-                );
-
-                FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
-                        selectedItem -> {
-                            if (selectedItem == null)
-                                changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
-                            else
-                                changeToolbar(toolbarSelecting);
-                        });
-                FXUtils.setOverflowHidden(toolbarPane, 8);
-                root.getContent().add(toolbarPane);
-
-                // Clear selection when pressing ESC
-                root.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
-                    if (e.getCode() == KeyCode.ESCAPE) {
-                        if (listView.getSelectionModel().getSelectedItem() != null) {
-                            listView.getSelectionModel().clearSelection();
-                            e.consume();
-                        }
-                    }
-                });
-            }
-
-            {
-                SpinnerPane center = new SpinnerPane();
-                ComponentList.setVgrow(center, Priority.ALWAYS);
-                center.loadingProperty().bind(control.loadingProperty());
-
-                listView.setCellFactory(x -> new ResourcePackListCell(listView, control));
-                listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-                StackPane placeholderContainer = new StackPane();
-                placeholderContainer.getStyleClass().add("notice-pane");
-                Label placeholderLabel = new Label(i18n("resourcepack.empty"));
-                placeholderLabel.textProperty().bind(
-                    Bindings.createStringBinding(() -> {
-                        if (isSearching.get()) {
-                            return i18n("search.no_results_found");
-                        } else {
-                            return i18n("resourcepack.empty");
-                        }
+            setupSkin(
+                    new Node[]{
+                            createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
+                            createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
+                            createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, control::onOpenFolder),
+                            createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
+                                    control.checkUpdates(listView.getItems().stream().map(ResourcePackInfoObject::getFile).toList())
+                            ),
+                            createToolbarButton2(i18n("download"), SVG.DOWNLOAD, control::onDownload),
+                            createToolbarButton2(i18n("search"), SVG.SEARCH, this::startSearch)
                     },
-                    isSearching)
-                );
-                placeholderContainer.getChildren().add(placeholderLabel);
-                listView.setPlaceholder(placeholderContainer);
-
-                Bindings.bindContent(listView.getItems(), control.getItems());
-
-                listView.setOnContextMenuRequested(event -> {
-                    ResourcePackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
-                    if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
-                        listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ResourcePackInfoDialog(control, selectedItem));
+                    new Node[]{
+                            createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
+                                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                                    control.removeSelected(listView.getSelectionModel().getSelectedItems());
+                                }, null);
+                            }),
+                            createToolbarButton2(i18n("button.enable"), SVG.CHECK, () ->
+                                    control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
+                            createToolbarButton2(i18n("button.disable"), SVG.CLOSE, () ->
+                                    control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
+                            createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
+                                    control.checkUpdates(
+                                            listView.getSelectionModel().getSelectedItems().stream().map(ResourcePackInfoObject::getFile).toList()
+                                    )
+                            )
                     }
-                });
-
-                ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                listView.getStyleClass().add("no-horizontal-scrollbar");
-
-                center.setContent(listView);
-                root.getContent().add(center);
-            }
-
-            pane.getChildren().setAll(root);
-            getChildren().setAll(pane);
+            );
         }
 
-        private void changeToolbar(HBox newToolbar) {
-            Node oldToolbar = toolbarPane.getCurrentNode();
-            if (newToolbar != oldToolbar) {
-                toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
-                if (newToolbar == searchBar) {
-                    Platform.runLater(searchField::requestFocus);
-                }
-            }
+        @Override
+        protected String getEmptyPlaceholderText() {
+            return i18n("resourcepack.empty");
         }
 
-        private void search() {
-            isSearching.set(true);
-
-            Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
-
-            String queryString = searchField.getText();
-            if (StringUtils.isBlank(queryString)) {
-                listView.getItems().setAll(getSkinnable().getItems());
-            } else {
-                listView.getItems().clear();
-
-                Predicate<@Nullable String> predicate;
-                try {
-                    predicate = StringUtils.compileQuery(queryString);
-                } catch (Throwable e) {
-                    LOG.warning("Illegal regular expression", e);
-                    return;
-                }
-
-                // Do we need to search in the background thread?
-                for (ResourcePackInfoObject item : getSkinnable().getItems()) {
+        @Override
+        protected Predicate<ResourcePackInfoObject> updateSearchPredicate(String queryString) {
+            if (StringUtils.isBlank(queryString)) return item -> true;
+            try {
+                Predicate<@Nullable String> queryPredicate = StringUtils.compileQuery(queryString);
+                return item -> {
                     ResourcePackFile resourcePack = item.getFile();
                     LocalAddonFile.Description description = resourcePack.getDescription();
                     Stream<String> descriptionParts = description == null
                             ? Stream.empty()
                             : description.getParts().stream().map(LocalAddonFile.Description.Part::getText);
-                    if (predicate.test(resourcePack.getFileNameWithExtension())
-                            || predicate.test(resourcePack.getFileName())
-                            || descriptionParts.anyMatch(predicate)) {
-                        listView.getItems().add(item);
-                    }
-                }
+                    return queryPredicate.test(resourcePack.getFileNameWithExtension())
+                            || queryPredicate.test(resourcePack.getFileName()) || descriptionParts.anyMatch(queryPredicate);
+                };
+            } catch (Throwable e) {
+                LOG.warning("Illegal regular expression", e);
+                return item -> true;
             }
         }
     }
