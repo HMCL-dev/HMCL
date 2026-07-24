@@ -22,7 +22,8 @@ import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -51,9 +52,9 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryListItem;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryPage;
+import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -103,10 +104,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             }
 
             AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
-                    .addNavigationDrawerItem(i18n("install.new_game"), SVG.ADD_CIRCLE, Versions::addNewGame)
-                    .addNavigationDrawerItem(i18n("install.modpack"), SVG.PACKAGE2, Versions::importModpack)
                     .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings);
-            FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 3 + 12 * 2);
+            FXUtils.setLimitHeight(bottomLeftCornerList, 40 + 12 * 2);
             setLeft(pane, bottomLeftCornerList);
         }
 
@@ -235,7 +234,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                     searchBar.getChildren().setAll(searchField, closeSearchBar);
 
-                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
+                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("install.new_game"), SVG.DOWNLOAD, Versions::addNewGame), createToolbarButton2(i18n("install.modpack"), SVG.PACKAGE2, Versions::importModpack), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
 
                     toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
 
