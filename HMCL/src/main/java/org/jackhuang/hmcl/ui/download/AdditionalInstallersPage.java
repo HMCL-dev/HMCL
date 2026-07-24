@@ -111,4 +111,13 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
     @Override
     public void cleanup(SettingsMap settings) {
     }
+
+    @Override
+    protected boolean showExtendPane() {
+        return false;
+    }
+
+    @Override
+    protected void resetDefaultName() {
+    }
 }

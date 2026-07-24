@@ -26,10 +26,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.Nullable;
 
@@ -274,6 +276,8 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
     /// Updates the fixed preferred height after the row width or subtitle content changes.
     private void updatePreferredHeight() {
+        if (FXUtils.getLimitHeight(this) > 0) return;
+
         double width = getWidth();
         if (width <= 0) {
             setMinHeight(MIN_HEIGHT);

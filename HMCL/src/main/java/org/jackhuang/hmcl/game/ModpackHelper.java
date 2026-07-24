@@ -231,7 +231,7 @@ public final class ModpackHelper {
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
             return modpack.getInstallTask(repository.getDependency(), zipFile, name, iconUrl)
-                    .whenComplete(Schedulers.javafx(), success, failure)
+                    .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
@@ -358,10 +358,10 @@ public final class ModpackHelper {
                         GameSettings.PROPERTY_MAX_MEMORY,
                         GameSettings.PROPERTY_PERM_SIZE
                 ));
-                setting.autoMemoryProperty().setValue(effective.get(GameSettings::autoMemoryProperty));
-                setting.minMemoryProperty().setValue(effective.get(GameSettings::minMemoryProperty));
+                setting.autoMemoryProperty().setValue(effective.getInheritable(GameSettings::autoMemoryProperty));
+                setting.minMemoryProperty().setValue(effective.getInheritable(GameSettings::minMemoryProperty));
                 setting.maxMemoryProperty().setValue(manifest.getLaunchInfo().getMinMemory());
-                setting.permSizeProperty().setValue(effective.get(GameSettings::permSizeProperty));
+                setting.permSizeProperty().setValue(effective.getInheritable(GameSettings::permSizeProperty));
             }
         });
     }

@@ -514,15 +514,23 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             pane.setCenter(spinnerPane);
             {
                 spinnerPane.loadingProperty().bind(getSkinnable().loadingProperty());
-                spinnerPane.failedReasonProperty().bind(Bindings.createStringBinding(() -> {
-                    if (getSkinnable().isFailed()) {
-                        return i18n("download.failed.refresh");
-                    } else {
-                        return null;
-                    }
-                }, getSkinnable().failedProperty()));
+                spinnerPane.failedReasonProperty().bind(
+                    Bindings.createStringBinding(() -> {
+                        if (getSkinnable().isFailed()) {
+                            return i18n("download.failed.refresh");
+                        } else if (!getSkinnable().isLoading() && getSkinnable().pageCount.get() >= 0 && getSkinnable().items.isEmpty()) {
+                            return i18n("search.no_results_found"); 
+                        } else {
+                            return null;
+                        }
+                    },
+                    getSkinnable().failedProperty(), 
+                    getSkinnable().loadingProperty(), 
+                    getSkinnable().pageCount,
+                    getSkinnable().items)
+                );
                 spinnerPane.setOnFailedAction(e -> {
-                    if (getSkinnable().retrySearch != null) {
+                    if (getSkinnable().isFailed() && getSkinnable().retrySearch != null) {
                         getSkinnable().retrySearch.run();
                     }
                 });

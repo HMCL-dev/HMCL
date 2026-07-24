@@ -1,0 +1,31 @@
+name: PR Size Label
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: true
+      - name: Label PR by filtered changed lines
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const script = require("./.github/scripts/pr-size-label.js");
+            await script({ github, context, core });

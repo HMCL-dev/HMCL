@@ -36,9 +36,7 @@ import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
+import javafx.stage.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
@@ -73,6 +71,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -97,12 +96,12 @@ public final class Controllers {
     public static final int MIN_CONTENT_HEIGHT = 450 + 2 + 40; // bg height + border width*2 + toolbar height
     public static final int MIN_WIDTH = MIN_CONTENT_WIDTH + CUSTOM_DECORATION_SHADOW_EXTENT;
     public static final int MIN_HEIGHT = MIN_CONTENT_HEIGHT + CUSTOM_DECORATION_SHADOW_EXTENT;
-    public static final Screen SCREEN = Screen.getPrimary();
+    public static final Rectangle2D PRIMARY_SCREEN_BOUNDS = Screen.getPrimary().getBounds();
     private static InvalidationListener stageSizeChangeListener;
-    private static DoubleProperty stageX = new SimpleDoubleProperty();
-    private static DoubleProperty stageY = new SimpleDoubleProperty();
-    private static DoubleProperty stageWidth = new SimpleDoubleProperty();
-    private static DoubleProperty stageHeight = new SimpleDoubleProperty();
+    private static final DoubleProperty contentX = new SimpleDoubleProperty();
+    private static final DoubleProperty contentY = new SimpleDoubleProperty();
+    private static final DoubleProperty contentWidth = new SimpleDoubleProperty();
+    private static final DoubleProperty contentHeight = new SimpleDoubleProperty();
 
     private static Scene scene;
     private static Stage stage;
@@ -133,12 +132,16 @@ public final class Controllers {
         void run() throws Exception;
     }
 
-    public static Scene getScene() {
-        return scene;
+    public static @Nullable Stage getStage() {
+        return stage;
     }
 
-    public static Stage getStage() {
-        return stage;
+    public static ReadOnlyDoubleProperty windowWidthProperty() {
+        return contentWidth;
+    }
+
+    public static ReadOnlyDoubleProperty windowHeightProperty() {
+        return contentHeight;
     }
 
     @FXThread
@@ -214,64 +217,8 @@ public final class Controllers {
         return decorator;
     }
 
-    public static void saveWindowStates() {
-        saveWindowBounds();
-    }
-
-    private static void saveWindowBounds() {
-        if (stageX != null) {
-            state().setX(toContentX(stageX.get()) / SCREEN.getBounds().getWidth());
-        }
-        if (stageY != null) {
-            state().setY(toContentY(stageY.get()) / SCREEN.getBounds().getHeight());
-        }
-        if (stageHeight != null) {
-            state().setHeight(toContentHeight(stageHeight.get()));
-        }
-        if (stageWidth != null) {
-            state().setWidth(toContentWidth(stageWidth.get()));
-        }
-    }
-
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
-        saveWindowBounds();
-        stageX = null;
-        stageY = null;
-        stageHeight = null;
-        stageWidth = null;
-    }
-
-    private static double toContentX(double stageX) {
-        return stageX + CUSTOM_DECORATION_SHADOW_SIZE;
-    }
-
-    private static double toContentY(double stageY) {
-        return stageY + CUSTOM_DECORATION_SHADOW_SIZE;
-    }
-
-    private static double toStageX(double contentX) {
-        return contentX - CUSTOM_DECORATION_SHADOW_SIZE;
-    }
-
-    private static double toStageY(double contentY) {
-        return contentY - CUSTOM_DECORATION_SHADOW_SIZE;
-    }
-
-    private static double toContentWidth(double stageWidth) {
-        return Math.max(0.0, stageWidth - CUSTOM_DECORATION_SHADOW_EXTENT);
-    }
-
-    private static double toContentHeight(double stageHeight) {
-        return Math.max(0.0, stageHeight - CUSTOM_DECORATION_SHADOW_EXTENT);
-    }
-
-    private static double toStageWidth(double contentWidth) {
-        return contentWidth + CUSTOM_DECORATION_SHADOW_EXTENT;
-    }
-
-    private static double toStageHeight(double contentHeight) {
-        return contentHeight + CUSTOM_DECORATION_SHADOW_EXTENT;
     }
 
     public static void initialize(Stage stage) {
@@ -285,7 +232,7 @@ public final class Controllers {
                 LOG.info("Enable sub-pixel antialiasing");
                 System.getProperties().put("prism.lcdtext", "true");
             } else if ("gray".equalsIgnoreCase(fontAntiAliasing)
-                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && SCREEN.getOutputScaleX() > 1) {
+                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Screen.getPrimary().getOutputScaleX() > 1) {
                 LOG.info("Disable sub-pixel antialiasing");
                 System.getProperties().put("prism.lcdtext", "false");
             }
@@ -293,52 +240,14 @@ public final class Controllers {
 
         Controllers.stage = stage;
 
-        stageSizeChangeListener = o -> {
-            ReadOnlyDoubleProperty sourceProperty = (ReadOnlyDoubleProperty) o;
-            DoubleProperty targetProperty;
-            switch (sourceProperty.getName()) {
-                case "x": {
-                    targetProperty = stageX;
-                    break;
-                }
-                case "y": {
-                    targetProperty = stageY;
-                    break;
-                }
-                case "width": {
-                    targetProperty = stageWidth;
-                    break;
-                }
-                case "height": {
-                    targetProperty = stageHeight;
-                    break;
-                }
-                default: {
-                    targetProperty = null;
-                }
-            }
-
-            if (targetProperty != null
-                    && Controllers.stage != null
-                    && !Controllers.stage.isIconified()
-                    // https://github.com/HMCL-dev/HMCL/issues/4290
-                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ||
-                    !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
-            ) {
-                targetProperty.set(sourceProperty.get());
-            }
-        };
-
-        WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
-
         double initContentWidth = Math.max(MIN_CONTENT_WIDTH, state().getWidth());
         double initContentHeight = Math.max(MIN_CONTENT_HEIGHT, state().getHeight());
-        double initWidth = toStageWidth(initContentWidth);
-        double initHeight = toStageHeight(initContentHeight);
+        double initWidth = initContentWidth + CUSTOM_DECORATION_SHADOW_EXTENT;
+        double initHeight = initContentHeight + CUSTOM_DECORATION_SHADOW_EXTENT;
 
         {
-            double initContentX = state().getX() * SCREEN.getBounds().getWidth();
-            double initContentY = state().getY() * SCREEN.getBounds().getHeight();
+            double initContentX = state().getX() * PRIMARY_SCREEN_BOUNDS.getWidth();
+            double initContentY = state().getY() * PRIMARY_SCREEN_BOUNDS.getHeight();
 
             boolean invalid = true;
             double border = 20D;
@@ -355,24 +264,65 @@ public final class Controllers {
             }
 
             if (invalid) {
-                initContentX = (0.5D - initContentWidth / SCREEN.getBounds().getWidth() / 2)
-                        * SCREEN.getBounds().getWidth();
-                initContentY = (0.5D - initContentHeight / SCREEN.getBounds().getHeight() / 2)
-                        * SCREEN.getBounds().getHeight();
+                initContentX = (0.5D - initContentWidth / PRIMARY_SCREEN_BOUNDS.getWidth() / 2)
+                        * PRIMARY_SCREEN_BOUNDS.getWidth();
+                initContentY = (0.5D - initContentHeight / PRIMARY_SCREEN_BOUNDS.getHeight() / 2)
+                        * PRIMARY_SCREEN_BOUNDS.getHeight();
             }
 
-            double initX = toStageX(initContentX);
-            double initY = toStageY(initContentY);
+            double initX = initContentX - CUSTOM_DECORATION_SHADOW_SIZE;
+            double initY = initContentY - CUSTOM_DECORATION_SHADOW_SIZE;
             stage.setX(initX);
             stage.setY(initY);
-            stageX.set(initX);
-            stageY.set(initY);
+            contentX.set(initContentX);
+            contentY.set(initContentY);
         }
 
         stage.setHeight(initHeight);
         stage.setWidth(initWidth);
-        stageHeight.set(initHeight);
-        stageWidth.set(initWidth);
+        contentHeight.set(initContentHeight);
+        contentWidth.set(initContentWidth);
+
+        stageSizeChangeListener = o -> {
+            ReadOnlyDoubleProperty property = (ReadOnlyDoubleProperty) o;
+            Stage currentStage = property.getBean() instanceof Stage s ? s : null;
+            if (currentStage == null)
+                return;
+
+            boolean saveState = !currentStage.isIconified()
+                    // https://github.com/HMCL-dev/HMCL/issues/4290
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    || !currentStage.isFullScreen() && !currentStage.isMaximized());
+
+            switch (property.getName()) {
+                case "x" -> {
+                    double value = property.get() + CUSTOM_DECORATION_SHADOW_SIZE;
+                    contentX.set(value);
+                    if (saveState)
+                        state().setX(value / PRIMARY_SCREEN_BOUNDS.getWidth());
+                }
+                case "y" -> {
+                    double value = property.get() + CUSTOM_DECORATION_SHADOW_SIZE;
+                    contentY.set(value);
+                    if (saveState)
+                        state().setY(value / PRIMARY_SCREEN_BOUNDS.getHeight());
+                }
+                case "width" -> {
+                    double value = Math.max(MIN_CONTENT_WIDTH, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT);
+                    contentWidth.set(value);
+                    if (saveState)
+                        state().setWidth(value);
+                }
+                case "height" -> {
+                    double value = Math.max(MIN_CONTENT_HEIGHT, property.get() - CUSTOM_DECORATION_SHADOW_EXTENT);
+                    contentHeight.set(value);
+                    if (saveState)
+                        state().setHeight(value);
+                }
+            }
+        };
+
+        WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
         stage.xProperty().addListener(weakListener);
         stage.yProperty().addListener(weakListener);
         stage.heightProperty().addListener(weakListener);
@@ -585,7 +535,7 @@ public final class Controllers {
 
     /// Shows a warning that confirms backing up a read-only settings file before overwriting it.
     ///
-    /// @param text the file-specific read-only warning
+    /// @param text      the file-specific read-only warning
     /// @param overwrite the action that backs up and overwrites the file
     public static void confirmBackupAndOverwrite(String text, ThrowingRunnable overwrite) {
         dialog(new MessageDialogPane.Builder(
@@ -692,6 +642,22 @@ public final class Controllers {
 
     public static void showToast(String content) {
         decorator.showToast(content);
+    }
+
+    public static @Nullable Path showDialog(DirectoryChooser directoryChooser) {
+        return FileUtils.toPath(directoryChooser.showDialog(stage));
+    }
+
+    public static @Nullable Path showOpenDialog(FileChooser fileChooser) {
+        return FileUtils.toPath(fileChooser.showOpenDialog(stage));
+    }
+
+    public static @Nullable Path showSaveDialog(FileChooser fileChooser) {
+        return FileUtils.toPath(fileChooser.showSaveDialog(stage));
+    }
+
+    public static @Nullable List<Path> showOpenMultipleDialog(FileChooser fileChooser) {
+        return FileUtils.toPaths(fileChooser.showOpenMultipleDialog(stage));
     }
 
     public static void onHyperlinkAction(String href) {

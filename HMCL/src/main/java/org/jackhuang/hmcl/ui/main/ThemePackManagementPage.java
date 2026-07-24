@@ -22,8 +22,11 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -32,6 +35,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
@@ -41,7 +45,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.*;
@@ -159,7 +162,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         chooser.getExtensionFilters().setAll(
                 new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
 
-        @Nullable Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        @Nullable Path file = Controllers.showOpenDialog(chooser);
         if (file == null) {
             return;
         }
@@ -415,8 +418,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// @param themePack the installed theme pack to display
         private ThemePackInfoDialog(ThemePackManagementPage page, ThemePackManager.InstalledThemePack themePack) {
             ThemePackManifest manifest = themePack.manifest();
-            Stage stage = Controllers.getStage();
-            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+            maxWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
 
             HBox heading = new HBox(8);
             heading.setAlignment(Pos.CENTER_LEFT);
@@ -481,7 +483,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             scrollPane.setPrefViewportWidth(520);
             scrollPane.setPrefViewportHeight(Math.min(360, manifest.themes().size() * 86));
-            scrollPane.maxHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.55));
+            scrollPane.maxHeightProperty().bind(Controllers.windowHeightProperty().multiply(0.55));
 
             StackPane body = new StackPane(scrollPane);
             body.setPadding(new Insets(10, 0, 0, 0));
@@ -507,6 +509,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
         /// Toolbar shown during normal browsing.
         private final HBox toolbarNormal = new HBox();
+
+        /// Whether the search mechanism is currently active.
+        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
         /// Search input.
         private final JFXTextField searchField = new JFXTextField();
@@ -545,13 +550,20 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             pause.setOnFinished(event ->
                     skinnable.filteredList.setPredicate(skinnable.createPredicate(searchField.getText())));
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                pause.setRate(1);
-                pause.playFromStart();
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    pause.setRate(1);
+                    pause.playFromStart();
+                }
             });
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
                 changeToolbar(toolbarNormal);
+
                 searchField.clear();
+                pause.stop();
+
+                skinnable.filteredList.setPredicate(null);
+                isSearching.set(false);
             });
             onEscPressed(searchField, closeSearchBar::fire);
 
@@ -586,6 +598,15 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             listView.getStyleClass().add("no-horizontal-scrollbar");
             ignoreEvent(listView, KeyEvent.KEY_PRESSED, event -> event.getCode() == KeyCode.ESCAPE);
 
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label();
+            placeholderLabel.textProperty().bind(
+                Bindings.when(isSearching).then(i18n("search.no_results_found")).otherwise("")
+            );
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+
             center.setContent(listView);
             root.getContent().add(center);
         }
@@ -597,6 +618,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
                 if (newToolbar == searchBar) {
                     runInFX(searchField::requestFocus);
+
+                    isSearching.set(true);
                 }
             }
         }
