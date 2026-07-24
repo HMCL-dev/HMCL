@@ -417,6 +417,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             modInfo.loadIcon(imageContainer, null);
 
             TwoLineListItem title = new TwoLineListItem();
+            title.getTitleLabel().setWrapText(true);
             if (modInfo.getModTranslations() != null && I18n.isUseChinese())
                 title.setTitle(modInfo.getModTranslations().getDisplayName());
             else
@@ -571,6 +572,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             container.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
+            content.getTitleLabel().setTextOverrun(OverrunStyle.ELLIPSIS);
             setSelectable();
 
             imageContainer.setImage(VersionIconType.COMMAND.getIcon());
