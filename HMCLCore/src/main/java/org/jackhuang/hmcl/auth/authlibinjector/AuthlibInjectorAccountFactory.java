@@ -18,11 +18,7 @@
 package org.jackhuang.hmcl.auth.authlibinjector;
 
 import com.google.gson.JsonObject;
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.AccountID;
-import org.jackhuang.hmcl.auth.AccountFactory;
-import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.CharacterSelector;
+import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
@@ -92,7 +88,7 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
             Map<String, String> properties = JsonUtils.GSON.fromJson(
                     profilePropertiesObject,
                     JsonUtils.mapTypeOf(String.class, String.class));
-            GameProfile selected = session.getSelectedProfile();
+            GameProfile selected = session.selectedProfile();
             ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository =
                     server.getYggdrasilService().getProfileRepository();
             profileRepository.put(selected.getId(), new CompleteGameProfile(selected, properties));

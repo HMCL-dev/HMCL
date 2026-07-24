@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -186,6 +187,10 @@ public abstract class HttpRequest {
 
         public T json(Object payload) throws JsonParseException {
             return string(payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+        }
+
+        public T json(Object payload, Gson gson) throws JsonParseException {
+            return string(payload instanceof String ? (String) payload : gson.toJson(payload), "application/json");
         }
 
         public T form(Map<String, String> params) {

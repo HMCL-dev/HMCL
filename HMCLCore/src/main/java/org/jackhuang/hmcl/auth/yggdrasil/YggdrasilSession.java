@@ -31,15 +31,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Immutable
-public class YggdrasilSession {
-
-    private final String clientToken;
-    private final String accessToken;
-    private final GameProfile selectedProfile;
-    private final List<GameProfile> availableProfiles;
-
-    @Nullable
-    private final Map<String, String> userProperties;
+public record YggdrasilSession(String clientToken, String accessToken, GameProfile selectedProfile,
+                               List<GameProfile> availableProfiles, @Nullable Map<String, String> userProperties) {
 
     public YggdrasilSession(String clientToken, String accessToken, GameProfile selectedProfile, List<GameProfile> availableProfiles, Map<String, String> userProperties) {
         this.clientToken = clientToken;
@@ -49,32 +42,6 @@ public class YggdrasilSession {
         this.userProperties = userProperties;
 
         if (accessToken != null) Logger.registerAccessToken(accessToken);
-    }
-
-    public String getClientToken() {
-        return clientToken;
-    }
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    /**
-     * @return nullable (null if no character is selected)
-     */
-    public GameProfile getSelectedProfile() {
-        return selectedProfile;
-    }
-
-    /**
-     * @return nullable (null if the YggdrasilSession is loaded from storage)
-     */
-    public List<GameProfile> getAvailableProfiles() {
-        return availableProfiles;
-    }
-
-    public Map<String, String> getUserProperties() {
-        return userProperties;
     }
 
     public boolean hasProfileName() {
