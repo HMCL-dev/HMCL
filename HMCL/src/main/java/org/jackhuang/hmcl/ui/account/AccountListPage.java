@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
@@ -87,8 +88,33 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
     private final ObjectProperty<Account> selectedAccount;
 
     public AccountListPage() {
-        items = MappedObservableList.create(accounts, AccountListItem::new);
+        items = MappedObservableList.create(accounts, account -> new AccountListItem(account, this::moveItem));
         selectedAccount = createSelectedItemPropertyFor(items, Account.class);
+    }
+
+    private void moveItem(AccountListItem draggedItem, AccountListItem targetItem, boolean afterTarget) {
+        if (draggedItem == null || targetItem == null || draggedItem == targetItem) {
+            return;
+        }
+
+        ObservableList<Account> accountList = Accounts.getAccounts();
+        ArrayList<Account> reorderedAccounts = new ArrayList<>(accountList);
+        int draggedIndex = reorderedAccounts.indexOf(draggedItem.getAccount());
+        int targetIndex = reorderedAccounts.indexOf(targetItem.getAccount());
+        if (draggedIndex < 0 || targetIndex < 0 || draggedIndex == targetIndex) {
+            return;
+        }
+
+        Account draggedAccount = reorderedAccounts.remove(draggedIndex);
+        if (draggedIndex < targetIndex) {
+            targetIndex--;
+        }
+        if (afterTarget) {
+            targetIndex++;
+        }
+        reorderedAccounts.add(targetIndex, draggedAccount);
+        accountList.setAll(reorderedAccounts);
+        Accounts.setAccountSortOrder(reorderedAccounts);
     }
 
     public ObjectProperty<Account> selectedAccountProperty() {

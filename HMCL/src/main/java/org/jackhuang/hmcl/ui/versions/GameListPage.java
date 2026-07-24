@@ -185,6 +185,30 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             GameDirectoryManager.getSelectedRepository().refreshVersionsAsync().start();
         }
 
+        private void moveItem(GameListItem draggedItem, GameListItem targetItem, boolean afterTarget) {
+            if (draggedItem == null || targetItem == null || draggedItem == targetItem) {
+                return;
+            }
+
+            int draggedIndex = sourceList.indexOf(draggedItem);
+            int targetIndex = sourceList.indexOf(targetItem);
+            if (draggedIndex < 0 || targetIndex < 0 || draggedIndex == targetIndex) {
+                return;
+            }
+
+            sourceList.remove(draggedIndex);
+            if (draggedIndex < targetIndex) {
+                targetIndex--;
+            }
+            if (afterTarget) {
+                targetIndex++;
+            }
+            sourceList.add(targetIndex, draggedItem);
+            draggedItem.getRepository().setInstanceSortOrder(sourceList.stream()
+                    .map(GameListItem::getId)
+                    .toList());
+        }
+
         @Override
         protected Skin<?> createDefaultSkin() {
             return new GameListSkin(this);
@@ -250,7 +274,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     center.loadingProperty().bind(skinnable.loadingProperty());
                     center.failedReasonProperty().bind(skinnable.failedReasonProperty());
 
-                    listView.setCellFactory(x -> new GameListCell());
+                    listView.setCellFactory(x -> new GameListCell(skinnable::moveItem));
                     listView.setItems(skinnable.getItems());
 
                     ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);

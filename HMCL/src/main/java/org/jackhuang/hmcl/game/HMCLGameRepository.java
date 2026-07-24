@@ -202,10 +202,21 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public Stream<Version> getDisplayVersions() {
+        Map<String, Integer> customOrder = new HashMap<>();
+        List<String> orderedIds = settings().getInstanceSortOrder(gameDirectory.getId());
+        for (int i = 0; i < orderedIds.size(); i++) {
+            customOrder.putIfAbsent(orderedIds.get(i), i);
+        }
+
         return getVersions().stream()
                 .filter(v -> !v.isHidden())
-                .sorted(Comparator.comparing((Version v) -> Lang.requireNonNullElse(v.getReleaseTime(), Instant.EPOCH))
-                        .thenComparing(v -> VersionNumber.asVersion(v.getId())));
+                .sorted(Comparator.comparing((Version v) -> customOrder.getOrDefault(v.getId(), Integer.MAX_VALUE))
+                        .thenComparing(v -> Lang.requireNonNullElse(v.getReleaseTime(), Instant.EPOCH))
+                        .thenComparing(v -> VersionNumber.asVersion(getGameVersion(v).orElse(v.getId()))));
+    }
+
+    public void setInstanceSortOrder(List<String> instanceIds) {
+        settings().setInstanceSortOrder(gameDirectory.getId(), instanceIds);
     }
 
     @Override
