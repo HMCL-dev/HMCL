@@ -335,7 +335,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
                 if (screenshot.getAttributes() != null)
                     head.setSubtitle(I18n.formatDateTime(screenshot.getCreationTime()) + "    " + FileUtils.parseFileSize(screenshot.getFileSize()));
             } else {
-                setBody(new ImageContainer(image, Math.min(Controllers.getScene().getWidth() * 0.8, image.getWidth()), Controllers.getScene().getHeight() * 0.57));
+                setBody(new ImageContainer(image, Math.min(Controllers.windowWidthProperty().get() * 0.8, image.getWidth()), Controllers.windowHeightProperty().get() * 0.57));
                 if (screenshot.getAttributes() != null)
                     head.setSubtitle(
                             I18n.formatDateTime(screenshot.getCreationTime())
