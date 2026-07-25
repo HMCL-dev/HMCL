@@ -480,15 +480,17 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// Whether UI animations are disabled.
     @SerializedName("animationDisabled")
-    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
-            FXUtils.REDUCED_MOTION == Boolean.TRUE
-                    || !JavaRuntime.CURRENT_JIT_ENABLED
-                    || !FXUtils.GPU_ACCELERATION_ENABLED
-    );
+    private final ObjectProperty<@Nullable Boolean> animationDisabled = new SimpleObjectProperty<>();
 
     /// Returns the UI animation disable property.
-    public BooleanProperty animationDisabledProperty() {
+    public ObjectProperty<@Nullable Boolean> animationDisabledProperty() {
         return animationDisabled;
+    }
+
+    public boolean isAnimationDisabled() {
+        // Avoid accessing FXUtils too early during startup
+        return Objects.requireNonNullElseGet(animationDisabled.get(), () ->
+                FXUtils.REDUCED_MOTION == Boolean.TRUE || !JavaRuntime.CURRENT_JIT_ENABLED || !FXUtils.GPU_ACCELERATION_ENABLED);
     }
 
     // Networks
