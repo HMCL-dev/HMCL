@@ -205,6 +205,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         }).start();
 
         var oldRes = fetchResult.get();
+        fetchResult.set(LitematicaFetchResult.EMPTY);
         Task.supplyAsync(Schedulers.io(), () -> {
             var modManager = repository.getModManager(instanceId);
             modManager.analyze();
@@ -230,6 +231,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
             return new LitematicaFetchResult(litematica, forgematica, shouldUseForgematica);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (!Objects.equals(currentInstanceId, this.instanceId)) return;
             if (exception == null) {
                 fetchResult.set(result);
             } else {
