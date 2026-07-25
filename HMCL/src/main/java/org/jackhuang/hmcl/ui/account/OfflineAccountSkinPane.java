@@ -148,14 +148,14 @@ public class OfflineAccountSkinPane extends StackPane {
                             UUID uuid = this.account.getProfileID();
                             if (result == null || result.skin() == null && result.cape() == null) {
                                 canvas.updateSkin(
-                                        TexturesLoader.getDefaultSkin(uuid).getImage(),
+                                        TexturesLoader.getDefaultSkin(uuid).image(),
                                         TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
                                         null
                                 );
                                 return;
                             }
                             canvas.updateSkin(
-                                    result.skin() != null ? result.skin().image() : TexturesLoader.getDefaultSkin(uuid).getImage(),
+                                    result.skin() != null ? result.skin().image() : TexturesLoader.getDefaultSkin(uuid).image(),
                                     result.model() == TextureModel.SLIM,
                                     result.cape() != null ? result.cape().image() : null);
                         }

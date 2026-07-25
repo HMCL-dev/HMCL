@@ -272,7 +272,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 if (!optArgument.isPresent()) {
                     return null;
                 }
-                List<Argument> gameArguments = optArgument.get().getGame();
+                List<Argument> gameArguments = optArgument.get().game();
                 if (gameArguments == null) {
                     return null;
                 }
@@ -280,11 +280,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 for (int i = 0; i < gameArguments.size() - 1; i++) {
                     Argument argument = gameArguments.get(i);
                     if (argument instanceof StringArgument) {
-                        String argumentValue = ((StringArgument) argument).getArgument();
+                        String argumentValue = ((StringArgument) argument).argument();
                         if ("--fml.neoForgeVersion".equals(argumentValue) || "--fml.forgeVersion".equals(argumentValue)) {
                             Argument next = gameArguments.get(i + 1);
                             if (next instanceof StringArgument) {
-                                return ((StringArgument) next).getArgument();
+                                return ((StringArgument) next).argument();
                             }
                             return null; // Normally, there should not be two --fml.neoForgeVersion argument.
                         }

@@ -26,6 +26,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
 public class ManuallyCreatedModpackInstallTask extends Task<Path> {
 
     private final Path zipFile;
@@ -36,6 +38,8 @@ public class ManuallyCreatedModpackInstallTask extends Task<Path> {
         this.zipFile = zipFile;
         this.charset = charset;
         this.name = name;
+
+        setName(i18n("modpack.installing"));
     }
 
     @Override

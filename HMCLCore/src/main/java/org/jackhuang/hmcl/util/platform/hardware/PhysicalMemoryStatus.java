@@ -17,25 +17,10 @@
  */
 package org.jackhuang.hmcl.util.platform.hardware;
 
-public final class PhysicalMemoryStatus {
-    private final long total;
-    private final long available;
-
-    public PhysicalMemoryStatus(long total, long available) {
-        this.total = total;
-        this.available = available;
-    }
-
-    public long getTotal() {
-        return total;
-    }
+public record PhysicalMemoryStatus(long total, long available) {
 
     public long getUsed() {
         return hasAvailable() ? total - available : 0;
-    }
-
-    public long getAvailable() {
-        return available;
     }
 
     public boolean hasAvailable() {

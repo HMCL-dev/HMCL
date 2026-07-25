@@ -314,20 +314,20 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${natives_directory}", nativeFolderPath);
 
         Path javaNativeFolder = FileUtils.toAbsolute(nativeFolder);
-        @Nullable List<Argument> jvmArguments = version.getArguments().map(Arguments::getJvm).orElse(null);
+        @Nullable List<Argument> jvmArguments = version.getArguments().map(Arguments::jvm).orElse(null);
 
         if (jvmArguments != null) {
             for (Argument jvmArgument : jvmArguments) {
                 if (jvmArgument instanceof StringArgument stringArgument
-                        && stringArgument.getArgument().startsWith("-Djava.library.path=")) {
+                        && stringArgument.argument().startsWith("-Djava.library.path=")) {
 
                     // We conservatively handle parameters like "-Djava.library.path=${natives_directory}/java"
                     // to avoid extracting native libraries to unexpected locations.
 
                     String prefix = "-Djava.library.path=${natives_directory}/";
-                    if (stringArgument.getArgument().startsWith(prefix)) {
+                    if (stringArgument.argument().startsWith(prefix)) {
                         try {
-                            String subDir = stringArgument.getArgument().substring(prefix.length());
+                            String subDir = stringArgument.argument().substring(prefix.length());
                             Path actualNativeFolder = FileUtils.toAbsolute(javaNativeFolder.resolve(subDir));
 
                             if (actualNativeFolder.startsWith(javaNativeFolder)) {
@@ -344,8 +344,8 @@ public class DefaultLauncher extends Launcher {
 
         res.addAll(Arguments.parseArguments(Objects.requireNonNullElseGet(jvmArguments, this::getDefaultJVMArguments), configuration));
         Arguments argumentsFromAuthInfo = authInfo.getLaunchArguments(options);
-        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getJvm() != null && !argumentsFromAuthInfo.getJvm().isEmpty())
-            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getJvm(), configuration));
+        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.jvm() != null && !argumentsFromAuthInfo.jvm().isEmpty())
+            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.jvm(), configuration));
 
         for (String javaAgent : options.getJavaAgents()) {
             res.add("-javaagent:" + javaAgent);
@@ -360,12 +360,12 @@ public class DefaultLauncher extends Launcher {
         res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(ArrayList::new), configuration));
 
         Map<String, Boolean> features = getFeatures();
-        version.getArguments().map(Arguments::getGame).ifPresent(arguments -> res.addAll(Arguments.parseArguments(arguments, configuration, features)));
+        version.getArguments().map(Arguments::game).ifPresent(arguments -> res.addAll(Arguments.parseArguments(arguments, configuration, features)));
         if (version.getMinecraftArguments().isPresent()) {
             res.addAll(Arguments.parseArguments(this.getDefaultGameArguments(), configuration, features));
         }
-        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getGame() != null && !argumentsFromAuthInfo.getGame().isEmpty())
-            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getGame(), configuration, features));
+        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.game() != null && !argumentsFromAuthInfo.game().isEmpty())
+            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.game(), configuration, features));
 
         if (options.getQuickPlayOption() instanceof QuickPlayOption.MultiPlayer multiPlayer) {
             String address = multiPlayer.serverIP();
@@ -374,12 +374,12 @@ public class DefaultLauncher extends Launcher {
                 ServerAddress parsed = ServerAddress.parse(address);
                 if (World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
                     res.add("--quickPlayMultiplayer");
-                    res.add(parsed.getPort() >= 0 ? address : parsed.getHost() + ":25565");
+                    res.add(parsed.port() >= 0 ? address : parsed.host() + ":25565");
                 } else {
                     res.add("--server");
-                    res.add(parsed.getHost());
+                    res.add(parsed.host());
                     res.add("--port");
-                    res.add(parsed.getPort() >= 0 ? String.valueOf(parsed.getPort()) : "25565");
+                    res.add(parsed.port() >= 0 ? String.valueOf(parsed.port()) : "25565");
                 }
             } catch (IllegalArgumentException e) {
                 LOG.warning("Invalid server address: " + address, e);

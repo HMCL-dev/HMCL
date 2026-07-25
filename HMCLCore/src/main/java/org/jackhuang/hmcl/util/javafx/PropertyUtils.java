@@ -37,14 +37,7 @@ public final class PropertyUtils {
     private PropertyUtils() {
     }
 
-    public static final class PropertyHandle {
-        public final WritableValue<Object> accessor;
-        public final Observable observable;
-
-        public PropertyHandle(WritableValue<Object> accessor, Observable observable) {
-            this.accessor = accessor;
-            this.observable = observable;
-        }
+    public record PropertyHandle(WritableValue<Object> accessor, Observable observable) {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

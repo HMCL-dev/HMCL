@@ -4,17 +4,31 @@
   "version": "1.0.0",
   "name": {
     "default": "Default",
+    "en-Qabs": "ʇꞁnɐɟǝᗡ",
+    "es": "Predeterminado",
+    "ja": "デフォルト",
+    "ru": "По умолчанию",
+    "uk": "За замовчуванням",
     "zh-Hans": "默认主题",
-    "zh-Hant": "預設主題"
+    "zh-Hant": "預設主題",
+    "lzh": "預設主題"
   },
   "description": {
     "default": "HMCL Default",
+    "es": "HMCL Predeterminado",
+    "ja": "HMCL デフォルト",
+    "ru": "HMCL По умолчанию",
+    "uk": "HMCL За замовчуванням",
     "zh-Hans": "HMCL 默认主题",
-    "zh-Hant": "HMCL 預設主題"
+    "zh-Hant": "HMCL 預設主題",
+    "lzh": "HMCL 預設主題"
   },
   "authors": [
     {
-      "name": "HMCL"
+      "name": {
+        "default": "HMCL",
+        "en-Qabs": "ꞀƆWH"
+      }
     }
   ],
   "theme": {}

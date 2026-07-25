@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -79,12 +80,6 @@ public final class LegacyConfigMigrator {
 
     /// The legacy built-in profile name for the user-home game directory.
     private static final String LEGACY_HOME_PROFILE = "Home";
-
-    /// The legacy built-in current-workspace profile ID.
-    private static final GameDirectoryID LEGACY_DEFAULT_PROFILE_ID = getLegacyProfileID(LEGACY_DEFAULT_PROFILE);
-
-    /// The legacy built-in user-home profile ID.
-    private static final GameDirectoryID LEGACY_HOME_PROFILE_ID = getLegacyProfileID(LEGACY_HOME_PROFILE);
 
     /// The legacy Windows and portable configuration file name used before HMCL 3.16.
     private static final String LEGACY_CONFIG_FILENAME = "hmcl.json";
@@ -260,6 +255,10 @@ public final class LegacyConfigMigrator {
             renameMember(jsonObject, "bgpaint", "customBackgroundPaint");
             renameMember(jsonObject, "backgroundPaint", "customBackgroundPaint");
             migrateBackgroundOpacity(jsonObject, themeAppearanceOverrides);
+            jsonObject.addProperty("windowTransparent", true);
+            addThemeAppearanceOverride(
+                    themeAppearanceOverrides,
+                    LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT);
             writeThemeAppearanceOverrides(jsonObject, themeAppearanceOverrides);
             renameMember(jsonObject, "proxyUserName", "proxyUser");
             migrateLegacySelectedVersions(jsonObject);
@@ -276,6 +275,7 @@ public final class LegacyConfigMigrator {
 
             GameSettingsPresets gameSettingsPresets = new GameSettingsPresets();
             migrateLegacyPresetSettings(gameDirectories, gameSettingsPresets, legacyConfigurations);
+            migrateLegacyInstanceGameSettings(gameDirectories, gameSettingsPresets);
             migrateLegacyAllowAutoAgent(deserialized, gameSettingsPresets, legacyAllowAutoAgent);
             migrateLegacyDisableAutoGameOptions(deserialized, gameSettingsPresets, legacyDisableAutoGameOptions);
             DetachedSettings detachedSettings = new DetachedSettings(gameDirectories, gameSettingsPresets,
@@ -1272,18 +1272,95 @@ public final class LegacyConfigMigrator {
                     continue;
                 }
 
-                legacyParent = LegacyGameSettingsMigrator.toPreset(legacyGameSettings, profileName, legacySettingObject);
+                legacyParent = LegacyGameSettingsMigrator.toPreset(legacyGameSettings, gameSettingsPresets.newPresetAutoNameNumber(), legacySettingObject);
                 gameSettingsPresets.getPresets().add(legacyParent);
             }
         }
     }
 
+    /// Migrates existing instances under migrated legacy game directories to explicit instance settings.
+    static void migrateLegacyInstanceGameSettings(
+            GameDirectories gameDirectories,
+            GameSettingsPresets gameSettingsPresets) {
+        Objects.requireNonNull(gameDirectories);
+        Objects.requireNonNull(gameSettingsPresets);
+
+        for (GameDirectory gameDirectory : gameDirectories.getGameDirectories()) {
+            @Nullable GameSettingsPresetID legacyGameSettings = gameDirectory.getLegacyGameSettings();
+            if (legacyGameSettings == null) {
+                continue;
+            }
+
+            GameSettings.Preset legacyParent = gameSettingsPresets.getPreset(legacyGameSettings);
+            if (legacyParent == null) {
+                continue;
+            }
+
+            migrateLegacyInstanceGameSettings(gameDirectory.getPath().toPath(), legacyGameSettings, legacyParent);
+        }
+    }
+
+    /// Migrates existing instances under one game directory to explicit instance settings.
+    private static void migrateLegacyInstanceGameSettings(
+            Path gameDirectory,
+            GameSettingsPresetID legacyGameSettings,
+            GameSettings.Preset legacyParent) {
+        Path versionsDirectory = gameDirectory.resolve("versions");
+        if (!Files.isDirectory(versionsDirectory)) {
+            return;
+        }
+
+        try (var stream = Files.list(versionsDirectory)) {
+            stream.filter(Files::isDirectory)
+                    .forEach(instanceRoot -> migrateLegacyInstanceGameSettingsInVersionRoot(
+                            instanceRoot,
+                            legacyGameSettings,
+                            legacyParent));
+        } catch (IOException e) {
+            LOG.warning("Failed to migrate legacy instance game settings under " + versionsDirectory, e);
+        }
+    }
+
+    /// Migrates one existing instance to explicit instance settings.
+    private static void migrateLegacyInstanceGameSettingsInVersionRoot(
+            Path instanceRoot,
+            GameSettingsPresetID legacyGameSettings,
+            GameSettings.Preset legacyParent) {
+        @Nullable Path instanceId = instanceRoot.getFileName();
+        if (instanceId == null || !Files.isRegularFile(instanceRoot.resolve(instanceId.toString() + ".json"))) {
+            return;
+        }
+
+        Path currentSettings = instanceRoot.resolve(LegacyGameSettingsMigrator.INSTANCE_METADATA_DIRECTORY)
+                .resolve(LegacyGameSettingsMigrator.INSTANCE_CONFIG_DIRECTORY)
+                .resolve(LegacyGameSettingsMigrator.INSTANCE_GAME_SETTINGS_FILENAME);
+        if (Files.exists(currentSettings)) {
+            return;
+        }
+        if (Files.exists(instanceRoot.resolve(LegacyGameSettingsMigrator.LEGACY_INSTANCE_SETTINGS_FILENAME))) {
+            return;
+        }
+
+        GameSettings.Instance setting = new GameSettings.Instance();
+        setting.parentProperty().setValue(legacyGameSettings);
+        if (legacyParent.defaultIsolationTypeProperty().getValue() == DefaultIsolationType.ALWAYS
+                && StringUtils.isBlank(legacyParent.runningDirectoryProperty().getValue())) {
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+        }
+
+        try {
+            FileUtils.saveSafely(currentSettings, LauncherSettings.SETTINGS_GSON.toJson(setting));
+        } catch (IOException e) {
+            LOG.warning("Failed to save migrated instance game settings " + currentSettings, e);
+        }
+    }
+
     /// Returns the legacy profile name used in `configurations`.
     private static @Nullable String getLegacyProfileName(GameDirectory gameDirectory) {
-        if (LEGACY_DEFAULT_PROFILE_ID.equals(gameDirectory.getId())) {
+        if (GameDirectoryManager.DEFAULT_GAME_DIRECTORY_ID.equals(gameDirectory.getId())) {
             return LEGACY_DEFAULT_PROFILE;
         }
-        if (LEGACY_HOME_PROFILE_ID.equals(gameDirectory.getId())) {
+        if (GameDirectoryManager.HOME_GAME_DIRECTORY_ID.equals(gameDirectory.getId())) {
             return LEGACY_HOME_PROFILE;
         }
         return GameDirectoryManager.getGameDirectoryCustomName(gameDirectory);

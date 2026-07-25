@@ -7,14 +7,17 @@
 }
 
 .log-window {
+    -fixed-log-background: #ffffff;
     -fixed-log-toggle-selected: #000000;
     -fixed-log-toggle-unselected: #6C757D;
-    -fixed-log-text-fill: #000000;
-    -fixed-log-trace: #EEE9E0;
-    -fixed-log-debug: #EEE9E0;
-    -fixed-log-info: #FFFFFF;
-    -fixed-log-warn: #FFEECC;
-    -fixed-log-error: #FFCCBB;
-    -fixed-log-fatal: #F7A699;
-    -fixed-log-selected: #C4C4C4;
+    -fixed-log-text-fill: #1f1f1f;
+    -fixed-log-trace-background: #EEE9E0;
+    -fixed-log-debug-background: #EEE9E0;
+    -fixed-log-info-background: #FFFFFF;
+    -fixed-log-warn-background: #fef6d5;
+    -fixed-log-warn-text-fill:  #3e2f00;
+    -fixed-log-error-background: #fcebeb;
+    -fixed-log-error-text-fill: #410e0b;
+    -fixed-log-fatal-background: #F7A699;
+    -fixed-log-selected: #f2f2f2;
 }

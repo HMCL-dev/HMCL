@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -43,11 +42,23 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public final class LegacyGameSettingsMigrator {
     /// Legacy file name used by old per-version `VersionSetting` data.
-    private static final String LEGACY_INSTANCE_SETTINGS_FILENAME = "hmclversion.cfg";
+    static final String LEGACY_INSTANCE_SETTINGS_FILENAME = "hmclversion.cfg";
 
     /// Receipt file name used to record successful legacy per-version settings migration.
     private static final String LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME =
             "instance-game-settings.migration-receipt.json";
+
+    /// Directory under the version root that stores HMCL-managed instance metadata.
+    static final String INSTANCE_METADATA_DIRECTORY = ".hmcl";
+
+    /// Directory under the instance metadata directory that stores instance configuration files.
+    static final String INSTANCE_CONFIG_DIRECTORY = "config";
+
+    /// Directory under the instance metadata directory that stores instance state files.
+    private static final String INSTANCE_STATE_DIRECTORY = "state";
+
+    /// Current file name for instance-specific game settings.
+    static final String INSTANCE_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
 
     /// Legacy game directory modes stored by old configuration files.
     private enum GameDirectoryType {
@@ -101,9 +112,9 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
-    public static GameSettings.Preset toPreset(GameSettingsPresetID id, String name, @Nullable JsonObject source) {
+    public static GameSettings.Preset toPreset(GameSettingsPresetID id, int autoNameNumber, @Nullable JsonObject source) {
         GameSettings.Preset target = new GameSettings.Preset(id);
-        target.nameProperty().setValue(LocalizedText.plain(name));
+        target.autoNameNumberProperty().setValue(autoNameNumber);
         if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
         }

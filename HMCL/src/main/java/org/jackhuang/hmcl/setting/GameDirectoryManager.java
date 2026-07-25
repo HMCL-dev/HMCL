@@ -39,6 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.*;
@@ -53,6 +54,14 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// [LauncherSettings] directly.
 @NotNullByDefault
 public final class GameDirectoryManager {
+
+    /// The stable ID shared by newly created and migrated current-workspace game directories.
+    static final GameDirectoryID DEFAULT_GAME_DIRECTORY_ID =
+            new GameDirectoryID(new UUID(0x7105bc1f490e5e8cL, 0x878cf5844c3d4bc3L));
+
+    /// The stable ID shared by newly created and migrated user-home game directories.
+    static final GameDirectoryID HOME_GAME_DIRECTORY_ID =
+            new GameDirectoryID(new UUID(0xf3eafde8506e5a77L, 0xbc88f24b4728dfb2L));
 
     /// The default current-workspace game directory path.
     private static final PortablePath CURRENT_GAME_DIRECTORY_PATH = PortablePath.of(".minecraft");
@@ -154,12 +163,14 @@ public final class GameDirectoryManager {
         if (localGameDirectories().isNewlyCreated() && localGameDirectories().getGameDirectories().isEmpty()) {
             needRebuildGameDirectories = true;
             GameDirectories gameDirectories = localGameDirectories();
-            gameDirectories.getGameDirectories().add(new GameDirectory(newGameDirectoryId(), null, CURRENT_GAME_DIRECTORY_PATH));
+            gameDirectories.getGameDirectories().add(new GameDirectory(
+                    DEFAULT_GAME_DIRECTORY_ID, null, CURRENT_GAME_DIRECTORY_PATH));
         }
         if (userGameDirectories().isNewlyCreated() && userGameDirectories().getGameDirectories().isEmpty()) {
             needRebuildGameDirectories = true;
             GameDirectories gameDirectories = userGameDirectories();
-            gameDirectories.getGameDirectories().add(new GameDirectory(newGameDirectoryId(), null, HOME_GAME_DIRECTORY_PATH));
+            gameDirectories.getGameDirectories().add(new GameDirectory(
+                    HOME_GAME_DIRECTORY_ID, null, HOME_GAME_DIRECTORY_PATH));
         }
 
         needRebuildGameDirectories |= createDefaultGameDirectoriesIfEmpty();
@@ -216,9 +227,11 @@ public final class GameDirectoryManager {
         if (localGameDirectories().getGameDirectories().isEmpty()
                 && userGameDirectories().getGameDirectories().isEmpty()) {
             localGameDirectories().getGameDirectories()
-                    .add(new GameDirectory(newGameDirectoryId(), null, CURRENT_GAME_DIRECTORY_PATH));
+                    .add(new GameDirectory(
+                            DEFAULT_GAME_DIRECTORY_ID, null, CURRENT_GAME_DIRECTORY_PATH));
             userGameDirectories().getGameDirectories()
-                    .add(new GameDirectory(newGameDirectoryId(), null, HOME_GAME_DIRECTORY_PATH));
+                    .add(new GameDirectory(
+                            HOME_GAME_DIRECTORY_ID, null, HOME_GAME_DIRECTORY_PATH));
             return true;
         } else {
             return false;

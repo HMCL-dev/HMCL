@@ -24,7 +24,7 @@ import java.util.Objects;
 /**
  * @author Glavo
  */
-public final class ServerAddress {
+public record ServerAddress(String host, int port) {
 
     private static final int UNKNOWN_PORT = -1;
 
@@ -86,9 +86,6 @@ public final class ServerAddress {
         }
     }
 
-    private final String host;
-    private final int port;
-
     public ServerAddress(@NotNull String host) {
         this(host, UNKNOWN_PORT);
     }
@@ -98,28 +95,8 @@ public final class ServerAddress {
         this.port = port;
     }
 
-    public String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof ServerAddress)) return false;
-        ServerAddress that = (ServerAddress) o;
-        return port == that.port && Objects.equals(host, that.host);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(host, port);
-    }
-
-    @Override
-    public String toString() {
+    public @NotNull String toString() {
         return String.format("ServerAddress[host='%s', port=%d]", host, port);
     }
 }

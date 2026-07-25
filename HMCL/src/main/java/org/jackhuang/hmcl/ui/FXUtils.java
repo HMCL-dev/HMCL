@@ -92,11 +92,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -1691,6 +1687,7 @@ public final class FXUtils {
 
         control.setOnContextMenuRequested(e -> {
             boolean hasNoSelection = control.getSelectedText().isEmpty();
+            boolean isPassword = control instanceof PasswordField;
 
             IconedMenuItem undo = new IconedMenuItem(SVG.UNDO, i18n("menu.undo"), control::undo, popup);
             IconedMenuItem redo = new IconedMenuItem(SVG.REDO, i18n("menu.redo"), control::redo, popup);
@@ -1704,9 +1701,9 @@ public final class FXUtils {
 
             undo.setDisable(!control.isUndoable());
             redo.setDisable(!control.isRedoable());
-            cut.setDisable(hasNoSelection);
+            cut.setDisable(hasNoSelection || isPassword);
             delete.setDisable(hasNoSelection);
-            copy.setDisable(hasNoSelection);
+            copy.setDisable(hasNoSelection || isPassword);
             paste.setDisable(!Clipboard.getSystemClipboard().hasString());
             selectall.setDisable(control.getText() == null || control.getText().isEmpty());
 
