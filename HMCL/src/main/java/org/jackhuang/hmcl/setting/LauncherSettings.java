@@ -87,6 +87,9 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Theme appearance override key for title-bar transparency.
     public static final String THEME_APPEARANCE_TITLE_BAR_TRANSPARENT = "titleBarTransparent";
 
+    /// Theme appearance override key for window transparency.
+    public static final String THEME_APPEARANCE_WINDOW_TRANSPARENT = "windowTransparent";
+
     /// Theme appearance override key for the primary background source.
     public static final String THEME_APPEARANCE_BACKGROUND = "background";
 
@@ -336,6 +339,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return titleBarTransparent;
     }
 
+    /// Whether translucent launcher backgrounds reveal content behind the window.
+    @SerializedName("windowTransparent")
+    private final BooleanProperty windowTransparent = new SimpleBooleanProperty(false);
+
+    /// Returns the window transparency property.
+    public BooleanProperty windowTransparentProperty() {
+        return windowTransparent;
+    }
+
     // Background source
 
     /// The launcher background source type.
@@ -468,15 +480,17 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// Whether UI animations are disabled.
     @SerializedName("animationDisabled")
-    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
-            FXUtils.REDUCED_MOTION == Boolean.TRUE
-                    || !JavaRuntime.CURRENT_JIT_ENABLED
-                    || !FXUtils.GPU_ACCELERATION_ENABLED
-    );
+    private final ObjectProperty<@Nullable Boolean> animationDisabled = new SimpleObjectProperty<>();
 
     /// Returns the UI animation disable property.
-    public BooleanProperty animationDisabledProperty() {
+    public ObjectProperty<@Nullable Boolean> animationDisabledProperty() {
         return animationDisabled;
+    }
+
+    public boolean isAnimationDisabled() {
+        // Avoid accessing FXUtils too early during startup
+        return Objects.requireNonNullElseGet(animationDisabled.get(), () ->
+                FXUtils.REDUCED_MOTION == Boolean.TRUE || !JavaRuntime.CURRENT_JIT_ENABLED || !FXUtils.GPU_ACCELERATION_ENABLED);
     }
 
     // Networks

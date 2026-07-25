@@ -15,22 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.setting;
+package org.jackhuang.hmcl.theme;
 
+import javafx.scene.layout.Background;
 import org.jetbrains.annotations.NotNullByDefault;
 
-/// Selects the source used to choose the launcher Monet theme color seed.
+import java.util.Objects;
+
+/// A launcher background and the opacity applied by its rendering node.
+///
+/// @param background the JavaFX background rendered by the launcher
+/// @param opacity     the node opacity in the range `[0, 1]`
 @NotNullByDefault
-public enum ThemeColorType {
-    /// Uses the built-in launcher default theme color.
-    DEFAULT,
+public record LauncherBackground(Background background, double opacity) {
+    /// Creates a launcher background value.
+    public LauncherBackground {
+        Objects.requireNonNull(background);
+        if (!Double.isFinite(opacity) || opacity < 0.0 || opacity > 1.0) {
+            throw new IllegalArgumentException("Launcher background opacity must be between 0 and 1: " + opacity);
+        }
+    }
 
-    /// Follows the accent color provided by the operating system.
-    SYSTEM,
-
-    /// Uses the custom launcher theme color selected by the user.
-    CUSTOM,
-
-    /// Extracts the launcher theme color from the current background when possible.
-    BACKGROUND
 }
