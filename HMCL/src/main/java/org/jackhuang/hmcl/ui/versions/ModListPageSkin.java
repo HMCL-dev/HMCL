@@ -109,6 +109,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         pane.getStyleClass().addAll("notice-pane");
 
         ComponentList root = new ComponentList();
+        pane.getChildren().setAll(root);
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
         listView.getStyleClass().add("no-horizontal-scrollbar");
