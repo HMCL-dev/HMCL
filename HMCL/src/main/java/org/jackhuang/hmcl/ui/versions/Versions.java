@@ -263,7 +263,7 @@ public final class Versions {
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
-            Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
+            Path file = Controllers.showSaveDialog(chooser);
             if (file != null) {
                 if (!isValidScriptExtension(FileUtils.getExtension(file))) {
                     String defaultExt = getDefaultScriptExtension();
