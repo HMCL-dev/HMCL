@@ -59,12 +59,12 @@ public class GameAdvancedListItem extends AdvancedListItem {
         if (repositoryChanged) {
             repository = GameDirectoryManager.getSelectedRepository();
             onVersionIconChangedListener = repository.onVersionIconChanged.registerWeak(event -> {
-                this.loadVersion();
+                FXUtils.runInFX(this::loadVersion);
             });
 
             if (!repository.isLoaded()) {
                 onRefreshedVersionsListener = EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
-                        .registerWeak(event -> loadVersion());
+                        .registerWeak(event -> FXUtils.runInFX(this::loadVersion));
                 return;
             }
         }

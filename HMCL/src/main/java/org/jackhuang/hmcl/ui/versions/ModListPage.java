@@ -99,6 +99,9 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private void loadMods(ModManager modManager) {
         setLoading(true);
 
+        if (this.modManager != modManager) {
+            getItems().clear();
+        }
         this.modManager = modManager;
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
@@ -111,6 +114,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
+            if (this.modManager != modManager) {
+                return;
+            }
+
             supportedLoaders.clear();
             supportedLoaders.addAll(modManager.getSupportedLoaders());
 
@@ -128,7 +135,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.add.title"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.litemod"));
-        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
 
         if (res == null) return;
 
@@ -191,6 +198,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
+        if (isLoading()) {
+            return;
+        }
+
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = repository.getGameVersion(instanceId);

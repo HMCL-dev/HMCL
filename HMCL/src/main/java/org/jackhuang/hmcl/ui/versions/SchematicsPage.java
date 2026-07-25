@@ -263,7 +263,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         fileChooser.setTitle(i18n("schematics.add.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
                 i18n("extension.schematic"), "*.litematic", "*.nbt", "*.schematic", "*.schem"));
-        List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
         if (files != null && !files.isEmpty()) {
             addFiles(files);
         }
@@ -795,6 +795,14 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             root.getStyleClass().add("no-padding");
             listView = new JFXListView<>();
             listView.setSelectionModel(new NoneMultipleSelectionModel<>());
+
+            {
+                StackPane placeholderContainer = new StackPane();
+                placeholderContainer.getStyleClass().add("notice-pane");
+                Label placeholderLabel = new Label(i18n("schematics.empty"));
+                placeholderContainer.getChildren().add(placeholderLabel);
+                listView.setPlaceholder(placeholderContainer);
+            }
 
             {
                 var toolbar = new HBox();
