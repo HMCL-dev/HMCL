@@ -128,23 +128,25 @@ public final class I18n {
         return MinecraftWiki.getWikiLink(locale, remoteVersion);
     }
 
+    public static @Nullable String translateLoaderType(LoaderType loaderType) {
+        if (loaderType instanceof ModLoaderType modLoaderType) {
+            return switch (modLoaderType) {
+                case FORGE -> i18n("install.installer.forge");
+                case CLEANROOM -> i18n("install.installer.cleanroom");
+                case NEO_FORGE -> i18n("install.installer.neoforge");
+                case FABRIC -> i18n("install.installer.fabric");
+                case LITE_LOADER -> i18n("install.installer.liteloader");
+                case QUILT -> i18n("install.installer.quilt");
+                case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
+                default -> null;
+            };
+        }
+        return null;
+    }
+
     public static @Nullable String translateLoaderType(Either<LoaderType, String> loader) {
         return loader.map(
-                loaderType -> {
-                    if (loaderType instanceof ModLoaderType modLoaderType) {
-                        return switch (modLoaderType) {
-                            case FORGE -> i18n("install.installer.forge");
-                            case CLEANROOM -> i18n("install.installer.cleanroom");
-                            case NEO_FORGE -> i18n("install.installer.neoforge");
-                            case FABRIC -> i18n("install.installer.fabric");
-                            case LITE_LOADER -> i18n("install.installer.liteloader");
-                            case QUILT -> i18n("install.installer.quilt");
-                            case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                            default -> null;
-                        };
-                    }
-                    return null;
-                },
+                I18n::translateLoaderType,
                 s -> "bungeecord".equalsIgnoreCase(s) ? "BungeeCord" : StringUtils.capitalizeWords(s)
         );
     }

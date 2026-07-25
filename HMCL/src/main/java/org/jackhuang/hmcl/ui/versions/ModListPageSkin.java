@@ -77,6 +77,7 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.translateLoaderType;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
@@ -622,15 +623,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 content.addTagWarning(i18n("mods.unknown"));
             } else if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
-                switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
-                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
-                    case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
-                    case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
-                    case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
-                    case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
-                    case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
-                }
+                content.addTagWarning(translateLoaderType(dataItem.getModInfo().getModLoaderType()));
             }
 
             String modVersion = modInfo.getVersion();
