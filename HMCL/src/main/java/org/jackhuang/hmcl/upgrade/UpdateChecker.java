@@ -90,7 +90,7 @@ public final class UpdateChecker {
 
     private static RemoteVersion checkUpdate(UpdateChannel channel, boolean preview) throws IOException {
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-            throw new IOException("Self verification failed");
+            throw new SelfVerificationException();
         }
 
         var query = new LinkedHashMap<String, String>();

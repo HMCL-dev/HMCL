@@ -110,37 +110,34 @@ public final class SettingsPage extends ScrollPane {
 
                     final StringProperty lblUpdateSubProperty = updatePane.subtitleProperty();
 
-                    if (IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK || IntegrityChecker.isSelfVerified()) {
-                        updateListener = any -> {
-                            boolean outdated = UpdateChecker.isOutdated();
+                    updateListener = any -> {
+                        boolean outdated = UpdateChecker.isOutdated();
 
-                            updateButton.setVisible(outdated);
-                            updateButton.setManaged(outdated);
-                            updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), outdated);
+                        updateButton.setVisible(outdated);
+                        updateButton.setManaged(outdated);
+                        updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), outdated);
 
-                            if (UpdateChecker.isOutdated()) {
-                                lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().version()));
-                            } else if (UpdateChecker.isCheckingUpdate()) {
-                                lblUpdateSubProperty.set(i18n("update.checking"));
-                            } else if (UpdateChecker.errorProperty().get() != null) {
-                                Throwable t = UpdateChecker.errorProperty().get();
+                        if (outdated) {
+                            lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().version()));
+                        } else if (UpdateChecker.isCheckingUpdate()) {
+                            lblUpdateSubProperty.set(i18n("update.checking"));
+                        } else if (UpdateChecker.errorProperty().get() != null) {
+                            Throwable t = UpdateChecker.errorProperty().get();
+                            if (t instanceof SelfVerificationException) {
+                                lblUpdateSubProperty.set(i18n("update.unverified"));
+                            } else {
                                 String msg = t.getClass().getSimpleName() + ": " + t.getLocalizedMessage();
                                 lblUpdateSubProperty.set(i18n("update.check_failed", msg));
-                            } else {
-                                lblUpdateSubProperty.set(i18n("update.latest"));
                             }
-                        };
-                        UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
-                        UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
-                        UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
-                        UpdateChecker.errorProperty().addListener(new WeakInvalidationListener(updateListener));
-                        updateListener.invalidated(null);
-                    } else {
-                        updateButton.setVisible(false);
-                        updateButton.setManaged(false);
-                        lblUpdateSubProperty.set(i18n("update.unverified"));
-                        updateListener = null;
-                    }
+                        } else {
+                            lblUpdateSubProperty.set(i18n("update.latest"));
+                        }
+                    };
+                    UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
+                    UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
+                    UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
+                    UpdateChecker.errorProperty().addListener(new WeakInvalidationListener(updateListener));
+                    updateListener.invalidated(null);
 
                     updatePaneList.getContent().add(updatePane);
                 }
