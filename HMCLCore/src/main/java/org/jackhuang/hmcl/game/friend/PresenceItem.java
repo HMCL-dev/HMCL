@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game.friend;
 import com.google.gson.annotations.SerializedName;
 
 import java.time.Instant;
+import java.util.UUID;
 
-public record PresenceItem(@SerializedName("profileId") String profileId, @SerializedName("status") EnumPresenceStatus status , @SerializedName("lastUpdated") Instant lastUpdated) {
+public record PresenceItem(@SerializedName("profileId") UUID profileId, @SerializedName("status") EnumPresenceStatus status , @SerializedName("lastUpdated") Instant lastUpdated) {
 }

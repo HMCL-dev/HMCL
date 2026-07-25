@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.game.friend.EnumPresenceStatus;
 import org.jackhuang.hmcl.game.friend.EnumUpdateType;
-import org.jackhuang.hmcl.game.friend.FriendControl;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -51,7 +50,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class FriendListCell extends MDListCell<FriendListItem> {
     private final Account account;
-    private final FriendControl control;
     private final Canvas avatar = new Canvas(32, 32);
     private final TwoLineListItem twoLineListItem = new TwoLineListItem();
 
@@ -59,13 +57,13 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
     private final JFXButton deleteButton = FXUtils.newToggleButton4(SVG.PERSON_OFF);
     private final JFXButton acceptButton = FXUtils.newToggleButton4(SVG.PERSON_CHECK);
     private final JFXButton rejectButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
+    private final JFXButton revokeButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
     private final HBox actions = new HBox();
 
-    public FriendListCell(JFXListView<FriendListItem> listView, Account account, FriendControl control, FriendListPage friendListPage) {
+    public FriendListCell(JFXListView<FriendListItem> listView, Account account, FriendListPage friendListPage) {
         super(listView);
 
         this.account = account;
-        this.control = control;
 
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(8, 8, 8, 8));
@@ -90,6 +88,9 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
 
         rejectButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.reject.confirm"), i18n("account.friend.reject.failed")));
         FXUtils.installFastTooltip(rejectButton, i18n("account.friend.reject"));
+
+        revokeButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.revoke"), i18n("account.friend.revoke")));
+        FXUtils.installFastTooltip(revokeButton, i18n("account.friend.revoke"));
 
         actions.setAlignment(Pos.CENTER_RIGHT);
 
@@ -131,7 +132,10 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
 
         var statusText = i18n("account.friend.presence_status." + (item.presenceStatus() == null ? EnumPresenceStatus.OFFLINE : item.presenceStatus()).name().toLowerCase(Locale.ROOT));
 
-        twoLineListItem.setSubtitle(i18n("account.friend.presence_status.last_updated", I18n.formatDateTime(item.lastUpdated())) + " / " + statusText);
+        if (item.lastUpdated() != null)
+            twoLineListItem.setSubtitle(i18n("account.friend.presence_status.last_updated", I18n.formatDateTime(item.lastUpdated())) + " / " + statusText);
+        else
+            twoLineListItem.setSubtitle(statusText);
 
         twoLineListItem.getTags().clear();
         if (item.status() != FriendStatus.NORMAL) {
@@ -146,6 +150,8 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
             actions.getChildren().addAll(deleteButton);
         } else if (item.status() == FriendStatus.INCOMING) {
             actions.getChildren().addAll(acceptButton, rejectButton);
+        } else if (item.status() == FriendStatus.OUTGOING) {
+            actions.getChildren().addAll(revokeButton);
         }
     }
 }

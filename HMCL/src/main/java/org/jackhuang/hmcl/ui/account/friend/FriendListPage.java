@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -120,7 +121,7 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
         btnOk.getStyleClass().add("dialog-accept");
         stackPane.getChildren().setAll(btnOk);
 
-        var dialog = new MessageDialogPane.Builder(i18n(text, item.name()), i18n("message.question"), MessageDialogPane.MessageType.QUESTION)
+        var dialog = new MessageDialogPane.Builder(String.format(text, item.name()), i18n("message.question"), MessageDialogPane.MessageType.QUESTION)
                 .addAction(stackPane)
                 .addCancel(null)
                 .build();
@@ -143,15 +144,15 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
             return;
         }
 
-        Map<String, PresenceItem> presenceMap = presence == null || presence.presence() == null
+        Map<UUID, PresenceItem> presenceMap = presence == null || presence.presence() == null
                 ? Map.of()
                 : presence.presence().stream()
                 .collect(Collectors.toMap(PresenceItem::profileId, Function.identity()));
 
         List<Map.Entry<List<FriendItem>, FriendStatus>> sources = List.of(
+                Map.entry(friends.incomingRequests(), FriendStatus.INCOMING),
                 Map.entry(friends.friends(), FriendStatus.NORMAL),
-                Map.entry(friends.outgoingRequests(), FriendStatus.OUTGOING),
-                Map.entry(friends.incomingRequests(), FriendStatus.INCOMING)
+                Map.entry(friends.outgoingRequests(), FriendStatus.OUTGOING)
         );
 
         sources.forEach(entry ->
