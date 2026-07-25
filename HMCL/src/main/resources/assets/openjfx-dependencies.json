@@ -443,25 +443,25 @@
         "module": "javafx.base",
         "groupId": "org.glavo.hmcl.openjfx",
         "artifactId": "javafx-base",
-        "version": "14.0.2.1-freebsd",
+        "version": "21.0.11-freebsd",
         "classifier": "freebsd",
-        "sha1": "7bac900f0ab0d4d6dcf178252cf37ee1e0470d40"
+        "sha1": "91890866a767230184fe4f18ab9a19d19bed887d"
       },
       {
         "module": "javafx.graphics",
         "groupId": "org.glavo.hmcl.openjfx",
         "artifactId": "javafx-graphics",
-        "version": "14.0.2.1-freebsd",
+        "version": "21.0.11-freebsd",
         "classifier": "freebsd",
-        "sha1": "7773ce02d1dc29160801e4e077ed2a26e93bed13"
+        "sha1": "bd9f01d923db548eb8ac7889d96036cd8297520f"
       },
       {
         "module": "javafx.controls",
         "groupId": "org.glavo.hmcl.openjfx",
         "artifactId": "javafx-controls",
-        "version": "14.0.2.1-freebsd",
+        "version": "21.0.11-freebsd",
         "classifier": "freebsd",
-        "sha1": "34a3dd3ccbc898bacfdcb3256cfb87ddc50621d3"
+        "sha1": "41590baecf9637e3fc1f7d9479527cf6eb9e8d44"
       }
     ]
   }
