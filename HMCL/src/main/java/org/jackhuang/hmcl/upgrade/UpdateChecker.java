@@ -127,6 +127,7 @@ public final class UpdateChecker {
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
                     if (throwable != null) {
+                        latestVersion.set(null);
                         error.set(throwable);
                     } else {
                         error.set(null);
