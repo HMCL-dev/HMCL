@@ -35,7 +35,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.*;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -57,7 +56,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -176,7 +175,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("resourcepack.add"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"));
-        List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
         if (files != null && !files.isEmpty()) {
             addFiles(files);
         }
@@ -257,6 +256,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
+    @NotNullByDefault
     private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
         private final JFXListView<ResourcePackInfoObject> listView;
         private final JFXTextField searchField = new JFXTextField();
@@ -266,7 +266,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final HBox toolbarNormal = new HBox();
         private final HBox toolbarSelecting = new HBox();
 
-        private boolean isSearching;
+        /// Whether the search mechanism is currently active.
+        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
+        /// Timer for debouncing search input to avoid executing search on every keystroke.
+        private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
         private ResourcePackListPageSkin(ResourcePackListPage control) {
             super(control);
@@ -309,19 +313,22 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 searchBar.setPadding(new Insets(0, 5, 0, 5));
                 searchField.setPromptText(i18n("search"));
                 HBox.setHgrow(searchField, Priority.ALWAYS);
-                PauseTransition pause = new PauseTransition(Duration.millis(100));
-                pause.setOnFinished(e -> search());
+                searchPause.setOnFinished(e -> search());
                 FXUtils.onChange(searchField.textProperty(), newValue -> {
-                    pause.setRate(1);
-                    pause.playFromStart();
+                    if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                        searchPause.setRate(1);
+                        searchPause.playFromStart();
+                    }
                 });
 
                 JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                         () -> {
                             changeToolbar(toolbarNormal);
 
-                            isSearching = false;
                             searchField.clear();
+                            searchPause.stop();
+
+                            isSearching.set(false);
                             Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                         });
 
@@ -346,7 +353,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
                         selectedItem -> {
                             if (selectedItem == null)
-                                changeToolbar(isSearching ? searchBar : toolbarNormal);
+                                changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
                             else
                                 changeToolbar(toolbarSelecting);
                         });
@@ -371,6 +378,23 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
                 listView.setCellFactory(x -> new ResourcePackListCell(listView, control));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+                StackPane placeholderContainer = new StackPane();
+                placeholderContainer.getStyleClass().add("notice-pane");
+                Label placeholderLabel = new Label(i18n("resourcepack.empty"));
+                placeholderLabel.textProperty().bind(
+                    Bindings.createStringBinding(() -> {
+                        if (isSearching.get()) {
+                            return i18n("search.no_results_found");
+                        } else {
+                            return i18n("resourcepack.empty");
+                        }
+                    },
+                    isSearching)
+                );
+                placeholderContainer.getChildren().add(placeholderLabel);
+                listView.setPlaceholder(placeholderContainer);
+
                 Bindings.bindContent(listView.getItems(), control.getItems());
 
                 listView.setOnContextMenuRequested(event -> {
@@ -403,7 +427,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
 
         private void search() {
-            isSearching = true;
+            isSearching.set(true);
 
             Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
 
@@ -567,8 +591,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            Stage stage = Controllers.getStage();
-            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+            maxWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
             imageContainer.setImage(packInfoObject.getIcon());
@@ -594,7 +617,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             FXUtils.onChange(description.heightProperty(), newVal -> {
-                double maxHeight = stage.getHeight() * 0.5;
+                double maxHeight = Controllers.windowHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });
