@@ -78,12 +78,8 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.setCenter(spinnerPane);
 
         spinnerPane.setLoading(true);
-        CompletableFuture
-                .supplyAsync(() -> getTreeItem(repository.getRunDirectory(version), "minecraft", 0), Schedulers.io())
-                .thenAcceptAsync(modpackFileTreeItem -> {
-                    treeView.setRoot(rootNode = modpackFileTreeItem);
-                    spinnerPane.setLoading(false);
-                }, Schedulers.javafx());
+        loadRoot(repository, treeView, spinnerPane);
+        spinnerPane.setOnFailedAction((__) -> loadRoot(repository, treeView, spinnerPane));
 
         HBox nextPane = new HBox();
         nextPane.setPadding(new Insets(16, 16, 16, 0));
@@ -98,6 +94,21 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         }
 
         this.setBottom(nextPane);
+    }
+
+    private void loadRoot(HMCLGameRepository repository, JFXTreeView<String> treeView, SpinnerPane spinnerPane) {
+        CompletableFuture
+                .supplyAsync(() -> getTreeItem(repository.getRunDirectory(version), "minecraft", 0), Schedulers.io())
+                .whenCompleteAsync((modpackFileTreeItem, throwable) -> {
+                    if (throwable != null) {
+                        treeView.setRoot(rootNode = modpackFileTreeItem);
+                        spinnerPane.setFailedReason(null);
+                    } else {
+                        LOG.warning("Failed to load modpack file tree. Please click here to retry.");
+                        spinnerPane.setFailedReason(i18n("modpack.files.load_failed"));
+                    }
+                    spinnerPane.setLoading(false);
+                }, Schedulers.javafx());
     }
 
     private ModpackFileTreeItem getTreeItem(Path file, String basePath, int level) {
