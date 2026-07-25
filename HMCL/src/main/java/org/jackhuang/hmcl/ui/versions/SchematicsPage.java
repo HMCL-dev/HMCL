@@ -42,6 +42,8 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.scene.text.Text;
 import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.mod.LocalMod;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -54,7 +56,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
+import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.SynchronizedLazy;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -68,6 +72,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
@@ -79,6 +84,23 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.GameInstanceLoadable {
+
+    private static final SynchronizedLazy<RemoteAddon> litematicaLazy = new SynchronizedLazy<>(() -> {
+        try {
+            return ModrinthRemoteAddonRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "litematica");
+        } catch (IOException e) {
+            LOG.warning("Failed to fetch litematica", e);
+            return null;
+        }
+    });
+    private static final SynchronizedLazy<RemoteAddon> forgematicaLazy = new SynchronizedLazy<>(() -> {
+        try {
+            return ModrinthRemoteAddonRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "forgematica");
+        } catch (IOException e) {
+            LOG.warning("Failed to fetch forgematica", e);
+            return null;
+        }
+    });
 
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
@@ -101,23 +123,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
     private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
-    private final ObjectProperty<LitematicaFetchResult> fetchResult = new SimpleObjectProperty<>(this, "fetchResult", LitematicaFetchResult.EMPTY);
-    private final ObjectBinding<RemoteAddon> downloadTarget = Bindings.createObjectBinding(
-            () -> {
-                var result = fetchResult.get();
-                if (result == null) return null;
-                boolean useForgematica = result.forgematica() != null && result.useForge();
-                boolean useLitematica = result.litematica() != null && !result.useForge();
-                if (useForgematica) {
-                    return result.forgematica();
-                } else if (useLitematica) {
-                    return result.litematica();
-                } else {
-                    return null;
-                }
-            },
-            fetchResult
-    );
+    private final ObjectProperty<RemoteAddon> downloadTarget = new SimpleObjectProperty<>(this, "downloadTarget");
 
     public SchematicsPage() {
         FXUtils.applyDragListener(this,
@@ -204,36 +210,29 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             setLoading(false);
         }).start();
 
-        var oldRes = fetchResult.get();
-        fetchResult.set(LitematicaFetchResult.EMPTY);
+        downloadTarget.set(null);
         Task.supplyAsync(Schedulers.io(), () -> {
             var modManager = repository.getModManager(instanceId);
             modManager.analyze();
             var analyzer = modManager.getLibraryAnalyzer();
-            if (analyzer == null) return LitematicaFetchResult.EMPTY;
+            if (analyzer == null) return null;
             var modLoaders = analyzer.getModLoaders(); // We don't care about kilt or connector
-            boolean shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGE))
-                    && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
-            RemoteAddon litematica = oldRes.litematica(), forgematica = oldRes.forgematica();
-            if (litematica == null) {
-                try {
-                    litematica = ModrinthRemoteAddonRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "litematica");
-                } catch (IOException e) {
-                    LOG.warning("Failed to fetch litematica", e);
-                }
-            }
-            if (forgematica == null) {
-                try {
-                    forgematica = ModrinthRemoteAddonRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "forgematica");
-                } catch (IOException e) {
-                    LOG.warning("Failed to fetch forgematica", e);
-                }
-            }
-            return new LitematicaFetchResult(litematica, forgematica, shouldUseForgematica);
+            var modIds = modManager.getLocalFiles().stream()
+                    .map(LocalModFile::getMod)
+                    .map(LocalMod::getId)
+                    .collect(Collectors.toSet());
+            if (modIds.contains("litematica") || modIds.contains("forgematica")) return null;
+            var gameVersionNumber = GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion()));
+            if (!gameVersionNumber.isAtLeast("1.12", "17w31a"))
+                return null;
+            if ((modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGE))
+                    && gameVersionNumber.isAtLeast("1.16.4", "20w45a"))
+                return forgematicaLazy.get();
+            return litematicaLazy.get();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (!Objects.equals(currentInstanceId, this.instanceId)) return;
             if (exception == null) {
-                fetchResult.set(result);
+                downloadTarget.set(result);
             } else {
                 LOG.warning("Failed to fetch litematica", exception);
             }
