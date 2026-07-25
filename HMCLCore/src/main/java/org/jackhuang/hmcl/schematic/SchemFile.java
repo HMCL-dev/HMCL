@@ -23,6 +23,7 @@ import org.glavo.nbt.tag.StringTag;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.util.NBTUtils;
 import org.jackhuang.hmcl.util.Point3I;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -30,11 +31,12 @@ import java.nio.file.Path;
 import java.util.OptionalInt;
 
 import static org.jackhuang.hmcl.util.NBTUtils.tryGetShort;
+import static org.jackhuang.hmcl.util.NBTUtils.tryGetString;
 
 /// @author Calboot
 /// @see <a href="https://minecraft.wiki/w/Schematic_file_format">Schematic File Format Wiki</a>
 /// @see <a href="https://github.com/Lunatrius/Schematica/blob/master/src/main/java/com/github/lunatrius/schematica/world/schematic/SchematicAlpha.java">Schematica</a>
-/// @see <a href="https://github.com/EngineHub/WorldEdit/blob/version/7.4.x/worldedit-core/src/main/java/com/sk89q/worldedit/extent/clipboard/io/SpongeSchematicReader.java">Schem</a>
+/// @see <a href="https://github.com/SpongePowered/Schematic-Specification/tree/master/versions">Sponge Spec</a>
 public final class SchemFile extends Schematic {
 
     private static final int DATA_VERSION_MC_1_13_2 = 1631;
@@ -45,6 +47,12 @@ public final class SchemFile extends Schematic {
 
         if (root.get("Materials") != null) return loadLegacy(file, root);
         else if (root.get("Version") != null) return loadSponge(file, root);
+        else {
+            var schem = root.get("Schematic");
+            if (schem instanceof CompoundTag sponge3 && sponge3.get("Version") != null) {
+                return loadSponge(file, sponge3);
+            }
+        }
         throw new IOException("No Materials tag or Version tag found");
     }
 
@@ -66,7 +74,7 @@ public final class SchemFile extends Schematic {
             }
         }
 
-        return new SchemFile(file, ((StringTag) materialsTag).getValue(), 0, 0, enclosingSize);
+        return new SchemFile(file, null, null, ((StringTag) materialsTag).getValue(), 0, 0, enclosingSize);
     }
 
     private static SchemFile loadSponge(Path file, CompoundTag root) throws IOException {
@@ -91,16 +99,39 @@ public final class SchemFile extends Schematic {
             }
         }
 
-        return new SchemFile(file, null, dataVersion, ((IntTag) versionTag).getValue(), enclosingSize);
+        Tag metaTag = root.get("Metadata");
+        String name = null, author = null;
+        if (metaTag instanceof CompoundTag meta) {
+            name = tryGetString(meta.get("Name"));
+            author = tryGetString(meta.get("Author"));
+        }
+
+        return new SchemFile(file, name, author, null, dataVersion, ((IntTag) versionTag).getValue(), enclosingSize);
     }
 
-    private final String materials;
+    private final @Nullable String name;
+    private final @Nullable String author;
+    private final @Nullable String materials;
     private final int version;
 
-    private SchemFile(Path file, @Nullable String materials, int dataVersion, int version, Point3I enclosingSize) {
+    private SchemFile(Path file, @Nullable String name, @Nullable String author, @Nullable String materials, int dataVersion, int version, Point3I enclosingSize) {
         super(file, dataVersion, enclosingSize);
+        this.name = name;
+        this.author = author;
         this.materials = materials;
         this.version = version;
+    }
+
+    @Override
+    public @NotNull String getName() {
+        if (name == null) return super.getName();
+        return name;
+    }
+
+    @Override
+    public String getAuthor() {
+        if (author == null) return super.getAuthor();
+        return author;
     }
 
     @Override
