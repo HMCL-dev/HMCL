@@ -25,6 +25,7 @@ import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -54,7 +55,7 @@ public final class UpdateChecker {
             },
             latestVersion);
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
-    private static final ReadOnlyObjectWrapper<Throwable> error = new ReadOnlyObjectWrapper<>();
+    private static final ReadOnlyObjectWrapper<@Nullable Throwable> error = new ReadOnlyObjectWrapper<>();
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get());
@@ -84,7 +85,7 @@ public final class UpdateChecker {
         return checkingUpdate.getReadOnlyProperty();
     }
 
-    public static ReadOnlyObjectProperty<Throwable> errorProperty() {
+    public static ReadOnlyObjectProperty<@Nullable Throwable> errorProperty() {
         return error.getReadOnlyProperty();
     }
 
