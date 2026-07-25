@@ -23,6 +23,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -43,7 +44,10 @@ import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -59,6 +63,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
     private final JFXButton rejectButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
     private final JFXButton revokeButton = FXUtils.newToggleButton4(SVG.PERSON_CANCEL);
     private final HBox actions = new HBox();
+    private final Map<UUID, Image> cache = new HashMap<>();
 
     public FriendListCell(JFXListView<FriendListItem> listView, Account account, FriendListPage friendListPage) {
         super(listView);
@@ -107,26 +112,32 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
 
         var uuid = item.profileId();
 
-        Task.supplyAsync(() -> {
-            CompleteGameProfile profile = null;
+        if (cache.containsKey(uuid)) {
+            TexturesLoader.drawAvatar(avatar, cache.get(uuid));
+        } else {
+            Task.supplyAsync(() -> {
+                CompleteGameProfile profile = null;
 
-            if (account instanceof YggdrasilAccount yggdrasilAccount) {
-                profile = yggdrasilAccount.getYggdrasilService().getCompleteGameProfile(uuid).orElseThrow();
-            } else if (account instanceof MicrosoftAccount microsoftAccount) {
-                profile = microsoftAccount.getService().getCompleteGameProfile(uuid).orElseThrow();
-            }
+                if (account instanceof YggdrasilAccount yggdrasilAccount) {
+                    profile = yggdrasilAccount.getYggdrasilService().getCompleteGameProfile(uuid).orElseThrow();
+                } else if (account instanceof MicrosoftAccount microsoftAccount) {
+                    profile = microsoftAccount.getService().getCompleteGameProfile(uuid).orElseThrow();
+                }
 
-            var texture = YggdrasilService.getTextures(profile).map(it -> it.get(TextureType.SKIN)).orElseThrow();
-            return TexturesLoader.loadTexture(texture);
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            if (exception == null) {
-                TexturesLoader.drawAvatar(avatar, result.image());
-                return;
-            } else LOG.warning("Failed to load skin", exception);
+                var texture = YggdrasilService.getTextures(profile).map(it -> it.get(TextureType.SKIN)).orElseThrow();
+                return TexturesLoader.loadTexture(texture);
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null) {
+                    cache.put(uuid, result.image());
+                    TexturesLoader.drawAvatar(avatar, result.image());
+                    return;
+                } else LOG.warning("Failed to load skin", exception);
 
-            var skin = TexturesLoader.getDefaultSkin(uuid);
-            TexturesLoader.drawAvatar(avatar, skin.image());
-        }).start();
+                var skin = TexturesLoader.getDefaultSkin(uuid);
+                cache.put(uuid, skin.image());
+                TexturesLoader.drawAvatar(avatar, skin.image());
+            }).start();
+        }
 
         twoLineListItem.setTitle(item.name());
 
