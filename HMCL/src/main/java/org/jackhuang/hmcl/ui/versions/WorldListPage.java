@@ -27,6 +27,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
@@ -140,7 +141,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("world.add.title"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.world"), "*.zip"));
-        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
 
         if (res == null || res.isEmpty()) return;
         installWorld(res.get(0));
@@ -216,6 +217,12 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         WorldListPageSkin() {
             super(WorldListPage.this);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("world.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
         }
 
         @Override

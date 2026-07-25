@@ -172,7 +172,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         fileChooser.setTitle(i18n("button.save_as"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension));
         fileChooser.setInitialFileName(file.file().filename());
-        Path dest = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
+        Path dest = Controllers.showSaveDialog(fileChooser);
         if (dest == null) {
             return;
         }
@@ -473,6 +473,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                             case QUILT:
                                 content.addTag(i18n("install.installer.quilt"));
                                 break;
+                            case LEGACY_FABRIC:
+                                content.addTag(i18n("install.installer.legacyfabric"));
+                                break;
                         }
                     }
 
@@ -569,8 +572,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                 this.setActions(downloadButton, saveAsButton, cancelButton);
             }
 
-            this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.8));
+            this.prefWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
+            this.prefHeightProperty().bind(Controllers.windowHeightProperty().multiply(0.8));
 
             onEscPressed(this, cancelButton::fire);
         }
