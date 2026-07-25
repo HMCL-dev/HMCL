@@ -102,7 +102,7 @@ public class InstanceIconDialog extends DialogPane {
     private void exploreIcon() {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(FXUtils.getImageExtensionFilter());
-        Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile != null) {
             TriPreference pref = SettingsManager.settings().saveCustomGameIconsProperty().get();
             if (pref == TriPreference.CONFIRM_EACH_TIME && !INSTANCE_ICONS_DIR.equals(selectedFile.getParent())) {
