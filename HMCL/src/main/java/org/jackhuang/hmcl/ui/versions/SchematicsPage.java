@@ -235,7 +235,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             if (exception == null) {
                 fetchResult.set(result);
             } else {
-                fetchResult.set(LitematicaFetchResult.EMPTY);
                 LOG.warning("Failed to fetch litematica", exception);
             }
         }).start();
