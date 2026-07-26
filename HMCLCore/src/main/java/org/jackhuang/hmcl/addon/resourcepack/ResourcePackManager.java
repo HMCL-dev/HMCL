@@ -243,6 +243,8 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         }
 
         EncodingDetector.Encoding bestEncoding = EncodingDetector.MODERN_WEB.detect(bytes).bestEncoding();
+        if (bestEncoding == EncodingDetector.Encoding.ASCII)
+            bestEncoding = EncodingDetector.Encoding.UTF_8;
 
         optionsFileEncoding = bestEncoding != null && bestEncoding.approximateCharset() != null
                 ? bestEncoding.approximateCharset() : StandardCharsets.UTF_8;
