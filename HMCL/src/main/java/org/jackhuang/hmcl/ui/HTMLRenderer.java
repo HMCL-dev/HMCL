@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -560,6 +561,7 @@ public final class HTMLRenderer {
 
     private static final class SimpleCssDeclarations {
 
+        @Unmodifiable
         private static final Map<String, String> cssPropertyMapping = Map.of(
                 "color", "-fx-fill",
                 "font-size", "-fx-font-size"

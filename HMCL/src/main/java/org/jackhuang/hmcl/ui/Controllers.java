@@ -678,12 +678,12 @@ public final class Controllers {
         }
     }
 
-    public static void openUriInBrowser(URI uri) {
+    public static void openUriInBrowser(@Nullable URI uri) {
         if (uri == null) return;
         openUriInBrowser(uri.toString());
     }
 
-    public static void openUriInBrowser(String uri) {
+    public static void openUriInBrowser(@Nullable String uri) {
         if (uri == null) return;
         var dialog = new MessageDialogPane.Builder(
                 i18n("web.open_in_browser", uri),
