@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon.resourcepack;
 
 import com.google.gson.annotations.SerializedName;
+import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
@@ -225,8 +227,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
     }
 
-    @Nullable
-    private Charset optionsFileCharset;
+    private @Nullable Charset optionsFileEncoding;
 
     @NotNull
     private Map<String, String> loadOptions() {
@@ -240,8 +241,13 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             LOG.warning("Failed to read instance options file", e);
             return options;
         }
-        optionsFileCharset = StringUtils.detectMaybeNativeTextEncoding(bytes);
-        new String(bytes, optionsFileCharset).lines().forEach(s -> {
+
+        EncodingDetector.Encoding bestEncoding = EncodingDetector.MODERN_WEB.detect(bytes).bestEncoding();
+
+        optionsFileEncoding = bestEncoding != null && bestEncoding.approximateCharset() != null
+                ? bestEncoding.approximateCharset() : StandardCharsets.UTF_8;
+        //noinspection DataFlowIssue
+        new String(bytes, optionsFileEncoding).lines().forEach(s -> {
             if (StringUtils.isNotBlank(s)) {
                 var entry = s.split(":", 2);
                 if (entry.length == 2) {
@@ -258,7 +264,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             sb.append(entry.getKey()).append(":").append(entry.getValue()).append(System.lineSeparator());
         }
         try {
-            FileUtils.saveSafely(optionsFile, sb.toString(), optionsFileCharset);
+            FileUtils.saveSafely(optionsFile, sb.toString(), optionsFileEncoding);
         } catch (IOException e) {
             LOG.warning("Failed to save instance options file", e);
         }
@@ -285,7 +291,8 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         if (requiredVersion == null) {
             lock.lock();
             try {
-                if (requiredVersion == null) requiredVersion = getPackVersion(getMinecraftVersion(), repository.getVersionJar(id));
+                if (requiredVersion == null)
+                    requiredVersion = getPackVersion(getMinecraftVersion(), repository.getVersionJar(id));
             } finally {
                 lock.unlock();
             }
