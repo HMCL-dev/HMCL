@@ -247,6 +247,12 @@ public class InstallerItem extends Control {
                 this.libraries = all;
             } else if (gameVersion.equals("1.12.2")) {
                 this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, optiFine};
+            } else if (GameVersionNumber.compare(gameVersion, "1.2.5") <= 0) {
+                this.libraries = new InstallerItem[]{game};
+            } else if (GameVersionNumber.compare(gameVersion, "1.5.1") <= 0) {
+                this.libraries = new InstallerItem[]{game, legacyfabric, legacyfabricApi};
+            } else if (GameVersionNumber.compare(gameVersion, "1.6.4") <= 0) {
+                this.libraries = new InstallerItem[]{game, forge, liteLoader, legacyfabric, legacyfabricApi};
             } else if (GameVersionNumber.compare(gameVersion, "1.13.2") <= 0) {
                 this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi};
             } else {
