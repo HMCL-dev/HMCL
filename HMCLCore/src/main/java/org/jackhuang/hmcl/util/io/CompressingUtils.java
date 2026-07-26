@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util.io;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import kala.compress.utils.BufferedDataInputSeekableChannel;
-import net.jpountz.util.ByteBufferUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
