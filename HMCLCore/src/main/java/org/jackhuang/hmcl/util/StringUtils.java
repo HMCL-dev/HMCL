@@ -651,7 +651,7 @@ public final class StringUtils {
             AutolinkExtension.create(), InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
     )).build();
 
-    public static String convertToHtml(String str, boolean rawIndentedBlocks) {
+    public static @Nullable String convertToHtml(String str, boolean rawIndentedBlocks) {
         if (str == null) return null;
         if (isBlank(str)) return "";
 

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -104,8 +105,10 @@ public interface RemoteAddonRepository {
 
     Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException;
 
+    @Nullable
     String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException;
 
+    @NotNull
     String getVersionPageUrl(RemoteAddon.Version version) throws IOException;
 
     Stream<Category> getCategories() throws IOException;

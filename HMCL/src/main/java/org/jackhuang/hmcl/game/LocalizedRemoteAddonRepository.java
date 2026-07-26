@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.ui.versions.ModTranslations;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -153,7 +154,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     }
 
     @Override
-    public String getVersionPageUrl(RemoteAddon.Version version) throws IOException {
+    public @NotNull String getVersionPageUrl(RemoteAddon.Version version) throws IOException {
         return getBackedRemoteModRepository().getVersionPageUrl(version);
     }
 }

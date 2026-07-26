@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
@@ -324,7 +325,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
-    public String getVersionPageUrl(RemoteAddon.Version version) {
+    public @NotNull String getVersionPageUrl(RemoteAddon.Version version) {
         return "%s/project/%s/version/%s".formatted(BASE, version.modid(), version.versionId()); // Modrinth will help us redirect
     }
 
