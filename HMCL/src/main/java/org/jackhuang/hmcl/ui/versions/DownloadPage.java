@@ -669,8 +669,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             setActions(closeButton);
 
-            this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.8));
+            this.prefWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
+            this.prefHeightProperty().bind(Controllers.windowHeightProperty().multiply(0.8));
 
             onEscPressed(this, closeButton::fire);
         }

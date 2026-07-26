@@ -334,8 +334,8 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
             setActions(versionPageBtn, closeButton);
 
-            this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.7));
+            this.prefWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
+            this.prefHeightProperty().bind(Controllers.windowHeightProperty().multiply(0.7));
 
             onEscPressed(this, closeButton::fire);
         }
