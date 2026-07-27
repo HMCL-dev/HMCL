@@ -80,8 +80,6 @@ import static org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM;
 
 public final class LauncherHelper {
 
-    private static final String LWJGL_3_4_1_TIP = "lwjgl3.4.1-ffm";
-
     private final HMCLGameRepository repository;
     private Account account;
     private final String selectedVersion;
@@ -203,28 +201,6 @@ public final class LauncherHelper {
                     );
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
-                .thenComposeAsync(() -> {
-                    if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
-                            || setting.getInheritable(GameSettings::noJVMOptionsProperty)
-                            || setting.getInheritable(GameSettings::noOptimizingJVMOptionsProperty)
-                            || Boolean.TRUE.equals(state().getShownTips().get(LWJGL_3_4_1_TIP))
-                            || !NativePatcher.needPatchMemoryUtil(version.get(), javaVersionRef.get().getParsedVersion())) {
-                        return Task.completed(null);
-                    } else {
-                        CompletableFuture<Void> future = new CompletableFuture<>();
-                        runInFX(() -> {
-                            Controllers.confirm(i18n("launch.advice.lwjgl_3_4_1"), i18n("launch.advice.lwjgl_3_4_1.title"), MessageType.QUESTION, () -> {
-                                state().getShownTips().put(LWJGL_3_4_1_TIP, true);
-                                enableAutoAgentForCurrentSetting();
-                                future.complete(null);
-                            }, () -> {
-                                state().getShownTips().put(LWJGL_3_4_1_TIP, true);
-                                future.complete(null);
-                            });
-                        });
-                        return Task.fromCompletableFuture(future);
-                    }
-                })
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions.Builder launchOptionsBuilder = repository.getLaunchOptions(
@@ -776,16 +752,6 @@ public final class LauncherHelper {
                     Launcher.stopWithoutPlatform();
                 });
                 break;
-        }
-    }
-
-    private void enableAutoAgentForCurrentSetting() {
-        GameSettings.Instance instance = setting.getInstance();
-        if (instance != null
-                && instance.getOverrideProperties().contains(GameSettings.PROPERTY_ALLOW_AUTO_AGENT)) {
-            instance.allowAutoAgentProperty().setValue(true);
-        } else {
-            setting.getPreset().allowAutoAgentProperty().setValue(true);
         }
     }
 

@@ -451,10 +451,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             launcherSettings.getContent().add(launcherVisibilityPane);
             launcherVisibilityPane.setTitle(i18n("settings.advanced.launcher_visible"));
 
-            var allowAutoAgentPane = createInheritableBooleanButton(GameSettings::allowAutoAgentProperty);
-            launcherSettings.getContent().add(allowAutoAgentPane);
-            allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
-            allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
+            // Hidden: LWJGL unsafe library injection now replaces javaagent approach
+            // var allowAutoAgentPane = createInheritableBooleanButton(GameSettings::allowAutoAgentProperty);
+            // launcherSettings.getContent().add(allowAutoAgentPane);
+            // allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
+            // allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
 
             var disableAutoGameOptionsPane = createInheritableBooleanButton(GameSettings::disableAutoGameOptionsProperty);
             launcherSettings.getContent().add(disableAutoGameOptionsPane);

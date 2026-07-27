@@ -78,6 +78,29 @@ public final class NativePatcher {
                                       JavaRuntime javaVersion,
                                       GameSettings.Effective settings,
                                       List<String> javaArguments) {
+        // https://github.com/LWJGL/lwjgl3/issues/1111
+        // Inject lwjgl-unsafe library to replace the javaagent approach (same as Minecraft 26.2+)
+        if (needPatchMemoryUtil(version, javaVersion.getParsedVersion())
+                && version.getLibraries().stream().noneMatch(library ->
+                "org.lwjgl".equals(library.getGroupId())
+                        && "lwjgl".equals(library.getArtifactId())
+                        && "3.4.1".equals(library.getVersion())
+                        && "unsafe".equals(library.getClassifier()))) {
+            Library unsafeLibrary = new Library(new Artifact("org.lwjgl", "lwjgl", "3.4.1", "unsafe"));
+            List<Library> libraries = new ArrayList<>(version.getLibraries());
+            for (int i = 0; i < libraries.size(); i++) {
+                Library lib = libraries.get(i);
+                if ("org.lwjgl".equals(lib.getGroupId())
+                        && "lwjgl".equals(lib.getArtifactId())
+                        && "3.4.1".equals(lib.getVersion())
+                        && lib.getClassifier() == null) {
+                    libraries.add(i, unsafeLibrary);
+                    break;
+                }
+            }
+            version = version.setLibraries(libraries);
+        }
+
         if (settings.getInheritable(GameSettings::useCustomNativesProperty)) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;
