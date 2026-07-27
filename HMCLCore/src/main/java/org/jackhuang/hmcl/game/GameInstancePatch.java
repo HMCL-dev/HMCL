@@ -32,11 +32,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @NotNullByDefault
 public record GameInstancePatch(
@@ -842,19 +838,19 @@ public record GameInstancePatch(
         if (downloads != null) {
             JsonObject downloadsObject = new JsonObject();
             for (Map.Entry<DownloadType, DownloadInfo> entry : downloads.entrySet()) {
-                downloadsObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                downloadsObject.add(entry.getKey().name().toLowerCase(Locale.ROOT), JsonUtils.GSON.toJsonTree(entry.getValue()));
             }
             json.add("downloads", downloadsObject);
         }
         if (logging != null) {
             JsonObject loggingObject = new JsonObject();
             for (Map.Entry<DownloadType, LoggingInfo> entry : logging.entrySet()) {
-                loggingObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                loggingObject.add(entry.getKey().name().toLowerCase(Locale.ROOT), JsonUtils.GSON.toJsonTree(entry.getValue()));
             }
             json.add("logging", loggingObject);
         }
         if (type != null)
-            json.addProperty("type", type.name());
+            json.addProperty("type", type.getId());
         if (time != null)
             json.addProperty("time", InstantTypeAdapter.serializeToString(time, ZoneOffset.UTC));
         if (releaseTime != null)
