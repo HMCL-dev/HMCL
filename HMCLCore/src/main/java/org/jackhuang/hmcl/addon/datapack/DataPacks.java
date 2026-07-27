@@ -249,7 +249,7 @@ public class DataPacks {
         private final BooleanProperty activeProperty;
         private final String id;
         private final LocalAddonFile.Description description;
-        private final DataPacks                  parentDataPacks;
+        private final DataPacks parentDataPacks;
 
         public Pack(Path path, boolean isDirectory, String id, LocalAddonFile.Description description, DataPacks parentDataPacks) {
             this.path = path;
