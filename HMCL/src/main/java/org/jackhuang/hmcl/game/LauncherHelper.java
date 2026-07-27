@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -898,8 +899,8 @@ public final class LauncherHelper {
                     runLater(() -> {
                         // If application was stopped and execution services did not finish termination,
                         // these codes will be executed.
-                        if (Controllers.getStage() != null) {
-                            Stage stage = Controllers.getStage();
+                        @Nullable Stage stage = Controllers.getStage();
+                        if (stage != null) {
                             stage.setIconified(false);
                             stage.hide();
                             launchingLatch.countDown();
