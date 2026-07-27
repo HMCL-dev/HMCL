@@ -37,11 +37,10 @@ public final class NBTStructureFile extends Schematic {
 
         CompoundTag root = NBTUtils.readCompressed(file);
 
-        Tag dataVersionTag = root.get("DataVersion");
-        if (dataVersionTag == null)
-            throw new IOException("DataVersion tag not found");
-        else if (!(dataVersionTag instanceof IntTag))
-            throw new IOException("DataVersion tag is not an integer");
+        if (!(root.get("blocks") instanceof ListTag<?>))
+            throw new IOException("blocks tag not found");
+        if (!(root.get("entities") instanceof ListTag<?>))
+            throw new IOException("entities tag not found");
 
         Tag sizeTag = root.get("size");
         if (sizeTag == null)
@@ -62,7 +61,7 @@ public final class NBTStructureFile extends Schematic {
             enclosingSize = new Point3I(width, height, length);
         }
 
-        return new NBTStructureFile(file, ((IntTag) dataVersionTag).getValue(), NBTUtils.tryGetString(root.get("author")), enclosingSize);
+        return new NBTStructureFile(file, tryGetInt(root.get("DataVersion")).orElse(500), NBTUtils.tryGetString(root.get("author")), enclosingSize);
     }
 
     private final String author;

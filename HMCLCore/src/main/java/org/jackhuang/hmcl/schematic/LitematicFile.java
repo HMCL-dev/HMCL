@@ -72,7 +72,7 @@ public final class LitematicFile extends Schematic {
 
         Tag subVersionTag = root.get("SubVersion");
         return new LitematicFile(file, (CompoundTag) metadataTag,
-                ((IntTag) versionTag).getValue(),
+                ((IntTag) versionTag).get(),
                 tryGetInt(subVersionTag).orElse(-1),
                 tryGetInt(root.get("MinecraftDataVersion")).orElse(0),
                 regions,
