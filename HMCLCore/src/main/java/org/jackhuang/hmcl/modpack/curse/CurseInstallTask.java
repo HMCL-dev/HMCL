@@ -112,7 +112,7 @@ public final class CurseInstallTask extends Task<Void> {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(CurseManifest.class));
 
                 if (!CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Version " + name + " is not a Curse modpack. Cannot update this version.");
+                    throw new IllegalArgumentException("Instance " + name + " is not a Curse modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }

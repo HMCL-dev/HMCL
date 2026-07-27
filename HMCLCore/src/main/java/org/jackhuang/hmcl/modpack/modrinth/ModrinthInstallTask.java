@@ -66,7 +66,7 @@ public class ModrinthInstallTask extends Task<Void> {
 
         Path json = repository.getModpackConfiguration(instanceId);
         if (repository.hasInstance(instanceId) && Files.notExists(json))
-            throw new IllegalArgumentException("Version " + instanceId + " already exists.");
+            throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
         GameBuilder builder = dependencyManager.newGameBuilder().name(instanceId).gameVersion(manifest.getGameVersion());
         for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
@@ -108,7 +108,7 @@ public class ModrinthInstallTask extends Task<Void> {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ModrinthManifest.class));
 
                 if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Version " + instanceId + " is not a Modrinth modpack. Cannot update this version.");
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Modrinth modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
