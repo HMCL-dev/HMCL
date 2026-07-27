@@ -33,7 +33,7 @@ import java.io.IOException;
 @JsonSerializable
 public record GameInstanceID(String id) implements Comparable<GameInstanceID> {
     public GameInstanceID {
-        if (id.isEmpty()) {
+        if (id.isBlank()) {
             throw new IllegalArgumentException("Game instance id cannot be empty");
         }
     }
