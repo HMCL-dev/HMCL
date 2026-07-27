@@ -899,8 +899,9 @@ public final class LauncherHelper {
                         // If application was stopped and execution services did not finish termination,
                         // these codes will be executed.
                         if (Controllers.getStage() != null) {
-                            Controllers.getStage().setIconified(false);
-                            Controllers.getStage().hide();
+                            Stage stage = Controllers.getStage();
+                            stage.setIconified(false);
+                            stage.hide();
                             launchingLatch.countDown();
                         }
                     });
