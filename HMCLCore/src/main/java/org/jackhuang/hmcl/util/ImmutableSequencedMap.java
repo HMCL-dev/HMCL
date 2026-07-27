@@ -164,18 +164,21 @@ public final class ImmutableSequencedMap<K extends @UnknownNullability Object, V
     /// {@inheritDoc}
     @Override
     public @Unmodifiable Set<K> keySet() {
+        // The caller should not modify the returned set
         return map.keySet();
     }
 
     /// {@inheritDoc}
     @Override
     public @Unmodifiable Collection<V> values() {
+        // The caller should not modify the returned set
         return map.values();
     }
 
     /// {@inheritDoc}
     @Override
     public @Unmodifiable Set<Entry<K, V>> entrySet() {
+        // The caller should not modify the returned set
         return map.entrySet();
     }
 
