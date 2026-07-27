@@ -150,6 +150,8 @@ public record GameInstanceManifest(
             json = json.deepCopy();
         }
 
+        boolean tlauncher = json.has("tlauncherVersion");
+
         Builder builder = new Builder();
 
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
@@ -215,7 +217,9 @@ public record GameInstanceManifest(
                     if (value instanceof JsonArray array) {
                         List<Library> list = new ArrayList<>(array.size());
                         for (JsonElement element : array) {
-                            Library library = JsonUtils.GSON.fromJson(element, Library.class);
+                            Library library = tlauncher
+                                    ? JsonUtils.GSON.fromJson(element, Library.TLauncher.class).toLibrary()
+                                    : JsonUtils.GSON.fromJson(element, Library.class);
                             if (library != null)
                                 list.add(library);
                         }

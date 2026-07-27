@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Lang;
@@ -50,6 +51,34 @@ public record Library(
         @SerializedName(value = "filename", alternate = {"MMC-filename"})
         @Nullable String filename
 ) implements Comparable<Library> {
+
+    @JsonSerializable
+    public record TLauncher(
+            Artifact name,
+            String url,
+            LibraryDownloadInfo artifact,
+            @SerializedName("classifies") // stupid typo made by TLauncher
+            Map<String, LibraryDownloadInfo> classifiers,
+            ExtractRules extract,
+            Map<String, String> natives,
+            List<CompatibilityRule> rules,
+            List<String> checksums
+    ) {
+        public Library toLibrary() {
+            return new Library(
+                    name,
+                    url,
+                    new LibrariesDownloadInfo(artifact, classifiers),
+                    checksums,
+                    extract,
+                    natives,
+                    rules,
+                    null,
+                    null
+            );
+        }
+    }
+
     /// A possible native descriptors can be: `[variant-]os[-key]`
     ///
     /// Variant can be an empty string, 'native', or 'natives'.
@@ -241,5 +270,4 @@ public record Library(
     public Library setClassifier(String classifier) {
         return new Library(artifact.setClassifier(classifier), url, downloads, checksums, extract, natives, rules, hint, filename);
     }
-
 }
