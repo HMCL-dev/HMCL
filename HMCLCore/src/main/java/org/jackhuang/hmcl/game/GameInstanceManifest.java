@@ -852,7 +852,7 @@ public record GameInstanceManifest(
                 if (this.downloads != null) {
                     JsonObject downloadsObject = new JsonObject();
                     for (Map.Entry<DownloadType, DownloadInfo> entry : this.downloads.entrySet()) {
-                        downloadsObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                        downloadsObject.add(entry.getKey().name().toLowerCase(Locale.ROOT), JsonUtils.GSON.toJsonTree(entry.getValue()));
                     }
                     rawJson.add("downloads", downloadsObject);
                 } else {
@@ -867,7 +867,7 @@ public record GameInstanceManifest(
                 if (this.logging != null) {
                     JsonObject loggingObject = new JsonObject();
                     for (Map.Entry<DownloadType, LoggingInfo> entry : this.logging.entrySet()) {
-                        loggingObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                        loggingObject.add(entry.getKey().name().toLowerCase(Locale.ROOT), JsonUtils.GSON.toJsonTree(entry.getValue()));
                     }
                     rawJson.add("logging", loggingObject);
                 } else {

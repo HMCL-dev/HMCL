@@ -502,7 +502,7 @@ public record GameInstancePatch(
                 if (this.downloads != null) {
                     JsonObject downloadsObject = new JsonObject();
                     for (Map.Entry<DownloadType, DownloadInfo> entry : this.downloads.entrySet()) {
-                        downloadsObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                        downloadsObject.add(entry.getKey().name().toLowerCase(Locale.ROOT), JsonUtils.GSON.toJsonTree(entry.getValue()));
                     }
                     rawJson.add("downloads", downloadsObject);
                 } else {
@@ -517,7 +517,7 @@ public record GameInstancePatch(
                 if (this.logging != null) {
                     JsonObject loggingObject = new JsonObject();
                     for (Map.Entry<DownloadType, LoggingInfo> entry : this.logging.entrySet()) {
-                        loggingObject.add(entry.getKey().name(), JsonUtils.GSON.toJsonTree(entry.getValue()));
+                        loggingObject.add(entry.getKey().name().toLowerCase(Locale.ROOT), JsonUtils.GSON.toJsonTree(entry.getValue()));
                     }
                     rawJson.add("logging", loggingObject);
                 } else {
@@ -846,7 +846,7 @@ public record GameInstancePatch(
             json.add("logging", loggingObject);
         }
         if (type != null)
-            json.addProperty("type", type.getId());
+            json.addProperty("type", type.name().toLowerCase(Locale.ROOT));
         if (time != null)
             json.addProperty("time", InstantTypeAdapter.serializeToString(time, ZoneOffset.UTC));
         if (releaseTime != null)
