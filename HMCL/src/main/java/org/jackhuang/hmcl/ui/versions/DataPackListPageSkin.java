@@ -261,7 +261,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
     static class DataPackInfoObject extends RecursiveTreeObject<DataPackInfoObject> {
         private final BooleanProperty activeProperty;
-        private final DataPacks.Pack  packInfo;
+        private final DataPacks.Pack packInfo;
 
         private SoftReference<CompletableFuture<Image>> iconCache;
 
