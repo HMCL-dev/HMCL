@@ -69,7 +69,6 @@ import java.util.stream.Collectors;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
-import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
