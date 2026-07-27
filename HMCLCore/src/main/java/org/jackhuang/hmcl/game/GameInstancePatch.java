@@ -306,20 +306,16 @@ public record GameInstancePatch(
         private @Nullable String assets;
         private @Nullable Integer complianceLevel;
         private @Nullable GameJavaVersion javaVersion;
-        private @Nullable
-        @Unmodifiable List<Library> libraries;
-        private @Nullable
-        @Unmodifiable List<CompatibilityRule> compatibilityRules;
-        private @Nullable
-        @Unmodifiable Map<DownloadType, DownloadInfo> downloads;
-        private @Nullable
-        @Unmodifiable Map<DownloadType, LoggingInfo> logging;
+        private @Nullable @Unmodifiable List<Library> libraries;
+        private @Nullable @Unmodifiable List<CompatibilityRule> compatibilityRules;
+        private @Nullable @Unmodifiable Map<DownloadType, DownloadInfo> downloads;
+        private @Nullable @Unmodifiable Map<DownloadType, LoggingInfo> logging;
         private @Nullable ReleaseType type;
         private @Nullable Instant time;
         private @Nullable Instant releaseTime;
         private @Nullable Integer minimumLauncherVersion;
         private @Nullable Boolean hidden;
-        private @Nullable JsonObject rawJson;
+        private final @Nullable JsonObject rawJson;
 
         private Builder(GameInstancePatch patch) {
             this.id = patch.id;
