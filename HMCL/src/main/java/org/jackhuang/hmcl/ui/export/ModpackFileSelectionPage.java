@@ -27,6 +27,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -72,14 +73,21 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         onEscPressed(treeView, () -> controller.onPrev(true));
 
+        Label placeholder = new Label(i18n("modpack.files.empty"));
+        StackPane placeholderPane = new StackPane(placeholder);
+        placeholderPane.getStyleClass().add("notice-pane");
+        placeholderPane.setVisible(false);
+
         SpinnerPane spinnerPane = new SpinnerPane();
-        spinnerPane.setContent(treeView);
+        StackPane center = new StackPane(treeView, placeholderPane);
+        spinnerPane.setContent(center);
+
         setMargin(spinnerPane, new Insets(10, 10, 5, 10));
         this.setCenter(spinnerPane);
 
         spinnerPane.setLoading(true);
-        loadRoot(repository, treeView, spinnerPane);
-        spinnerPane.setOnFailedAction((__) -> loadRoot(repository, treeView, spinnerPane));
+        loadRoot(repository, treeView, placeholderPane, spinnerPane);
+        spinnerPane.setOnFailedAction((__) -> loadRoot(repository, treeView, placeholderPane, spinnerPane));
 
         HBox nextPane = new HBox();
         nextPane.setPadding(new Insets(16, 16, 16, 0));
@@ -96,15 +104,19 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.setBottom(nextPane);
     }
 
-    private void loadRoot(HMCLGameRepository repository, JFXTreeView<String> treeView, SpinnerPane spinnerPane) {
+    private void loadRoot(HMCLGameRepository repository, JFXTreeView<String> treeView, StackPane placeholderPane, SpinnerPane spinnerPane) {
         CompletableFuture
                 .supplyAsync(() -> getTreeItem(repository.getRunDirectory(version), "minecraft", 0), Schedulers.io())
-                .whenCompleteAsync((modpackFileTreeItem, throwable) -> {
-                    if (throwable != null) {
-                        treeView.setRoot(rootNode = modpackFileTreeItem);
+                .whenCompleteAsync((root, throwable) -> {
+                    if (throwable == null) {
+                        if (root != null) {
+                            treeView.setRoot(rootNode = root);
+                        } else {
+                            placeholderPane.setVisible(true);
+                        }
                         spinnerPane.setFailedReason(null);
                     } else {
-                        LOG.warning("Failed to load modpack file tree. Please click here to retry.");
+                        LOG.warning("Failed to load modpack file tree", throwable);
                         spinnerPane.setFailedReason(i18n("modpack.files.load_failed"));
                     }
                     spinnerPane.setLoading(false);
