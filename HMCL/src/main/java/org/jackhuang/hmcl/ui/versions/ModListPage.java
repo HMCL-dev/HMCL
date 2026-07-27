@@ -17,17 +17,15 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -52,8 +50,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.GameInstanceLoadable, PageAware {
-    private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
-
     private final ReentrantLock lock = new ReentrantLock();
 
     private ModManager modManager;
@@ -92,14 +88,16 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         Version resolved = repository.getResolvedPreservingPatchesVersion(instanceId);
         this.gameVersion = repository.getGameVersion(resolved).orElse(null);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
-        modded.set(analyzer.hasModLoader());
+
         loadMods(repository.getModManager(instanceId));
     }
 
     private void loadMods(ModManager modManager) {
         setLoading(true);
 
+        if (this.modManager != modManager) {
+            getItems().clear();
+        }
         this.modManager = modManager;
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
@@ -112,6 +110,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
+            if (this.modManager != modManager) {
+                return;
+            }
+
             updateSupportedLoaders(modManager);
 
             if (exception == null) {
@@ -163,7 +165,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         }
 
         // Sinytra Connector
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE)
+        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && (modManager.hasMod("connector", ModLoaderType.NEO_FORGE) || modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE))
                 || "1.20.1".equals(gameVersion) && analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
@@ -173,7 +175,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.add.title"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.litemod"));
-        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
 
         if (res == null) return;
 
@@ -236,6 +238,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
+        if (isLoading()) {
+            return;
+        }
+
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = repository.getGameVersion(instanceId);
@@ -276,18 +282,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         } catch (IOException ex) {
             Controllers.showToast(i18n("message.failed"));
         }
-    }
-
-    public boolean isModded() {
-        return modded.get();
-    }
-
-    public BooleanProperty moddedProperty() {
-        return modded;
-    }
-
-    public void setModded(boolean modded) {
-        this.modded.set(modded);
     }
 
     public GameDirectory getGameDirectory() {

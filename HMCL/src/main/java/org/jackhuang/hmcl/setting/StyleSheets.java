@@ -28,18 +28,11 @@ import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.theme.ResolvedTheme;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Locale;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -67,23 +60,8 @@ public final class StyleSheets {
         });
     }
 
-    private static String toStyleSheetUri(String styleSheet, String fallback) {
-        if (FXUtils.JAVAFX_MAJOR_VERSION >= 17)
-            // JavaFX 17+ support loading stylesheets from data URIs
-            // https://bugs.openjdk.org/browse/JDK-8267554
-            return "data:text/css;charset=UTF-8;base64," + Base64.getEncoder().encodeToString(styleSheet.getBytes(StandardCharsets.UTF_8));
-        else
-            try {
-                Path temp = Files.createTempFile("hmcl", ".css");
-                // For JavaFX 17 or earlier, CssParser uses the default charset
-                // https://bugs.openjdk.org/browse/JDK-8279328
-                Files.writeString(temp, styleSheet, Charset.defaultCharset());
-                temp.toFile().deleteOnExit();
-                return temp.toUri().toString();
-            } catch (IOException | NullPointerException e) {
-                LOG.error("Unable to create stylesheet, fallback to " + fallback, e);
-                return fallback;
-            }
+    private static String toStyleSheetUri(String styleSheet) {
+        return "data:text/css;charset=UTF-8;base64," + Base64.getEncoder().encodeToString(styleSheet.getBytes(StandardCharsets.UTF_8));
     }
 
     private static String getFontStyleSheet() {
@@ -133,7 +111,7 @@ public final class StyleSheets {
 
         builder.append('}');
 
-        return toStyleSheetUri(builder.toString(), defaultCss);
+        return toStyleSheetUri(builder.toString());
     }
 
     private static String getBrightnessStyleSheet() {
@@ -184,7 +162,7 @@ public final class StyleSheets {
         addColor(builder, scheme, ColorRole.INVERSE_SURFACE, 0.8);
 
         builder.append("}\n");
-        return toStyleSheetUri(builder.toString(), blueCss);
+        return toStyleSheetUri(builder.toString());
     }
 
     public static void init(Scene scene) {
