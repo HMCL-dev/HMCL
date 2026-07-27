@@ -45,9 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -73,6 +71,7 @@ public final class WorldManageUIUtils {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
+        worldZip.toFile().deleteOnExit();
 
         Controllers.taskDialog(
                 new FileDownloadTask(downloadURLs, worldZip)
