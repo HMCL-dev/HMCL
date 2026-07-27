@@ -597,8 +597,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (id == null || !isLoaded())
             return GameInstanceIconType.DEFAULT.getIcon();
 
-        GameSettings.Instance setting  = getInstanceGameSettings(id);
-        GameInstanceIconType  iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT) : GameInstanceIconType.DEFAULT;
+        GameSettings.Instance setting = getInstanceGameSettings(id);
+        GameInstanceIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT) : GameInstanceIconType.DEFAULT;
 
         if (iconType == GameInstanceIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
