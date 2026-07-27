@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.schematic;
 
 import org.glavo.nbt.tag.CompoundTag;
-import org.glavo.nbt.tag.IntTag;
 import org.glavo.nbt.tag.ListTag;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.util.NBTUtils;
