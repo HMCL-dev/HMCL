@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.windows.Gdi32;
 import org.jackhuang.hmcl.util.platform.windows.User32;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -406,8 +407,8 @@ public final class Launcher extends Application {
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 if (NativeUtils.USE_JNA && Gdi32.INSTANCE != null && User32.INSTANCE != null) {
-                    Pointer pointer = User32.INSTANCE.GetDC(Pointer.NULL);
-                    if (pointer != null && !Pointer.NULL.equals(pointer)) {
+                    @Nullable Pointer pointer = User32.INSTANCE.GetDC(Pointer.NULL);
+                    if (pointer != null) {
                         try {
                             int refreshRate = Gdi32.INSTANCE.GetDeviceCaps(pointer, Gdi32.VREFRESH);
 
