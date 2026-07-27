@@ -519,7 +519,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         if (getSkinnable().isFailed()) {
                             return i18n("download.failed.refresh");
                         } else if (!getSkinnable().isLoading() && getSkinnable().pageCount.get() >= 0 && getSkinnable().items.isEmpty()) {
-                            return i18n("download.failed.no_results_found"); 
+                            return i18n("search.no_results_found"); 
                         } else {
                             return null;
                         }
