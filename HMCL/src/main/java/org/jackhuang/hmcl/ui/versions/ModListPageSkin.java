@@ -38,10 +38,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.addon.*;
-import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -108,6 +109,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         pane.getStyleClass().addAll("notice-pane");
 
         ComponentList root = new ComponentList();
+        pane.getChildren().setAll(root);
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
         listView.getStyleClass().add("no-horizontal-scrollbar");
@@ -268,14 +270,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             center.setContent(listView);
             root.getContent().add(center);
         }
-
-        Label label = new Label(i18n("mods.not_modded"));
-        label.prefWidthProperty().bind(pane.widthProperty().add(-100));
-
-        FXUtils.onChangeAndOperate(skinnable.moddedProperty(), modded -> {
-            if (modded) pane.getChildren().setAll(root);
-            else pane.getChildren().setAll(label);
-        });
 
         getChildren().setAll(pane);
     }
