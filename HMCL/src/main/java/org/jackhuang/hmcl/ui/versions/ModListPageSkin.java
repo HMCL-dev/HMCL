@@ -46,7 +46,7 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.InstanceIconType;
+import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -364,7 +364,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 LOG.warning("Failed to load mod icons", e);
             }
 
-            return InstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
+            return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
         }
 
         public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
@@ -380,7 +380,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
                 this.iconCache = new SoftReference<>(imageFuture);
             }
-            imageContainer.setImage(InstanceIconType.getIconType(localModFile.getModLoaderType()).getIcon());
+            imageContainer.setImage(GameInstanceIconType.getIconType(localModFile.getModLoaderType()).getIcon());
             imageFuture.thenAcceptAsync(image -> {
                 if (current != null) {
                     ObjectProperty<ModInfoObject> infoObjectProperty = current.get();
@@ -567,7 +567,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
-            imageContainer.setImage(InstanceIconType.COMMAND.getIcon());
+            imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 

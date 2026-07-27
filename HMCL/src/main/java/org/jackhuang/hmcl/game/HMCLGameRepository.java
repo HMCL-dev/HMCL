@@ -595,12 +595,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public Image getVersionIconImage(@Nullable String id) {
         if (id == null || !isLoaded())
-            return InstanceIconType.DEFAULT.getIcon();
+            return GameInstanceIconType.DEFAULT.getIcon();
 
-        GameSettings.Instance setting = getInstanceGameSettings(id);
-        InstanceIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), InstanceIconType.DEFAULT) : InstanceIconType.DEFAULT;
+        GameSettings.Instance setting  = getInstanceGameSettings(id);
+        GameInstanceIconType  iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT) : GameInstanceIconType.DEFAULT;
 
-        if (iconType == InstanceIconType.DEFAULT) {
+        if (iconType == GameInstanceIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
             Optional<Path> iconFile = getVersionIconFile(id);
             if (iconFile.isPresent()) {
@@ -614,35 +614,35 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             if (LibraryAnalyzer.isModded(this, version)) {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return InstanceIconType.FABRIC.getIcon();
+                    return GameInstanceIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return InstanceIconType.QUILT.getIcon();
+                    return GameInstanceIconType.QUILT.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
-                    return InstanceIconType.LEGACY_FABRIC.getIcon();
+                    return GameInstanceIconType.LEGACY_FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return InstanceIconType.NEO_FORGE.getIcon();
+                    return GameInstanceIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return InstanceIconType.FORGE.getIcon();
+                    return GameInstanceIconType.FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
-                    return InstanceIconType.CLEANROOM.getIcon();
+                    return GameInstanceIconType.CLEANROOM.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return InstanceIconType.CHICKEN.getIcon();
+                    return GameInstanceIconType.CHICKEN.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return InstanceIconType.OPTIFINE.getIcon();
+                    return GameInstanceIconType.OPTIFINE.getIcon();
             }
 
             String gameVersion = getGameVersion(version).orElse(null);
             if (gameVersion != null) {
                 GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion);
                 if (versionNumber.isAprilFools()) {
-                    return InstanceIconType.APRIL_FOOLS.getIcon();
+                    return GameInstanceIconType.APRIL_FOOLS.getIcon();
                 } else if (versionNumber instanceof GameVersionNumber.LegacySnapshot) {
-                    return InstanceIconType.COMMAND.getIcon();
+                    return GameInstanceIconType.COMMAND.getIcon();
                 } else if (versionNumber instanceof GameVersionNumber.Old) {
-                    return InstanceIconType.CRAFT_TABLE.getIcon();
+                    return GameInstanceIconType.CRAFT_TABLE.getIcon();
                 }
             }
-            return InstanceIconType.GRASS.getIcon();
+            return GameInstanceIconType.GRASS.getIcon();
         } else {
             return iconType.getIcon();
         }

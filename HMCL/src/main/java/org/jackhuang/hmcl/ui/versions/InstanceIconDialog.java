@@ -24,10 +24,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.InstanceIconType;
-import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.setting.TriPreference;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -70,20 +67,20 @@ public class InstanceIconDialog extends DialogPane {
 
         pane.getChildren().setAll(
                 createCustomIcon(),
-                createIcon(InstanceIconType.GRASS),
-                createIcon(InstanceIconType.CHEST),
-                createIcon(InstanceIconType.CHICKEN),
-                createIcon(InstanceIconType.COMMAND),
-                createIcon(InstanceIconType.APRIL_FOOLS),
-                createIcon(InstanceIconType.OPTIFINE),
-                createIcon(InstanceIconType.CRAFT_TABLE),
-                createIcon(InstanceIconType.FABRIC),
-                createIcon(InstanceIconType.LEGACY_FABRIC),
-                createIcon(InstanceIconType.FORGE),
-                createIcon(InstanceIconType.CLEANROOM),
-                createIcon(InstanceIconType.NEO_FORGE),
-                createIcon(InstanceIconType.FURNACE),
-                createIcon(InstanceIconType.QUILT)
+                createIcon(GameInstanceIconType.GRASS),
+                createIcon(GameInstanceIconType.CHEST),
+                createIcon(GameInstanceIconType.CHICKEN),
+                createIcon(GameInstanceIconType.COMMAND),
+                createIcon(GameInstanceIconType.APRIL_FOOLS),
+                createIcon(GameInstanceIconType.OPTIFINE),
+                createIcon(GameInstanceIconType.CRAFT_TABLE),
+                createIcon(GameInstanceIconType.FABRIC),
+                createIcon(GameInstanceIconType.LEGACY_FABRIC),
+                createIcon(GameInstanceIconType.FORGE),
+                createIcon(GameInstanceIconType.CLEANROOM),
+                createIcon(GameInstanceIconType.NEO_FORGE),
+                createIcon(GameInstanceIconType.FURNACE),
+                createIcon(GameInstanceIconType.QUILT)
         );
         if (Files.isDirectory(INSTANCE_ICONS_DIR)) {
             try (var stream = Files.list(INSTANCE_ICONS_DIR)) {
@@ -144,7 +141,7 @@ public class InstanceIconDialog extends DialogPane {
             repository.setVersionIconFile(versionId, dest);
 
             if (setting != null) {
-                setting.iconProperty().setValue(InstanceIconType.DEFAULT);
+                setting.iconProperty().setValue(GameInstanceIconType.DEFAULT);
             }
 
             onAccept();
@@ -163,7 +160,7 @@ public class InstanceIconDialog extends DialogPane {
         return container;
     }
 
-    private Node createIcon(InstanceIconType type) {
+    private Node createIcon(GameInstanceIconType type) {
         ImageView imageView = new ImageView(type.getIcon());
         imageView.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(imageView);
@@ -197,7 +194,7 @@ public class InstanceIconDialog extends DialogPane {
                 LOG.error("Failed to set icon file: " + path, e);
             }
             if (setting != null) {
-                setting.iconProperty().setValue(InstanceIconType.DEFAULT);
+                setting.iconProperty().setValue(GameInstanceIconType.DEFAULT);
                 onAccept();
             }
         });

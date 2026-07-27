@@ -2837,7 +2837,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         repository.deleteIconFile(instanceId);
         GameSettings.Instance localGameSettings = repository.getInstanceGameSettingsOrCreate(instanceId);
         if (localGameSettings != null) {
-            localGameSettings.iconProperty().setValue(InstanceIconType.DEFAULT);
+            localGameSettings.iconProperty().setValue(GameInstanceIconType.DEFAULT);
         }
         loadIcon();
     }

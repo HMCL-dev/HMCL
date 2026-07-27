@@ -45,7 +45,7 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
-import org.jackhuang.hmcl.setting.InstanceIconType;
+import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -240,21 +240,21 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 switch (versionType) {
                     case RELEASE -> {
                         twoLineListItem.addTag(i18n("version.game.release"));
-                        imageView.setImage(InstanceIconType.GRASS.getIcon());
+                        imageView.setImage(GameInstanceIconType.GRASS.getIcon());
                     }
                     case SNAPSHOT, PENDING, UNOBFUSCATED -> {
                         if (versionType == RemoteVersion.Type.SNAPSHOT
                                 && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
                             twoLineListItem.addTag(i18n("version.game.april_fools"));
-                            imageView.setImage(InstanceIconType.APRIL_FOOLS.getIcon());
+                            imageView.setImage(GameInstanceIconType.APRIL_FOOLS.getIcon());
                         } else {
                             twoLineListItem.addTag(i18n("version.game.snapshot"));
-                            imageView.setImage(InstanceIconType.COMMAND.getIcon());
+                            imageView.setImage(GameInstanceIconType.COMMAND.getIcon());
                         }
                     }
                     default -> {
                         twoLineListItem.addTag(i18n("version.game.old"));
-                        imageView.setImage(InstanceIconType.CRAFT_TABLE.getIcon());
+                        imageView.setImage(GameInstanceIconType.CRAFT_TABLE.getIcon());
                     }
                 }
 
@@ -263,25 +263,25 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     case UNSUPPORTED -> twoLineListItem.addTagWarning(i18n("version.game.support_status.unsupported"));
                 }
             } else {
-                InstanceIconType iconType;
+                GameInstanceIconType iconType;
                 if (remoteVersion instanceof LiteLoaderRemoteVersion)
-                    iconType = InstanceIconType.CHICKEN;
+                    iconType = GameInstanceIconType.CHICKEN;
                 else if (remoteVersion instanceof OptiFineRemoteVersion)
-                    iconType = InstanceIconType.OPTIFINE;
+                    iconType = GameInstanceIconType.OPTIFINE;
                 else if (remoteVersion instanceof ForgeRemoteVersion)
-                    iconType = InstanceIconType.FORGE;
+                    iconType = GameInstanceIconType.FORGE;
                 else if (remoteVersion instanceof CleanroomRemoteVersion)
-                    iconType = InstanceIconType.CLEANROOM;
+                    iconType = GameInstanceIconType.CLEANROOM;
                 else if (remoteVersion instanceof NeoForgeRemoteVersion)
-                    iconType = InstanceIconType.NEO_FORGE;
+                    iconType = GameInstanceIconType.NEO_FORGE;
                 else if (remoteVersion instanceof LegacyFabricRemoteVersion || remoteVersion instanceof LegacyFabricAPIRemoteVersion)
-                    iconType = InstanceIconType.LEGACY_FABRIC;
+                    iconType = GameInstanceIconType.LEGACY_FABRIC;
                 else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)
-                    iconType = InstanceIconType.FABRIC;
+                    iconType = GameInstanceIconType.FABRIC;
                 else if (remoteVersion instanceof QuiltRemoteVersion || remoteVersion instanceof QuiltAPIRemoteVersion)
-                    iconType = InstanceIconType.QUILT;
+                    iconType = GameInstanceIconType.QUILT;
                 else
-                    iconType = InstanceIconType.COMMAND;
+                    iconType = GameInstanceIconType.COMMAND;
 
                 imageView.setImage(iconType.getIcon());
                 String displayGameVersion = I18n.getDisplayVersion(GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()));
@@ -394,7 +394,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         RemoteVersionListCell dummyCell = new RemoteVersionListCell(control);
                         dummyCell.twoLineListItem.setTitle("Dummy");
                         dummyCell.twoLineListItem.setSubtitle("Dummy");
-                        dummyCell.imageView.setImage(InstanceIconType.GRASS.getIcon());
+                        dummyCell.imageView.setImage(GameInstanceIconType.GRASS.getIcon());
                         prepareNode(dummyCell.pane);
                         list.setFixedCellSize(dummyCell.pane.prefHeight(-1));
 
