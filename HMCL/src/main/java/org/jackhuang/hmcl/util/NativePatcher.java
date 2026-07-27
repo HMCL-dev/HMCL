@@ -79,7 +79,8 @@ public final class NativePatcher {
                                       GameSettings.Effective settings,
                                       List<String> javaArguments) {
         // https://github.com/LWJGL/lwjgl3/issues/1111
-        // Inject lwjgl-unsafe library to replace the javaagent approach (same as Minecraft 26.2+)
+        // Replace org.lwjgl:lwjgl:3.4.1 with org.lwjgl:lwjgl:3.4.1:unsafe
+        // (same approach as Minecraft 26.2+)
         if (needPatchMemoryUtil(version, javaVersion.getParsedVersion())
                 && version.getLibraries().stream().noneMatch(library ->
                 "org.lwjgl".equals(library.getGroupId())
@@ -94,7 +95,7 @@ public final class NativePatcher {
                         && "lwjgl".equals(lib.getArtifactId())
                         && "3.4.1".equals(lib.getVersion())
                         && lib.getClassifier() == null) {
-                    libraries.add(i, unsafeLibrary);
+                    libraries.set(i, unsafeLibrary);
                     break;
                 }
             }
