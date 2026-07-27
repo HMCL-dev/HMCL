@@ -310,10 +310,14 @@ public record GameInstancePatch(
         private @Nullable String assets;
         private @Nullable Integer complianceLevel;
         private @Nullable GameJavaVersion javaVersion;
-        private @Nullable @Unmodifiable List<Library> libraries;
-        private @Nullable @Unmodifiable List<CompatibilityRule> compatibilityRules;
-        private @Nullable @Unmodifiable Map<DownloadType, DownloadInfo> downloads;
-        private @Nullable @Unmodifiable Map<DownloadType, LoggingInfo> logging;
+        private @Nullable
+        @Unmodifiable List<Library> libraries;
+        private @Nullable
+        @Unmodifiable List<CompatibilityRule> compatibilityRules;
+        private @Nullable
+        @Unmodifiable Map<DownloadType, DownloadInfo> downloads;
+        private @Nullable
+        @Unmodifiable Map<DownloadType, LoggingInfo> logging;
         private @Nullable ReleaseType type;
         private @Nullable Instant time;
         private @Nullable Instant releaseTime;
@@ -719,9 +723,9 @@ public record GameInstancePatch(
                         Map<DownloadType, DownloadInfo> map = new LinkedHashMap<>();
                         for (Map.Entry<String, JsonElement> downloadEntry : object.entrySet()) {
                             try {
-                                DownloadType downloadType = DownloadType.valueOf(downloadEntry.getKey());
+                                DownloadType downloadType = JsonUtils.GSON.fromJson(downloadEntry.getKey(), DownloadType.class);
                                 map.put(downloadType, JsonUtils.GSON.fromJson(downloadEntry.getValue(), DownloadInfo.class));
-                            } catch (IllegalArgumentException ignored) {
+                            } catch (Exception ignored) {
                             }
                         }
                         downloads = ImmutableSequencedMap.copyOf(map);
@@ -732,20 +736,18 @@ public record GameInstancePatch(
                         Map<DownloadType, LoggingInfo> map = new LinkedHashMap<>();
                         for (Map.Entry<String, JsonElement> loggingEntry : object.entrySet()) {
                             try {
-                                DownloadType downloadType = DownloadType.valueOf(loggingEntry.getKey());
+                                DownloadType downloadType = JsonUtils.GSON.fromJson(loggingEntry.getKey(), DownloadType.class);
                                 map.put(downloadType, JsonUtils.GSON.fromJson(loggingEntry.getValue(), LoggingInfo.class));
-                            } catch (IllegalArgumentException ignored) {
+                            } catch (Exception ignored) {
                             }
                         }
                         logging = ImmutableSequencedMap.copyOf(map);
                     }
                 }
                 case "type" -> {
-                    if (value instanceof JsonPrimitive primitive && primitive.isString()) {
-                        try {
-                            type = ReleaseType.valueOf(primitive.getAsString());
-                        } catch (IllegalArgumentException ignored) {
-                        }
+                    try {
+                        type = JsonUtils.GSON.fromJson(value, ReleaseType.class);
+                    } catch (Exception ignored) {
                     }
                 }
                 case "time" -> {
