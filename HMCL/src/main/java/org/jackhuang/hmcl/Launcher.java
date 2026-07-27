@@ -388,10 +388,12 @@ public final class Launcher extends Application {
                 LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
 
                 try {
-                    if (Integer.parseInt(animationFrameRate) <= 0)
+                    int value = Integer.parseInt(animationFrameRate);
+                    if (value <= 0)
                         throw new NumberFormatException(animationFrameRate);
 
-                    System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
+                    if (value != 60)
+                        System.setProperty("javafx.animation.pulse", animationFrameRate);
                 } catch (NumberFormatException e) {
                     LOG.warning("Invalid animation frame rate: " + animationFrameRate);
                 }
@@ -399,24 +401,25 @@ public final class Launcher extends Application {
             }
 
             // To avoid prematurely loading FXUtils, we only check if animationDisabled has been explicitly set to true
-            if (!Boolean.TRUE.equals(settings().animationDisabledProperty().get())) {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    if (NativeUtils.USE_JNA && Gdi32.INSTANCE != null && User32.INSTANCE != null) {
-                        Pointer pointer = User32.INSTANCE.GetDC(Pointer.NULL);
-                        if (pointer != null && !Pointer.NULL.equals(pointer)) {
-                            try {
-                                int refreshRate = Gdi32.INSTANCE.GetDeviceCaps(pointer, Gdi32.VREFRESH);
+            if (Boolean.TRUE.equals(settings().animationDisabledProperty().get()))
+                break setUpAnimationFrameRate;
 
-                                if (refreshRate > 0) {
-                                    LOG.info("Detected refresh rate: " + refreshRate + "Hz");
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (NativeUtils.USE_JNA && Gdi32.INSTANCE != null && User32.INSTANCE != null) {
+                    Pointer pointer = User32.INSTANCE.GetDC(Pointer.NULL);
+                    if (pointer != null && !Pointer.NULL.equals(pointer)) {
+                        try {
+                            int refreshRate = Gdi32.INSTANCE.GetDeviceCaps(pointer, Gdi32.VREFRESH);
 
-                                    if (refreshRate >= 90) {
-                                        System.getProperties().putIfAbsent("javafx.animation.pulse", String.valueOf(refreshRate));
-                                    }
+                            if (refreshRate > 0) {
+                                LOG.info("Detected refresh rate: " + refreshRate + "Hz");
+
+                                if (refreshRate >= 90) {
+                                    System.getProperties().putIfAbsent("javafx.animation.pulse", String.valueOf(refreshRate));
                                 }
-                            } finally {
-                                User32.INSTANCE.ReleaseDC(Pointer.NULL, pointer);
                             }
+                        } finally {
+                            User32.INSTANCE.ReleaseDC(Pointer.NULL, pointer);
                         }
                     }
                 }
