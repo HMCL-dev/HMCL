@@ -74,7 +74,7 @@ public final class WorldManageUIUtils {
         fileChooser.setTitle(i18n("world.export.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
         fileChooser.setInitialFileName(world.getWorldName() + ".zip");
-        Path file = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
+        Path file = Controllers.showSaveDialog(fileChooser);
         if (file == null) {
             return;
         }

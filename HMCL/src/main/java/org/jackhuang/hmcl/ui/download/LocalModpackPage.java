@@ -90,7 +90,7 @@ public final class LocalModpackPage extends ModpackPage {
             FileChooser chooser = new FileChooser();
             chooser.setTitle(i18n("modpack.choose"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-            selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+            selectedFile = Controllers.showOpenDialog(chooser);
             if (selectedFile == null) {
                 controller.onEnd();
                 return;

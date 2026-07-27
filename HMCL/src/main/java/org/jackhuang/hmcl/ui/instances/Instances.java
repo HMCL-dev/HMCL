@@ -17,11 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
-
 import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -29,8 +28,11 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.QuickPlayOption;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -93,6 +95,7 @@ public final class Instances {
         }
         Controllers.taskDialog(
                 new FileDownloadTask(downloadURLs, modpack)
+                        .setName(file.name())
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 ModpackInstallWizardProvider installWizardProvider;
@@ -272,7 +275,7 @@ public final class Instances {
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
-            Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
+            Path file = Controllers.showSaveDialog(chooser);
             if (file != null) {
                 if (!isValidScriptExtension(FileUtils.getExtension(file))) {
                     String defaultExt = getDefaultScriptExtension();

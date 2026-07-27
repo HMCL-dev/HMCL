@@ -387,7 +387,7 @@ public class PersonalizationPage extends StackPane {
         chooser.getExtensionFilters().setAll(
                 new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
 
-        @Nullable Path output = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
+        @Nullable Path output = Controllers.showSaveDialog(chooser);
         if (output == null) {
             return;
         }
@@ -1007,6 +1007,7 @@ public class PersonalizationPage extends StackPane {
 
                 Label textOpacity = new Label();
                 FXUtils.setLimitWidth(textOpacity, 50);
+                textOpacity.setAlignment(Pos.CENTER);
 
                 StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
                 textOpacity.textProperty().bind(valueBinding);
@@ -1171,7 +1172,8 @@ public class PersonalizationPage extends StackPane {
 
             LineToggleButton animationButton = new LineToggleButton();
             appearanceList.getContent().add(animationButton);
-            animationButton.selectedProperty().bindBidirectional(settings().animationDisabledProperty());
+            animationButton.setSelected(settings().isAnimationDisabled());
+            FXUtils.onChange(animationButton.selectedProperty(), value -> settings().animationDisabledProperty().set(value));
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
 

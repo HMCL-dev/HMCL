@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -77,7 +76,7 @@ public class GameInstanceIconDialog extends DialogPane {
     private void exploreIcon() {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(FXUtils.getImageExtensionFilter());
-        Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile != null) {
             try {
                 repository.setInstanceIconFile(instanceId, selectedFile);

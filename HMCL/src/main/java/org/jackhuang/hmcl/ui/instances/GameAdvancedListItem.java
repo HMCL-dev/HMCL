@@ -58,11 +58,11 @@ public class GameAdvancedListItem extends AdvancedListItem {
             repository = GameDirectoryManager.getSelectedRepository();
             if (repository != null) {
                 onInstanceIconChangedListener = repository.onInstanceIconChanged.registerWeak(event -> {
-                    this.loadInstance(repository.getSelectedInstance());
+                    FXUtils.runInFX(() -> loadInstance(repository.getSelectedInstance()));
                 });
                 if (!repository.isLoaded()) {
                     onRefreshedInstancesListener = EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class)
-                            .registerWeak(event -> loadInstance(repository.getSelectedInstance()));
+                            .registerWeak(event -> FXUtils.runInFX(() -> loadInstance(repository.getSelectedInstance())));
                     return;
                 }
             }

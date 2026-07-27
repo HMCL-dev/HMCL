@@ -1,7 +1,7 @@
 /*
  * Gradle Wrapper Neo single-file source distribution.
  *
- * This source file is part of Gradle Wrapper Neo 0.1.0.
+ * This source file is part of Gradle Wrapper Neo 0.2.0.
  * Documentation and updates: https://github.com/Glavo/gradle-wrapper-neo
  *
  * Place this file at gradle/wrapper/GradleWrapperNeo.java in a Gradle project.
