@@ -760,7 +760,10 @@ public final class LauncherHelper {
             case HIDE_AND_REOPEN:
                 runLater(() -> {
                     Optional.ofNullable(Controllers.getStage())
-                            .ifPresent(Stage::show);
+                            .ifPresent(stage -> {
+                                stage.setIconified(false);
+                                stage.show();
+                            });
                 });
                 break;
             case KEEP:
@@ -896,6 +899,7 @@ public final class LauncherHelper {
                         // If application was stopped and execution services did not finish termination,
                         // these codes will be executed.
                         if (Controllers.getStage() != null) {
+                            Controllers.getStage().setIconified(false);
                             Controllers.getStage().hide();
                             launchingLatch.countDown();
                         }
