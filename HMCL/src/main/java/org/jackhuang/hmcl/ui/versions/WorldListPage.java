@@ -283,6 +283,15 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
+                var btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                right.getChildren().add(btnReveal);
+                FXUtils.installFastTooltip(btnReveal, i18n("button.reveal_dir"));
+                btnReveal.setOnAction(event -> {
+                    World world = getItem();
+                    if (world != null)
+                        page.reveal(world);
+                });
+
                 btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
                 btnLaunch.visibleProperty().bind(page.supportQuickPlayProperty());
                 btnLaunch.managedProperty().bind(btnLaunch.visibleProperty());
@@ -405,11 +414,6 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                     exportMenuItem,
                     deleteMenuItem,
                     duplicateMenuItem
-            );
-
-            popupMenu.getContent().addAll(
-                    new MenuSeparator(),
-                    new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), () -> page.reveal(world), popup)
             );
 
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
