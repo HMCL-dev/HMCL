@@ -200,7 +200,6 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     }
 
     private void onNext() {
-        if (rootNode == null) return;
         ArrayList<String> list = new ArrayList<>();
         getFilesNeeded(rootNode, "minecraft", list);
         controller.getSettings().put(MODPACK_FILE_SELECTION, list);
