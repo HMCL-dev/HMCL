@@ -242,9 +242,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     private static void checkInstalledInList(DownloadListPage page, RemoteAddon addon, java.util.function.Consumer<Boolean> callback) {
         HMCLGameRepository.InstanceReference ref = page.getInstanceReference();
-        System.out.println("[DEBUG] checkInstalledInList: addon=" + addon.slug() + ", repoType=" + page.repository.getType() + ", ref=" + ref);
         if (ref.repository() == null || ref.instanceId() == null) {
-            System.out.println("[DEBUG] checkInstalledInList: ref is null, returning false");
             callback.accept(false);
             return;
         }
@@ -261,16 +259,13 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 targetDir = ref.repository().getShaderPackDirectory(ref.instanceId());
                 break;
             default:
-                System.out.println("[DEBUG] checkInstalledInList: unsupported type, returning false");
                 callback.accept(false);
                 return;
         }
 
-        System.out.println("[DEBUG] checkInstalledInList: targetDir=" + targetDir);
         Path finalTargetDir = targetDir;
         Task.supplyAsync(() -> {
             if (!Files.isDirectory(finalTargetDir)) {
-                System.out.println("[DEBUG] checkInstalledInList: directory does not exist: " + finalTargetDir);
                 return false;
             }
             String slug = addon.slug().toLowerCase(Locale.ROOT);
@@ -282,18 +277,14 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         .anyMatch(name -> {
                             String lowerName = name.toLowerCase(Locale.ROOT);
                             boolean match = lowerName.contains(slug) || lowerName.replaceAll("[^a-z0-9]", "").contains(slugNormalized);
-                            if (match) System.out.println("[DEBUG] checkInstalledInList: matched " + name + " for slug " + slug);
                             return match;
                         });
-                System.out.println("[DEBUG] checkInstalledInList: result=" + found + " for slug=" + slug + " (normalized=" + slugNormalized + ")");
                 return found;
             } catch (IOException e) {
-                System.out.println("[DEBUG] checkInstalledInList: IOException=" + e.getMessage());
                 return false;
             }
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception != null) {
-                System.out.println("[DEBUG] checkInstalledInList: exception=" + exception.getMessage());
             }
             callback.accept(result != null && result);
         }).start();
