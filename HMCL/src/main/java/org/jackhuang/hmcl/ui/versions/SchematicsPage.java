@@ -704,11 +704,14 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 right.setAlignment(Pos.CENTER_RIGHT);
 
                 JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
-                FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 {
                     var fo = SVG.FOLDER_OPEN.createIcon();
                     var f = SVG.FOLDER.createIcon();
                     btnReveal.graphicProperty().bind(isDirectoryProperty.map(b -> b ? fo : f));
+
+                    var tooltip = new Tooltip();
+                    tooltip.textProperty().bind(isDirectoryProperty.map(b -> b ? i18n("button.reveal_dir") : i18n("reveal.in_file_manager")));
+                    FXUtils.installFastTooltip(btnReveal, tooltip);
                 }
                 btnReveal.setOnAction(event -> {
                     Item item = getItem();
@@ -871,10 +874,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             pane.getChildren().setAll(root);
             getChildren().setAll(pane);
         }
-    }
-
-    private record LitematicaFetchResult(@Nullable RemoteAddon litematica, @Nullable RemoteAddon forgematica, boolean useForge) {
-        public static final LitematicaFetchResult EMPTY = new LitematicaFetchResult(null, null, false);
     }
 
 }
