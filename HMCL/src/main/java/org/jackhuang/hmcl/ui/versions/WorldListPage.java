@@ -350,7 +350,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                     btnLaunch.setDisable(false);
                 }
 
-                content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
+                content.setSubtitle(world.getFileName() + " | " + i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
                 setGraphic(graphic);
             }
