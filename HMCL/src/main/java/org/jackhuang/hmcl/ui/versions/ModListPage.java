@@ -17,17 +17,15 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -52,8 +50,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.GameInstanceLoadable, PageAware {
-    private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
-
     private final ReentrantLock lock = new ReentrantLock();
 
     private ModManager modManager;
@@ -89,10 +85,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         this.repository = repository;
         this.instanceId = instanceId;
 
-        Version resolved = repository.getResolvedPreservingPatchesVersion(instanceId);
-        String gameVersion = repository.getGameVersion(resolved).orElse(null);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
-        modded.set(analyzer.hasModLoader());
         loadMods(repository.getModManager(instanceId));
     }
 
@@ -242,18 +234,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         } catch (IOException ex) {
             Controllers.showToast(i18n("message.failed"));
         }
-    }
-
-    public boolean isModded() {
-        return modded.get();
-    }
-
-    public BooleanProperty moddedProperty() {
-        return modded;
-    }
-
-    public void setModded(boolean modded) {
-        this.modded.set(modded);
     }
 
     public GameDirectory getGameDirectory() {
