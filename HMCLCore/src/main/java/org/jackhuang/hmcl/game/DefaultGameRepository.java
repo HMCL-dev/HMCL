@@ -341,8 +341,9 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getInstanceJar(GameInstanceManifest manifest) {
-        GameInstanceID jarID = Objects.requireNonNullElse(manifest.jar(), manifest.id());
-        return getInstanceRoot(jarID).resolve(jarID + ".jar");
+        GameInstanceManifest resolved = this.resolve(manifest).launchManifest();
+        GameInstanceID id = Optional.ofNullable(resolved.jar()).orElse(resolved.jar());
+        return getInstanceRoot(id).resolve(id + ".jar");
     }
 
     @Override

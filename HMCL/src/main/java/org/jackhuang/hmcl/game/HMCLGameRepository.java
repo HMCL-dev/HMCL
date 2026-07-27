@@ -748,6 +748,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
+                .setInstanceId(instanceId)
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
                 .setVersionType(Metadata.TITLE)
