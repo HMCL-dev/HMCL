@@ -118,7 +118,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         boolean isDirectory = Files.isDirectory(file);
 
         ModAdviser.ModSuggestion state = ModAdviser.ModSuggestion.SUGGESTED;
-        if (basePath.length() > "minecraft/".length()) {
+        if (level > 0) {
             state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (isDirectory ? "/" : ""), isDirectory);
 
             String fileName = FileUtils.getName(file);
