@@ -54,15 +54,28 @@ public record Library(
     @JsonSerializable
     public record TLauncher(
             Artifact name,
-            String url,
-            LibraryDownloadInfo artifact,
+            @Nullable String url,
+            @Nullable LibraryDownloadInfo artifact,
             @SerializedName("classifies") // stupid typo made by TLauncher
-            Map<String, LibraryDownloadInfo> classifiers,
-            ExtractRules extract,
-            Map<String, String> natives,
-            List<CompatibilityRule> rules,
-            List<String> checksums
+            @Nullable Map<String, LibraryDownloadInfo> classifiers,
+            @Nullable ExtractRules extract,
+            @Nullable Map<String, String> natives,
+            @Nullable List<CompatibilityRule> rules,
+            @Nullable List<String> checksums
     ) {
+        public TLauncher(Library library) {
+            this(
+                    library.artifact,
+                    library.url,
+                    library.downloads != null ? library.downloads.artifact() : null,
+                    library.downloads != null ? library.downloads.classifiers() : null,
+                    library.extract,
+                    library.natives,
+                    library.rules,
+                    library.checksums
+            );
+        }
+
         public Library toLibrary() {
             return new Library(
                     name,

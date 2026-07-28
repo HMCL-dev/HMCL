@@ -843,7 +843,12 @@ public record GameInstanceManifest(
             this.libraries = libraries == null ? null : List.copyOf(libraries);
             if (rawJson != null) {
                 if (this.libraries != null) {
-                    rawJson.add("libraries", JsonUtils.GSON.toJsonTree(this.libraries));
+                    boolean tlauncher = rawJson.has("tlauncherVersion");
+                    if (tlauncher) {
+                        rawJson.add("libraries", JsonUtils.GSON.toJsonTree(this.libraries.stream().map(Library.TLauncher::new).toList()));
+                    } else {
+                        rawJson.add("libraries", JsonUtils.GSON.toJsonTree(this.libraries));
+                    }
                 } else {
                     rawJson.remove("libraries");
                 }
