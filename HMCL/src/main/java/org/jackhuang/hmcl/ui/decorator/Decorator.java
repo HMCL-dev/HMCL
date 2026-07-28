@@ -112,10 +112,6 @@ public final class Decorator {
         }
     };
 
-    /// Reattaches stage-specific listeners when [#stage] changes.
-    private final ChangeListener<@Nullable Stage> stageListener =
-            (observable, oldStage, newStage) -> onStageChanged(oldStage, newStage);
-
     /// The direction used by the next title-bar transition.
     private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
 
@@ -124,7 +120,7 @@ public final class Decorator {
     /// @param primaryStage the stage controlled by the decorator
     /// @param mainPage     the permanent root page of the navigation stack
     public Decorator(Stage primaryStage, Node mainPage) {
-        stage.addListener(stageListener);
+        stage.addListener((observable, oldStage, newStage) -> onStageChanged(oldStage, newStage));
         setStage(primaryStage);
 
         navigator.setOnNavigated(this::onNavigated);
