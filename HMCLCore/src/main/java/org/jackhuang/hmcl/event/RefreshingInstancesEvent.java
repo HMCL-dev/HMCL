@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.event;
 
-import org.jackhuang.hmcl.game.GameRepository;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /// This event gets fired when loading versions in a .minecraft folder.
@@ -29,8 +28,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 public final class RefreshingInstancesEvent extends Event {
 
     /// Constructor.
-    ///
-    /// @param source [GameRepository]
     public RefreshingInstancesEvent(Object source) {
         super(source);
     }
