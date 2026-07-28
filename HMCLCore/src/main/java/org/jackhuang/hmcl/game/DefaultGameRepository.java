@@ -680,13 +680,13 @@ public class DefaultGameRepository implements GameRepository {
                 } else {
                     launchManifest = manifest;
                 }
-                launchManifest = launchManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar())
-                        .withInheritsFrom(null);
+                launchManifest = launchManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar());
             } else {
                 // To maximize the compatibility.
                 if (!resolvedSoFar.add(manifest.id())) {
                     LOG.warning("Found circular dependency versions: " + resolvedSoFar);
-                    launchManifest = manifest.jar() == null ? manifest.withJar(manifest.id()) : manifest;
+                    launchManifest = (manifest.jar() == null ? manifest.withJar(manifest.id()) : manifest)
+                            .withInheritsFrom(null);
                 } else {
                     InstanceHolder parentInstance = instances.get(manifest.inheritsFrom());
                     if (parentInstance == null) {
