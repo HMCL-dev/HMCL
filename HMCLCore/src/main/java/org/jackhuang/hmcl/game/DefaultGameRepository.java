@@ -680,7 +680,8 @@ public class DefaultGameRepository implements GameRepository {
                 } else {
                     launchManifest = manifest;
                 }
-                launchManifest = launchManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar());
+                launchManifest = launchManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar())
+                        .withInheritsFrom(null);
             } else {
                 // To maximize the compatibility.
                 if (!resolvedSoFar.add(manifest.id())) {
