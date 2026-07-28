@@ -17,32 +17,30 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jetbrains.annotations.NotNullByDefault;
 
-/**
- * This event gets fired when a minecraft version is being removed.
- * <br>
- * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
- *
- * @author huangyuhui
- */
-public class RemoveVersionEvent extends Event {
+/// This event gets fired when a minecraft version is being removed.
+///
+/// This event is fired on the [org.jackhuang.hmcl.event.EventBus#EVENT_BUS]
+///
+/// @author huangyuhui
+@NotNullByDefault
+public class RemoveInstanceEvent extends Event {
 
-    private final String version;
+    private final GameInstanceID instanceId;
 
-    /**
-     *
-     * @param source {@link GameRepository}
-     * @param version the version id.
-     */
-    public RemoveVersionEvent(Object source, String version) {
+    /// @param source [GameRepository]
+    /// @param instanceId the version id.
+    public RemoveInstanceEvent(Object source, GameInstanceID instanceId) {
         super(source);
-        this.version = version;
+        this.instanceId = instanceId;
     }
 
-    public String getVersion() {
-        return version;
+    public GameInstanceID getInstanceId() {
+        return instanceId;
     }
 
     @Override
@@ -54,7 +52,7 @@ public class RemoveVersionEvent extends Event {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("source", source)
-                .append("version", version)
+                .append("instanceId", instanceId)
                 .toString();
     }
 }

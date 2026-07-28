@@ -394,7 +394,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public boolean removeInstanceFromDisk(GameInstanceID id) {
-        if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id.id())) == Event.Result.DENY) {
+        if (EventBus.EVENT_BUS.fireEvent(new RemoveInstanceEvent(this, id.id())) == Event.Result.DENY) {
             return false;
         }
 
