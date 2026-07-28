@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Lang;
