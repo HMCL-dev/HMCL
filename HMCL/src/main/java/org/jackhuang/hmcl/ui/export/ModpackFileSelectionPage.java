@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,7 +63,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     private final WizardController controller;
     private final String version;
     private final ModAdviser adviser;
-    private ModpackFileTreeItem rootNode;
+    private @Nullable ModpackFileTreeItem rootNode;
 
     public ModpackFileSelectionPage(WizardController controller, HMCLGameRepository repository, String version, ModAdviser adviser) {
         this.controller = controller;
@@ -85,26 +86,25 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         setMargin(spinnerPane, new Insets(10, 10, 5, 10));
         this.setCenter(spinnerPane);
 
-        spinnerPane.setLoading(true);
-        loadRoot(repository, treeView, placeholderPane, spinnerPane);
-        spinnerPane.setOnFailedAction((__) -> loadRoot(repository, treeView, placeholderPane, spinnerPane));
 
         HBox nextPane = new HBox();
         nextPane.setPadding(new Insets(16, 16, 16, 0));
         nextPane.setAlignment(Pos.CENTER_RIGHT);
-        {
-            JFXButton btnNext = FXUtils.newRaisedButton(i18n("wizard.next"));
-            btnNext.setPrefSize(100, 40);
-            btnNext.disableProperty().bind(spinnerPane.loadingProperty());
-            btnNext.setOnAction(e -> onNext());
 
-            nextPane.getChildren().setAll(btnNext);
-        }
+        JFXButton btnNext = FXUtils.newRaisedButton(i18n("wizard.next"));
+        btnNext.setPrefSize(100, 40);
+        btnNext.setOnAction(e -> onNext());
+        nextPane.getChildren().setAll(btnNext);
+
+        loadRoot(repository, treeView, placeholderPane, spinnerPane, btnNext);
+        spinnerPane.setOnFailedAction((__) -> loadRoot(repository, treeView, placeholderPane, spinnerPane, btnNext));
 
         this.setBottom(nextPane);
     }
 
-    private void loadRoot(HMCLGameRepository repository, JFXTreeView<String> treeView, StackPane placeholderPane, SpinnerPane spinnerPane) {
+    private void loadRoot(HMCLGameRepository repository, JFXTreeView<String> treeView, StackPane placeholderPane, SpinnerPane spinnerPane, JFXButton btnNext) {
+        spinnerPane.setLoading(true);
+        btnNext.setDisable(true);
         CompletableFuture
                 .supplyAsync(() -> getTreeItem(repository.getRunDirectory(version), "minecraft", 0), Schedulers.io())
                 .whenCompleteAsync((root, throwable) -> {
@@ -115,6 +115,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                             placeholderPane.setVisible(true);
                         }
                         spinnerPane.setFailedReason(null);
+                        btnNext.setDisable(false);
                     } else {
                         LOG.warning("Failed to load modpack file tree", throwable);
                         spinnerPane.setFailedReason(i18n("modpack.files.load_failed"));
