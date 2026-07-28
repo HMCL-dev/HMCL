@@ -112,7 +112,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public void refresh() {
-        if (EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this)) == Event.Result.DENY) {
+        if (EventBus.EVENT_BUS.fireEvent(new RefreshingInstancesEvent(this)) == Event.Result.DENY) {
             return;
         }
 
@@ -191,8 +191,8 @@ public class DefaultGameRepository implements GameRepository {
                         try {
                             moveInstanceFiles(newStatus.baseDirectory, id, manifest.id());
                         } catch (IOException e) {
-                            LOG.warning("Ignoring version " + manifest.id()
-                                    + " because version id does not match folder name " + id
+                            LOG.warning("Ignoring instance " + manifest.id()
+                                    + " because instance id does not match folder name " + id
                                     + ", and we cannot correct it.", e);
                             return Stream.empty();
                         }
@@ -348,7 +348,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public boolean renameInstance(GameInstanceID from, GameInstanceID to) {
-        if (EventBus.EVENT_BUS.fireEvent(new RenameVersionEvent(this, from.id(), to.id())) == Event.Result.DENY) {
+        if (EventBus.EVENT_BUS.fireEvent(new RenameInstanceEvent(this, from, to)) == Event.Result.DENY) {
             return false;
         }
 

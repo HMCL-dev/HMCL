@@ -18,22 +18,20 @@
 package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.game.GameRepository;
+import org.jetbrains.annotations.NotNullByDefault;
 
-/**
- * This event gets fired when loading versions in a .minecraft folder.
- * <br>
- * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
- *
- * @author huangyuhui
- */
-public final class RefreshingVersionsEvent extends Event {
+/// This event gets fired when loading versions in a .minecraft folder.
+///
+/// This event is fired on the [org.jackhuang.hmcl.event.EventBus#EVENT_BUS]
+///
+/// @author huangyuhui
+@NotNullByDefault
+public final class RefreshingInstancesEvent extends Event {
 
-    /**
-     * Constructor.
-     *
-     * @param source {@link GameRepository}
-     */
-    public RefreshingVersionsEvent(Object source) {
+    /// Constructor.
+    ///
+    /// @param source [GameRepository]
+    public RefreshingInstancesEvent(Object source) {
         super(source);
     }
 

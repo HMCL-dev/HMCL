@@ -17,36 +17,37 @@
  */
 package org.jackhuang.hmcl.event;
 
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jetbrains.annotations.NotNullByDefault;
 
-/**
- * This event gets fired when a minecraft version is being removed.
- * <br>
- * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
- *
- * @author huangyuhui
- */
-public class RenameVersionEvent extends Event {
+/// This event gets fired when a minecraft instance is being removed.
+///
+/// This event is fired on the [org.jackhuang.hmcl.event.EventBus#EVENT_BUS]
+///
+/// @author huangyuhui
+@NotNullByDefault
+public final class RenameInstanceEvent extends Event {
 
-    private final String from, to;
+    private final GameInstanceID from, to;
 
     /**
      *
      * @param source {@link GameRepository}
-     * @param from the version id.
+     * @param from the instance id.
      */
-    public RenameVersionEvent(Object source, String from, String to) {
+    public RenameInstanceEvent(Object source, GameInstanceID from, GameInstanceID to) {
         super(source);
         this.from = from;
         this.to = to;
     }
 
-    public String getFromVersion() {
+    public GameInstanceID getFrom() {
         return from;
     }
 
-    public String getToVersion() {
+    public GameInstanceID getTo() {
         return to;
     }
 
