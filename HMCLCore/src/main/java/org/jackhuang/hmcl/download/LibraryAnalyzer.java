@@ -155,7 +155,28 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public static LibraryAnalyzer analyze(GameInstanceManifest.Resolved resolved, String gameVersion) {
-        return analyze(resolved.standaloneManifest(), gameVersion);
+        Map<String, Pair<Library, String>> libraries = new HashMap<>();
+
+        if (gameVersion != null) {
+            libraries.put(LibraryType.MINECRAFT.getPatchId(), pair(null, gameVersion));
+        }
+
+        List<Library> rawLibraries = resolved.launchManifest().getLibraries();
+        for (Library library : rawLibraries) {
+            for (LibraryType type : LibraryType.values()) {
+                if (type.matchLibrary(library, rawLibraries)) {
+                    libraries.put(type.getPatchId(), pair(library, type.patchVersion(resolved.standaloneManifest(), library.version())));
+                    break;
+                }
+            }
+        }
+
+        for (GameInstancePatch patch : resolved.standaloneManifest().getPatches()) {
+            if (patch.isHidden()) continue;
+            libraries.put(patch.id(), pair(null, patch.version()));
+        }
+
+        return new LibraryAnalyzer(resolved.standaloneManifest(), libraries);
     }
 
     public static LibraryAnalyzer analyze(GameInstanceManifest manifest, String gameVersion) {
@@ -242,12 +263,12 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
-            protected String patchVersion(GameInstanceManifest gameVersion, String libraryVersion) {
+            protected String patchVersion(GameInstanceManifest manifest, String libraryVersion) {
                 Matcher matcher = FORGE_VERSION_MATCHER.matcher(libraryVersion);
                 if (matcher.find()) {
                     return matcher.group("forge");
                 }
-                return super.patchVersion(gameVersion, libraryVersion);
+                return super.patchVersion(manifest, libraryVersion);
             }
 
             @Override
@@ -265,13 +286,13 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
-            protected String patchVersion(GameInstanceManifest gameVersion, String libraryVersion) {
-                String res = scanVersion(gameVersion);
+            protected String patchVersion(GameInstanceManifest manifest, String libraryVersion) {
+                String res = scanVersion(manifest);
                 if (res != null) {
                     return res;
                 }
 
-                for (GameInstancePatch patch : gameVersion.getPatches()) {
+                for (GameInstancePatch patch : manifest.getPatches()) {
                     res = scanPatch(patch);
                     if (res != null) {
                         return res;
@@ -283,7 +304,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                     return matcher.group("forge");
                 }
 
-                return super.patchVersion(gameVersion, libraryVersion);
+                return super.patchVersion(manifest, libraryVersion);
             }
 
             private String scanVersion(GameInstanceManifest manifest) {
@@ -385,7 +406,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             return group.matcher(library.groupId()).matches() && artifact.matcher(library.artifactId()).matches();
         }
 
-        protected String patchVersion(GameInstanceManifest gameVersion, String libraryVersion) {
+        protected String patchVersion(GameInstanceManifest manifest, String libraryVersion) {
             return libraryVersion;
         }
     }
