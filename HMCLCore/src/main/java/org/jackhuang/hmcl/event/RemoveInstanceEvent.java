@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jetbrains.annotations.NotNullByDefault;
 
@@ -32,8 +31,7 @@ public class RemoveInstanceEvent extends Event {
 
     private final GameInstanceID instanceId;
 
-    /// @param source [GameRepository]
-    /// @param instanceId the version id.
+    /// @param instanceId the instance id.
     public RemoveInstanceEvent(Object source, GameInstanceID instanceId) {
         super(source);
         this.instanceId = instanceId;
