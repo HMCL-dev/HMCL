@@ -28,6 +28,11 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -45,16 +50,37 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
+import java.util.Objects;
+
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class AccountListItemSkin extends SkinBase<AccountListItem> {
+    private static final DataFormat ACCOUNT_LIST_ITEM = new DataFormat("application/x-hmcl-account-list-item");
+
+    private static AccountListItem draggingItem;
+
+    private boolean dragging;
 
     public AccountListItemSkin(AccountListItem skinnable) {
         super(skinnable);
 
         BorderPane root = new BorderPane();
         root.setCursor(Cursor.HAND);
-        FXUtils.onClicked(root, skinnable::fire);
+        if (Controllers.getDecorator() != null) {
+            Controllers.getDecorator().getDecorator().forbidDraggingWindow(root);
+        }
+        root.setOnMouseClicked(e -> {
+            if (dragging) {
+                dragging = false;
+                e.consume();
+                return;
+            }
+
+            if (e.getButton() == MouseButton.PRIMARY) {
+                skinnable.fire();
+                e.consume();
+            }
+        });
 
         JFXRadioButton chkSelected = new JFXRadioButton();
         chkSelected.setMouseTransparent(true);
@@ -175,7 +201,52 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         root.setStyle("-fx-padding: 8 8 8 0;");
         JFXDepthManager.setDepth(root, 1);
 
+        root.setOnDragDetected(e -> {
+            if (e.getButton() != MouseButton.PRIMARY) {
+                return;
+            }
+
+            dragging = true;
+            draggingItem = skinnable;
+
+            Dragboard dragboard = root.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.put(ACCOUNT_LIST_ITEM, skinnable.getAccount().getAccountID().toString());
+            dragboard.setContent(content);
+            e.consume();
+        });
+
+        root.setOnDragOver(e -> {
+            if (canAcceptDrop(e.getDragboard(), skinnable)) {
+                e.acceptTransferModes(TransferMode.MOVE);
+                e.consume();
+            }
+        });
+
+        root.setOnDragDropped(e -> {
+            boolean success = false;
+            if (canAcceptDrop(e.getDragboard(), skinnable)) {
+                skinnable.getDropHandler().onDrop(draggingItem, skinnable, e.getY() > root.getHeight() / 2);
+                success = true;
+            }
+            e.setDropCompleted(success);
+            e.consume();
+        });
+
+        root.setOnDragDone(e -> {
+            draggingItem = null;
+            e.consume();
+        });
+
         getChildren().setAll(root);
+    }
+
+    private static boolean canAcceptDrop(Dragboard dragboard, AccountListItem targetItem) {
+        return draggingItem != null
+                && targetItem != null
+                && draggingItem != targetItem
+                && dragboard.hasContent(ACCOUNT_LIST_ITEM)
+                && Objects.equals(dragboard.getContent(ACCOUNT_LIST_ITEM), draggingItem.getAccount().getAccountID().toString());
     }
 
     /// Moves the account between local and user account files.

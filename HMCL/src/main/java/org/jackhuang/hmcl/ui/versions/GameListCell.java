@@ -25,7 +25,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -34,10 +38,18 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.util.Objects;
+
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class GameListCell extends ListCell<GameListItem> {
+    private static final DataFormat GAME_LIST_ITEM = new DataFormat("application/x-hmcl-game-list-item");
+
+    private static GameListItem draggingItem;
+
+    private final DropHandler dropHandler;
+    private boolean dragging;
 
     private final Region graphic;
 
@@ -53,7 +65,9 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final StringProperty tag = new SimpleStringProperty();
 
-    public GameListCell() {
+    public GameListCell(DropHandler dropHandler) {
+        this.dropHandler = dropHandler;
+
         BorderPane root = new BorderPane();
         root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8, 8, 8, 0));
@@ -143,6 +157,12 @@ public final class GameListCell extends ListCell<GameListItem> {
 
         root.setCursor(Cursor.HAND);
         container.setOnMouseClicked(e -> {
+            if (dragging) {
+                dragging = false;
+                e.consume();
+                return;
+            }
+
             GameListItem item = getItem();
             if (item == null)
                 return;
@@ -157,6 +177,59 @@ public final class GameListCell extends ListCell<GameListItem> {
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
             }
         });
+
+        container.setOnDragDetected(e -> {
+            GameListItem item = getItem();
+            if (item == null || e.getButton() != MouseButton.PRIMARY) {
+                return;
+            }
+
+            dragging = true;
+            draggingItem = item;
+
+            Dragboard dragboard = container.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.put(GAME_LIST_ITEM, item.getId());
+            dragboard.setContent(content);
+            e.consume();
+        });
+
+        container.setOnDragOver(e -> {
+            if (canAcceptDrop(e.getDragboard(), getItem())) {
+                e.acceptTransferModes(TransferMode.MOVE);
+                e.consume();
+            }
+        });
+
+        container.setOnDragDropped(e -> {
+            boolean success = false;
+            GameListItem targetItem = getItem();
+            if (canAcceptDrop(e.getDragboard(), targetItem)) {
+                dropHandler.onDrop(draggingItem, targetItem, e.getY() > container.getHeight() / 2);
+                success = true;
+            }
+            e.setDropCompleted(success);
+            e.consume();
+        });
+
+        container.setOnDragDone(e -> {
+            draggingItem = null;
+            e.consume();
+        });
+    }
+
+    private static boolean canAcceptDrop(Dragboard dragboard, GameListItem targetItem) {
+        return draggingItem != null
+                && targetItem != null
+                && draggingItem != targetItem
+                && dragboard.hasContent(GAME_LIST_ITEM)
+                && Objects.equals(dragboard.getContent(GAME_LIST_ITEM), draggingItem.getId())
+                && draggingItem.getRepository() == targetItem.getRepository();
+    }
+
+    @FunctionalInterface
+    public interface DropHandler {
+        void onDrop(GameListItem draggedItem, GameListItem targetItem, boolean afterTarget);
     }
 
     @Override

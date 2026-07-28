@@ -72,6 +72,12 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// The JSON property name for selected instance IDs keyed by game directory ID.
     static final String PROPERTY_SELECTED_INSTANCE = "selectedInstance";
 
+    /// The JSON property name for custom instance sort order keyed by game directory ID.
+    static final String PROPERTY_INSTANCE_SORT_ORDER = "instanceSortOrder";
+
+    /// The JSON property name for custom account sort order.
+    static final String PROPERTY_ACCOUNT_SORT_ORDER = "accountSortOrder";
+
     /// Default launcher theme used when no stored theme reference is available.
     public static final ThemeReference DEFAULT_THEME_REFERENCE = new ThemeReference("hmcl.default", null);
 
@@ -652,6 +658,48 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         } else {
             this.selectedInstance.put(gameDirectoryId, selectedInstance);
         }
+    }
+
+    /// Custom instance sort order keyed by game directory ID.
+    @SerializedName(PROPERTY_INSTANCE_SORT_ORDER)
+    private final ObservableMap<GameDirectoryID, ObservableList<String>> instanceSortOrder = FXCollections.observableHashMap();
+
+    /// Returns custom instance sort order keyed by game directory ID.
+    public ObservableMap<GameDirectoryID, ObservableList<String>> getInstanceSortOrder() {
+        return instanceSortOrder;
+    }
+
+    /// Returns the custom instance sort order for the given game directory ID.
+    public List<String> getInstanceSortOrder(@Nullable GameDirectoryID gameDirectoryId) {
+        ObservableList<String> order = gameDirectoryId != null ? instanceSortOrder.get(gameDirectoryId) : null;
+        return order == null ? List.of() : List.copyOf(order);
+    }
+
+    /// Sets the custom instance sort order for the given game directory ID.
+    public void setInstanceSortOrder(@Nullable GameDirectoryID gameDirectoryId, Collection<String> order) {
+        if (gameDirectoryId == null) {
+            return;
+        }
+
+        if (order.isEmpty()) {
+            this.instanceSortOrder.remove(gameDirectoryId);
+        } else {
+            this.instanceSortOrder.put(gameDirectoryId, FXCollections.observableArrayList(order));
+        }
+    }
+
+    /// Custom account sort order.
+    @SerializedName(PROPERTY_ACCOUNT_SORT_ORDER)
+    private final ObservableList<AccountID> accountSortOrder = FXCollections.observableArrayList();
+
+    /// Returns custom account sort order.
+    public List<AccountID> getAccountSortOrder() {
+        return List.copyOf(accountSortOrder);
+    }
+
+    /// Sets custom account sort order.
+    public void setAccountSortOrder(Collection<AccountID> order) {
+        this.accountSortOrder.setAll(order);
     }
 
     // Accounts

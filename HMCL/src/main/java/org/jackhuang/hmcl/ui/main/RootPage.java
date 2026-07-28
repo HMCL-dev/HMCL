@@ -56,12 +56,9 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -124,11 +121,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             GameDirectoryManager.registerVersionsListener(repository -> {
                 GameDirectory gameDirectory = repository.getGameDirectory();
-                List<Version> children = repository.getVersions().parallelStream()
-                        .filter(version -> !version.isHidden())
-                        .sorted(Comparator
-                                .comparing((Version version) -> Lang.requireNonNullElse(version.getReleaseTime(), Instant.EPOCH))
-                                .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
+                List<Version> children = repository.getDisplayVersions()
                         .collect(Collectors.toList());
                 runInFX(() -> {
                     if (gameDirectory == GameDirectoryManager.getSelectedGameDirectory())
