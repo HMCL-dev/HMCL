@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
@@ -422,6 +423,14 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
+            Label installedLabel = new Label();
+            installedLabel.setGraphic(SVG.CHECK_CIRCLE.createIcon(16));
+            installedLabel.setText(i18n("addon.installed"));
+            installedLabel.getStyleClass().add("label-installed");
+            installedLabel.setVisible(false);
+            installedLabel.setManaged(false);
+            installedLabel.setMouseTransparent(true);
+
             {
                 HBox descPane = new HBox(8);
                 descPane.setPadding(new Insets(0, 8, 0, 8));
@@ -476,11 +485,17 @@ public class DownloadPage extends Control implements DecoratorPage {
                         }
                     }
 
-                    descPane.getChildren().setAll(graphicPane, content);
+                    descPane.getChildren().setAll(graphicPane, content, installedLabel);
                 }
 
                 pane.getChildren().add(descPane);
             }
+
+            // Check if the file is already installed in the target instance
+            checkInstalled(selfPage, dataItem, installed -> {
+                installedLabel.setVisible(installed);
+                installedLabel.setManaged(installed);
+            });
 
             RipplerContainer container = new RipplerContainer(pane);
             FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
@@ -488,6 +503,37 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
             this.setMinHeight(50);
+        }
+
+        private static void checkInstalled(DownloadPage selfPage, RemoteAddon.Version dataItem, java.util.function.Consumer<Boolean> callback) {
+            HMCLGameRepository.InstanceReference ref = selfPage.instanceReference;
+            if (ref.repository() == null || ref.instanceId() == null) {
+                callback.accept(false);
+                return;
+            }
+
+            Path targetDir;
+            switch (selfPage.type) {
+                case MOD:
+                    targetDir = ref.repository().getModsDirectory(ref.instanceId());
+                    break;
+                case RESOURCE_PACK:
+                    targetDir = ref.repository().getResourcePackDirectory(ref.instanceId());
+                    break;
+                case SHADER_PACK:
+                    targetDir = ref.repository().getShaderPackDirectory(ref.instanceId());
+                    break;
+                default:
+                    callback.accept(false);
+                    return;
+            }
+
+            Path targetFile = targetDir.resolve(dataItem.file().filename());
+
+            Task.supplyAsync(() -> Files.exists(targetFile))
+                    .whenComplete(Schedulers.javafx(), (exists, exception) -> {
+                        callback.accept(exists != null && exists);
+                    }).start();
         }
     }
 
