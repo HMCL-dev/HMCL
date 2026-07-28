@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.ImmutableSequencedMap;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.LowerCaseEnumTypeAdapter;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -715,8 +716,9 @@ public record GameInstancePatch(
                         Map<DownloadType, DownloadInfo> map = new LinkedHashMap<>();
                         for (Map.Entry<String, JsonElement> downloadEntry : object.entrySet()) {
                             try {
-                                DownloadType downloadType = JsonUtils.GSON.fromJson(downloadEntry.getKey(), DownloadType.class);
-                                map.put(downloadType, JsonUtils.GSON.fromJson(downloadEntry.getValue(), DownloadInfo.class));
+                                DownloadType downloadType = LowerCaseEnumTypeAdapter.fromJson(DownloadType.class, downloadEntry.getKey());
+                                if (downloadType != null)
+                                    map.put(downloadType, JsonUtils.GSON.fromJson(downloadEntry.getValue(), DownloadInfo.class));
                             } catch (Exception ignored) {
                             }
                         }
@@ -728,8 +730,9 @@ public record GameInstancePatch(
                         Map<DownloadType, LoggingInfo> map = new LinkedHashMap<>();
                         for (Map.Entry<String, JsonElement> loggingEntry : object.entrySet()) {
                             try {
-                                DownloadType downloadType = JsonUtils.GSON.fromJson(loggingEntry.getKey(), DownloadType.class);
-                                map.put(downloadType, JsonUtils.GSON.fromJson(loggingEntry.getValue(), LoggingInfo.class));
+                                DownloadType downloadType = LowerCaseEnumTypeAdapter.fromJson(DownloadType.class, loggingEntry.getKey());
+                                if (downloadType != null)
+                                    map.put(downloadType, JsonUtils.GSON.fromJson(loggingEntry.getValue(), LoggingInfo.class));
                             } catch (Exception ignored) {
                             }
                         }
