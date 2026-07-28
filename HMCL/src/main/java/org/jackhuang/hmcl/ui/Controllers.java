@@ -52,7 +52,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.decorator.DecoratorController;
+import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
@@ -74,6 +74,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
@@ -108,7 +109,8 @@ public final class Controllers {
     private static VersionPage versionPage;
     private static Lazy<GameListPage> gameListPage = new Lazy<>(GameListPage::new);
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
-    private static DecoratorController decorator;
+    /// The coordinator for the main window's scene graph and navigation stack.
+    private static @Nullable Decorator decorator;
     private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
@@ -212,15 +214,21 @@ public final class Controllers {
         return terracottaPage.get();
     }
 
+    /// Returns the initialized main-window decorator.
+    ///
+    /// @return the application-wide main-window decorator
     @FXThread
-    public static DecoratorController getDecorator() {
-        return decorator;
+    public static Decorator getDecorator() {
+        return Objects.requireNonNull(decorator, "Main window is not initialized");
     }
 
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
     }
 
+    /// Initializes the main application stage, scene graph, and background services.
+    ///
+    /// @param stage the primary application stage, which must not have been shown
     public static void initialize(Stage stage) {
         LOG.info("Start initializing application");
 
@@ -330,7 +338,7 @@ public final class Controllers {
 
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
-        decorator = new DecoratorController(stage, getRootPage());
+        decorator = new Decorator(stage, getRootPage());
         getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
         getRootPage().getMainPage().showUpdateDialogProperty().bind(
                 decorator.backableProperty().not()
@@ -346,12 +354,10 @@ public final class Controllers {
 
         Lang.thread(JavaManager::initialize, "Search Java", true);
 
-        scene = new Scene(decorator.getDecorator());
+        scene = new Scene(decorator.getRoot());
         scene.setFill(Color.TRANSPARENT);
         stage.setMinWidth(MIN_WIDTH);
         stage.setMinHeight(MIN_HEIGHT);
-        decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
-        decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
         StyleSheets.init(scene);
 
         FXUtils.setIcon(stage);
@@ -362,16 +368,16 @@ public final class Controllers {
         if (AnimationUtils.playWindowAnimation()) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.millis(0),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, Motion.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.8, Motion.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.8, Motion.EASE),
-                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.8, Motion.EASE)
+                            new KeyValue(decorator.getRoot().opacityProperty(), 0, Motion.EASE),
+                            new KeyValue(decorator.getRoot().scaleXProperty(), 0.8, Motion.EASE),
+                            new KeyValue(decorator.getRoot().scaleYProperty(), 0.8, Motion.EASE),
+                            new KeyValue(decorator.getRoot().scaleZProperty(), 0.8, Motion.EASE)
                     ),
                     new KeyFrame(Duration.millis(600),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, Motion.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, Motion.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, Motion.EASE),
-                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, Motion.EASE)
+                            new KeyValue(decorator.getRoot().opacityProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getRoot().scaleXProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getRoot().scaleYProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getRoot().scaleZProperty(), 1, Motion.EASE)
                     )
             );
             timeline.play();

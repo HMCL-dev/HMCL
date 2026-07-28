@@ -25,54 +25,78 @@ import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-/// A container that wraps the root node, used to replace the system window decoration and render shadows outside the window.
+/// Reserves transparent window space and renders a shadow around one content node.
+///
+/// The wrapper is intended to be used as a scene root. Its insets remain available for custom resize hit testing,
+/// while its content is laid out inside those insets.
+@NotNullByDefault
 final class ShadowWrapper extends StackPane {
+    /// The inner pane to which the drop-shadow effect is applied.
     private final StackPane shadowContainer;
 
+    /// The content rendered inside [#shadowContainer], or `null` when empty.
     private final ObjectProperty<@Nullable Node> content = new ObjectPropertyBase<>() {
+        /// {@inheritDoc}
         @Override
         public Object getBean() {
             return ShadowWrapper.this;
         }
 
+        /// {@inheritDoc}
         @Override
         public String getName() {
             return "content";
         }
 
+        /// Replaces the node hosted by the shadow container.
         @Override
         protected void invalidated() {
             @Nullable Node node = get();
-            if (node != null)
-                shadowContainer.getChildren().setAll(node);
-            else
+            if (node == null) {
                 shadowContainer.getChildren().clear();
+            } else {
+                shadowContainer.getChildren().setAll(node);
+            }
         }
     };
 
+    /// Creates an empty wrapper with the standard main-window shadow.
     ShadowWrapper() {
-        this.setPadding(new Insets(Decorator2.SHADOW_SIZE));
+        setPadding(new Insets(Decorator.SHADOW_SIZE));
+        setPickOnBounds(true);
 
-        this.shadowContainer = new StackPane();
+        shadowContainer = new StackPane();
         shadowContainer.setEffect(new DropShadow(
                 BlurType.ONE_PASS_BOX,
                 Color.rgb(0, 0, 0, 0.4),
-                10, 0.3,
-                0.0, 0.0));
-        this.getChildren().setAll(shadowContainer);
+                10,
+                0.3,
+                0.0,
+                0.0));
+        getChildren().setAll(shadowContainer);
     }
 
-    public @Nullable Node getContent() {
+    /// Returns the node rendered inside the shadow.
+    ///
+    /// @return the content node, or `null` when empty
+    @Nullable Node getContent() {
         return content.get();
     }
 
-    public void setContent(@Nullable Node value) {
-        content.set(value);
+    /// Replaces the node rendered inside the shadow.
+    ///
+    /// @param content the new content, or `null` to empty the wrapper
+    void setContent(@Nullable Node content) {
+        this.content.set(content);
     }
 
-    public ObjectProperty<@Nullable Node> contentProperty() {
+    /// Returns the mutable content property.
+    ///
+    /// @return the content property
+    ObjectProperty<@Nullable Node> contentProperty() {
         return content;
     }
 }
