@@ -49,7 +49,7 @@ import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.instances.InstanceIconDialog;
+import org.jackhuang.hmcl.ui.instances.GameInstanceIconDialog;
 import org.jackhuang.hmcl.ui.instances.GameInstancePage;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
@@ -2835,7 +2835,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         if (repository == null || instanceId == null)
             return;
 
-        Controllers.dialog(new InstanceIconDialog(repository, instanceId, this::loadIcon));
+        Controllers.dialog(new GameInstanceIconDialog(repository, instanceId, this::loadIcon));
     }
 
     private void onDeleteIcon() {
