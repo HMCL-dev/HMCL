@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.versions;
+package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.shader.ShaderFile;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -53,6 +54,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.instances.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -74,13 +76,13 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionPage.GameInstanceLoadable {
+public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInstancePage.GameInstanceLoadable {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    private Path shadersDir;
     private HMCLGameRepository repository;
-    private String instanceId;
+    private @Nullable GameInstanceID instanceId;
+    private @Nullable Path shadersDir;
 
     public ShaderListPage() {
         FXUtils.applyDragListener(this, ShaderFile::isFileShaderPack, this::addFiles);
@@ -92,10 +94,10 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionP
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
+    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
         this.repository = repository;
         this.instanceId = instanceId;
-        this.shadersDir = repository.getShadersDirectory(instanceId);
+        this.shadersDir = instanceId != null ? repository.getShadersDirectory(instanceId) : null;
         refresh();
     }
 
@@ -203,7 +205,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements VersionP
     }
 
     private void onDownload() {
-        Controllers.getDownloadPage().showShaderDownloads().selectVersion(instanceId);
+        Controllers.getDownloadPage().showShaderDownloads().selectInstance(instanceId);
         Controllers.navigate(Controllers.getDownloadPage());
     }
 

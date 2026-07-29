@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.mod.ModManager;
-import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -473,8 +473,8 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public Path getShadersDirectory(String id) {
-        return getRunDirectory(id).resolve("shaderpacks");
+    public Path getShadersDirectory(GameInstanceID instanceId) {
+        return getRunDirectory(instanceId).resolve("shaderpacks");
     }
 
     public Path getInstanceJson(GameInstanceID instanceId) {
