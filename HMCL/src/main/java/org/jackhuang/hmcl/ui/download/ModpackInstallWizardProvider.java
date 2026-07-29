@@ -94,13 +94,13 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
 
-        GameInstanceID instanceId = new GameInstanceID(name);
-
         if (isManuallyCreated) {
             return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name, charset);
         }
 
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
+
+        GameInstanceID instanceId = new GameInstanceID(name);
 
         if (updateVersion != null) {
             if (selected == null) {
