@@ -92,9 +92,9 @@ public interface RemoteAddonRepository {
 
     RemoteAddon getModById(DownloadProvider downloadProvider, String id) throws IOException;
 
-    default RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
-        return getModById(downloadProvider, id);
-    }
+    /// @return the dependency resolved, or {@link RemoteAddon#BROKEN} when the dependency is not found
+    /// @throws IOException if an I/O error occurs, except for when the desired dependency is not found
+    RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException;
 
     RemoteAddon.File getModFile(String modId, String fileId) throws IOException;
 
