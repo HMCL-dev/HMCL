@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.game.JavaVersionConstraint;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -315,13 +315,13 @@ public final class JavaManager {
     }
 
     @Nullable
-    public static JavaRuntime findSuitableJava(GameVersionNumber gameVersion, Version version) throws InterruptedException {
-        return findSuitableJava(getAllJava(), gameVersion, version);
+    public static JavaRuntime findSuitableJava(GameVersionNumber gameVersion, GameInstanceManifest manifest) throws InterruptedException {
+        return findSuitableJava(getAllJava(), gameVersion, manifest);
     }
 
     @Nullable
-    public static JavaRuntime findSuitableJava(Collection<JavaRuntime> javaRuntimes, GameVersionNumber gameVersion, Version version) {
-        LibraryAnalyzer analyzer = version != null ? LibraryAnalyzer.analyze(version, gameVersion != null ? gameVersion.toString() : null) : null;
+    public static JavaRuntime findSuitableJava(Collection<JavaRuntime> javaRuntimes, GameVersionNumber gameVersion, GameInstanceManifest manifest) {
+        LibraryAnalyzer analyzer = manifest != null ? LibraryAnalyzer.analyze(manifest, gameVersion != null ? gameVersion.toString() : null) : null;
 
         boolean forceX86 = Architecture.SYSTEM_ARCH == Architecture.ARM64
                 && (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
@@ -342,8 +342,8 @@ public final class JavaManager {
             boolean violationSuggested = false;
 
             for (JavaVersionConstraint constraint : JavaVersionConstraint.ALL) {
-                if (constraint.appliesToVersion(gameVersion, version, java, analyzer)) {
-                    if (!constraint.checkJava(gameVersion, version, java, analyzer)) {
+                if (constraint.appliesToVersion(gameVersion, manifest, java, analyzer)) {
+                    if (!constraint.checkJava(gameVersion, manifest, java, analyzer)) {
                         if (constraint.isMandatory()) {
                             violationMandatory = true;
                         } else {

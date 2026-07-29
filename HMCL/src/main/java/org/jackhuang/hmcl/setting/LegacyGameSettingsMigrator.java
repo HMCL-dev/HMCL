@@ -130,9 +130,9 @@ public final class LegacyGameSettingsMigrator {
     /// @return the migrated instance setting, or `null` when no legacy file can be migrated
     public static @Nullable InstanceMigrationResult migrateInstanceGameSettings(
             HMCLGameRepository repository,
-            String instanceId,
+            GameInstanceID instanceId,
             @Nullable GameSettingsPresetID parent) {
-        Path instanceRoot = repository.getVersionRoot(instanceId);
+        Path instanceRoot = repository.getInstanceRoot(instanceId);
         Path file = instanceRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
         if (!Files.exists(file)) {
             return null;

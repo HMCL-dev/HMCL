@@ -19,7 +19,8 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -30,21 +31,21 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 
-public class GameInstallTask extends Task<Version> {
+public class GameInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultGameRepository gameRepository;
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest manifest;
     private final GameRemoteVersion remote;
-    private final VersionJsonDownloadTask downloadTask;
+    private final GameInstanceJsonDownloadTask downloadTask;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public GameInstallTask(DefaultDependencyManager dependencyManager, Version version, GameRemoteVersion remoteVersion) {
+    public GameInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, GameRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
-        this.downloadTask = new VersionJsonDownloadTask(remoteVersion.getGameVersion(), dependencyManager);
+        this.downloadTask = new GameInstanceJsonDownloadTask(remoteVersion.getGameVersion(), dependencyManager);
     }
 
     @Override
@@ -64,11 +65,14 @@ public class GameInstallTask extends Task<Version> {
 
     @Override
     public void execute() throws Exception {
-        Version patch = JsonUtils.fromNonNullJson(downloadTask.getResult(), Version.class)
-                .setId(MINECRAFT.getPatchId()).setVersion(remote.getGameVersion()).setJar(null).setPriority(Version.PRIORITY_MC);
+        GameInstancePatch patch = GameInstancePatch.fromManifest(
+                JsonUtils.fromNonNullJson(downloadTask.getResult(), GameInstanceManifest.class),
+                MINECRAFT.getPatchId(),
+                remote.getGameVersion(),
+                GameInstancePatch.PRIORITY_MC).withJar(null);
         setResult(patch);
 
-        Version version = new Version(this.version.getId()).addPatch(patch);
+        GameInstanceManifest version = new GameInstanceManifest(this.manifest.id()).addPatch(patch);
         dependencies.add(Task.allOf(
                 new GameDownloadTask(dependencyManager, remote.getGameVersion(), version),
                 Task.allOf(
