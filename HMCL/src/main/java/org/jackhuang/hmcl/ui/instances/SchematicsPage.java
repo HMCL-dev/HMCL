@@ -117,7 +117,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     private HMCLGameRepository repository;
-    private String instanceId;
+    private GameInstanceID instanceId;
     private Path schematicsDirectory;
 
     private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
@@ -162,7 +162,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     public void downloadLitematica() {
         if (downloadTarget.get() != null) {
             var modDownloads = Controllers.getDownloadPage().showModDownloads();
-            modDownloads.selectVersion(instanceId);
+            modDownloads.selectInstance(instanceId);
             Controllers.navigate(new DownloadPage(
                     modDownloads,
                     downloadTarget.get(),
@@ -176,7 +176,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         if (schematicsDirectory == null) return;
 
         setLoading(true);
-        String currentInstanceId = this.instanceId;
+        GameInstanceID currentInstanceId = this.instanceId;
         DirItem currentDir = currentDirectoryProperty().get();
         Task.supplyAsync(Schedulers.io(), () -> {
             DirItem target = loadRoot(schematicsDirectory);
