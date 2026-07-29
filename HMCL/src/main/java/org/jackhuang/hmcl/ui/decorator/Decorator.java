@@ -106,9 +106,6 @@ public final class Decorator {
             0.0,
             0.0);
 
-    /// Whether [#root] currently reserves and renders the custom window shadow.
-    private boolean windowShadowEnabled;
-
     /// The navigation stack rendered in the main window.
     private final Navigator navigator = new Navigator();
 
@@ -176,8 +173,9 @@ public final class Decorator {
         shadowContainer.getChildren().setAll(mainWindowPane);
         root.setPickOnBounds(true);
         root.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
+        root.setPadding(SHADOW_INSETS);
         root.getChildren().setAll(shadowContainer);
-        setWindowShadowEnabled(true);
+        shadowContainer.setEffect(windowShadow);
 
         snackbar.registerSnackbarContainer(mainWindowPane);
 
@@ -198,89 +196,22 @@ public final class Decorator {
     ///
     /// @return `true` when the decorator reserves custom-shadow insets
     public boolean hasWindowShadow() {
-        return windowShadowEnabled;
-    }
-
-    /// Enables or disables the custom window shadow without replacing the scene root.
-    ///
-    /// When an attached stage has finite non-maximized bounds, this method requests corresponding stage bounds to
-    /// preserve the main-window content's screen position and size. The stable root remains both the scene root and
-    /// the move and resize event root. Calling this method with the current value has no effect. This method must be
-    /// called on the JavaFX application thread.
-    ///
-    /// @param enabled whether the custom shadow must be present
-    public void setWindowShadowEnabled(boolean enabled) {
-        FXUtils.checkFxUserThread();
-        if (enabled == windowShadowEnabled) {
-            return;
-        }
-
-        Insets oldInsets = getWindowInsets();
-        mainWindowPane.cancelWindowGesture();
-        windowShadowEnabled = enabled;
-        root.setPadding(enabled ? SHADOW_INSETS : Insets.EMPTY);
-        shadowContainer.setEffect(enabled ? windowShadow : null);
-        adjustStageForWindowInsets(oldInsets, getWindowInsets());
-    }
-
-    /// Adjusts an attached stage after its content insets change.
-    ///
-    /// @param oldInsets the insets before the content-layer change
-    /// @param newInsets the insets after the content-layer change
-    private void adjustStageForWindowInsets(Insets oldInsets, Insets newInsets) {
-        @Nullable Stage currentStage = getStage();
-        if (currentStage == null) {
-            return;
-        }
-
-        double horizontalDelta = newInsets.getLeft() + newInsets.getRight()
-                - oldInsets.getLeft() - oldInsets.getRight();
-        double verticalDelta = newInsets.getTop() + newInsets.getBottom()
-                - oldInsets.getTop() - oldInsets.getBottom();
-
-        double minWidth = currentStage.getMinWidth();
-        if (Double.isFinite(minWidth) && minWidth > 0) {
-            currentStage.setMinWidth(Math.max(0, minWidth + horizontalDelta));
-        }
-        double minHeight = currentStage.getMinHeight();
-        if (Double.isFinite(minHeight) && minHeight > 0) {
-            currentStage.setMinHeight(Math.max(0, minHeight + verticalDelta));
-        }
-
-        if (currentStage.isMaximized() || currentStage.isFullScreen()) {
-            return;
-        }
-
-        double x = currentStage.getX();
-        if (Double.isFinite(x)) {
-            currentStage.setX(x - newInsets.getLeft() + oldInsets.getLeft());
-        }
-        double y = currentStage.getY();
-        if (Double.isFinite(y)) {
-            currentStage.setY(y - newInsets.getTop() + oldInsets.getTop());
-        }
-
-        double width = currentStage.getWidth();
-        double height = currentStage.getHeight();
-        if (Double.isFinite(width) && width > 0 && Double.isFinite(height) && height > 0) {
-            // Width and height must be set together to avoid JDK-8344372.
-            currentStage.setWidth(Math.max(currentStage.getMinWidth(), width + horizontalDelta));
-            currentStage.setHeight(Math.max(currentStage.getMinHeight(), height + verticalDelta));
-        }
+        return shadowContainer.getEffect() == windowShadow;
     }
 
     /// Returns the insets reserved outside the main-window content.
     ///
     /// @return the root's shadow insets, or [Insets#EMPTY] when the shadow is disabled
     public Insets getWindowInsets() {
-        return windowShadowEnabled ? SHADOW_INSETS : Insets.EMPTY;
+        return root.getPadding();
     }
 
     /// Returns the insets used for custom resize hit testing.
     ///
     /// @return the shadow insets, or an inward resize area when the shadow is disabled
     Insets getResizeInsets() {
-        return windowShadowEnabled ? SHADOW_INSETS : RESIZE_INSETS;
+        Insets windowInsets = getWindowInsets();
+        return Insets.EMPTY.equals(windowInsets) ? RESIZE_INSETS : windowInsets;
     }
 
     /// Returns the pane on which application dialogs are stacked.
