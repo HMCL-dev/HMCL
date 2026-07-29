@@ -21,6 +21,7 @@ import javafx.scene.Node;
 import org.jackhuang.hmcl.util.SettingsMap;
 
 public interface WizardProvider {
+
     void start(SettingsMap settings);
 
     Object finish(SettingsMap settings);
