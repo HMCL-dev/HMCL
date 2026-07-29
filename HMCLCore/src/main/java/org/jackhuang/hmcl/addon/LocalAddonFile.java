@@ -66,8 +66,7 @@ public abstract class LocalAddonFile {
     public record AddonUpdate(
             LocalAddonFile localAddonFile,
             RemoteAddon.Version currentVersion,
-            RemoteAddon.Version targetVersion,
-            boolean useRemoteFileName
+            RemoteAddon.Version targetVersion
     ) {
     }
 

@@ -294,7 +294,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 RemoteAddon.Version remote = addon.targetVersion();
                 boolean isDisabled = local.isDisabled();
                 String originalFileName = local.getFile().getFileName().toString();
-                String fileName = addon.useRemoteFileName() ? remote.file().filename() : originalFileName;
+                String fileName = remote.file().filename();
                 if (isDisabled)
                     fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
                 String newFileName = fileName;

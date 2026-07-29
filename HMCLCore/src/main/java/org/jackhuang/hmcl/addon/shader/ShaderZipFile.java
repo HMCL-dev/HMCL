@@ -95,7 +95,7 @@ final class ShaderZipFile extends ShaderFile {
                 .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), true);
+        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0));
     }
 
     @Override

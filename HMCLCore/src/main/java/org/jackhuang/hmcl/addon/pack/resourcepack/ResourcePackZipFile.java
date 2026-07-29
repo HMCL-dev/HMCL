@@ -74,6 +74,11 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
+    public void onUpdated(String newFileNameWithExtension) {
+        manager.rename(getFileNameWithExtension(), newFileNameWithExtension);
+    }
+
+    @Override
     public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
         RemoteAddonRepository repository = source.getRepoForType(RemoteAddonRepository.Type.RESOURCE_PACK);
         if (repository == null) return null;
@@ -85,7 +90,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
                 .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), false);
+        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0));
     }
 }
 
