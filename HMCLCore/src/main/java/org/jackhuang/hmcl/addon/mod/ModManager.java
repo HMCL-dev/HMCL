@@ -198,11 +198,11 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
-    public void analyze() {
+    public void analyze() throws IOException {
         lock.lock();
         try {
-            var resolved = getRepository().getResolvedPreservingPatchesVersion(id);
-            gameVersion = repository.getGameVersion(resolved).orElse(null);
+            var resolved = getRepository().getResolvedInstanceManifest(instanceId);
+            gameVersion = repository.getGameVersion(resolved.standaloneManifest()).orElse(null);
             analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         } catch (NoSuchGameInstanceException e) {
             throw new IOException(e);

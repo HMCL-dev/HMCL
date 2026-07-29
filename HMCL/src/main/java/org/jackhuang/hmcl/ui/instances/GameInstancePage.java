@@ -192,7 +192,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     private void onBrowseSchematics() {
-        FXUtils.openFolder(getRepository().getSchematicsDirectory(getVersion()));
+        FXUtils.openFolder(getRepository().getSchematicsDirectory(getInstanceId()));
     }
 
     private void redownloadAssetIndex() {
