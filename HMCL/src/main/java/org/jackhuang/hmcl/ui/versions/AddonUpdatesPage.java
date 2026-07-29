@@ -296,7 +296,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 String fileName = remote.file().filename();
                 if (isDisabled)
                     fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
-                String finalFileName = fileName;
+                String newFileName = fileName;
 
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
@@ -304,7 +304,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
                             var task = new FileDownloadTask(
                                     remote.file().url(),
-                                    addonDirectory.resolve(finalFileName)
+                                    addonDirectory.resolve(newFileName)
                             );
 
                             task.setName(remote.name());
@@ -318,7 +318,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                                     local.markDisabled();
                                 failedAddons.add(local);
                             } else {
-                                local.onUpdated(finalFileName);
+                                local.onUpdated(newFileName);
                                 if (!local.keepOldFiles()) {
                                     try {
                                         local.delete();
