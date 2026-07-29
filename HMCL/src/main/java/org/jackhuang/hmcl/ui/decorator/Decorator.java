@@ -27,11 +27,15 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -39,7 +43,9 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
@@ -64,15 +70,25 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 
 /// Coordinates the main window's visual tree, navigation, dialogs, and native window behavior.
 ///
-/// A decorator owns one navigation stack and one root node. Its stage may be replaced or detached through
-/// [#setStage(Stage)], but its root node and navigation stack remain valid for the decorator's lifetime.
+/// A decorator owns one navigation stack and one stable root node. The root may either be the main-window pane
+/// itself or a [ShadowWrapper], as selected at construction. Attaching a stage also attaches the retained scene;
+/// hiding or closing that stage does not discard either the scene or the decorator state.
 @NotNullByDefault
 public final class Decorator {
     /// The space, in pixels, reserved on each side of the window content for the custom shadow.
     static final double SHADOW_SIZE = 8.0;
 
-    /// The scene root that reserves space for and renders the custom window shadow.
-    private final ShadowWrapper root = new ShadowWrapper();
+    /// The width, in pixels, of the resize hit area when no shadow wrapper provides insets.
+    static final double RESIZE_BORDER_SIZE = 8.0;
+
+    /// The inward resize hit area used by an unwrapped main-window pane.
+    private static final Insets RESIZE_INSETS = new Insets(RESIZE_BORDER_SIZE);
+
+    /// The optional scene root that reserves space for and renders the custom window shadow.
+    private final @Nullable ShadowWrapper shadowWrapper;
+
+    /// The stable root exposed to the scene, with or without a shadow wrapper.
+    private final Parent root;
 
     /// The navigation stack rendered in the main window.
     private final Navigator navigator = new Navigator();
@@ -90,7 +106,8 @@ public final class Decorator {
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(this, "showCloseAsHome");
 
     /// The stage currently controlled by this decorator, or `null` while detached.
-    private final ObjectProperty<@Nullable Stage> stage = new SimpleObjectProperty<>(this, "stage");
+    private final ReadOnlyObjectWrapper<@Nullable Stage> stage =
+            new ReadOnlyObjectWrapper<>(this, "stage");
 
     /// The title-bar state supplied by the current page, or `null` before navigation is initialized.
     private final ObjectProperty<DecoratorPage.@Nullable State> state = new SimpleObjectProperty<>(this, "state");
@@ -104,6 +121,9 @@ public final class Decorator {
     /// Whether the next de-iconification should play the restore animation.
     private boolean playRestoreMinimizeAnimation;
 
+    /// The active root-node window animation, or `null` when the root is stationary.
+    private @Nullable Timeline windowAnimation;
+
     /// Handles restore animation when the current stage leaves its iconified state.
     private final ChangeListener<Boolean> iconifiedListener = (observable, oldValue, iconified) -> {
         if (playRestoreMinimizeAnimation && !iconified) {
@@ -115,18 +135,51 @@ public final class Decorator {
     /// The direction used by the next title-bar transition.
     private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
 
-    /// Creates a decorator attached to `primaryStage` and initializes its navigation stack with `mainPage`.
+    /// Creates a shadowed decorator attached to `primaryStage`.
     ///
     /// @param primaryStage the stage controlled by the decorator
     /// @param mainPage     the permanent root page of the navigation stack
     public Decorator(Stage primaryStage, Node mainPage) {
-        stage.addListener((observable, oldStage, newStage) -> onStageChanged(oldStage, newStage));
-        setStage(primaryStage);
+        this(primaryStage, mainPage, true);
+    }
 
+    /// Creates a decorator attached to `primaryStage`.
+    ///
+    /// @param primaryStage    the stage controlled by the decorator
+    /// @param mainPage        the permanent root page of the navigation stack
+    /// @param useWindowShadow whether to wrap the main-window pane in a custom shadow
+    public Decorator(Stage primaryStage, Node mainPage, boolean useWindowShadow) {
+        this(mainPage, useWindowShadow);
+        attachStage(primaryStage);
+    }
+
+    /// Creates a detached shadowed decorator.
+    ///
+    /// @param mainPage the permanent root page of the navigation stack
+    public Decorator(Node mainPage) {
+        this(mainPage, true);
+    }
+
+    /// Creates a detached decorator and initializes its navigation stack.
+    ///
+    /// No scene is created until [#attachStage(Stage)] is called or the root is otherwise installed in a scene.
+    ///
+    /// @param mainPage        the permanent root page of the navigation stack
+    /// @param useWindowShadow whether to wrap the main-window pane in a custom shadow
+    public Decorator(Node mainPage, boolean useWindowShadow) {
+        stage.addListener((observable, oldStage, newStage) -> onStageChanged(oldStage, newStage));
         navigator.setOnNavigated(this::onNavigated);
 
+        shadowWrapper = useWindowShadow ? new ShadowWrapper() : null;
         mainWindowPane = new MainWindowPane(this);
-        root.setContent(mainWindowPane);
+        if (shadowWrapper == null) {
+            root = mainWindowPane;
+        } else {
+            shadowWrapper.setContent(mainWindowPane);
+            root = shadowWrapper;
+        }
+        mainWindowPane.startStageTracking();
+
         snackbar.registerSnackbarContainer(mainWindowPane);
 
         navigator.init(mainPage);
@@ -142,11 +195,34 @@ public final class Decorator {
         return root;
     }
 
-    /// Returns the concrete root used by package-local window layout code.
+    /// Returns whether the scene root includes the custom shadow wrapper.
     ///
-    /// @return the custom-shadow wrapper
-    ShadowWrapper getWindowRoot() {
-        return root;
+    /// @return `true` when the decorator reserves custom-shadow insets
+    public boolean hasWindowShadow() {
+        return shadowWrapper != null;
+    }
+
+    /// Returns the insets reserved outside the main-window content.
+    ///
+    /// @return the shadow wrapper's insets, or [Insets#EMPTY] when the wrapper is absent
+    public Insets getWindowInsets() {
+        return shadowWrapper == null ? Insets.EMPTY : shadowWrapper.getInsets();
+    }
+
+    /// Returns the region that receives native move and resize event filters.
+    ///
+    /// @return the shadow wrapper when present; otherwise the main-window pane
+    StackPane getWindowEventRoot() {
+        return shadowWrapper == null ? mainWindowPane : shadowWrapper;
+    }
+
+    /// Returns the insets used for custom resize hit testing.
+    ///
+    /// @return actual shadow insets, or an inward resize area when no wrapper is present
+    Insets getResizeInsets() {
+        return shadowWrapper == null
+                ? RESIZE_INSETS
+                : shadowWrapper.getInsets();
     }
 
     /// Returns the pane on which application dialogs are stacked.
@@ -249,27 +325,89 @@ public final class Decorator {
         });
     }
 
+    /// Returns the scene retained by this decorator's root.
+    ///
+    /// A detached decorator retains its scene after [#detachStage()] so that stylesheets and scene state survive
+    /// attachment to another stage.
+    ///
+    /// @return the retained scene, or `null` if the root has never been installed in one
+    public @Nullable Scene getScene() {
+        return root.getScene();
+    }
+
+    /// Attaches the retained scene and native window behavior to `newStage`.
+    ///
+    /// If the root has no scene, this method reuses `newStage`'s scene and replaces its root, or creates a
+    /// transparent scene when the stage has none. If the retained scene belongs to another stage, it is detached
+    /// from that stage before being installed on `newStage`. Any active window animation is cancelled and reset.
+    /// This method does not show the stage.
+    ///
+    /// @param newStage the stage to attach, which must be accessed on the JavaFX application thread
+    /// @return the scene installed on `newStage`
+    public Scene attachStage(Stage newStage) {
+        FXUtils.checkFxUserThread();
+        stopWindowAnimation();
+
+        @Nullable Scene retainedScene = root.getScene();
+        Scene scene;
+        if (retainedScene == null) {
+            @Nullable Scene stageScene = newStage.getScene();
+            if (stageScene == null) {
+                scene = new Scene(root);
+                scene.setFill(Color.TRANSPARENT);
+            } else {
+                if (root.getParent() != null) {
+                    throw new IllegalStateException("Decorator root is already attached to a parent");
+                }
+                stageScene.setRoot(root);
+                scene = stageScene;
+            }
+        } else {
+            scene = retainedScene;
+            @Nullable Window owner = scene.getWindow();
+            if (owner != null && owner != newStage) {
+                if (owner instanceof Stage ownerStage) {
+                    ownerStage.setScene(null);
+                } else {
+                    throw new IllegalStateException("Decorator scene is attached to a non-stage window");
+                }
+            }
+        }
+
+        if (newStage.getScene() != scene) {
+            newStage.setScene(scene);
+        }
+        stage.set(newStage);
+        return scene;
+    }
+
+    /// Detaches the retained scene and native window behavior from the current stage.
+    ///
+    /// The root, scene, navigation state, dialogs, and snackbar remain owned by this decorator and may subsequently
+    /// be attached to another stage. Calling this method while detached has no effect beyond resetting root transforms.
+    public void detachStage() {
+        FXUtils.checkFxUserThread();
+        stopWindowAnimation();
+
+        @Nullable Stage currentStage = stage.get();
+        stage.set(null);
+        if (currentStage != null && currentStage.getScene() == root.getScene()) {
+            currentStage.setScene(null);
+        }
+    }
+
     /// Returns the stage currently controlled by this decorator.
     ///
     /// @return the current stage, or `null` while detached
-    @Nullable Stage getStage() {
+    public @Nullable Stage getStage() {
         return stage.get();
     }
 
-    /// Attaches this decorator to `stage`, detaching listeners from any previous stage.
+    /// Returns the read-only stage property used by window components.
     ///
-    /// Passing `null` disables native window operations until another stage is attached.
-    ///
-    /// @param stage the new stage, or `null` to detach
-    void setStage(@Nullable Stage stage) {
-        this.stage.set(stage);
-    }
-
-    /// Returns the mutable stage property used by window components.
-    ///
-    /// @return the current-stage property
-    ObjectProperty<@Nullable Stage> stageProperty() {
-        return stage;
+    /// @return the attached-stage property
+    public ReadOnlyObjectProperty<@Nullable Stage> stageProperty() {
+        return stage.getReadOnlyProperty();
     }
 
     /// Returns the title-bar state supplied by the current page.
@@ -364,7 +502,6 @@ public final class Decorator {
         }
 
         if (AnimationUtils.playWindowAnimation() && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
-            playRestoreMinimizeAnimation = true;
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
@@ -378,9 +515,17 @@ public final class Decorator {
                             new KeyValue(root.scaleXProperty(), 0.4, Motion.EASE),
                             new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE),
                             new KeyValue(root.scaleZProperty(), 0.4, Motion.EASE)));
-            timeline.setOnFinished(event -> currentStage.setIconified(true));
-            timeline.play();
+            playWindowAnimation(timeline, () -> {
+                if (getStage() == currentStage) {
+                    currentStage.setIconified(true);
+                } else {
+                    playRestoreMinimizeAnimation = false;
+                    resetRootTransform();
+                }
+            });
+            playRestoreMinimizeAnimation = true;
         } else {
+            stopWindowAnimation();
             currentStage.setIconified(true);
         }
     }
@@ -399,9 +544,9 @@ public final class Decorator {
                             new KeyValue(root.scaleXProperty(), 0.8, Motion.EASE),
                             new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE),
                             new KeyValue(root.scaleZProperty(), 0.8, Motion.EASE)));
-            timeline.setOnFinished(event -> Launcher.stopApplication());
-            timeline.play();
+            playWindowAnimation(timeline, Launcher::stopApplication);
         } else {
+            stopWindowAnimation();
             Launcher.stopApplication();
         }
     }
@@ -519,13 +664,12 @@ public final class Decorator {
     /// @param oldStage the previously attached stage, or `null`
     /// @param newStage the newly attached stage, or `null`
     private void onStageChanged(@Nullable Stage oldStage, @Nullable Stage newStage) {
+        playRestoreMinimizeAnimation = false;
         if (oldStage != null) {
             oldStage.iconifiedProperty().removeListener(iconifiedListener);
         }
         if (newStage != null) {
             newStage.iconifiedProperty().addListener(iconifiedListener);
-        } else {
-            playRestoreMinimizeAnimation = false;
         }
     }
 
@@ -544,6 +688,42 @@ public final class Decorator {
                         new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
                         new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
                         new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
+        playWindowAnimation(timeline, this::resetRootTransform);
+    }
+
+    /// Cancels the current window animation, starts `timeline`, and runs `onFinished` after normal completion.
+    ///
+    /// @param timeline   the animation to start
+    /// @param onFinished the action to run only when this animation reaches its end
+    private void playWindowAnimation(Timeline timeline, Runnable onFinished) {
+        stopWindowAnimation();
+        windowAnimation = timeline;
+        timeline.setOnFinished(event -> {
+            if (windowAnimation != timeline) {
+                return;
+            }
+            windowAnimation = null;
+            onFinished.run();
+        });
         timeline.play();
+    }
+
+    /// Cancels any active window animation and restores the stable root transform.
+    private void stopWindowAnimation() {
+        playRestoreMinimizeAnimation = false;
+        if (windowAnimation != null) {
+            windowAnimation.stop();
+            windowAnimation = null;
+        }
+        resetRootTransform();
+    }
+
+    /// Restores the root transform used while the stage is visible and stationary.
+    private void resetRootTransform() {
+        root.setOpacity(1);
+        root.setTranslateY(0);
+        root.setScaleX(1);
+        root.setScaleY(1);
+        root.setScaleZ(1);
     }
 }

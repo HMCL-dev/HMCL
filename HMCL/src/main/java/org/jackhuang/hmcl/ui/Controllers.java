@@ -104,8 +104,11 @@ public final class Controllers {
     private static final DoubleProperty contentWidth = new SimpleDoubleProperty();
     private static final DoubleProperty contentHeight = new SimpleDoubleProperty();
 
-    private static Scene scene;
-    private static Stage stage;
+    /// The retained main scene, or `null` after controller shutdown.
+    private static @Nullable Scene scene;
+
+    /// The primary application stage, or `null` after controller shutdown.
+    private static @Nullable Stage stage;
     private static VersionPage versionPage;
     private static Lazy<GameListPage> gameListPage = new Lazy<>(GameListPage::new);
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
@@ -222,8 +225,12 @@ public final class Controllers {
         return Objects.requireNonNull(decorator, "Main window is not initialized");
     }
 
+    /// Releases stage-specific listeners and retained window ownership before application shutdown.
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
+        if (decorator != null) {
+            decorator.detachStage();
+        }
     }
 
     /// Initializes the main application stage, scene graph, and background services.
@@ -338,7 +345,10 @@ public final class Controllers {
 
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
-        decorator = new Decorator(stage, getRootPage());
+        stage.initStyle(StageStyle.TRANSPARENT);
+        decorator = new Decorator(getRootPage());
+        Scene mainScene = decorator.attachStage(stage);
+        scene = mainScene;
         getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
         getRootPage().getMainPage().showUpdateDialogProperty().bind(
                 decorator.backableProperty().not()
@@ -354,16 +364,13 @@ public final class Controllers {
 
         Lang.thread(JavaManager::initialize, "Search Java", true);
 
-        scene = new Scene(decorator.getRoot());
-        scene.setFill(Color.TRANSPARENT);
+        mainScene.setFill(Color.TRANSPARENT);
         stage.setMinWidth(MIN_WIDTH);
         stage.setMinHeight(MIN_HEIGHT);
-        StyleSheets.init(scene);
+        StyleSheets.init(mainScene);
 
         FXUtils.setIcon(stage);
         stage.setTitle(Metadata.FULL_TITLE);
-        stage.initStyle(StageStyle.TRANSPARENT);
-        stage.setScene(scene);
 
         if (AnimationUtils.playWindowAnimation()) {
             Timeline timeline = new Timeline(
@@ -687,7 +694,9 @@ public final class Controllers {
         return decorator == null;
     }
 
+    /// Releases controller-owned pages, window state, and JavaFX helper resources.
     public static void shutdown() {
+        onApplicationStop();
         rootPage = null;
         versionPage = null;
         gameListPage = null;
@@ -698,7 +707,6 @@ public final class Controllers {
         decorator = null;
         stage = null;
         scene = null;
-        onApplicationStop();
 
         FXUtils.shutdown();
     }

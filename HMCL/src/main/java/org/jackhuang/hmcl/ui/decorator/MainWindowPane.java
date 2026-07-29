@@ -60,8 +60,8 @@ import org.jetbrains.annotations.Nullable;
 
 /// Renders the clipped window content and implements custom title-bar, move, and resize behavior.
 ///
-/// This pane occupies only the content area inside [ShadowWrapper]'s shadow insets. Mouse filters used to resize
-/// the native stage are installed on the wrapper so that the transparent shadow area remains the resize target.
+/// When a [ShadowWrapper] is present, this pane occupies only its content area and the wrapper receives native
+/// resize events. Without a wrapper, an inward edge region of this pane provides the same resize behavior.
 @NotNullByDefault
 final class MainWindowPane extends StackPane {
     /// The diameter, in pixels, of the rounded window corners.
@@ -125,8 +125,11 @@ final class MainWindowPane extends StackPane {
     /// The stage whose native-state properties currently have listeners installed.
     private @Nullable Stage observedStage;
 
-    /// Whether the move and resize event filters are currently installed on the shadow wrapper.
+    /// Whether the move and resize event filters are currently installed on the active event root.
     private boolean windowEventFiltersInstalled;
+
+    /// Whether this pane has started observing the decorator's attached-stage property.
+    private boolean stageTrackingStarted;
 
     /// The initial pointer position of the active move or resize gesture.
     private double mouseInitX;
@@ -212,8 +215,6 @@ final class MainWindowPane extends StackPane {
         StackPane.setAlignment(rightButtonsContainer, Pos.TOP_RIGHT);
 
         getChildren().setAll(backgroundNode, dialogContainer, windowControlsLayer);
-
-        holder.onWeakChangeAndOperate(decorator.stageProperty(), this::onStageChange);
     }
 
     /// Returns the pane used as the JFoenix dialog host.
@@ -221,6 +222,17 @@ final class MainWindowPane extends StackPane {
     /// @return the stable dialog container
     StackPane getDialogContainer() {
         return dialogContainer;
+    }
+
+    /// Starts observing stage attachment after the decorator has finished constructing its root.
+    ///
+    /// Repeated calls have no effect.
+    void startStageTracking() {
+        if (stageTrackingStarted) {
+            return;
+        }
+        stageTrackingStarted = true;
+        holder.onWeakChangeAndOperate(decorator.stageProperty(), this::onStageChange);
     }
 
     /// Creates the launcher-background layer and keeps it synchronized with the active theme.
@@ -474,7 +486,7 @@ final class MainWindowPane extends StackPane {
         }
     }
 
-    /// Installs or removes the custom move and resize filters on the shadow wrapper.
+    /// Installs or removes the custom move and resize filters on the active event root.
     ///
     /// @param enabled whether the filters should be installed
     private void setWindowEventFiltersEnabled(boolean enabled) {
@@ -482,7 +494,7 @@ final class MainWindowPane extends StackPane {
             return;
         }
 
-        ShadowWrapper root = decorator.getWindowRoot();
+        StackPane root = decorator.getWindowEventRoot();
         if (enabled) {
             root.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
             root.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
@@ -497,38 +509,39 @@ final class MainWindowPane extends StackPane {
         windowEventFiltersInstalled = enabled;
     }
 
-    /// Returns whether `x` lies in the wrapper's right resize inset.
+    /// Returns whether `x` lies in the event root's right resize inset.
     ///
-    /// @param x the horizontal pointer coordinate in the wrapper
+    /// @param x the horizontal pointer coordinate in the event root
     /// @return `true` when the coordinate is on the right edge
     private boolean isRightEdge(double x) {
-        ShadowWrapper root = decorator.getWindowRoot();
-        return x < root.getWidth() && x >= root.getWidth() - root.getInsets().getRight();
+        StackPane root = decorator.getWindowEventRoot();
+        Insets insets = decorator.getResizeInsets();
+        return x < root.getWidth() && x >= root.getWidth() - insets.getRight();
     }
 
-    /// Returns whether `y` lies in the wrapper's top resize inset.
+    /// Returns whether `y` lies in the event root's top resize inset.
     ///
-    /// @param y the vertical pointer coordinate in the wrapper
+    /// @param y the vertical pointer coordinate in the event root
     /// @return `true` when the coordinate is on the top edge
     private boolean isTopEdge(double y) {
-        return y >= 0 && y <= decorator.getWindowRoot().getInsets().getTop();
+        return y >= 0 && y <= decorator.getResizeInsets().getTop();
     }
 
-    /// Returns whether `y` lies in the wrapper's bottom resize inset.
+    /// Returns whether `y` lies in the event root's bottom resize inset.
     ///
-    /// @param y the vertical pointer coordinate in the wrapper
+    /// @param y the vertical pointer coordinate in the event root
     /// @return `true` when the coordinate is on the bottom edge
     private boolean isBottomEdge(double y) {
-        ShadowWrapper root = decorator.getWindowRoot();
-        return y < root.getHeight() && y >= root.getHeight() - root.getInsets().getBottom();
+        StackPane root = decorator.getWindowEventRoot();
+        return y < root.getHeight() && y >= root.getHeight() - decorator.getResizeInsets().getBottom();
     }
 
-    /// Returns whether `x` lies in the wrapper's left resize inset.
+    /// Returns whether `x` lies in the event root's left resize inset.
     ///
-    /// @param x the horizontal pointer coordinate in the wrapper
+    /// @param x the horizontal pointer coordinate in the event root
     /// @return `true` when the coordinate is on the left edge
     private boolean isLeftEdge(double x) {
-        return x >= 0 && x <= decorator.getWindowRoot().getInsets().getLeft();
+        return x >= 0 && x <= decorator.getResizeInsets().getLeft();
     }
 
     /// Resizes the current stage while enforcing its configured minimum dimensions.
@@ -564,12 +577,12 @@ final class MainWindowPane extends StackPane {
         stage.setHeight(newHeight);
     }
 
-    /// Selects the resize cursor for the pointer's current wrapper position.
+    /// Selects the resize cursor for the pointer's current event-root position.
     ///
     /// @param event the pointer movement event
     private void onMouseMoved(MouseEvent event) {
         @Nullable Stage stage = getCurrentStage();
-        ShadowWrapper root = decorator.getWindowRoot();
+        StackPane root = decorator.getWindowEventRoot();
         if (stage == null || stage.isFullScreen() || !stage.isResizable()) {
             root.setCursor(Cursor.DEFAULT);
             return;
@@ -577,7 +590,7 @@ final class MainWindowPane extends StackPane {
 
         double x = event.getX();
         double y = event.getY();
-        Insets insets = root.getInsets();
+        Insets insets = decorator.getResizeInsets();
         double diagonalSize = Math.max(
                 Math.max(insets.getLeft(), insets.getRight()),
                 Math.max(insets.getTop(), insets.getBottom())) + 10;
@@ -652,7 +665,7 @@ final class MainWindowPane extends StackPane {
 
         double dx = event.getScreenX() - mouseInitX;
         double dy = event.getScreenY() - mouseInitY;
-        Cursor cursor = decorator.getWindowRoot().getCursor();
+        Cursor cursor = decorator.getWindowEventRoot().getCursor();
 
         if (decorator.isAllowMove() && cursor == Cursor.DEFAULT) {
             stage.setX(stageInitX + dx);
