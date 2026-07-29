@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.versions;
+package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -30,6 +30,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -63,9 +64,9 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> implements VersionPage.GameInstanceLoadable, PageAware {
+public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> implements GameInstancePage.GameInstanceLoadable, PageAware {
 
-    private Path screenshotsDir;
+    private @Nullable Path screenshotsDir;
 
     @Override
     protected Skin<?> createDefaultSkin() {
@@ -73,14 +74,16 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, String version) {
-        screenshotsDir = repository.getRunDirectory(version).resolve("screenshots");
+    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
+        screenshotsDir = instanceId != null ? repository.getRunDirectory(instanceId).resolve("screenshots") : null;
         refresh();
     }
 
     public void refresh() {
+        if (screenshotsDir == null) return;
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
+            if (screenshotsDir == null) return List.<Screenshot>of();
             try (Stream<Path> stream = Files.list(screenshotsDir)) {
                 return stream.map(Screenshot::fromFile).filter(Objects::nonNull).sorted(Comparator.reverseOrder()).toList();
             }
@@ -96,7 +99,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
     }
 
     private void revealFolder() {
-        FXUtils.openFolder(screenshotsDir);
+        if (screenshotsDir != null) FXUtils.openFolder(screenshotsDir);
     }
 
     private void deleteAt(Path path) {
@@ -118,6 +121,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
     }
 
     private void clear() {
+        if (screenshotsDir == null) return;
         try (var stream = Files.list(screenshotsDir)) {
             stream.filter(Screenshot::isFileScreenshot).forEach(this::deleteAt);
         } catch (IOException e) {
