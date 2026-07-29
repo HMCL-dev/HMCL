@@ -99,10 +99,10 @@ final class ShaderZipFile extends ShaderFile {
     }
 
     @Override
-    public void onUpdated(String newFileNameWithExtension) {
-        super.onUpdated(newFileNameWithExtension);
+    public void onUpdated(String newFileNameWithExt) {
+        super.onUpdated(newFileNameWithExt);
         var configPath = getFile().resolveSibling(getFileName() + ".zip.txt");
-        var newConfigPath = getFile().resolveSibling(newFileNameWithExtension + ".txt");
+        var newConfigPath = getFile().resolveSibling(newFileNameWithExt + ".txt");
         if (Files.isRegularFile(configPath)) {
             try {
                 Files.move(configPath, newConfigPath);

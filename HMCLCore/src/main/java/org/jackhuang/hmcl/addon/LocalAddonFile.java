@@ -60,7 +60,7 @@ public abstract class LocalAddonFile {
         return null;
     }
 
-    public void onUpdated(String newFileNameWithExtension) {
+    public void onUpdated(String newFileNameWithExt) {
     }
 
     public record AddonUpdate(
