@@ -249,18 +249,7 @@ public final class HTMLRenderer {
             try {
                 ImageView imageView = new ImageView();
 
-                FXUtils.getRemoteImageTask(
-                        src, width, height, true, true
-                ).whenComplete(Schedulers.javafx(), (res, e) -> {
-                    if (e != null) {
-                        LOG.warning("Failed to load image: " + src, e);
-                        return;
-                    }
-                    if (res == null) {
-                        LOG.warning("Failed to load image: " + src, new AssertionError("Image loading task returned null, which should never happen"));
-                    }
-                    imageView.setImage(res);
-                }).start();
+                imageView.imageProperty().bind(FXUtils.newRemoteImage(src, width, height, true, true));
                 imageView.setPreserveRatio(true);
 
                 ImagePane imagePane = new ImagePane(imageView, alt);
@@ -293,7 +282,7 @@ public final class HTMLRenderer {
         List<Element> foot = new ArrayList<>();
 
         boolean hasHead = false;
-        boolean hasBody = false;
+        boolean hasBody = childElements.stream().map(Element::nodeName).anyMatch("tbody"::equals);
         boolean hasFoot = false;
         int columnCount = 0;
         for (Element child : childElements) {
@@ -319,8 +308,6 @@ public final class HTMLRenderer {
                     columnCount = Math.max(columnCount, head.size());
                 }
                 case "tbody" -> {
-                    if (hasBody) continue;
-                    hasBody = true;
                     body.clear();
                     for (Element e : child.children()) {
                         if (e.nameIs("tr")) {
@@ -553,8 +540,12 @@ public final class HTMLRenderer {
             super();
             this.imageView = imageView;
 
-            if (StringUtils.isNotBlank(alt)) getChildren().add(new Text(alt));
+            var txt = new Text(alt);
+            if (StringUtils.isNotBlank(alt)) getChildren().add(txt);
             getChildren().add(imageView);
+            FXUtils.onChangeAndOperate(imageView.imageProperty(), img -> {
+                if (img != null) txt.setVisible(false);
+            });
         }
 
     }
