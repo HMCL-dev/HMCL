@@ -300,17 +300,9 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
-                        .thenComposeAsync(() -> {
-
-                            var task = new FileDownloadTask(
-                                    remote.file().url(),
-                                    addonDirectory.resolve(newFileName)
-                            );
-
-                            task.setName(remote.name());
-                            return task;
-                        })
-                        .whenComplete(Schedulers.javafx(), exception -> {
+                        .thenComposeAsync(() ->
+                                new FileDownloadTask(remote.file().url(), addonDirectory.resolve(newFileName)).setName(remote.name())
+                        ).whenComplete(Schedulers.javafx(), exception -> {
                             if (exception != null) {
                                 // restore state if failed
                                 local.setOld(false);
