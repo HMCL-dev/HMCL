@@ -509,6 +509,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     public boolean rename(String oldName, String newName) {
         String oldNameNewFormat = "file/" + oldName;
+        String newNameNewFormat = "file/" + newName;
         boolean modified = false;
 
         lock.lock();
@@ -521,7 +522,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                 while (it.hasNext()) {
                     var next = it.next();
                     if (oldName.equals(next) || oldNameNewFormat.equals(next)) {
-                        it.set(newName);
+                        it.set(supportsNewOptionsFormat ? newNameNewFormat : newName);
                         modified = true;
                     }
                 }
