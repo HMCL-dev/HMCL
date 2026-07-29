@@ -35,7 +35,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -54,7 +54,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  */
 public class InstallerItem extends Control {
     private final String id;
-    private final VersionIconType iconType;
+    private final GameInstanceIconType iconType;
     private final Style style;
     private final ObjectProperty<InstalledState> versionProperty = new SimpleObjectProperty<>(this, "version", null);
     private final ObjectProperty<State> resolvedStateProperty = new SimpleObjectProperty<>(this, "resolvedState", InstallableState.INSTANCE);
@@ -92,15 +92,15 @@ public class InstallerItem extends Control {
         this.style = style;
 
         iconType = switch (id) {
-            case "game" -> VersionIconType.GRASS;
-            case "fabric", "fabric-api" -> VersionIconType.FABRIC;
-            case "legacyfabric", "legacyfabric-api" -> VersionIconType.LEGACY_FABRIC;
-            case "forge" -> VersionIconType.FORGE;
-            case "cleanroom" -> VersionIconType.CLEANROOM;
-            case "liteloader" -> VersionIconType.CHICKEN;
-            case "optifine" -> VersionIconType.OPTIFINE;
-            case "quilt", "quilt-api" -> VersionIconType.QUILT;
-            case "neoforge" -> VersionIconType.NEO_FORGE;
+            case "game" -> GameInstanceIconType.GRASS;
+            case "fabric", "fabric-api" -> GameInstanceIconType.FABRIC;
+            case "legacyfabric", "legacyfabric-api" -> GameInstanceIconType.LEGACY_FABRIC;
+            case "forge" -> GameInstanceIconType.FORGE;
+            case "cleanroom" -> GameInstanceIconType.CLEANROOM;
+            case "liteloader" -> GameInstanceIconType.CHICKEN;
+            case "optifine" -> GameInstanceIconType.OPTIFINE;
+            case "quilt", "quilt-api" -> GameInstanceIconType.QUILT;
+            case "neoforge" -> GameInstanceIconType.NEO_FORGE;
             default -> null;
         };
     }

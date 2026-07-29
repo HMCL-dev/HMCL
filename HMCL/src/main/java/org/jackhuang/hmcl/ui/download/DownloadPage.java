@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -42,7 +43,7 @@ import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.*;
+import org.jackhuang.hmcl.ui.instances.*;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -65,11 +66,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
-    public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_MOD =
+    public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_MOD =
             (downloadProvider, repository, version, mod, file) -> download(downloadProvider, repository, version, file, "mods");
-    public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_RESOURCE_PACK =
+    public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_RESOURCE_PACK =
             (downloadProvider, repository, version, pack, file) -> download(downloadProvider, repository, version, file, "resourcepacks");
-    public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_SHADER =
+    public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_SHADER =
             (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks");
     public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_WORLD =
             (downloadProvider, repository, version, world, file) -> WorldManageUIUtils.downloadWorld(downloadProvider, repository, version, file);
@@ -91,16 +92,16 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         this(null);
     }
 
-    public DownloadPage(String uploadVersion) {
+    public DownloadPage(GameInstanceID uploadInstance) {
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
             DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, repository, __, modpack, file) -> {
-                Versions.downloadModpackImpl(downloadProvider, repository, uploadVersion, modpack, file);
+                Instances.downloadModpackImpl(downloadProvider, repository, uploadInstance, modpack, file);
             }, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
-            installLocalModpackButton.setOnAction(e -> Versions.importModpack());
+            installLocalModpackButton.setOnAction(e -> Instances.importModpack());
 
             page.getActions().add(installLocalModpackButton);
             return page;
@@ -133,17 +134,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
-            if (node instanceof VersionPage.GameInstanceLoadable loadable) {
+            if (node instanceof GameInstancePage.GameInstanceLoadable loadable) {
                 loadable.loadInstance(GameDirectoryManager.getSelectedRepository(), null);
             }
             return node;
         };
     }
 
-    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon.Version file, String subdirectoryName) {
-        if (version == null) version = repository.getSelectedInstance();
+    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
+        if (instanceId == null) {
+            instanceId = repository.getSelectedInstance();
+        }
 
-        Path runDirectory = repository.hasVersion(version) ? repository.getRunDirectory(version) : repository.getBaseDirectory();
+        Path runDirectory = instanceId != null && repository.hasInstance(instanceId) ? repository.getRunDirectory(instanceId) : repository.getBaseDirectory();
 
         Set<String> existingFiles;
 
@@ -305,10 +308,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
-            GameBuilder builder = dependencyManager.gameBuilder();
+            GameBuilder builder = dependencyManager.newGameBuilder();
 
-            String name = (String) settings.get("name");
-            builder.name(name);
+            GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
+            builder.name(instanceId);
             builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
 
             settings.asStringMap().forEach((key, value) -> {
@@ -317,10 +320,11 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.version(remoteVersion);
             });
 
-            repository.applyDefaultIsolationSettingForNewInstance(name, settings.isInstallingModdedVersion());
+            repository.applyDefaultIsolationSettingForNewInstance(instanceId, settings.isInstallingModdedVersion());
             return builder.buildAsync().whenComplete(any -> {
-                repository.refreshVersions();
-            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
+                repository.refresh();
+                repository.applyDefaultIsolationSetting(instanceId);
+            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(instanceId));
         }
 
         @Override
