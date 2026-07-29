@@ -44,12 +44,7 @@ import javafx.stage.FileChooser;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
-import org.jackhuang.hmcl.setting.BackgroundType;
-import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.setting.ThemeColorType;
-import org.jackhuang.hmcl.setting.UserSettings;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.theme.BuiltinBackground;
 import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
@@ -347,20 +342,25 @@ public class PersonalizationPage extends StackPane {
         String defaultPackId = "com.example.hmcl.theme-pack." + UUIDs.toCompactString(UUIDs.generateV7(exportTimestamp));
         String defaultPackName = LocalDateTime.ofInstant(exportTimestamp, ZoneId.systemDefault()).format(EXPORTED_THEME_NAME_FORMATTER);
 
-        String userName = System.getProperty("user.name").trim();
-        String defaultAuthorName = StringUtils.isBlank(userName) ? "Unknown" : userName;
+        String accountName = null;
+        {
+            var currentAccount = Accounts.getSelectedAccount();
+            if (currentAccount != null) accountName = currentAccount.getProfileName();
+        }
+        if (StringUtils.isBlank(accountName)) accountName = System.getProperty("user.name").trim();
+        String defaultAuthorName = StringUtils.isBlank(accountName) ? "Unknown" : accountName;
 
         PromptDialogPane.Builder.StringQuestion packNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.name"),
-                "")
+                defaultPackName)
                 .setPromptText(defaultPackName);
         PromptDialogPane.Builder.StringQuestion versionQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.version"),
-                "")
+                ThemePackManager.CURRENT_THEME_PACK_VERSION)
                 .setPromptText(ThemePackManager.CURRENT_THEME_PACK_VERSION);
         PromptDialogPane.Builder.StringQuestion authorNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.author"),
-                "")
+                defaultAuthorName)
                 .setPromptText(defaultAuthorName);
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
