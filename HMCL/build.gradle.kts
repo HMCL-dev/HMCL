@@ -299,6 +299,7 @@ val makeDeb = tasks.register("makeDeb", CreateDeb::class) {
 
     version.set(project.version.toString())
     releaseType.set(debChannel)
+    launcherClassName.set("org.jackhuang.hmcl.Launcher")
     appShFile.set(layout.file(provider { artifactFile("sh") }))
     iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
     outputFile.set(debFile)

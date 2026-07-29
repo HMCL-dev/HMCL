@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
@@ -41,16 +42,16 @@ public final class ServerModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        return new ServerModpackCompletionTask(dependencyManager, version);
+    public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId) {
+        return new ServerModpackCompletionTask(dependencyManager, instanceId);
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof ServerModpackManifest serverModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new ServerModpackLocalInstallTask(dependencyManager, zipFile, modpack, serverModpackManifest, name));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), instanceId, new ServerModpackLocalInstallTask(dependencyManager, zipFile, modpack, serverModpackManifest, instanceId));
     }
 
     @Override
