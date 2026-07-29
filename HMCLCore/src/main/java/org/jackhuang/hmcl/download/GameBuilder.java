@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -28,12 +30,12 @@ import java.util.*;
  */
 public abstract class GameBuilder {
 
-    protected String name = "";
+    protected @Nullable GameInstanceID name;
     protected String gameVersion = "";
     protected final Map<String, String> toolVersions = new HashMap<>();
     protected final Set<RemoteVersion> remoteVersions = new HashSet<>();
 
-    public String getName() {
+    public GameInstanceID getName() {
         return name;
     }
 
@@ -42,7 +44,7 @@ public abstract class GameBuilder {
      *
      * @param name the name of new game version.
      */
-    public GameBuilder name(String name) {
+    public GameBuilder name(GameInstanceID name) {
         this.name = Objects.requireNonNull(name);
         return this;
     }
