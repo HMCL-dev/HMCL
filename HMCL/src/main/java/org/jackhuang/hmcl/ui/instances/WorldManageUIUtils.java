@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.instances;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.game.WorldLockedException;
@@ -54,10 +55,10 @@ public final class WorldManageUIUtils {
     private WorldManageUIUtils() {
     }
 
-    public static void downloadWorld(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon.Version file) {
-        if (version == null) version = repository.getSelectedInstance();
+    public static void downloadWorld(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file) {
+        if (instanceId == null) instanceId = repository.getSelectedInstance();
 
-        Path runDirectory = repository.hasVersion(version) ? repository.getRunDirectory(version) : repository.getBaseDirectory();
+        Path runDirectory = instanceId != null && repository.hasInstance(instanceId) ? repository.getRunDirectory(instanceId) : repository.getBaseDirectory();
         Path savesDirectory = runDirectory.resolve("saves");
 
         Path worldZip;

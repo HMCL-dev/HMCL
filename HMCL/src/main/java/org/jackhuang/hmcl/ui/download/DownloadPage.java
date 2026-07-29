@@ -72,7 +72,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             (downloadProvider, repository, version, pack, file) -> download(downloadProvider, repository, version, file, "resourcepacks");
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_SHADER =
             (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks");
-    public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_WORLD =
+    public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_WORLD =
             (downloadProvider, repository, version, world, file) -> WorldManageUIUtils.downloadWorld(downloadProvider, repository, version, file);
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
