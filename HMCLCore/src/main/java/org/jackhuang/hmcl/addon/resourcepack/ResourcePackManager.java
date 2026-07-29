@@ -506,6 +506,36 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         }
     }
 
+    public boolean rename(String oldName, String newName) {
+        String oldNameNewFormat = "file/" + oldName;
+        boolean modified = false;
+
+        lock.lock();
+        try {
+            Map<String, String> options = loadOptions();
+            List<String> optPacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
+            List<String> optIncompatiblePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
+            for (var l : List.of(optPacks, optIncompatiblePacks)) {
+                var it = l.listIterator();
+                while (it.hasNext()) {
+                    var next = it.next();
+                    if (oldName.equals(next) || oldNameNewFormat.equals(next)) {
+                        it.set(newName);
+                        modified = true;
+                    }
+                }
+            }
+            if (modified) {
+                options.put("resourcePacks", serializePackList(optPacks));
+                options.put("incompatibleResourcePacks", serializePackList(optIncompatiblePacks));
+                saveOptions(options);
+            }
+            return modified;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public Stream<Pair<ResourcePackFile, Boolean>> arePacksEnabled(Stream<ResourcePackFile> resourcePacks) {
         lock.lock();
         try {

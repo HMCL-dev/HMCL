@@ -31,7 +31,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
 
-    private static final UpdateConditions UPDATE_CONDITIONS = new UpdateConditions(false, null);
+    private static final UpdateConditions UPDATE_CONDITIONS = new UpdateConditions(null);
 
     private final PackMcMeta meta;
     private final @Nullable Image icon;
@@ -89,6 +89,11 @@ final class ResourcePackZipFile extends ResourcePackFile {
     @Override
     protected UpdateConditions getUpdateConditions() {
         return UPDATE_CONDITIONS;
+    }
+
+    @Override
+    public void onUpdated(String newFileNameWithExt) {
+        manager.rename(getFileNameWithExtension(), newFileNameWithExt);
     }
 }
 

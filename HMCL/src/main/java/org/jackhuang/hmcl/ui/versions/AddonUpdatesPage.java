@@ -293,18 +293,18 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 LocalAddonFile local = addon.localAddonFile();
                 RemoteAddon.Version remote = addon.targetVersion();
                 boolean isDisabled = local.isDisabled();
-                String originalFileName = local.getFile().getFileName().toString();
+                String fileName = remote.file().filename();
+                if (isDisabled)
+                    fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
+                String finalFileName = fileName;
 
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
                         .thenComposeAsync(() -> {
-                            String fileName = addon.useRemoteFileName() ? remote.file().filename() : originalFileName;
-                            if (isDisabled)
-                                fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
 
                             var task = new FileDownloadTask(
                                     remote.file().url(),
-                                    addonDirectory.resolve(fileName)
+                                    addonDirectory.resolve(finalFileName)
                             );
 
                             task.setName(remote.name());
@@ -317,11 +317,14 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                                 if (isDisabled)
                                     local.markDisabled();
                                 failedAddons.add(local);
-                            } else if (!local.keepOldFiles()) {
-                                try {
-                                    local.delete();
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
+                            } else {
+                                local.onUpdated(finalFileName);
+                                if (!local.keepOldFiles()) {
+                                    try {
+                                        local.delete();
+                                    } catch (IOException e) {
+                                        LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
+                                    }
                                 }
                             }
                         })

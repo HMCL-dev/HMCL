@@ -199,7 +199,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     @Override
     protected UpdateConditions getUpdateConditions() {
-        return new UpdateConditions(true, List.of(v -> v.loaders().contains(getModLoaderType())));
+        return new UpdateConditions(List.of(v -> v.loaders().contains(getModLoaderType())));
     }
 
     @Override

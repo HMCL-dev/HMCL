@@ -76,11 +76,14 @@ public abstract class LocalAddonFile {
             }
         List<RemoteAddon.Version> remoteVersions = stream.sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed()).toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), conditions.useRemoteFileName());
+        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0));
+    }
+
+    public void onUpdated(String newFileNameWithExt) {
     }
 
     @SuppressWarnings("RedundantRecordConstructor")
-    protected record UpdateConditions(boolean useRemoteFileName, @Nullable List<Predicate<RemoteAddon.Version>> predicates) {
+    protected record UpdateConditions(@Nullable List<Predicate<RemoteAddon.Version>> predicates) {
         public UpdateConditions {
         }
     }
@@ -88,8 +91,7 @@ public abstract class LocalAddonFile {
     public record AddonUpdate(
             LocalAddonFile localAddonFile,
             RemoteAddon.Version currentVersion,
-            RemoteAddon.Version targetVersion,
-            boolean useRemoteFileName
+            RemoteAddon.Version targetVersion
     ) {
     }
 
