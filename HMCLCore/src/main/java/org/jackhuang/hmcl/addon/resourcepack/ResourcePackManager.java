@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.addon.resourcepack;
 
 import com.google.gson.annotations.SerializedName;
+import kala.encdet.EncodingDetector;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
@@ -36,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
@@ -218,39 +222,52 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private boolean loaded = false;
 
-    public ResourcePackManager(GameRepository repository, String id) {
-        super(repository, id);
-        this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
-        this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
+    public ResourcePackManager(GameRepository repository, GameInstanceID instanceId) {
+        super(repository, instanceId);
+        this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.instanceId);
+        this.optionsFile = repository.getRunDirectory(instanceId).resolve("options.txt");
     }
+
+    private @Nullable Charset optionsFileEncoding;
 
     @NotNull
     private Map<String, String> loadOptions() {
         getMinecraftVersion();
         Map<String, String> options = new LinkedHashMap<>();
         if (!Files.isRegularFile(optionsFile)) return options;
-        try (var stream = Files.lines(optionsFile, StandardCharsets.UTF_8)) {
-            stream.forEach(s -> {
-                if (StringUtils.isNotBlank(s)) {
-                    var entry = s.split(":", 2);
-                    if (entry.length == 2) {
-                        options.put(entry[0], entry[1]);
-                    }
-                }
-            });
-        } catch (IOException e) {
+        byte[] bytes;
+        try {
+            bytes = Files.readAllBytes(optionsFile);
+        } catch (IOException | UncheckedIOException e) {
             LOG.warning("Failed to read instance options file", e);
+            return options;
         }
+
+        EncodingDetector.Encoding bestEncoding = EncodingDetector.MODERN_WEB.detect(bytes).bestEncoding();
+        if (bestEncoding == EncodingDetector.Encoding.ASCII)
+            bestEncoding = EncodingDetector.Encoding.UTF_8;
+
+        optionsFileEncoding = bestEncoding != null && bestEncoding.approximateCharset() != null
+                ? bestEncoding.approximateCharset() : StandardCharsets.UTF_8;
+        //noinspection DataFlowIssue
+        new String(bytes, optionsFileEncoding).lines().forEach(s -> {
+            if (StringUtils.isNotBlank(s)) {
+                var entry = s.split(":", 2);
+                if (entry.length == 2) {
+                    options.put(entry[0], entry[1]);
+                }
+            }
+        });
         return options;
     }
 
     private void saveOptions(@NotNull Map<String, String> options) {
+        StringBuilder sb = new StringBuilder();
+        for (var entry : options.entrySet()) {
+            sb.append(entry.getKey()).append(":").append(entry.getValue()).append(System.lineSeparator());
+        }
         try {
-            StringBuilder sb = new StringBuilder();
-            for (var entry : options.entrySet()) {
-                sb.append(entry.getKey()).append(":").append(entry.getValue()).append(System.lineSeparator());
-            }
-            FileUtils.saveSafely(optionsFile, sb.toString());
+            FileUtils.saveSafely(optionsFile, sb.toString(), optionsFileEncoding);
         } catch (IOException e) {
             LOG.warning("Failed to save instance options file", e);
         }
@@ -262,7 +279,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             lock.lock();
             try {
                 if (minecraftVersion == null) {
-                    minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(id));
+                    minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(instanceId));
                     supportsNewOptionsFormat = isMcVersionSupportsNewOptionsFormat(minecraftVersion);
                 }
             } finally {
@@ -277,7 +294,8 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         if (requiredVersion == null) {
             lock.lock();
             try {
-                if (requiredVersion == null) requiredVersion = getPackVersion(getMinecraftVersion(), repository.getVersionJar(id));
+                if (requiredVersion == null)
+                    requiredVersion = getPackVersion(getMinecraftVersion(), repository.getInstanceJar(instanceId));
             } finally {
                 lock.unlock();
             }
