@@ -398,21 +398,15 @@ public class DownloadPage extends Control implements DecoratorPage {
             });
             setNode(IDX_LEADING, pane);
 
-            if (addon != RemoteAddon.BROKEN) {
-                ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(type).getModByCurseForgeId(addon.slug());
-                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
-                content.setSubtitle(addon.description());
-                for (String category : addon.categories()) {
-                    if (page.shouldDisplayCategory(category))
-                        content.addTag(page.getLocalizedCategory(category, null));
-                }
-                if (StringUtils.isNotBlank(addon.iconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.iconUrl(), 80, 80, true, true));
-                }
-            } else {
-                content.setTitle(i18n("addon.broken_dependency.title"));
-                content.setSubtitle(i18n("addon.broken_dependency.desc"));
-                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@4x.png"));
+            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(type).getModByCurseForgeId(addon.slug());
+            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
+            content.setSubtitle(addon.description());
+            for (String category : addon.categories()) {
+                if (page.shouldDisplayCategory(category))
+                    content.addTag(page.getLocalizedCategory(category, null));
+            }
+            if (StringUtils.isNotBlank(addon.iconUrl())) {
+                imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.iconUrl(), 80, 80, true, true));
             }
         }
     }
