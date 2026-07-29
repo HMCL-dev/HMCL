@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.addon.pack.resourcepack;
 
 import com.google.gson.annotations.SerializedName;
 import kala.encdet.EncodingDetector;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.pack.PackMcMeta;
@@ -221,10 +222,10 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private boolean loaded = false;
 
-    public ResourcePackManager(GameRepository repository, String id) {
-        super(repository, id);
-        this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
-        this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
+    public ResourcePackManager(GameRepository repository, GameInstanceID instanceId) {
+        super(repository, instanceId);
+        this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.instanceId);
+        this.optionsFile = repository.getRunDirectory(instanceId).resolve("options.txt");
     }
 
     private @Nullable Charset optionsFileEncoding;
@@ -278,7 +279,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             lock.lock();
             try {
                 if (minecraftVersion == null) {
-                    minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(id));
+                    minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(instanceId));
                     supportsNewOptionsFormat = isMcVersionSupportsNewOptionsFormat(minecraftVersion);
                 }
             } finally {
@@ -294,7 +295,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             lock.lock();
             try {
                 if (requiredVersion == null)
-                    requiredVersion = getPackVersion(getMinecraftVersion(), repository.getVersionJar(id));
+                    requiredVersion = getPackVersion(getMinecraftVersion(), repository.getInstanceJar(instanceId));
             } finally {
                 lock.unlock();
             }

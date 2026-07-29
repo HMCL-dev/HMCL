@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.ui.versions.ModTranslations;
+import org.jackhuang.hmcl.ui.instances.ModTranslations;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 

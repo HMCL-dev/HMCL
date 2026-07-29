@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -42,10 +43,10 @@ import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.DownloadListPage;
-import org.jackhuang.hmcl.ui.versions.HMCLLocalizedDownloadListPage;
-import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.instances.DownloadListPage;
+import org.jackhuang.hmcl.ui.instances.HMCLLocalizedDownloadListPage;
+import org.jackhuang.hmcl.ui.instances.GameInstancePage;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -86,16 +87,16 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         this(null);
     }
 
-    public DownloadPage(String updateVersion) {
+    public DownloadPage(GameInstanceID updateInstance) {
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
             DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, repository, __, modpack, file) -> {
-                Versions.downloadModpackImpl(downloadProvider, repository, updateVersion, modpack, file);
+                Instances.downloadModpackImpl(downloadProvider, repository, updateInstance, modpack, file);
             }, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
-            installLocalModpackButton.setOnAction(e -> Versions.importModpack());
+            installLocalModpackButton.setOnAction(e -> Instances.importModpack());
 
             page.getActions().add(installLocalModpackButton);
             return page;
@@ -128,17 +129,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
-            if (node instanceof VersionPage.GameInstanceLoadable loadable) {
+            if (node instanceof GameInstancePage.GameInstanceLoadable loadable) {
                 loadable.loadInstance(GameDirectoryManager.getSelectedRepository(), null);
             }
             return node;
         };
     }
 
-    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable String version, RemoteAddon.Version file, String subdirectoryName) {
-        if (version == null) version = repository.getSelectedInstance();
+    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
+        if (instanceId == null) {
+            instanceId = repository.getSelectedInstance();
+        }
 
-        Path runDirectory = repository.hasVersion(version) ? repository.getRunDirectory(version) : repository.getBaseDirectory();
+        Path runDirectory = instanceId != null && repository.hasInstance(instanceId) ? repository.getRunDirectory(instanceId) : repository.getBaseDirectory();
 
         Set<String> existingFiles;
 
@@ -305,10 +308,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
-            GameBuilder builder = dependencyManager.gameBuilder();
+            GameBuilder builder = dependencyManager.newGameBuilder();
 
-            String name = (String) settings.get("name");
-            builder.name(name);
+            GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
+            builder.name(instanceId);
             builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
 
             settings.asStringMap().forEach((key, value) -> {
@@ -317,10 +320,11 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.version(remoteVersion);
             });
 
-            repository.applyDefaultIsolationSettingForNewInstance(name, settings.isInstallingModdedVersion());
+            repository.applyDefaultIsolationSettingForNewInstance(instanceId, settings.isInstallingModdedVersion());
             return builder.buildAsync().whenComplete(any -> {
-                repository.refreshVersions();
-            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
+                repository.refresh();
+                repository.applyDefaultIsolationSetting(instanceId);
+            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(instanceId));
         }
 
         @Override
