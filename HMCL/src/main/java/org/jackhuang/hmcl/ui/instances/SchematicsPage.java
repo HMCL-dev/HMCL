@@ -1,0 +1,880 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui.instances;
+
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXListView;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.stage.FileChooser;
+import javafx.scene.text.Text;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.mod.LocalMod;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.schematic.LitematicFile;
+import org.jackhuang.hmcl.schematic.Schematic;
+import org.jackhuang.hmcl.schematic.SchematicType;
+import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.SynchronizedLazy;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.ui.FXUtils.*;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+/**
+ * @author Glavo
+ */
+public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements GameInstancePage.GameInstanceLoadable {
+
+    private static final SynchronizedLazy<RemoteAddon> litematicaLazy = new SynchronizedLazy<>(() -> {
+        try {
+            return ModrinthRemoteAddonRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "litematica");
+        } catch (IOException e) {
+            LOG.warning("Failed to fetch litematica", e);
+            return null;
+        }
+    });
+    private static final SynchronizedLazy<RemoteAddon> forgematicaLazy = new SynchronizedLazy<>(() -> {
+        try {
+            return ModrinthRemoteAddonRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "forgematica");
+        } catch (IOException e) {
+            LOG.warning("Failed to fetch forgematica", e);
+            return null;
+        }
+    });
+
+    private static String translateAuthorName(String author) {
+        if (I18n.isUseChinese() && "hsds".equals(author)) {
+            return "黑山大叔";
+        }
+        return author;
+    }
+
+    private static String translateType(SchematicType type) {
+        return switch (type) {
+            case SCHEM -> i18n("schematics.info.type.schem");
+            case NBT_STRUCTURE -> i18n("schematics.info.type.nbt_structure");
+            case LITEMATIC -> i18n("schematics.info.type.litematic");
+        };
+    }
+
+    private HMCLGameRepository repository;
+    private String instanceId;
+    private Path schematicsDirectory;
+
+    private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
+    private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
+    private final ObjectProperty<RemoteAddon> downloadTarget = new SimpleObjectProperty<>(this, "downloadTarget");
+
+    public SchematicsPage() {
+        FXUtils.applyDragListener(this,
+                file -> currentDirectoryProperty().get() != null && Schematic.isFileSchematic(file),
+                this::addFiles
+        );
+    }
+
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new SchematicsPageSkin(this);
+    }
+
+    @Override
+    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
+        this.repository = repository;
+        this.instanceId = instanceId;
+        this.schematicsDirectory = instanceId != null ? repository.getSchematicsDirectory(instanceId) : null;
+
+        refresh();
+    }
+
+    private ObjectProperty<DirItem> currentDirectoryProperty() {
+        return currentDirectory;
+    }
+
+    public BooleanProperty isRootProperty() {
+        return isRootProperty;
+    }
+
+    public void navigateBack() {
+        var d = currentDirectoryProperty().get();
+        if (d == null) return;
+        if (d.parent != null) navigateTo(d.parent);
+    }
+
+    public void downloadLitematica() {
+        if (downloadTarget.get() != null) {
+            var modDownloads = Controllers.getDownloadPage().showModDownloads();
+            modDownloads.selectVersion(instanceId);
+            Controllers.navigate(new DownloadPage(
+                    modDownloads,
+                    downloadTarget.get(),
+                    modDownloads.getInstanceReference(),
+                    modDownloads.getCallback())
+            );
+        }
+    }
+
+    public void refresh() {
+        if (schematicsDirectory == null) return;
+
+        setLoading(true);
+        String currentInstanceId = this.instanceId;
+        DirItem currentDir = currentDirectoryProperty().get();
+        Task.supplyAsync(Schedulers.io(), () -> {
+            DirItem target = loadRoot(schematicsDirectory);
+            if (currentDir != null) {
+                loop:
+                for (String dirName : currentDir.relativePath) {
+                    try {
+                        target.preLoad();
+                    } catch (IOException e) {
+                        LOG.warning("Failed to preload sub-directories in " + target, e);
+                        break;
+                    }
+                    for (var dirChild : target.dirChildren) {
+                        if (dirChild.getName().equals(dirName)) {
+                            target = dirChild;
+                            continue loop;
+                        }
+                    }
+                    break;
+                }
+            }
+            return target;
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (!Objects.equals(currentInstanceId, this.instanceId)) return;
+            if (exception == null) {
+                navigateTo(result);
+            } else {
+                LOG.warning("Failed to load schematics", exception);
+            }
+            setLoading(false);
+        }).start();
+
+        downloadTarget.set(null);
+        Task.supplyAsync(Schedulers.io(), () -> {
+            var modManager = repository.getModManager(instanceId);
+            modManager.analyze();
+            var analyzer = modManager.getLibraryAnalyzer();
+            if (analyzer == null) return null;
+            var modLoaders = analyzer.getModLoaders(); // We don't care about kilt or connector
+            var modIds = modManager.getLocalFiles().stream()
+                    .map(LocalModFile::getMod)
+                    .map(LocalMod::getId)
+                    .collect(Collectors.toSet());
+            if (modIds.contains("litematica") || modIds.contains("forgematica")) return null;
+            var gameVersionNumber = GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion()));
+            if (!gameVersionNumber.isAtLeast("1.12", "17w31a"))
+                return null;
+            if ((modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGE))
+                    && gameVersionNumber.isAtLeast("1.16.4", "20w45a"))
+                return forgematicaLazy.get();
+            return litematicaLazy.get();
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (!Objects.equals(currentInstanceId, this.instanceId)) return;
+            if (exception == null) {
+                downloadTarget.set(result);
+            } else {
+                LOG.warning("Failed to fetch litematica", exception);
+            }
+        }).start();
+    }
+
+    public void addFiles(List<Path> files) {
+        if (currentDirectoryProperty().get() == null)
+            return;
+
+        Path dir = currentDirectoryProperty().get().getPath();
+        try {
+            // Can be executed in the background, but be careful that users can call loadVersion during this time
+            Files.createDirectories(dir);
+            for (Path file : files) {
+                Files.copy(file, dir.resolve(file.getFileName()));
+            }
+            refresh();
+        } catch (FileAlreadyExistsException ignored) {
+        } catch (IOException e) {
+            Controllers.dialog(i18n("schematics.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            LOG.warning("Failed to add schematics to " + dir, e);
+        }
+    }
+
+    public void onAddFiles() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(i18n("schematics.add.title"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+                i18n("extension.schematic"), "*.litematic", "*.nbt", "*.schematic", "*.schem"));
+        List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
+        if (files != null && !files.isEmpty()) {
+            addFiles(files);
+        }
+    }
+
+    public void onCreateDirectory() {
+        if (currentDirectoryProperty().get() == null) return;
+
+        Path parent = currentDirectoryProperty().get().getPath();
+        Controllers.prompt(
+                i18n("schematics.create_directory.prompt"),
+                (result, handler) -> {
+                    Path targetDir = parent.resolve(result);
+                    if (Files.exists(targetDir)) {
+                        handler.reject(i18n("schematics.create_directory.failed.already_exists"));
+                        return;
+                    }
+
+                    try {
+                        Files.createDirectories(targetDir);
+                        handler.resolve();
+                        refresh();
+                    } catch (IOException e) {
+                        LOG.warning("Failed to create directory: " + targetDir, e);
+                        handler.reject(i18n("schematics.create_directory.failed", targetDir));
+                    }
+                }, "", new RequiredValidator(), new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid));
+    }
+
+    public void onRevealSchematicsFolder() {
+        var d = currentDirectoryProperty().get();
+        var p = d != null ? d.getPath() : schematicsDirectory;
+        if (p != null) FXUtils.openFolder(p);
+    }
+
+    private DirItem loadRoot(Path dir) {
+        var item = new DirItem(dir, null);
+        item.load();
+        return item;
+    }
+
+    private void navigateTo(DirItem item) {
+        if (currentDirectoryProperty().get() == item) return;
+        currentDirectoryProperty().set(item);
+        isRootProperty().set(item.parent == null);
+        setLoading(true);
+        Task.runAsync(item::load).whenComplete(Schedulers.javafx(), exception -> {
+            if (currentDirectoryProperty().get() == item) {
+                getItems().setAll(item.children);
+                setLoading(false);
+            }
+        }).start();
+    }
+
+    abstract sealed class Item implements Comparable<Item> {
+
+        boolean isDirectory() {
+            return this instanceof DirItem;
+        }
+
+        abstract Path getPath();
+
+        abstract String getName();
+
+        abstract String getDescription();
+
+        abstract SVG getIcon();
+
+        Node getIcon(int size) {
+            StackPane icon = new StackPane();
+            icon.setPrefSize(size, size);
+            icon.setMaxSize(size, size);
+            icon.getChildren().add(getIcon().createIcon(size));
+            return icon;
+        }
+
+        abstract int order();
+
+        abstract void onClick();
+
+        abstract void onReveal();
+
+        abstract void onDelete();
+
+        @Override
+        public int compareTo(@NotNull SchematicsPage.Item o) {
+            if (this.order() != o.order())
+                return Integer.compare(this.order(), o.order());
+
+            return this.getName().compareTo(o.getName());
+        }
+    }
+
+    private final class DirItem extends Item {
+        final ReentrantLock lock = new ReentrantLock();
+
+        final Path path;
+        final @Nullable DirItem parent;
+        final List<Item> children = new ArrayList<>();
+        final List<DirItem> dirChildren = new ArrayList<>();
+        final List<String> relativePath;
+        int size = 0;
+        boolean preLoaded = false;
+        boolean loaded = false;
+
+        DirItem(Path path, @Nullable DirItem parent) {
+            this.path = path;
+            this.parent = parent;
+
+            if (parent != null) {
+                this.relativePath = new ArrayList<>(parent.relativePath);
+                relativePath.add(FileUtils.getName(path));
+            } else {
+                this.relativePath = Collections.emptyList();
+            }
+        }
+
+        @Override
+        int order() {
+            return 0;
+        }
+
+        @Override
+        Path getPath() {
+            return path;
+        }
+
+        @Override
+        public String getName() {
+            return FileUtils.getName(path);
+        }
+
+        @Override
+        String getDescription() {
+            return i18n("schematics.sub_items", size);
+        }
+
+        @Override
+        SVG getIcon() {
+            return SVG.FOLDER;
+        }
+
+        void preLoad() throws IOException {
+            lock.lock();
+            try {
+                if (this.preLoaded) return;
+                this.size = 0;
+                this.dirChildren.clear();
+                try (Stream<Path> stream = Files.list(path)) {
+                    stream.forEach(p -> {
+                        boolean b1 = Files.isDirectory(p);
+                        boolean b2 = Schematic.isFileSchematic(p);
+                        if (b1 || b2) this.size++;
+                        if (b1) {
+                            var child = new DirItem(p, this);
+                            this.dirChildren.add(child);
+                        }
+                    });
+                }
+                this.preLoaded = true;
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        void load() {
+            lock.lock();
+            try {
+                if (this.loaded) return;
+
+                this.children.clear();
+
+                preLoad();
+                for (var dir : dirChildren) {
+                    dir.preLoad();
+                    this.children.add(dir);
+                }
+                try (Stream<Path> stream = Files.list(path)) {
+                    stream.filter(Schematic::isFileSchematic)
+                            .forEach(p -> {
+                                try {
+                                    this.children.add(new SchematicItem(p));
+                                } catch (IOException e) {
+                                    LOG.warning("Failed to load schematic file: " + p, e);
+                                }
+                            });
+                }
+
+                this.children.sort(Comparator.naturalOrder());
+                this.loaded = true;
+            } catch (NoSuchFileException ignored) {
+            } catch (IOException e) {
+                LOG.warning("Failed to load schematics in " + path, e);
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        @Override
+        void onClick() {
+            navigateTo(this);
+        }
+
+        @Override
+        void onReveal() {
+            FXUtils.openFolder(path);
+        }
+
+        @Override
+        void onDelete() {
+            try {
+                FileUtils.deleteDirectory(path);
+                refresh();
+            } catch (IOException e) {
+                LOG.warning("Failed to delete directory: " + path, e);
+            }
+        }
+    }
+
+    private final class SchematicItem extends Item {
+        final Path path;
+        final Schematic file;
+        final String name;
+        final Image image;
+
+        private SchematicItem(Path path) throws IOException {
+            this.path = path;
+            this.file = Schematic.load(path);
+
+            if (file == null) throw new IOException("Unsupported or deleted file: " + path);
+
+            if (this.file instanceof LitematicFile lFile) {
+                String name = lFile.getName();
+                if (StringUtils.isNotBlank(name) && !"Unnamed".equals(name)) {
+                    this.name = name;
+                } else {
+                    this.name = FileUtils.getNameWithoutExtension(path);
+                }
+            } else {
+                this.name = FileUtils.getNameWithoutExtension(path);
+            }
+
+            WritableImage image = null;
+            int[] previewImageData = file.getPreviewImageData();
+            if (previewImageData != null && previewImageData.length > 0) {
+                int size = (int) Math.sqrt(previewImageData.length);
+                if ((size * size) == previewImageData.length) {
+                    image = new WritableImage(size, size);
+                    PixelWriter pixelWriter = image.getPixelWriter();
+
+                    for (int y = 0, i = 0; y < size; ++y) {
+                        for (int x = 0; x < size; ++x) {
+                            pixelWriter.setArgb(x, y, previewImageData[i++]);
+                        }
+                    }
+
+                }
+            }
+            this.image = image;
+        }
+
+        @Override
+        int order() {
+            return 1;
+        }
+
+        @Override
+        Path getPath() {
+            return path;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        String getDescription() {
+            return path.getFileName().toString();
+        }
+
+        @Override
+        SVG getIcon() {
+            return SVG.SCHEMA;
+        }
+
+        public @Nullable Image getImage() {
+            return image;
+        }
+
+        Node getIcon(int size) {
+            if (image == null) {
+                return super.getIcon(size);
+            } else {
+                var imageView = new ImageContainer(size);
+                imageView.setImage(image);
+                return imageView;
+            }
+        }
+
+        @Override
+        void onClick() {
+            Controllers.dialog(new SchematicInfoDialog());
+        }
+
+        @Override
+        void onReveal() {
+            FXUtils.showFileInExplorer(path);
+        }
+
+        @Override
+        void onDelete() {
+            try {
+                Files.deleteIfExists(path);
+                refresh();
+            } catch (IOException e) {
+                LOG.warning("Failed to delete schematic file: " + path, e);
+            }
+        }
+
+        private final class SchematicInfoDialog extends JFXDialogLayout {
+            private final ComponentList details;
+
+            private void addDetailItem(String key, Object detail) {
+                BorderPane borderPane = new BorderPane();
+                borderPane.setLeft(new Label(key));
+                borderPane.setRight(new Label(detail.toString()));
+                details.getContent().add(borderPane);
+            }
+
+            private void updateContent(Schematic file) {
+                details.getContent().clear();
+                addDetailItem(i18n("schematics.info.name"), file.getName());
+                addDetailItem(i18n("schematics.info.type"), translateType(file.getType()));
+                if (StringUtils.isNotBlank(file.getAuthor()))
+                    addDetailItem(i18n("schematics.info.schematic_author"), translateAuthorName(file.getAuthor()));
+                if (file.getTimeCreated() != null)
+                    addDetailItem(i18n("schematics.info.time_created"), I18n.formatDateTime(file.getTimeCreated()));
+                if (file.getTimeModified() != null && !file.getTimeModified().equals(file.getTimeCreated()))
+                    addDetailItem(i18n("schematics.info.time_modified"), I18n.formatDateTime(file.getTimeModified()));
+                if (file.getRegionCount().isPresent())
+                    addDetailItem(i18n("schematics.info.region_count"), String.valueOf(file.getRegionCount().getAsInt()));
+                if (file.getTotalVolume().isPresent())
+                    addDetailItem(i18n("schematics.info.total_volume"), file.getTotalVolume().getAsLong());
+                if (file.getTotalBlocks().isPresent())
+                    addDetailItem(i18n("schematics.info.total_blocks"), file.getTotalBlocks().getAsInt());
+                if (file.getEnclosingSize() != null)
+                    addDetailItem(i18n("schematics.info.enclosing_size"),
+                            String.format("%d x %d x %d", file.getEnclosingSize().x(),
+                                    file.getEnclosingSize().y(),
+                                    file.getEnclosingSize().z()));
+                if (StringUtils.isNotBlank(file.getMinecraftVersion()))
+                    addDetailItem(i18n("schematics.info.mc_data_version"), file.getMinecraftVersion());
+                if (file.getVersion().isPresent())
+                    addDetailItem(i18n("schematics.info.version"),
+                            file.getSubVersion().isPresent()
+                                    ? "%d.%d".formatted(file.getVersion().getAsInt(), file.getSubVersion().getAsInt())
+                                    : file.getVersion().getAsInt()
+                    );
+            }
+
+            SchematicInfoDialog() {
+                HBox titleBox = new HBox(8);
+                {
+                    Node icon = getIcon(40);
+
+                    TwoLineListItem title = new TwoLineListItem();
+                    title.setTitle(getName());
+                    title.setSubtitle(path.getFileName().toString());
+
+                    titleBox.getChildren().setAll(icon, title);
+                    setHeading(titleBox);
+                }
+
+                {
+                    this.details = new ComponentList();
+                    details.setStyle("-fx-effect: null;");
+                    StackPane detailsContainer = new StackPane();
+                    detailsContainer.getChildren().add(details);
+                    ScrollPane scrollPane = new ScrollPane(detailsContainer);
+                    scrollPane.setFitToWidth(true);
+                    FXUtils.setOverflowHidden(scrollPane, 8);
+                    FXUtils.smoothScrolling(scrollPane);
+                    StackPane.setMargin(scrollPane, new Insets(10, 0, 0, 0));
+                    setBody(scrollPane);
+                }
+
+                {
+                    JFXButton okButton = new JFXButton();
+                    okButton.getStyleClass().add("dialog-accept");
+                    okButton.setText(i18n("button.ok"));
+                    okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+                    getActions().add(okButton);
+
+                    onEscPressed(this, okButton::fire);
+                }
+
+                this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.6));
+                this.maxHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.8));
+
+                updateContent(file);
+            }
+        }
+    }
+
+    private static final class Cell extends MDListCell<Item> {
+
+        private final StackPane left;
+        private final TwoLineListItem center;
+        private final HBox right;
+
+        private final ImageContainer iconImageView;
+        private final SVGContainer iconSVGView;
+
+        private final BooleanProperty isFileProperty = new SimpleBooleanProperty(this, "isFile", false);
+        private final BooleanProperty isDirectoryProperty = new SimpleBooleanProperty(this, "isDirectory", false);
+
+        private final Tooltip tooltip = new Tooltip();
+
+        public Cell(JFXListView<Item> listView) {
+            super(listView);
+
+            var box = new HBox(8);
+            box.setAlignment(Pos.CENTER_LEFT);
+            box.setPickOnBounds(false);
+
+            {
+                this.left = new StackPane();
+                left.setPadding(new Insets(0, 8, 0, 0));
+
+                this.iconImageView = new ImageContainer(32);
+                this.iconSVGView = new SVGContainer(32);
+            }
+            {
+                this.center = new TwoLineListItem();
+                HBox.setHgrow(center, Priority.ALWAYS);
+            }
+            {
+                this.right = new HBox(8);
+                right.setAlignment(Pos.CENTER_RIGHT);
+
+                JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                {
+                    var fo = SVG.FOLDER_OPEN.createIcon();
+                    var f = SVG.FOLDER.createIcon();
+                    btnReveal.graphicProperty().bind(isDirectoryProperty.map(b -> b ? fo : f));
+
+                    var tooltip = new Tooltip();
+                    tooltip.textProperty().bind(isDirectoryProperty.map(b -> b ? i18n("button.reveal_dir") : i18n("reveal.in_file_manager")));
+                    FXUtils.installFastTooltip(btnReveal, tooltip);
+                }
+                btnReveal.setOnAction(event -> {
+                    Item item = getItem();
+                    if (item != null) item.onReveal();
+                });
+
+                JFXButton btnExplore = FXUtils.newToggleButton4(SVG.EXPLORE); // Change the icon if allows editing
+                btnExplore.setOnAction(event -> {
+                    Item item = getItem();
+                    if (item instanceof SchematicItem) {
+                        try {
+                            Controllers.navigate(new NBTEditorPage(item.getPath()));
+                        } catch (IOException ignored) { // Should be impossible
+                        }
+                    }
+                });
+                btnExplore.visibleProperty().bind(isFileProperty);
+
+                JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
+                btnDelete.setOnAction(event -> {
+                    Item item = getItem();
+                    if (item != null) {
+                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
+                                item::onDelete, null);
+                    }
+                });
+
+                right.getChildren().setAll(btnExplore, btnReveal, btnDelete);
+            }
+
+            box.getChildren().setAll(left, center, right);
+            StackPane.setMargin(box, new Insets(8));
+            getContainer().getChildren().setAll(box);
+            onClicked(() -> {
+                var item = getItem();
+                if (item != null) item.onClick();
+            });
+        }
+
+        @Override
+        protected void updateControl(Item item, boolean empty) {
+            if (empty || item == null) return;
+
+            iconImageView.setImage(null);
+
+            isFileProperty.set(item instanceof SchematicItem);
+            isDirectoryProperty.set(item.isDirectory());
+
+            if (item instanceof SchematicItem fileItem && fileItem.getImage() != null) {
+                iconImageView.setImage(fileItem.getImage());
+                left.getChildren().setAll(iconImageView);
+            } else {
+                iconSVGView.setIcon(item.getIcon());
+                left.getChildren().setAll(iconSVGView);
+            }
+
+            center.setTitle(item.getName());
+            center.setSubtitle(item.getDescription());
+
+            Path path = item.getPath();
+            if (path != null) {
+                tooltip.setText(FileUtils.getAbsolutePath(path));
+                FXUtils.installSlowTooltip(left, tooltip);
+            } else {
+                Tooltip.uninstall(left, tooltip);
+            }
+        }
+    }
+
+    private static final class SchematicsPageSkin extends SkinBase<SchematicsPage> {
+
+        private final JFXListView<Item> listView;
+
+        SchematicsPageSkin(SchematicsPage skinnable) {
+            super(skinnable);
+
+            StackPane pane = new StackPane();
+            pane.setPadding(new Insets(10));
+            pane.getStyleClass().addAll("notice-pane");
+
+            ComponentList root = new ComponentList();
+            root.getStyleClass().add("no-padding");
+            listView = new JFXListView<>();
+            listView.setSelectionModel(new NoneMultipleSelectionModel<>());
+
+            {
+                StackPane placeholderContainer = new StackPane();
+                placeholderContainer.getStyleClass().add("notice-pane");
+                Label placeholderLabel = new Label(i18n("schematics.empty"));
+                placeholderContainer.getChildren().add(placeholderLabel);
+                listView.setPlaceholder(placeholderContainer);
+            }
+
+            {
+                var toolbar = new HBox();
+                JFXButton btnGoBack = createToolbarButton2("", SVG.ARROW_BACK, skinnable::navigateBack);
+                btnGoBack.disableProperty().bind(skinnable.isRootProperty());
+                JFXButton btnDownload = createToolbarButton2(i18n("schematics.install_mod"), SVG.DOWNLOAD, skinnable::downloadLitematica);
+                FXUtils.onChangeAndOperate(skinnable.downloadTarget, (t) -> btnDownload.setDisable(t == null));
+                toolbar.getChildren().setAll(
+                        btnGoBack,
+                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                        createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
+                        createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, skinnable::onCreateDirectory),
+                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::onRevealSchematicsFolder),
+                        btnDownload
+                );
+                FXUtils.setOverflowHidden(toolbar, 8);
+                root.getContent().add(toolbar);
+            }
+
+            {
+                SpinnerPane center = new SpinnerPane();
+                ComponentList.setVgrow(center, Priority.ALWAYS);
+                center.loadingProperty().bind(skinnable.loadingProperty());
+
+                listView.setCellFactory(x -> new Cell(listView));
+                listView.setSelectionModel(new NoneMultipleSelectionModel<>());
+                Bindings.bindContent(listView.getItems(), skinnable.getItems());
+
+                // ListViewBehavior would consume ESC pressed event, preventing us from handling it
+                // So we ignore it here
+                ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+                listView.getStyleClass().add("no-horizontal-scrollbar");
+
+
+                center.setContent(listView);
+                root.getContent().add(center);
+            }
+
+            {
+                var relPath = new HBox();
+                relPath.getStyleClass().add("jfx-tool-bar-tip");
+                relPath.setAlignment(Pos.CENTER_LEFT);
+                FXUtils.onChangeAndOperate(skinnable.currentDirectoryProperty(), currentDir -> {
+                    relPath.getChildren().clear();
+                    var d = currentDir;
+                    while (d != null) {
+                        if (d != currentDir) {
+                            var box = new HBox(new Text(">"));
+                            box.setPadding(new Insets(3));
+                            relPath.getChildren().add(0, box);
+                        }
+                        var txt = new Text(d.getName());
+                        var box = new HBox(txt);
+                        box.setPadding(new Insets(3));
+                        box.setMouseTransparent(true);
+                        var rippler = new RipplerContainer(box);
+                        var finalD = d;
+                        FXUtils.onClicked(rippler, () -> skinnable.navigateTo(finalD));
+                        relPath.getChildren().add(0, rippler);
+                        d = d.parent;
+                    }
+                });
+                var relPathPane = new HBox(relPath);
+                relPathPane.setPadding(new Insets(2));
+                root.getContent().add(relPathPane);
+            }
+
+            pane.getChildren().setAll(root);
+            getChildren().setAll(pane);
+        }
+    }
+
+}

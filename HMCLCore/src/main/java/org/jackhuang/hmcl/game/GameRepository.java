@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,248 +30,208 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * Supports operations on versioning.
- * <p>
- * Note that game repository will not do any operations which need connection with Internet, if do,
- * see {@link org.jackhuang.hmcl.download.DependencyManager}
- *
- * @author huangyuhui
- */
-public interface GameRepository extends VersionProvider {
-
-    /**
-     * Does the version of id exist?
-     *
-     * @param id the id of version
-     * @return true if the version exists
-     */
-    @Override
-    boolean hasVersion(String id);
-
-    /**
-     * Get the version
-     *
-     * @param id the id of version
-     * @return the version you want
-     * @throws VersionNotFoundException if no version is id.
-     */
-    @Override
-    Version getVersion(String id) throws VersionNotFoundException;
-
-    default Version getResolvedVersion(String id) throws VersionNotFoundException {
-        return getVersion(id).resolve(this);
-    }
-
-    default Version getResolvedPreservingPatchesVersion(String id) throws VersionNotFoundException {
-        return getVersion(id).resolvePreservingPatches(this);
-    }
-
-    /**
-     * How many version are there?
-     */
-    int getVersionCount();
-
-    /**
-     * Gets the collection of versions
-     *
-     * @return the collection of versions
-     */
-    Collection<Version> getVersions();
-
-    /**
-     * Load version list.
-     * <p>
-     * This method should be called before launching a version.
-     * A time-costly operation.
-     * You'd better execute this method in a new thread.
-     */
-    void refreshVersions();
-
-    default Task<Void> refreshVersionsAsync() {
-        return Task.runAsync(this::refreshVersions);
-    }
-
-    /**
-     * Gets the root folder of specific version.
-     * The root folders the versions must be unique.
-     * For example, .minecraft/versions/&lt;version name&gt;/.
-     */
-    Path getVersionRoot(String id);
-
-    /**
-     * Gets the current running directory of the given version for game.
-     *
-     * @param id the version id
-     */
-    Path getRunDirectory(String id);
-
-    Path getLibrariesDirectory(Version version);
-
-    /**
-     * Get the library file in disk.
-     * This method allows versions and libraries that are not loaded by this game repository.
-     *
-     * @param version the reference of game version
-     * @param lib the library, {@link Version#getLibraries()}
-     * @return the library file
-     */
-    Path getLibraryFile(Version version, Library lib);
-
-    /**
-     * Get the directory that native libraries will be unzipped to.
-     * <p>
-     * You'd better return a unique directory.
-     * Or if it returns a temporary directory, {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript} will fail.
-     * If you do want to return a temporary directory, make {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript}
-     * always fail({@code UnsupportedOperationException}) and not to use it.
-     *
-     * @param id version id
-     * @param platform the platform of native libraries
-     * @return the native directory
-     */
-    Path getNativeDirectory(String id, Platform platform);
-
-    /// Get the directory for placing mod files.
+/// Provides indexed access to local game instances and the filesystem layout used by those instances.
+///
+/// Implementations are responsible for loading instance manifests, resolving inheritance and patches,
+/// locating instance-owned files, and exposing helper paths used by launch, download, and maintenance code.
+@NotNullByDefault
+public interface GameRepository {
+    /// Resolves inheritance into launch and standalone manifest views.
     ///
-    /// @param id instance id
+    /// @param manifest the manifest to resolve
+    /// @return the resolved manifest view
+    GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException;
+
+    /// Returns whether the instance exists in the current repository index.
+    ///
+    /// @param instanceId the instance id
+    /// @return whether the instance exists
+    boolean hasInstance(GameInstanceID instanceId);
+
+    /// Returns the stored manifest for an instance without resolving inheritance or patches.
+    ///
+    /// @param instanceId the instance id
+    /// @return the stored instance manifest
+    /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
+    GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+
+    /// Returns a cached launch-ready manifest view for the instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the resolved manifest view
+    GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+
+    /// Returns the number of loaded instances.
+    ///
+    /// @return the loaded instance count
+    int getInstanceCount();
+
+    /// Returns the stored manifests for all loaded instances.
+    ///
+    /// @return the loaded instance manifests
+    Collection<GameInstanceManifest> getInstanceManifests();
+
+    /// Reloads repository state from the backing storage.
+    void refresh();
+
+    /// Creates a task that reloads repository state from the backing storage.
+    ///
+    /// @return a task that calls [#refresh()]
+    default Task<Void> refreshAsync() {
+        return Task.runAsync(this::refresh);
+    }
+
+    /// Returns the directory that stores files belonging to an instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the instance root directory
+    Path getInstanceRoot(GameInstanceID instanceId);
+
+    /// Returns the working directory used when launching an instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the run directory
+    Path getRunDirectory(GameInstanceID instanceId);
+
+    /// Returns the base directory used to store shared libraries for a manifest.
+    ///
+    /// @param manifest the manifest whose libraries are being resolved
+    /// @return the libraries directory
+    Path getLibrariesDirectory(GameInstanceManifest manifest);
+
+    /// Returns the expected filesystem path for a library.
+    ///
+    /// @param manifest the manifest that owns or references the library
+    /// @param lib      the library descriptor
+    /// @return the library file path
+    Path getLibraryFile(GameInstanceManifest manifest, Library lib);
+
+    /// Returns the directory used for extracted native libraries of an instance and platform.
+    ///
+    /// @param instanceId the instance id
+    /// @param platform   the target platform
+    /// @return the native library directory
+    Path getNativeDirectory(GameInstanceID instanceId, Platform platform);
+
+    /// Returns the mods directory for an instance.
+    ///
+    /// @param instanceId the instance id
     /// @return the mods directory
-    Path getModsDirectory(String id);
+    Path getModsDirectory(GameInstanceID instanceId);
 
-    /// Get the directory for placing resource packs.
+    /// Returns the resource pack directory for an instance.
     ///
-    /// @param id instance id
+    /// @param instanceId the instance id
     /// @return the resource pack directory
-    Path getResourcePackDirectory(String id);
+    Path getResourcePackDirectory(GameInstanceID instanceId);
 
-    /**
-     * Get minecraft jar
-     *
-     * @param version resolvedVersion
-     * @return the minecraft jar
-     */
-    Path getVersionJar(Version version);
+    /// Returns the primary client jar path for a manifest.
+    ///
+    /// @param manifest the manifest whose jar should be located
+    /// @return the primary client jar path
+    Path getInstanceJar(GameInstanceManifest manifest);
 
-    /**
-     * Detect game version.
-     * <p>
-     * This method is time-consuming, but the result will be cached.
-     * Consider running this job in IO scheduler.
-     *
-     * @param version version
-     * @return game version, or empty if an error occurred in detection.
-     */
-    Optional<String> getGameVersion(Version version);
+    /// Detects the Minecraft game version associated with a manifest.
+    ///
+    /// @param manifest the manifest to inspect
+    /// @return the detected Minecraft game version, or empty if it cannot be determined
+    Optional<String> getGameVersion(GameInstanceManifest manifest);
 
-    /**
-     * Detect game version.
-     * <p>
-     * This method is time-consuming, but the result will be cached.
-     * Consider running this job in IO scheduler.
-     *
-     * @param versionId id of version
-     * @return game version, or empty if an error occurred in detection.
-     */
-    default Optional<String> getGameVersion(String versionId) throws VersionNotFoundException {
-        return getGameVersion(getVersion(versionId));
+    /// Detects the Minecraft game version associated with an instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the detected Minecraft game version, or empty if it cannot be determined
+    /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
+    default Optional<String> getGameVersion(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        return getGameVersion(getInstanceManifest(instanceId));
     }
 
-    /**
-     * Get minecraft jar
-     *
-     * @param version version id
-     * @return the minecraft jar
-     */
-    default Path getVersionJar(String version) throws VersionNotFoundException {
-        return getVersionJar(getVersion(version).resolve(this));
+    /// Returns the primary client jar path for an instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the primary client jar path
+    /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
+    default Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        return getInstanceJar(getResolvedInstanceManifest(instanceId).launchManifest());
     }
 
-    /**
-     * Rename given version to new name.
-     *
-     * @param from The id of original version
-     * @param to The new id of the version
-     * @throws UnsupportedOperationException if this game repository does not support renaming a version
-     * @return true if the operation is done successfully, false if version `from` not found, version json is malformed or I/O errors occurred.
-     */
-    boolean renameVersion(String from, String to);
+    /// Renames an instance and updates repository-managed references.
+    ///
+    /// @param from the current instance id
+    /// @param to   the target instance id
+    /// @return whether the instance was renamed
+    boolean renameInstance(GameInstanceID from, GameInstanceID to);
 
-    /**
-     * Get actual asset directory.
-     * Will reconstruct assets or do some blocking tasks if necessary.
-     * You'd better create a new thread to invoke this method.
-     *
-     * @param version the id of specific version that is relevant to {@code assetId}
-     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
-     * @return the actual asset directory
-     */
-    Path getActualAssetDirectory(String version, String assetId);
+    /// Returns the asset directory that should be used at launch time.
+    ///
+    /// @param instanceId the instance id
+    /// @param assetId    the asset index id
+    /// @return the actual asset directory
+    Path getActualAssetDirectory(GameInstanceID instanceId, String assetId);
 
-    /**
-     * Get the asset directory according to the asset id.
-     *
-     * @param version the id of specific version that is relevant to {@code assetId}
-     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
-     * @return the asset directory
-     */
-    Path getAssetDirectory(String version, String assetId);
+    /// Returns the base asset storage directory for an instance.
+    ///
+    /// @param instanceId the instance id
+    /// @param assetId    the asset index id
+    /// @return the asset storage directory
+    Path getAssetDirectory(GameInstanceID instanceId, String assetId);
 
-    /**
-     * Get the file that given asset object refers to
-     *
-     * @param version the id of specific version that is relevant to {@code assetId}
-     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
-     * @param name the asset object name, you can find it in keys of {@link AssetIndex#getObjects()}
-     * @throws java.io.IOException if I/O operation fails.
-     * @return the file that given asset object refers to
-     */
-    Optional<Path> getAssetObject(String version, String assetId, String name) throws IOException;
+    /// Returns an existing asset object path by logical asset name.
+    ///
+    /// @param instanceId the instance id
+    /// @param assetId    the asset index id
+    /// @param name       the logical asset name
+    /// @return the asset object path, or empty if the object is not present in the asset index
+    /// @throws IOException if the asset index cannot be read
+    Optional<Path> getAssetObject(GameInstanceID instanceId, String assetId, String name) throws IOException;
 
-    /**
-     * Get the file that given asset object refers to
-     *
-     * @param version the id of specific version that is relevant to {@code assetId}
-     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
-     * @param obj the asset object, you can find it in {@link AssetIndex#getObjects()}
-     * @return the file that given asset object refers to
-     */
-    Path getAssetObject(String version, String assetId, AssetObject obj);
+    /// Returns the expected path for an asset object descriptor.
+    ///
+    /// @param instanceId the instance id
+    /// @param assetId    the asset index id
+    /// @param obj        the asset object descriptor
+    /// @return the asset object path
+    Path getAssetObject(GameInstanceID instanceId, String assetId, AssetObject obj);
 
-    /**
-     * Get asset index that assetId represents
-     *
-     * @param version the id of specific version that is relevant to {@code assetId}
-     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
-     * @return the asset index
-     */
-    AssetIndex getAssetIndex(String version, String assetId) throws IOException;
+    /// Reads an asset index.
+    ///
+    /// @param instanceId the instance id
+    /// @param assetId    the asset index id
+    /// @return the asset index
+    /// @throws IOException if the asset index cannot be read
+    AssetIndex getAssetIndex(GameInstanceID instanceId, String assetId) throws IOException;
 
-    /**
-     * Get the asset_index.json which includes asset objects information.
-     *
-     * @param version the id of specific version that is relevant to {@code assetId}
-     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
-     */
-    Path getIndexFile(String version, String assetId);
+    /// Returns the path of an asset index file.
+    ///
+    /// @param instanceId the instance id
+    /// @param assetId    the asset index id
+    /// @return the asset index file path
+    Path getIndexFile(GameInstanceID instanceId, String assetId);
 
-    /**
-     * Get logging object
-     *
-     * @param version the id of specific version that is relevant to {@code assetId}
-     * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
-     * @param loggingInfo the logging info
-     * @return the file that loggingInfo refers to
-     */
-    Path getLoggingObject(String version, String assetId, LoggingInfo loggingInfo);
+    /// Returns the path of a logging configuration object.
+    ///
+    /// @param instanceId  the instance id
+    /// @param assetId     the asset index id used as the logging object namespace
+    /// @param loggingInfo the logging configuration descriptor
+    /// @return the logging object path
+    Path getLoggingObject(GameInstanceID instanceId, String assetId, LoggingInfo loggingInfo);
 
-    default Set<String> getClasspath(Version version) {
+    /// Returns the classpath entries whose library files are present on disk.
+    ///
+    /// @param manifest the manifest whose libraries should be mapped to classpath entries
+    /// @return absolute classpath entries for existing non-native libraries
+    default Set<String> getClasspath(GameInstanceManifest manifest) {
         Set<String> classpath = new LinkedHashSet<>();
-        for (Library library : version.getLibraries())
-            if (library.appliesToCurrentEnvironment() && !library.isNative()) {
-                Path f = getLibraryFile(version, library);
-                if (Files.isRegularFile(f))
-                    classpath.add(FileUtils.getAbsolutePath(f));
-            }
+        if (manifest.libraries() != null) {
+            for (Library library : manifest.libraries())
+                if (library.appliesToCurrentEnvironment() && !library.isNative()) {
+                    Path f = getLibraryFile(manifest, library);
+                    if (Files.isRegularFile(f))
+                        classpath.add(FileUtils.getAbsolutePath(f));
+                }
+        }
+
         return classpath;
     }
+
 }
