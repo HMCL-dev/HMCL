@@ -60,8 +60,8 @@ import org.jetbrains.annotations.Nullable;
 
 /// Renders the clipped window content and implements custom title-bar, move, and resize behavior.
 ///
-/// When a [ShadowWrapper] is present, this pane occupies only its content area and the wrapper receives native
-/// resize events. Without a wrapper, an inward edge region of this pane provides the same resize behavior.
+/// The owning decorator's stable root receives native resize events. Its shadow padding supplies the resize area
+/// while the shadow is enabled; otherwise an inward edge region supplies the same behavior.
 @NotNullByDefault
 final class MainWindowPane extends StackPane {
     /// The diameter, in pixels, of the rounded window corners.
@@ -110,8 +110,8 @@ final class MainWindowPane extends StackPane {
     /// Updates the resize cursor according to the pointer position.
     private final javafx.event.EventHandler<MouseEvent> onMouseMoved = this::onMouseMoved;
 
-    /// The pane that currently receives native move and resize event filters.
-    private StackPane windowEventRoot;
+    /// The stable pane that receives native move and resize event filters.
+    private final StackPane windowEventRoot;
 
     /// The stage whose native-state properties currently have listeners installed.
     private @Nullable Stage observedStage;
@@ -151,10 +151,11 @@ final class MainWindowPane extends StackPane {
 
     /// Creates and wires the main-window content for `decorator`.
     ///
-    /// @param decorator the owning window decorator
-    MainWindowPane(Decorator decorator) {
+    /// @param decorator       the owning window decorator
+    /// @param windowEventRoot the stable root that receives move and resize events
+    MainWindowPane(Decorator decorator, StackPane windowEventRoot) {
         this.decorator = decorator;
-        windowEventRoot = this;
+        this.windowEventRoot = windowEventRoot;
 
         Rectangle clip = new Rectangle();
         clip.widthProperty().bind(widthProperty());
@@ -476,28 +477,9 @@ final class MainWindowPane extends StackPane {
         }
     }
 
-    /// Moves installed move and resize filters to `newRoot`.
-    ///
-    /// Any active gesture is cancelled because its pointer coordinates belong to the previous root.
-    ///
-    /// @param newRoot the pane that must receive subsequent move and resize events
-    void updateWindowEventRoot(StackPane newRoot) {
-        if (windowEventRoot == newRoot) {
-            return;
-        }
-
-        StackPane oldRoot = windowEventRoot;
-        if (windowEventFiltersInstalled) {
-            removeWindowEventFilters(oldRoot);
-        }
-        oldRoot.setCursor(Cursor.DEFAULT);
-
-        windowEventRoot = newRoot;
-        newRoot.setCursor(Cursor.DEFAULT);
-        if (windowEventFiltersInstalled) {
-            installWindowEventFilters(newRoot);
-        }
-
+    /// Cancels the active move or resize gesture and restores the root cursor.
+    void cancelWindowGesture() {
+        windowEventRoot.setCursor(Cursor.DEFAULT);
         decorator.setDragging(false);
         decorator.setAllowMove(false);
     }
@@ -514,8 +496,7 @@ final class MainWindowPane extends StackPane {
             installWindowEventFilters(windowEventRoot);
         } else {
             removeWindowEventFilters(windowEventRoot);
-            windowEventRoot.setCursor(Cursor.DEFAULT);
-            decorator.setDragging(false);
+            cancelWindowGesture();
         }
         windowEventFiltersInstalled = enabled;
     }

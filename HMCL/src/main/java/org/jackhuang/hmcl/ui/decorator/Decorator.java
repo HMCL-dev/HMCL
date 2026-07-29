@@ -36,6 +36,8 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -70,30 +72,45 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 
 /// Coordinates the main window's visual tree, navigation, dialogs, and native window behavior.
 ///
-/// A decorator owns one navigation stack and one stable root node. It manages an optional [ShadowWrapper] inside
-/// that root and may add or remove the wrapper without replacing the scene root. Attaching a stage also attaches the
-/// retained scene; hiding or closing that stage does not discard either the scene or the decorator state.
+/// A decorator owns one navigation stack and one stable root node. The root manages its shadow insets and effect
+/// without replacing or reparenting the main-window content. Attaching a stage also attaches the retained scene;
+/// hiding or closing that stage does not discard either the scene or the decorator state.
 @NotNullByDefault
 public final class Decorator {
     /// The space, in pixels, reserved on each side of the window content for the custom shadow.
-    static final double SHADOW_SIZE = 8.0;
+    private static final double SHADOW_SIZE = 8.0;
 
-    /// The width, in pixels, of the resize hit area when no shadow wrapper provides insets.
-    static final double RESIZE_BORDER_SIZE = 8.0;
+    /// The width, in pixels, of the resize hit area while the custom shadow is disabled.
+    private static final double RESIZE_BORDER_SIZE = 8.0;
 
-    /// The inward resize hit area used by an unwrapped main-window pane.
+    /// The inward resize hit area used while the custom shadow is disabled.
     private static final Insets RESIZE_INSETS = new Insets(RESIZE_BORDER_SIZE);
 
-    /// The optional layer that reserves space for and renders the custom window shadow.
-    private @Nullable ShadowWrapper shadowWrapper;
+    /// The root padding used to reserve space for the custom window shadow.
+    private static final Insets SHADOW_INSETS = new Insets(SHADOW_SIZE);
 
-    /// The stable root exposed to the scene.
+    /// The stable root exposed to the scene and responsible for shadow insets.
     private final StackPane root = new StackPane();
+
+    /// The stable content host to which the optional window-shadow effect is applied.
+    private final StackPane shadowContainer = new StackPane();
+
+    /// The drop-shadow effect installed on [#shadowContainer] while the window shadow is enabled.
+    private final DropShadow windowShadow = new DropShadow(
+            BlurType.ONE_PASS_BOX,
+            Color.rgb(0, 0, 0, 0.4),
+            10,
+            0.3,
+            0.0,
+            0.0);
+
+    /// Whether [#root] currently reserves and renders the custom window shadow.
+    private boolean windowShadowEnabled;
 
     /// The navigation stack rendered in the main window.
     private final Navigator navigator = new Navigator();
 
-    /// The clipped main-window content hosted directly by [#root] or inside [#shadowWrapper].
+    /// The clipped main-window content hosted inside [#shadowContainer].
     private final MainWindowPane mainWindowPane;
 
     /// The snackbar shared by all main-window toast messages.
@@ -153,8 +170,10 @@ public final class Decorator {
     public Decorator(Node mainPage) {
         navigator.setOnNavigated(this::onNavigated);
 
-        mainWindowPane = new MainWindowPane(this);
-        root.getChildren().setAll(mainWindowPane);
+        mainWindowPane = new MainWindowPane(this, root);
+        shadowContainer.getChildren().setAll(mainWindowPane);
+        root.setPickOnBounds(true);
+        root.getChildren().setAll(shadowContainer);
         setWindowShadowEnabled(true);
 
         snackbar.registerSnackbarContainer(mainWindowPane);
@@ -172,47 +191,32 @@ public final class Decorator {
         return root;
     }
 
-    /// Returns whether the scene root includes the custom shadow wrapper.
+    /// Returns whether the scene root currently reserves and renders the custom window shadow.
     ///
     /// @return `true` when the decorator reserves custom-shadow insets
     public boolean hasWindowShadow() {
-        return shadowWrapper != null;
+        return windowShadowEnabled;
     }
 
     /// Enables or disables the custom window shadow without replacing the scene root.
     ///
     /// When an attached stage has finite non-maximized bounds, this method requests corresponding stage bounds to
-    /// preserve the main-window content's screen position and size. Move and resize event filters follow the active
-    /// content layer. Calling this method with the current value has no effect. This method must be called on the
-    /// JavaFX application thread.
+    /// preserve the main-window content's screen position and size. The stable root remains both the scene root and
+    /// the move and resize event root. Calling this method with the current value has no effect. This method must be
+    /// called on the JavaFX application thread.
     ///
     /// @param enabled whether the custom shadow must be present
     public void setWindowShadowEnabled(boolean enabled) {
         FXUtils.checkFxUserThread();
-        if (enabled == (shadowWrapper != null)) {
+        if (enabled == windowShadowEnabled) {
             return;
         }
 
         Insets oldInsets = getWindowInsets();
-        if (enabled) {
-            root.getChildren().clear();
-
-            ShadowWrapper newShadowWrapper = new ShadowWrapper();
-            newShadowWrapper.setContent(mainWindowPane);
-            shadowWrapper = newShadowWrapper;
-            root.getChildren().setAll(newShadowWrapper);
-            mainWindowPane.updateWindowEventRoot(newShadowWrapper);
-        } else {
-            @Nullable ShadowWrapper oldShadowWrapper = shadowWrapper;
-            if (oldShadowWrapper == null) {
-                throw new AssertionError("Shadow wrapper disappeared during removal");
-            }
-
-            oldShadowWrapper.setContent(null);
-            shadowWrapper = null;
-            root.getChildren().setAll(mainWindowPane);
-            mainWindowPane.updateWindowEventRoot(mainWindowPane);
-        }
+        mainWindowPane.cancelWindowGesture();
+        windowShadowEnabled = enabled;
+        root.setPadding(enabled ? SHADOW_INSETS : Insets.EMPTY);
+        shadowContainer.setEffect(enabled ? windowShadow : null);
         adjustStageForWindowInsets(oldInsets, getWindowInsets());
     }
 
@@ -264,18 +268,16 @@ public final class Decorator {
 
     /// Returns the insets reserved outside the main-window content.
     ///
-    /// @return the shadow wrapper's insets, or [Insets#EMPTY] when the wrapper is absent
+    /// @return the root's shadow insets, or [Insets#EMPTY] when the shadow is disabled
     public Insets getWindowInsets() {
-        return shadowWrapper == null ? Insets.EMPTY : shadowWrapper.getInsets();
+        return windowShadowEnabled ? SHADOW_INSETS : Insets.EMPTY;
     }
 
     /// Returns the insets used for custom resize hit testing.
     ///
-    /// @return actual shadow insets, or an inward resize area when no wrapper is present
+    /// @return the shadow insets, or an inward resize area when the shadow is disabled
     Insets getResizeInsets() {
-        return shadowWrapper == null
-                ? RESIZE_INSETS
-                : shadowWrapper.getInsets();
+        return windowShadowEnabled ? SHADOW_INSETS : RESIZE_INSETS;
     }
 
     /// Returns the pane on which application dialogs are stacked.
