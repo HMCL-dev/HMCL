@@ -151,15 +151,6 @@ public final class Decorator {
     /// The direction used by the next title-bar transition.
     private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
 
-    /// Creates a decorator attached to `primaryStage`.
-    ///
-    /// @param primaryStage the stage controlled by the decorator
-    /// @param mainPage     the permanent root page of the navigation stack
-    public Decorator(Stage primaryStage, Node mainPage) {
-        this(mainPage);
-        attachStage(primaryStage);
-    }
-
     /// Creates a detached decorator and initializes its navigation stack.
     ///
     /// The decorator initially enables its custom window shadow. No scene is created until
@@ -190,13 +181,6 @@ public final class Decorator {
     /// @return the stable scene root owned by this decorator
     public Parent getRoot() {
         return root;
-    }
-
-    /// Returns whether the scene root currently reserves and renders the custom window shadow.
-    ///
-    /// @return `true` when the decorator reserves custom-shadow insets
-    public boolean hasWindowShadow() {
-        return shadowContainer.getEffect() == windowShadow;
     }
 
     /// Returns the insets reserved outside the main-window content.
