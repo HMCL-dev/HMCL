@@ -53,14 +53,15 @@ public abstract class LocalAddonFile {
 
     public abstract void delete() throws IOException;
 
+    @Nullable
     protected UpdateConditions getUpdateConditions() {
-        return UpdateConditions.NO_UPDATE;
+        return null;
     }
 
     @Nullable
     public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
         var conditions = getUpdateConditions();
-        if (!conditions.canUpdate()) return null;
+        if (conditions == null) return null;
 
         RemoteAddonRepository repository = source.getRepoForType(getType());
         if (repository == null) return null;
@@ -79,9 +80,7 @@ public abstract class LocalAddonFile {
     }
 
     @SuppressWarnings("RedundantRecordConstructor")
-    protected record UpdateConditions(boolean canUpdate, boolean useRemoteFileName, @Nullable List<Predicate<RemoteAddon.Version>> predicates) {
-        public static final UpdateConditions NO_UPDATE = new UpdateConditions(false, false, null);
-
+    protected record UpdateConditions(boolean useRemoteFileName, @Nullable List<Predicate<RemoteAddon.Version>> predicates) {
         public UpdateConditions {
         }
     }

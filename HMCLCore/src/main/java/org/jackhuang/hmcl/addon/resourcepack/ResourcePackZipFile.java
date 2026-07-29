@@ -31,7 +31,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
 
-    private static final UpdateConditions UPDATE_CONDITIONS = new UpdateConditions(true, false, null);
+    private static final UpdateConditions UPDATE_CONDITIONS = new UpdateConditions(false, null);
 
     private final PackMcMeta meta;
     private final @Nullable Image icon;
