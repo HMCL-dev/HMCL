@@ -367,18 +367,13 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                                  @SerializedName("author_id") String authorId,
                                  @SerializedName("date_published") Instant datePublished, int downloads,
                                  @SerializedName("changelog_url") String changelogUrl,
-                                 List<ProjectVersionFile> files) implements RemoteAddon.IVersion {
+                                 List<ProjectVersionFile> files) {
         private static final Map<String, RemoteAddon.@Nullable DependencyType> DEPENDENCY_TYPE = mapOf(
                 pair("required", RemoteAddon.DependencyType.REQUIRED),
                 pair("optional", RemoteAddon.DependencyType.OPTIONAL),
                 pair("embedded", RemoteAddon.DependencyType.EMBEDDED),
                 pair("incompatible", RemoteAddon.DependencyType.INCOMPATIBLE)
         );
-
-        @Override
-        public RemoteAddon.Source getType() {
-            return RemoteAddon.Source.MODRINTH;
-        }
 
         public Optional<RemoteAddon.Version> toVersion() {
             RemoteAddon.VersionType type;
@@ -397,11 +392,10 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
             }
 
             return Optional.of(new RemoteAddon.Version(
-                    this,
+                    RemoteAddon.Source.MODRINTH,
                     projectId,
                     name,
                     versionNumber,
-                    changelog,
                     datePublished,
                     type,
                     files.get(0).toFile(),

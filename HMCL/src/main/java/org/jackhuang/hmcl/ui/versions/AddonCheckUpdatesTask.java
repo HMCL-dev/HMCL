@@ -55,6 +55,7 @@ public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<L
                         }
                     }
 
+                    if (candidate != null && candidate.targetVersion().equals(candidate.currentVersion())) return null;
                     return candidate;
                 }).setName(addon.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter("update.checking")
         ).toList();

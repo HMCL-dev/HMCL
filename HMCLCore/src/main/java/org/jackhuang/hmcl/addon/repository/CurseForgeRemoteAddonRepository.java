@@ -441,7 +441,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                                  int releaseType, int fileStatus, List<LatestFileHash> hashes, Instant fileDate,
                                  int fileLength, int downloadCount, String downloadUrl, List<String> gameVersions,
                                  List<Dependency> dependencies, int alternateFileId, boolean isServerPack,
-                                 long fileFingerprint) implements RemoteAddon.IVersion {
+                                 long fileFingerprint) {
 
             @Override
             public String downloadUrl() {
@@ -453,11 +453,6 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 return downloadUrl;
             }
 
-            @Override
-            public RemoteAddon.Source getType() {
-                return RemoteAddon.Source.CURSEFORGE;
-            }
-
             public RemoteAddon.Version toVersion() {
                 RemoteAddon.VersionType versionType = switch (releaseType()) {
                     case 1 -> RemoteAddon.VersionType.Release;
@@ -467,11 +462,10 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 };
 
                 return new RemoteAddon.Version(
-                        this,
+                        RemoteAddon.Source.CURSEFORGE,
                         Integer.toString(modId),
                         displayName(),
                         fileName(),
-                        null,
                         fileDate(),
                         versionType,
                         new RemoteAddon.File(Collections.emptyMap(), downloadUrl(), fileName()),

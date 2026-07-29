@@ -21,9 +21,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
-import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
@@ -94,6 +92,11 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         } else {
             mod.getFiles().add(this);
         }
+    }
+
+    @Override
+    public RemoteAddonRepository.Type getType() {
+        return RemoteAddonRepository.Type.MOD;
     }
 
     public ModManager getModManager() {
@@ -195,19 +198,8 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     @Override
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
-        RemoteAddonRepository repository = source.getRepoForType(RemoteAddonRepository.Type.MOD);
-        if (repository == null) return null;
-        Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
-        if (currentVersion.isEmpty()) return null;
-        List<RemoteAddon.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().modid())
-                .filter(version -> version.gameVersions().contains(gameVersion))
-                .filter(version -> version.loaders().contains(getModLoaderType()))
-                .filter(version -> version.datePublished().compareTo(currentVersion.get().datePublished()) > 0)
-                .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
-                .toList();
-        if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), true);
+    protected UpdateConditions getUpdateConditions() {
+        return new UpdateConditions(true, true, List.of(v -> v.loaders().contains(getModLoaderType())));
     }
 
     @Override

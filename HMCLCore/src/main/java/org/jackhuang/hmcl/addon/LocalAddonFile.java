@@ -24,9 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /// Sub-classes should implement `Comparable`
@@ -34,6 +33,8 @@ public abstract class LocalAddonFile {
 
     protected LocalAddonFile() {
     }
+
+    public abstract RemoteAddonRepository.Type getType();
 
     public abstract Path getFile();
 
@@ -52,8 +53,38 @@ public abstract class LocalAddonFile {
 
     public abstract void delete() throws IOException;
 
+    protected UpdateConditions getUpdateConditions() {
+        return UpdateConditions.NO_UPDATE;
+    }
+
     @Nullable
-    public abstract AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException;
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
+        var conditions = getUpdateConditions();
+        if (!conditions.canUpdate()) return null;
+
+        RemoteAddonRepository repository = source.getRepoForType(getType());
+        if (repository == null) return null;
+        Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(getFile());
+        if (currentVersion.isEmpty()) return null;
+
+        var stream = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().modid())
+                .filter(version -> version.gameVersions().contains(gameVersion));
+        if (conditions.predicates() != null)
+            for (var p : conditions.predicates()) {
+                stream = stream.filter(p);
+            }
+        List<RemoteAddon.Version> remoteVersions = stream.sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed()).toList();
+        if (remoteVersions.isEmpty()) return null;
+        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), conditions.useRemoteFileName());
+    }
+
+    @SuppressWarnings("RedundantRecordConstructor")
+    protected record UpdateConditions(boolean canUpdate, boolean useRemoteFileName, @Nullable List<Predicate<RemoteAddon.Version>> predicates) {
+        public static final UpdateConditions NO_UPDATE = new UpdateConditions(false, false, null);
+
+        public UpdateConditions {
+        }
+    }
 
     public record AddonUpdate(
             LocalAddonFile localAddonFile,
