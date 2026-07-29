@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.modpack.mcbbs;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -424,8 +425,8 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
         return new Modpack(name, author, version, gameVersion, description, encoding, this) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl) {
-                return new McbbsModpackLocalInstallTask(dependencyManager, zipFile, this, McbbsModpackManifest.this, name);
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, GameInstanceID instanceId, String iconUrl) {
+                return new McbbsModpackLocalInstallTask(dependencyManager, zipFile, this, McbbsModpackManifest.this, instanceId);
             }
         };
     }
