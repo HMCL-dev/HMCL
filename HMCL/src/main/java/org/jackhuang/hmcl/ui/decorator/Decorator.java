@@ -70,9 +70,9 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 
 /// Coordinates the main window's visual tree, navigation, dialogs, and native window behavior.
 ///
-/// A decorator owns one navigation stack and one stable root node. The root may either be the main-window pane
-/// itself or a [ShadowWrapper], as selected at construction. Attaching a stage also attaches the retained scene;
-/// hiding or closing that stage does not discard either the scene or the decorator state.
+/// A decorator owns one navigation stack and one stable root node. It manages an optional [ShadowWrapper] inside
+/// that root and may add or remove the wrapper without replacing the scene root. Attaching a stage also attaches the
+/// retained scene; hiding or closing that stage does not discard either the scene or the decorator state.
 @NotNullByDefault
 public final class Decorator {
     /// The space, in pixels, reserved on each side of the window content for the custom shadow.
@@ -84,16 +84,16 @@ public final class Decorator {
     /// The inward resize hit area used by an unwrapped main-window pane.
     private static final Insets RESIZE_INSETS = new Insets(RESIZE_BORDER_SIZE);
 
-    /// The optional scene root that reserves space for and renders the custom window shadow.
-    private final @Nullable ShadowWrapper shadowWrapper;
+    /// The optional layer that reserves space for and renders the custom window shadow.
+    private @Nullable ShadowWrapper shadowWrapper;
 
-    /// The stable root exposed to the scene, with or without a shadow wrapper.
-    private final Parent root;
+    /// The stable root exposed to the scene.
+    private final StackPane root = new StackPane();
 
     /// The navigation stack rendered in the main window.
     private final Navigator navigator = new Navigator();
 
-    /// The clipped main-window content hosted inside [#root].
+    /// The clipped main-window content hosted directly by [#root] or inside [#shadowWrapper].
     private final MainWindowPane mainWindowPane;
 
     /// The snackbar shared by all main-window toast messages.
@@ -135,50 +135,27 @@ public final class Decorator {
     /// The direction used by the next title-bar transition.
     private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
 
-    /// Creates a shadowed decorator attached to `primaryStage`.
+    /// Creates a decorator attached to `primaryStage`.
     ///
     /// @param primaryStage the stage controlled by the decorator
     /// @param mainPage     the permanent root page of the navigation stack
     public Decorator(Stage primaryStage, Node mainPage) {
-        this(primaryStage, mainPage, true);
-    }
-
-    /// Creates a decorator attached to `primaryStage`.
-    ///
-    /// @param primaryStage    the stage controlled by the decorator
-    /// @param mainPage        the permanent root page of the navigation stack
-    /// @param useWindowShadow whether to wrap the main-window pane in a custom shadow
-    public Decorator(Stage primaryStage, Node mainPage, boolean useWindowShadow) {
-        this(mainPage, useWindowShadow);
+        this(mainPage);
         attachStage(primaryStage);
-    }
-
-    /// Creates a detached shadowed decorator.
-    ///
-    /// @param mainPage the permanent root page of the navigation stack
-    public Decorator(Node mainPage) {
-        this(mainPage, true);
     }
 
     /// Creates a detached decorator and initializes its navigation stack.
     ///
-    /// No scene is created until [#attachStage(Stage)] is called or the root is otherwise installed in a scene.
+    /// The decorator initially enables its custom window shadow. No scene is created until
+    /// [#attachStage(Stage)] is called or [#getRoot()] is otherwise installed in a scene.
     ///
-    /// @param mainPage        the permanent root page of the navigation stack
-    /// @param useWindowShadow whether to wrap the main-window pane in a custom shadow
-    public Decorator(Node mainPage, boolean useWindowShadow) {
-        stage.addListener((observable, oldStage, newStage) -> onStageChanged(oldStage, newStage));
+    /// @param mainPage the permanent root page of the navigation stack
+    public Decorator(Node mainPage) {
         navigator.setOnNavigated(this::onNavigated);
 
-        shadowWrapper = useWindowShadow ? new ShadowWrapper() : null;
         mainWindowPane = new MainWindowPane(this);
-        if (shadowWrapper == null) {
-            root = mainWindowPane;
-        } else {
-            shadowWrapper.setContent(mainWindowPane);
-            root = shadowWrapper;
-        }
-        mainWindowPane.startStageTracking();
+        root.getChildren().setAll(mainWindowPane);
+        setWindowShadowEnabled(true);
 
         snackbar.registerSnackbarContainer(mainWindowPane);
 
@@ -202,18 +179,94 @@ public final class Decorator {
         return shadowWrapper != null;
     }
 
+    /// Enables or disables the custom window shadow without replacing the scene root.
+    ///
+    /// When an attached stage has finite non-maximized bounds, this method requests corresponding stage bounds to
+    /// preserve the main-window content's screen position and size. Move and resize event filters follow the active
+    /// content layer. Calling this method with the current value has no effect. This method must be called on the
+    /// JavaFX application thread.
+    ///
+    /// @param enabled whether the custom shadow must be present
+    public void setWindowShadowEnabled(boolean enabled) {
+        FXUtils.checkFxUserThread();
+        if (enabled == (shadowWrapper != null)) {
+            return;
+        }
+
+        Insets oldInsets = getWindowInsets();
+        if (enabled) {
+            root.getChildren().clear();
+
+            ShadowWrapper newShadowWrapper = new ShadowWrapper();
+            newShadowWrapper.setContent(mainWindowPane);
+            shadowWrapper = newShadowWrapper;
+            root.getChildren().setAll(newShadowWrapper);
+            mainWindowPane.updateWindowEventRoot(newShadowWrapper);
+        } else {
+            @Nullable ShadowWrapper oldShadowWrapper = shadowWrapper;
+            if (oldShadowWrapper == null) {
+                throw new AssertionError("Shadow wrapper disappeared during removal");
+            }
+
+            oldShadowWrapper.setContent(null);
+            shadowWrapper = null;
+            root.getChildren().setAll(mainWindowPane);
+            mainWindowPane.updateWindowEventRoot(mainWindowPane);
+        }
+        adjustStageForWindowInsets(oldInsets, getWindowInsets());
+    }
+
+    /// Adjusts an attached stage after its content insets change.
+    ///
+    /// @param oldInsets the insets before the content-layer change
+    /// @param newInsets the insets after the content-layer change
+    private void adjustStageForWindowInsets(Insets oldInsets, Insets newInsets) {
+        @Nullable Stage currentStage = getStage();
+        if (currentStage == null) {
+            return;
+        }
+
+        double horizontalDelta = newInsets.getLeft() + newInsets.getRight()
+                - oldInsets.getLeft() - oldInsets.getRight();
+        double verticalDelta = newInsets.getTop() + newInsets.getBottom()
+                - oldInsets.getTop() - oldInsets.getBottom();
+
+        double minWidth = currentStage.getMinWidth();
+        if (Double.isFinite(minWidth) && minWidth > 0) {
+            currentStage.setMinWidth(Math.max(0, minWidth + horizontalDelta));
+        }
+        double minHeight = currentStage.getMinHeight();
+        if (Double.isFinite(minHeight) && minHeight > 0) {
+            currentStage.setMinHeight(Math.max(0, minHeight + verticalDelta));
+        }
+
+        if (currentStage.isMaximized() || currentStage.isFullScreen()) {
+            return;
+        }
+
+        double x = currentStage.getX();
+        if (Double.isFinite(x)) {
+            currentStage.setX(x - newInsets.getLeft() + oldInsets.getLeft());
+        }
+        double y = currentStage.getY();
+        if (Double.isFinite(y)) {
+            currentStage.setY(y - newInsets.getTop() + oldInsets.getTop());
+        }
+
+        double width = currentStage.getWidth();
+        double height = currentStage.getHeight();
+        if (Double.isFinite(width) && width > 0 && Double.isFinite(height) && height > 0) {
+            // Width and height must be set together to avoid JDK-8344372.
+            currentStage.setWidth(Math.max(currentStage.getMinWidth(), width + horizontalDelta));
+            currentStage.setHeight(Math.max(currentStage.getMinHeight(), height + verticalDelta));
+        }
+    }
+
     /// Returns the insets reserved outside the main-window content.
     ///
     /// @return the shadow wrapper's insets, or [Insets#EMPTY] when the wrapper is absent
     public Insets getWindowInsets() {
         return shadowWrapper == null ? Insets.EMPTY : shadowWrapper.getInsets();
-    }
-
-    /// Returns the region that receives native move and resize event filters.
-    ///
-    /// @return the shadow wrapper when present; otherwise the main-window pane
-    StackPane getWindowEventRoot() {
-        return shadowWrapper == null ? mainWindowPane : shadowWrapper;
     }
 
     /// Returns the insets used for custom resize hit testing.
@@ -377,7 +430,7 @@ public final class Decorator {
         if (newStage.getScene() != scene) {
             newStage.setScene(scene);
         }
-        stage.set(newStage);
+        setAttachedStage(newStage);
         return scene;
     }
 
@@ -385,15 +438,16 @@ public final class Decorator {
     ///
     /// The root, scene, navigation state, dialogs, and snackbar remain owned by this decorator and may subsequently
     /// be attached to another stage. Calling this method while detached has no effect beyond resetting root transforms.
+    /// Hiding a stage that will later be shown again does not require detachment.
     public void detachStage() {
         FXUtils.checkFxUserThread();
         stopWindowAnimation();
 
         @Nullable Stage currentStage = stage.get();
-        stage.set(null);
         if (currentStage != null && currentStage.getScene() == root.getScene()) {
             currentStage.setScene(null);
         }
+        setAttachedStage(null);
     }
 
     /// Returns the stage currently controlled by this decorator.
@@ -492,6 +546,29 @@ public final class Decorator {
     /// @param navigationDirection the pending navigation direction
     void setNavigationDirection(Navigation.NavigationDirection navigationDirection) {
         this.navigationDirection = navigationDirection;
+    }
+
+    /// Reveals the attached window using the configured opening animation.
+    ///
+    /// Calling this method replaces any active minimize, restore, close, or earlier opening animation.
+    public void playOpenAnimation() {
+        if (!AnimationUtils.playWindowAnimation()) {
+            stopWindowAnimation();
+            return;
+        }
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(root.opacityProperty(), 0, Motion.EASE),
+                        new KeyValue(root.scaleXProperty(), 0.8, Motion.EASE),
+                        new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE),
+                        new KeyValue(root.scaleZProperty(), 0.8, Motion.EASE)),
+                new KeyFrame(Duration.millis(600),
+                        new KeyValue(root.opacityProperty(), 1, Motion.EASE),
+                        new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
+                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
+                        new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
+        playWindowAnimation(timeline, this::resetRootTransform);
     }
 
     /// Minimizes the attached stage, using the configured window animation when supported.
@@ -659,11 +736,27 @@ public final class Decorator {
                 url -> Controllers.dialog(new AddAuthlibInjectorServerPane(url))));
     }
 
+    /// Moves all native-stage listeners and event filters from the current stage to `newStage`.
+    ///
+    /// The read-only stage property is updated only after stage-dependent components have completed the transition.
+    ///
+    /// @param newStage the stage to publish, or `null` when detaching
+    private void setAttachedStage(@Nullable Stage newStage) {
+        @Nullable Stage oldStage = stage.get();
+        if (oldStage == newStage) {
+            return;
+        }
+
+        moveRestoreListener(oldStage, newStage);
+        mainWindowPane.updateStage(newStage);
+        stage.set(newStage);
+    }
+
     /// Moves the restore listener from `oldStage` to `newStage`.
     ///
     /// @param oldStage the previously attached stage, or `null`
     /// @param newStage the newly attached stage, or `null`
-    private void onStageChanged(@Nullable Stage oldStage, @Nullable Stage newStage) {
+    private void moveRestoreListener(@Nullable Stage oldStage, @Nullable Stage newStage) {
         playRestoreMinimizeAnimation = false;
         if (oldStage != null) {
             oldStage.iconifiedProperty().removeListener(iconifiedListener);
