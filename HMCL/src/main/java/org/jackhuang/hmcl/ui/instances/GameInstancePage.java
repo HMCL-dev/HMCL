@@ -106,10 +106,10 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             }
         });
 
-        listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class).registerWeak(event -> checkSelectedInstnace(), EventPriority.HIGHEST));
+        listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class).registerWeak(event -> checkSelectedInstance(), EventPriority.HIGHEST));
     }
 
-    private void checkSelectedInstnace() {
+    private void checkSelectedInstance() {
         runInFX(() -> {
             if (this.instanceReference.get() == null) return;
             HMCLGameRepository repository = this.instanceReference.get().repository();
