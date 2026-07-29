@@ -102,6 +102,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 wrapper.getChildren().setAll(box, addGameDirectoryItem);
                 pane.setContent(wrapper);
             }
+            FXUtils.smoothScrolling(pane);
 
             AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
                     .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings);
