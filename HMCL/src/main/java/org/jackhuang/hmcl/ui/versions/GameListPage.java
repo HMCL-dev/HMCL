@@ -85,7 +85,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
         {
             ScrollPane pane = new ScrollPane();
-            FXUtils.smoothScrolling(pane);
             VBox.setVgrow(pane, Priority.ALWAYS);
             {
                 AdvancedListItem addGameDirectoryItem = new AdvancedListItem();
@@ -103,6 +102,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 wrapper.getChildren().setAll(box, addGameDirectoryItem);
                 pane.setContent(wrapper);
             }
+            FXUtils.smoothScrolling(pane);
 
             AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
                     .addNavigationDrawerItem(i18n("install.new_game"), SVG.ADD_CIRCLE, Versions::addNewGame)
