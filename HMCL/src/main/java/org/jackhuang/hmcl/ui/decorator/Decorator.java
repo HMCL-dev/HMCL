@@ -43,6 +43,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -173,6 +175,7 @@ public final class Decorator {
         mainWindowPane = new MainWindowPane(this, root);
         shadowContainer.getChildren().setAll(mainWindowPane);
         root.setPickOnBounds(true);
+        root.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
         root.getChildren().setAll(shadowContainer);
         setWindowShadowEnabled(true);
 
