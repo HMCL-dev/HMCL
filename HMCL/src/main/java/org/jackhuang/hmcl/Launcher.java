@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl;
 
+import com.sun.jna.Pointer;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -46,6 +47,9 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.windows.Gdi32;
+import org.jackhuang.hmcl.util.platform.windows.User32;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -266,7 +270,7 @@ public final class Launcher extends Application {
     @Override
     public void stop() throws Exception {
         Controllers.onApplicationStop();
-        FileSaver.shutdown();
+        SettingsManager.shutdown();
         LOG.shutdown();
     }
 
@@ -376,19 +380,50 @@ public final class Launcher extends Application {
 
         setUpAnimationFrameRate:
         {
+            if (System.getProperty("javafx.animation.pulse") != null) {
+                break setUpAnimationFrameRate;
+            }
+
             String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
             if (animationFrameRate != null) {
                 LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
 
                 try {
-                    if (Integer.parseInt(animationFrameRate) <= 0)
+                    int value = Integer.parseInt(animationFrameRate);
+                    if (value <= 0)
                         throw new NumberFormatException(animationFrameRate);
 
-                    System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
+                    if (value != 60)
+                        System.setProperty("javafx.animation.pulse", animationFrameRate);
                 } catch (NumberFormatException e) {
                     LOG.warning("Invalid animation frame rate: " + animationFrameRate);
                 }
                 break setUpAnimationFrameRate;
+            }
+
+            // To avoid prematurely loading FXUtils, we only check if animationDisabled has been explicitly set to true
+            if (Boolean.TRUE.equals(settings().animationDisabledProperty().get()))
+                break setUpAnimationFrameRate;
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (NativeUtils.USE_JNA && Gdi32.INSTANCE != null && User32.INSTANCE != null) {
+                    @Nullable Pointer pointer = User32.INSTANCE.GetDC(Pointer.NULL);
+                    if (pointer != null) {
+                        try {
+                            int refreshRate = Gdi32.INSTANCE.GetDeviceCaps(pointer, Gdi32.VREFRESH);
+
+                            if (refreshRate > 0) {
+                                LOG.info("Detected refresh rate: " + refreshRate + "Hz");
+
+                                if (refreshRate >= 90) {
+                                    System.getProperties().putIfAbsent("javafx.animation.pulse", String.valueOf(refreshRate));
+                                }
+                            }
+                        } finally {
+                            User32.INSTANCE.ReleaseDC(Pointer.NULL, pointer);
+                        }
+                    }
+                }
             }
         }
 
