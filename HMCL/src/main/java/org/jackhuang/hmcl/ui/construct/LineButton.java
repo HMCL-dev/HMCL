@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
@@ -74,7 +75,12 @@ public class LineButton extends LineButtonBase {
 
                 @Override
                 protected void invalidated() {
-                    setEventHandler(ActionEvent.ACTION, get());
+                    EventHandler<ActionEvent> handler = get();
+                    setEventHandler(ActionEvent.ACTION, handler == null ? null : event -> {
+                        if (event.getTarget() == LineButton.this) {
+                            handler.handle(event);
+                        }
+                    });
                 }
             };
         }
@@ -117,6 +123,8 @@ public class LineButton extends LineButtonBase {
                             trailingTextLabel.setMouseTransparent(true);
                         }
                         trailingTextLabel.setText(message);
+                        trailingTextLabel.setMinWidth(50);
+                        trailingTextLabel.setAlignment(Pos.CENTER_RIGHT);
                         setNode(getTrailingTextIndex(), trailingTextLabel);
                     } else if (trailingTextLabel != null) {
                         trailingTextLabel.setText("");

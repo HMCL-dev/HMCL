@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
+import org.glavo.uuid.UUIDs;
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
@@ -24,7 +25,6 @@ import org.jackhuang.hmcl.util.KeyUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.HttpServer;
 
 import java.io.ByteArrayInputStream;
@@ -113,7 +113,7 @@ public class YggdrasilServer extends HttpServer {
     private Response profile(Request request) {
         String uuid = request.getPathVariables().group("uuid");
 
-        Optional<Character> character = findCharacterByUuid(UUIDTypeAdapter.fromString(uuid));
+        Optional<Character> character = findCharacterByUuid(UUIDs.parse(uuid));
 
         //Workaround for JDK-8138667
         //noinspection OptionalIsPresent
@@ -129,7 +129,7 @@ public class YggdrasilServer extends HttpServer {
 
         if (Texture.hasTexture(hash)) {
             Texture texture = Texture.getTexture(hash);
-            byte[] data = PNGJavaFXUtils.writeImageToArray(texture.getImage());
+            byte[] data = PNGJavaFXUtils.writeImageToArray(texture.image());
             Response response = newFixedLengthResponse(Response.Status.OK, "image/png", new ByteArrayInputStream(data), data.length);
             response.addHeader("Etag", String.format("\"%s\"", hash));
             response.addHeader("Cache-Control", "max-age=2592000, public");
@@ -177,30 +177,30 @@ public class YggdrasilServer extends HttpServer {
 
         public Object toCompleteResponse(String rootUrl) {
             Map<String, Object> realTextures = new HashMap<>();
-            if (skin != null && skin.getSkin() != null) {
-                if (skin.getModel() == TextureModel.SLIM) {
+            if (skin != null && skin.skin() != null) {
+                if (skin.model() == TextureModel.SLIM) {
                     realTextures.put("SKIN", mapOf(
-                            pair("url", rootUrl + "/textures/" + skin.getSkin().getHash()),
+                            pair("url", rootUrl + "/textures/" + skin.skin().hash()),
                             pair("metadata", mapOf(
                                     pair("model", "slim")
                             ))));
                 } else {
-                    realTextures.put("SKIN", mapOf(pair("url", rootUrl + "/textures/" + skin.getSkin().getHash())));
+                    realTextures.put("SKIN", mapOf(pair("url", rootUrl + "/textures/" + skin.skin().hash())));
                 }
             }
-            if (skin != null && skin.getCape() != null) {
-                realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.getCape().getHash())));
+            if (skin != null && skin.cape() != null) {
+                realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.cape().hash())));
             }
 
             Map<String, Object> textureResponse = mapOf(
                     pair("timestamp", System.currentTimeMillis()),
-                    pair("profileId", uuid),
+                    pair("profileId", UUIDs.toCompactString(uuid)),
                     pair("profileName", name),
                     pair("textures", realTextures)
             );
 
             return mapOf(
-                    pair("id", uuid),
+                    pair("id", UUIDs.toCompactString(uuid)),
                     pair("name", name),
                     pair("properties", properties(true,
                             pair("textures", new String(

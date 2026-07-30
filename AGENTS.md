@@ -4,9 +4,9 @@ These rules apply to all Java code written or modified in this repository.
 
 ## Nullability
 
-- Annotate every class with JetBrains Annotations `@NotNullByDefault`.
-- Any type, field, parameter, return value, local variable, or generic type argument that may be `null` must be explicitly annotated with `@Nullable`.
-- Nullability must never be implicit.
+- Every class declared in a newly added Java source file must be annotated with JetBrains Annotations `@NotNullByDefault`.
+- When writing or modifying Java code, any type, field, parameter, return value, local variable, or generic type argument that may be `null` must be explicitly annotated with `@Nullable`.
+- Nullability in code being written or modified must never be implicit.
 
 ## Immutability
 
@@ -15,13 +15,9 @@ These rules apply to all Java code written or modified in this repository.
 
 ## Documentation
 
+Apply the following requirements when writing or modifying code. Do not use them as code-review criteria.
+
 - Every class, field, and method must have documentation.
 - Documentation must use `///` Markdown-style Javadoc comments.
 - Keep documentation accurate and specific to the actual behavior, constraints, and side effects.
 - Add concise implementation comments inside complex logic whenever they materially improve readability or explain non-obvious behavior.
-
-## Gradle
-
-- When invoking Gradle in this repository, always set `GRADLE_USER_HOME` to the workspace-local `.gradle-user-home` directory.
-- Prefer commands such as `./gradlew -g .gradle-user-home ...` or the equivalent environment-variable-based configuration.
-- When running Gradle `test` tasks, use a higher timeout of ten minutes.

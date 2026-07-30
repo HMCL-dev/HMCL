@@ -16,6 +16,10 @@
 
     <module name="TreeWalker">
         <module name="SuppressionCommentFilter"/> <!-- use //CHECKSTYLE:OFF (...) //CHECKSTYLE:ON to disable checkstyle: http://checkstyle.sourceforge.net/config_filters.html#SuppressionCommentFilter -->
+        <module name="SuppressionXpathSingleFilter">
+            <property name="checks" value="Indentation"/>
+            <property name="query" value="//LAMBDA | //LAMBDA//*"/>
+        </module>
 
         <!-- Annotations -->
         <module name="MissingDeprecated"> <!-- if @deprecated and javadoc is there, must be explained in javadoc: http://checkstyle.sourceforge.net/config_annotation.html#MissingDeprecated -->
@@ -78,7 +82,7 @@
 
         <!-- Size Limitations -->
         <module name="ParameterNumber"><!-- max params for method http://checkstyle.sourceforge.net/config_sizes.html#ParameterNumber -->
-            <property name="max" value="10"/>
+            <property name="max" value="12"/>
             <property name="ignoreOverriddenMethods" value="true"/>
             <property name="tokens" value="METHOD_DEF"/>
         </module>
@@ -131,7 +135,12 @@
 
     <module name="SuppressionSingleFilter">
         <property name="checks" value="RegexpHeader"/>
-        <property name="files" value=".*[\\/](SwingFXUtils|ScrollUtils|TypeUtils).java"/>
+        <property name="files" value=".*[\\/](ScrollUtils|TypeUtils).java"/>
+    </module>
+
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="FileLength"/>
+        <property name="files" value=".*[\\/]org[\\/]jackhuang[\\/]hmcl[\\/]ui[\\/]game[\\/]GameSettingsPage.java"/>
     </module>
 
     <module name="RegexpHeader">

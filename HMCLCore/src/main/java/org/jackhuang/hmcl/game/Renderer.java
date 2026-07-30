@@ -17,6 +17,11 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.TypeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
@@ -42,6 +47,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 @NotNullByDefault
+@JsonAdapter(Renderer.Adapter.class)
 public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Renderer.Unknown {
 
     /// Default renderer.
@@ -541,5 +547,23 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
     /// If `cards` is `null`, it means that the graphics cards are unknown.
     default boolean isSupported(Platform platform, @Nullable List<GraphicsCard> cards) {
         return true;
+    }
+
+    final class Adapter extends TypeAdapter<@Nullable Renderer> {
+
+        @Override
+        public void write(JsonWriter out, @Nullable Renderer value) throws IOException {
+            out.value(value != null ? value.name() : null);
+        }
+
+        @Override
+        public @Nullable Renderer read(JsonReader in) throws IOException {
+            if (in.peek() == JsonToken.NULL) {
+                in.nextNull();
+                return null;
+            }
+
+            return Renderer.of(in.nextString());
+        }
     }
 }

@@ -17,16 +17,18 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
+import com.google.gson.JsonObject;
+import org.glavo.uuid.UUIDs;
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 /**
  *
@@ -45,7 +47,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
     }
 
     public OfflineAccount create(String username, UUID uuid) {
-        return new OfflineAccount(downloader, username, uuid, null);
+        return new OfflineAccount(AccountID.generate(), downloader, username, uuid, null);
     }
 
     @Override
@@ -61,19 +63,23 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
             uuid = getUUIDFromUserName(username);
             skin = null;
         }
-        return new OfflineAccount(downloader, username, uuid, skin);
+        return new OfflineAccount(AccountID.generate(), downloader, username, uuid, skin);
     }
 
     @Override
-    public OfflineAccount fromStorage(Map<Object, Object> storage) {
-        String username = tryCast(storage.get("username"), String.class)
-                .orElseThrow(() -> new IllegalStateException("Offline account configuration malformed."));
-        UUID uuid = tryCast(storage.get("uuid"), String.class)
-                .map(UUIDTypeAdapter::fromString)
-                .orElse(getUUIDFromUserName(username));
-        Skin skin = Skin.fromStorage(tryCast(storage.get("skin"), Map.class).orElse(null));
+    public OfflineAccount fromStorage(JsonObject metadata, JsonObject privateData) {
+        AccountID accountID = Account.readAccountID(metadata);
+        String profileName = JsonUtils.getString(metadata, "profileName");
+        if (profileName == null) {
+            throw new IllegalStateException("Offline account configuration malformed.");
+        }
+        String profileIDText = JsonUtils.getString(metadata, "profileID");
+        UUID profileID = profileIDText != null
+                ? UUIDs.parse(profileIDText)
+                : getUUIDFromUserName(profileName);
+        Skin skin = Skin.fromStorage(metadata.get("skin") instanceof JsonObject skinObject ? skinObject : null);
 
-        return new OfflineAccount(downloader, username, uuid, skin);
+        return new OfflineAccount(accountID, downloader, profileName, profileID, skin);
     }
 
     public static UUID getUUIDFromUserName(String username) {

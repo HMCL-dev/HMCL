@@ -17,38 +17,43 @@
  */
 package org.jackhuang.hmcl;
 
+import com.sun.jna.Pointer;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.DataFormat;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.setting.ConfigHolder;
-import org.jackhuang.hmcl.setting.SambaException;
+import org.jackhuang.hmcl.game.HMCLCacheRepository;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
-import org.jackhuang.hmcl.util.CrashReporter;
-import org.jackhuang.hmcl.util.FileSaver;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.windows.Gdi32;
+import org.jackhuang.hmcl.util.platform.windows.User32;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -60,11 +65,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -97,21 +102,11 @@ public final class Launcher extends Application {
         }
 
         try {
-            try {
-                ConfigHolder.init();
-            } catch (SambaException e) {
-                showAlert(AlertType.WARNING, i18n("fatal.samba"));
-            } catch (IOException e) {
-                LOG.error("Failed to load config", e);
-                checkConfigInTempDir();
-                checkConfigOwner();
-                showAlert(AlertType.ERROR, i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
-                EntryPoint.exit(1);
-            }
+            initializeSettingsRuntime();
 
             // https://lapcatsoftware.com/articles/app-translocation.html
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
-                    && ConfigHolder.isNewlyCreated()
+                    && SettingsManager.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
                 if (!confirmWithCountdown(AlertType.WARNING, i18n("fatal.mac_app_translocation"), 5))
                     return;
@@ -119,20 +114,20 @@ public final class Launcher extends Application {
                 checkConfigInTempDir();
             }
 
-            if (ConfigHolder.isOwnerChanged()) {
+            if (SettingsManager.isOwnerChanged()) {
                 if (showAlert(AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
                     return;
             }
 
-            if (ConfigHolder.isUnsupportedVersion()) {
+            if (SettingsManager.hasReadOnlyCoreSettings()) {
                 showAlert(AlertType.WARNING, i18n("fatal.config_unsupported_version"));
             }
 
-            if (Metadata.HMCL_CURRENT_DIRECTORY.toString().indexOf('=') >= 0) {
+            if (Metadata.HMCL_LOCAL_HOME.toString().indexOf('=') >= 0) {
                 showAlert(AlertType.WARNING, i18n("fatal.illegal_char"));
             }
 
-            // runLater to ensure ConfigHolder.init() finished initialization
+            // runLater to ensure SettingsManager.init() finished initialization
             Platform.runLater(() -> {
                 // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
                 // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
@@ -149,6 +144,26 @@ public final class Launcher extends Application {
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
         }
+    }
+
+    /// Initializes modules and runtime services that depend on loaded settings.
+    private static void initializeSettingsRuntime() {
+        DownloadProviders.init();
+        ProxyManager.init();
+        Accounts.init();
+        GameDirectoryManager.init();
+        AuthlibInjectorServers.init();
+        AnimationUtils.init();
+
+        CacheRepository.setInstance(HMCLCacheRepository.REPOSITORY);
+        HMCLCacheRepository.REPOSITORY.directoryProperty().bind(Bindings.createStringBinding(() -> {
+            String commonDirectory = settings().getResolvedCommonDirectory();
+            if (commonDirectory != null && FileUtils.canCreateDirectory(commonDirectory)) {
+                return commonDirectory;
+            } else {
+                return LauncherSettings.getDefaultCommonDirectory();
+            }
+        }, settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
     }
 
     private static void appendScreen(StringBuilder builder, Screen screen) {
@@ -209,7 +224,7 @@ public final class Launcher extends Application {
     }
 
     private static boolean isConfigInTempDir() {
-        String configPath = ConfigHolder.configLocation().toString();
+        String configPath = SettingsManager.localConfigDirectory().toString();
 
         String tmpdir = System.getProperty("java.io.tmpdir");
         if (StringUtils.isNotBlank(tmpdir) && configPath.startsWith(tmpdir))
@@ -246,55 +261,16 @@ public final class Launcher extends Application {
     }
 
     private static void checkConfigInTempDir() {
-        if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
+        if (SettingsManager.isNewlyCreated() && isConfigInTempDir()
                 && !confirmWithCountdown(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), 5)) {
             EntryPoint.exit(0);
         }
     }
 
-    private static void checkConfigOwner() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            return;
-
-        String userName = System.getProperty("user.name");
-        String owner;
-        try {
-            owner = Files.getOwner(ConfigHolder.configLocation()).getName();
-        } catch (IOException ioe) {
-            LOG.warning("Failed to get file owner", ioe);
-            return;
-        }
-
-        if (Files.isWritable(ConfigHolder.configLocation()) || userName.equals("root") || userName.equals(owner))
-            return;
-
-        ArrayList<String> files = new ArrayList<>();
-        files.add(ConfigHolder.configLocation().toString());
-        if (Files.exists(Metadata.HMCL_GLOBAL_DIRECTORY))
-            files.add(Metadata.HMCL_GLOBAL_DIRECTORY.toString());
-        if (Files.exists(Metadata.HMCL_CURRENT_DIRECTORY))
-            files.add(Metadata.HMCL_CURRENT_DIRECTORY.toString());
-
-        Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
-        if (Files.exists(mcDir))
-            files.add(mcDir.toString());
-
-        String command = new CommandBuilder().addAll("sudo", "chown", "-R", userName).addAll(files).toString();
-        ButtonType copyAndExit = new ButtonType(i18n("button.copy_and_exit"));
-
-        if (showAlert(AlertType.ERROR,
-                i18n("fatal.config_loading_failure.unix", owner, command),
-                copyAndExit, ButtonType.CLOSE) == copyAndExit) {
-            Clipboard.getSystemClipboard()
-                    .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
-        }
-        EntryPoint.exit(1);
-    }
-
     @Override
     public void stop() throws Exception {
         Controllers.onApplicationStop();
-        FileSaver.shutdown();
+        SettingsManager.shutdown();
         LOG.shutdown();
     }
 
@@ -326,8 +302,8 @@ public final class Launcher extends Application {
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
             LOG.info("Java Home: " + System.getProperty("java.home"));
             LOG.info("Current Directory: " + Metadata.CURRENT_DIRECTORY);
-            LOG.info("HMCL Global Directory: " + Metadata.HMCL_GLOBAL_DIRECTORY);
-            LOG.info("HMCL Current Directory: " + Metadata.HMCL_CURRENT_DIRECTORY);
+            LOG.info("HMCL User Home: " + Metadata.HMCL_USER_HOME);
+            LOG.info("HMCL Local Home: " + Metadata.HMCL_LOCAL_HOME);
             LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
             LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
             LOG.info("JVM Max Memory: " + MEGABYTES.formatBytes(Runtime.getRuntime().maxMemory()));
@@ -347,7 +323,22 @@ public final class Launcher extends Application {
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
 
+            LOG.info("Zlib Compatible: " + ZlibUtils.IS_ZLIB_COMPATIBLE);
+
             Lang.thread(SystemInfo::initialize, "Detection System Information", true);
+
+            try {
+                SettingsManager.init();
+            } catch (SambaException e) {
+                EntryPoint.showWarning(i18n("fatal.samba"));
+            } catch (IOException e) {
+                LOG.error("Failed to load config", e);
+                checkConfigOwner();
+                SwingUtils.showErrorDialog(i18n("fatal.config_loading_failure", SettingsManager.localConfigDirectory()));
+                EntryPoint.exit(1);
+            }
+
+            setupJavaFXVMOptions();
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
@@ -379,6 +370,159 @@ public final class Launcher extends Application {
             Controllers.shutdown();
             Lang.executeDelayed(System::gc, TimeUnit.SECONDS, 5, true);
         });
+    }
+
+    private static void setupJavaFXVMOptions() {
+        if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU"))) {
+            LOG.info("HMCL_FORCE_GPU: true");
+            System.getProperties().putIfAbsent("prism.forceGPU", "true");
+        }
+
+        setUpAnimationFrameRate:
+        {
+            if (System.getProperty("javafx.animation.pulse") != null) {
+                break setUpAnimationFrameRate;
+            }
+
+            String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
+            if (animationFrameRate != null) {
+                LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
+
+                try {
+                    int value = Integer.parseInt(animationFrameRate);
+                    if (value <= 0)
+                        throw new NumberFormatException(animationFrameRate);
+
+                    if (value != 60)
+                        System.setProperty("javafx.animation.pulse", animationFrameRate);
+                } catch (NumberFormatException e) {
+                    LOG.warning("Invalid animation frame rate: " + animationFrameRate);
+                }
+                break setUpAnimationFrameRate;
+            }
+
+            // To avoid prematurely loading FXUtils, we only check if animationDisabled has been explicitly set to true
+            if (Boolean.TRUE.equals(settings().animationDisabledProperty().get()))
+                break setUpAnimationFrameRate;
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (NativeUtils.USE_JNA && Gdi32.INSTANCE != null && User32.INSTANCE != null) {
+                    @Nullable Pointer pointer = User32.INSTANCE.GetDC(Pointer.NULL);
+                    if (pointer != null) {
+                        try {
+                            int refreshRate = Gdi32.INSTANCE.GetDeviceCaps(pointer, Gdi32.VREFRESH);
+
+                            if (refreshRate > 0) {
+                                LOG.info("Detected refresh rate: " + refreshRate + "Hz");
+
+                                if (refreshRate >= 90) {
+                                    System.getProperties().putIfAbsent("javafx.animation.pulse", String.valueOf(refreshRate));
+                                }
+                            }
+                        } finally {
+                            User32.INSTANCE.ReleaseDC(Pointer.NULL, pointer);
+                        }
+                    }
+                }
+            }
+        }
+
+        String uiScale = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
+        if (uiScale != null) {
+            uiScale = uiScale.trim();
+
+            LOG.info("HMCL_UI_SCALE: " + uiScale);
+
+            try {
+                float scaleValue;
+                if (uiScale.endsWith("%")) {
+                    scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 1)) / 100.0f;
+                } else if (uiScale.endsWith("dpi") || uiScale.endsWith("DPI")) {
+                    scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 3)) / 96.0f;
+                } else {
+                    scaleValue = Float.parseFloat(uiScale);
+                }
+
+                float lowerBound;
+                float upperBound;
+
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    // JavaFX behavior may be abnormal when the DPI scaling factor is too high
+                    lowerBound = 0.25f;
+                    upperBound = 4f;
+                } else {
+                    lowerBound = 0.01f;
+                    upperBound = 10f;
+                }
+
+                if (scaleValue >= lowerBound && scaleValue <= upperBound) {
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                        System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
+                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                        LOG.warning("macOS does not support setting UI scale, so it will be ignored");
+                    } else {
+                        System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
+                    }
+                } else {
+                    LOG.warning("UI scale out of range: " + uiScale);
+                }
+            } catch (Throwable e) {
+                LOG.warning("Invalid UI scale: " + uiScale);
+            }
+        }
+    }
+
+    private static void checkConfigOwner() {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            return;
+
+        String userName = System.getProperty("user.name");
+        Path configDirectory = SettingsManager.localConfigDirectory();
+        if (!Files.exists(configDirectory)) {
+            return;
+        }
+
+        String owner;
+        try {
+            owner = Files.getOwner(configDirectory).getName();
+        } catch (IOException ioe) {
+            LOG.warning("Failed to get file owner", ioe);
+            return;
+        }
+
+        if (Files.isWritable(configDirectory) || userName.equals("root") || userName.equals(owner))
+            return;
+
+        ArrayList<String> files = new ArrayList<>();
+        files.add(configDirectory.toString());
+        if (Files.exists(Metadata.HMCL_USER_HOME))
+            files.add(Metadata.HMCL_USER_HOME.toString());
+
+        Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
+        if (Files.exists(mcDir))
+            files.add(mcDir.toString());
+
+        String command = new CommandBuilder().addAll("sudo", "chown", "-R", userName).addAll(files).toString();
+        SwingUtils.initLookAndFeel();
+
+        Object[] options = {i18n("button.copy_and_exit"), i18n("button.cancel")};
+        int result = JOptionPane.showOptionDialog(null,
+                i18n("fatal.config_loading_failure.unix", owner, command),
+                i18n("message.error"),
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (result == 0) {
+            try {
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), null);
+            } catch (Throwable e) {
+                LOG.warning("Failed to copy command to clipboard", e);
+            }
+        }
+        EntryPoint.exit(1);
     }
 
     public static final CrashReporter CRASH_REPORTER = new CrashReporter(true);

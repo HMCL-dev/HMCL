@@ -21,7 +21,6 @@ import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FetchTask;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -33,80 +32,68 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
-import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class DownloadProviders {
     private DownloadProviders() {
     }
 
-    public static final String DEFAULT_AUTO_PROVIDER_ID = "balanced";
-    public static final String DEFAULT_DIRECT_PROVIDER_ID = "mojang";
-
     private static final DownloadProviderWrapper PROVIDER_WRAPPER;
 
+    private static final DownloadProvider MOJANG_PROVIDER;
+    private static final BMCLAPIDownloadProvider BMCLAPI_PROVIDER;
     private static final DownloadProvider DEFAULT_PROVIDER;
-    public static final Map<String, DownloadProvider> DIRECT_PROVIDERS;
-    public static final Map<String, DownloadProvider> AUTO_PROVIDERS;
 
     static {
         String bmclapiRoot = System.getProperty("hmcl.bmclapi.override", "https://bmclapi2.bangbang93.com");
-        BMCLAPIDownloadProvider bmclapiRaw = new BMCLAPIDownloadProvider(bmclapiRoot);
-
-        DownloadProvider mojang = new MojangDownloadProvider();
-        DownloadProvider bmclapi = new AutoDownloadProvider(bmclapiRaw, mojang);
-
-        DEFAULT_PROVIDER = mojang;
-        DIRECT_PROVIDERS = Lang.mapOf(
-                pair("mojang", mojang),
-                pair("bmclapi", bmclapi)
-        );
-
-        AUTO_PROVIDERS = Lang.mapOf(
-                pair("balanced", LocaleUtils.IS_CHINA_MAINLAND ? bmclapi : mojang),
-                pair("official", LocaleUtils.IS_CHINA_MAINLAND ? new AutoDownloadProvider(
-                        List.of(mojang, bmclapiRaw),
-                        List.of(bmclapiRaw, mojang)
-                ) : mojang),
-                pair("mirror", bmclapi)
-        );
-
+        BMCLAPI_PROVIDER = new BMCLAPIDownloadProvider(bmclapiRoot);
+        MOJANG_PROVIDER = new MojangDownloadProvider();
+        DEFAULT_PROVIDER = createDownloadProvider(DownloadSource.DEFAULT, DownloadSource.DEFAULT);
         PROVIDER_WRAPPER = new DownloadProviderWrapper(DEFAULT_PROVIDER);
     }
 
-    static void init() {
+    /// Initializes download provider settings and synchronizes download thread settings.
+    public static void init() {
         InvalidationListener onChangeDownloadThreads = observable -> {
-            FetchTask.setDownloadExecutorConcurrency(config().getAutoDownloadThreads()
+            FetchTask.setDownloadExecutorConcurrency(settings().autoDownloadThreadsProperty().get()
                     ? DEFAULT_CONCURRENCY
-                    : config().getDownloadThreads());
+                    : settings().downloadThreadsProperty().get());
         };
-        config().autoDownloadThreadsProperty().addListener(onChangeDownloadThreads);
-        config().downloadThreadsProperty().addListener(onChangeDownloadThreads);
+        settings().autoDownloadThreadsProperty().addListener(onChangeDownloadThreads);
+        settings().downloadThreadsProperty().addListener(onChangeDownloadThreads);
         onChangeDownloadThreads.invalidated(null);
 
         InvalidationListener onChangeDownloadSource = observable -> {
-            if (config().isAutoChooseDownloadType()) {
-                String versionListSource = config().getVersionListSource();
-                DownloadProvider downloadProvider = versionListSource != null
-                        ? AUTO_PROVIDERS.getOrDefault(versionListSource, DEFAULT_PROVIDER)
-                        : DEFAULT_PROVIDER;
-                PROVIDER_WRAPPER.setProvider(downloadProvider);
-            } else {
-                String downloadType = config().getDownloadType();
-                PROVIDER_WRAPPER.setProvider(downloadType != null
-                        ? DIRECT_PROVIDERS.getOrDefault(downloadType, DEFAULT_PROVIDER)
-                        : DEFAULT_PROVIDER);
-            }
+            PROVIDER_WRAPPER.setProvider(createDownloadProvider(
+                    settings().versionListSourceProperty().get(),
+                    settings().fileDownloadSourceProperty().get()));
         };
-        config().versionListSourceProperty().addListener(onChangeDownloadSource);
-        config().autoChooseDownloadTypeProperty().addListener(onChangeDownloadSource);
-        config().downloadTypeProperty().addListener(onChangeDownloadSource);
+        settings().versionListSourceProperty().addListener(onChangeDownloadSource);
+        settings().fileDownloadSourceProperty().addListener(onChangeDownloadSource);
         onChangeDownloadSource.invalidated(null);
+    }
+
+    /// Creates a download provider with independent version-list and file download preferences.
+    private static DownloadProvider createDownloadProvider(DownloadSource versionListSource, DownloadSource fileDownloadSource) {
+        return new AutoDownloadProvider(
+                getCandidates(versionListSource),
+                getCandidates(fileDownloadSource));
+    }
+
+    /// Returns provider candidates ordered by the given source preference.
+    private static List<DownloadProvider> getCandidates(DownloadSource source) {
+        DownloadSource normalized = source != null ? source : DownloadSource.DEFAULT;
+        return switch (normalized) {
+            case DEFAULT -> LocaleUtils.IS_CHINA_MAINLAND
+                    ? List.of(BMCLAPI_PROVIDER, MOJANG_PROVIDER)
+                    : List.of(MOJANG_PROVIDER, BMCLAPI_PROVIDER);
+            case OFFICIAL -> List.of(MOJANG_PROVIDER);
+            case MIRROR -> List.of(BMCLAPI_PROVIDER, MOJANG_PROVIDER);
+        };
     }
 
     /**

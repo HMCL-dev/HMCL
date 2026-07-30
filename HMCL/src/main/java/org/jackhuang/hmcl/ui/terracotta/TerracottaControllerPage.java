@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.terracotta;
 
 import com.jfoenix.controls.JFXProgressBar;
+import javafx.beans.binding.Binding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -32,12 +33,12 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaManager;
@@ -51,12 +52,12 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
-import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -69,8 +70,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class TerracottaControllerPage extends StackPane {
     private static final String FEEDBACK_TIP = "terracotta-feedback";
@@ -84,15 +86,22 @@ public class TerracottaControllerPage extends StackPane {
         });
     }
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private final Binding<Boolean> focusedBinding;
+    @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
     /* FIXME: It's sucked to have such a long logic, containing UI for all states defined in TerracottaState, with unclear control flows.
          Consider moving UI into multiple files for each state respectively. */
     public TerracottaControllerPage() {
-        holder.add(FXUtils.observeWeak(() -> {
+        focusedBinding = BindingMapping.of(this.sceneProperty())
+                .flatMap(it -> it != null ? it.windowProperty() : new SimpleObjectProperty<>())
+                .flatMap(it -> it != null ? it.focusedProperty() : null, () -> false);
+
+        FXUtils.onChange(focusedBinding, focused -> {
             // Run daemon process only if HMCL is focused and is displaying current node.
-            TerracottaManager.switchDaemon(getScene() != null && Controllers.getStage().isFocused());
-        }, this.sceneProperty(), Controllers.getStage().focusedProperty()));
+            TerracottaManager.switchDaemon(getScene() != null && focused);
+        });
 
         TransitionPane transition = new TransitionPane();
 
@@ -162,11 +171,11 @@ public class TerracottaControllerPage extends StackPane {
                     }
 
                     if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
-                        Object feedback = config().getShownTips().get(FEEDBACK_TIP);
+                        Object feedback = state().getShownTips().get(FEEDBACK_TIP);
                         if (!(feedback instanceof Number number) || number.intValue() < 1) {
-                            Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
+                            Controllers.confirm(i18n("terracotta.feedback.desc.update"), i18n("terracotta.feedback.title"), () -> {
                                 FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
-                                config().getShownTips().put(FEEDBACK_TIP, 1);
+                                state().getShownTips().put(FEEDBACK_TIP, 1);
                             }, () -> {
                             });
                         }
@@ -210,9 +219,9 @@ public class TerracottaControllerPage extends StackPane {
                                 i18n("terracotta.status.waiting.host.launch.desc"),
                                 i18n("terracotta.status.waiting.host.launch.title"),
                                 MessageDialogPane.MessageType.QUESTION
-                        ).addAction(i18n("version.launch"), () -> {
-                            Profile profile = Profiles.getSelectedProfile();
-                            Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                        ).addAction(i18n("instance.launch"), () -> {
+                            var repository = GameDirectoryManager.getSelectedRepository();
+                            Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
                                 launcherHelper.setKeep();
                                 launcherHelper.setDisableOfflineSkin();
                             });
@@ -246,7 +255,7 @@ public class TerracottaControllerPage extends StackPane {
                         } else {
                             handler.resolve();
                         }
-                    });
+                    }, "", new RequiredValidator(i18n("input.not_empty")));
                 });
 
                 if (ThreadLocalRandom.current().nextDouble() < 0.02D) {
@@ -460,7 +469,7 @@ public class TerracottaControllerPage extends StackPane {
                         try (Zipper zipper = new Zipper(path)) {
                             zipper.putTextFile(data, StandardCharsets.UTF_8, "terracotta.log");
                             try (OutputStream os = zipper.putStream("hmcl-latest.log")) {
-                                Logger.LOG.exportLogs(os);
+                                LOG.exportLogs(os);
                             }
                         }
                         FXUtils.showFileInExplorer(path);
@@ -549,16 +558,10 @@ public class TerracottaControllerPage extends StackPane {
 
     private ComponentSublist getThirdPartyDownloadNodes() {
         ComponentSublist locals = new ComponentSublist();
-
-        var header = new LinePane();
-        header.getStyleClass().add("no-padding");
-        header.setLargeTitle(true);
-        header.setMinHeight(LinePane.USE_COMPUTED_SIZE);
-        header.setMouseTransparent(true);
-        header.setLeading(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
-        header.setTitle(i18n("terracotta.from_local.title"));
-        header.setSubtitle(i18n("terracotta.from_local.desc"));
-        locals.setHeaderLeft(header);
+        locals.setLargeTitle(true);
+        locals.setLeading(new ImageView(FXUtils.newBuiltinImage("/assets/img/terracotta.png")));
+        locals.setTitle(i18n("terracotta.from_local.title"));
+        locals.setSubtitle(i18n("terracotta.from_local.desc"));
 
         for (TerracottaMetadata.Link link : TerracottaMetadata.PACKAGE_LINKS) {
             LineButton item = new LineButton();

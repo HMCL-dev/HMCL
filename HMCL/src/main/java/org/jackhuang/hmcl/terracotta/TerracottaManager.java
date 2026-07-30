@@ -307,7 +307,7 @@ public final class TerracottaManager {
 
     private static String getPlayerName() {
         Account account = Accounts.getSelectedAccount();
-        return account != null ? account.getCharacter() : i18n("terracotta.player_anonymous");
+        return account != null ? account.getProfileName() : i18n("terracotta.player_anonymous");
     }
 
     public static TerracottaState.HostScanning setScanning() {

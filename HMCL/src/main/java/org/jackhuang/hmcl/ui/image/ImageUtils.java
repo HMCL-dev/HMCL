@@ -45,7 +45,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
@@ -154,13 +157,13 @@ public final class ImageUtils {
             if (doScale) {
                 targetWidth = requestedWidth;
                 targetHeight = requestedHeight;
-                pixels = scale(defaultImage.array,
-                        defaultImage.width, defaultImage.height,
+                pixels = scale(defaultImage.array(),
+                        defaultImage.width(), defaultImage.height(),
                         targetWidth, targetHeight);
             } else {
-                targetWidth = defaultImage.width;
-                targetHeight = defaultImage.height;
-                pixels = defaultImage.array;
+                targetWidth = defaultImage.width();
+                targetHeight = defaultImage.height();
+                pixels = defaultImage.array();
             }
 
             WritableImage image = new WritableImage(targetWidth, targetHeight);
@@ -219,17 +222,9 @@ public final class ImageUtils {
             (byte) 0x0d, (byte) 0x0a, (byte) 0x1a, (byte) 0x0a,
     };
 
-    private static final class PngChunkHeader {
+    private record PngChunkHeader(int length, int chunkType) {
         private static final int IDAT_HEADER = 0x49444154;
         private static final int acTL_HEADER = 0x6163544c;
-
-        private final int length;
-        private final int chunkType;
-
-        private PngChunkHeader(int length, int chunkType) {
-            this.length = length;
-            this.chunkType = chunkType;
-        }
 
         private static @Nullable PngChunkHeader readHeader(ByteBuffer headerBuffer) {
             if (headerBuffer.remaining() < 8)
@@ -327,7 +322,7 @@ public final class ImageUtils {
         int[] buffer = new int[Math.multiplyExact(width, height)];
         for (int frameIndex = 0; frameIndex < frames.size(); frameIndex++) {
             var frame = frames.get(frameIndex);
-            PngFrameControl control = frame.control;
+            PngFrameControl control = frame.control();
 
             if (frameIndex == 0 && (
                     control.xOffset != 0 || control.yOffset != 0
@@ -347,7 +342,7 @@ public final class ImageUtils {
             int[] currentFrameBuffer = buffer.clone();
             if (control.blendOp == 0) {
                 for (int row = 0; row < control.height; row++) {
-                    System.arraycopy(frame.bitmap.array,
+                    System.arraycopy(frame.bitmap().array(),
                             row * control.width,
                             currentFrameBuffer,
                             (control.yOffset + row) * width + control.xOffset,
@@ -360,7 +355,7 @@ public final class ImageUtils {
                         int srcIndex = row * control.width + col;
                         int dstIndex = (control.yOffset + row) * width + control.xOffset + col;
 
-                        int srcPixel = frame.bitmap.array[srcIndex];
+                        int srcPixel = frame.bitmap().array()[srcIndex];
                         int dstPixel = currentFrameBuffer[dstIndex];
 
                         int srcAlpha = (srcPixel >>> 24) & 0xFF;
@@ -444,7 +439,7 @@ public final class ImageUtils {
         PngAnimationControl animationControl = sequence.getAnimationControl();
         int cycleCount;
         if (animationControl != null) {
-            cycleCount = animationControl.numPlays;
+            cycleCount = animationControl.numPlays();
             if (cycleCount == 0)
                 cycleCount = Timeline.INDEFINITE;
         } else {

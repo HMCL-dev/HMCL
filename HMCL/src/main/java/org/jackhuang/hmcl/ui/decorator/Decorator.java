@@ -40,6 +40,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.theme.LauncherBackground;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
@@ -49,7 +50,9 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 public class Decorator extends Control {
     private final ListProperty<Node> content = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ListProperty<Node> container = new SimpleListProperty<>(FXCollections.observableArrayList());
-    private final ObjectProperty<Background> contentBackground = new SimpleObjectProperty<>();
+
+    /// The launcher background and opacity rendered by this decorator's skin.
+    private final ObjectProperty<LauncherBackground> contentBackground = new SimpleObjectProperty<>();
     private final ObjectProperty<DecoratorPage.State> state = new SimpleObjectProperty<>();
     private final ObjectProperty<EventHandler<ActionEvent>> onCloseNavButtonAction = new SimpleObjectProperty<>();
     private final ObjectProperty<EventHandler<ActionEvent>> onBackNavButtonAction = new SimpleObjectProperty<>();
@@ -151,15 +154,18 @@ public class Decorator extends Control {
         this.container.set(container);
     }
 
-    public Background getContentBackground() {
+    /// Returns the launcher background rendered behind the content.
+    public LauncherBackground getContentBackground() {
         return contentBackground.get();
     }
 
-    public ObjectProperty<Background> contentBackgroundProperty() {
+    /// Returns the launcher background property rendered by this decorator's skin.
+    public ObjectProperty<LauncherBackground> contentBackgroundProperty() {
         return contentBackground;
     }
 
-    public void setContentBackground(Background contentBackground) {
+    /// Sets the launcher background rendered behind the content.
+    public void setContentBackground(LauncherBackground contentBackground) {
         this.contentBackground.set(contentBackground);
     }
 

@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.TypeUtils;
 import org.jackhuang.hmcl.util.javafx.DirtyTracker;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -41,6 +42,8 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Represents a settings object with multiple [Observable] fields.
 ///
@@ -55,6 +58,7 @@ import java.util.*;
 /// All subclasses of this class must call [#register()] once in their constructor.
 ///
 /// @author Glavo
+@NotNullByDefault
 public abstract class ObservableSetting implements Observable {
 
     private static final ClassValue<List<? extends ObservableField<?>>> FIELDS = new ClassValue<>() {
@@ -92,6 +96,9 @@ public abstract class ObservableSetting implements Observable {
     protected transient final Map<String, JsonElement> unknownFields = new HashMap<>();
     protected transient final DirtyTracker tracker = new DirtyTracker();
 
+    /// Whether a deferred field change still needs to be saved.
+    private transient boolean savePending;
+
     private boolean registered = false;
 
     protected final void register() {
@@ -107,6 +114,26 @@ public abstract class ObservableSetting implements Observable {
             tracker.track(observable);
             observable.addListener(helper);
         }
+    }
+
+    /// Returns whether a change to the given field should be saved immediately.
+    ///
+    /// @param observable the changed observable field
+    /// @return whether the change should trigger listeners immediately
+    public boolean shouldSaveImmediately(Observable observable) {
+        return true;
+    }
+
+    /// Returns whether a deferred field change still needs to be saved.
+    public final boolean isSavePending() {
+        return savePending;
+    }
+
+    /// Sets whether a deferred field change still needs to be saved.
+    ///
+    /// @param savePending whether a deferred field change still needs to be saved
+    public final void setSavePending(boolean savePending) {
+        this.savePending = savePending;
     }
 
     @Override
@@ -358,7 +385,12 @@ public abstract class ObservableSetting implements Observable {
 
                 if (value != null) {
                     setting.tracker.markDirty(field.get(setting));
-                    field.deserialize(setting, value, context);
+                    try {
+                        field.deserialize(setting, value, context);
+                    } catch (RuntimeException e) {
+                        LOG.warning("Ignoring invalid setting field "
+                                + setting.getClass().getName() + "." + field.getSerializedName(), e);
+                    }
                 }
             }
 

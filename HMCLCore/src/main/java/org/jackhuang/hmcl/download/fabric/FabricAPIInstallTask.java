@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 
@@ -32,16 +33,16 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class FabricAPIInstallTask extends Task<Version> {
+public final class FabricAPIInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest manifest;
     private final FabricAPIRemoteVersion remote;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public FabricAPIInstallTask(DefaultDependencyManager dependencyManager, Version version, FabricAPIRemoteVersion remoteVersion) {
+    public FabricAPIInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, FabricAPIRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
     }
 
@@ -58,9 +59,9 @@ public final class FabricAPIInstallTask extends Task<Version> {
     @Override
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
-                remote.getVersion().getFile().getUrl(),
-                dependencyManager.getGameRepository().getModsDirectory(version.getId()).resolve("fabric-api-" + remote.getVersion().getVersion() + ".jar"),
-                remote.getVersion().getFile().getIntegrityCheck())
+                remote.getVersion().file().url(),
+                dependencyManager.getGameRepository().getModsDirectory(manifest.id()).resolve("fabric-api-" + remote.getVersion().version() + ".jar"),
+                remote.getVersion().file().getIntegrityCheck())
         );
     }
 }

@@ -14,6 +14,7 @@ tasks.compileJava {
 dependencies {
     api(libs.kala.compress.zip)
     api(libs.kala.compress.tar)
+    api(libs.kala.encoding.detctor)
     api(libs.simple.png.javafx)
     api(libs.gson)
     api(libs.tomlj)
@@ -23,11 +24,11 @@ dependencies {
     api(libs.constant.pool.scanner)
     api(libs.nanohttpd)
     api(libs.jsoup)
-    api(libs.chardet)
     api(libs.jna)
     api(libs.pci.ids)
     api(libs.hello.nbt)
-
+    api(libs.weburl)
+    api(libs.uuid.tools)
     compileOnlyApi(libs.jetbrains.annotations)
 
     testImplementation(libs.jna.platform)

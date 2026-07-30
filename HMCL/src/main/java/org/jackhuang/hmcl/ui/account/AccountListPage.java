@@ -38,6 +38,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -52,7 +53,7 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.Locale;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -65,14 +66,14 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
         if ("false".equals(property)
                 || "auto".equals(property) && LocaleUtils.IS_CHINA_MAINLAND
-                || globalConfig().isEnableOfflineAccount())
+                || SettingsManager.userSettings().enableOfflineAccountProperty().get())
             RESTRICTED.set(false);
         else
-            globalConfig().enableOfflineAccountProperty().addListener(new ChangeListener<Boolean>() {
+            userSettings().enableOfflineAccountProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> o, Boolean oldValue, Boolean newValue) {
                     if (newValue) {
-                        globalConfig().enableOfflineAccountProperty().removeListener(this);
+                        userSettings().enableOfflineAccountProperty().removeListener(this);
                         RESTRICTED.set(false);
                     }
                 }
@@ -130,23 +131,45 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     microsoftItem.getStyleClass().add("navigation-drawer-item");
                     microsoftItem.setTitle(i18n("account.methods.microsoft"));
                     microsoftItem.setLeftIcon(SVG.MICROSOFT);
-                    microsoftItem.setOnAction(e -> Controllers.dialog(new MicrosoftAccountLoginPane()));
+                    microsoftItem.setOnAction(e -> {
+                        if (SettingsManager.isUserGameAccountsReadOnly()) {
+                            confirmOverwriteUserAccounts(() -> Controllers.dialog(new MicrosoftAccountLoginPane()));
+                        } else {
+                            Controllers.dialog(new MicrosoftAccountLoginPane());
+                        }
+                    });
 
                     AdvancedListItem offlineItem = new AdvancedListItem();
                     offlineItem.getStyleClass().add("navigation-drawer-item");
                     offlineItem.setTitle(i18n("account.methods.offline"));
                     offlineItem.setLeftIcon(SVG.PERSON);
-                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
+                    offlineItem.setOnAction(e -> {
+                        if (SettingsManager.isUserGameAccountsReadOnly()) {
+                            confirmOverwriteUserAccounts(() -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
+                        } else {
+                            Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE));
+                        }
+                    });
 
                     VBox boxAuthServers = new VBox();
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();
                         item.getStyleClass().add("navigation-drawer-item");
                         item.setLeftIcon(SVG.DRESSER);
-                        item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
-                        item.setRightAction(SVG.CLOSE, () -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                            skinnable.authServersProperty().remove(server);
-                        }, null));
+                        item.setOnAction(e -> {
+                            if (SettingsManager.isUserGameAccountsReadOnly()) {
+                                confirmOverwriteUserAccounts(() -> Controllers.dialog(new CreateAccountPane(server)));
+                            } else {
+                                Controllers.dialog(new CreateAccountPane(server));
+                            }
+                        });
+                        item.setRightAction(SVG.CLOSE, () -> {
+                            if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
+                                confirmOverwriteAuthlibInjectorServers(() -> confirmRemoveAuthlibInjectorServer(skinnable, server));
+                            } else {
+                                confirmRemoveAuthlibInjectorServer(skinnable, server);
+                            }
+                        });
 
                         ObservableValue<String> title = BindingMapping.of(server, AuthlibInjectorServer::getName);
                         item.titleProperty().bind(title);
@@ -195,7 +218,14 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     addAuthServerItem.setTitle(i18n("account.injector.add"));
                     addAuthServerItem.setSubtitle(i18n("account.methods.authlib_injector"));
                     addAuthServerItem.setLeftIcon(SVG.ADD_CIRCLE);
-                    addAuthServerItem.setOnAction(e -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
+                    addAuthServerItem.setOnAction(e -> {
+                        if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
+                            confirmOverwriteAuthlibInjectorServers(
+                                    () -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
+                        } else {
+                            Controllers.dialog(new AddAuthlibInjectorServerPane());
+                        }
+                    });
                     VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
                 }
 
@@ -220,6 +250,31 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
                 setCenter(scrollPane);
             }
+        }
+
+        /// Confirms overwriting the user account files before continuing the account operation.
+        private static void confirmOverwriteUserAccounts(Runnable action) {
+            Controllers.confirmBackupAndOverwrite(i18n("account.storage.read_only"), () -> {
+                SettingsManager.forceOverwriteUserGameAccounts();
+                action.run();
+            });
+        }
+
+        /// Confirms overwriting the authlib-injector server list before continuing the server operation.
+        private static void confirmOverwriteAuthlibInjectorServers(Runnable action) {
+            Controllers.confirmBackupAndOverwrite(i18n("account.injector.server.storage.read_only"), () -> {
+                SettingsManager.forceOverwriteAuthlibInjectorServers();
+                action.run();
+            });
+        }
+
+        /// Asks the user to confirm removing an authlib-injector server.
+        private static void confirmRemoveAuthlibInjectorServer(
+                AccountListPage skinnable,
+                AuthlibInjectorServer server) {
+            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                skinnable.authServersProperty().remove(server);
+            }, null);
         }
     }
 }

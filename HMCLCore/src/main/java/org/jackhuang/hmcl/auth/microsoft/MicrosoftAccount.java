@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.microsoft;
 
+import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
@@ -36,61 +37,56 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class MicrosoftAccount extends OAuthAccount {
 
     protected final MicrosoftService service;
-    protected UUID characterUUID;
+    protected UUID profileID;
 
     private boolean authenticated = false;
     private MicrosoftSession session;
 
-    protected MicrosoftAccount(MicrosoftService service, MicrosoftSession session) {
+    protected MicrosoftAccount(AccountID accountID, MicrosoftService service, MicrosoftSession session) {
+        super(accountID);
         this.service = requireNonNull(service);
         this.session = requireNonNull(session);
-        this.characterUUID = requireNonNull(session.getProfile().getId());
+        this.profileID = requireNonNull(session.profile().id());
     }
 
     protected MicrosoftAccount(MicrosoftService service, OAuth.GrantFlow flow) throws AuthenticationException {
+        super(AccountID.generate());
         this.service = requireNonNull(service);
 
         MicrosoftSession acquiredSession = service.authenticate(flow);
-        if (acquiredSession.getProfile() == null) {
+        if (acquiredSession.profile() == null) {
             session = service.refresh(acquiredSession);
         } else {
             session = acquiredSession;
         }
 
-        characterUUID = session.getProfile().getId();
+        profileID = session.profile().id();
         authenticated = true;
     }
 
     @Override
-    public String getUsername() {
-        // TODO: email of Microsoft account is blocked by oauth.
-        return "";
+    public String getProfileName() {
+        return session.profile().name();
     }
 
     @Override
-    public String getCharacter() {
-        return session.getProfile().getName();
-    }
-
-    @Override
-    public UUID getUUID() {
-        return session.getProfile().getId();
-    }
-
-    @Override
-    public String getIdentifier() {
-        return "microsoft:" + getUUID();
+    public UUID getProfileID() {
+        return session.profile().id();
     }
 
     @Override
     public AuthInfo logIn() throws AuthenticationException {
-        if (!authenticated || System.currentTimeMillis() > session.getNotAfter()) {
-            if (service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
+        if (!authenticated || !session.hasProfileName() || System.currentTimeMillis() > session.notAfter()) {
+            if (session.hasProfileName()
+                    && service.validate(session.notAfter(), session.tokenType(), session.accessToken())) {
                 authenticated = true;
             } else {
                 MicrosoftSession acquiredSession = service.refresh(session);
-                if (!Objects.equals(acquiredSession.getProfile().getId(), session.getProfile().getId())) {
+                if (!Objects.equals(acquiredSession.profile().id(), session.profile().id())) {
                     throw new ServerResponseMalformedException("Selected profile changed");
+                }
+                if (!acquiredSession.hasProfileName()) {
+                    throw new ServerResponseMalformedException("Profile name is missing");
                 }
 
                 session = acquiredSession;
@@ -106,11 +102,11 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public AuthInfo logInWhenCredentialsExpired() throws AuthenticationException {
         MicrosoftSession acquiredSession = service.authenticate(OAuth.GrantFlow.DEVICE);
-        if (!Objects.equals(characterUUID, acquiredSession.getProfile().getId())) {
-            throw new WrongAccountException(characterUUID, acquiredSession.getProfile().getId());
+        if (!Objects.equals(profileID, acquiredSession.profile().id())) {
+            throw new WrongAccountException(profileID, acquiredSession.profile().id());
         }
 
-        if (acquiredSession.getProfile() == null) {
+        if (acquiredSession.profile() == null) {
             session = service.refresh(acquiredSession);
         } else {
             session = acquiredSession;
@@ -122,7 +118,11 @@ public final class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
-    public AuthInfo playOffline() {
+    public AuthInfo playOffline() throws AuthenticationException {
+        if (!session.hasProfileName()) {
+            throw new CredentialExpiredException("Profile name is missing");
+        }
+
         return session.toAuthInfo();
     }
 
@@ -133,12 +133,19 @@ public final class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
-        service.uploadSkin(session.getAccessToken(), isSlim, file);
+        service.uploadSkin(session.accessToken(), isSlim, file);
     }
 
     @Override
-    public Map<Object, Object> toStorage() {
-        return session.toStorage();
+    public void writeMetadata(JsonObject metadata) {
+        super.writeMetadata(metadata);
+        metadata.addProperty("profileID", getProfileID().toString());
+    }
+
+    @Override
+    public void writePrivateData(JsonObject privateData) {
+        super.writePrivateData(privateData);
+        session.writePrivateData(privateData);
     }
 
     public MicrosoftService getService() {
@@ -147,7 +154,7 @@ public final class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
-        return BindingMapping.of(service.getProfileRepository().binding(getUUID()))
+        return BindingMapping.of(service.getProfileRepository().binding(getProfileID()))
                 .map(profile -> profile.flatMap(it -> {
                     try {
                         return YggdrasilService.getTextures(it);
@@ -161,24 +168,12 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public void clearCache() {
         authenticated = false;
-        service.getProfileRepository().invalidate(characterUUID);
+        service.getProfileRepository().invalidate(profileID);
     }
 
     @Override
     public String toString() {
-        return "MicrosoftAccount[uuid=" + characterUUID + ", name=" + getCharacter() + "]";
-    }
-
-    @Override
-    public int hashCode() {
-        return characterUUID.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MicrosoftAccount that = (MicrosoftAccount) o;
-        return this.isPortable() == that.isPortable() && characterUUID.equals(that.characterUUID);
+        return "MicrosoftAccount[accountID=" + getAccountID() + ", profileID=" + profileID
+                + ", name=" + getProfileName() + "]";
     }
 }

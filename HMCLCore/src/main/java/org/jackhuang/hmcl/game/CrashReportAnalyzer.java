@@ -165,48 +165,7 @@ public final class CrashReportAnalyzer {
         }
     }
 
-    public static class Result {
-        private final Rule rule;
-        private final String log;
-        private final Matcher matcher;
-
-        public Result(Rule rule, String log, Matcher matcher) {
-            this.rule = rule;
-            this.log = log;
-            this.matcher = matcher;
-        }
-
-        public Rule getRule() {
-            return rule;
-        }
-
-        public String getLog() {
-            return log;
-        }
-
-        public Matcher getMatcher() {
-            return matcher;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Result result = (Result) o;
-
-            if (rule != result.rule) return false;
-            if (!log.equals(result.log)) return false;
-            return matcher.equals(result.matcher);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = rule.hashCode();
-            result = 31 * result + log.hashCode();
-            result = 31 * result + matcher.hashCode();
-            return result;
-        }
+    public record Result(Rule rule, String log, Matcher matcher) {
     }
 
     public static Set<Result> analyze(String log) {

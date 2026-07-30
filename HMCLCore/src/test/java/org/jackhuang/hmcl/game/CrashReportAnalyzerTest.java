@@ -39,7 +39,7 @@ public class CrashReportAnalyzerTest {
     }
 
     private CrashReportAnalyzer.Result findResultByRule(Set<CrashReportAnalyzer.Result> results, CrashReportAnalyzer.Rule rule) {
-        CrashReportAnalyzer.Result r = results.stream().filter(result -> result.getRule() == rule).findFirst().orElse(null);
+        CrashReportAnalyzer.Result r = results.stream().filter(result -> result.rule() == rule).findFirst().orElse(null);
         assertNotNull(r);
         return r;
     }
@@ -88,7 +88,7 @@ public class CrashReportAnalyzerTest {
                         " - Mod test depends on mod {fabricloader @ [>=0.11.3]}, which is missing!\n" +
                         " - Mod test depends on mod {fabric @ [*]}, which is missing!\n" +
                         " - Mod test depends on mod {java @ [>=16]}, which is missing!\n").replaceAll("\\s+", ""),
-                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+                result.matcher().group("reason").replaceAll("\\s+", ""));
     }
 
     @Test
@@ -97,7 +97,7 @@ public class CrashReportAnalyzerTest {
                 CrashReportAnalyzer.analyze(loadLog("/logs/forgemod_resolution.txt")),
                 CrashReportAnalyzer.Rule.FORGEMOD_RESOLUTION);
         assertEquals(("\tMod ID: 'vampirism', Requested by: 'werewolves', Expected range: '[1.9.0-beta.1,)', Actual version: '[MISSING]'\n").replaceAll("\\s+", ""),
-                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+                result.matcher().group("reason").replaceAll("\\s+", ""));
     }
 
     @Test
@@ -106,7 +106,7 @@ public class CrashReportAnalyzerTest {
                 CrashReportAnalyzer.analyze(loadLog("/logs/forge_found_duplicate_mods.txt")),
                 CrashReportAnalyzer.Rule.FORGE_FOUND_DUPLICATE_MODS);
         assertEquals(("\tMod ID: 'jei' from mod files: REIPluginCompatibilities-forge-12.0.93.jar, jei-1.20.1-forge-15.2.0.27.jar\n").replaceAll("\\s+", ""),
-                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+                result.matcher().group("reason").replaceAll("\\s+", ""));
     }
 
     @Test
@@ -114,8 +114,8 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/mod_resolution_collection.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_COLLECTION);
-        assertEquals("tabtps-fabric", result.getMatcher().group("sourcemod"));
-        assertEquals("{fabricloader @ [>=0.11.1]}", result.getMatcher().group("destmod"));
+        assertEquals("tabtps-fabric", result.matcher().group("sourcemod"));
+        assertEquals("{fabricloader @ [>=0.11.1]}", result.matcher().group("destmod"));
     }
 
     @Test
@@ -142,7 +142,7 @@ public class CrashReportAnalyzerTest {
                         "\tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]\n" +
                         "\tat oolloo.jlw.Wrapper.invokeMain(Wrapper.java:58) [JavaWrapper.jar:?]\n" +
                         "\tat oolloo.jlw.Wrapper.main(Wrapper.java:51) [JavaWrapper.jar:?]").replaceAll("\\s+", ""),
-                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+                result.matcher().group("reason").replaceAll("\\s+", ""));
     }
 
     @Test
@@ -157,7 +157,7 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/too_old_java.txt")),
                 CrashReportAnalyzer.Rule.TOO_OLD_JAVA);
-        assertEquals("60", result.getMatcher().group("expected"));
+        assertEquals("60", result.matcher().group("expected"));
     }
 
     @Test
@@ -165,7 +165,7 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/too_old_java.txt")),
                 CrashReportAnalyzer.Rule.TOO_OLD_JAVA);
-        assertEquals("52", result.getMatcher().group("expected"));
+        assertEquals("52", result.matcher().group("expected"));
     }
 
     @Test
@@ -173,7 +173,7 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/too_old_java2.txt")),
                 CrashReportAnalyzer.Rule.TOO_OLD_JAVA);
-        assertEquals("52", result.getMatcher().group("expected"));
+        assertEquals("52", result.matcher().group("expected"));
     }
 
     @Test
@@ -188,7 +188,7 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/security.txt")),
                 CrashReportAnalyzer.Rule.FILE_CHANGED);
-        assertEquals("assets/minecraft/texts/splashes.txt", result.getMatcher().group("file"));
+        assertEquals("assets/minecraft/texts/splashes.txt", result.matcher().group("file"));
     }
 
     @Test
@@ -196,7 +196,7 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/no_class_def_found_error.txt")),
                 CrashReportAnalyzer.Rule.NO_CLASS_DEF_FOUND_ERROR);
-        assertEquals("blk", result.getMatcher().group("class"));
+        assertEquals("blk", result.matcher().group("class"));
     }
 
     @Test
@@ -204,7 +204,7 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/no_class_def_found_error2.txt")),
                 CrashReportAnalyzer.Rule.NO_CLASS_DEF_FOUND_ERROR);
-        assertEquals("cer", result.getMatcher().group("class"));
+        assertEquals("cer", result.matcher().group("class"));
     }
 
     @Test
@@ -214,7 +214,7 @@ public class CrashReportAnalyzerTest {
                 CrashReportAnalyzer.Rule.FILE_ALREADY_EXISTS);
         assertEquals(
                 "D:\\Games\\Minecraft\\Minecraft Longtimeusing\\.minecraft\\versions\\1.12.2-forge1.12.2-14.23.5.2775\\config\\pvpsettings.txt",
-                result.getMatcher().group("file"));
+                result.matcher().group("file"));
     }
 
     @Test
@@ -222,8 +222,8 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/loader_exception_mod_crash.txt")),
                 CrashReportAnalyzer.Rule.LOADING_CRASHED_FORGE);
-        assertEquals("Better PvP", result.getMatcher().group("name"));
-        assertEquals("xaerobetterpvp", result.getMatcher().group("id"));
+        assertEquals("Better PvP", result.matcher().group("name"));
+        assertEquals("xaerobetterpvp", result.matcher().group("id"));
     }
 
     @Test
@@ -231,8 +231,8 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/loader_exception_mod_crash2.txt")),
                 CrashReportAnalyzer.Rule.LOADING_CRASHED_FORGE);
-        assertEquals("Inventory Sort", result.getMatcher().group("name"));
-        assertEquals("invsort", result.getMatcher().group("id"));
+        assertEquals("Inventory Sort", result.matcher().group("name"));
+        assertEquals("invsort", result.matcher().group("id"));
     }
 
     @Test
@@ -240,8 +240,8 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/loader_exception_mod_crash3.txt")),
                 CrashReportAnalyzer.Rule.LOADING_CRASHED_FORGE);
-        assertEquals("SuperOres", result.getMatcher().group("name"));
-        assertEquals("superores", result.getMatcher().group("id"));
+        assertEquals("SuperOres", result.matcher().group("name"));
+        assertEquals("superores", result.matcher().group("id"));
     }
 
     @Test
@@ -249,8 +249,8 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/loader_exception_mod_crash4.txt")),
                 CrashReportAnalyzer.Rule.LOADING_CRASHED_FORGE);
-        assertEquals("Kathairis", result.getMatcher().group("name"));
-        assertEquals("kathairis", result.getMatcher().group("id"));
+        assertEquals("Kathairis", result.matcher().group("name"));
+        assertEquals("kathairis", result.matcher().group("id"));
     }
 
     @Test
@@ -258,7 +258,7 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/loading_error_fabric.txt")),
                 CrashReportAnalyzer.Rule.LOADING_CRASHED_FABRIC);
-        assertEquals("test", result.getMatcher().group("id"));
+        assertEquals("test", result.matcher().group("id"));
     }
 
     @Test
@@ -315,7 +315,7 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/bootstrap.txt")),
                 CrashReportAnalyzer.Rule.BOOTSTRAP_FAILED);
-        assertEquals("prefab", result.getMatcher().group("id"));
+        assertEquals("prefab", result.matcher().group("id"));
     }
 
     @Test
@@ -323,7 +323,7 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/mixin_apply_mod_failed.txt")),
                 CrashReportAnalyzer.Rule.MIXIN_APPLY_MOD_FAILED);
-        assertEquals("enhancedblockentities", result.getMatcher().group("id"));
+        assertEquals("enhancedblockentities", result.matcher().group("id"));
     }
 
     @Test
@@ -331,7 +331,7 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/unsatisfied_link_error.txt")),
                 CrashReportAnalyzer.Rule.UNSATISFIED_LINK_ERROR);
-        assertEquals("lwjgl.dll", result.getMatcher().group("name"));
+        assertEquals("lwjgl.dll", result.matcher().group("name"));
     }
 
     @Test
@@ -367,8 +367,8 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/config.txt")),
                 CrashReportAnalyzer.Rule.CONFIG);
-        assertEquals("jumbofurnace", result.getMatcher().group("id"));
-        assertEquals("jumbofurnace-server.toml", result.getMatcher().group("file"));
+        assertEquals("jumbofurnace", result.matcher().group("id"));
+        assertEquals("jumbofurnace-server.toml", result.matcher().group("file"));
     }
 
     @Test
@@ -384,7 +384,7 @@ public class CrashReportAnalyzerTest {
                         "\t - You must install any version of reeses-sodium-options.\n" +
                         " - Conflicting versions found for fabric-screen-api-v1: used 1.0.4+155f865c18, also found 1.0.4+198a96213d\n" +
                         " - Conflicting versions found for fabric-key-binding-api-v1: used 1.0.4+a02b446318, also found 1.0.4+a02b44633d\n").replaceAll("\\s+", ""),
-                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+                result.matcher().group("reason").replaceAll("\\s+", ""));
     }
 
     @Test
@@ -398,7 +398,7 @@ public class CrashReportAnalyzerTest {
                         "Unmet dependency listing:\n" +
                         "\t - Mod 'Roughly Searchable' (roughlysearchable) 2.2.1+1.17.1 requires version 6.0.2 or later of roughlyenoughitems, which is missing!\n" +
                         "\tat net.fabricmc.loader.impl.FabricLoaderImpl.load(FabricLoaderImpl.java:190) ~").replaceAll("\\s+", ""),
-                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+                result.matcher().group("reason").replaceAll("\\s+", ""));
     }
 
     @Test
@@ -414,7 +414,7 @@ public class CrashReportAnalyzerTest {
                         "\t - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 fabric-api 的 任意版本，但没有安装它！\n" +
                         "\t - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 sodium 的 0.5.6 及以上版本，但没有安装它！\n" +
                         "\tat net.fabricmc.loader.impl.FormattedException.ofLocalized(FormattedException.java:51) ~").replaceAll("\\s+", ""),
-                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+                result.matcher().group("reason").replaceAll("\\s+", ""));
     }
 
     @Test
@@ -422,8 +422,8 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/fabric-mod-conflict.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_CONFLICT);
-        assertEquals("phosphor", result.getMatcher().group("sourcemod"));
-        assertEquals("{starlight @ [*]}", result.getMatcher().group("destmod"));
+        assertEquals("phosphor", result.matcher().group("sourcemod"));
+        assertEquals("{starlight @ [*]}", result.matcher().group("destmod"));
     }
 
     @Test
@@ -431,8 +431,8 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/fabric-mod-missing.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_MISSING);
-        assertEquals("pca", result.getMatcher().group("sourcemod"));
-        assertEquals("{fabric @ [>=0.39.2]}", result.getMatcher().group("destmod"));
+        assertEquals("pca", result.matcher().group("sourcemod"));
+        assertEquals("{fabric @ [>=0.39.2]}", result.matcher().group("destmod"));
     }
 
     @Test
@@ -468,8 +468,8 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/fabric-minecraft.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_MISSING_MINECRAFT);
-        assertEquals("fabric", result.getMatcher().group("mod"));
-        assertEquals("[~1.16.2-alpha.20.28.a]", result.getMatcher().group("version"));
+        assertEquals("fabric", result.matcher().group("mod"));
+        assertEquals("[~1.16.2-alpha.20.28.a]", result.matcher().group("version"));
     }
 
     @Test
@@ -632,9 +632,9 @@ public class CrashReportAnalyzerTest {
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/mod/customnpc.txt")),
                 CrashReportAnalyzer.Rule.ENTITY);
         assertEquals("customnpcs.CustomNpc (noppes.npcs.entity.EntityCustomNpc)",
-                result.getMatcher().group("type"));
+                result.matcher().group("type"));
         assertEquals("99942.59, 4.00, 100000.98",
-                result.getMatcher().group("location"));
+                result.matcher().group("location"));
 
         assertEquals(
                 new HashSet<>(Arrays.asList("npcs", "noppes")),
@@ -647,9 +647,9 @@ public class CrashReportAnalyzerTest {
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/mod/tconstruct.txt")),
                 CrashReportAnalyzer.Rule.BLOCK);
         assertEquals("Block{tconstruct:seared_drain}[active=true,facing=north]",
-                result.getMatcher().group("type"));
+                result.matcher().group("type"));
         assertEquals("World: (1370,92,-738), Chunk: (at 10,5,14 in 85,-47; contains blocks 1360,0,-752 to 1375,255,-737), Region: (2,-2; contains chunks 64,-64 to 95,-33, blocks 1024,0,-1024 to 1535,255,-513)",
-                result.getMatcher().group("location"));
+                result.matcher().group("location"));
 
         assertEquals(
                 new HashSet<>(Arrays.asList("tconstruct", "slimeknights", "smeltery")),
