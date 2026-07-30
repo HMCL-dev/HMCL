@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.account.skin;
 
 import com.jfoenix.controls.JFXPopup;
-import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -44,31 +43,28 @@ import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingFXUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
     protected final T account;
-    @Nullable
-    private final String url;
+    protected final BooleanProperty loadingProperty = new SimpleBooleanProperty(true);
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
-    private final BooleanProperty loadingProperty = new SimpleBooleanProperty(true);
     private final TabHeader tab;
     private final TabHeader.Tab<SkinManage> manageTab = new TabHeader.Tab<>("manageTab");
     private final TransitionPane transitionPane = new TransitionPane();
 
     protected final SkinManage skinManage;
 
-    protected SkinPageBase(T account, @Nullable String url) {
-        this.url = url;
+    protected SkinPageBase(T account) {
         this.account = account;
 
         tab = new TabHeader(transitionPane, manageTab);
@@ -84,37 +80,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         AdvancedListBox sideBar = new AdvancedListBox().addNavigationDrawerTab(tab, manageTab, i18n("account.skin"), SVG.CHECKROOM);
         left.setTop(sideBar);
 
-        PopupMenu saveList = new PopupMenu();
-        JFXPopup savePopup = new JFXPopup(saveList);
-
-        var capeItem = new IconedMenuItem(SVG.CROP_9_16, i18n("account.skin.manage.save.cape"), () -> {
-            var fxCapeImage = skinObjectProperty().get().cape().image();
-            var bufferedCapeImage = SwingFXUtils.fromFXImage(fxCapeImage, null);
-            try {
-                savePng(bufferedCapeImage, "cape");
-            } catch (Exception e) {
-                LOG.warning("Failed to export skin img", e);
-                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-            }
-        }, savePopup);
-
-        saveList.getContent().setAll(new IconedMenuItem(SVG.APPAREL, i18n("account.skin.manage.save.skin"), () -> {
-            var fxSkinImage = skinObjectProperty().get().skin().image();
-            var bufferedSkinImage = SwingFXUtils.fromFXImage(fxSkinImage, null);
-            try {
-                savePng(bufferedSkinImage, "skin");
-            } catch (Exception e) {
-                LOG.warning("Failed to export skin img", e);
-                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-            }
-        }, savePopup), capeItem);
-
-        skinObjectProperty().addListener((observable, oldValue, newValue) -> {
-            capeItem.setDisable(newValue.cape() == null);
-        });
-        AdvancedListBox toolbar = new AdvancedListBox().addNavigationDrawerItem(i18n("button.save"), SVG.OUTPUT, null, item -> {
-            item.setOnAction(e -> savePopup.show(item, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, item.getWidth(), 0));
-        });
+        AdvancedListBox toolbar = new AdvancedListBox().addNavigationDrawerItem(i18n("button.save"), SVG.OUTPUT, null, item -> item.setOnAction(e -> onSaveTexture(item.getWidth())));
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 
@@ -128,10 +94,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         });
         skinManage.setOnDragDropped(e -> {
             if (e.isAccepted()) {
-                Path skin = e.getDragboard().getFiles().get(0).toPath();
-                Platform.runLater(() -> {
-                    onDrag(skin);
-                });
+                onDrag(e.getDragboard().getFiles().get(0).toPath());
             }
         });
 
@@ -150,6 +113,36 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         File target = fileChooser.showSaveDialog(Controllers.getStage());
         if (target == null) return;
         ImageIO.write(image, "png", target);
+    }
+
+    public void onSaveTexture(double w) {
+        PopupMenu saveTextureList = new PopupMenu();
+        JFXPopup saveTexturePopup = new JFXPopup(saveTextureList);
+
+        var capeItem = new IconedMenuItem(SVG.CROP_9_16, i18n("account.skin.manage.save.cape"), () -> {
+            var fxCapeImage = Objects.requireNonNull(skinObjectProperty().get().cape()).image();
+            var bufferedCapeImage = SwingFXUtils.fromFXImage(fxCapeImage, null);
+            try {
+                savePng(bufferedCapeImage, "cape");
+            } catch (Exception e) {
+                LOG.warning("Failed to export skin img", e);
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+            }
+        }, saveTexturePopup);
+
+        saveTextureList.getContent().setAll(new IconedMenuItem(SVG.APPAREL, i18n("account.skin.manage.save.skin"), () -> {
+            var fxSkinImage = skinObjectProperty().get().skin().image();
+            var bufferedSkinImage = SwingFXUtils.fromFXImage(fxSkinImage, null);
+            try {
+                savePng(bufferedSkinImage, "skin");
+            } catch (Exception e) {
+                LOG.warning("Failed to export skin img", e);
+                Controllers.dialog(i18n("message.failed") + "\n" + StringUtils.getStackTrace(e), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+            }
+        }, saveTexturePopup), capeItem);
+
+        capeItem.setDisable(skinObjectProperty().get().cape() == null);
+        saveTexturePopup.show(this, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, w, -10);
     }
 
     @Override
@@ -178,16 +171,19 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
             var skin = TexturesLoader.getDefaultSkin(uuid).image();
             var slim = TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM;
 
+            SpinnerPane spinnerPane = new SpinnerPane();
+            spinnerPane.loadingProperty().bind(loadingProperty);
+            spinnerPane.setPrefWidth(300);
+
             SkinCanvas canvas = new SkinCanvas(skin, 250, 400, true);
             canvas.getScale().setX(1.25);
             canvas.getScale().setY(1.25);
             canvas.updateSkin(skin, slim, null);
-            skinObjectProperty().addListener((obs, oldSkin, newSkin) -> {
-                canvas.updateSkin(newSkin.skin().image(), newSkin.model().isSlim(), newSkin.cape() != null ? newSkin.cape().image() : null);
-            });
-            StackPane canvasPane = new StackPane(canvas);
-            canvasPane.setPrefWidth(300);
-            rightRegion.setCenter(canvasPane);
+            skinObjectProperty().addListener((obs, oldSkin, newSkin) -> canvas.updateSkin(newSkin.skin().image(), newSkin.model().isSlim(), newSkin.cape() != null ? newSkin.cape().image() : null));
+
+            spinnerPane.setContent(canvas);
+            rightRegion.setCenter(spinnerPane);
+
             canvas.getAnimationPlayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
             canvas.enableRotation(.5);
 

@@ -56,7 +56,8 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
     private final FileSelector capeSelector = new FileSelector();
 
     public OfflineAccountSkinPage(OfflineAccount account) {
-        super(account, null);
+        super(account);
+        super.loadingProperty.set(false);
 
         skinTypeItem.loadChildren(Arrays.asList(
                 new MultiFileItem.Option<>(i18n("message.default"), OfflineSkinConfig.Type.DEFAULT),
