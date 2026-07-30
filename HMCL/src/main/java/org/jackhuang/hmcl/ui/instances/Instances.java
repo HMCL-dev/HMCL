@@ -30,11 +30,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.game.QuickPlayOption;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -51,8 +47,8 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -60,7 +56,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -255,7 +254,7 @@ public final class Instances {
         executor.start();
     }
 
-    public static void cleanGameFiles(Profile profile) {
+    public static void cleanGameFiles(HMCLGameRepository repository) {
         var dialogBuilder = new MessageDialogPane.Builder(i18n("game.clean.content", i18n("game.clean.loading")), i18n("message.question"), MessageDialogPane.MessageType.QUESTION);
         var spinner = new JFXSpinner();
         spinner.getStyleClass().add("small-spinner");
@@ -271,12 +270,10 @@ public final class Instances {
         var dialog = dialogBuilder.build();
 
         Task.supplyAsync(() -> {
-            var repository = profile.getRepository();
-            var versions = repository.getVersions();
+            var versions = repository.getInstanceManifests();
 
             Set<String> activeAssets = versions.stream()
-                    .filter(Objects::nonNull)
-                    .map(Version::getAssetIndex)
+                    .map(GameInstanceManifest::getAssetIndex)
                     .distinct()
                     .flatMap(idx -> {
                         try {
@@ -301,7 +298,7 @@ public final class Instances {
                 unusedFolders.add(repository.getBaseDirectory().resolve(path));
             }
 
-            versions.stream().map(v -> repository.getRunDirectory(v.getId())).distinct().forEach(runDir -> {
+            versions.stream().map(v -> repository.getRunDirectory(v.id())).distinct().forEach(runDir -> {
                 for (String folderName : uselessFolderNames) {
                     Path target = runDir.resolve(folderName);
                     if (Files.isDirectory(target)) {
