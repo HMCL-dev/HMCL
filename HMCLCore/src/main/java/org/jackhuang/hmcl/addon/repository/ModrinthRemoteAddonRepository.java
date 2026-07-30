@@ -115,7 +115,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     private ModrinthRemoteAddonRepository(String projectType) {
         this.projectType = projectType;
         this.type = toAddonType(projectType);
-        if (this.type == null) throw new IllegalArgumentException("Unsupported Modrinth project type: " + projectType);
+        if (type == null) throw new IllegalArgumentException("Unsupported Modrinth project type: " + projectType);
     }
 
     @Override
