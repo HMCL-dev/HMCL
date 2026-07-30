@@ -45,7 +45,10 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -65,21 +68,10 @@ public final class TexturesLoader {
     }
 
     // ==== Texture Loading ====
-    public static class LoadedTexture {
-        private final Image image;
-        private final Map<String, String> metadata;
-
-        public LoadedTexture(Image image, Map<String, String> metadata) {
-            this.image = requireNonNull(image);
-            this.metadata = requireNonNull(metadata);
-        }
-
-        public Image getImage() {
-            return image;
-        }
-
-        public Map<String, String> getMetadata() {
-            return metadata;
+    public record LoadedTexture(Image image, Map<String, String> metadata) {
+        public LoadedTexture {
+            requireNonNull(image);
+            requireNonNull(metadata);
         }
     }
 
@@ -87,7 +79,7 @@ public final class TexturesLoader {
     private static final Path TEXTURES_DIR = Metadata.HMCL_USER_HOME.resolve("skins");
 
     private static Path getTexturePath(Texture texture) {
-        String url = texture.getUrl();
+        String url = texture.url();
         int slash = url.lastIndexOf('/');
         int dot = url.lastIndexOf('.');
         if (dot < slash) {
@@ -99,7 +91,7 @@ public final class TexturesLoader {
     }
 
     public static LoadedTexture loadTexture(Texture texture) throws Throwable {
-        if (StringUtils.isBlank(texture.getUrl())) {
+        if (StringUtils.isBlank(texture.url())) {
             throw new IOException("Texture url is empty");
         }
 
@@ -107,14 +99,14 @@ public final class TexturesLoader {
         if (!Files.isRegularFile(file)) {
             // download it
             try {
-                new FileDownloadTask(texture.getUrl(), file).run();
-                LOG.info("Texture downloaded: " + texture.getUrl());
+                new FileDownloadTask(texture.url(), file).run();
+                LOG.info("Texture downloaded: " + texture.url());
             } catch (Exception e) {
                 if (Files.isRegularFile(file)) {
                     // concurrency conflict?
-                    LOG.warning("Failed to download texture " + texture.getUrl() + ", but the file is available", e);
+                    LOG.warning("Failed to download texture " + texture.url() + ", but the file is available", e);
                 } else {
-                    throw new IOException("Failed to download texture " + texture.getUrl());
+                    throw new IOException("Failed to download texture " + texture.url());
                 }
             }
         }
@@ -127,7 +119,7 @@ public final class TexturesLoader {
         if (img.isError())
             throw img.getException();
 
-        Map<String, String> metadata = texture.getMetadata();
+        Map<String, String> metadata = texture.metadata();
         if (metadata == null) {
             metadata = emptyMap();
         }
@@ -158,7 +150,7 @@ public final class TexturesLoader {
     }
 
     public static TextureModel getDefaultModel(UUID uuid) {
-        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).getMetadata().get("model"))
+        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).metadata().get("model"))
                 ? TextureModel.WIDE
                 : TextureModel.SLIM;
     }
@@ -176,7 +168,7 @@ public final class TexturesLoader {
                             }
                         })
                         .flatMap(it -> Optional.ofNullable(it.get(TextureType.SKIN)))
-                        .filter(it -> StringUtils.isNotBlank(it.getUrl())))
+                        .filter(it -> StringUtils.isNotBlank(it.url())))
                 .asyncMap(it -> {
                     if (it.isPresent()) {
                         Texture texture = it.get();
@@ -184,7 +176,7 @@ public final class TexturesLoader {
                             try {
                                 return loadTexture(texture);
                             } catch (Throwable e) {
-                                LOG.warning("Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                LOG.warning("Failed to load texture " + texture.url() + ", using fallback texture", e);
                                 return uuidFallback;
                             }
                         }, POOL);
@@ -209,15 +201,15 @@ public final class TexturesLoader {
                     skin.load(profileName).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
-                        } else if (result != null && result.getSkin() != null && result.getSkin().getImage() != null) {
+                        } else if (result != null && result.skin() != null && result.skin().image() != null) {
                             Map<String, String> metadata;
-                            if (result.getModel() != null) {
-                                metadata = singletonMap("model", result.getModel().modelName);
+                            if (result.model() != null) {
+                                metadata = singletonMap("model", result.model().modelName);
                             } else {
                                 metadata = emptyMap();
                             }
 
-                            binding.set(new LoadedTexture(result.getSkin().getImage(), metadata));
+                            binding.set(new LoadedTexture(result.skin().image(), metadata));
                         }
                     }).start();
                 }
@@ -234,12 +226,12 @@ public final class TexturesLoader {
                     .asyncMap(textures -> {
                         if (textures.isPresent()) {
                             Texture texture = textures.get().get(TextureType.SKIN);
-                            if (texture != null && StringUtils.isNotBlank(texture.getUrl())) {
+                            if (texture != null && StringUtils.isNotBlank(texture.url())) {
                                 return CompletableFuture.supplyAsync(() -> {
                                     try {
                                         return loadTexture(texture);
                                     } catch (Throwable e) {
-                                        LOG.warning("Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                        LOG.warning("Failed to load texture " + texture.url() + ", using fallback texture", e);
                                         return uuidFallback;
                                     }
                                 }, POOL);

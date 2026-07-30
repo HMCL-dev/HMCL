@@ -77,7 +77,7 @@ public class MicrosoftService {
     public MicrosoftSession authenticate(OAuth.GrantFlow flow) throws AuthenticationException {
         try {
             OAuth.Result result = OAuth.MICROSOFT.authenticate(flow, new OAuth.Options(SCOPE, callback));
-            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
+            return authenticateViaLiveAccessToken(result.accessToken(), result.refreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
@@ -87,8 +87,8 @@ public class MicrosoftService {
 
     public MicrosoftSession refresh(MicrosoftSession oldSession) throws AuthenticationException {
         try {
-            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.getRefreshToken(), new OAuth.Options(SCOPE, callback));
-            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
+            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.refreshToken(), new OAuth.Options(SCOPE, callback));
+            return authenticateViaLiveAccessToken(result.accessToken(), result.refreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {

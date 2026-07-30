@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.*;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -42,18 +43,18 @@ import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
  *
  * @author huangyuhui
  */
-public final class ForgeInstallTask extends Task<Version> {
+public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest manifest;
     private Path installer;
     private final ForgeRemoteVersion remote;
     private FileDownloadTask dependent;
-    private Task<Version> dependency;
+    private Task<GameInstancePatch> dependency;
 
-    public ForgeInstallTask(DefaultDependencyManager dependencyManager, Version version, ForgeRemoteVersion remoteVersion) {
+    public ForgeInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, ForgeRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
         setSignificance(TaskSignificance.MODERATE);
     }
@@ -98,31 +99,31 @@ public final class ForgeInstallTask extends Task<Version> {
 
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
-        String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
+        String originalMainClass = manifest.resolve(dependencyManager.getGameRepository()).mainClass();
         if (GameVersionNumber.compare("1.13", remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with fabric.
             if (!LibraryAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
                 throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
         }
 
-        if (detectForgeInstallerType(dependencyManager, version, installer))
-            dependency = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);
+        if (detectForgeInstallerType(dependencyManager, manifest, installer))
+            dependency = new ForgeNewInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
         else
-            dependency = new ForgeOldInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);
+            dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
     }
 
     /**
      * Detect Forge installer type.
      *
      * @param dependencyManager game repository
-     * @param version version.json
+     * @param manifest instance manifest
      * @param installer the Forge installer, either the new or old one.
      * @return true for new, false for old
      * @throws IOException if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
-    public static boolean detectForgeInstallerType(DependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
-        Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
+    public static boolean detectForgeInstallerType(DependencyManager dependencyManager, GameInstanceManifest manifest, Path installer) throws IOException, VersionMismatchException {
+        Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(manifest);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
@@ -148,14 +149,14 @@ public final class ForgeInstallTask extends Task<Version> {
      * This method will try to identify this installer whether it is in old or new format.
      *
      * @param dependencyManager game repository
-     * @param version version.json
+     * @param manifest instance manifest
      * @param installer the Forge installer, either the new or old one.
      * @return the task to install library
      * @throws IOException if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
-    public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
-        Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
+    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, Path installer) throws IOException, VersionMismatchException {
+        Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(manifest);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
@@ -164,12 +165,12 @@ public final class ForgeInstallTask extends Task<Version> {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
-                return new ForgeNewInstallTask(dependencyManager, version, modifyVersion(gameVersion.get(), profile.getVersion()), installer);
+                return new ForgeNewInstallTask(dependencyManager, manifest, modifyVersion(gameVersion.get(), profile.getVersion()), installer);
             } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
                 ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getInstall().getMinecraft()))
                     throw new VersionMismatchException(profile.getInstall().getMinecraft(), gameVersion.get());
-                return new ForgeOldInstallTask(dependencyManager, version, modifyVersion(gameVersion.get(), profile.getInstall().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
+                return new ForgeOldInstallTask(dependencyManager, manifest, modifyVersion(gameVersion.get(), profile.getInstall().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
             } else {
                 throw new IOException();
             }

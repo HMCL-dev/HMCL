@@ -288,22 +288,7 @@ public class OAuth {
         DEVICE,
     }
 
-    public static final class Result {
-        private final String accessToken;
-        private final String refreshToken;
-
-        public Result(String accessToken, String refreshToken) {
-            this.accessToken = accessToken;
-            this.refreshToken = refreshToken;
-        }
-
-        public String getAccessToken() {
-            return accessToken;
-        }
-
-        public String getRefreshToken() {
-            return refreshToken;
-        }
+    public record Result(String accessToken, String refreshToken) {
     }
 
     private final static class DeviceTokenResponse extends ErrorResponse {

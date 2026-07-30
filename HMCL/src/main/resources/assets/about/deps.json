@@ -71,7 +71,7 @@
   },
   {
     "title" : "fxsvgimage",
-    "subtitle" : "Copyright (c) 2021, 2022, 2025 Hervé Girod.\nLicensed under the BSD 3-clause License.",
+    "subtitle" : "Copyright © 2021, 2022, 2025 Hervé Girod.\nLicensed under the BSD 3-clause License.",
     "externalLink" : "https://github.com/hervegirod/fxsvgimage"
   },
   {
@@ -101,7 +101,17 @@
   },
   {
     "title": "WebURL for Java",
-    "subtitle": "Licensed under the Apache 2.0 License.",
+    "subtitle": "Copyright © 2026 Glavo.\nLicensed under the Apache 2.0 License.",
     "externalLink": "https://github.com/Glavo/weburl-java"
+  },
+  {
+    "title": "JWebP",
+    "subtitle": "Copyright © 2026 Glavo.\nLicensed under the Apache 2.0 License.",
+    "externalLink": "https://github.com/Glavo/jwebp"
+  },
+  {
+    "title": "uuid-tools",
+    "subtitle": "Copyright © 2026 Glavo.\nLicensed under the Apache 2.0 License.",
+    "externalLink": "https://github.com/Glavo/uuid-tools"
   }
 ]

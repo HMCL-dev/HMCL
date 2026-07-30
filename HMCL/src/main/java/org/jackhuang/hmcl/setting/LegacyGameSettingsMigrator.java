@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -43,11 +42,23 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public final class LegacyGameSettingsMigrator {
     /// Legacy file name used by old per-version `VersionSetting` data.
-    private static final String LEGACY_INSTANCE_SETTINGS_FILENAME = "hmclversion.cfg";
+    static final String LEGACY_INSTANCE_SETTINGS_FILENAME = "hmclversion.cfg";
 
     /// Receipt file name used to record successful legacy per-version settings migration.
     private static final String LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME =
             "instance-game-settings.migration-receipt.json";
+
+    /// Directory under the version root that stores HMCL-managed instance metadata.
+    static final String INSTANCE_METADATA_DIRECTORY = ".hmcl";
+
+    /// Directory under the instance metadata directory that stores instance configuration files.
+    static final String INSTANCE_CONFIG_DIRECTORY = "config";
+
+    /// Directory under the instance metadata directory that stores instance state files.
+    private static final String INSTANCE_STATE_DIRECTORY = "state";
+
+    /// Current file name for instance-specific game settings.
+    static final String INSTANCE_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
 
     /// Legacy game directory modes stored by old configuration files.
     private enum GameDirectoryType {
@@ -62,22 +73,22 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Legacy `VersionIconType` ordinal order used by old local settings.
-    private static final VersionIconType @Unmodifiable [] LEGACY_VERSION_ICON_TYPES = {
-            VersionIconType.DEFAULT,
-            VersionIconType.GRASS,
-            VersionIconType.CHEST,
-            VersionIconType.CHICKEN,
-            VersionIconType.COMMAND,
-            VersionIconType.OPTIFINE,
-            VersionIconType.CRAFT_TABLE,
-            VersionIconType.FABRIC,
-            VersionIconType.FORGE,
-            VersionIconType.NEO_FORGE,
-            VersionIconType.FURNACE,
-            VersionIconType.QUILT,
-            VersionIconType.APRIL_FOOLS,
-            VersionIconType.CLEANROOM,
-            VersionIconType.LEGACY_FABRIC
+    private static final GameInstanceIconType @Unmodifiable [] LEGACY_VERSION_ICON_TYPES = {
+            GameInstanceIconType.DEFAULT,
+            GameInstanceIconType.GRASS,
+            GameInstanceIconType.CHEST,
+            GameInstanceIconType.CHICKEN,
+            GameInstanceIconType.COMMAND,
+            GameInstanceIconType.OPTIFINE,
+            GameInstanceIconType.CRAFT_TABLE,
+            GameInstanceIconType.FABRIC,
+            GameInstanceIconType.FORGE,
+            GameInstanceIconType.NEO_FORGE,
+            GameInstanceIconType.FURNACE,
+            GameInstanceIconType.QUILT,
+            GameInstanceIconType.APRIL_FOOLS,
+            GameInstanceIconType.CLEANROOM,
+            GameInstanceIconType.LEGACY_FABRIC
     };
 
     /// Legacy `JavaVersionType` ordinal order used by old game settings.
@@ -101,9 +112,9 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Converts a legacy profile-level setting JSON object into a preset with the given ID.
-    public static GameSettings.Preset toPreset(GameSettingsPresetID id, String name, @Nullable JsonObject source) {
+    public static GameSettings.Preset toPreset(GameSettingsPresetID id, int autoNameNumber, @Nullable JsonObject source) {
         GameSettings.Preset target = new GameSettings.Preset(id);
-        target.nameProperty().setValue(LocalizedText.plain(name));
+        target.autoNameNumberProperty().setValue(autoNameNumber);
         if (getLegacyGameDirType(source, GameDirectoryType.ROOT_FOLDER) == GameDirectoryType.VERSION_FOLDER) {
             target.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
         }
@@ -119,9 +130,9 @@ public final class LegacyGameSettingsMigrator {
     /// @return the migrated instance setting, or `null` when no legacy file can be migrated
     public static @Nullable InstanceMigrationResult migrateInstanceGameSettings(
             HMCLGameRepository repository,
-            String instanceId,
+            GameInstanceID instanceId,
             @Nullable GameSettingsPresetID parent) {
-        Path instanceRoot = repository.getVersionRoot(instanceId);
+        Path instanceRoot = repository.getInstanceRoot(instanceId);
         Path file = instanceRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
         if (!Files.exists(file)) {
             return null;
@@ -477,10 +488,10 @@ public final class LegacyGameSettingsMigrator {
     }
 
     /// Parses the legacy icon selection with frozen ordinal order.
-    private static VersionIconType parseLegacyVersionIconType(@Nullable JsonObject source) {
+    private static GameInstanceIconType parseLegacyVersionIconType(@Nullable JsonObject source) {
         JsonPrimitive primitive = JsonUtils.getPrimitive(source, "versionIcon");
         if (primitive == null) {
-            return VersionIconType.DEFAULT;
+            return GameInstanceIconType.DEFAULT;
         }
 
         try {
@@ -488,11 +499,11 @@ public final class LegacyGameSettingsMigrator {
                 int index = primitive.getAsInt();
                 return index >= 0 && index < LEGACY_VERSION_ICON_TYPES.length
                         ? LEGACY_VERSION_ICON_TYPES[index]
-                        : VersionIconType.DEFAULT;
+                        : GameInstanceIconType.DEFAULT;
             }
 
             String value = primitive.getAsString();
-            for (VersionIconType iconType : LEGACY_VERSION_ICON_TYPES) {
+            for (GameInstanceIconType iconType : LEGACY_VERSION_ICON_TYPES) {
                 if (iconType.name().equalsIgnoreCase(value)) {
                     return iconType;
                 }
@@ -500,7 +511,7 @@ public final class LegacyGameSettingsMigrator {
         } catch (RuntimeException ignored) {
         }
 
-        return VersionIconType.DEFAULT;
+        return GameInstanceIconType.DEFAULT;
     }
 
     /// Reads an enum property from either ordinal or name.

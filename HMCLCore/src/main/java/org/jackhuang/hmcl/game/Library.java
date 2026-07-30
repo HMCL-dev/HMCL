@@ -17,35 +17,84 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
-import org.jackhuang.hmcl.util.gson.TolerableValidationException;
-import org.jackhuang.hmcl.util.gson.Validation;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * A class that describes a Minecraft dependency.
- *
- * @author huangyuhui
- */
-@Immutable
-public class Library implements Comparable<Library>, Validation {
-    /**
-     * <p>A possible native descriptors can be: [variant-]os[-key]</p>
-     *
-     * <p>
-     * Variant can be empty string, 'native', or 'natives'.
-     * Key can be empty string, system arch, or system arch bit count.
-     * </p>
-     */
+/// A class that describes a Minecraft dependency.
+///
+/// @author huangyuhui
+@JsonSerializable
+@NotNullByDefault
+public record Library(
+        @SerializedName("name")
+        Artifact artifact,
+        @Nullable String url,
+        @Nullable LibrariesDownloadInfo downloads,
+        @Nullable List<String> checksums,
+        @Nullable ExtractRules extract,
+        @Nullable Map<String, String> natives,
+        @Nullable List<CompatibilityRule> rules,
+
+        @SerializedName(value = "hint", alternate = {"MMC-hint"})
+        @Nullable String hint,
+
+        @SerializedName(value = "filename", alternate = {"MMC-filename"})
+        @Nullable String filename
+) implements Comparable<Library> {
+
+    @JsonSerializable
+    public record TLauncher(
+            Artifact name,
+            @Nullable String url,
+            @Nullable LibraryDownloadInfo artifact,
+            @SerializedName("classifies") // stupid typo made by TLauncher
+            @Nullable Map<String, LibraryDownloadInfo> classifiers,
+            @Nullable ExtractRules extract,
+            @Nullable Map<String, String> natives,
+            @Nullable List<CompatibilityRule> rules,
+            @Nullable List<String> checksums
+    ) {
+        public TLauncher(Library library) {
+            this(
+                    library.artifact,
+                    library.url,
+                    library.downloads != null ? library.downloads.artifact() : null,
+                    library.downloads != null ? library.downloads.classifiers() : null,
+                    library.extract,
+                    library.natives,
+                    library.rules,
+                    library.checksums
+            );
+        }
+
+        public Library toLibrary() {
+            return new Library(
+                    name,
+                    url,
+                    new LibrariesDownloadInfo(artifact, classifiers),
+                    checksums,
+                    extract,
+                    natives,
+                    rules,
+                    null,
+                    null
+            );
+        }
+    }
+
+    /// A possible native descriptors can be: `[variant-]os[-key]`
+    ///
+    /// Variant can be an empty string, 'native', or 'natives'.
+    /// Key can be an empty string, system arch, or system arch bit count.
     private static final String[] POSSIBLE_NATIVE_DESCRIPTORS;
 
     static {
@@ -74,58 +123,35 @@ public class Library implements Comparable<Library>, Validation {
         }
     }
 
-    @SerializedName("name")
-    private final Artifact artifact;
-    private final String url;
-    private final LibrariesDownloadInfo downloads;
-    private final ExtractRules extract;
-    private final Map<String, String> natives;
-    private final List<CompatibilityRule> rules;
-    private final List<String> checksums;
-
-    @SerializedName(value = "hint", alternate = {"MMC-hint"})
-    private final String hint;
-
-    @SerializedName(value = "filename", alternate = {"MMC-filename"})
-    private final String fileName;
+    public Library {
+        Objects.requireNonNull(artifact);
+    }
 
     public Library(Artifact artifact) {
         this(artifact, null, null);
     }
 
-    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads) {
+    public Library(Artifact artifact, @Nullable String url, @Nullable LibrariesDownloadInfo downloads) {
         this(artifact, url, downloads, null, null, null, null, null, null);
     }
 
-    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<String, String> natives, List<CompatibilityRule> rules, String hint, String filename) {
-        this.artifact = artifact;
-        this.url = url;
-        this.downloads = downloads;
-        this.extract = extract;
-        this.natives = natives;
-        this.rules = rules;
-        this.checksums = checksums;
-        this.hint = hint;
-        this.fileName = filename;
-    }
-
-    public String getGroupId() {
+    public String groupId() {
         return artifact.getGroup();
     }
 
-    public String getArtifactId() {
+    public String artifactId() {
         return artifact.getName();
     }
 
-    public String getName() {
+    public String name() {
         return artifact.toString();
     }
 
-    public String getVersion() {
+    public String version() {
         return artifact.getVersion();
     }
 
-    public String getClassifier() {
+    public @Nullable String classifier() {
         if (artifact.getClassifier() == null) {
             if (natives != null) {
                 for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
@@ -134,9 +160,9 @@ public class Library implements Comparable<Library>, Validation {
                         return nd.replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
                     }
                 }
-            } else if (downloads != null && downloads.getClassifiers() != null) {
+            } else if (downloads != null && downloads.classifiers() != null) {
                 for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
-                    LibraryDownloadInfo info = downloads.getClassifiers().get(nativeDescriptor);
+                    LibraryDownloadInfo info = downloads.classifiers().get(nativeDescriptor);
                     if (info != null) {
                         return nativeDescriptor;
                     }
@@ -165,22 +191,20 @@ public class Library implements Comparable<Library>, Validation {
             return true;
         }
 
-        return downloads != null && downloads.getClassifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
+        return downloads != null
+                && downloads.classifiers() != null
+                && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
     }
 
-    public LibraryDownloadInfo getRawDownloadInfo() {
+    public @Nullable LibraryDownloadInfo getRawDownloadInfo() {
         if (downloads != null) {
             if (isNative())
-                return downloads.getClassifiers().get(getClassifier());
+                return downloads.classifiers() != null ? downloads.classifiers().get(classifier()) : null;
             else
-                return downloads.getArtifact();
+                return downloads.artifact();
         } else {
             return null;
         }
-    }
-
-    public Artifact getArtifact() {
-        return artifact;
     }
 
     public String getPath() {
@@ -188,7 +212,7 @@ public class Library implements Comparable<Library>, Validation {
         if (temp != null && temp.getPath() != null)
             return temp.getPath();
         else
-            return artifact.setClassifier(getClassifier()).getPath();
+            return artifact.setClassifier(classifier()).getPath();
     }
 
     public LibraryDownloadInfo getDownload() {
@@ -201,7 +225,7 @@ public class Library implements Comparable<Library>, Validation {
         );
     }
 
-    private String computePath(LibraryDownloadInfo raw, String path) {
+    private String computePath(@Nullable LibraryDownloadInfo raw, String path) {
         if (raw != null) {
             String url = raw.getUrl();
             if (url != null) {
@@ -223,76 +247,39 @@ public class Library implements Comparable<Library>, Validation {
         else return url != null;
     }
 
-    public List<String> getChecksums() {
-        return checksums;
-    }
-
-    public List<CompatibilityRule> getRules() {
-        return rules;
-    }
-
-    /**
-     * Hint for how to locate the library file.
-     *
-     * @return null for default, "local" for location in version/&lt;version&gt;/libraries/filename
-     */
-    @Nullable
-    public String getHint() {
-        return hint;
-    }
-
     public Library withoutCommunityFields() {
         return new Library(artifact, url, downloads, checksums, extract, natives, rules, null, null);
     }
 
-    /**
-     * Available when hint is "local"
-     *
-     * @return the filename of the local library in version/&lt;version&gt;/libraries/$filename
-     */
-    @Nullable
-    public String getFileName() {
-        return fileName;
-    }
-
     public boolean is(String groupId, String artifactId) {
-        return getGroupId().equals(groupId) && getArtifactId().equals(artifactId);
+        return groupId().equals(groupId) && artifactId().equals(artifactId);
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).append("name", getName()).toString();
+        return new ToStringBuilder(this).append("name", name()).toString();
     }
 
     @Override
     public int compareTo(Library o) {
-        if (getName().compareTo(o.getName()) == 0)
+        if (name().compareTo(o.name()) == 0)
             return Boolean.compare(isNative(), o.isNative());
         else
-            return getName().compareTo(o.getName());
+            return name().compareTo(o.name());
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Library))
-            return false;
+        return obj instanceof Library other && name().equals(other.name()) && (isNative() == other.isNative());
 
-        Library other = (Library) obj;
-        return getName().equals(other.getName()) && (isNative() == other.isNative());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), isNative());
+        return Objects.hash(name(), isNative());
     }
 
     public Library setClassifier(String classifier) {
-        return new Library(artifact.setClassifier(classifier), url, downloads, checksums, extract, natives, rules, hint, fileName);
-    }
-
-    @Override
-    public void validate() throws JsonParseException, TolerableValidationException {
-        if (artifact == null)
-            throw new JsonParseException("Library.name cannot be null");
+        return new Library(artifact.setClassifier(classifier), url, downloads, checksums, extract, natives, rules, hint, filename);
     }
 }

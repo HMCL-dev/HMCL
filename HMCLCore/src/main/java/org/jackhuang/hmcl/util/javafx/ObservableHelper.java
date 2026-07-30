@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.javafx;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -28,6 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author yushijinhun
  */
+@NotNullByDefault
 public final class ObservableHelper implements Observable, InvalidationListener {
 
     private final List<InvalidationListener> listeners = new CopyOnWriteArrayList<>();
@@ -63,7 +65,7 @@ public final class ObservableHelper implements Observable, InvalidationListener 
 
     @Override
     public void invalidated(Observable observable) {
-        this.invalidate();
+        listeners.forEach(it -> it.invalidated(observable));
     }
 
     public void receiveUpdatesFrom(Observable observable) {

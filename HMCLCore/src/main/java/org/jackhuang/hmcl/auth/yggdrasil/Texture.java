@@ -23,27 +23,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 @Immutable
-public final class Texture {
-
-    private final String url;
-    private final Map<String, String> metadata;
+public record Texture(String url, Map<String, String> metadata) {
 
     public Texture() {
         this(null, null);
     }
 
-    public Texture(String url, Map<String, String> metadata) {
-        this.url = url;
-        this.metadata = metadata;
-    }
-
+    @Override
     @Nullable
-    public String getUrl() {
+    public String url() {
         return url;
     }
 
+    @Override
     @Nullable
-    public Map<String, String> getMetadata() {
+    public Map<String, String> metadata() {
         return metadata;
     }
 }

@@ -21,9 +21,9 @@ import javafx.scene.Node;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -46,22 +46,22 @@ import java.util.zip.ZipException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class UpdateInstallerWizardProvider implements WizardProvider {
-    private final Profile profile;
+    private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependencyManager;
     private final String gameVersion;
-    private final Version version;
+    private final GameInstanceManifest manifest;
     private final String libraryId;
     private final String oldLibraryVersion;
     private final DownloadProvider downloadProvider;
 
-    public UpdateInstallerWizardProvider(@NotNull Profile profile, @NotNull String gameVersion, @NotNull Version version, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
-        this.profile = profile;
+    public UpdateInstallerWizardProvider(@NotNull HMCLGameRepository repository, @NotNull String gameVersion, @NotNull GameInstanceManifest manifest, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
+        this.repository = repository;
         this.gameVersion = gameVersion;
-        this.version = version;
+        this.manifest = manifest;
         this.libraryId = libraryId;
         this.oldLibraryVersion = oldLibraryVersion;
         this.downloadProvider = DownloadProviders.getDownloadProvider();
-        this.dependencyManager = profile.getDependency(downloadProvider);
+        this.dependencyManager = repository.getDependency(downloadProvider);
     }
 
     @Override
@@ -76,7 +76,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
         // We remove library but not save it,
         // so if installation failed will not break down current version.
-        Task<Version> ret = Task.supplyAsync(() -> version);
+        Task<GameInstanceManifest> ret = Task.supplyAsync(() -> manifest);
         var hints = new ArrayList<Task.StagesHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof RemoteVersion remoteVersion) {
@@ -91,7 +91,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             }
         }
 
-        return ret.thenComposeAsync(profile.getRepository()::saveAsync).thenComposeAsync(profile.getRepository().refreshVersionsAsync()).withStagesHints(hints);
+        return ret.thenComposeAsync(repository::saveAsync).thenComposeAsync(repository.refreshAsync()).withStagesHints(hints);
     }
 
     @Override
@@ -103,7 +103,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                         controller.onFinish();
                     } else if ("game".equals(libraryId)) {
                         String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
-                        controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, profile.getRepository(), downloadProvider));
+                        controller.onNext(new AdditionalInstallersPage(newGameVersion, manifest, controller, repository, downloadProvider));
                     } else {
                         Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);
@@ -128,7 +128,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
     public static void alertFailureMessage(Exception exception, Runnable next) {
         if (exception instanceof LibraryDownloadException) {
-            String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n";
+            String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().name()) + "\n";
             if (exception.getCause() instanceof ResponseCodeException) {
                 ResponseCodeException rce = (ResponseCodeException) exception.getCause();
                 int responseCode = rce.getResponseCode();
