@@ -206,7 +206,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             fileName.set(data.localAddonFile().getFileName());
             currentVersion.set(data.currentVersion().version());
             targetVersion.set(data.targetVersion().version());
-            switch (data.currentVersion().self().getType()) {
+            switch (data.currentVersion().self().getSource()) {
                 case CURSEFORGE:
                     source.set(i18n("addon.curseforge"));
                     break;

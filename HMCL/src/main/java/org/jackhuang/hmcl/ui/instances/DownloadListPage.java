@@ -584,7 +584,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
                         if (empty || item == null) {
                             setGraphic(null);
                         } else {
-                            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(item.slug());
+                            ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(getSkinnable().repository.getType()).getModByCurseForgeId(item.slug());
                             content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.title());
                             String description = item.description();
                             if (description != null) {
