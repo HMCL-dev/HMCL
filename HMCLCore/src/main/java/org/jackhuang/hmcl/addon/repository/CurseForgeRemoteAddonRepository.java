@@ -72,6 +72,11 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     private final Type type;
     private final int section;
 
+    public CurseForgeRemoteAddonRepository() {
+        this.type = null;
+        this.section = -1;
+    }
+
     public CurseForgeRemoteAddonRepository(Type type, int section) {
         this.type = type;
         this.section = section;
@@ -79,6 +84,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     @Override
     public Type getType() {
+        if (type == null) throw new UnsupportedOperationException();
         return type;
     }
 
@@ -109,6 +115,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
+        if (type == null) throw new UnsupportedOperationException();
         SEMAPHORE.acquireUninterruptibly();
         try {
             int categoryId = 0;
