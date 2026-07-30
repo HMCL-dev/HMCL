@@ -307,16 +307,14 @@ public final class HTMLRenderer {
                     columnCount = Math.max(columnCount, head.size());
                 }
                 case "tbody" -> {
-                    body.clear();
-                    for (Element e : child.children()) {
-                        if (e.nameIs("tr")) {
-                            List<Element> row = e.children().stream()
-                                    .filter(n -> n.nameIs("th") || n.nameIs("td"))
-                                    .toList();
-                            columnCount = Math.max(columnCount, row.size());
-                            if (!row.isEmpty()) body.add(row);
-                        }
-                    }
+                    var rows = child.children().stream()
+                            .filter(e -> e.nameIs("tr"))
+                            .map(e ->
+                                    e.children().stream().filter(n -> n.nameIs("th") || n.nameIs("td")).toList())
+                            .filter(row -> !row.isEmpty())
+                            .toList();
+                    body.addAll(rows);
+                    columnCount = Math.max(columnCount, rows.stream().mapToInt(List::size).max().orElse(0));
                 }
                 case "tfoot" -> {
                     if (hasFoot) continue;
@@ -342,8 +340,10 @@ public final class HTMLRenderer {
                     List<Element> row = child.children().stream()
                             .filter(n -> n.nameIs("th") || n.nameIs("td"))
                             .toList();
-                    columnCount = Math.max(columnCount, row.size());
-                    if (!row.isEmpty()) body.add(row);
+                    if (!row.isEmpty()) {
+                        body.add(row);
+                        columnCount = Math.max(columnCount, row.size());
+                    }
                 }
             }
         }
