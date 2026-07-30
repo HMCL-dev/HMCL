@@ -83,7 +83,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         return type;
     }
 
-    private int toModsSearchSortField(SortType sort) {
+    private static int toModsSearchSortField(SortType sort) {
         // https://docs.curseforge.com/rest-api/#tocS_ModsSearchSortField
         return switch (sort) {
             case DATE_CREATED -> 1;
@@ -96,7 +96,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         };
     }
 
-    private String toSortOrder(SortOrder sortOrder) {
+    private static String toSortOrder(SortOrder sortOrder) {
         // https://docs.curseforge.com/rest-api/#tocS_SortOrder
         return switch (sortOrder) {
             case ASC -> "asc";
@@ -104,7 +104,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         };
     }
 
-    private int calculateTotalPages(Response<List<CurseAddon>> response, int pageSize) {
+    private static int calculateTotalPages(Response<List<CurseAddon>> response, int pageSize) {
         return (int) Math.ceil((double) Math.min(response.pagination.totalCount, 10000) / pageSize);
     }
 
@@ -271,7 +271,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         }
     }
 
-    private List<Category> reorganizeCategories(List<Category> categories, int rootId) {
+    private static List<Category> reorganizeCategories(List<Category> categories, int rootId) {
         List<Category> result = new ArrayList<>();
 
         Map<Integer, Category> categoryMap = new HashMap<>();

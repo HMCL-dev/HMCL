@@ -121,7 +121,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         };
     }
 
-    static List<String> sortDisplayCategories(List<String> displayCategories) {
+    private static List<String> sortDisplayCategories(List<String> displayCategories) {
         return displayCategories != null && !displayCategories.isEmpty()
                 ? displayCategories.stream().sorted(TAG_COMPARATOR).toList()
                 : List.of();
