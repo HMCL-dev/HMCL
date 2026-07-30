@@ -418,16 +418,16 @@ public final class Launcher extends Application {
         }
 
         long hwnd = handle.getAsLong();
-        Lang.thread(() -> {
+        Schedulers.defaultScheduler().execute(() -> {
             try {
                 applyWindowsAppUserModelRelaunchProperties(hwnd);
             } catch (Throwable e) {
                 LOG.warning("Failed to update AppUserModel relaunch properties", e);
             }
-        }, "Update Windows AppUserModel Relaunch Properties", true);
+        });
     }
 
-    /// Writes AppUserModel ID and relaunch properties for the given window.
+    /// Writes AppUserModel ID and relaunch properties for the given window when HMCL is packaged as an `.exe`.
     ///
     /// @param hwnd the native window handle
     private static void applyWindowsAppUserModelRelaunchProperties(long hwnd) {
@@ -435,17 +435,12 @@ public final class Launcher extends Application {
         if (shell32 == null)
             return;
 
-        String relaunchCommand = buildWindowsRelaunchCommand();
-        if (relaunchCommand == null) {
-            LOG.warning("Failed to determine Windows relaunch command");
+        @Nullable Path thisJar = JarUtils.thisJarPath();
+        if (thisJar == null || !Files.isRegularFile(thisJar) || !"exe".equalsIgnoreCase(FileUtils.getExtension(thisJar)))
             return;
-        }
 
-        String iconResource = buildWindowsRelaunchIconResource();
-        if (iconResource == null) {
-            LOG.warning("Failed to determine Windows relaunch icon resource");
-            return;
-        }
+        String exePath = FileUtils.getAbsolutePath(thisJar);
+        String iconResource = exePath + ",0";
 
         try (IPropertyStore store = IPropertyStore.forWindow(shell32, hwnd)) {
             if (store == null) {
@@ -454,7 +449,7 @@ public final class Launcher extends Application {
             }
 
             if (!setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_ID, WINDOWS_APP_USER_MODEL_ID)
-                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchCommand, relaunchCommand)
+                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchCommand, exePath)
                     || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchIconResource, iconResource)
                     || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchDisplayNameResource, Metadata.FULL_NAME)) {
                 return;
@@ -464,7 +459,7 @@ public final class Launcher extends Application {
             if (hr < 0) {
                 LOG.warning("Failed to commit AppUserModel relaunch properties, HRESULT=0x" + Integer.toHexString(hr));
             } else {
-                LOG.info("Updated AppUserModel relaunch properties");
+                LOG.info("Updated AppUserModel relaunch properties for " + exePath);
             }
         }
     }
@@ -484,82 +479,6 @@ public final class Launcher extends Application {
             return false;
         }
         return true;
-    }
-
-    /// Builds the command line used to relaunch HMCL from the Windows taskbar.
-    ///
-    /// @return a quoted Windows command line, or `null` when it cannot be determined
-    private static @Nullable String buildWindowsRelaunchCommand() {
-        ProcessHandle.Info info = ProcessHandle.current().info();
-        Optional<String> command = info.command();
-        Optional<String[]> arguments = info.arguments();
-        if (command.isPresent() && arguments.isPresent()) {
-            CommandBuilder builder = new CommandBuilder();
-            builder.add(command.get());
-            builder.addAll(arguments.get());
-            return builder.toString();
-        }
-
-        Path jar = JarUtils.thisJarPath();
-        if (jar == null)
-            return null;
-
-        Path javaBinary = resolveWindowsJavaBinary();
-        if (javaBinary == null)
-            return null;
-
-        CommandBuilder builder = new CommandBuilder();
-        builder.add(javaBinary.toString());
-        try {
-            for (String inputArgument : java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-                if (inputArgument.startsWith("-D") || inputArgument.startsWith("-X")) {
-                    builder.add(inputArgument);
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-        builder.add("-jar");
-        builder.add(jar.toAbsolutePath().toString());
-        return builder.toString();
-    }
-
-    /// Builds the icon resource string used by the Windows taskbar for relaunch/pinning.
-    ///
-    /// @return an icon resource path such as `C:\Path\App.exe,0`, or `null` when unavailable
-    private static @Nullable String buildWindowsRelaunchIconResource() {
-        Optional<String> command = ProcessHandle.current().info().command();
-        if (command.isPresent()) {
-            Path executable = Path.of(command.get());
-            if (Files.isRegularFile(executable)) {
-                return executable.toAbsolutePath() + ",0";
-            }
-        }
-
-        Path javaBinary = resolveWindowsJavaBinary();
-        if (javaBinary != null && Files.isRegularFile(javaBinary)) {
-            return javaBinary.toAbsolutePath() + ",0";
-        }
-        return null;
-    }
-
-    /// Resolves the preferred Windows Java launcher binary for restarting HMCL without a console window.
-    ///
-    /// @return `javaw.exe` when present, otherwise `java.exe`, or `null` when neither is available
-    private static @Nullable Path resolveWindowsJavaBinary() {
-        String javaHome = System.getProperty("java.home");
-        if (javaHome == null)
-            return null;
-
-        Path bin = Path.of(javaHome, "bin");
-        Path javaw = bin.resolve("javaw.exe");
-        if (Files.isRegularFile(javaw))
-            return javaw;
-
-        Path java = bin.resolve("java.exe");
-        if (Files.isRegularFile(java))
-            return java;
-
-        return null;
     }
 
     private static void setupJavaFXVMOptions() {
