@@ -26,6 +26,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
+import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -33,6 +34,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.setting.*;
@@ -417,14 +419,28 @@ public final class Launcher extends Application {
             return;
         }
 
-        long hwnd = handle.getAsLong();
-        Schedulers.defaultScheduler().execute(() -> {
-            try {
-                applyWindowsAppUserModelRelaunchProperties(hwnd);
-            } catch (Throwable e) {
-                LOG.warning("Failed to update AppUserModel relaunch properties", e);
-            }
-        });
+        Runnable applyWindowsAppUserModelRelaunchProperties = () -> {
+            long hwnd = handle.getAsLong();
+            Schedulers.defaultScheduler().execute(() -> {
+                try {
+                    applyWindowsAppUserModelRelaunchProperties(hwnd);
+                } catch (Throwable e) {
+                    LOG.warning("Failed to update AppUserModel relaunch properties", e);
+                }
+            });
+        };
+
+        if (stage.isShowing()) {
+            applyWindowsAppUserModelRelaunchProperties.run();
+        } else {
+            stage.addEventFilter(WindowEvent.WINDOW_SHOWN, new EventHandler<>() {
+                @Override
+                public void handle(WindowEvent e) {
+                    stage.removeEventFilter(WindowEvent.WINDOW_SHOWN, this);
+                    applyWindowsAppUserModelRelaunchProperties.run();
+                }
+            });
+        }
     }
 
     /// Writes AppUserModel ID and relaunch properties for the given window when HMCL is packaged as an `.exe`.
@@ -449,7 +465,7 @@ public final class Launcher extends Application {
             }
 
             if (!setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_ID, WINDOWS_APP_USER_MODEL_ID)
-                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchCommand, exePath)
+                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchCommand, '"' + exePath + '"')
                     || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchIconResource, iconResource)
                     || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchDisplayNameResource, Metadata.FULL_NAME)) {
                 return;
@@ -467,7 +483,7 @@ public final class Launcher extends Application {
     /// Sets a string property on an [`IPropertyStore`].
     ///
     /// @param store the property store
-    /// @param key the property key
+    /// @param key   the property key
     /// @param value the string value
     /// @return `true` if [`IPropertyStore#SetValue`] succeeds
     private static boolean setWindowsPropertyStoreString(IPropertyStore store, WinTypes.PROPERTYKEY key, String value) {
