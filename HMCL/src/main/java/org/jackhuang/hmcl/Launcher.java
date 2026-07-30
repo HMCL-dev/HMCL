@@ -404,7 +404,10 @@ public final class Launcher extends Application {
         }
     }
 
-    /// Asynchronously configures window-level AppUserModel relaunch properties after the stage is shown.
+    /// Configures window-level AppUserModel relaunch properties after the stage has a native window.
+    ///
+    /// Must run on the JavaFX application thread. `IPropertyStore` is a COM interface, and the FX
+    /// thread is already initialized for COM on Windows; worker threads are not.
     ///
     /// @param stage the primary launcher stage
     private static void updateWindowsAppUserModelRelaunchProperties(Stage stage) {
@@ -413,31 +416,22 @@ public final class Launcher extends Application {
         if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
             return;
 
-        OptionalLong handle = WindowsNativeUtils.getWindowHandle(stage);
-        if (handle.isEmpty() || handle.getAsLong() == WinTypes.HANDLE.INVALID_VALUE) {
-            LOG.warning("Failed to get window handle for AppUserModel relaunch properties");
-            return;
-        }
-
-        Runnable applyWindowsAppUserModelRelaunchProperties = () -> {
-            long hwnd = handle.getAsLong();
-            Schedulers.defaultScheduler().execute(() -> {
-                try {
-                    applyWindowsAppUserModelRelaunchProperties(hwnd);
-                } catch (Throwable e) {
-                    LOG.warning("Failed to update AppUserModel relaunch properties", e);
-                }
-            });
+        Runnable apply = () -> {
+            try {
+                applyWindowsAppUserModelRelaunchProperties(stage);
+            } catch (Throwable e) {
+                LOG.warning("Failed to update AppUserModel relaunch properties", e);
+            }
         };
 
         if (stage.isShowing()) {
-            applyWindowsAppUserModelRelaunchProperties.run();
+            apply.run();
         } else {
             stage.addEventFilter(WindowEvent.WINDOW_SHOWN, new EventHandler<>() {
                 @Override
                 public void handle(WindowEvent e) {
                     stage.removeEventFilter(WindowEvent.WINDOW_SHOWN, this);
-                    applyWindowsAppUserModelRelaunchProperties.run();
+                    apply.run();
                 }
             });
         }
@@ -445,8 +439,8 @@ public final class Launcher extends Application {
 
     /// Writes AppUserModel ID and relaunch properties for the given window when HMCL is packaged as an `.exe`.
     ///
-    /// @param hwnd the native window handle
-    private static void applyWindowsAppUserModelRelaunchProperties(long hwnd) {
+    /// @param stage the stage whose native window receives the properties
+    private static void applyWindowsAppUserModelRelaunchProperties(Stage stage) {
         Shell32 shell32 = Shell32.INSTANCE;
         if (shell32 == null)
             return;
@@ -455,10 +449,16 @@ public final class Launcher extends Application {
         if (thisJar == null || !Files.isRegularFile(thisJar) || !"exe".equalsIgnoreCase(FileUtils.getExtension(thisJar)))
             return;
 
+        OptionalLong handle = WindowsNativeUtils.getWindowHandle(stage);
+        if (handle.isEmpty() || handle.getAsLong() == WinTypes.HANDLE.INVALID_VALUE) {
+            LOG.warning("Failed to get window handle for AppUserModel relaunch properties");
+            return;
+        }
+
         String exePath = FileUtils.getAbsolutePath(thisJar);
         String iconResource = exePath + ",0";
 
-        try (IPropertyStore store = IPropertyStore.forWindow(shell32, hwnd)) {
+        try (IPropertyStore store = IPropertyStore.forWindow(shell32, handle.getAsLong())) {
             if (store == null) {
                 LOG.warning("Failed to call SHGetPropertyStoreForWindow");
                 return;
