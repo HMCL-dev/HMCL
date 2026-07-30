@@ -66,8 +66,8 @@ public final class RemoteModpackPage extends ModpackPage {
             txtModpackName.setText(manifest.getName().trim());
             txtModpackName.getValidators().addAll(
                     new RequiredValidator(),
-                    new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
-                    new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+                    new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
+                    new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
         }
 
         btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.InstallerItem;
@@ -42,8 +43,8 @@ public class InstallersPage extends AbstractInstallersPage {
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
-                new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
-                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+                new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
+                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
 
         txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
@@ -91,22 +92,22 @@ public class InstallersPage extends AbstractInstallersPage {
     }
 
     protected void onInstall() {
-        String name = txtName.getText();
+        GameInstanceID instanceId = new GameInstanceID(txtName.getText());
 
-        if (!checkName(name)) {
+        if (!checkName(instanceId.id())) {
             Controllers.dialog(new MessageDialogPane.Builder(
                     i18n("install.name.invalid"),
                     i18n("message.warning"),
                     MessageDialogPane.MessageType.QUESTION)
                     .yesOrNo(() -> {
-                        controller.getSettings().put("name", name);
+                        controller.getSettings().put(INSTANCE_ID, instanceId);
                         controller.onFinish();
                     }, () -> {
                         // The user selects Cancel and does nothing.
                     })
                     .build());
         } else {
-            controller.getSettings().put("name", name);
+            controller.getSettings().put(INSTANCE_ID, instanceId);
             controller.onFinish();
         }
     }
@@ -142,5 +143,16 @@ public class InstallersPage extends AbstractInstallersPage {
 
         txtName.setText(nameBuilder.toString());
         isNameModifiedByUser = false;
+    }
+
+    @Override
+    protected boolean showExtendPane() {
+        return true;
+    }
+
+    @Override
+    protected void resetDefaultName() {
+        isNameModifiedByUser = false;
+        setTxtNameWithLoaders();
     }
 }
