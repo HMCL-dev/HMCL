@@ -20,9 +20,8 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.beans.binding.Bindings;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
@@ -33,17 +32,17 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends AbstractInstallersPage {
-    protected final GameRepository repository;
+    protected final HMCLGameRepository repository;
     protected final String gameVersion;
-    protected final Version version;
+    protected final GameInstanceManifest manifest;
 
-    public AdditionalInstallersPage(String gameVersion, Version version, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
+    public AdditionalInstallersPage(String gameVersion, GameInstanceManifest manifest, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
         this.gameVersion = gameVersion;
-        this.version = version;
+        this.manifest = manifest;
         this.repository = repository;
 
-        txtName.setText(version.getId());
+        txtName.setText(manifest.id().toString());
         txtName.setEditable(false);
 
         for (InstallerItem library : group.getLibraries()) {
@@ -88,5 +87,14 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     @Override
     public void cleanup(SettingsMap settings) {
+    }
+
+    @Override
+    protected boolean showExtendPane() {
+        return false;
+    }
+
+    @Override
+    protected void resetDefaultName() {
     }
 }
