@@ -444,7 +444,7 @@ public final class Launcher extends Application {
 
         try (IPropertyStore store = IPropertyStore.forWindow(shell32, hwnd)) {
             if (store == null) {
-                LOG.warning("SHGetPropertyStoreForWindow failed");
+                LOG.warning("Failed to call SHGetPropertyStoreForWindow");
                 return;
             }
 
