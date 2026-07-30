@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
+import org.jetbrains.annotations.Nullable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -304,7 +305,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 int parsedVersion = item.getParsedVersion();
                 label.setText(parsedVersion >= 0 ? String.valueOf(parsedVersion) : "?");
 
-                String vendor = JavaInfo.normalizeVendor(item.getVendor());
+                @Nullable String vendor = JavaInfo.normalizeVendor(item.getVendor());
 
                 content.setTitle((vendor != null ? vendor : i18n("message.unknown")) + " " + (item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
