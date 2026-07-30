@@ -179,11 +179,19 @@ public interface WinTypes {
     /// Minimal `PROPVARIANT` layout used for property-store string values.
     ///
     /// Only the fields required for `VT_EMPTY` and `VT_LPWSTR` values are modeled.
-    /// Callers that obtain values from the system must clear them with
-    /// [`Ole32#PropVariantClear(PROPVARIANT)`] when finished.
+    /// The native layout is preserved: an 8-byte header followed by the value union, which is
+    /// 8 bytes on x86 (`sizeof(PROPVARIANT) == 16`) and 16 bytes on x64
+    /// (`sizeof(PROPVARIANT) == 24`). Callers that obtain values from the system must clear them
+    /// with [`Ole32#PropVariantClear(PROPVARIANT)`] when finished.
     ///
     /// @see <a href="https://learn.microsoft.com/windows/win32/api/propidlbase/ns-propidlbase-propvariant">PROPVARIANT structure</a>
     final class PROPVARIANT extends Structure {
+
+        /// Native `sizeof(PROPVARIANT)`: `16` on x86, `24` on x64.
+        public static final int SIZE = 8 + (Native.POINTER_SIZE == 8 ? 16 : 8);
+
+        /// Byte offset of the value union (`pwszVal` for `VT_LPWSTR`).
+        private static final int UNION_OFFSET = 8;
 
         /// The variant type tag, such as [`WinConstants#VT_EMPTY`] or [`WinConstants#VT_LPWSTR`].
         public short vt;
@@ -197,21 +205,24 @@ public interface WinTypes {
         /// Reserved; must be zero for values constructed by HMCL.
         public short wReserved3;
 
-        /// The first pointer-sized union member; holds `LPWSTR` when `vt` is `VT_LPWSTR`.
-        public @Nullable Pointer value;
+        /// Backing storage for the native value union.
+        ///
+        /// Sized to the full ABI union width so [`#size()`] matches `sizeof(PROPVARIANT)`.
+        public byte[] unionData = new byte[SIZE - UNION_OFFSET];
 
         /// Keeps caller-owned wide-string memory reachable while this variant is in use.
         private @Nullable Memory ownedStringMemory;
 
         /// Creates an empty property variant.
         public PROPVARIANT() {
+            super(ALIGN_NONE);
         }
 
         /// Creates a property variant over an existing native memory region.
         ///
         /// @param memory the native memory containing a PROPVARIANT
         public PROPVARIANT(Pointer memory) {
-            super(memory);
+            super(memory, ALIGN_NONE);
             read();
         }
 
@@ -231,7 +242,7 @@ public interface WinTypes {
             this.wReserved1 = 0;
             this.wReserved2 = 0;
             this.wReserved3 = 0;
-            this.value = memory;
+            Arrays.fill(this.unionData, (byte) 0);
             write();
         }
 
@@ -245,7 +256,7 @@ public interface WinTypes {
             this.wReserved1 = 0;
             this.wReserved2 = 0;
             this.wReserved3 = 0;
-            this.value = null;
+            Arrays.fill(this.unionData, (byte) 0);
             write();
         }
 
@@ -254,15 +265,31 @@ public interface WinTypes {
         /// @return the string value, or `null` when the variant is not a non-null `VT_LPWSTR`
         public @Nullable String getStringValue() {
             read();
-            if (vt != WinConstants.VT_LPWSTR || value == null) {
+            if (vt != WinConstants.VT_LPWSTR) {
                 return null;
             }
-            return value.getWideString(0);
+            Pointer pointer = getPointer().getPointer(UNION_OFFSET);
+            if (pointer == null) {
+                return null;
+            }
+            return pointer.getWideString(0);
+        }
+
+        /// Writes the structure, then plants `pwszVal` when this instance owns a string value.
+        ///
+        /// JNA field writing alone cannot place a pointer into the leading bytes of
+        /// [`#unionData`] without a second pass.
+        @Override
+        public void write() {
+            super.write();
+            if (ownedStringMemory != null && vt == WinConstants.VT_LPWSTR) {
+                getPointer().setPointer(UNION_OFFSET, ownedStringMemory);
+            }
         }
 
         @Override
         protected List<String> getFieldOrder() {
-            return Arrays.asList("vt", "wReserved1", "wReserved2", "wReserved3", "value");
+            return Arrays.asList("vt", "wReserved1", "wReserved2", "wReserved3", "unionData");
         }
     }
 
