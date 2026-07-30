@@ -114,7 +114,6 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"));
         Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile == null) {
-            Platform.runLater(controller::onEnd);
             return;
         }
 
