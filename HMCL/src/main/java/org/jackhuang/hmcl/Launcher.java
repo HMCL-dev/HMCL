@@ -26,7 +26,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
-import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -147,8 +146,8 @@ public final class Launcher extends Application {
 
                 UpdateChecker.init();
 
+                installWindowsAppUserModelRelaunchProperties(primaryStage);
                 primaryStage.show();
-                updateWindowsAppUserModelRelaunchProperties(primaryStage);
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
@@ -404,49 +403,59 @@ public final class Launcher extends Application {
         }
     }
 
-    /// Configures window-level AppUserModel relaunch properties after the stage has a native window.
+    /// Installs permanent window listeners that keep AppUserModel relaunch properties in sync
+    /// with the stage's native HWND lifecycle.
     ///
-    /// Must run on the JavaFX application thread. `IPropertyStore` is a COM interface, and the FX
-    /// thread is already initialized for COM on Windows; worker threads are not.
+    /// JavaFX may destroy and recreate the HWND across `hide()` / `show()` (for example with
+    /// `HIDE_AND_REOPEN`). Properties are therefore applied on every [`WindowEvent#WINDOW_SHOWN`]
+    /// and removed with `VT_EMPTY` on every [`WindowEvent#WINDOW_HIDING`], as required by
+    /// [`SHGetPropertyStoreForWindow`](https://learn.microsoft.com/windows/win32/api/shellapi/nf-shellapi-shgetpropertystoreforwindow).
+    ///
+    /// Handlers must run on the JavaFX application thread: `IPropertyStore` is a COM interface,
+    /// and the FX thread is already initialized for COM on Windows.
     ///
     /// @param stage the primary launcher stage
-    private static void updateWindowsAppUserModelRelaunchProperties(Stage stage) {
+    private static void installWindowsAppUserModelRelaunchProperties(Stage stage) {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
             return;
         if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
             return;
 
-        Runnable apply = () -> {
-            try {
-                applyWindowsAppUserModelRelaunchProperties(stage);
-            } catch (Throwable e) {
-                LOG.warning("Failed to update AppUserModel relaunch properties", e);
-            }
-        };
-
-        if (stage.isShowing()) {
-            apply.run();
-        } else {
-            stage.addEventFilter(WindowEvent.WINDOW_SHOWN, new EventHandler<>() {
-                @Override
-                public void handle(WindowEvent e) {
-                    stage.removeEventFilter(WindowEvent.WINDOW_SHOWN, this);
-                    apply.run();
-                }
-            });
-        }
-    }
-
-    /// Writes AppUserModel ID and relaunch properties for the given window when HMCL is packaged as an `.exe`.
-    ///
-    /// @param stage the stage whose native window receives the properties
-    private static void applyWindowsAppUserModelRelaunchProperties(Stage stage) {
-        Shell32 shell32 = Shell32.INSTANCE;
-        if (shell32 == null)
-            return;
-
         @Nullable Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null || !Files.isRegularFile(thisJar) || !"exe".equalsIgnoreCase(FileUtils.getExtension(thisJar)))
+            return;
+
+        String exePath = FileUtils.getAbsolutePath(thisJar);
+        String iconResource = exePath + ",0";
+        String relaunchCommand = '"' + exePath + '"';
+
+        stage.addEventFilter(WindowEvent.WINDOW_SHOWN, event -> {
+            try {
+                applyWindowsAppUserModelRelaunchProperties(stage, relaunchCommand, iconResource);
+            } catch (Throwable e) {
+                LOG.warning("Failed to set AppUserModel relaunch properties", e);
+            }
+        });
+        stage.addEventFilter(WindowEvent.WINDOW_HIDING, event -> {
+            try {
+                clearWindowsAppUserModelRelaunchProperties(stage);
+            } catch (Throwable e) {
+                LOG.warning("Failed to clear AppUserModel relaunch properties", e);
+            }
+        });
+    }
+
+    /// Writes AppUserModel relaunch properties for the current native window of `stage`.
+    ///
+    /// Successful [`IPropertyStore#SetValue`] calls on a window property store take effect
+    /// immediately; no `Commit` is required or useful.
+    ///
+    /// @param stage the stage whose native window receives the properties
+    /// @param relaunchCommand the `PKEY_AppUserModel_RelaunchCommand` value
+    /// @param iconResource the `PKEY_AppUserModel_RelaunchIconResource` value
+    private static void applyWindowsAppUserModelRelaunchProperties(Stage stage, String relaunchCommand, String iconResource) {
+        Shell32 shell32 = Shell32.INSTANCE;
+        if (shell32 == null)
             return;
 
         OptionalLong handle = WindowsNativeUtils.getWindowHandle(stage);
@@ -455,35 +464,59 @@ public final class Launcher extends Application {
             return;
         }
 
-        String exePath = FileUtils.getAbsolutePath(thisJar);
-        String iconResource = exePath + ",0";
-
         try (IPropertyStore store = IPropertyStore.forWindow(shell32, handle.getAsLong())) {
             if (store == null) {
                 LOG.warning("Failed to call SHGetPropertyStoreForWindow");
                 return;
             }
 
-            if (!setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchCommand, '"' + exePath + '"')
+            // Set Relaunch* first, then AppUserModel.ID last. Window property store values take
+            // effect immediately on SetValue; assigning the ID first can let the shell register the
+            // window before relaunch metadata is complete.
+            if (!setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchCommand, relaunchCommand)
                     || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchIconResource, iconResource)
                     || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchDisplayNameResource, Metadata.FULL_NAME)
                     || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_ID, WINDOWS_APP_USER_MODEL_ID)) {
                 return;
             }
 
-            int hr = store.Commit();
-            if (hr < 0) {
-                LOG.warning("Failed to commit AppUserModel relaunch properties, HRESULT=0x" + Integer.toHexString(hr));
-            } else {
-                LOG.info("Updated AppUserModel relaunch properties for " + exePath);
+            LOG.info("Set AppUserModel relaunch properties for HWND " + Long.toHexString(handle.getAsLong()));
+        }
+    }
+
+    /// Removes AppUserModel relaunch properties from the current native window before it is hidden.
+    ///
+    /// @param stage the stage whose native window is about to be destroyed or hidden
+    private static void clearWindowsAppUserModelRelaunchProperties(Stage stage) {
+        Shell32 shell32 = Shell32.INSTANCE;
+        if (shell32 == null)
+            return;
+
+        OptionalLong handle = WindowsNativeUtils.getWindowHandle(stage);
+        if (handle.isEmpty() || handle.getAsLong() == WinTypes.HANDLE.INVALID_VALUE) {
+            return;
+        }
+
+        try (IPropertyStore store = IPropertyStore.forWindow(shell32, handle.getAsLong())) {
+            if (store == null) {
+                LOG.warning("Failed to call SHGetPropertyStoreForWindow while clearing properties");
+                return;
             }
+
+            WinTypes.PROPVARIANT empty = new WinTypes.PROPVARIANT();
+            empty.setEmpty();
+            // Clear in reverse of apply order so ID is removed before relaunch metadata when possible.
+            clearWindowsPropertyStoreValue(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_ID, empty);
+            clearWindowsPropertyStoreValue(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchDisplayNameResource, empty);
+            clearWindowsPropertyStoreValue(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchIconResource, empty);
+            clearWindowsPropertyStoreValue(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchCommand, empty);
         }
     }
 
     /// Sets a string property on an [`IPropertyStore`].
     ///
     /// @param store the property store
-    /// @param key   the property key
+    /// @param key the property key
     /// @param value the string value
     /// @return `true` if [`IPropertyStore#SetValue`] succeeds
     private static boolean setWindowsPropertyStoreString(IPropertyStore store, WinTypes.PROPERTYKEY key, String value) {
@@ -491,10 +524,22 @@ public final class Launcher extends Application {
         propvar.setStringValue(value);
         int hr = store.SetValue(key, propvar);
         if (hr < 0) {
-            LOG.warning("Failed to set " + key.pid + " on IPropertyStore, HRESULT=0x" + Integer.toHexString(hr));
+            LOG.warning("Failed to set property pid=" + key.pid + " on IPropertyStore, HRESULT=0x" + Integer.toHexString(hr));
             return false;
         }
         return true;
+    }
+
+    /// Removes a property by writing `VT_EMPTY`.
+    ///
+    /// @param store the property store
+    /// @param key the property key to clear
+    /// @param empty a `VT_EMPTY` value
+    private static void clearWindowsPropertyStoreValue(IPropertyStore store, WinTypes.PROPERTYKEY key, WinTypes.PROPVARIANT empty) {
+        int hr = store.SetValue(key, empty);
+        if (hr < 0) {
+            LOG.warning("Failed to clear property pid=" + key.pid + " on IPropertyStore, HRESULT=0x" + Integer.toHexString(hr));
+        }
     }
 
     private static void setupJavaFXVMOptions() {

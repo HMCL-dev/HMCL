@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util.platform.windows;
 import com.sun.jna.Function;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -28,32 +27,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 /// Thin wrapper around the Windows [`IPropertyStore`](https://learn.microsoft.com/windows/win32/api/propsys/nn-propsys-ipropertystore)
-/// COM interface.
+/// COM interface, limited to the operations HMCL needs for window AppUserModel properties.
 ///
 /// Instances own one COM reference. Callers must release that reference with
 /// [`#close()`] or [`#Release()`] when the store is no longer needed.
+///
+/// When the store is obtained from [`Shell32#SHGetPropertyStoreForWindow`], successful
+/// [`#SetValue(WinTypes.PROPERTYKEY, WinTypes.PROPVARIANT)`] calls take effect immediately.
+/// `IPropertyStore::Commit` has no effect on that store and is intentionally not exposed.
 ///
 /// @author Glavo
 @NotNullByDefault
 public final class IPropertyStore implements AutoCloseable {
 
-    /// Vtable slot of `IUnknown::AddRef`.
-    private static final int VTBL_ADD_REF = 1;
-
     /// Vtable slot of `IUnknown::Release`.
     private static final int VTBL_RELEASE = 2;
 
-    /// Vtable slot of `IPropertyStore::GetCount`.
-    private static final int VTBL_GET_COUNT = 3;
-
-    /// Vtable slot of `IPropertyStore::GetValue`.
-    private static final int VTBL_GET_VALUE = 5;
-
     /// Vtable slot of `IPropertyStore::SetValue`.
     private static final int VTBL_SET_VALUE = 6;
-
-    /// Vtable slot of `IPropertyStore::Commit`.
-    private static final int VTBL_COMMIT = 7;
 
     /// The underlying COM interface pointer, or `null` after release.
     private @Nullable Pointer pointer;
@@ -98,9 +89,10 @@ public final class IPropertyStore implements AutoCloseable {
         return pointer;
     }
 
-    /// Sets a property value, replacing any existing value for the same key.
+    /// Sets a property value, replacing or removing any existing value for the same key.
     ///
-    /// Changes are not persisted until [`#Commit()`] succeeds.
+    /// For stores returned by [`Shell32#SHGetPropertyStoreForWindow`], a successful call
+    /// takes effect immediately on the window. Pass a `VT_EMPTY` value to remove a property.
     ///
     /// @param key the property key to write
     /// @param propvar the value to assign; the store copies this value and does not take ownership of it
@@ -109,50 +101,7 @@ public final class IPropertyStore implements AutoCloseable {
     public int SetValue(WinTypes.PROPERTYKEY key, WinTypes.PROPVARIANT propvar) {
         key.write();
         propvar.write();
-        return invokeHResult(VTBL_SET_VALUE, key, propvar);
-    }
-
-    /// Saves property changes made by [`#SetValue(WinTypes.PROPERTYKEY, WinTypes.PROPVARIANT)`].
-    ///
-    /// @return `S_OK` if the operation succeeds; otherwise a failure `HRESULT`
-    /// @see <a href="https://learn.microsoft.com/windows/win32/api/propsys/nf-propsys-ipropertystore-commit">IPropertyStore::Commit method</a>
-    public int Commit() {
-        return invokeHResult(VTBL_COMMIT);
-    }
-
-    /// Retrieves the value of a property.
-    ///
-    /// On success, the caller owns the resources held by `propvar` and must clear them,
-    /// for example with [`Ole32#PropVariantClear(WinTypes.PROPVARIANT)`].
-    ///
-    /// @param key the property key to read
-    /// @param propvar receives the property value
-    /// @return `S_OK` if the operation succeeds; otherwise a failure `HRESULT`
-    /// @see <a href="https://learn.microsoft.com/windows/win32/api/propsys/nf-propsys-ipropertystore-getvalue">IPropertyStore::GetValue method</a>
-    public int GetValue(WinTypes.PROPERTYKEY key, WinTypes.PROPVARIANT propvar) {
-        key.write();
-        propvar.clear();
-        propvar.write();
-        int hr = invokeHResult(VTBL_GET_VALUE, key, propvar);
-        propvar.read();
-        return hr;
-    }
-
-    /// Returns the number of properties currently stored.
-    ///
-    /// @param count receives the property count on success
-    /// @return `S_OK` if the operation succeeds; otherwise a failure `HRESULT`
-    /// @see <a href="https://learn.microsoft.com/windows/win32/api/propsys/nf-propsys-ipropertystore-getcount">IPropertyStore::GetCount method</a>
-    public int GetCount(IntByReference count) {
-        return invokeHResult(VTBL_GET_COUNT, count);
-    }
-
-    /// Increments the COM reference count.
-    ///
-    /// @return the new reference count; the return value is intended for diagnostics only
-    /// @see <a href="https://learn.microsoft.com/windows/win32/api/unknwn/nf-unknwn-iunknown-addref">IUnknown::AddRef method</a>
-    public int AddRef() {
-        return invokeInt(VTBL_ADD_REF);
+        return invokeInt(VTBL_SET_VALUE, key, propvar);
     }
 
     /// Decrements the COM reference count and drops this wrapper's pointer when released.
@@ -174,15 +123,6 @@ public final class IPropertyStore implements AutoCloseable {
     @Override
     public void close() {
         Release();
-    }
-
-    /// Invokes a COM method that returns an `HRESULT`.
-    ///
-    /// @param vtableIndex the zero-based vtable slot
-    /// @param args arguments after the implicit `this` pointer
-    /// @return the method `HRESULT`
-    private int invokeHResult(int vtableIndex, Object... args) {
-        return invokeInt(vtableIndex, args);
     }
 
     /// Invokes a COM method that returns an `int`.

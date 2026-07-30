@@ -176,13 +176,13 @@ public interface WinTypes {
         }
     }
 
-    /// Minimal `PROPVARIANT` layout used for property-store string values.
+    /// Minimal `PROPVARIANT` layout for values HMCL writes with [`IPropertyStore#SetValue`].
     ///
-    /// Only the fields required for `VT_EMPTY` and `VT_LPWSTR` values are modeled.
-    /// The native layout is preserved: an 8-byte header followed by the value union, which is
-    /// 8 bytes on x86 (`sizeof(PROPVARIANT) == 16`) and 16 bytes on x64
-    /// (`sizeof(PROPVARIANT) == 24`). Callers that obtain values from the system must clear them
-    /// with [`Ole32#PropVariantClear(PROPVARIANT)`] when finished.
+    /// Only `VT_EMPTY` and `VT_LPWSTR` construction is supported. The native layout is preserved:
+    /// an 8-byte header followed by the value union, which is 8 bytes on x86
+    /// (`sizeof(PROPVARIANT) == 16`) and 16 bytes on x64 (`sizeof(PROPVARIANT) == 24`).
+    /// This type must not be used as an output buffer for APIs that write arbitrary
+    /// `PROPVARIANT` values (for example `IPropertyStore::GetValue`).
     ///
     /// @see <a href="https://learn.microsoft.com/windows/win32/api/propidlbase/ns-propidlbase-propvariant">PROPVARIANT structure</a>
     final class PROPVARIANT extends Structure {
@@ -213,7 +213,7 @@ public interface WinTypes {
         /// Keeps caller-owned wide-string memory reachable while this variant is in use.
         private @Nullable Memory ownedStringMemory;
 
-        /// Creates an empty property variant.
+        /// Creates an empty property variant (`VT_EMPTY`).
         public PROPVARIANT() {
             super(ALIGN_NONE);
         }
@@ -246,11 +246,11 @@ public interface WinTypes {
             write();
         }
 
-        /// Resets this variant to `VT_EMPTY` without freeing externally owned resources.
+        /// Resets this variant to `VT_EMPTY`.
         ///
-        /// Do not use this method for values returned by the system; use
-        /// [`Ole32#PropVariantClear(PROPVARIANT)`] instead.
-        public void clear() {
+        /// Use this when removing a window property with
+        /// [`IPropertyStore#SetValue(PROPERTYKEY, PROPVARIANT)`].
+        public void setEmpty() {
             this.ownedStringMemory = null;
             this.vt = (short) WinConstants.VT_EMPTY;
             this.wReserved1 = 0;
@@ -258,21 +258,6 @@ public interface WinTypes {
             this.wReserved3 = 0;
             Arrays.fill(this.unionData, (byte) 0);
             write();
-        }
-
-        /// Returns the wide string stored in this variant when `vt` is `VT_LPWSTR`.
-        ///
-        /// @return the string value, or `null` when the variant is not a non-null `VT_LPWSTR`
-        public @Nullable String getStringValue() {
-            read();
-            if (vt != WinConstants.VT_LPWSTR) {
-                return null;
-            }
-            Pointer pointer = getPointer().getPointer(UNION_OFFSET);
-            if (pointer == null) {
-                return null;
-            }
-            return pointer.getWideString(0);
         }
 
         /// Writes the structure, then plants `pwszVal` when this instance owns a string value.

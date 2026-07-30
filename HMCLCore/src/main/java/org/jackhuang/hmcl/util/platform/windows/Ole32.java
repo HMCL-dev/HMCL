@@ -39,11 +39,4 @@ public interface Ole32 extends StdCallLibrary {
     /// @param pv the memory block to free; ignored when `null`
     /// @see <a href="https://learn.microsoft.com/windows/win32/api/combaseapi/nf-combaseapi-cotaskmemfree">CoTaskMemFree function</a>
     void CoTaskMemFree(@Nullable Pointer pv);
-
-    /// Clears a [`WinTypes.PROPVARIANT`] value and frees any associated resources.
-    ///
-    /// @param pvar the property value to clear
-    /// @return `S_OK` if the operation succeeds; otherwise a failure `HRESULT`
-    /// @see <a href="https://learn.microsoft.com/windows/win32/api/combaseapi/nf-combaseapi-propvariantclear">PropVariantClear function</a>
-    int PropVariantClear(WinTypes.PROPVARIANT pvar);
 }
