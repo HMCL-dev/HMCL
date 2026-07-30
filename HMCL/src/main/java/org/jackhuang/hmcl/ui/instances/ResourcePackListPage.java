@@ -636,7 +636,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 Task.runAsync(() -> {
                     Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
                     if (versionOptional.isPresent()) {
-                        RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
+                        RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
                         FXUtils.runInFX(() -> {
                             button.setOnAction(e -> {
                                 fireEvent(new DialogCloseEvent());

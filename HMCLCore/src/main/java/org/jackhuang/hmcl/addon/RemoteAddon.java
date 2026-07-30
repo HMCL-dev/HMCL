@@ -32,16 +32,16 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public record RemoteAddon(String slug, String author, String title, String description, List<String> categories,
-                          String pageUrl, String iconUrl, IMod data, RemoteAddonRepository.Type repoType) {
+                          String pageUrl, String iconUrl, IAddon data, RemoteAddonRepository.Type repoType) {
 
-    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IMod() {
+    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IAddon() {
         @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
 
         @Override
-        public Stream<Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
     }, RemoteAddonRepository.Type.MOD);
@@ -192,14 +192,14 @@ public record RemoteAddon(String slug, String author, String title, String descr
         }
     }
 
-    public interface IMod {
-        List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException;
+    public interface IAddon {
+        List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
 
-        Stream<Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException;
+        Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
     }
 
     public interface IVersion {
-        Source getType();
+        Source getSource();
     }
 
     public record Version(IVersion self, String modid, String name, String version, String changelog,
