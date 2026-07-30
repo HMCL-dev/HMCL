@@ -464,10 +464,10 @@ public final class Launcher extends Application {
                 return;
             }
 
-            if (!setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_ID, WINDOWS_APP_USER_MODEL_ID)
-                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchCommand, '"' + exePath + '"')
+            if (!setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchCommand, '"' + exePath + '"')
                     || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchIconResource, iconResource)
-                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchDisplayNameResource, Metadata.FULL_NAME)) {
+                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchDisplayNameResource, Metadata.FULL_NAME)
+                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_ID, WINDOWS_APP_USER_MODEL_ID)) {
                 return;
             }
 
