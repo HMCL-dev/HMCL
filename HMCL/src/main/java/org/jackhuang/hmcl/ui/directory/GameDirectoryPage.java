@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.RequiredFieldValidator;
 import com.jfoenix.validation.base.ValidatorBase;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -44,6 +43,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -205,9 +205,10 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     }
 
     /// Saves the edited game directory or adds a new entry to the appropriate game directory store.
+    @FXThread
     private void onSave() {
         if (Objects.equals(Path.of(getLocation()).getRoot(), Path.of(getLocation()))) {
-            Platform.runLater(() -> Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING,
+            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING,
                     () -> {
                         if (gameDirectory != null) {
                             LocalizedText name = LocalizedText.plain(txtGameDirectoryName.getText());
@@ -254,8 +255,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                         }
 
                         fireEvent(new PageCloseEvent());
-                    }, null));
-
+                    }, null);
         }
     }
 
