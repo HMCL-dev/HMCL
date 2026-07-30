@@ -23,7 +23,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -141,10 +142,10 @@ public final class GameDirectoryManager {
     private static final ObjectProperty<@UnknownNullability HMCLGameRepository> selectedRepository = new SimpleObjectProperty<>(GameDirectoryManager.class, "selectedRepository");
 
     /// The selected instance ID projected from the selected repository.
-    private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper(GameDirectoryManager.class, "selectedInstance");
+    private static final ReadOnlyObjectWrapper<GameInstanceID> selectedInstance = new ReadOnlyObjectWrapper<>(GameDirectoryManager.class, "selectedInstance");
 
     /// Updates [#selectedInstance] when the selected repository changes its selected instance.
-    private static final ChangeListener<String> selectedRepositoryInstanceListener =
+    private static final ChangeListener<GameInstanceID> selectedRepositoryInstanceListener =
             (observable, oldValue, newValue) -> selectedInstance.set(newValue);
 
     /// Initializes game directory state from the stores loaded by [SettingsManager].
@@ -206,11 +207,11 @@ public final class GameDirectoryManager {
             selectedRepository.set(repository);
             selectedInstance.set(repository.getSelectedInstance());
             repository.selectedInstanceProperty().addListener(selectedRepositoryInstanceListener);
-            repository.refreshVersionsAsync().start();
+            repository.refreshAsync().start();
         });
         selectedGameDirectory.set(currentGameDirectory != null ? currentGameDirectory : mergedGameDirectories.get(0));
 
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
+        EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class).registerWeak(event -> {
             runInFX(() -> {
                 @Nullable HMCLGameRepository repository = selectedRepository.get();
                 if (repository != null && repository == event.getSource()) {
@@ -479,17 +480,17 @@ public final class GameDirectoryManager {
     }
 
     /// Returns the selected instance property projected from the selected repository.
-    public static ReadOnlyStringProperty selectedInstanceProperty() {
+    public static ReadOnlyObjectProperty<@Nullable GameInstanceID> selectedInstanceProperty() {
         return selectedInstance.getReadOnlyProperty();
     }
 
     /// Returns the selected instance ID for the selected repository.
-    public static @Nullable String getSelectedInstance() {
+    public static @Nullable GameInstanceID getSelectedInstance() {
         return getSelectedRepository().getSelectedInstance();
     }
 
     /// Sets the selected instance ID for the selected repository.
-    public static void setSelectedInstance(@Nullable String instance) {
+    public static void setSelectedInstance(@Nullable GameInstanceID instance) {
         getSelectedRepository().setSelectedInstance(instance);
     }
 
