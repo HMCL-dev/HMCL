@@ -170,7 +170,8 @@ public final class GameListPopupMenu extends StackPane {
                 this.content.titleProperty().bind(item.titleProperty());
                 this.content.subtitleProperty().bind(item.subtitleProperty());
                 this.tag.bind(item.tagProperty());
-                rootPane.pseudoClassStateChanged(ACTIVE, Objects.equals(item.getId(), item.getRepository().getSelectedInstance()));
+                if (item.getRepository().getSelectedInstance() != null)
+                    rootPane.pseudoClassStateChanged(ACTIVE, Objects.equals(item.getId(), item.getRepository().getSelectedInstance().id()));
             }
         }
     }
