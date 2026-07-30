@@ -23,8 +23,12 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.game.TexturesLoader;
@@ -59,17 +63,17 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
     protected final BooleanProperty loadingProperty = new SimpleBooleanProperty(true);
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final TabHeader tab;
-    private final TabHeader.Tab<SkinManage> manageTab = new TabHeader.Tab<>("manageTab");
+    private final TabHeader.Tab<SkinManagePane> manageTab = new TabHeader.Tab<>("manageTab");
     private final TransitionPane transitionPane = new TransitionPane();
 
-    protected final SkinManage skinManage;
+    protected final SkinManagePane skinManagePane;
 
     protected SkinPageBase(T account) {
         this.account = account;
 
         tab = new TabHeader(transitionPane, manageTab);
-        skinManage = new SkinManage();
-        manageTab.setNodeSupplier(() -> skinManage);
+        skinManagePane = new SkinManagePane();
+        manageTab.setNodeSupplier(() -> skinManagePane);
         tab.select(manageTab);
 
         BorderPane left = new BorderPane();
@@ -84,7 +88,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 
-        skinManage.setOnDragOver(e -> {
+        skinManagePane.setOnDragOver(e -> {
             if (e.getDragboard().hasFiles()) {
                 Path file = e.getDragboard().getFiles().get(0).toPath();
                 if (FileUtils.getName(file).endsWith(".png")) {
@@ -92,7 +96,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
                 }
             }
         });
-        skinManage.setOnDragDropped(e -> {
+        skinManagePane.setOnDragDropped(e -> {
             if (e.isAccepted()) {
                 onDrag(e.getDragboard().getFiles().get(0).toPath());
             }
@@ -152,15 +156,16 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
 
     protected abstract ReadOnlyObjectProperty<Skin> skinObjectProperty();
 
-    protected final class SkinManage extends HBox {
-        protected StackPane leftRegion = new StackPane();
+    protected final class SkinManagePane extends HBox {
+        protected VBox leftRegion = new VBox(20);
         private final BorderPane rightRegion = new BorderPane();
 
-        private SkinManage() {
+        private SkinManagePane() {
             setSpacing(10);
             setPadding(new Insets(10, 10, 10, 10));
 
             leftRegion.getStyleClass().add("card-non-transparent");
+            leftRegion.setAlignment(Pos.CENTER);
             HBox.setHgrow(leftRegion, Priority.ALWAYS);
 
             rightRegion.getStyleClass().add("card-non-transparent");

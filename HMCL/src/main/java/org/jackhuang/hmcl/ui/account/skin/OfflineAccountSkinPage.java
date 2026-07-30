@@ -25,8 +25,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineSkinConfig;
 import org.jackhuang.hmcl.game.TexturesLoader;
@@ -80,9 +78,6 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
             capeSelector.setValue(config.localCapePath());
         }
 
-        StackPane contentPane = super.skinManage.leftRegion;
-
-        VBox settingsBox = new VBox(20);
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
         grid.setHgap(16);
@@ -100,10 +95,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
         listener.changed(null, null, skinTypeItem.getSelectedData());
         skinTypeItem.selectedDataProperty().addListener(listener);
 
-        settingsBox.getChildren().addAll(skinTypeItem, grid);
-        contentPane.getChildren().setAll(settingsBox);
-        StackPane.setAlignment(settingsBox, Pos.CENTER);
-        settingsBox.setAlignment(Pos.CENTER);
+        super.skinManagePane.leftRegion.getChildren().addAll(skinTypeItem, grid);
 
         InvalidationListener invalidationListener = (e) -> {
             account.setSkin(getConfig());

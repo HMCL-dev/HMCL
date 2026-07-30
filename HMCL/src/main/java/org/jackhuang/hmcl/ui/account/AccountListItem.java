@@ -18,11 +18,9 @@
 package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
@@ -34,13 +32,12 @@ import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
-import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
+import org.jackhuang.hmcl.ui.account.skin.AuthlibInjectorAccoubtSkinPage;
 import org.jackhuang.hmcl.ui.account.skin.OfflineAccountSkinPage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -51,12 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 
-import static java.util.Collections.emptySet;
-import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -119,22 +112,6 @@ public class AccountListItem extends RadioButton {
         });
     }
 
-    public ObservableBooleanValue canUploadSkin() {
-        if (account instanceof AuthlibInjectorAccount aiAccount) {
-            ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getProfileID());
-            return createBooleanBinding(() -> {
-                Set<TextureType> uploadableTextures = profile.get()
-                        .map(AuthlibInjectorAccount::getUploadableTextures)
-                        .orElse(emptySet());
-                return uploadableTextures.contains(TextureType.SKIN);
-            }, profile);
-        } else if (account instanceof OfflineAccount || account.canUploadSkin()) {
-            return createBooleanBinding(() -> true);
-        } else {
-            return createBooleanBinding(() -> false);
-        }
-    }
-
     /**
      * @return the skin upload task, null if no file is selected
      */
@@ -143,7 +120,12 @@ public class AccountListItem extends RadioButton {
         if (account instanceof OfflineAccount) {
             Controllers.navigate(new OfflineAccountSkinPage((OfflineAccount) account));
             return null;
+        } else if (account instanceof AuthlibInjectorAccount) {
+            Controllers.navigate(new AuthlibInjectorAccoubtSkinPage((AuthlibInjectorAccount) account));
+            return null;
         }
+
+
         if (!account.canUploadSkin()) {
             return null;
         }
