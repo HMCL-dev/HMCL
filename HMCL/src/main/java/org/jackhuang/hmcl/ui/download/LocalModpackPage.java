@@ -66,8 +66,8 @@ public final class LocalModpackPage extends ModpackPage {
                 if (installAsVersion) {
                     txtModpackName.getValidators().setAll(
                             new RequiredValidator(),
-                            new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
-                            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+                            new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
+                            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
                 } else {
                     txtModpackName.getValidators().setAll(
                             new RequiredValidator(),
@@ -75,7 +75,7 @@ public final class LocalModpackPage extends ModpackPage {
                                     && GameDirectoryManager.getGameDirectories().stream()
                                             .noneMatch(existingProfile ->
                                                     str.equals(GameDirectoryManager.getGameDirectoryCustomName(existingProfile)))),
-                            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+                            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
                 }
             });
         }
@@ -90,7 +90,7 @@ public final class LocalModpackPage extends ModpackPage {
             FileChooser chooser = new FileChooser();
             chooser.setTitle(i18n("modpack.choose"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-            selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+            selectedFile = Controllers.showOpenDialog(chooser);
             if (selectedFile == null) {
                 controller.onEnd();
                 return;
