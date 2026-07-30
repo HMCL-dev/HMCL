@@ -25,6 +25,7 @@ import com.google.gson.JsonParser;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.PortablePath;
@@ -96,8 +97,8 @@ public final class GameDirectoriesTest {
 
         GameDirectories gameDirectories = Objects.requireNonNull(LegacyConfigMigrator.extractGameDirectoriesFromConfigJson(settings));
 
-        GameDirectoryID defaultGameDirectoryId = LegacyConfigMigrator.getLegacyProfileID("Default");
-        GameDirectoryID homeGameDirectoryId = LegacyConfigMigrator.getLegacyProfileID("Home");
+        GameDirectoryID defaultGameDirectoryId = GameDirectoryManager.DEFAULT_GAME_DIRECTORY_ID;
+        GameDirectoryID homeGameDirectoryId = GameDirectoryManager.HOME_GAME_DIRECTORY_ID;
         GameDirectory defaultGameDirectory = gameDirectories.getGameDirectories().stream()
                 .filter(gameDirectory -> defaultGameDirectoryId.equals(gameDirectory.getId()))
                 .findFirst()
@@ -140,7 +141,7 @@ public final class GameDirectoriesTest {
 
         assertFalse(settings.has("configurations"));
         assertEquals(id, config.selectedGameDirectoryProperty().get());
-        assertEquals("1.20.1", config.getSelectedInstance(id));
+        assertEquals("1.20.1", config.getSelectedInstance(id).toString());
 
         JsonObject serialized = JsonParser.parseString(config.toJson()).getAsJsonObject();
         assertEquals("1.20.1", serialized
@@ -357,9 +358,33 @@ public final class GameDirectoriesTest {
             GameDirectory userGameDirectory = assertSingleDefaultGameDirectory(
                     userDirectories,
                     PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
+            assertEquals(GameDirectoryManager.DEFAULT_GAME_DIRECTORY_ID, localGameDirectory.getId());
+            assertEquals(GameDirectoryManager.HOME_GAME_DIRECTORY_ID, userGameDirectory.getId());
             assertEquals(2, GameDirectoryManager.getGameDirectories().size());
             assertTrue(GameDirectoryManager.getGameDirectories().contains(localGameDirectory));
             assertTrue(GameDirectoryManager.getGameDirectories().contains(userGameDirectory));
+        }
+    }
+
+    /// Tests that newly created stores use the stable IDs for their built-in game directories.
+    @Test
+    public void createsBuiltInGameDirectoriesWithStableIdsForNewStores() throws ReflectiveOperationException {
+        GameDirectories userDirectories = new GameDirectories();
+        userDirectories.setUserFile(true);
+        userDirectories.setNewlyCreated(true);
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.setUserFile(false);
+        localDirectories.setNewlyCreated(true);
+
+        try (GameDirectoryEnvironment ignored = new GameDirectoryEnvironment(localDirectories, userDirectories)) {
+            GameDirectoryManager.init();
+
+            GameDirectory localGameDirectory = assertSingleDefaultGameDirectory(localDirectories, PortablePath.of(".minecraft"));
+            GameDirectory userGameDirectory = assertSingleDefaultGameDirectory(
+                    userDirectories,
+                    PortablePath.fromPath(Metadata.MINECRAFT_DIRECTORY));
+            assertEquals(GameDirectoryManager.DEFAULT_GAME_DIRECTORY_ID, localGameDirectory.getId());
+            assertEquals(GameDirectoryManager.HOME_GAME_DIRECTORY_ID, userGameDirectory.getId());
         }
     }
 
@@ -405,6 +430,44 @@ public final class GameDirectoriesTest {
             PortablePath newPath = PortablePath.of("local/Renamed");
             gameDirectory.setPath(newPath);
             assertEquals(newPath.toPath(), repository.getBaseDirectory());
+        }
+    }
+
+    /// Tests that new isolated installing instances resolve content directories under the version root before metadata is saved.
+    @Test
+    public void newIsolatedInstallingInstanceUsesVersionRootBeforeVersionExists(@TempDir Path tempDirectory)
+            throws ReflectiveOperationException {
+        GameSettingsPresetID defaultPresetId =
+                GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174002");
+        GameSettings.Preset defaultPreset = new GameSettings.Preset(defaultPresetId);
+        defaultPreset.defaultIsolationTypeProperty().setValue(DefaultIsolationType.MODDED);
+        GameSettingsPresets presets = new GameSettingsPresets();
+        presets.getPresets().setAll(defaultPreset);
+
+        GameDirectory gameDirectory = new GameDirectory(
+                GameDirectoryID.generate(),
+                LocalizedText.plain("Dev"),
+                PortablePath.of(tempDirectory.toString()));
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(gameDirectory);
+        GameDirectories userDirectories = new GameDirectories();
+
+        try (GameDirectoryEnvironment ignored =
+                     new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
+            settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
+            HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
+            GameInstanceID id = new GameInstanceID("1.21.11-fabric");
+
+            assertFalse(repository.hasInstance(id));
+            assertEquals(repository.getBaseDirectory(), repository.getRunDirectory(id));
+
+            repository.applyDefaultIsolationSettingForNewInstance(id, true);
+
+            assertEquals(repository.getInstanceRoot(id), repository.getRunDirectory(id));
+            assertEquals(repository.getInstanceRoot(id).resolve("mods"), repository.getModsDirectory(id));
+
+            assertTrue(repository.removeInstanceFromDisk(id));
+            assertEquals(repository.getBaseDirectory(), repository.getRunDirectory(id));
         }
     }
 
@@ -465,7 +528,8 @@ public final class GameDirectoriesTest {
                      new GameDirectoryEnvironment(localDirectories, userDirectories, presets)) {
             settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
-            Path versionRoot = repository.getVersionRoot("1.20.1");
+            GameInstanceID instanceId = new GameInstanceID("1.20.1");
+            Path versionRoot = repository.getInstanceRoot(instanceId);
             Files.createDirectories(versionRoot);
             Files.writeString(versionRoot.resolve("hmclversion.cfg"), """
                     {
@@ -473,7 +537,7 @@ public final class GameDirectoriesTest {
                     }
                     """);
 
-            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings(instanceId));
 
             assertEquals(legacyPresetId, setting.parentProperty().getValue());
         }
@@ -506,7 +570,8 @@ public final class GameDirectoriesTest {
             settings().defaultGameSettingsPresetProperty().set(defaultPresetId);
             HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
             writeVersionJson(repository, "1.20.1");
-            Path versionRoot = repository.getVersionRoot("1.20.1");
+            GameInstanceID instanceId = new GameInstanceID("1.20.1");
+            Path versionRoot = repository.getInstanceRoot(instanceId);
             Files.writeString(versionRoot.resolve(LegacyGameSettingsMigrator.LEGACY_INSTANCE_SETTINGS_FILENAME), """
                     {
                       "usesGlobal": true
@@ -515,9 +580,9 @@ public final class GameDirectoriesTest {
 
             LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
 
-            assertFalse(Files.exists(repository.getInstanceConfigDirectory("1.20.1")
+            assertFalse(Files.exists(repository.getInstanceConfigDirectory(instanceId)
                     .resolve(LegacyGameSettingsMigrator.INSTANCE_GAME_SETTINGS_FILENAME)));
-            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings(instanceId));
             assertEquals(legacyPresetId, setting.parentProperty().getValue());
         }
     }
@@ -553,7 +618,7 @@ public final class GameDirectoriesTest {
             writeVersionJson(repository, "1.20.1");
             LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
 
-            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings("1.20.1"));
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings(new GameInstanceID("1.20.1")));
 
             assertEquals(legacyPresetId, setting.parentProperty().getValue());
             assertTrue(setting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY));
@@ -591,7 +656,7 @@ public final class GameDirectoriesTest {
             LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
             writeVersionJson(repository, "1.20.1");
 
-            assertNull(repository.getInstanceGameSettings("1.20.1"));
+            assertNull(repository.getInstanceGameSettings(new GameInstanceID("1.20.1")));
         }
     }
 
@@ -774,7 +839,7 @@ public final class GameDirectoriesTest {
 
     /// Writes a minimal valid version json for repository refresh tests.
     private static void writeVersionJson(HMCLGameRepository repository, String id) throws IOException {
-        Path versionRoot = repository.getVersionRoot(id);
+        Path versionRoot = repository.getInstanceRoot(new GameInstanceID(id));
         Files.createDirectories(versionRoot);
         Files.writeString(versionRoot.resolve(id + ".json"), """
                 {

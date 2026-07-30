@@ -23,7 +23,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -39,6 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.*;
@@ -53,6 +55,14 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// [LauncherSettings] directly.
 @NotNullByDefault
 public final class GameDirectoryManager {
+
+    /// The stable ID shared by newly created and migrated current-workspace game directories.
+    static final GameDirectoryID DEFAULT_GAME_DIRECTORY_ID =
+            new GameDirectoryID(new UUID(0x7105bc1f490e5e8cL, 0x878cf5844c3d4bc3L));
+
+    /// The stable ID shared by newly created and migrated user-home game directories.
+    static final GameDirectoryID HOME_GAME_DIRECTORY_ID =
+            new GameDirectoryID(new UUID(0xf3eafde8506e5a77L, 0xbc88f24b4728dfb2L));
 
     /// The default current-workspace game directory path.
     private static final PortablePath CURRENT_GAME_DIRECTORY_PATH = PortablePath.of(".minecraft");
@@ -132,10 +142,10 @@ public final class GameDirectoryManager {
     private static final ObjectProperty<@UnknownNullability HMCLGameRepository> selectedRepository = new SimpleObjectProperty<>(GameDirectoryManager.class, "selectedRepository");
 
     /// The selected instance ID projected from the selected repository.
-    private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper(GameDirectoryManager.class, "selectedInstance");
+    private static final ReadOnlyObjectWrapper<GameInstanceID> selectedInstance = new ReadOnlyObjectWrapper<>(GameDirectoryManager.class, "selectedInstance");
 
     /// Updates [#selectedInstance] when the selected repository changes its selected instance.
-    private static final ChangeListener<String> selectedRepositoryInstanceListener =
+    private static final ChangeListener<GameInstanceID> selectedRepositoryInstanceListener =
             (observable, oldValue, newValue) -> selectedInstance.set(newValue);
 
     /// Initializes game directory state from the stores loaded by [SettingsManager].
@@ -154,12 +164,14 @@ public final class GameDirectoryManager {
         if (localGameDirectories().isNewlyCreated() && localGameDirectories().getGameDirectories().isEmpty()) {
             needRebuildGameDirectories = true;
             GameDirectories gameDirectories = localGameDirectories();
-            gameDirectories.getGameDirectories().add(new GameDirectory(newGameDirectoryId(), null, CURRENT_GAME_DIRECTORY_PATH));
+            gameDirectories.getGameDirectories().add(new GameDirectory(
+                    DEFAULT_GAME_DIRECTORY_ID, null, CURRENT_GAME_DIRECTORY_PATH));
         }
         if (userGameDirectories().isNewlyCreated() && userGameDirectories().getGameDirectories().isEmpty()) {
             needRebuildGameDirectories = true;
             GameDirectories gameDirectories = userGameDirectories();
-            gameDirectories.getGameDirectories().add(new GameDirectory(newGameDirectoryId(), null, HOME_GAME_DIRECTORY_PATH));
+            gameDirectories.getGameDirectories().add(new GameDirectory(
+                    HOME_GAME_DIRECTORY_ID, null, HOME_GAME_DIRECTORY_PATH));
         }
 
         needRebuildGameDirectories |= createDefaultGameDirectoriesIfEmpty();
@@ -195,11 +207,11 @@ public final class GameDirectoryManager {
             selectedRepository.set(repository);
             selectedInstance.set(repository.getSelectedInstance());
             repository.selectedInstanceProperty().addListener(selectedRepositoryInstanceListener);
-            repository.refreshVersionsAsync().start();
+            repository.refreshAsync().start();
         });
         selectedGameDirectory.set(currentGameDirectory != null ? currentGameDirectory : mergedGameDirectories.get(0));
 
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
+        EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class).registerWeak(event -> {
             runInFX(() -> {
                 @Nullable HMCLGameRepository repository = selectedRepository.get();
                 if (repository != null && repository == event.getSource()) {
@@ -216,9 +228,11 @@ public final class GameDirectoryManager {
         if (localGameDirectories().getGameDirectories().isEmpty()
                 && userGameDirectories().getGameDirectories().isEmpty()) {
             localGameDirectories().getGameDirectories()
-                    .add(new GameDirectory(newGameDirectoryId(), null, CURRENT_GAME_DIRECTORY_PATH));
+                    .add(new GameDirectory(
+                            DEFAULT_GAME_DIRECTORY_ID, null, CURRENT_GAME_DIRECTORY_PATH));
             userGameDirectories().getGameDirectories()
-                    .add(new GameDirectory(newGameDirectoryId(), null, HOME_GAME_DIRECTORY_PATH));
+                    .add(new GameDirectory(
+                            HOME_GAME_DIRECTORY_ID, null, HOME_GAME_DIRECTORY_PATH));
             return true;
         } else {
             return false;
@@ -466,17 +480,17 @@ public final class GameDirectoryManager {
     }
 
     /// Returns the selected instance property projected from the selected repository.
-    public static ReadOnlyStringProperty selectedInstanceProperty() {
+    public static ReadOnlyObjectProperty<@Nullable GameInstanceID> selectedInstanceProperty() {
         return selectedInstance.getReadOnlyProperty();
     }
 
     /// Returns the selected instance ID for the selected repository.
-    public static @Nullable String getSelectedInstance() {
+    public static @Nullable GameInstanceID getSelectedInstance() {
         return getSelectedRepository().getSelectedInstance();
     }
 
     /// Sets the selected instance ID for the selected repository.
-    public static void setSelectedInstance(@Nullable String instance) {
+    public static void setSelectedInstance(@Nullable GameInstanceID instance) {
         getSelectedRepository().setSelectedInstance(instance);
     }
 

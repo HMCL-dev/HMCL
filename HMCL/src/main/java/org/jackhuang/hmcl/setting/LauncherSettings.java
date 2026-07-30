@@ -34,6 +34,7 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountID;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.theme.BuiltinBackground;
@@ -86,6 +87,9 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// Theme appearance override key for title-bar transparency.
     public static final String THEME_APPEARANCE_TITLE_BAR_TRANSPARENT = "titleBarTransparent";
+
+    /// Theme appearance override key for window transparency.
+    public static final String THEME_APPEARANCE_WINDOW_TRANSPARENT = "windowTransparent";
 
     /// Theme appearance override key for the primary background source.
     public static final String THEME_APPEARANCE_BACKGROUND = "background";
@@ -336,6 +340,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return titleBarTransparent;
     }
 
+    /// Whether translucent launcher backgrounds reveal content behind the window.
+    @SerializedName("windowTransparent")
+    private final BooleanProperty windowTransparent = new SimpleBooleanProperty(false);
+
+    /// Returns the window transparency property.
+    public BooleanProperty windowTransparentProperty() {
+        return windowTransparent;
+    }
+
     // Background source
 
     /// The launcher background source type.
@@ -468,15 +481,17 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
 
     /// Whether UI animations are disabled.
     @SerializedName("animationDisabled")
-    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
-            FXUtils.REDUCED_MOTION == Boolean.TRUE
-                    || !JavaRuntime.CURRENT_JIT_ENABLED
-                    || !FXUtils.GPU_ACCELERATION_ENABLED
-    );
+    private final ObjectProperty<@Nullable Boolean> animationDisabled = new SimpleObjectProperty<>();
 
     /// Returns the UI animation disable property.
-    public BooleanProperty animationDisabledProperty() {
+    public ObjectProperty<@Nullable Boolean> animationDisabledProperty() {
         return animationDisabled;
+    }
+
+    public boolean isAnimationDisabled() {
+        // Avoid accessing FXUtils too early during startup
+        return Objects.requireNonNullElseGet(animationDisabled.get(), () ->
+                FXUtils.REDUCED_MOTION == Boolean.TRUE || !JavaRuntime.CURRENT_JIT_ENABLED || !FXUtils.GPU_ACCELERATION_ENABLED);
     }
 
     // Networks
@@ -609,34 +624,34 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     ///
     /// This field is owned by [GameDirectoryManager]. Code outside [GameDirectoryManager] should not modify it directly.
     @SerializedName(PROPERTY_SELECTED_INSTANCE)
-    private final ObservableMap<GameDirectoryID, String> selectedInstance = FXCollections.observableHashMap();
+    private final ObservableMap<GameDirectoryID, GameInstanceID> selectedInstance = FXCollections.observableHashMap();
 
     /// Returns selected instance IDs keyed by game directory ID.
     ///
     /// The map stores persisted selected instance values by game directory ID.
-    public ObservableMap<GameDirectoryID, String> getSelectedInstance() {
+    public ObservableMap<GameDirectoryID, GameInstanceID> getSelectedInstance() {
         return selectedInstance;
     }
 
     /// Returns the selected instance ID for the given game directory ID.
     ///
     /// The value is loaded by the game repository for the matching game directory.
-    public @Nullable String getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
+    public @Nullable GameInstanceID getSelectedInstance(@Nullable GameDirectoryID gameDirectoryId) {
         return gameDirectoryId != null ? selectedInstance.get(gameDirectoryId) : null;
     }
 
     /// Sets the selected instance ID for the given game directory ID.
     ///
     /// Blank values remove the persisted selected instance entry.
-    public void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable String selectedInstance) {
+    public void setSelectedInstance(@Nullable GameDirectoryID gameDirectoryId, @Nullable GameInstanceID selectedInstance) {
         if (gameDirectoryId == null) {
             return;
         }
 
-        if (StringUtils.isBlank(selectedInstance)) {
-            this.selectedInstance.remove(gameDirectoryId);
-        } else {
+        if (selectedInstance != null) {
             this.selectedInstance.put(gameDirectoryId, selectedInstance);
+        } else {
+            this.selectedInstance.remove(gameDirectoryId);
         }
     }
 
