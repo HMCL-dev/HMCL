@@ -67,13 +67,13 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
         private final DependencyType type;
 
-        private final RemoteAddonRepository remoteAddonRepository;
+        private final @Nullable RemoteAddonRepository remoteAddonRepository;
 
-        private final String id;
+        private final @Nullable String id;
 
         private transient RemoteAddon remoteAddon = null;
 
-        private Dependency(DependencyType type, RemoteAddonRepository remoteAddonRepository, String id) {
+        private Dependency(DependencyType type, @Nullable RemoteAddonRepository remoteAddonRepository, @Nullable String id) {
             this.type = type;
             this.remoteAddonRepository = remoteAddonRepository;
             this.id = id;
@@ -98,10 +98,12 @@ public record RemoteAddon(String slug, String author, String title, String descr
             return this.type;
         }
 
+        @Nullable
         public RemoteAddonRepository getRemoteModRepository() {
             return this.remoteAddonRepository;
         }
 
+        @Nullable
         public String getId() {
             return this.id;
         }
