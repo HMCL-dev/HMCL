@@ -88,7 +88,7 @@ public final class IPropertyStore implements AutoCloseable {
     /// @param hwnd the native window handle
     /// @return the property store, or `null` when the call fails
     public static @Nullable IPropertyStore forWindow(Shell32 shell32, long hwnd) {
-        return forWindow(shell32, new WinTypes.HANDLE(new Pointer(hwnd)));
+        return forWindow(shell32, new WinTypes.HANDLE(Pointer.createConstant(hwnd)));
     }
 
     /// Returns the raw COM interface pointer.

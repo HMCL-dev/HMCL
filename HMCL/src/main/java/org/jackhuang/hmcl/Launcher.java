@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.WString;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -40,6 +41,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WindowsNativeUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -48,7 +50,10 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.windows.Gdi32;
+import org.jackhuang.hmcl.util.platform.windows.IPropertyStore;
+import org.jackhuang.hmcl.util.platform.windows.Shell32;
 import org.jackhuang.hmcl.util.platform.windows.User32;
+import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,6 +72,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
@@ -140,6 +146,7 @@ public final class Launcher extends Application {
                 UpdateChecker.init();
 
                 primaryStage.show();
+                updateWindowsAppUserModelRelaunchProperties(primaryStage);
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
@@ -339,6 +346,7 @@ public final class Launcher extends Application {
             }
 
             setupJavaFXVMOptions();
+            setupWindowsAppUserModelID();
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
@@ -370,6 +378,188 @@ public final class Launcher extends Application {
             Controllers.shutdown();
             Lang.executeDelayed(System::gc, TimeUnit.SECONDS, 5, true);
         });
+    }
+
+    /// Explicit Application User Model ID used for Windows taskbar grouping and pinning.
+    private static final String WINDOWS_APP_USER_MODEL_ID = "org.jackhuang.hmcl";
+
+    /// Sets the process-level AppUserModelID on Windows so the launcher groups correctly on the taskbar.
+    private static void setupWindowsAppUserModelID() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+            return;
+        if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
+            return;
+
+        try {
+            int hr = Shell32.INSTANCE.SetCurrentProcessExplicitAppUserModelID(new WString(WINDOWS_APP_USER_MODEL_ID));
+            if (hr < 0) {
+                LOG.warning("Failed to set AppUserModelID, HRESULT=0x" + Integer.toHexString(hr));
+            } else {
+                LOG.info("Set AppUserModelID: " + WINDOWS_APP_USER_MODEL_ID);
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to set AppUserModelID", e);
+        }
+    }
+
+    /// Asynchronously configures window-level AppUserModel relaunch properties after the stage is shown.
+    ///
+    /// @param stage the primary launcher stage
+    private static void updateWindowsAppUserModelRelaunchProperties(Stage stage) {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+            return;
+        if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
+            return;
+
+        OptionalLong handle = WindowsNativeUtils.getWindowHandle(stage);
+        if (handle.isEmpty() || handle.getAsLong() == WinTypes.HANDLE.INVALID_VALUE) {
+            LOG.warning("Failed to get window handle for AppUserModel relaunch properties");
+            return;
+        }
+
+        long hwnd = handle.getAsLong();
+        Lang.thread(() -> {
+            try {
+                applyWindowsAppUserModelRelaunchProperties(hwnd);
+            } catch (Throwable e) {
+                LOG.warning("Failed to update AppUserModel relaunch properties", e);
+            }
+        }, "Update Windows AppUserModel Relaunch Properties", true);
+    }
+
+    /// Writes AppUserModel ID and relaunch properties for the given window.
+    ///
+    /// @param hwnd the native window handle
+    private static void applyWindowsAppUserModelRelaunchProperties(long hwnd) {
+        Shell32 shell32 = Shell32.INSTANCE;
+        if (shell32 == null)
+            return;
+
+        String relaunchCommand = buildWindowsRelaunchCommand();
+        if (relaunchCommand == null) {
+            LOG.warning("Failed to determine Windows relaunch command");
+            return;
+        }
+
+        String iconResource = buildWindowsRelaunchIconResource();
+        if (iconResource == null) {
+            LOG.warning("Failed to determine Windows relaunch icon resource");
+            return;
+        }
+
+        try (IPropertyStore store = IPropertyStore.forWindow(shell32, hwnd)) {
+            if (store == null) {
+                LOG.warning("SHGetPropertyStoreForWindow failed");
+                return;
+            }
+
+            if (!setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_ID, WINDOWS_APP_USER_MODEL_ID)
+                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchCommand, relaunchCommand)
+                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchIconResource, iconResource)
+                    || !setWindowsPropertyStoreString(store, WinTypes.PROPERTYKEY.PKEY_AppUserModel_RelaunchDisplayNameResource, Metadata.FULL_NAME)) {
+                return;
+            }
+
+            int hr = store.Commit();
+            if (hr < 0) {
+                LOG.warning("Failed to commit AppUserModel relaunch properties, HRESULT=0x" + Integer.toHexString(hr));
+            } else {
+                LOG.info("Updated AppUserModel relaunch properties");
+            }
+        }
+    }
+
+    /// Sets a string property on an [`IPropertyStore`].
+    ///
+    /// @param store the property store
+    /// @param key the property key
+    /// @param value the string value
+    /// @return `true` if [`IPropertyStore#SetValue`] succeeds
+    private static boolean setWindowsPropertyStoreString(IPropertyStore store, WinTypes.PROPERTYKEY key, String value) {
+        WinTypes.PROPVARIANT propvar = new WinTypes.PROPVARIANT();
+        propvar.setStringValue(value);
+        int hr = store.SetValue(key, propvar);
+        if (hr < 0) {
+            LOG.warning("Failed to set " + key.pid + " on IPropertyStore, HRESULT=0x" + Integer.toHexString(hr));
+            return false;
+        }
+        return true;
+    }
+
+    /// Builds the command line used to relaunch HMCL from the Windows taskbar.
+    ///
+    /// @return a quoted Windows command line, or `null` when it cannot be determined
+    private static @Nullable String buildWindowsRelaunchCommand() {
+        ProcessHandle.Info info = ProcessHandle.current().info();
+        Optional<String> command = info.command();
+        Optional<String[]> arguments = info.arguments();
+        if (command.isPresent() && arguments.isPresent()) {
+            CommandBuilder builder = new CommandBuilder();
+            builder.add(command.get());
+            builder.addAll(arguments.get());
+            return builder.toString();
+        }
+
+        Path jar = JarUtils.thisJarPath();
+        if (jar == null)
+            return null;
+
+        Path javaBinary = resolveWindowsJavaBinary();
+        if (javaBinary == null)
+            return null;
+
+        CommandBuilder builder = new CommandBuilder();
+        builder.add(javaBinary.toString());
+        try {
+            for (String inputArgument : java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+                if (inputArgument.startsWith("-D") || inputArgument.startsWith("-X")) {
+                    builder.add(inputArgument);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        builder.add("-jar");
+        builder.add(jar.toAbsolutePath().toString());
+        return builder.toString();
+    }
+
+    /// Builds the icon resource string used by the Windows taskbar for relaunch/pinning.
+    ///
+    /// @return an icon resource path such as `C:\Path\App.exe,0`, or `null` when unavailable
+    private static @Nullable String buildWindowsRelaunchIconResource() {
+        Optional<String> command = ProcessHandle.current().info().command();
+        if (command.isPresent()) {
+            Path executable = Path.of(command.get());
+            if (Files.isRegularFile(executable)) {
+                return executable.toAbsolutePath() + ",0";
+            }
+        }
+
+        Path javaBinary = resolveWindowsJavaBinary();
+        if (javaBinary != null && Files.isRegularFile(javaBinary)) {
+            return javaBinary.toAbsolutePath() + ",0";
+        }
+        return null;
+    }
+
+    /// Resolves the preferred Windows Java launcher binary for restarting HMCL without a console window.
+    ///
+    /// @return `javaw.exe` when present, otherwise `java.exe`, or `null` when neither is available
+    private static @Nullable Path resolveWindowsJavaBinary() {
+        String javaHome = System.getProperty("java.home");
+        if (javaHome == null)
+            return null;
+
+        Path bin = Path.of(javaHome, "bin");
+        Path javaw = bin.resolve("javaw.exe");
+        if (Files.isRegularFile(javaw))
+            return javaw;
+
+        Path java = bin.resolve("java.exe");
+        if (Files.isRegularFile(java))
+            return java;
+
+        return null;
     }
 
     private static void setupJavaFXVMOptions() {

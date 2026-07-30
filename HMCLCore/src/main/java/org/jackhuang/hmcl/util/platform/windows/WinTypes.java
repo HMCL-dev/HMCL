@@ -101,19 +101,40 @@ public interface WinTypes {
     /// @see <a href="https://learn.microsoft.com/windows/win32/api/wtypes/ns-wtypes-propertykey">PROPERTYKEY structure</a>
     final class PROPERTYKEY extends Structure {
 
+        /// Format identifier shared by `System.AppUserModel.*` properties.
+        private static final GUID FMTID_AppUserModel = GUID.of(
+                0x9F4C2855, (short) 0x9F79, (short) 0x4B39,
+                (byte) 0xA8, (byte) 0xD0, (byte) 0xE1, (byte) 0xD4,
+                (byte) 0x2D, (byte) 0xE1, (byte) 0xD5, (byte) 0xF3
+        );
+
+        /// The command line used to relaunch the application from the taskbar.
+        ///
+        /// Callers must treat this constant as read-only.
+        ///
+        /// @see <a href="https://learn.microsoft.com/windows/win32/properties/props-system-appusermodel-relaunchcommand">System.AppUserModel.RelaunchCommand</a>
+        public static final PROPERTYKEY PKEY_AppUserModel_RelaunchCommand = of(FMTID_AppUserModel, 2);
+
+        /// The icon resource shown for the application's taskbar button and pinned items.
+        ///
+        /// Callers must treat this constant as read-only.
+        ///
+        /// @see <a href="https://learn.microsoft.com/windows/win32/properties/props-system-appusermodel-relaunchiconresource">System.AppUserModel.RelaunchIconResource</a>
+        public static final PROPERTYKEY PKEY_AppUserModel_RelaunchIconResource = of(FMTID_AppUserModel, 3);
+
+        /// The display name used when the application is relaunched from the taskbar.
+        ///
+        /// Callers must treat this constant as read-only.
+        ///
+        /// @see <a href="https://learn.microsoft.com/windows/win32/properties/props-system-appusermodel-relaunchdisplaynameresource">System.AppUserModel.RelaunchDisplayNameResource</a>
+        public static final PROPERTYKEY PKEY_AppUserModel_RelaunchDisplayNameResource = of(FMTID_AppUserModel, 4);
+
         /// The AppUserModelID property key used with window and shortcut property stores.
         ///
         /// Callers must treat this constant as read-only.
         ///
         /// @see <a href="https://learn.microsoft.com/windows/win32/properties/props-system-appusermodel-id">System.AppUserModel.ID</a>
-        public static final PROPERTYKEY PKEY_AppUserModel_ID = of(
-                GUID.of(
-                        0x9F4C2855, (short) 0x9F79, (short) 0x4B39,
-                        (byte) 0xA8, (byte) 0xD0, (byte) 0xE1, (byte) 0xD4,
-                        (byte) 0x2D, (byte) 0xE1, (byte) 0xD5, (byte) 0xF3
-                ),
-                5
-        );
+        public static final PROPERTYKEY PKEY_AppUserModel_ID = of(FMTID_AppUserModel, 5);
 
         /// The format identifier of the property set that contains the property.
         public GUID fmtid = new GUID();
