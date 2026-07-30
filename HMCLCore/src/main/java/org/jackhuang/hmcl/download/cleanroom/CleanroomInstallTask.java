@@ -125,7 +125,7 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(manifest);
         if (gameVersion.isEmpty()) throw new IOException();
 
-        Version resolved = version.resolvePreservingPatches(dependencyManager.getGameRepository());
+        GameInstanceManifest.Resolved resolved = dependencyManager.getGameRepository().resolve(manifest);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion.get());
 
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
