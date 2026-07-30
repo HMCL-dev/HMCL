@@ -79,7 +79,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     public CurseForgeRemoteAddonRepository(int section) {
         this.type = toAddonType(section);
-        if (type == null) throw new IllegalArgumentException("Unknown CurseForge section id " + section);
+        if (type == null) throw new IllegalArgumentException("Unsupported CurseForge section id: " + section);
         this.section = section;
     }
 
