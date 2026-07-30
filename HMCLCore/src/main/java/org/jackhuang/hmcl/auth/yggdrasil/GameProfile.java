@@ -21,7 +21,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.UnhyphenatedUUIDTypeAdapter;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 import com.google.gson.JsonParseException;
@@ -33,7 +33,7 @@ import com.google.gson.annotations.JsonAdapter;
 @Immutable
 public class GameProfile implements Validation {
 
-    @JsonAdapter(UUIDTypeAdapter.class)
+    @JsonAdapter(UnhyphenatedUUIDTypeAdapter.class)
     private final UUID id;
 
     private final String name;

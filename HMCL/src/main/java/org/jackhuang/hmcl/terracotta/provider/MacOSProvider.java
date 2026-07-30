@@ -59,7 +59,7 @@ public final class MacOSProvider extends AbstractTerracottaProvider {
                 throw new IllegalStateException("Cannot locate 'osascript' system executable on MacOS for installing Terracotta.");
             }
 
-            Path movedInstaller = Files.createTempDirectory(Metadata.HMCL_GLOBAL_DIRECTORY, "terracotta-pkg")
+            Path movedInstaller = Files.createTempDirectory(Metadata.HMCL_USER_HOME, "terracotta-pkg")
                     .toRealPath()
                     .resolve(FileUtils.getName(installer));
             Files.copy(installer, movedInstaller, StandardCopyOption.REPLACE_EXISTING);

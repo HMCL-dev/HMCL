@@ -18,12 +18,11 @@
 package org.jackhuang.hmcl.ui.terracotta;
 
 import com.jfoenix.controls.JFXProgressBar;
+import javafx.beans.binding.Binding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.WeakChangeListener;
 import javafx.collections.FXCollections;
@@ -34,17 +33,12 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaManager;
@@ -57,19 +51,13 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.ComponentSublist;
-import org.jackhuang.hmcl.ui.construct.HintPane;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
-import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -82,8 +70,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class TerracottaControllerPage extends StackPane {
     private static final String FEEDBACK_TIP = "terracotta-feedback";
@@ -97,15 +86,22 @@ public class TerracottaControllerPage extends StackPane {
         });
     }
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private final Binding<Boolean> focusedBinding;
+    @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
     /* FIXME: It's sucked to have such a long logic, containing UI for all states defined in TerracottaState, with unclear control flows.
          Consider moving UI into multiple files for each state respectively. */
     public TerracottaControllerPage() {
-        holder.add(FXUtils.observeWeak(() -> {
+        focusedBinding = BindingMapping.of(this.sceneProperty())
+                .flatMap(it -> it != null ? it.windowProperty() : new SimpleObjectProperty<>())
+                .flatMap(it -> it != null ? it.focusedProperty() : null, () -> false);
+
+        FXUtils.onChange(focusedBinding, focused -> {
             // Run daemon process only if HMCL is focused and is displaying current node.
-            TerracottaManager.switchDaemon(getScene() != null && Controllers.getStage().isFocused());
-        }, this.sceneProperty(), Controllers.getStage().focusedProperty()));
+            TerracottaManager.switchDaemon(getScene() != null && focused);
+        });
 
         TransitionPane transition = new TransitionPane();
 
@@ -163,23 +159,23 @@ public class TerracottaControllerPage extends StackPane {
                 body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
-                LineButton download = LineButton.of();
-                download.setLeftImage(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
+                var download = createLargeTitleLineButton();
+                download.setLeading(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
                 download.setTitle(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
-                download.setRightIcon(SVG.ARROW_FORWARD);
-                FXUtils.onClicked(download, () -> {
+                download.setTrailingIcon(SVG.ARROW_FORWARD, ICON_SIZE);
+                download.setOnAction(event -> {
                     TerracottaState.Preparing s = TerracottaManager.download();
                     if (s != null) {
                         UI_STATE.set(s);
                     }
 
                     if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
-                        Object feedback = config().getShownTips().get(FEEDBACK_TIP);
+                        Object feedback = state().getShownTips().get(FEEDBACK_TIP);
                         if (!(feedback instanceof Number number) || number.intValue() < 1) {
-                            Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
+                            Controllers.confirm(i18n("terracotta.feedback.desc.update"), i18n("terracotta.feedback.title"), () -> {
                                 FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
-                                config().getShownTips().put(FEEDBACK_TIP, 1);
+                                state().getShownTips().put(FEEDBACK_TIP, 1);
                             }, () -> {
                             });
                         }
@@ -207,12 +203,12 @@ public class TerracottaControllerPage extends StackPane {
                 flow.getStyleClass().add("terracotta-hint");
                 flow.setLineSpacing(4);
 
-                LineButton host = LineButton.of();
-                host.setLeftIcon(SVG.HOST);
+                var host = createLargeTitleLineButton();
+                host.setLeading(SVG.HOST, ICON_SIZE);
                 host.setTitle(i18n("terracotta.status.waiting.host.title"));
                 host.setSubtitle(i18n("terracotta.status.waiting.host.desc"));
-                host.setRightIcon(SVG.ARROW_FORWARD);
-                FXUtils.onClicked(host, () -> {
+                host.setTrailingIcon(SVG.ARROW_FORWARD, ICON_SIZE);
+                host.setOnAction(event -> {
                     if (LauncherHelper.countMangedProcesses() >= 1) {
                         TerracottaState.HostScanning s1 = TerracottaManager.setScanning();
                         if (s1 != null) {
@@ -223,9 +219,9 @@ public class TerracottaControllerPage extends StackPane {
                                 i18n("terracotta.status.waiting.host.launch.desc"),
                                 i18n("terracotta.status.waiting.host.launch.title"),
                                 MessageDialogPane.MessageType.QUESTION
-                        ).addAction(i18n("version.launch"), () -> {
-                            Profile profile = Profiles.getSelectedProfile();
-                            Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                        ).addAction(i18n("instance.launch"), () -> {
+                            var repository = GameDirectoryManager.getSelectedRepository();
+                            Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
                                 launcherHelper.setKeep();
                                 launcherHelper.setDisableOfflineSkin();
                             });
@@ -239,12 +235,12 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                LineButton guest = LineButton.of();
-                guest.setLeftIcon(SVG.ADD_CIRCLE);
+                var guest = createLargeTitleLineButton();
+                guest.setLeading(SVG.ADD_CIRCLE, ICON_SIZE);
                 guest.setTitle(i18n("terracotta.status.waiting.guest.title"));
                 guest.setSubtitle(i18n("terracotta.status.waiting.guest.desc"));
-                guest.setRightIcon(SVG.ARROW_FORWARD);
-                FXUtils.onClicked(guest, () -> {
+                guest.setTrailingIcon(SVG.ARROW_FORWARD, ICON_SIZE);
+                guest.setOnAction(event -> {
                     Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, handler) -> {
                         Task<TerracottaState.GuestConnecting> task = TerracottaManager.setGuesting(code);
                         if (task != null) {
@@ -259,15 +255,15 @@ public class TerracottaControllerPage extends StackPane {
                         } else {
                             handler.resolve();
                         }
-                    });
+                    }, "", new RequiredValidator(i18n("input.not_empty")));
                 });
 
                 if (ThreadLocalRandom.current().nextDouble() < 0.02D) {
-                    LineButton feedback = LineButton.of();
-                    feedback.setLeftIcon(SVG.FEEDBACK);
+                    var feedback = createLargeTitleLineButton();
+                    feedback.setLeading(SVG.FEEDBACK, ICON_SIZE);
                     feedback.setTitle(i18n("terracotta.feedback.title"));
                     feedback.setSubtitle(i18n("terracotta.feedback.desc"));
-                    feedback.setRightIcon(SVG.OPEN_IN_NEW);
+                    feedback.setTrailingIcon(SVG.OPEN_IN_NEW, ICON_SIZE);
                     FXUtils.onClicked(feedback, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
 
                     nodesProperty.setAll(flow, host, guest, feedback);
@@ -282,11 +278,11 @@ public class TerracottaControllerPage extends StackPane {
                 body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
-                LineButton room = LineButton.of();
-                room.setLeftIcon(SVG.ARROW_BACK);
+                var room = createLargeTitleLineButton();
+                room.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.scanning.back"));
-                FXUtils.onClicked(room, () -> {
+                room.setOnAction(event -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
@@ -298,11 +294,11 @@ public class TerracottaControllerPage extends StackPane {
                 statusProperty.set(i18n("terracotta.status.host_starting"));
                 progressProperty.set(-1);
 
-                LineButton room = LineButton.of();
-                room.setLeftIcon(SVG.ARROW_BACK);
+                var room = createLargeTitleLineButton();
+                room.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.host_starting.back"));
-                FXUtils.onClicked(room, () -> {
+                room.setOnAction(event -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
@@ -342,17 +338,17 @@ public class TerracottaControllerPage extends StackPane {
                     code.setCursor(Cursor.HAND);
                     FXUtils.onClicked(code, () -> copyCode(cs));
 
-                    LineButton copy = LineButton.of();
-                    copy.setLeftIcon(SVG.CONTENT_COPY);
+                    var copy = createLargeTitleLineButton();
+                    copy.setLeading(SVG.CONTENT_COPY, ICON_SIZE);
                     copy.setTitle(i18n("terracotta.status.host_ok.code.copy"));
                     copy.setSubtitle(i18n("terracotta.status.host_ok.code.desc"));
                     FXUtils.onClicked(copy, () -> copyCode(cs));
 
-                    LineButton back = LineButton.of();
-                    back.setLeftIcon(SVG.ARROW_BACK);
+                    var back = createLargeTitleLineButton();
+                    back.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                     back.setTitle(i18n("terracotta.back"));
                     back.setSubtitle(i18n("terracotta.status.host_ok.back"));
-                    FXUtils.onClicked(back, () -> {
+                    back.setOnAction(event -> {
                         TerracottaState.Waiting s = TerracottaManager.setWaiting();
                         if (s != null) {
                             UI_STATE.set(s);
@@ -369,11 +365,11 @@ public class TerracottaControllerPage extends StackPane {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
                 progressProperty.set(-1);
 
-                LineButton room = LineButton.of();
-                room.setLeftIcon(SVG.ARROW_BACK);
+                var room = createLargeTitleLineButton();
+                room.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.guest_starting.back"));
-                FXUtils.onClicked(room, () -> {
+                room.setOnAction(event -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
@@ -384,12 +380,12 @@ public class TerracottaControllerPage extends StackPane {
                 if (state instanceof TerracottaState.GuestStarting) {
                     TerracottaState.GuestStarting.Difficulty difficulty = ((TerracottaState.GuestStarting) state).getDifficulty();
                     if (difficulty != null && difficulty != TerracottaState.GuestStarting.Difficulty.UNKNOWN) {
-                        LineButton info = LineButton.of();
-                        info.setLeftIcon(switch (difficulty) {
+                        var info = createLargeTitleLineButton();
+                        info.setLeading(switch (difficulty) {
                             case UNKNOWN -> throw new AssertionError();
                             case EASIEST, SIMPLE -> SVG.INFO;
                             case MEDIUM, TOUGH -> SVG.WARNING;
-                        });
+                        }, ICON_SIZE);
 
                         String difficultyID = difficulty.name().toLowerCase(Locale.ROOT);
                         info.setTitle(i18n(String.format("terracotta.difficulty.%s", difficultyID)));
@@ -412,15 +408,15 @@ public class TerracottaControllerPage extends StackPane {
                     statusProperty.set(i18n("terracotta.status.guest_ok"));
                     progressProperty.set(1);
 
-                    LineButton tutorial = LineButton.of();
+                    var tutorial = createLargeTitleLineButton();
                     tutorial.setTitle(i18n("terracotta.status.guest_ok.title"));
                     tutorial.setSubtitle(i18n("terracotta.status.guest_ok.desc", guestOK.getUrl()));
 
-                    LineButton back = LineButton.of();
-                    back.setLeftIcon(SVG.ARROW_BACK);
+                    var back = createLargeTitleLineButton();
+                    back.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                     back.setTitle(i18n("terracotta.back"));
                     back.setSubtitle(i18n("terracotta.status.guest_ok.back"));
-                    FXUtils.onClicked(back, () -> {
+                    back.setOnAction(event -> {
                         TerracottaState.Waiting s = TerracottaManager.setWaiting();
                         if (s != null) {
                             UI_STATE.set(s);
@@ -438,11 +434,11 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
                 nodesProperty.setAll();
 
-                LineButton back = LineButton.of();
-                back.setLeftIcon(SVG.ARROW_BACK);
+                var back = createLargeTitleLineButton();
+                back.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                 back.setTitle(i18n("terracotta.back"));
                 back.setSubtitle(i18n("terracotta.status.exception.back"));
-                FXUtils.onClicked(back, () -> {
+                back.setOnAction(event -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
@@ -450,8 +446,8 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 SpinnerPane exportLog = new SpinnerPane();
-                LineButton exportLogInner = LineButton.of();
-                exportLogInner.setLeftIcon(SVG.OUTPUT);
+                var exportLogInner = createLargeTitleLineButton();
+                exportLogInner.setLeading(SVG.OUTPUT, ICON_SIZE);
                 exportLogInner.setTitle(i18n("terracotta.export_log"));
                 exportLogInner.setSubtitle(i18n("terracotta.export_log.desc"));
                 exportLog.setContent(exportLogInner);
@@ -459,7 +455,7 @@ public class TerracottaControllerPage extends StackPane {
                 // FIXME: SpinnerPane loses its content width in loading state.
                 exportLog.minHeightProperty().bind(back.heightProperty());
 
-                FXUtils.onClicked(exportLogInner, () -> {
+                exportLogInner.setOnAction(event -> {
                     exportLog.setLoading(true);
 
                     TerracottaManager.exportLogs().thenAcceptAsync(Schedulers.io(), data -> {
@@ -473,7 +469,7 @@ public class TerracottaControllerPage extends StackPane {
                         try (Zipper zipper = new Zipper(path)) {
                             zipper.putTextFile(data, StandardCharsets.UTF_8, "terracotta.log");
                             try (OutputStream os = zipper.putStream("hmcl-latest.log")) {
-                                Logger.LOG.exportLogs(os);
+                                LOG.exportLogs(os);
                             }
                         }
                         FXUtils.showFileInExplorer(path);
@@ -493,11 +489,11 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
 
                 if (fatal.isRecoverable()) {
-                    LineButton retry = LineButton.of();
-                    retry.setLeftIcon(SVG.RESTORE);
+                    var retry = createLargeTitleLineButton();
+                    retry.setLeading(SVG.RESTORE, ICON_SIZE);
                     retry.setTitle(i18n("terracotta.status.fatal.retry"));
                     retry.setSubtitle(message);
-                    FXUtils.onClicked(retry, () -> {
+                    retry.setOnAction(event -> {
                         TerracottaState s = TerracottaManager.recover();
                         if (s != null) {
                             UI_STATE.set(s);
@@ -534,7 +530,8 @@ public class TerracottaControllerPage extends StackPane {
                 children.add(statusPane);
                 children.addAll(nodesProperty);
             }
-
+            // Prevent the shadow of components from being clipped
+            StackPane.setMargin(components, new Insets(0, 0, 5, 0));
             transition.setContent(components, ContainerAnimations.SLIDE_UP_FADE_IN);
         };
         listener.changed(UI_STATE, null, UI_STATE.get());
@@ -561,34 +558,21 @@ public class TerracottaControllerPage extends StackPane {
 
     private ComponentSublist getThirdPartyDownloadNodes() {
         ComponentSublist locals = new ComponentSublist();
-        locals.setComponentPadding(false);
-
-        LineButton header = LineButton.of(false);
-        header.setLeftImage(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
-        header.setTitle(i18n("terracotta.from_local.title"));
-        header.setSubtitle(i18n("terracotta.from_local.desc"));
-        locals.setHeaderLeft(header);
+        locals.setLargeTitle(true);
+        locals.setLeading(new ImageView(FXUtils.newBuiltinImage("/assets/img/terracotta.png")));
+        locals.setTitle(i18n("terracotta.from_local.title"));
+        locals.setSubtitle(i18n("terracotta.from_local.desc"));
 
         for (TerracottaMetadata.Link link : TerracottaMetadata.PACKAGE_LINKS) {
-            HBox node = new HBox();
-            node.setAlignment(Pos.CENTER_LEFT);
-            node.setPadding(new Insets(10, 16, 10, 16));
-
-            Label description = new Label(link.description().getText(I18n.getLocale().getCandidateLocales()));
-            HBox placeholder = new HBox();
-            HBox.setHgrow(placeholder, Priority.ALWAYS);
-            Node icon = SVG.OPEN_IN_NEW.createIcon(16);
-            node.getChildren().setAll(description, placeholder, icon);
-
-            String url = link.link();
-            RipplerContainer container = new RipplerContainer(node);
-            container.setOnMouseClicked(ev -> Controllers.dialog(
+            LineButton item = new LineButton();
+            item.setTrailingIcon(SVG.OPEN_IN_NEW);
+            item.setTitle(link.description().getText(I18n.getLocale().getCandidateLocales()));
+            item.setOnAction(event -> Controllers.dialog(
                     i18n("terracotta.from_local.guide", TerracottaMetadata.PACKAGE_NAME),
                     i18n("message.info"), MessageDialogPane.MessageType.INFO,
-                    () -> FXUtils.openLink(url)
+                    () -> FXUtils.openLink(link.link())
             ));
-            ComponentList.setNoPadding(container);
-            locals.getContent().add(container);
+            locals.getContent().add(item);
         }
         return locals;
     }
@@ -597,103 +581,12 @@ public class TerracottaControllerPage extends StackPane {
         FXUtils.copyText(code, i18n("terracotta.status.host_ok.code.copy.toast"));
     }
 
-    private static final class LineButton extends RipplerContainer {
-        private final WeakListenerHolder holder = new WeakListenerHolder();
+    private static final double ICON_SIZE = 28;
 
-        private final ObjectProperty<Node> left = new SimpleObjectProperty<>(this, "left");
-        private final ObjectProperty<Node> right = new SimpleObjectProperty<>(this, "right");
-        private final StringProperty title = new SimpleStringProperty(this, "title", "");
-        private final StringProperty subTitle = new SimpleStringProperty(this, "subTitle", "");
-
-        public static LineButton of() {
-            return of(true);
-        }
-
-        public static LineButton of(boolean padding) {
-            HBox container = new HBox();
-            if (padding) {
-                container.setPadding(new Insets(10, 16, 10, 16));
-            }
-            container.setAlignment(Pos.CENTER_LEFT);
-            container.setCursor(Cursor.HAND);
-            container.setSpacing(16);
-
-            LineButton button = new LineButton(container);
-            VBox spacing = new VBox();
-            HBox.setHgrow(spacing, Priority.ALWAYS);
-            button.holder.add(FXUtils.observeWeak(() -> {
-                List<Node> nodes = new ArrayList<>(4);
-                Node left = button.left.get();
-                if (left != null) {
-                    nodes.add(left);
-                }
-
-                {
-                    // FIXME: It's sucked to have the following TwoLineListItem-liked logic whose subtitle is a TextFlow.
-                    VBox middle = new VBox();
-                    middle.getStyleClass().add("two-line-list-item");
-                    middle.setMouseTransparent(true);
-                    {
-                        HBox firstLine = new HBox();
-                        firstLine.getStyleClass().add("first-line");
-                        {
-                            Label lblTitle = new Label(button.title.get());
-                            lblTitle.getStyleClass().add("title");
-                            firstLine.getChildren().setAll(lblTitle);
-                        }
-
-                        HBox secondLine = new HBox();
-                        secondLine.getStyleClass().add("second-line");
-                        {
-                            Text text = new Text(button.subTitle.get());
-
-                            TextFlow lblSubtitle = new TextFlow(text);
-                            lblSubtitle.getStyleClass().add("subtitle");
-                            secondLine.getChildren().setAll(lblSubtitle);
-                        }
-
-                        middle.getChildren().setAll(firstLine, secondLine);
-                    }
-                    nodes.add(middle);
-                }
-
-                nodes.add(spacing);
-
-                Node right = button.right.get();
-                if (right != null) {
-                    nodes.add(right);
-                }
-
-                container.getChildren().setAll(nodes);
-            }, button.title, button.subTitle, button.left, button.right));
-            ComponentList.setNoPadding(button);
-
-            return button;
-        }
-
-        private LineButton(Node container) {
-            super(container);
-        }
-
-        public void setTitle(String title) {
-            this.title.set(title);
-        }
-
-        public void setSubtitle(String subtitle) {
-            this.subTitle.set(subtitle);
-        }
-
-        public void setLeftImage(Image left) {
-            this.left.set(new ImageView(left));
-        }
-
-        public void setLeftIcon(SVG left) {
-            this.left.set(left.createIcon(28));
-        }
-
-        public void setRightIcon(SVG right) {
-            this.right.set(right.createIcon(28));
-        }
+    private static LineButton createLargeTitleLineButton() {
+        var lineButton = new LineButton();
+        lineButton.setLargeTitle(true);
+        return lineButton;
     }
 
     private static final class PlayerProfileUI extends VBox {

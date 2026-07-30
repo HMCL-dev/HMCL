@@ -30,7 +30,7 @@
 
 ## Introduction
 
-HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Cleanroom, Fabric, Quilt, LiteLoader, and OptiFine), Modpack Creating, UI Customization, and more.
+HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Cleanroom, Fabric, Legacy Fabric, Quilt, LiteLoader, and OptiFine), Modpack Creating, UI Customization, and more.
 
 HMCL has amazing cross-platform capabilities. Not only does it run on different operating systems like Windows, Linux, macOS, and FreeBSD, but it also supports various CPU architectures such as x86, ARM, RISC-V, MIPS, and LoongArch. You can easily enjoy Minecraft across different platforms through HMCL.
 
@@ -60,7 +60,7 @@ Before contributing, please read the [Contributing Guide](./Contributing.md), wh
 
 ## Contributors
 
-Since 2015, more than 110 contributors have participated in HMCL. Thank you for your hard work!
+Since 2015, more than 120 contributors have participated in HMCL. Thank you for your hard work!
 
 [![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
@@ -72,6 +72,6 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 
 1. When you distribute a modified version of the software, you must change the software name or the version number in a reasonable way in order to distinguish it from the original version. (Under [GPLv3, 7(c)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374))
 
-   The software name and the version number can be edited [here](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L33-L35).
+   The software name and the version number can be edited [here](https://github.com/HMCL-dev/HMCL/blob/86529c6f15b3be54ed8d89ece47566cf57f43eb7/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L36-L38).
 
 2. You must not remove the copyright declaration displayed in the software. (Under [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))

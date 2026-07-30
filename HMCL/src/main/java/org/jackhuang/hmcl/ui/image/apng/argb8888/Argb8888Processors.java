@@ -122,8 +122,8 @@ public class Argb8888Processors {
 
         @Override
         public void processScanline(byte[] srcBytes, int srcPosition) {
-            final int[] destArray = this.bitmap.array;
-            final int width = this.bitmap.width;
+            final int[] destArray = this.bitmap.array();
+            final int width = this.bitmap.width();
             int writePosition = this.y * width;
             int lastWritePosition = writePosition + width;
             int bit = highBit;
@@ -136,7 +136,7 @@ public class Argb8888Processors {
 
                 int dest;
                 if (palette != null) {
-                    dest = palette.argbArray[index];
+                    dest = palette.argbArray()[index];
                 } else {
                     dest = 0;
                 }
@@ -168,8 +168,8 @@ public class Argb8888Processors {
 
         @Override
         public void processScanline(byte[] srcBytes, int srcPosition) {
-            final int[] destArray = this.bitmap.array;
-            final int width = this.bitmap.width;
+            final int[] destArray = this.bitmap.array();
+            final int width = this.bitmap.width();
             int writePosition = this.y * width;
             for (int x = 0; x < width; x++) {
 
@@ -177,7 +177,7 @@ public class Argb8888Processors {
 
                 int dest;
                 if (palette != null) {
-                    dest = palette.argbArray[index];
+                    dest = palette.argbArray()[index];
                 } else {
                     dest = 0;
                 }
@@ -203,8 +203,8 @@ public class Argb8888Processors {
 
         @Override
         public void processScanline(byte[] srcBytes, int srcPosition) {
-            final int[] destArray = this.bitmap.array;
-            final int width = this.bitmap.width;
+            final int[] destArray = this.bitmap.array();
+            final int width = this.bitmap.width();
             int writePosition = this.y * width;
             for (int x = 0; x < width; x++) {
                 final int v = srcBytes[srcPosition++];
@@ -236,8 +236,8 @@ public class Argb8888Processors {
 
         @Override
         public void processScanline(byte[] srcBytes, int srcPosition) {
-            final int[] destArray = this.bitmap.array;
-            final int width = this.bitmap.width;
+            final int[] destArray = this.bitmap.array();
+            final int width = this.bitmap.width();
             final int alpha = 0xff000000; // No alpha in the image means every pixel must be fully opaque
             int writePosition = this.y * width;
             for (int x = 0; x < width; x++) {
@@ -274,8 +274,8 @@ public class Argb8888Processors {
 
         @Override
         public void processScanline(byte[] srcBytes, int srcPosition) {
-            final int[] destArray = this.bitmap.array;
-            final int width = this.bitmap.width;
+            final int[] destArray = this.bitmap.array();
+            final int width = this.bitmap.width();
             int writePosition = this.y * width;
             for (int x = 0; x < width; x++) {
                 final int k = 0xff & srcBytes[srcPosition++];
@@ -303,8 +303,8 @@ public class Argb8888Processors {
 
         @Override
         public void processScanline(byte[] srcBytes, int srcPosition) {
-            final int[] destArray = this.bitmap.array;
-            final int width = this.bitmap.width;
+            final int[] destArray = this.bitmap.array();
+            final int width = this.bitmap.width();
             int writePosition = this.y * width;
             for (int x = 0; x < width; x++) {
                 final int k = 0xff & srcBytes[srcPosition++];
@@ -333,8 +333,8 @@ public class Argb8888Processors {
 
         @Override
         public void processScanline(byte[] srcBytes, int srcPosition) {
-            final int[] destArray = this.bitmap.array;
-            final int width = this.bitmap.width;
+            final int[] destArray = this.bitmap.array();
+            final int width = this.bitmap.width();
             final int alpha = 0xff000000; // No alpha in the image means every pixel must be fully opaque
             int writePosition = this.y * width;
             for (int x = 0; x < width; x++) {
@@ -364,8 +364,8 @@ public class Argb8888Processors {
 
         @Override
         public void processScanline(byte[] srcBytes, int srcPosition) {
-            final int[] destArray = this.bitmap.array;
-            final int width = this.bitmap.width;
+            final int[] destArray = this.bitmap.array();
+            final int width = this.bitmap.width();
             int writePosition = this.y * width;
             //srcPosition++; // skip filter byte
             for (int x = 0; x < width; x++) {
@@ -395,8 +395,8 @@ public class Argb8888Processors {
 
         @Override
         public void processScanline(byte[] srcBytes, int srcPosition) {
-            final int[] destArray = this.bitmap.array;
-            final int width = this.bitmap.width;
+            final int[] destArray = this.bitmap.array();
+            final int width = this.bitmap.width();
             final int alpha = 0xff000000; // No alpha in the image means every pixel must be fully opaque
             int writePosition = this.y * width;
             //srcPosition++; // skip filter byte
@@ -431,8 +431,8 @@ public class Argb8888Processors {
 
         @Override
         public void processScanline(byte[] srcBytes, int srcPosition) {
-            final int[] destArray = this.bitmap.array;
-            final int width = this.bitmap.width;
+            final int[] destArray = this.bitmap.array();
+            final int width = this.bitmap.width();
             //final int alpha = 0xff000000; // No alpha in the image means every pixel must be fully opaque
             int writePosition = this.y * width;
             //srcPosition++; // skip filter byte

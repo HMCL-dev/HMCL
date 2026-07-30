@@ -86,6 +86,10 @@ public enum Architecture {
         return this == X86 || this == X86_64;
     }
 
+    public boolean isArm() {
+        return this == ARM32 || this == ARM64;
+    }
+
     public static final Architecture CURRENT_ARCH;
     public static final Architecture SYSTEM_ARCH;
 

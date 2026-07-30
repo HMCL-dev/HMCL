@@ -19,15 +19,16 @@ package org.jackhuang.hmcl.ui.main;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.setting.GameSettings;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.VersionSettingsPage;
+import org.jackhuang.hmcl.ui.game.GameSettingsPage;
 
 import java.util.Locale;
 
@@ -36,7 +37,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class LauncherSettingsPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings")));
     private final TabHeader tab;
-    private final TabHeader.Tab<VersionSettingsPage> gameTab = new TabHeader.Tab<>("versionSettingsPage");
+    private final TabHeader.Tab<GameSettingsPage<GameSettings.Preset>> gameTab = new TabHeader.Tab<>("versionSettingsPage");
     private final TabControl.Tab<JavaManagementPage> javaManagementTab = new TabControl.Tab<>("javaManagementPage");
     private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
     private final TabHeader.Tab<PersonalizationPage> personalizationTab = new TabHeader.Tab<>("personalizationPage");
@@ -47,7 +48,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {
-        gameTab.setNodeSupplier(() -> new VersionSettingsPage(true));
+        gameTab.setNodeSupplier(() -> new GameSettingsPage<>(GameSettings.Preset.class));
         javaManagementTab.setNodeSupplier(JavaManagementPage::new);
         settingsTab.setNodeSupplier(SettingsPage::new);
         personalizationTab.setNodeSupplier(PersonalizationPage::new);
@@ -58,7 +59,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         tab = new TabHeader(transitionPane, gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
 
         tab.select(gameTab);
-        addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null));
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadInstance(GameDirectoryManager.getSelectedRepository(), null));
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
@@ -87,8 +88,8 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         tab.onPageHidden();
     }
 
-    public void showGameSettings(Profile profile) {
-        gameTab.getNode().loadVersion(profile, null);
+    public void showGameSettings(HMCLGameRepository repository) {
+        gameTab.getNode().loadInstance(repository, null);
         tab.select(gameTab, false);
     }
 

@@ -17,107 +17,48 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.beans.property.StringPropertyBase;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.collections.ListChangeListener;
+import javafx.event.ActionEvent;
+import javafx.scene.Cursor;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 /// @author Glavo
-public abstract class LineButtonBase extends StackPane implements NoPaddingComponent {
+public abstract class LineButtonBase extends LineComponent {
+    private static final String DEFAULT_STYLE_CLASS = "line-button-base";
 
-    private static final Insets PADDING = new Insets(8, 8, 8, 16);
-
-    protected final BorderPane root;
-    protected final RipplerContainer container;
-
-    private final Label titleLabel;
+    protected final RipplerContainer ripplerContainer;
 
     public LineButtonBase() {
-        this.root = new BorderPane();
-        root.setPadding(PADDING);
-        root.setMinHeight(48);
+        this.getStyleClass().addAll(LineButtonBase.DEFAULT_STYLE_CLASS);
 
-        this.container = new RipplerContainer(root);
-        this.getChildren().setAll(container);
+        this.ripplerContainer = new RipplerContainer(container);
+        container.getChildren().addListener((ListChangeListener<Node>) change -> updateCursor());
+        disabledProperty().addListener(observable -> updateCursor());
+        FXUtils.setOverflowHidden(this);
+        FXUtils.onClicked(this, this::fire);
 
-        this.titleLabel = new Label();
-        root.setCenter(titleLabel);
-        BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
-        titleLabel.textProperty().bind(titleProperty());
-        titleLabel.getStyleClass().add("title");
+        this.getChildren().setAll(ripplerContainer);
+        updateCursor();
     }
 
-    private final StringProperty title = new SimpleStringProperty(this, "title");
-
-    public StringProperty titleProperty() {
-        return title;
+    public void fire() {
+        fireEvent(new ActionEvent(this, this));
     }
 
-    public String getTitle() {
-        return titleProperty().get();
+    /// Updates the cursor shown by the row rippler.
+    private void updateCursor() {
+        applyCursor(this, isDisabled() ? Cursor.DEFAULT : Cursor.HAND);
     }
 
-    public void setTitle(String title) {
-        this.titleProperty().set(title);
-    }
-
-    private StringProperty subtitle;
-
-    public StringProperty subtitleProperty() {
-        if (subtitle == null) {
-            subtitle = new StringPropertyBase() {
-                private VBox left;
-                private Label subtitleLabel;
-
-                @Override
-                public String getName() {
-                    return "subtitle";
-                }
-
-                @Override
-                public Object getBean() {
-                    return LineButtonBase.this;
-                }
-
-                @Override
-                protected void invalidated() {
-                    String subtitle = get();
-                    if (subtitle != null && !subtitle.isEmpty()) {
-                        if (left == null) {
-                            left = new VBox();
-                            left.setMouseTransparent(true);
-                            left.setAlignment(Pos.CENTER_LEFT);
-
-                            subtitleLabel = new Label();
-                            subtitleLabel.setWrapText(true);
-                            subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
-                            subtitleLabel.getStyleClass().add("subtitle");
-                        }
-                        subtitleLabel.setText(subtitle);
-                        left.getChildren().setAll(titleLabel, subtitleLabel);
-                        root.setCenter(left);
-                    } else if (left != null) {
-                        subtitleLabel.setText(null);
-                        root.setCenter(titleLabel);
-                    }
-                }
-            };
+    /// Applies the row cursor to every current child node that may receive mouse hover.
+    private static void applyCursor(Node node, Cursor cursor) {
+        node.setCursor(cursor);
+        if (node instanceof Parent parent) {
+            for (Node child : parent.getChildrenUnmodifiable()) {
+                applyCursor(child, cursor);
+            }
         }
-
-        return subtitle;
-    }
-
-    public String getSubtitle() {
-        return subtitleProperty().get();
-    }
-
-    public void setSubtitle(String subtitle) {
-        subtitleProperty().set(subtitle);
     }
 }

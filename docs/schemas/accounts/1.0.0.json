@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/accounts/1.0.0",
+  "title": "HMCL Accounts",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "$schema"
+  ],
+  "patternProperties": {
+    "^\\$schema$": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/accounts/1.0.0"
+      ]
+    }
+  },
+  "properties": {
+    "accounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "accountID",
+          "type"
+        ],
+        "properties": {
+          "accountID": {
+            "$ref": "#/$defs/accountID"
+          },
+          "type": {
+            "enum": [
+              "offline",
+              "microsoft",
+              "authlibInjector"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "accountID": {
+      "type": "string",
+      "pattern": "^account:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    }
+  }
+}

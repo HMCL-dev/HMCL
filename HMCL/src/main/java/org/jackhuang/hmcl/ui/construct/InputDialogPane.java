@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
+import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -56,6 +57,7 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
         this.setBody(new VBox(textField));
 
         lblCreationWarning = new Label();
+        lblCreationWarning.setPadding(new Insets(0, 5, 0, 0));
 
         acceptPane = new SpinnerPane();
         acceptPane.getStyleClass().add("small-spinner-pane");

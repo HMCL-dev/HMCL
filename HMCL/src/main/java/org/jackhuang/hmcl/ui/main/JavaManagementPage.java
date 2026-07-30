@@ -25,17 +25,19 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -113,7 +115,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
-        Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        Path file = Controllers.showOpenDialog(chooser);
         if (file != null) {
             JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
@@ -125,7 +127,10 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     }
 
     void onShowRestoreJavaPage() {
-        Controllers.navigateForward(new JavaRestorePage(ConfigHolder.globalConfig().getDisabledJava()));
+        if (SettingsManager.isUserSettingsReadOnly()) {
+            return;
+        }
+        Controllers.navigateForward(new JavaRestorePage(SettingsManager.userSettings().getDisabledJava()));
     }
 
     private void onAddJavaBinary(Path file) {
@@ -189,7 +194,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         JavaPageSkin(JavaManagementPage skinnable) {
             super(skinnable);
-            this.listView.getStyleClass().add("no-horizontal-scrollbar");
         }
 
         @Override
@@ -200,10 +204,16 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             if (skinnable.onInstallJava != null) {
                 res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD, skinnable.onInstallJava));
             }
-            res.add(createToolbarButton2(i18n("java.add"), SVG.ADD, skinnable::onAddJava));
+            JFXButton addJava = createToolbarButton2(i18n("java.add"), SVG.ADD, skinnable::onAddJava);
+            addJava.setDisable(SettingsManager.isUserSettingsReadOnly());
+            res.add(addJava);
 
             JFXButton disableJava = createToolbarButton2(i18n("java.disabled.management"), SVG.FORMAT_LIST_BULLETED, skinnable::onShowRestoreJavaPage);
-            disableJava.disableProperty().bind(Bindings.isEmpty(ConfigHolder.globalConfig().getDisabledJava()));
+            if (SettingsManager.isUserSettingsReadOnly()) {
+                disableJava.setDisable(true);
+            } else {
+                disableJava.disableProperty().bind(Bindings.isEmpty(SettingsManager.userSettings().getDisabledJava()));
+            }
             res.add(disableJava);
 
             return res;
@@ -217,9 +227,11 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
     private static final class JavaItemCell extends ListCell<JavaRuntime> {
         private final Node graphic;
+        private final Label label = new Label();
         private final TwoLineListItem content;
 
         private SVG removeIcon;
+        private final JFXButton removeButton;
         private final StackPane removeIconPane;
         private final Tooltip removeTooltip = new Tooltip();
 
@@ -231,18 +243,23 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
 
+            label.setAlignment(Pos.CENTER);
+            label.setMinSize(24, 24);
+            label.setMaxSize(24, 24);
+            label.setPrefSize(24, 24);
+            label.setStyle("-fx-background-color: -monet-secondary-container; -fx-background-radius: 2; -fx-padding: 2; -fx-font-weight: normal; -fx-font-size: 12px;");
+
             this.content = new TwoLineListItem();
+            HBox.setHgrow(content, Priority.ALWAYS);
 
             BorderPane.setAlignment(content, Pos.CENTER);
-            center.getChildren().setAll(content);
+            center.getChildren().setAll(label, content);
             root.setCenter(center);
 
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
-                JFXButton revealButton = new JFXButton();
-                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(24), 24, 24));
-                revealButton.getStyleClass().add("toggle-icon4");
+                JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> {
                     JavaRuntime java = getItem();
                     if (java != null)
@@ -250,7 +267,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 });
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
-                JFXButton removeButton = new JFXButton();
+                removeButton = new JFXButton();
                 removeButton.getStyleClass().add("toggle-icon4");
                 removeButton.setOnAction(e -> {
                     JavaRuntime java = getItem();
@@ -279,18 +296,24 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         @Override
         protected void updateItem(JavaRuntime item, boolean empty) {
+            JavaRuntime oldItem = getItem();
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setGraphic(null);
             } else {
+                int parsedVersion = item.getParsedVersion();
+                label.setText(parsedVersion >= 0 ? String.valueOf(parsedVersion) : "?");
+
                 content.setTitle((item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
 
-                content.getTags().clear();
-                content.addTag(i18n("java.info.architecture") + ": " + item.getArchitecture().getDisplayName());
-                String vendor = JavaInfo.normalizeVendor(item.getVendor());
-                if (vendor != null)
-                    content.addTag(i18n("java.info.vendor") + ": " + vendor);
+                if (oldItem != item) {
+                    content.getTags().clear();
+                    content.addTag(i18n("java.info.architecture") + ": " + item.getArchitecture().getDisplayName());
+                    String vendor = JavaInfo.normalizeVendor(item.getVendor());
+                    if (vendor != null)
+                        content.addTag(i18n("java.info.vendor") + ": " + vendor);
+                }
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;
                 if (removeIcon != newRemoveIcon) {
@@ -298,6 +321,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                     removeIconPane.getChildren().setAll(removeIcon.createIcon(24));
                     removeTooltip.setText(item.isManaged() ? i18n("java.uninstall") : i18n("java.disable"));
                 }
+                removeButton.setDisable(!item.isManaged() && SettingsManager.isUserSettingsReadOnly());
 
                 setGraphic(graphic);
             }
@@ -328,13 +352,16 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                         null
                 );
             } else {
+                if (SettingsManager.isUserSettingsReadOnly()) {
+                    return;
+                }
                 Controllers.confirm(
                         i18n("java.disable.confirm"),
                         i18n("message.warning"),
                         () -> {
                             String path = java.getBinary().toString();
-                            ConfigHolder.globalConfig().getUserJava().remove(path);
-                            ConfigHolder.globalConfig().getDisabledJava().add(path);
+                            SettingsManager.userSettings().getUserJava().remove(path);
+                            SettingsManager.userSettings().getDisabledJava().add(path);
                             try {
                                 JavaManager.removeJava(java);
                             } catch (InterruptedException ignored) {

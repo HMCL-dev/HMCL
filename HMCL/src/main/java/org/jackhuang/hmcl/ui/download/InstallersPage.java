@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.InstallerItem;
@@ -28,6 +29,7 @@ import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -41,8 +43,8 @@ public class InstallersPage extends AbstractInstallersPage {
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
-                new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
-                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+                new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
+                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
 
         txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
@@ -50,11 +52,11 @@ public class InstallersPage extends AbstractInstallersPage {
 
     @Override
     public String getTitle() {
-        return group.getGame().versionProperty().get().version();
+        return ((RemoteVersion) controller.getSettings().get("game")).getGameVersion();
     }
 
     private String getVersion(String id) {
-        return ((RemoteVersion) controller.getSettings().get(id)).getSelfVersion();
+        return I18n.getDisplayVersion((RemoteVersion) controller.getSettings().get(id));
     }
 
     protected void reload() {
@@ -90,28 +92,28 @@ public class InstallersPage extends AbstractInstallersPage {
     }
 
     protected void onInstall() {
-        String name = txtName.getText();
+        GameInstanceID instanceId = new GameInstanceID(txtName.getText());
 
-        if (!checkName(name)) {
+        if (!checkName(instanceId.id())) {
             Controllers.dialog(new MessageDialogPane.Builder(
                     i18n("install.name.invalid"),
                     i18n("message.warning"),
                     MessageDialogPane.MessageType.QUESTION)
                     .yesOrNo(() -> {
-                        controller.getSettings().put("name", name);
+                        controller.getSettings().put(INSTANCE_ID, instanceId);
                         controller.onFinish();
                     }, () -> {
                         // The user selects Cancel and does nothing.
                     })
                     .build());
         } else {
-            controller.getSettings().put("name", name);
+            controller.getSettings().put(INSTANCE_ID, instanceId);
             controller.onFinish();
         }
     }
 
     private void setTxtNameWithLoaders() {
-        StringBuilder nameBuilder = new StringBuilder(group.getGame().versionProperty().get().version());
+        StringBuilder nameBuilder = new StringBuilder(getTitle());
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId().replace(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), "");
@@ -120,27 +122,37 @@ public class InstallersPage extends AbstractInstallersPage {
             }
 
             LibraryAnalyzer.LibraryType libraryType = LibraryAnalyzer.LibraryType.fromPatchId(libraryId);
+
             if (libraryType != null) {
                 String loaderName = switch (libraryType) {
-                    case FORGE -> i18n("install.installer.forge");
-                    case NEO_FORGE -> i18n("install.installer.neoforge");
-                    case CLEANROOM -> i18n("install.installer.cleanroom");
-                    case LEGACY_FABRIC -> i18n("install.installer.legacyfabric").replace(" ", "_");
-                    case FABRIC -> i18n("install.installer.fabric");
-                    case LITELOADER -> i18n("install.installer.liteloader");
-                    case QUILT -> i18n("install.installer.quilt");
-                    case OPTIFINE -> i18n("install.installer.optifine");
+                    case FORGE -> "Forge";
+                    case NEO_FORGE -> "NeoForge";
+                    case CLEANROOM -> "Cleanroom";
+                    case LEGACY_FABRIC -> "LegacyFabric";
+                    case FABRIC -> "Fabric";
+                    case LITELOADER -> "LiteLoader";
+                    case QUILT -> "Quilt";
+                    case OPTIFINE -> "OptiFine";
                     default -> null;
                 };
 
-                if (loaderName == null)
-                    continue;
-
-                nameBuilder.append("-").append(loaderName);
+                if (loaderName != null)
+                    nameBuilder.append('-').append(loaderName);
             }
         }
 
         txtName.setText(nameBuilder.toString());
         isNameModifiedByUser = false;
+    }
+
+    @Override
+    protected boolean showExtendPane() {
+        return true;
+    }
+
+    @Override
+    protected void resetDefaultName() {
+        isNameModifiedByUser = false;
+        setTxtNameWithLoaders();
     }
 }

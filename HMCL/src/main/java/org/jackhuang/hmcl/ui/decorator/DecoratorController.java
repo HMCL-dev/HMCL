@@ -18,35 +18,20 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXSnackbar;
+import com.jfoenix.controls.JFXSnackbarLayout;
 import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
-import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
-import javafx.geometry.Insets;
+import javafx.beans.property.BooleanProperty;
 import javafx.scene.Node;
-import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
-import org.jackhuang.hmcl.setting.EnumBackgroundImage;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane.AnimationProducer;
@@ -54,25 +39,9 @@ import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toList;
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DecoratorController {
     private final Decorator decorator;
@@ -80,29 +49,7 @@ public class DecoratorController {
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
-        decorator.setOnCloseButtonAction(() -> {
-            if (AnimationUtils.playWindowAnimation()) {
-                Timeline timeline = new Timeline(
-                        new KeyFrame(Duration.millis(0),
-                                new KeyValue(decorator.opacityProperty(), 1, Motion.EASE),
-                                new KeyValue(decorator.scaleXProperty(), 1, Motion.EASE),
-                                new KeyValue(decorator.scaleYProperty(), 1, Motion.EASE),
-                                new KeyValue(decorator.scaleZProperty(), 0.3, Motion.EASE)
-                        ),
-                        new KeyFrame(Duration.millis(200),
-                                new KeyValue(decorator.opacityProperty(), 0, Motion.EASE),
-                                new KeyValue(decorator.scaleXProperty(), 0.8, Motion.EASE),
-                                new KeyValue(decorator.scaleYProperty(), 0.8, Motion.EASE),
-                                new KeyValue(decorator.scaleZProperty(), 0.8, Motion.EASE)
-                        )
-                );
-                timeline.setOnFinished(event -> Launcher.stopApplication());
-                timeline.play();
-            } else {
-                Launcher.stopApplication();
-            }
-        });
-        decorator.titleTransparentProperty().bind(config().titleTransparentProperty());
+        decorator.titleTransparentProperty().bind(Themes.titleBarTransparentProperty());
 
         navigator = new Navigator();
         navigator.setOnNavigated(this::onNavigated);
@@ -115,15 +62,7 @@ public class DecoratorController {
 
         setupAuthlibInjectorDnD();
 
-        // Setup background
-        decorator.setContentBackground(getBackground());
-        changeBackgroundListener = o -> updateBackground();
-        WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
-        config().backgroundImageTypeProperty().addListener(weakListener);
-        config().backgroundImageProperty().addListener(weakListener);
-        config().backgroundImageUrlProperty().addListener(weakListener);
-        config().backgroundPaintProperty().addListener(weakListener);
-        config().backgroundImageOpacityProperty().addListener(weakListener);
+        decorator.contentBackgroundProperty().bind(Themes.backgroundProperty());
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -187,184 +126,14 @@ public class DecoratorController {
         return decorator;
     }
 
-    // ==== Background ====
-
-    //FXThread
-    private int changeBackgroundCount = 0;
-
-    @SuppressWarnings("FieldCanBeLocal") // Strong reference
-    private final InvalidationListener changeBackgroundListener;
-
-    private void updateBackground() {
-        final int currentCount = ++this.changeBackgroundCount;
-        Task.supplyAsync(Schedulers.io(), this::getBackground)
-                .setName("Update background")
-                .whenComplete(Schedulers.javafx(), (background, exception) -> {
-                    if (exception == null) {
-                        if (this.changeBackgroundCount == currentCount)
-                            decorator.setContentBackground(background);
-                    } else {
-                        LOG.warning("Failed to update background", exception);
-                    }
-                }).start();
-    }
-
-    private Background getBackground() {
-        EnumBackgroundImage imageType = config().getBackgroundImageType();
-        if (imageType == null)
-            imageType = EnumBackgroundImage.DEFAULT;
-
-        Image image = null;
-        switch (imageType) {
-            case CUSTOM:
-                String backgroundImage = config().getBackgroundImage();
-                if (backgroundImage != null)
-                    try {
-                        image = tryLoadImage(Paths.get(backgroundImage));
-                    } catch (Exception e) {
-                        LOG.warning("Couldn't load background image", e);
-                    }
-                break;
-            case NETWORK:
-                String backgroundImageUrl = config().getBackgroundImageUrl();
-                if (backgroundImageUrl != null) {
-                    try {
-                        image = FXUtils.loadImage(backgroundImageUrl);
-                    } catch (Exception e) {
-                        LOG.warning("Couldn't load background image", e);
-                    }
-                }
-                break;
-            case CLASSIC:
-                image = newBuiltinImage("/assets/img/background-classic.jpg");
-                break;
-            case TRANSLUCENT: // Deprecated
-                return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
-            case PAINT:
-                Paint paint = config().getBackgroundPaint();
-                double opacity = Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.;
-                if (paint instanceof Color || paint == null) {
-                    Color color = (Color) paint;
-                    if (color == null)
-                        color = Color.WHITE; // Default to white if no color is set
-                    if (opacity < 1.)
-                        color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacity);
-                    return new Background(new BackgroundFill(color, CornerRadii.EMPTY, Insets.EMPTY));
-                } else {
-                    // TODO: Support opacity for non-color paints
-                    return new Background(new BackgroundFill(paint, CornerRadii.EMPTY, Insets.EMPTY));
-                }
-        }
-        if (image == null) {
-            image = loadDefaultBackgroundImage();
-        }
-        return createBackgroundWithOpacity(image, config().getBackgroundImageOpacity());
-    }
-
-    private Background createBackgroundWithOpacity(Image image, int opacity) {
-        if (opacity <= 0) {
-            return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
-        } else if (opacity >= 100 || image.getPixelReader() == null) {
-            return new Background(new BackgroundImage(
-                    image,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundPosition.DEFAULT,
-                    new BackgroundSize(800, 480, false, false, true, true)
-            ));
-        } else {
-            WritableImage tempImage = new WritableImage((int) image.getWidth(), (int) image.getHeight());
-            PixelReader pixelReader = image.getPixelReader();
-            PixelWriter pixelWriter = tempImage.getPixelWriter();
-            for (int y = 0; y < image.getHeight(); y++) {
-                for (int x = 0; x < image.getWidth(); x++) {
-                    Color color = pixelReader.getColor(x, y);
-                    Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity / 100);
-                    pixelWriter.setColor(x, y, newColor);
-                }
-            }
-
-            return new Background(new BackgroundImage(
-                    tempImage,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundPosition.DEFAULT,
-                    new BackgroundSize(800, 480, false, false, true, true)
-            ));
-        }
-    }
-
-    /**
-     * Load background image from bg/, background.png, background.jpg, background.gif
-     */
-    private Image loadDefaultBackgroundImage() {
-        Image image = randomImageIn(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background"));
-        if (image != null)
-            return image;
-
-        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            image = tryLoadImage(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background." + extension));
-            if (image != null)
-                return image;
-        }
-
-        image = randomImageIn(Metadata.CURRENT_DIRECTORY.resolve("bg"));
-        if (image != null)
-            return image;
-
-        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            image = tryLoadImage(Metadata.CURRENT_DIRECTORY.resolve("background." + extension));
-            if (image != null)
-                return image;
-        }
-
-        return newBuiltinImage("/assets/img/background.jpg");
-    }
-
-    private @Nullable Image randomImageIn(Path imageDir) {
-        if (!Files.isDirectory(imageDir)) {
-            return null;
-        }
-
-        List<Path> candidates;
-        try (Stream<Path> stream = Files.list(imageDir)) {
-            candidates = stream
-                    .filter(it -> FXUtils.IMAGE_EXTENSIONS.contains(getExtension(it).toLowerCase(Locale.ROOT)))
-                    .filter(Files::isReadable)
-                    .collect(toList());
-        } catch (IOException e) {
-            LOG.warning("Failed to list files in ./bg", e);
-            return null;
-        }
-
-        Random rnd = new Random();
-        while (!candidates.isEmpty()) {
-            int selected = rnd.nextInt(candidates.size());
-            Image loaded = tryLoadImage(candidates.get(selected));
-            if (loaded != null)
-                return loaded;
-            else
-                candidates.remove(selected);
-        }
-        return null;
-    }
-
-    private @Nullable Image tryLoadImage(Path path) {
-        if (!Files.isReadable(path))
-            return null;
-
-        try {
-            return FXUtils.loadImage(path);
-        } catch (Exception e) {
-            LOG.warning("Couldn't load background image", e);
-            return null;
-        }
-    }
-
     // ==== Navigation ====
 
     public void navigate(Node node, AnimationProducer animationProducer, Duration duration, Interpolator interpolator) {
         navigator.navigate(node, animationProducer, duration, interpolator);
+    }
+
+    public BooleanProperty backableProperty() {
+        return navigator.backableProperty();
     }
 
     private void close() {
@@ -451,10 +220,14 @@ public class DecoratorController {
         DialogUtils.close(node);
     }
 
+    public void showDialogLater(Node node) {
+        DialogUtils.showLater(decorator, node);
+    }
+
     // ==== Toast ====
 
     public void showToast(String content) {
-        decorator.getSnackbar().fireEvent(new JFXSnackbar.SnackbarEvent(content, null, 2000L, false, null));
+        decorator.getSnackbar().fireEvent(new JFXSnackbar.SnackbarEvent(new JFXSnackbarLayout(content)));
     }
 
     // ==== Wizard ====

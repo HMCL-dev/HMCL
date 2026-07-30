@@ -1,0 +1,126 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.modpack.mcbbs;
+
+import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
+import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
+import org.jackhuang.hmcl.modpack.Modpack;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.modpack.ModpackInstallTask;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+public final class McbbsModpackLocalInstallTask extends Task<Void> {
+
+    private final DefaultDependencyManager dependencyManager;
+    private final Path zipFile;
+    private final Modpack modpack;
+    private final McbbsModpackManifest manifest;
+    private final GameInstanceID instanceId;
+    private final boolean update;
+    private final DefaultGameRepository repository;
+    private final MinecraftInstanceTask<McbbsModpackManifest> instanceTask;
+    private final List<Task<?>> dependencies = new ArrayList<>(2);
+    private final List<Task<?>> dependents = new ArrayList<>(4);
+
+    public McbbsModpackLocalInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, McbbsModpackManifest manifest, GameInstanceID instanceId) {
+        this.dependencyManager = dependencyManager;
+        this.zipFile = zipFile;
+        this.modpack = modpack;
+        this.manifest = manifest;
+        this.instanceId = instanceId;
+        this.repository = dependencyManager.getGameRepository();
+        Path run = repository.getRunDirectory(instanceId);
+
+        Path json = repository.getModpackConfiguration(instanceId);
+        if (repository.hasInstance(instanceId) && Files.notExists(json))
+            throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
+        this.update = repository.hasInstance(instanceId);
+
+
+        GameBuilder builder = dependencyManager.newGameBuilder().name(instanceId);
+        for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
+            builder.version(addon.getId(), addon.getVersion());
+        }
+
+        dependents.add(builder.buildAsync());
+        onDone().register(event -> {
+            if (event.isFailed())
+                repository.removeInstanceFromDisk(instanceId);
+        });
+
+        ModpackConfiguration<McbbsModpackManifest> config = null;
+        try {
+            if (Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
+
+                if (!McbbsModpackProvider.INSTANCE.getName().equals(config.getType()))
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Mcbbs modpack. Cannot update this instance.");
+            }
+        } catch (JsonParseException | IOException ignore) {
+        }
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
+        instanceTask = new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(instanceId));
+        dependents.add(instanceTask.withStage("hmcl.modpack"));
+    }
+
+    @Override
+    public List<Task<?>> getDependents() {
+        return dependents;
+    }
+
+    @Override
+    public List<Task<?>> getDependencies() {
+        return dependencies;
+    }
+
+    @Override
+    public void execute() throws Exception {
+        GameInstanceManifest instanceManifest = repository.getInstanceManifest(instanceId);
+        Optional<GameInstancePatch> mcbbsPatch = instanceManifest.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.id())).findFirst();
+        if (!update) {
+            GameInstancePatch patch = new GameInstancePatch(PATCH_NAME).withLibraries(manifest.getLibraries());
+            dependencies.add(repository.saveAsync(instanceManifest.addPatch(patch)));
+        } else if (mcbbsPatch.isPresent()) {
+            // This mcbbs modpack was installed by HMCL.
+            GameInstancePatch patch = mcbbsPatch.get().withLibraries(manifest.getLibraries());
+            dependencies.add(repository.saveAsync(instanceManifest.addPatch(patch)));
+        } else {
+            // This mcbbs modpack was installed by other launchers.
+            // TODO: maintain libraries.
+        }
+
+        dependencies.add(new McbbsModpackCompletionTask(dependencyManager, instanceId, instanceTask.getResult()));
+    }
+
+    private static final String PATCH_NAME = "mcbbs";
+}

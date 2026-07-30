@@ -17,11 +17,21 @@
  */
 package org.jackhuang.hmcl.ui.image;
 
-import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import org.girod.javafx.svgimage.LoaderParameters;
+import org.girod.javafx.svgimage.SVGImage;
+import org.girod.javafx.svgimage.SVGLoader;
+import org.girod.javafx.svgimage.ScaleQuality;
+import org.glavo.webp.WebPImage;
+import org.glavo.webp.WebPImageLoadOptions;
+import org.glavo.webp.javafx.WebPFXImage;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.image.apng.Png;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Bitmap;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888BitmapSequence;
@@ -30,16 +40,16 @@ import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
-import org.jackhuang.hmcl.util.SwingFXUtils;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -61,16 +71,48 @@ public final class ImageUtils {
     };
 
     public static final ImageLoader WEBP = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
-        WebPImageReaderSpi spi = new WebPImageReaderSpi();
-        ImageReader reader = spi.createReaderInstance(null);
-        BufferedImage bufferedImage;
-        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
-            reader.setInput(imageInput, true, true);
-            bufferedImage = reader.read(0, reader.getDefaultReadParam());
-        } finally {
-            reader.dispose();
+        var options = new WebPImageLoadOptions(requestedWidth, requestedHeight, preserveRatio, smooth);
+        return new WebPFXImage(WebPImage.read(input, options));
+    };
+
+    public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+        String content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+
+        LoaderParameters parameters = new LoaderParameters();
+        parameters.autoStartAnimations = false;
+
+        SVGImage image;
+
+        if (Platform.isFxApplicationThread()) {
+            image = SVGLoader.load(content, parameters);
+        } else {
+            // TODO: Currently, SVGLoader.load(...) requires the javafx.swing module if it operates on a non-JavaFX thread.
+            image = CompletableFuture.supplyAsync(
+                    () -> SVGLoader.load(content, parameters),
+                    Schedulers.javafx()
+            ).get();
         }
-        return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
+
+        if (image == null)
+            throw new IOException("Failed to load SVG image");
+
+        var snapshotParameters = new SnapshotParameters();
+        snapshotParameters.setFill(Color.TRANSPARENT);
+
+        if (requestedWidth <= 0. || requestedHeight <= 0.) {
+            return image.toImage(snapshotParameters);
+        }
+
+        double scaleX = requestedWidth / image.getScaledWidth();
+        double scaleY = requestedHeight / image.getScaledHeight();
+
+        if (preserveRatio || scaleX == scaleY) {
+            double scale = Math.min(scaleX, scaleY);
+            return image.scale(scale).toImage(snapshotParameters);
+        } else {
+            // FIXME: Use DEFAULT_SVG_SNAPSHOT_PARAMS
+            return image.toImageScaled(ScaleQuality.RENDER_QUALITY, scaleX, scaleY);
+        }
     };
 
     public static final ImageLoader APNG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
@@ -115,13 +157,13 @@ public final class ImageUtils {
             if (doScale) {
                 targetWidth = requestedWidth;
                 targetHeight = requestedHeight;
-                pixels = scale(defaultImage.array,
-                        defaultImage.width, defaultImage.height,
+                pixels = scale(defaultImage.array(),
+                        defaultImage.width(), defaultImage.height(),
                         targetWidth, targetHeight);
             } else {
-                targetWidth = defaultImage.width;
-                targetHeight = defaultImage.height;
-                pixels = defaultImage.array;
+                targetWidth = defaultImage.width();
+                targetHeight = defaultImage.height();
+                pixels = defaultImage.array();
             }
 
             WritableImage image = new WritableImage(targetWidth, targetHeight);
@@ -136,11 +178,13 @@ public final class ImageUtils {
 
     public static final Map<String, ImageLoader> EXT_TO_LOADER = Map.of(
             "webp", WEBP,
+            "svg", SVG,
             "apng", APNG
     );
 
     public static final Map<String, ImageLoader> CONTENT_TYPE_TO_LOADER = Map.of(
             "image/webp", WEBP,
+            "image/svg+xml", SVG,
             "image/apng", APNG
     );
 
@@ -165,22 +209,22 @@ public final class ImageUtils {
                 && Arrays.equals(headerBuffer, 8, 12, WEBP_HEADER, 0, 4);
     }
 
+    private static final byte[] SVG_HEADER = "<svg".getBytes(StandardCharsets.US_ASCII);
+
+    // This is currently a simple check, more complex checks can be considered in the future
+    public static boolean isSVG(byte[] headerBuffer) {
+        return headerBuffer.length > SVG_HEADER.length
+                && Arrays.equals(headerBuffer, 0, SVG_HEADER.length, SVG_HEADER, 0, SVG_HEADER.length);
+    }
+
     private static final byte[] PNG_HEADER = {
             (byte) 0x89, (byte) 0x50, (byte) 0x4e, (byte) 0x47,
             (byte) 0x0d, (byte) 0x0a, (byte) 0x1a, (byte) 0x0a,
     };
 
-    private static final class PngChunkHeader {
+    private record PngChunkHeader(int length, int chunkType) {
         private static final int IDAT_HEADER = 0x49444154;
         private static final int acTL_HEADER = 0x6163544c;
-
-        private final int length;
-        private final int chunkType;
-
-        private PngChunkHeader(int length, int chunkType) {
-            this.length = length;
-            this.chunkType = chunkType;
-        }
 
         private static @Nullable PngChunkHeader readHeader(ByteBuffer headerBuffer) {
             if (headerBuffer.remaining() < 8)
@@ -232,6 +276,8 @@ public final class ImageUtils {
             return WEBP;
         if (isApng(headerBuffer))
             return APNG;
+        if (isSVG(headerBuffer))
+            return SVG;
         return null;
     }
 
@@ -276,7 +322,7 @@ public final class ImageUtils {
         int[] buffer = new int[Math.multiplyExact(width, height)];
         for (int frameIndex = 0; frameIndex < frames.size(); frameIndex++) {
             var frame = frames.get(frameIndex);
-            PngFrameControl control = frame.control;
+            PngFrameControl control = frame.control();
 
             if (frameIndex == 0 && (
                     control.xOffset != 0 || control.yOffset != 0
@@ -296,7 +342,7 @@ public final class ImageUtils {
             int[] currentFrameBuffer = buffer.clone();
             if (control.blendOp == 0) {
                 for (int row = 0; row < control.height; row++) {
-                    System.arraycopy(frame.bitmap.array,
+                    System.arraycopy(frame.bitmap().array(),
                             row * control.width,
                             currentFrameBuffer,
                             (control.yOffset + row) * width + control.xOffset,
@@ -309,7 +355,7 @@ public final class ImageUtils {
                         int srcIndex = row * control.width + col;
                         int dstIndex = (control.yOffset + row) * width + control.xOffset + col;
 
-                        int srcPixel = frame.bitmap.array[srcIndex];
+                        int srcPixel = frame.bitmap().array()[srcIndex];
                         int dstPixel = currentFrameBuffer[dstIndex];
 
                         int srcAlpha = (srcPixel >>> 24) & 0xFF;
@@ -393,7 +439,7 @@ public final class ImageUtils {
         PngAnimationControl animationControl = sequence.getAnimationControl();
         int cycleCount;
         if (animationControl != null) {
-            cycleCount = animationControl.numPlays;
+            cycleCount = animationControl.numPlays();
             if (cycleCount == 0)
                 cycleCount = Timeline.INDEFINITE;
         } else {
@@ -404,6 +450,19 @@ public final class ImageUtils {
             return new AnimationImageImpl(targetWidth, targetHeight, framePixels, durations, cycleCount);
         else
             return new AnimationImageImpl(width, height, framePixels, durations, cycleCount);
+    }
+
+    private static int[] rgbaToArgb(ByteBuffer rgba) {
+        int pixelCount = rgba.remaining() / 4;
+        int[] argb = new int[pixelCount];
+        for (int i = 0; i < pixelCount; i++) {
+            int r = rgba.get() & 0xFF;
+            int g = rgba.get() & 0xFF;
+            int b = rgba.get() & 0xFF;
+            int a = rgba.get() & 0xFF;
+            argb[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        }
+        return argb;
     }
 
     private ImageUtils() {

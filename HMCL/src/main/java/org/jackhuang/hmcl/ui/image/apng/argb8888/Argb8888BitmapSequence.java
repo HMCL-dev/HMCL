@@ -37,7 +37,7 @@ public final class Argb8888BitmapSequence {
 
     public void receiveAnimationControl(PngAnimationControl animationControl) {
         this.animationControl = animationControl;
-        this.animationFrames = new ArrayList<>(animationControl.numFrames);
+        this.animationFrames = new ArrayList<>(animationControl.numFrames());
     }
 
     public void receiveDefaultImage(Argb8888Bitmap bitmap) {
@@ -49,7 +49,7 @@ public final class Argb8888BitmapSequence {
     }
 
     public boolean isAnimated() {
-        return null != animationControl && animationControl.numFrames > 0;
+        return null != animationControl && animationControl.numFrames() > 0;
     }
 
     public PngAnimationControl getAnimationControl() {
@@ -60,13 +60,6 @@ public final class Argb8888BitmapSequence {
         return animationFrames;
     }
 
-    public static final class Frame {
-        public final PngFrameControl control;
-        public final Argb8888Bitmap bitmap;
-
-        public Frame(PngFrameControl control, Argb8888Bitmap bitmap) {
-            this.control = control;
-            this.bitmap = bitmap;
-        }
+    public record Frame(PngFrameControl control, Argb8888Bitmap bitmap) {
     }
 }

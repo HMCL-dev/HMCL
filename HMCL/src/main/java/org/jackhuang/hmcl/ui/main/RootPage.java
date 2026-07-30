@@ -19,15 +19,17 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.GameDirectory;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
@@ -45,14 +47,15 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.ui.nbt.NBTFileType;
-import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
-import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.instances.GameAdvancedListItem;
+import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -65,7 +68,6 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.ui.FXUtils.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -73,12 +75,12 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage mainPage = null;
 
     public RootPage() {
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
+        EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class)
                 .register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
 
-        Profile profile = Profiles.getSelectedProfile();
-        if (profile != null && profile.getRepository().isLoaded())
-            onRefreshedVersions(Profiles.selectedProfileProperty().get().getRepository());
+        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+        if (repository.isLoaded())
+            onRefreshedVersions(GameDirectoryManager.getSelectedRepository());
 
         getStyleClass().remove("gray-background");
         getLeft().getStyleClass().add("gray-background");
@@ -98,12 +100,12 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
             FXUtils.applyDragListener(mainPage,
-                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file),
+                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file) || "json".equalsIgnoreCase(FileUtils.getExtension(file)),
                     modpacks -> {
                         Path file = modpacks.get(0);
                         if (ModpackHelper.isFileModpackByExtension(file)) {
                             Controllers.getDecorator().startWizard(
-                                    new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file),
+                                    new ModpackInstallWizardProvider(GameDirectoryManager.getSelectedRepository(), file),
                                     i18n("install.modpack"));
                         } else if (NBTFileType.isNBTFileByExtension(file)) {
                             try {
@@ -113,24 +115,25 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                 Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
                                         i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
+                        } else if ("json".equalsIgnoreCase(FileUtils.getExtension(file))) {
+                            Instances.installFromJson(GameDirectoryManager.getSelectedRepository(), file);
                         }
                     });
 
-            FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), mainPage::setCurrentGame);
-            mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());
+            FXUtils.onChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), mainPage::setCurrentGame);
             mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
 
-            Profiles.registerVersionsListener(profile -> {
-                HMCLGameRepository repository = profile.getRepository();
-                List<Version> children = repository.getVersions().parallelStream()
+            GameDirectoryManager.registerVersionsListener(repository -> {
+                GameDirectory gameDirectory = repository.getGameDirectory();
+                List<GameInstanceManifest> children = repository.getInstanceManifests().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
-                                .comparing((Version version) -> Lang.requireNonNullElse(version.getReleaseTime(), Instant.EPOCH))
-                                .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
+                                .comparing((GameInstanceManifest manifest) -> Lang.requireNonNullElse(manifest.releaseTime(), Instant.EPOCH))
+                                .thenComparing(manifest -> VersionNumber.asVersion(repository.getGameVersion(manifest).orElse(manifest.id().toString()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {
-                    if (profile == Profiles.getSelectedProfile())
-                        mainPage.initVersions(profile, children);
+                    if (gameDirectory == GameDirectoryManager.getSelectedGameDirectory())
+                        mainPage.initVersions(repository, children);
                 });
             });
             this.mainPage = mainPage;
@@ -152,52 +155,47 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // second item in left sidebar
             GameAdvancedListItem gameListItem = new GameAdvancedListItem();
             gameListItem.setOnAction(e -> {
-                Profile profile = Profiles.getSelectedProfile();
-                String version = Profiles.getSelectedVersion();
-                if (version == null) {
+                GameInstanceID instanceId = GameDirectoryManager.getSelectedRepository().getSelectedInstance();
+                if (instanceId == null) {
                     Controllers.navigate(Controllers.getGameListPage());
                 } else {
-                    Versions.modifyGameSettings(profile, version);
+                    Instances.modifyGameSettings(GameDirectoryManager.getSelectedRepository(), instanceId);
                 }
             });
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
-                String currentId = getSkinnable().getMainPage().getCurrentGame();
-                return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-            }, it -> getSkinnable().getMainPage().getProfile().setSelectedVersion(it.getId()));
+                GameInstanceID currentId = getSkinnable().getMainPage().getCurrentGame();
+                return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
+            }, it -> getSkinnable().getMainPage().getRepository().setSelectedInstance(it.id()));
             if (AnimationUtils.isAnimationEnabled()) {
-                FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
+                FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareGameInstancePage);
             }
             FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(wrap(SVG.FORMAT_LIST_BULLETED));
-            gameItem.setActionButtonVisible(false);
-            gameItem.setTitle(i18n("version.manage"));
+            gameItem.setLeftIcon(SVG.FORMAT_LIST_BULLETED);
+            gameItem.setTitle(i18n("instance.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
             FXUtils.onSecondaryButtonClicked(gameItem, () -> showGameListPopupMenu(gameItem));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
-            downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD));
-            downloadItem.setActionButtonVisible(false);
+            downloadItem.setLeftIcon(SVG.DOWNLOAD);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> {
                 Controllers.getDownloadPage().showGameDownloads();
                 Controllers.navigate(Controllers.getDownloadPage());
             });
-            FXUtils.installFastTooltip(downloadItem, i18n("download.hint"));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
             }
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftGraphic(wrap(SVG.SETTINGS));
-            launcherSettingsItem.setActionButtonVisible(false);
+            launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> {
-                Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
+                Controllers.getSettingsPage().showGameSettings(GameDirectoryManager.getSelectedRepository());
                 Controllers.navigate(Controllers.getSettingsPage());
             });
             if (AnimationUtils.isAnimationEnabled()) {
@@ -206,8 +204,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
-            terracottaItem.setLeftGraphic(wrap(SVG.GRAPH2));
-            terracottaItem.setActionButtonVisible(false);
+            terracottaItem.setLeftIcon(SVG.GRAPH2);
             terracottaItem.setTitle(i18n("terracotta"));
             terracottaItem.setOnAction(e -> {
                 if (TerracottaMetadata.PROVIDER != null) {
@@ -232,7 +229,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             AdvancedListBox sideBar = new AdvancedListBox()
                     .startCategory(i18n("account").toUpperCase(Locale.ROOT))
                     .add(accountListItem)
-                    .startCategory(i18n("version").toUpperCase(Locale.ROOT))
+                    .startCategory(i18n("instance").toUpperCase(Locale.ROOT))
                     .add(gameListItem)
                     .add(gameItem)
                     .add(downloadItem)
@@ -249,13 +246,13 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             setCenter(getSkinnable().getMainPage());
         }
 
-        public void showGameListPopupMenu(AdvancedListItem gameListItem) {
+        public void showGameListPopupMenu(Region gameListItem) {
             GameListPopupMenu.show(gameListItem,
                     JFXPopup.PopupVPosition.TOP,
                     JFXPopup.PopupHPosition.LEFT,
                     gameListItem.getWidth(),
                     0,
-                    getSkinnable().getMainPage().getProfile(),
+                    getSkinnable().getMainPage().getRepository(),
                     getSkinnable().getMainPage().getVersions());
         }
     }
@@ -267,7 +264,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             if (!checkedModpack) {
                 checkedModpack = true;
 
-                if (repository.getVersionCount() == 0) {
+                if (repository.getInstanceCount() == 0) {
                     Path zipModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
                     Path mrpackModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.mrpack");
 
@@ -284,7 +281,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
                                 .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
                                 .thenApplyAsync(modpack -> ModpackHelper
-                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack, null)
+                                        .getInstallTask(repository, modpackFile, new GameInstanceID(modpack.getName()), modpack, null)
                                         .executor())
                                 .thenAcceptAsync(Schedulers.javafx(), executor -> {
                                     Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);

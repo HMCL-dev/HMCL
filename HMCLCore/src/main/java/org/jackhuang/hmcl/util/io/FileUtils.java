@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.util.io;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import org.glavo.chardet.DetectedCharset;
-import org.glavo.chardet.UniversalDetector;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -27,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
@@ -38,7 +38,6 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -99,7 +98,11 @@ public final class FileUtils {
     }
 
     public static String getNameWithoutExtension(Path file) {
-        return StringUtils.substringBeforeLast(getName(file), '.');
+        String name = getName(file);
+        if (Files.isDirectory(file)) {
+            return name;
+        }
+        return StringUtils.substringBeforeLast(name, '.');
     }
 
     public static String getExtension(String fileName) {
@@ -209,6 +212,17 @@ public final class FileUtils {
         return true;
     }
 
+    /// @see #isNameValidForJar(OperatingSystem, String)
+    public static boolean isNameValidForJar(String name) {
+        return isNameValidForJar(OperatingSystem.CURRENT_OS, name);
+    }
+
+    /// Returns true if the given name is a valid jar file name on the given operating system,
+    /// and `false` otherwise.
+    public static boolean isNameValidForJar(OperatingSystem os, String name) {
+        return !name.contains("!") && isNameValid(os, name);
+    }
+
     /// Safely get the file size. Returns `0` if the file does not exist or the size cannot be obtained.
     public static long size(Path file) {
         try {
@@ -219,24 +233,6 @@ public final class FileUtils {
             LOG.warning("Failed to get file size of " + file, e);
             return 0L;
         }
-    }
-
-    public static String readTextMaybeNativeEncoding(Path file) throws IOException {
-        byte[] bytes = Files.readAllBytes(file);
-
-        if (OperatingSystem.NATIVE_CHARSET == UTF_8)
-            return new String(bytes, UTF_8);
-
-        UniversalDetector detector = new UniversalDetector();
-        detector.handleData(bytes);
-        detector.dataEnd();
-
-        DetectedCharset detectedCharset = detector.getDetectedCharset();
-        if (detectedCharset != null && detectedCharset.isSupported()
-                && (detectedCharset == DetectedCharset.UTF_8 || detectedCharset == DetectedCharset.US_ASCII))
-            return new String(bytes, UTF_8);
-        else
-            return new String(bytes, OperatingSystem.NATIVE_CHARSET);
     }
 
     public static void deleteDirectory(Path directory) throws IOException {
@@ -492,8 +488,17 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, String content) throws IOException {
+        saveSafely(file, content, StandardCharsets.UTF_8);
+    }
+
+    public static void saveSafely(Path file, String content, @Nullable Charset charset) throws IOException {
+        Path parent = file.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
         Path tmpFile = tmpSaveFile(file);
-        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, charset != null ? charset : StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             writer.write(content);
         }
 
@@ -508,6 +513,11 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, ExceptionalConsumer<? super OutputStream, IOException> action) throws IOException {
+        Path parent = file.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
         Path tmpFile = tmpSaveFile(file);
 
         try (OutputStream os = Files.newOutputStream(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {

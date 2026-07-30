@@ -30,7 +30,7 @@ English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中�
 
 ## 紹介
 
-HMCLはオープンソースでクロスプラットフォーム対応のMinecraftランチャーです。Mod管理、ゲームカスタマイズ、Modローダーのインストール（Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader、OptiFine）、Modパック作成、UIカスタマイズなど、さまざまな機能をサポートしています。
+HMCLはオープンソースでクロスプラットフォーム対応のMinecraftランチャーです。Mod管理、ゲームカスタマイズ、Modローダーのインストール（Forge、NeoForge、Cleanroom、Fabric、Legacy Fabric、Quilt、LiteLoader、OptiFine）、Modパック作成、UIカスタマイズなど、さまざまな機能をサポートしています。
 
 HMCLは優れたクロスプラットフォーム性能を持っています。Windows、Linux、macOS、FreeBSDなどの異なるオペレーティングシステムだけでなく、x86、ARM、RISC-V、MIPS、LoongArchなどのさまざまなCPUアーキテクチャにも対応しています。HMCLを使えば、さまざまなプラットフォームでMinecraftを簡単に楽しむことができます。
 
@@ -38,11 +38,31 @@ HMCLが対応しているシステムやCPUアーキテクチャについては�
 
 ## ダウンロード
 
-最新版は[公式サイト](https://hmcl.huangyuhui.net/download)からダウンロードできます。
+HMCL は以下の場所からダウンロードできます。
 
-また、[GitHub Releases](https://github.com/HMCL-dev/HMCL/releases)でも最新版を入手できます。
+- [HMCL 公式サイト](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-必要ではありませんが、上記の公式サイトからのみリリース版をダウンロードすることを推奨します。
+## 貢献
+
+HMCL はコミュニティ主導のオープンソースプロジェクトであり、コードの貢献や提案を歓迎しています。
+
+HMCL の開発には、次の方法で参加できます。
+
+- GitHub で [Issue を作成](https://github.com/HMCL-dev/HMCL/issues/new/choose)して、バグ報告や機能要望を行う。
+- GitHub でリポジトリを fork し、[Pull Request を送信](https://github.com/HMCL-dev/HMCL/compare)してコードを貢献する。
+
+貢献する前に、以下の内容を含む[貢献ガイド](./Contributing.md)をお読みください。
+
+- [ソースコードから HMCL をビルドして実行する方法](./Contributing.md#build-hmcl)
+- [デバッグオプションで HMCL の動作を調整する方法](./Contributing.md#debug-options)
+
+## 貢献者
+
+2015 年以来、120 人を超える貢献者が HMCL に参加しています。ご協力ありがとうございます。
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## ライセンス
 

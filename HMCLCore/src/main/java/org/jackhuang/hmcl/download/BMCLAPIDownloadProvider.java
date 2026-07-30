@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -57,6 +56,7 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     private final QuiltVersionList quilt;
     private final QuiltAPIVersionList quiltApi;
     private final List<Pair<String, String>> replacement;
+    private final List<Pair<String, String>> fallbackReplacement;
 
     public BMCLAPIDownloadProvider(String apiRoot) {
         this.apiRoot = apiRoot;
@@ -73,7 +73,7 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
         this.legacyFabric = new LegacyFabricVersionList(this);
         this.legacyFabricApi = new LegacyFabricAPIVersionList(this);
 
-        this.replacement = Arrays.asList(
+        this.replacement = List.of(
                 pair("https://bmclapi2.bangbang93.com", apiRoot),
                 pair("https://launchermeta.mojang.com", apiRoot),
                 pair("https://piston-meta.mojang.com", apiRoot),
@@ -94,12 +94,14 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
                 pair("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
                 pair("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
                 pair("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto")
-//                // https://github.com/mcmod-info-mirror/mcim-rust-api
-//                pair("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth"),
-//                pair("https://cdn.modrinth.com", "https://mod.mcimirror.top"),
-//                pair("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge"),
-//                pair("https://edge.forgecdn.net", "https://mod.mcimirror.top"),
-//                pair("https://mediafilez.forgecdn.net", "https://mod.mcimirror.top")
+        );
+
+        this.fallbackReplacement = List.of(
+                // https://github.com/mcmod-info-mirror/mcim-rust-api
+                pair("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth"),
+                pair("https://cdn.modrinth.com", "https://mod.mcimirror.top"),
+                pair("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge"),
+                pair("https://edge.forgecdn.net", "https://mod.mcimirror.top")
         );
     }
 
@@ -136,15 +138,36 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
         };
     }
 
-    @Override
-    public String injectURL(String baseURL) {
+    private static String injectURL(List<Pair<String, String>> replacement, String baseURL) {
         for (Pair<String, String> pair : replacement) {
             if (baseURL.startsWith(pair.getKey())) {
                 return pair.getValue() + baseURL.substring(pair.getKey().length());
             }
         }
-
         return baseURL;
+    }
+
+    @Override
+    public String injectURL(String baseURL) {
+        return injectURL(replacement, baseURL);
+    }
+
+    @Override
+    public List<URI> injectURLWithCandidates(String baseURL) {
+        String injected = injectURL(replacement, baseURL);
+        if (injected.equals(baseURL)) {
+            String fallbackInjected = injectURL(fallbackReplacement, baseURL);
+            if (fallbackInjected.equals(baseURL)) {
+                return List.of(NetworkUtils.toURI(baseURL));
+            } else {
+                return List.of(
+                        NetworkUtils.toURI(baseURL),
+                        NetworkUtils.toURI(fallbackInjected)
+                );
+            }
+        } else {
+            return List.of(NetworkUtils.toURI(injected));
+        }
     }
 
     @Override

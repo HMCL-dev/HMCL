@@ -79,10 +79,11 @@ public final class SelfDependencyPatcher {
     private final byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
     private final MessageDigest digest = DigestUtils.getDigest("SHA-1");
 
-    private SelfDependencyPatcher() throws IncompatibleVersionException {
+    private SelfDependencyPatcher() throws PatchException {
         // We can only self-patch JavaFX on specific platform.
         if (dependencies == null) {
-            throw new IncompatibleVersionException();
+            throw new PatchException("Unsupported platform: operating system %s, architecture %s".formatted(
+                    System.getProperty("os.name"), System.getProperty("os.arch")));
         }
 
         final String customUrl = System.getProperty("hmcl.openjfx.repo");
@@ -159,18 +160,12 @@ public final class SelfDependencyPatcher {
     /**
      * Patch in any missing dependencies, if any.
      */
-    public static void patch() throws PatchException, IncompatibleVersionException, CancellationException {
+    public static void patch() throws PatchException, CancellationException {
         // Do nothing if JavaFX is detected
         try {
-            try {
-                Class.forName("javafx.application.Application");
-                return;
-            } catch (Exception ignored) {
-            }
-        } catch (UnsupportedClassVersionError error) {
-            // Loading the JavaFX class was unsupported.
-            // We are probably on 8 and its on 11
-            throw new IncompatibleVersionException();
+            Class.forName("javafx.application.Application");
+            return;
+        } catch (Exception ignored) {
         }
 
         SelfDependencyPatcher patcher = new SelfDependencyPatcher();
@@ -274,7 +269,14 @@ public final class SelfDependencyPatcher {
             AtomicBoolean isCancelled = new AtomicBoolean();
             AtomicBoolean showDetails = new AtomicBoolean();
 
-            ProgressFrame dialog = new ProgressFrame(i18n("download.javafx"));
+            ProgressFrame dialog;
+            try {
+                dialog = new SwingProgressFrame(i18n("download.javafx"));
+            } catch (HeadlessException e) {
+                LOG.warning("Failed to open dialog", e);
+                dialog = new FakeProgressFrame();
+            }
+
             dialog.setProgressMaximum(dependencies.size() + 1);
             dialog.setProgress(count);
             dialog.setOnCancel(() -> isCancelled.set(true));
@@ -301,9 +303,10 @@ public final class SelfDependencyPatcher {
                     DependencyDescriptor dependency = dependencies.get(i);
 
                     final String url = repository.resolveDependencyURL(dependency);
+                    ProgressFrame finalDialog = dialog;
                     SwingUtilities.invokeLater(() -> {
-                        dialog.setCurrent(dependency.module);
-                        dialog.incrementProgress();
+                        finalDialog.setCurrent(dependency.module);
+                        finalDialog.incrementProgress();
                     });
 
                     LOG.info("Downloading " + url);
@@ -378,22 +381,41 @@ public final class SelfDependencyPatcher {
     }
 
     public static class PatchException extends Exception {
+        PatchException(String message) {
+            super(message);
+        }
+
         PatchException(String message, Throwable cause) {
             super(message, cause);
         }
     }
 
-    public static class IncompatibleVersionException extends Exception {
+    public sealed interface ProgressFrame {
+        void setCurrent(String component);
+
+        void setProgressMaximum(int total);
+
+        void setProgress(int n);
+
+        void incrementProgress();
+
+        void setOnCancel(Runnable action);
+
+        void setOnChangeSource(Runnable action);
+
+        void setVisible(boolean visible);
+
+        void dispose();
     }
 
-    public static class ProgressFrame extends JDialog {
+    public static final class SwingProgressFrame extends JDialog implements ProgressFrame {
 
         private final JProgressBar progressBar;
         private final JLabel progressText;
         private final JButton btnChangeSource;
         private final JButton btnCancel;
 
-        public ProgressFrame(String title) {
+        public SwingProgressFrame(String title) {
             JPanel panel = new JPanel();
 
             setResizable(false);
@@ -455,6 +477,41 @@ public final class SelfDependencyPatcher {
 
         public void setOnChangeSource(Runnable action) {
             btnChangeSource.addActionListener(e -> action.run());
+        }
+    }
+
+    public static final class FakeProgressFrame implements ProgressFrame {
+
+        @Override
+        public void setCurrent(String component) {
+        }
+
+        @Override
+        public void setProgressMaximum(int total) {
+        }
+
+        @Override
+        public void setProgress(int n) {
+        }
+
+        @Override
+        public void incrementProgress() {
+        }
+
+        @Override
+        public void setOnCancel(Runnable action) {
+        }
+
+        @Override
+        public void setOnChangeSource(Runnable action) {
+        }
+
+        @Override
+        public void setVisible(boolean visible) {
+        }
+
+        @Override
+        public void dispose() {
         }
     }
 }

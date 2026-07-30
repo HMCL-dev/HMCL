@@ -30,7 +30,7 @@ English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中�
 
 ## Введение
 
-HMCL — это открытый, кроссплатформенный лаунчер для Minecraft с поддержкой управления модами, настройки игры, установки загрузчиков модов (Forge, NeoForge, Cleanroom, Fabric, Quilt, LiteLoader и OptiFine), создания модпаков, настройки интерфейса и многого другого.
+HMCL — это открытый, кроссплатформенный лаунчер для Minecraft с поддержкой управления модами, настройки игры, установки загрузчиков модов (Forge, NeoForge, Cleanroom, Fabric, Legacy Fabric, Quilt, LiteLoader и OptiFine), создания модпаков, настройки интерфейса и многого другого.
 
 HMCL обладает отличной кроссплатформенностью. Он работает не только на различных операционных системах, таких как Windows, Linux, macOS и FreeBSD, но и поддерживает различные архитектуры процессоров: x86, ARM, RISC-V, MIPS и LoongArch. Благодаря HMCL вы можете легко наслаждаться Minecraft на разных платформах.
 
@@ -38,11 +38,31 @@ HMCL обладает отличной кроссплатформенность�
 
 ## Загрузка
 
-Скачайте последнюю версию с [официального сайта](https://hmcl.huangyuhui.net/download).
+Вы можете скачать HMCL из следующих источников:
 
-Также вы можете найти последнюю версию HMCL в [релизах на GitHub](https://github.com/HMCL-dev/HMCL/releases).
+- [Официальный сайт HMCL](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-Хотя это не обязательно, рекомендуется скачивать релизы только с указанных выше официальных сайтов.
+## Участие
+
+HMCL — это открытый проект, развиваемый сообществом. Мы рады любому вкладу в код и предложениям.
+
+Вы можете помочь разработке HMCL следующими способами:
+
+- Сообщайте об ошибках или предлагайте новые функции, [создав issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) на GitHub.
+- Вносите код, сделав fork репозитория на GitHub и [отправив pull request](https://github.com/HMCL-dev/HMCL/compare).
+
+Перед участием прочитайте [руководство для участников](./Contributing.md), в котором описано следующее:
+
+- [Как собрать и запустить HMCL из исходного кода](./Contributing.md#build-hmcl)
+- [Как изменять поведение HMCL с помощью параметров отладки](./Contributing.md#debug-options)
+
+## Участники
+
+С 2015 года в разработке HMCL участвовали более 120 человек. Спасибо за ваш труд!
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## Лицензия
 

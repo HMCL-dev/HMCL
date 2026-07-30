@@ -29,8 +29,8 @@
 
 .scroll-bar .thumb {
     -fx-fill: -monet-surface-tint;
-    -fx-arc-width: 0;
-    -fx-arc-height: 0;
+    -fx-arc-width: 6;
+    -fx-arc-height: 6;
 }
 
 .title-label {
@@ -113,28 +113,26 @@
 .memory-label {
 }
 
-.memory-used {
-    -fx-background-color: -monet-primary;
+.memory-status-bar {
+    -fx-opacity: 1;
 }
 
-.memory-used:disabled {
+.memory-status-bar:disabled {
     -fx-opacity: 0.4;
 }
 
-.memory-allocate {
-    -fx-background-color: -monet-primary-transparent-50;
+.memory-status-bar .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
 }
 
-.memory-allocate:disabled {
-    -fx-opacity: 0.4;
+.memory-status-bar .memory-used {
+    -fx-fill: -monet-primary;
 }
 
-.memory-total {
-    -fx-background-color: -monet-surface-container;
-}
-
-.memory-total:disabled {
-    -fx-opacity: 0.4;
+.memory-status-bar .memory-allocate {
+    -fx-fill: -monet-primary-transparent-50;
 }
 
 .update-label {
@@ -212,28 +210,28 @@
     -fx-padding: 0 0 0 0;
 }
 
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
     -fx-font-size: 13;
 }
 
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .subtitle {
+.game-directory-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .subtitle {
     -fx-font-size: 10;
 }
 
-.profile-list-item > .rippler-container > BorderPane {
+.game-directory-list-item > .rippler-container > BorderPane {
     -fx-padding: 8 0 8 16;
 }
 
-.profile-list-item:selected > .rippler-container > BorderPane {
+.game-directory-list-item:selected > .rippler-container > BorderPane {
     -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
-.profile-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
 
-.profile-list-item:selected .svg {
+.game-directory-list-item:selected .svg {
     -fx-fill: -monet-on-secondary-container;
 }
 
@@ -324,20 +322,25 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
-.two-line-list-item > .first-line > .tag {
+.two-line-list-item > .first-line .scroll-bar {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+}
+
+.two-line-list-item > .first-line .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
     -fx-padding: 2;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .first-line > .tag-warning {
+.two-line-list-item > .first-line .tag:warning {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -fixed-warning-tag-background;
-    -fx-padding: 2;
-    -fx-font-weight: normal;
-    -fx-font-size: 12px;
 }
 
 .two-line-item-second-large {
@@ -393,6 +396,10 @@
     -fx-cursor: hand;
 }
 
+.installer-item-status:incompatible {
+    -fx-opacity: 0.6;
+}
+
 .installer-item-wrapper {
     -fx-background-color: -monet-surface;
     -fx-background-radius: 4;
@@ -411,7 +418,7 @@
 }
 
 .installer-item-wrapper .installer-item:list-item > .installer-item-name {
-    -fx-pref-width: 80px;
+    -fx-pref-width: 100px;
 }
 
 .installer-item-wrapper .installer-item:list-item > .installer-item-status {
@@ -440,20 +447,29 @@
     -fx-max-height: 55px;
     -fx-min-height: 55px;
     -fx-background-color: -monet-primary-container;
+    -fx-opacity: 1; /* Override the opacity of disabled button */
     -fx-cursor: hand;
 }
 
 .launch-pane > .jfx-button.launch-button {
-    -fx-max-width: 207px;
-    -fx-min-width: 207px;
+    -fx-max-width: 200px;
+    -fx-min-width: 200px;
     -fx-border-width: 0 3px 0 0;
-    -fx-border-color: -monet-on-surface-variant;
+    -fx-border-color: linear-gradient(
+        to bottom, 
+        transparent 0%, 
+        transparent 20%, 
+        -monet-on-surface-variant 20%,
+        -monet-on-surface-variant 80%,
+        transparent 80%, 
+        transparent 100%
+    );
     -fx-background-radius: 4px 0 0 4px;
 }
 
 .launch-pane > .jfx-button.menu-button {
-    -fx-max-width: 20px;
-    -fx-min-width: 20px;
+    -fx-max-width: 27px;
+    -fx-min-width: 27px;
     -fx-font-size: 15px;
     -fx-background-radius: 0 4px 4px 0;
 }
@@ -521,12 +537,14 @@
 }
 
 .jfx-dialog-layout {
-    -fx-padding: 24.0px 24.0px 16.0px 24.0px;
+    -fx-background-radius: 4px;
+    -fx-padding: 24px 24px 16px 24px;
     -fx-background-color: -monet-surface-container-high;
     -fx-text-fill: -monet-on-surface;
 }
 
 .jfx-layout-heading {
+    -fx-font-weight: BOLD;
     -fx-font-size: 20.0px;
     -fx-alignment: center-left;
     -fx-padding: 5.0 0.0 5.0 0.0;
@@ -563,10 +581,46 @@
 }
 
 .task-executor-dialog-layout {
+    -fx-background-radius: 4px;
     -fx-background-color: -monet-surface-container-high;
     -fx-text-fill: -monet-on-surface;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * Microsoft Login Dialog                                                      *
+ *                                                                             *
+ ******************************************************************************/
+
+.microsoft-login-dialog:bodyonly {
+    -fx-padding: 0px 0px 0px 0px;
+}
+
+.method-title {
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-weight: bold;
+}
+
+.method-desc {
+    -fx-text-fill: -monet-outline;
+    -fx-font-size: 0.9em;
+    -fx-line-spacing: 2;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.code-box {
+    -fx-background-color: -monet-surface-variant;
+    -fx-background-radius: 6;
+    -fx-padding: 0 10 0 10;
+    -fx-alignment: center;
+}
+
+.code-box .code-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -monet-primary;
+}
 
 /*******************************************************************************
  *                                                                             *
@@ -587,8 +641,16 @@
     -fx-pref-width: 150.0px;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * JFX Snack Bar                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
 .jfx-snackbar-content {
     -fx-background-color: -monet-inverse-surface;
+    -fx-padding: 5;
+    -fx-spacing: 5;
 }
 
 .jfx-snackbar-toast {
@@ -742,31 +804,39 @@
  *                                                                             *
  ******************************************************************************/
 
-.svg-slider .thumb {
-    -fx-stroke: -monet-on-surface;
-    -fx-fill: -monet-on-surface;
+.jfx-slider .track,
+.jfx-slider:vertical .track {
+    -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 5;
+    -fx-background-insets: 0;
+    -fx-pref-width: 2px;
+    -fx-pref-height: 2px;
 }
 
-.jfx-slider:disabled {
-    -fx-opacity: 0.4;
-}
-
-/*******************************************************
-*                           						   *
-* For the main demo sliders 						   *
-*                          							   *
-*******************************************************/
-
-.jfx-slider {
-    -jfx-indicator-position: right;
-}
-
-.jfx-slider .track {
-    -fx-background-color: -monet-on-surface-variant-transparent-38;
-}
-
-.jfx-slider .thumb {
+.jfx-slider .thumb,
+.jfx-slider:focused .thumb {
     -fx-background-color: -monet-primary;
+    -fx-background-radius: 20;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider .colored-track {
+    -fx-background-color: -monet-primary;
+    -fx-background-radius: 5 0 0 5;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider .slider-value {
+    -fx-stroke: -monet-inverse-on-surface;
+    -fx-font-size: 10;
+}
+
+.jfx-slider .animated-thumb {
+    -fx-pref-width: 30px;
+    -fx-pref-height: 30px;
+    -fx-background-color: -monet-inverse-surface;
+    -fx-background-radius: 50% 50% 50% 0%;
+    -fx-background-insets: 0;
 }
 
 /*******************************************************************************
@@ -855,14 +925,6 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-progress-bar {
-    -fx-pref-width: 500.0;
-}
-
-.jfx-progress-bar > .track, .jfx-progress-bar > .bar {
-    -fx-background-radius: 0;
-    -fx-background-insets: 0;
-}
 
 .jfx-progress-bar > .track {
     -fx-background-color: -monet-secondary-container;
@@ -870,6 +932,13 @@
 
 .jfx-progress-bar > .bar {
     -fx-background-color: -monet-primary;
+    -fx-padding: 2;
+}
+
+.jfx-progress-bar > .track,
+.jfx-progress-bar > .bar {
+    -fx-background-radius: 2;
+    -fx-background-insets: 0;
 }
 
 /*******************************************************************************
@@ -909,6 +978,10 @@
 
 .no-padding .list-cell {
     -fx-padding: 0;
+}
+
+.no-padding .combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-padding: 4 0 4 5;
 }
 
 .jfx-list-cell, .list-cell {
@@ -1003,6 +1076,13 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
+.card-no-padding {
+    -fx-background-color: -monet-surface-container-low-transparent-80;
+    -fx-background-radius: 4;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
 .card-non-transparent {
     -fx-background-color: -monet-surface-container-low;
     -fx-background-radius: 4;
@@ -1029,8 +1109,16 @@
     -fx-background-color: -monet-error-container;
 }
 
+.resource-pack-list-cell:warning {
+    -fx-background-color: -monet-error-container;
+}
+
+.multi-file-item {
+    -fx-padding: 10 0 10 0;
+}
+
 .options-sublist {
-    -fx-background-color: -monet-surface;
+    -fx-background-color: -monet-surface-container;
 }
 
 .options-list-item {
@@ -1039,6 +1127,14 @@
     -fx-border-width: 1 0 0 0;
     -fx-padding: 10 16 10 16;
     -fx-font-size: 12;
+}
+
+.options-sublist .options-list-item {
+    -fx-background-color: -monet-surface-container;
+}
+
+.options-sublist .multi-file-item {
+    -fx-padding: 10 10 10 10;
 }
 
 .options-list-item .svg {
@@ -1076,6 +1172,18 @@
     -fx-border-width: 0;
 }
 
+.options-sublist-wrapper > .container {
+    -fx-background-color: -monet-surface-container;
+}
+
+.options-sublist-wrapper .expand-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.options-sublist-wrapper .expand-icon .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Toggle Button                                                            *
@@ -1093,7 +1201,7 @@
     -fx-background-insets: 0px;
 
     -jfx-toggle-color: -monet-primary;
-    -jfx-toggle-line-color: -monet-primary-container;
+    -jfx-toggle-line-color: -monet-secondary-container;
     -jfx-untoggle-color: -monet-outline;
     -jfx-untoggle-line-color: -monet-surface-container-highest;
     -jfx-size: 10;
@@ -1103,15 +1211,16 @@
 .jfx-toggle-button Line {
     -fx-stroke: -jfx-untoggle-line-color;
 }
-.jfx-toggle-button:selected Line{
+
+.jfx-toggle-button:selected Line {
     -fx-stroke: -jfx-toggle-line-color;
 }
 
-.jfx-toggle-button Circle{
+.jfx-toggle-button Circle {
     -fx-fill: -jfx-untoggle-color;
 }
 
-.jfx-toggle-button:selected Circle{
+.jfx-toggle-button:selected Circle {
     -fx-fill: -jfx-toggle-color;
 }
 
@@ -1223,6 +1332,7 @@
     -fx-pref-height: -fx-toggle-icon-tiny-size;
     -fx-max-height: -fx-toggle-icon-tiny-size;
     -fx-min-height: -fx-toggle-icon-tiny-size;
+    -fx-padding: 0;
     -fx-background-radius: 25px;
     -fx-background-color: transparent;
     -jfx-toggle-color: -monet-primary;
@@ -1231,7 +1341,11 @@
 
 .toggle-icon-tiny .icon {
     -fx-fill: rgb(204.0, 204.0, 51.0);
-    -fx-padding: 5.0;
+    -fx-padding: 0;
+}
+
+.toggle-icon-tiny:overridden .svg {
+    -fx-fill: -monet-primary;
 }
 
 .toggle-icon-tiny .jfx-rippler {
@@ -1268,6 +1382,7 @@
 
 .log-toggle {
     -fx-border: 1px;
+    -fx-background-insets: 0;
     -fx-border-color: -fixed-log-toggle-unselected;
     -fx-text-fill: -fixed-log-toggle-unselected;
 }
@@ -1279,27 +1394,27 @@
 }
 
 .log-toggle.fatal {
-    -fx-background-color: -fixed-log-fatal;
+    -fx-background-color: -fixed-log-fatal-background;
 }
 
 .log-toggle.error {
-    -fx-background-color: -fixed-log-error;
+    -fx-background-color: -fixed-log-error-background;
 }
 
 .log-toggle.warn {
-    -fx-background-color: -fixed-log-warn;
+    -fx-background-color: -fixed-log-warn-background;
 }
 
 .log-toggle.info {
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-toggle.debug {
-    -fx-background-color: -fixed-log-debug;
+    -fx-background-color: -fixed-log-debug-background;
 }
 
 .log-toggle.trace {
-    -fx-background-color: -fixed-log-trace;
+    -fx-background-color: -fixed-log-trace-background;
 }
 
 .log-window-list-cell:selected {
@@ -1307,7 +1422,7 @@
 }
 
 .log-window {
-    -fx-background-color: -monet-surface-container;
+    -fx-background-color: -fixed-log-background;
 }
 
 .log-window .scroll-bar .thumb {
@@ -1330,32 +1445,36 @@
 
 .log-window-list-cell:fatal {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-fatal;
+    -fx-background-color: -fixed-log-fatal-background;
 }
 
 .log-window-list-cell:error {
-    -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-error;
+    -fx-text-fill: -fixed-log-error-text-fill;
+    -fx-background-color: -fixed-log-error-background;
 }
 
 .log-window-list-cell:warn {
-    -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-warn;
+    -fx-text-fill: -fixed-log-warn-text-fill;
+    -fx-background-color: -fixed-log-warn-background;
 }
 
 .log-window-list-cell:info {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -fixed-log-info-background;
+}
+
+.log-window-list-cell {
+    -fx-background-color: -fixed-log-info-background;
 }
 
 .log-window-list-cell:debug {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-debug;
+    -fx-background-color: -fixed-log-debug-background;
 }
 
 .log-window-list-cell:trace {
     -fx-text-fill: -fixed-log-text-fill;
-    -fx-background-color: -fixed-log-trace;
+    -fx-background-color: -fixed-log-trace-background;
 }
 
 .log-window-list-cell:selected {
@@ -1363,100 +1482,41 @@
     -fx-background-color: -fixed-log-selected;
 }
 
+.log-window .always-on-top-button {
+    -fx-rotate: 0.0;
+}
+
+.log-window .always-on-top-button:selected {
+    -fx-background-color: -monet-secondary-container-transparent-80;
+    -fx-rotate: 45.0;
+}
+
+
 /*******************************************************************************
 *                                                                              *
 * JFX Spinner                                                                  *
 *                                                                              *
 *******************************************************************************/
 
-.jfx-spinner > .arc {
-    -fx-stroke-width: 3.0;
-    -fx-fill: transparent;
+.jfx-spinner .arc {
     -fx-stroke: -monet-primary-container;
 }
 
-.jfx-spinner .arc {
-    -fx-stroke-line-cap: round;
-}
-
-.first-spinner {
-    -jfx-radius: 20;
-}
-
-.first-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
 .small-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
-.small-spinner > .arc {
+.small-spinner .arc {
     -fx-stroke-width: 3.0;
 }
 
 .small-spinner-pane .jfx-spinner {
-    -jfx-radius: 10;
+    -jfx-radius: 9;
 }
 
-.small-spinner-pane .jfx-spinner > .arc {
-    -fx-stroke-width: 3.0;
-}
-
-.large-spinner-pane .jfx-spinner {
-    -jfx-radius: 20;
-}
-
-.large-spinner-pane .jfx-spinner {
-    -fx-stroke-width: 5.0;
-}
-
-.second-spinner {
-    -jfx-radius: 30;
-}
-
-.second-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.third-spinner {
-    -jfx-radius: 40;
-}
-
-.third-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fourth-spinner {
-    -jfx-radius: 50;
-}
-
-.fourth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.fifth-spinner {
-    -jfx-radius: 60;
-}
-
-.fifth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.sixth-spinner {
-    -jfx-radius: 70;
-}
-
-.sixth-spinner > .arc {
-    -fx-stroke-width: 5.0;
-}
-
-.seventh-spinner {
-    -jfx-radius: 80;
-}
-
-.seventh-spinner > .arc {
-    -fx-stroke-width: 5.0;
+.spinner-pane .spinner-pane-content {
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
 }
 
 /*******************************************************************************
@@ -1471,6 +1531,11 @@
     -fx-background-color: -monet-surface-container-highest;
     -fx-padding: 4;
     -fx-max-width: 1000000000;
+}
+
+.jfx-combo-box .arrow {
+    -fx-background-color: -monet-on-surface-variant;
+    -fx-shape: "M12 15 7 10H17L12 15Z";
 }
 
 .jfx-combo-box .text {
@@ -1488,6 +1553,7 @@
 .combo-box-popup .list-view .jfx-list-cell {
     -fx-background-color: -monet-surface-container;
     -fx-text-fill: -monet-on-surface;
+    -fx-cursor: hand;
     -fx-background-insets: 0.0;
 }
 
@@ -1495,6 +1561,10 @@
 .combo-box-popup .list-view .list-cell:even:selected > .jfx-rippler > StackPane {
     -fx-background-color: -monet-secondary-container;
     -fx-text-fill: -monet-on-secondary-container;
+}
+
+.combo-box-popup .list-view .list-cell:hover > .jfx-rippler > StackPane {
+    -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
 .jfx-combo-box-warning {
@@ -1523,7 +1593,7 @@
     -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
     -fx-background-radius: 3px;
     -fx-background-insets: 0px;
-    -fx-min-height: 25px;
+    -fx-min-height: 36px;
 }
 
 .color-palette-region {
@@ -1559,6 +1629,21 @@
 
 .custom-color-dialog .tab-selected-line {
     -fx-background-color: -monet-on-surface;
+}
+
+.custom-color-dialog .jfx-color-dialog-actions {
+    -fx-background-color: -monet-surface;
+    -fx-padding: 0.0 10.0 5.0 0.0;
+    -fx-alignment: center-right;
+}
+
+.custom-color-dialog .jfx-color-dialog-accept {
+    -fx-padding: 0.7em 0.8em;
+}
+
+.custom-color-dialog .jfx-color-dialog-cancel {
+    -fx-text-fill: -monet-on-surface-variant;
+    -fx-padding: 0.7em 0.8em;
 }
 
 /*******************************************************************************
@@ -1860,32 +1945,67 @@
 
 /*******************************************************************************
  *                                                                             *
- * Line Button                                                                 *
+ * Line Component                                                              *
  *                                                                             *
  ******************************************************************************/
 
-
-.line-select-button .svg {
-    -fx-opacity: 1;
+.line-component .line-component-container {
+    -fx-padding: 10 16 10 16;
 }
 
-.line-select-button .svg:disabled {
-    -fx-opacity: 0.4;
-}
-
-.line-select-button .menu-container .title {
-    -fx-font-size: 13px;
-    -fx-text-fill: -monet-on-surface;
-}
-
-.line-select-button .menu-container:selected .title {
-    -fx-text-fill: -monet-primary;
-}
-
-.line-select-button .menu-container .subtitle {
+.line-component .subtitle-label {
     -fx-text-fill: -monet-on-surface-variant;
 }
 
-.line-select-button .menu-container:selected .subtitle {
+.line-component.no-padding .line-component-container {
+    -fx-padding: 0;
+}
+
+.line-component:large-title .title-label {
+    -fx-font-size: 15px;
+}
+
+.line-button .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-button .trailing-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-button .trailing-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
+    -fx-opacity: 1;
+}
+
+.line-button .trailing-icon .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-select-button .menu-container .title-label {
+    -fx-font-size: 13px;
+}
+
+.line-select-button .menu-container .title-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.line-select-button .menu-container .subtitle-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-select-button .menu-container:selected .title-label {
     -fx-text-fill: -monet-primary;
+}
+
+.line-select-button .menu-container:selected .subtitle-label {
+    -fx-text-fill: -monet-primary-container;
+}
+
+.line-toggle-button .jfx-toggle-button {
+    -fx-padding: 0;
+}
+
+.update-pane:active .subtitle-label {
+    -fx-text-fill: -monet-tertiary;
 }

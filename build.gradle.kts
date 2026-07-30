@@ -4,6 +4,7 @@ import org.jackhuang.hmcl.gradle.l10n.ParseLanguageSubtagRegistry
 
 plugins {
     id("checkstyle")
+    id("org.glavo.gradle-wrapper-neo") version "0.2.0"
 }
 
 group = "org.jackhuang"
@@ -41,6 +42,8 @@ subprojects {
     @Suppress("UnstableApiUsage")
     tasks.withType<Checkstyle> {
         maxHeapSize.set("2g")
+
+        setConfigProperties("licenseHeaderFile" to rootProject.rootDir.resolve("config/checkstyle/license-header.txt"))
     }
 
     configure<CheckstyleExtension> {

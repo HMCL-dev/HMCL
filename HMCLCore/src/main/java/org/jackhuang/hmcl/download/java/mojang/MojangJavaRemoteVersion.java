@@ -19,20 +19,12 @@ package org.jackhuang.hmcl.download.java.mojang;
 
 import org.jackhuang.hmcl.download.java.JavaRemoteVersion;
 import org.jackhuang.hmcl.game.GameJavaVersion;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Glavo
  */
-public final class MojangJavaRemoteVersion implements JavaRemoteVersion {
-    private final GameJavaVersion gameJavaVersion;
-
-    public MojangJavaRemoteVersion(GameJavaVersion gameJavaVersion) {
-        this.gameJavaVersion = gameJavaVersion;
-    }
-
-    public GameJavaVersion getGameJavaVersion() {
-        return gameJavaVersion;
-    }
+public record MojangJavaRemoteVersion(GameJavaVersion gameJavaVersion) implements JavaRemoteVersion {
 
     @Override
     public int getJdkVersion() {
@@ -50,7 +42,7 @@ public final class MojangJavaRemoteVersion implements JavaRemoteVersion {
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return "MojangJavaRemoteVersion[gameJavaVersion=" + gameJavaVersion + "]";
     }
 }

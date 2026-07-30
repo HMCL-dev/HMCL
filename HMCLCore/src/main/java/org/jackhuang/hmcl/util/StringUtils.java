@@ -17,11 +17,17 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author huangyuhui
@@ -254,6 +260,26 @@ public final class StringUtils {
         return false;
     }
 
+    public static boolean startsWithAny(String str, Collection<String> prefixes) {
+        return prefixes.stream().anyMatch(str::startsWith);
+    }
+
+    public static boolean endsWithAny(String str, Collection<String> suffixes) {
+        return suffixes.stream().anyMatch(str::endsWith);
+    }
+
+    public static Predicate<@Nullable String> compileQuery(String queryString) throws PatternSyntaxException {
+        Predicate<@Nullable String> predicate;
+        if (queryString.startsWith("regex:")) {
+            Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
+            predicate = s -> s != null && pattern.matcher(s).find();
+        } else {
+            String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
+            predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+        }
+        return predicate;
+    }
+
     public static boolean containsChinese(String str) {
         for (int i = 0; i < str.length(); i++) {
             char ch = str.charAt(i);
@@ -274,6 +300,58 @@ public final class StringUtils {
         }
 
         return false;
+    }
+
+    /// Check if the code point is a full-width character.
+    public static boolean isFullWidth(int codePoint) {
+        return codePoint >= '\uff10' && codePoint <= '\uff19'       // full-width digits
+                || codePoint >= '\uff21' && codePoint <= '\uff3a'   // full-width uppercase letters
+                || codePoint >= '\uff41' && codePoint <= '\uff5a'   // full-width lowercase letters
+                || codePoint == '\uff08'                            // full-width left parenthesis
+                || codePoint == '\uff09'                            // full-width right parenthesis
+                || codePoint == '\uff0c'                            // full-width comma
+                || codePoint == '\uff05'                            // full-width percent sign
+                || codePoint == '\uff0e'                            // full-width period
+                || codePoint == '\u3000'                            // full-width ideographic space
+                || codePoint == '\uff03';                           // full-width number sign
+    }
+
+    /// Convert full-width characters to half-width characters.
+    public static String toHalfWidth(String str) {
+        int i = 0;
+        while (i < str.length()) {
+            int cp = str.codePointAt(i);
+
+            if (isFullWidth(cp)) {
+                break;
+            }
+
+            i += Character.charCount(cp);
+        }
+
+        if (i == str.length())
+            return str;
+
+        var builder = new StringBuilder(str.length());
+        builder.append(str, 0, i);
+        while (i < str.length()) {
+            int c = str.codePointAt(i);
+
+            if (c >= '\uff10' && c <= '\uff19') builder.append((char) (c - 0xfee0));
+            else if (c >= '\uff21' && c <= '\uff3a') builder.append((char) (c - 0xfee0));
+            else if (c >= '\uff41' && c <= '\uff5a') builder.append((char) (c - 0xfee0));
+            else if (c == '\uff08') builder.append('(');
+            else if (c == '\uff09') builder.append(')');
+            else if (c == '\uff0c') builder.append(',');
+            else if (c == '\uff05') builder.append('%');
+            else if (c == '\uff0e') builder.append('.');
+            else if (c == '\u3000') builder.append(' ');
+            else if (c == '\uff03') builder.append('#');
+            else builder.appendCodePoint(c);
+
+            i += Character.charCount(c);
+        }
+        return builder.toString();
     }
 
     private static boolean isVarNameStart(char ch) {
@@ -493,6 +571,15 @@ public final class StringUtils {
         return builder.toString();
     }
 
+    public static String escapeXmlAttribute(String str) {
+        return str
+                .replace("&", "&amp;")
+                .replace("\"", "&quot;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("'", "&apos;");
+    }
+
     public static String repeats(char ch, int repeat) {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < repeat; i++) {
@@ -527,6 +614,20 @@ public final class StringUtils {
                 return false;
         }
         return true;
+    }
+
+    /// Turns `List.of("a", "b", "c")` into `["a", "b", "c"]`
+    @Contract(pure = true)
+    public static String serializeStringList(List<String> list) {
+        if (list == null) return "[]";
+        return JsonUtils.UGLY_GSON.toJson(list.stream().filter(Objects::nonNull).toList(), JsonUtils.listTypeOf(String.class).getType());
+    }
+
+    /// Turns `["a", "b", "c"]` into `List.of("a", "b", "c")`
+    @Contract(pure = true)
+    public static List<String> deserializeStringList(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        return JsonUtils.fromNonNullJson(json, JsonUtils.listTypeOf(String.class));
     }
 
     public static class LevCalculator {

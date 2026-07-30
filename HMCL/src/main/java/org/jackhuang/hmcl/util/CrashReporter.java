@@ -20,20 +20,13 @@ package org.jackhuang.hmcl.util;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.countly.CrashReport;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.CrashWindow;
-import org.jackhuang.hmcl.upgrade.IntegrityChecker;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.HashMap;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -103,34 +96,13 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
                     if (showCrashWindow) {
                         new CrashWindow(report).show();
                     }
-                    if (!UpdateChecker.isOutdated() && IntegrityChecker.isSelfVerified()) {
-                        reportToServer(report);
-                    }
                 }
             });
         } catch (Throwable handlingException) {
             LOG.error("Unable to handle uncaught exception", handlingException);
         }
 
-        FileSaver.shutdown();
+        SettingsManager.shutdown();
         LOG.shutdown();
-    }
-
-    private void reportToServer(CrashReport crashReport) {
-        Thread t = new Thread(() -> {
-            HashMap<String, String> map = new HashMap<>();
-            map.put("crash_report", crashReport.getDisplayText());
-            map.put("version", Metadata.VERSION);
-            map.put("log", LOG.getLogs());
-            try {
-                String response = NetworkUtils.doPost(URI.create(Metadata.PUBLISH_URL + "/hmcl/crash.php"), map);
-                if (StringUtils.isNotBlank(response))
-                    LOG.error("Crash server response: " + response);
-            } catch (IOException ex) {
-                LOG.error("Unable to post HMCL server.", ex);
-            }
-        });
-        t.setDaemon(true);
-        t.start();
     }
 }

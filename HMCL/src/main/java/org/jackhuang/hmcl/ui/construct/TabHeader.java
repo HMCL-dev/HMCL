@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXRippler;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -26,12 +25,11 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
-import javafx.geometry.Insets;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
@@ -157,8 +155,6 @@ public class TabHeader extends Control implements TabControl, PageAware {
 
         private static final PseudoClass SELECTED_PSEUDOCLASS_STATE = PseudoClass.getPseudoClass("selected");
 
-        private final Color ripplerColor = Color.valueOf("#FFFF8D");
-
         private final HeaderContainer header;
         private boolean isSelectingTab = false;
         private Tab<?> selectedTab;
@@ -214,7 +210,6 @@ public class TabHeader extends Control implements TabControl, PageAware {
                 selectedTabLine.getStyleClass().addAll("tab-selected-line");
                 selectedTabLine.setPrefHeight(2);
                 selectedTabLine.setPrefWidth(2);
-                selectedTabLine.setBackground(new Background(new BackgroundFill(ripplerColor, CornerRadii.EMPTY, Insets.EMPTY)));
                 getChildren().setAll(headersRegion, selectedTabLine);
                 headersRegion.setPickOnBounds(false);
                 headersRegion.prefHeightProperty().bind(heightProperty());
@@ -593,7 +588,6 @@ public class TabHeader extends Control implements TabControl, PageAware {
             private final Tab<?> tab;
             private final Label tabText;
             private final BorderPane inner;
-            private final JFXRippler rippler;
 
             public TabHeaderContainer(Tab<?> tab) {
                 this.tab = tab;
@@ -604,9 +598,8 @@ public class TabHeader extends Control implements TabControl, PageAware {
                 inner = new BorderPane();
                 inner.setCenter(tabText);
                 inner.getStyleClass().add("tab-container");
-                rippler = new JFXRippler(inner, JFXRippler.RipplerPos.FRONT);
-                rippler.getStyleClass().add("tab-rippler");
-                rippler.setRipplerFill(ripplerColor);
+                inner.setMouseTransparent(true);
+                RipplerContainer rippler = new RipplerContainer(inner);
                 getChildren().setAll(rippler);
 
                 FXUtils.onChangeAndOperate(tab.selectedProperty(), selected -> inner.pseudoClassStateChanged(SELECTED_PSEUDOCLASS_STATE, selected));

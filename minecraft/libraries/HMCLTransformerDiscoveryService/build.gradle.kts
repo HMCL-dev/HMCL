@@ -1,7 +1,7 @@
 version = "1.0"
 
 dependencies {
-    compileOnly(project.files("lib/modlauncher-4.1.0.jar"))
+    compileOnly(files("lib/modlauncher-4.1.0.jar"))
 }
 
 tasks.compileJava {

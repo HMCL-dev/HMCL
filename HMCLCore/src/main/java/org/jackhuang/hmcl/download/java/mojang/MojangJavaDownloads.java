@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download.java.mojang;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import org.jackhuang.hmcl.game.DownloadInfo;
-import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -29,21 +29,10 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 
+@JsonSerializable
 @JsonAdapter(MojangJavaDownloads.Adapter.class)
-public class MojangJavaDownloads {
-
-    private final Map<String, Map<String, List<JavaDownload>>> downloads;
-
-    public MojangJavaDownloads(Map<String, Map<String, List<JavaDownload>>> downloads) {
-        this.downloads = downloads;
-    }
-
-    public Map<String, Map<String, List<JavaDownload>>> getDownloads() {
-        return downloads;
-    }
-
+public record MojangJavaDownloads(Map<String, Map<String, List<JavaDownload>>> downloads) {
     public static class Adapter implements JsonSerializer<MojangJavaDownloads>, JsonDeserializer<MojangJavaDownloads> {
-
         @Override
         public JsonElement serialize(MojangJavaDownloads src, Type typeOfSrc, JsonSerializationContext context) {
             return context.serialize(src.downloads);
@@ -55,78 +44,15 @@ public class MojangJavaDownloads {
         }
     }
 
-    @Immutable
-    public static class JavaDownload {
-        private final Availability availability;
-        private final DownloadInfo manifest;
-        private final Version version;
-
-        public JavaDownload() {
-            this(new Availability(), new DownloadInfo(), new Version());
-        }
-
-        public JavaDownload(Availability availability, DownloadInfo manifest, Version version) {
-            this.availability = availability;
-            this.manifest = manifest;
-            this.version = version;
-        }
-
-        public Availability getAvailability() {
-            return availability;
-        }
-
-        public DownloadInfo getManifest() {
-            return manifest;
-        }
-
-        public Version getVersion() {
-            return version;
-        }
+    @JsonSerializable
+    public record JavaDownload(Availability availability, DownloadInfo manifest, Version version) {
     }
 
-    @Immutable
-    public static class Availability {
-        private final int group;
-        private final int progress;
-
-        public Availability() {
-            this(0, 0);
-        }
-
-        public Availability(int group, int progress) {
-            this.group = group;
-            this.progress = progress;
-        }
-
-        public int getGroup() {
-            return group;
-        }
-
-        public int getProgress() {
-            return progress;
-        }
+    @JsonSerializable
+    public record Availability(int group, int progress) {
     }
 
-    @Immutable
-    public static class Version {
-        private final String name;
-        private final String released;
-
-        public Version() {
-            this("", "");
-        }
-
-        public Version(String name, String released) {
-            this.name = name;
-            this.released = released;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getReleased() {
-            return released;
-        }
+    @JsonSerializable
+    public record Version(String name, String released) {
     }
 }

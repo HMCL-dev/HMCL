@@ -27,21 +27,27 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class AbstractInstallersPage extends Control implements WizardPage {
+    public static final SettingsMap.Key<GameInstanceID> INSTANCE_ID = new SettingsMap.Key<>("instanceId");
+
     public static final String FABRIC_QUILT_API_TIP = "fabricQuiltApi";
     protected final WizardController controller;
 
@@ -58,7 +64,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             String libraryId = library.getLibraryId();
             if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
             library.setOnInstall(() -> {
-                if (!Boolean.TRUE.equals(config().getShownTips().get(FABRIC_QUILT_API_TIP))
+                if (!Boolean.TRUE.equals(state().getShownTips().get(FABRIC_QUILT_API_TIP))
                         && (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)
                         || LibraryAnalyzer.LibraryType.QUILT_API.getPatchId().equals(libraryId)
                         || LibraryAnalyzer.LibraryType.LEGACY_FABRIC_API.getPatchId().equals(libraryId))) {
@@ -66,7 +72,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                             i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer." + libraryId)),
                             i18n("message.warning"),
                             MessageDialogPane.MessageType.WARNING
-                    ).ok(null).addCancel(i18n("button.do_not_show_again"), () -> config().getShownTips().put(FABRIC_QUILT_API_TIP, true)).build());
+                    ).ok(null).addCancel(i18n("button.do_not_show_again"), () -> state().getShownTips().put(FABRIC_QUILT_API_TIP, true)).build());
                 }
 
                 if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
@@ -112,6 +118,14 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
         return new InstallersPageSkin(this);
     }
 
+    /// Returns whether the name field includes clear and reset controls.
+    ///
+    /// @return `true` to display the controls; `false` otherwise
+    protected abstract boolean showExtendPane();
+
+    /// Restores the default value of the name field.
+    protected abstract void resetDefaultName();
+
     protected static class InstallersPageSkin extends SkinBase<AbstractInstallersPage> {
         /**
          * Constructor for all SkinBase instances.
@@ -127,11 +141,27 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             {
                 HBox versionNamePane = new HBox(8);
                 versionNamePane.getStyleClass().add("card-non-transparent");
-                versionNamePane.setStyle("-fx-padding: 20 8 20 16");
+                versionNamePane.setStyle("-fx-padding: 20 16 20 16");
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
 
-                control.txtName.setMaxWidth(300);
-                versionNamePane.getChildren().setAll(new Label(i18n("version.name")), control.txtName);
+                HBox.setHgrow(control.txtName, Priority.ALWAYS);
+
+                versionNamePane.getChildren().addAll(new Label(i18n("instance.name")), control.txtName);
+
+                if (control.showExtendPane()) {
+                    JFXButton clearButton = FXUtils.newToggleButton4(SVG.CLOSE);
+                    FXUtils.installFastTooltip(clearButton, i18n("button.clear"));
+                    clearButton.disableProperty().bind(control.txtName.textProperty().isEmpty().or(control.txtName.disableProperty()));
+                    clearButton.setOnAction(e -> control.txtName.clear());
+
+                    JFXButton resetButton = FXUtils.newToggleButton4(SVG.RESTORE);
+                    FXUtils.installFastTooltip(resetButton, i18n("button.reset"));
+                    resetButton.disableProperty().bind(control.txtName.disableProperty());
+                    resetButton.setOnAction(e -> control.resetDefaultName());
+
+                    versionNamePane.getChildren().addAll(clearButton, resetButton);
+                }
+
                 root.setTop(versionNamePane);
             }
 
