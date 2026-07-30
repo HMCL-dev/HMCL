@@ -21,7 +21,8 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.*;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -36,10 +37,10 @@ import java.util.*;
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
-public final class NeoForgeInstallTask extends Task<Version> {
+public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
 
-    private final Version version;
+    private final GameInstanceManifest manifest;
 
     private final NeoForgeRemoteVersion remoteVersion;
 
@@ -47,11 +48,11 @@ public final class NeoForgeInstallTask extends Task<Version> {
 
     private FileDownloadTask dependent;
 
-    private Task<Version> dependency;
+    private Task<GameInstancePatch> dependency;
 
-    public NeoForgeInstallTask(DefaultDependencyManager dependencyManager, Version version, NeoForgeRemoteVersion remoteVersion) {
+    public NeoForgeInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, NeoForgeRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.remoteVersion = remoteVersion;
     }
 
@@ -96,10 +97,10 @@ public final class NeoForgeInstallTask extends Task<Version> {
 
     @Override
     public void execute() throws Exception {
-        dependency = install(dependencyManager, version, installer);
+        dependency = install(dependencyManager, manifest, installer);
     }
 
-    public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
+    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
@@ -110,12 +111,12 @@ public final class NeoForgeInstallTask extends Task<Version> {
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
                 return new ForgeNewInstallTask(dependencyManager, version, modifyNeoForgeOldVersion(gameVersion.get(), profile.getVersion()), installer).thenApplyAsync(neoForgeVersion -> {
-                    if (!neoForgeVersion.getId().equals(LibraryAnalyzer.LibraryType.FORGE.getPatchId()) || neoForgeVersion.getVersion() == null) {
+                    if (!neoForgeVersion.id().equals(LibraryAnalyzer.LibraryType.FORGE.getPatchId()) || neoForgeVersion.version() == null) {
                         throw new IOException("Invalid neoforge version.");
                     }
-                    return neoForgeVersion.setId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
-                            .setVersion(
-                                    removePrefix(neoForgeVersion.getVersion().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), ""), "-")
+                    return neoForgeVersion.withId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
+                            .withVersion(
+                                    removePrefix(neoForgeVersion.version().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), ""), "-")
                             );
                 });
             } else if (LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId().equals(installProfile.get("profile")) || "NeoForge".equals(installProfile.get("profile"))) {
