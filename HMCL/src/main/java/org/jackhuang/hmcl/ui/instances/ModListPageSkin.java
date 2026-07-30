@@ -118,14 +118,6 @@ final class ModListPageSkin extends ToolbarListPageSkin<ModListPageSkin.ModInfoO
                         )
                 }
         );
-
-        Label notModdedLabel = new Label(i18n("mods.not_modded"));
-        notModdedLabel.prefWidthProperty().bind(mainContainer.widthProperty().add(-100));
-
-        FXUtils.onChangeAndOperate(skinnable.moddedProperty(), modded -> {
-            if (modded) mainContainer.getChildren().setAll(rootList);
-            else mainContainer.getChildren().setAll(notModdedLabel);
-        });
     }
 
     @Override

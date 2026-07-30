@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.instances;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
@@ -85,8 +84,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             }
             FXUtils.smoothScrolling(pane);
 
-            AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
-                    .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings);
+            AdvancedListBox bottomLeftCornerList = new AdvancedListBox().addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings);
             FXUtils.setLimitHeight(bottomLeftCornerList, 40 + 12 * 2);
             setLeft(pane, bottomLeftCornerList);
         }
@@ -139,7 +137,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         public void refreshList() {
-            GameDirectoryManager.getSelectedRepository().refreshVersionsAsync().start();
+            GameDirectoryManager.getSelectedRepository().refreshAsync().start();
         }
 
         @Override
@@ -153,13 +151,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 super(skinnable, true);
                 listView.setCellFactory(x -> new GameListCell());
 
-                setupSkin(
-                        new Node[]{
-                                createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList),
-                                createToolbarButton2(i18n("search"), SVG.SEARCH, this::startSearch)
-                        },
-                        null
-                );
+                setupSkin(new Node[]{createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, this::startSearch)}, null);
             }
 
             @Override
@@ -180,99 +172,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
             @Override
             protected String getEmptyPlaceholderText() {
-                return i18n("version.empty.hint");
-            }
-
-        public void refreshList() {
-            GameDirectoryManager.getSelectedRepository().refreshAsync().start();
-        }
-
-        @Override
-        protected Skin<?> createDefaultSkin() {
-            return new GameListSkin(this);
-        }
-
-        private static class GameListSkin extends SkinBase<GameList> {
-            private final TransitionPane toolbarPane;
-            private final HBox searchBar;
-            private final HBox toolbarNormal;
-
-            private final JFXTextField searchField;
-
-            public GameListSkin(GameList skinnable) {
-                super(skinnable);
-
-                StackPane pane = new StackPane();
-                pane.setPadding(new Insets(10));
-                pane.getStyleClass().addAll("notice-pane");
-
-                ComponentList root = new ComponentList();
-                root.getStyleClass().add("no-padding");
-                JFXListView<GameListItem> listView = new JFXListView<>();
-
-                {
-                    toolbarPane = new TransitionPane();
-
-                    searchBar = new HBox();
-                    toolbarNormal = new HBox();
-
-                    searchBar.setAlignment(Pos.CENTER);
-                    searchBar.setPadding(new Insets(0, 5, 0, 5));
-                    searchField = new JFXTextField();
-                    searchField.setPromptText(i18n("search"));
-                    HBox.setHgrow(searchField, Priority.ALWAYS);
-                    PauseTransition pause = new PauseTransition(Duration.millis(100));
-                    pause.setOnFinished(e -> skinnable.filteredList.setPredicate(skinnable.createPredicate(searchField.getText())));
-                    searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                        pause.setRate(1);
-                        pause.playFromStart();
-                    });
-
-                    JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
-                        changeToolbar(toolbarNormal);
-                        searchField.clear();
-                    });
-
-                    onEscPressed(searchField, closeSearchBar::fire);
-
-                    searchBar.getChildren().setAll(searchField, closeSearchBar);
-
-                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("install.new_game"), SVG.DOWNLOAD, Instances::addNewGame), createToolbarButton2(i18n("install.modpack"), SVG.PACKAGE2, Instances::importModpack), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
-
-                    toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
-
-                    FXUtils.setOverflowHidden(toolbarPane, 8);
-
-                    root.getContent().add(toolbarPane);
-                }
-
-                {
-                    SpinnerPane center = new SpinnerPane();
-                    ComponentList.setVgrow(center, Priority.ALWAYS);
-                    center.loadingProperty().bind(skinnable.loadingProperty());
-                    center.failedReasonProperty().bind(skinnable.failedReasonProperty());
-
-                    listView.setCellFactory(x -> new GameListCell());
-                    listView.setItems(skinnable.getItems());
-
-                    ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-
-                    center.setContent(listView);
-                    root.getContent().add(center);
-                }
-
-                pane.getChildren().setAll(root);
-                getChildren().setAll(pane);
-            }
-
-            private void changeToolbar(HBox newToolbar) {
-                Node oldToolbar = toolbarPane.getCurrentNode();
-                if (newToolbar != oldToolbar) {
-                    toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
-                    if (newToolbar == searchBar) {
-                        runInFX(searchField::requestFocus);
-                    }
-                }
+                return i18n("instance.empty.hint");
             }
         }
     }
