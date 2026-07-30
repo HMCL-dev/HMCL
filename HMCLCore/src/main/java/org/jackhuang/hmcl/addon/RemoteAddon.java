@@ -73,17 +73,17 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
         private transient RemoteAddon remoteAddon = null;
 
-        private Dependency(DependencyType type, RemoteAddonRepository remoteAddonRepository, String modid) {
+        private Dependency(DependencyType type, RemoteAddonRepository remoteAddonRepository, String id) {
             this.type = type;
             this.remoteAddonRepository = remoteAddonRepository;
-            this.id = modid;
+            this.id = id;
         }
 
-        public static Dependency ofGeneral(DependencyType type, RemoteAddonRepository remoteAddonRepository, String modid) {
+        public static Dependency ofGeneral(DependencyType type, RemoteAddonRepository remoteAddonRepository, String id) {
             if (type == DependencyType.BROKEN) {
                 return ofBroken();
             } else {
-                return new Dependency(type, remoteAddonRepository, modid);
+                return new Dependency(type, remoteAddonRepository, id);
             }
         }
 
@@ -202,7 +202,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
         Source getSource();
     }
 
-    public record Version(IVersion self, String modid, String name, String version, String changelog,
+    public record Version(IVersion self, String projectId, String name, String version, String changelog,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
                           List<String> gameVersions, List<ModLoaderType> loaders) {
     }
