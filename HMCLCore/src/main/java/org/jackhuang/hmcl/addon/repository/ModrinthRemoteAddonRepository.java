@@ -24,10 +24,12 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
@@ -103,16 +105,16 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     private static final String PREFIX = "https://api.modrinth.com";
 
-    private final String projectType;
+    private final @Nullable String projectType;
 
-    private final RemoteAddon.Type type;
+    private final @Nullable RemoteAddon.Type type;
 
     private ModrinthRemoteAddonRepository() {
         this.projectType = null;
         this.type = null;
     }
 
-    private ModrinthRemoteAddonRepository(String projectType) {
+    private ModrinthRemoteAddonRepository(@NotNull String projectType) {
         this.projectType = projectType;
         this.type = toAddonType(projectType);
         if (type == null) throw new IllegalArgumentException("Unsupported Modrinth project type: " + projectType);
@@ -310,6 +312,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         }
     }
 
+    @JsonSerializable
     public record Category(String icon, String name, @SerializedName("project_type") String projectType) {
         public Category() {
             this("", "", "");

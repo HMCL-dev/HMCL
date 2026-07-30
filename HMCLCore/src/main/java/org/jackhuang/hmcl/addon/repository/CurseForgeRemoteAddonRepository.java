@@ -69,7 +69,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         return !API_KEY.isEmpty();
     }
 
-    private final RemoteAddon.Type type;
+    private final @Nullable RemoteAddon.Type type;
     private final int section;
 
     public CurseForgeRemoteAddonRepository() {
