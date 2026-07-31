@@ -37,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -168,15 +166,13 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
     }
 
     private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerItem, InstallerListPage> {
-
         InstallerListPageSkin() {
-            super(InstallerListPage.this);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(InstallerListPage skinnable) {
-            return Collections.singletonList(
-                    createToolbarButton2(i18n("install.installer.install_offline"), SVG.ADD, skinnable::installOffline)
+            super(InstallerListPage.this, false);
+            setupSkin(
+                    new Node[]{
+                            createToolbarButton2(i18n("install.installer.install_offline"), SVG.ADD, getSkinnable()::installOffline)
+                    },
+                    null
             );
         }
     }

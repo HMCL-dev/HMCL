@@ -993,15 +993,6 @@
     -fx-text-fill: black;
 }
 
-.jfx-list-cell .jfx-rippler {
-    -jfx-rippler-fill: -monet-primary-container;
-}
-
-/*.list-cell:odd:selected > .jfx-rippler > StackPane,*/
-/*.list-cell:even:selected > .jfx-rippler > StackPane {*/
-/*    -fx-background-color: derive(-monet-primary, 30%);*/
-/*}*/
-
 .jfx-list-view {
     -fx-background-insets: 0.0;
     -jfx-cell-horizontal-margin: 0.0;

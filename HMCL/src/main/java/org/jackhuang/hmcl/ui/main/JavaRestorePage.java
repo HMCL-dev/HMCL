@@ -27,8 +27,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
+import javafx.scene.control.Skin;
+import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.java.JavaManager;
@@ -43,8 +45,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -188,12 +188,8 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
 
     private static final class JavaRestorePageSkin extends ToolbarListPageSkin<DisabledJavaItem, JavaRestorePage> {
         JavaRestorePageSkin(JavaRestorePage skinnable) {
-            super(skinnable);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(JavaRestorePage skinnable) {
-            return Collections.emptyList();
+            super(skinnable, false);
+            setupSkin(null, null);
         }
     }
 }
