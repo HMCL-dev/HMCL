@@ -20,5 +20,5 @@ package org.jackhuang.hmcl.ui.decorator;
 public interface BackConfirmPage {
     boolean canBack();
 
-    boolean confirmBack();
+    void confirmBack(Runnable onConfirm);
 }

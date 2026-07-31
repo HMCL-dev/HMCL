@@ -18,58 +18,100 @@
 package org.jackhuang.hmcl.ui.account.skin;
 
 import javafx.beans.binding.ObjectBinding;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.game.skin.Skin;
+import org.jackhuang.hmcl.game.skin.SkinModel;
 import org.jackhuang.hmcl.game.skin.TextureType;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.HintPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
 import static java.util.Collections.emptySet;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AuthlibInjectorAccoubtSkinPage extends SkinPageBase<AuthlibInjectorAccount> {
-    private ReadOnlyObjectWrapper<Skin> skinProperty;
-
     public AuthlibInjectorAccoubtSkinPage(AuthlibInjectorAccount account) {
         super(account);
 
-        if (!canUploadSkin()) {
+        Task.supplyAsync(() -> {
+            var textures = YggdrasilService.getTextures(account.getYggdrasilService().getCompleteGameProfile(account.getProfileID()).orElseThrow()).orElseThrow();
+            var skin = textures.get(TextureType.SKIN);
+
+            Image skinImg;
+            if (skin == null || StringUtils.isBlank(skin.url()))
+                skinImg = TexturesLoader.getDefaultSkin(account.getProfileID()).image();
+            else skinImg = TexturesLoader.loadTexture(skin).image();
+
+            boolean isSlim;
+            if (skin != null && skin.metadata() != null) {
+                isSlim = skin.metadata().get("model").equals(SkinModel.SLIM.modelName);
+            } else isSlim = TexturesLoader.getDefaultModel(account.getProfileID()).isSlim();
+
+            Image capeImg = null;
+            if (textures.get(TextureType.CAPE) != null && !StringUtils.isBlank(textures.get(TextureType.CAPE).url())) {
+                capeImg = TexturesLoader.loadTexture(textures.get(TextureType.CAPE)).image();
+            }
+
+            return new Skin(isSlim ? SkinModel.SLIM : SkinModel.WIDE, skinImg, capeImg);
+        }).whenComplete(Schedulers.javafx(), (r, e) -> {
+            if (e != null) Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
+            skinObjectProperty.set(r);
+        }).start();
+
+        if (getUploadableTextures().size() != 2) {
+            var homePage = Optional.of(account.getServer().getLinks().get("homepage")).orElse(account.getServer().getUrl());
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-            hintPane.setSegment(i18n("account.skin.yggdrasil.unsupported", Optional.of(account.getServer().getLinks().get("homepage")).orElse(account.getServer().getUrl())));
+            if (getUploadableTextures().size() == 1)
+                hintPane.setSegment(i18n("account.skin.yggdrasil.unsupported." + getUploadableTextures().iterator().next().name().toLowerCase(Locale.ROOT), homePage));
+            else
+                hintPane.setSegment(i18n("account.skin.yggdrasil.unsupported.skin_and_cape", homePage));
             skinManagePane.leftRegion.getChildren().setAll(hintPane);
         }
     }
 
     @Override
     protected void onDrag(Path skin) {
-        if (!canUploadSkin()) return;
-        throw new UnsupportedOperationException();
+        if (!getUploadableTextures().contains(TextureType.SKIN)) return;
+        try {
+            var skinImg = FXUtils.loadImage(skin);
+            var current = skinObjectProperty.get();
+            skinObjectProperty.set(new Skin(current.model(), skinImg, current.cape()));
+        } catch (Exception e) {
+            LOG.warning("Failed to parse skin image", e);
+            Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
+        }
     }
 
     @Override
     protected void onSaveChanges() {
-        throw new UnsupportedOperationException();
+        try {
+            var current = skinObjectProperty.get();
+            account.uploadSkin(current.model().isSlim(), FXUtils.getInputStreamFromImage(current.skin(), "png"));
+        } catch (Exception e) {
+            LOG.warning("Failed to upload skin", e);
+            Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
+        }
     }
 
-    @Override
-    protected ReadOnlyObjectProperty<Skin> skinObjectProperty() {
-        if (skinProperty == null) skinProperty = new ReadOnlyObjectWrapper<>();
-        return skinProperty.getReadOnlyProperty();
-    }
-
-    public boolean canUploadSkin() {
+    public Set<TextureType> getUploadableTextures() {
         ObjectBinding<Optional<CompleteGameProfile>> profile = account.getYggdrasilService().getProfileRepository().binding(account.getProfileID());
 
-        Set<TextureType> uploadableTextures = profile.get()
+        return profile.get()
                 .map(AuthlibInjectorAccount::getUploadableTextures)
                 .orElse(emptySet());
-        return uploadableTextures.contains(TextureType.SKIN);
     }
 }

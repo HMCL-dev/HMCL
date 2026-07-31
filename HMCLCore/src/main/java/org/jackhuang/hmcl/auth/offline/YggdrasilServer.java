@@ -17,10 +17,10 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
-import org.glavo.uuid.UUIDs;
 import org.glavo.png.javafx.PNGJavaFXUtils;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
-import org.jackhuang.hmcl.game.skin.TextureModel;
+import org.jackhuang.hmcl.game.skin.SkinModel;
 import org.jackhuang.hmcl.util.KeyUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
@@ -161,7 +161,7 @@ public class YggdrasilServer extends HttpServer {
             Map<String, Object> realTextures = new HashMap<>();
             if (skin != null && skin.skin() != null) {
                 String url = rootUrl + "/textures/" + skin.skin().hash();
-                if (skin.model() == TextureModel.SLIM) {
+                if (skin.model() == SkinModel.SLIM) {
                     realTextures.put("SKIN", mapOf(
                             pair("url", rootUrl + "/textures/" + skin.skin().hash()),
                             pair("metadata", mapOf(

@@ -17,14 +17,16 @@
  */
 package org.jackhuang.hmcl.game.skin;
 
-import javafx.scene.image.Image;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jetbrains.annotations.NotNull;
+public enum SkinModel {
+    WIDE("default"), SLIM("slim");
 
-import java.nio.file.Path;
+    public final String modelName;
 
-public record TextureObject(@NotNull Image image, @NotNull String url) {
-    public TextureObject of(Path path) {
-        return new TextureObject(new Image(path.toString()), FileUtils.getAbsolutePath(path));
+    SkinModel(String modelName) {
+        this.modelName = modelName;
+    }
+
+    public boolean isSlim() {
+        return modelName.equals("slim");
     }
 }

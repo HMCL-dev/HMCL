@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.auth.offline;
 
 import com.google.gson.JsonObject;
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.game.skin.TextureModel;
+import org.jackhuang.hmcl.game.skin.SkinModel;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Optional;
 
-public record OfflineSkinConfig(Type type, TextureModel textureModel, String localSkinPath, String localCapePath) {
+public record OfflineSkinConfig(Type type, SkinModel textureModel, String localSkinPath, String localCapePath) {
 
     public enum Type {
         DEFAULT,
@@ -63,8 +63,8 @@ public record OfflineSkinConfig(Type type, TextureModel textureModel, String loc
     }
 
     @Override
-    public TextureModel textureModel() {
-        return textureModel == null ? TextureModel.WIDE : textureModel;
+    public SkinModel textureModel() {
+        return textureModel == null ? SkinModel.WIDE : textureModel;
     }
 
     public Task<LoadedOfflineSkin> load() {
@@ -80,8 +80,8 @@ public record OfflineSkinConfig(Type type, TextureModel textureModel, String loc
             case STEVE:
             case SUNNY:
             case ZURI:
-                TextureModel model = this.textureModel != null ? this.textureModel : type == Type.ALEX ? TextureModel.SLIM : TextureModel.WIDE;
-                String resource = (model == TextureModel.SLIM ? "/assets/img/skin/slim/" : "/assets/img/skin/wide/") + type.name().toLowerCase(Locale.ROOT) + ".png";
+                SkinModel model = this.textureModel != null ? this.textureModel : type == Type.ALEX ? SkinModel.SLIM : SkinModel.WIDE;
+                String resource = (model == SkinModel.SLIM ? "/assets/img/skin/slim/" : "/assets/img/skin/wide/") + type.name().toLowerCase(Locale.ROOT) + ".png";
 
                 return Task.supplyAsync(() -> new LoadedOfflineSkin(
                         model,
@@ -120,7 +120,7 @@ public record OfflineSkinConfig(Type type, TextureModel textureModel, String loc
         String localSkinPath = JsonUtils.getString(storage, "localSkinPath");
         String localCapePath = JsonUtils.getString(storage, "localCapePath");
 
-        return new OfflineSkinConfig(type, "slim".equals(textureModel) ? TextureModel.SLIM : TextureModel.WIDE, localSkinPath, localCapePath);
+        return new OfflineSkinConfig(type, "slim".equals(textureModel) ? SkinModel.SLIM : SkinModel.WIDE, localSkinPath, localCapePath);
     }
 
 }

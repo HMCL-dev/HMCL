@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.game.skin;
 
+import javafx.scene.image.Image;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record Skin(@NotNull TextureModel model, @NotNull TextureObject skin, @Nullable TextureObject cape) {
+public record Skin(@NotNull SkinModel model, @NotNull Image skin, @Nullable Image cape) {
 }

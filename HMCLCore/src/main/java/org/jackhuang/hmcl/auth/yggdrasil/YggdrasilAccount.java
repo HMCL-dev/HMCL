@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
-import java.nio.file.Path;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -212,7 +212,7 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     }
 
     @Override
-    public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+    public void uploadSkin(boolean isSlim, InputStream file) throws AuthenticationException, UnsupportedOperationException {
         service.uploadSkin(profileID, session.getAccessToken(), isSlim, file);
     }
 

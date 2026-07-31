@@ -35,7 +35,7 @@ import org.jackhuang.hmcl.auth.offline.OfflineSkinConfig;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.game.skin.TextureModel;
+import org.jackhuang.hmcl.game.skin.SkinModel;
 import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -92,7 +92,7 @@ public final class TexturesLoader {
         return TEXTURES_DIR.resolve(prefix).resolve(hash);
     }
 
-    public static LoadedTexture loadTexture(Texture texture) throws Throwable {
+    public static LoadedTexture loadTexture(Texture texture) throws Exception {
         if (StringUtils.isBlank(texture.url())) {
             throw new IOException("Texture url is empty");
         }
@@ -138,23 +138,23 @@ public final class TexturesLoader {
 
     public static LoadedTexture getDefaultSkin(UUID uuid) {
         int idx = Math.floorMod(uuid.hashCode(), DEFAULT_SKINS.length * 2);
-        TextureModel model;
+        SkinModel model;
         Image skin;
         if (idx < DEFAULT_SKINS.length) {
-            model = TextureModel.SLIM;
+            model = SkinModel.SLIM;
             skin = FXUtils.newBuiltinImage("/assets/img/skin/slim/" + DEFAULT_SKINS[idx] + ".png");
         } else {
-            model = TextureModel.WIDE;
+            model = SkinModel.WIDE;
             skin = FXUtils.newBuiltinImage("/assets/img/skin/wide/" + DEFAULT_SKINS[idx - DEFAULT_SKINS.length] + ".png");
         }
 
         return new LoadedTexture(skin, singletonMap("model", model.modelName));
     }
 
-    public static TextureModel getDefaultModel(UUID uuid) {
-        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).metadata().get("model"))
-                ? TextureModel.WIDE
-                : TextureModel.SLIM;
+    public static SkinModel getDefaultModel(UUID uuid) {
+        return SkinModel.WIDE.modelName.equals(getDefaultSkin(uuid).metadata().get("model"))
+                ? SkinModel.WIDE
+                : SkinModel.SLIM;
     }
 
     public static ObjectBinding<LoadedTexture> skinBinding(YggdrasilService service, UUID uuid) {

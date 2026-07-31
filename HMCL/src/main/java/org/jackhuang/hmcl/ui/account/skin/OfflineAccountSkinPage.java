@@ -19,18 +19,16 @@ package org.jackhuang.hmcl.ui.account.skin;
 
 import com.jfoenix.controls.JFXComboBox;
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineSkinConfig;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.game.skin.Skin;
-import org.jackhuang.hmcl.game.skin.TextureModel;
-import org.jackhuang.hmcl.game.skin.TextureObject;
+import org.jackhuang.hmcl.game.skin.SkinModel;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -46,34 +44,26 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
-    private ReadOnlyObjectWrapper<Skin> skinProperty;
-
     private final MultiFileItem<OfflineSkinConfig.Type> skinTypeItem = new MultiFileItem<>();
-    private final JFXComboBox<TextureModel> modelCombobox = new JFXComboBox<>();
+    private final JFXComboBox<SkinModel> modelCombobox = new JFXComboBox<>();
     private final FileSelector skinSelector = new FileSelector();
     private final FileSelector capeSelector = new FileSelector();
 
     public OfflineAccountSkinPage(OfflineAccount account) {
         super(account);
-        super.loadingProperty.set(false);
 
-        skinTypeItem.loadChildren(Arrays.asList(
-                new MultiFileItem.Option<>(i18n("message.default"), OfflineSkinConfig.Type.DEFAULT),
-                new MultiFileItem.Option<>(i18n("account.skin.type.steve"), OfflineSkinConfig.Type.STEVE),
-                new MultiFileItem.Option<>(i18n("account.skin.type.alex"), OfflineSkinConfig.Type.ALEX),
-                new MultiFileItem.Option<>(i18n("account.skin.type.local_file"), OfflineSkinConfig.Type.LOCAL_FILE)
-        ));
+        skinTypeItem.loadChildren(Arrays.asList(new MultiFileItem.Option<>(i18n("message.default"), OfflineSkinConfig.Type.DEFAULT), new MultiFileItem.Option<>(i18n("account.skin.type.steve"), OfflineSkinConfig.Type.STEVE), new MultiFileItem.Option<>(i18n("account.skin.type.alex"), OfflineSkinConfig.Type.ALEX), new MultiFileItem.Option<>(i18n("account.skin.type.local_file"), OfflineSkinConfig.Type.LOCAL_FILE)));
 
         modelCombobox.setConverter(FXUtils.stringConverter(model -> i18n("account.skin.model." + model.modelName)));
-        modelCombobox.getItems().setAll(TextureModel.WIDE, TextureModel.SLIM);
+        modelCombobox.getItems().setAll(SkinModel.WIDE, SkinModel.SLIM);
 
         OfflineSkinConfig config = account.getSkin();
         if (config == null) {
             skinTypeItem.setSelectedData(OfflineSkinConfig.Type.DEFAULT);
-            modelCombobox.setValue(TextureModel.WIDE);
+            modelCombobox.setValue(SkinModel.WIDE);
         } else {
             skinTypeItem.setSelectedData(config.type());
-            modelCombobox.setValue(config.textureModel() != null ? config.textureModel() : TextureModel.WIDE);
+            modelCombobox.setValue(config.textureModel() != null ? config.textureModel() : SkinModel.WIDE);
             skinSelector.setValue(config.localSkinPath());
             capeSelector.setValue(config.localCapePath());
         }
@@ -97,10 +87,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
 
         super.skinManagePane.leftRegion.getChildren().addAll(skinTypeItem, grid);
 
-        InvalidationListener invalidationListener = (e) -> {
-            account.setSkin(getConfig());
-            loadSkinPreview();
-        };
+        InvalidationListener invalidationListener = (e) -> loadSkinPreview();
 
         skinTypeItem.selectedDataProperty().addListener(invalidationListener);
         modelCombobox.valueProperty().addListener(invalidationListener);
@@ -113,11 +100,11 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
     private OfflineSkinConfig getConfig() {
         OfflineSkinConfig.Type type = skinTypeItem.getSelectedData();
         if (type == null) type = OfflineSkinConfig.Type.DEFAULT;
-        TextureModel model = modelCombobox.getValue();
+        SkinModel model = modelCombobox.getValue();
 
         var textureModel = switch (type) {
-            case ALEX -> TextureModel.SLIM;
-            case STEVE -> TextureModel.WIDE;
+            case ALEX -> SkinModel.SLIM;
+            case STEVE -> SkinModel.WIDE;
             case DEFAULT -> TexturesLoader.getDefaultModel(account.getProfileID());
             default -> model;
         };
@@ -135,22 +122,22 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
             }
 
             UUID uuid = account.getProfileID();
-            TextureModel model = TextureModel.WIDE;
-            TextureObject skinTex = null;
-            TextureObject capeTex = null;
+            SkinModel model = SkinModel.WIDE;
+            Image skinTex = null;
+            Image capeTex = null;
 
             if (loadedSkin != null) {
                 model = loadedSkin.model();
-                skinTex = loadedSkin.skin() != null ? new TextureObject(loadedSkin.skin().image(), "") : null;
-                capeTex = loadedSkin.cape() != null ? new TextureObject(loadedSkin.cape().image(), "") : null;
+                skinTex = loadedSkin.skin() != null ? loadedSkin.skin().image() : null;
+                capeTex = loadedSkin.cape() != null ? loadedSkin.cape().image() : null;
             }
 
             if (skinTex == null) {
-                skinTex = new TextureObject(TexturesLoader.getDefaultSkin(uuid).image(), "");
+                skinTex = TexturesLoader.getDefaultSkin(uuid).image();
                 model = TexturesLoader.getDefaultModel(uuid);
             }
 
-            skinProperty.set(new Skin(model, skinTex, capeTex));
+            skinObjectProperty.set(new Skin(model, skinTex, capeTex));
         }).start();
     }
 
@@ -162,12 +149,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
 
     @Override
     protected void onSaveChanges() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected ReadOnlyObjectProperty<Skin> skinObjectProperty() {
-        if (skinProperty == null) skinProperty = new ReadOnlyObjectWrapper<>();
-        return skinProperty.getReadOnlyProperty();
+        super.onSaveChanges();
+        account.setSkin(getConfig());
     }
 }

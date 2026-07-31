@@ -151,9 +151,16 @@ public class DecoratorController {
 
     private void back() {
         if (navigator.getCurrentPage() instanceof BackConfirmPage backConfirmPage) {
-            if (!backConfirmPage.canBack() && !backConfirmPage.confirmBack()) return;
+            if (!backConfirmPage.canBack()) {
+                backConfirmPage.confirmBack(this::doBack);
+                return;
+            }
         }
 
+        doBack();
+    }
+
+    private void doBack() {
         if (navigator.getCurrentPage() instanceof DecoratorPage page) {
             if (page.back()) {
                 if (navigator.canGoBack()) {

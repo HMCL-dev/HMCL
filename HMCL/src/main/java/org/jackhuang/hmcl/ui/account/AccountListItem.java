@@ -155,7 +155,7 @@ public class AccountListItem extends RadioButton {
                     NormalizedSkin skin = new NormalizedSkin(skinImg);
                     String model = skin.isSlim() ? "slim" : "";
                     LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
-                    account.uploadSkin(skin.isSlim(), selectedFile);
+                    account.uploadSkin(skin.isSlim(), Files.newInputStream(selectedFile));
                 })
                 .thenComposeAsync(refreshAsync())
                 .whenComplete(Schedulers.javafx(), e -> {

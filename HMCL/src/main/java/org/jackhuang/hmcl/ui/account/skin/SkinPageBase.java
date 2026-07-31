@@ -18,10 +18,12 @@
 package org.jackhuang.hmcl.ui.account.skin;
 
 import com.jfoenix.controls.JFXPopup;
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.input.TransferMode;
@@ -33,7 +35,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.game.skin.Skin;
-import org.jackhuang.hmcl.game.skin.TextureModel;
+import org.jackhuang.hmcl.game.skin.SkinModel;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -55,28 +57,42 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedPage implements DecoratorPage, BackConfirmPage {
     protected final T account;
-    protected final BooleanProperty loadingProperty = new SimpleBooleanProperty(true);
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final TabHeader tab;
     private final TabHeader.Tab<SkinManagePane> manageTab = new TabHeader.Tab<>("manageTab");
     private final TransitionPane transitionPane = new TransitionPane();
+
+    protected ObjectProperty<Skin> skinObjectProperty;
+    protected ObjectProperty<Skin> savedSkinProperty;
 
     protected final SkinManagePane skinManagePane;
 
     protected SkinPageBase(T account) {
         this.account = account;
 
+        skinObjectProperty = new SimpleObjectProperty<>();
+        savedSkinProperty = new SimpleObjectProperty<>();
+
         tab = new TabHeader(transitionPane, manageTab);
         skinManagePane = new SkinManagePane();
         manageTab.setNodeSupplier(() -> skinManagePane);
         tab.select(manageTab);
+
+        skinObjectProperty.addListener(new ChangeListener<>() {
+            @Override
+            public void changed(ObservableValue<? extends Skin> observable, Skin oldValue, Skin newValue) {
+                if (savedSkinProperty.get() == null && newValue != null) {
+                    savedSkinProperty.set(newValue);
+                }
+                skinObjectProperty.removeListener(this);
+            }
+        });
 
         BorderPane left = new BorderPane();
         FXUtils.setLimitWidth(left, 200);
@@ -86,12 +102,10 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         AdvancedListBox sideBar = new AdvancedListBox().addNavigationDrawerTab(tab, manageTab, i18n("account.skin"), SVG.CHECKROOM);
         left.setTop(sideBar);
 
-        AdvancedListBox toolbar = new AdvancedListBox()
-                .addNavigationDrawerItem(i18n("account.skin.manage.save"), SVG.OUTPUT, null, item -> {
-                    item.setOnAction(e -> onSaveTexture(item.getWidth()));
-                    item.disableProperty().bind(skinObjectProperty().isNull());
-                })
-                .addNavigationDrawerItem(i18n("button.save_changes"), SVG.SAVE, this::onSaveChanges);
+        AdvancedListBox toolbar = new AdvancedListBox().addNavigationDrawerItem(i18n("account.skin.manage.save"), SVG.OUTPUT, null, item -> {
+            item.setOnAction(e -> onSaveTexture(item.getWidth()));
+            item.disableProperty().bind(skinObjectProperty.isNull());
+        }).addNavigationDrawerItem(i18n("button.save_changes"), SVG.SAVE, this::onSaveChanges, item -> item.disableProperty().bind(savedSkinProperty.isEqualTo(skinObjectProperty)));
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 
@@ -126,26 +140,27 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         ImageIO.write(image, "png", target);
     }
 
-    protected abstract void onSaveChanges();
-
-    @Override
-    public boolean canBack() {
-        return false;
+    protected void onSaveChanges() {
+        savedSkinProperty.set(skinObjectProperty.get());
     }
 
     @Override
-    public boolean confirmBack() {
-        CompletableFuture<Boolean> confirmFuture = CompletableFuture.completedFuture(false);
-        Controllers.confirm("a", "b", () -> confirmFuture.complete(false), () -> confirmFuture.complete(true));
-        return confirmFuture.join();
+    public boolean canBack() {
+        return Objects.equals(savedSkinProperty.get(), skinObjectProperty.get());
+    }
+
+    @Override
+    public void confirmBack(Runnable onConfirm) {
+        Controllers.confirm(i18n("account.skin.manage.back_confirm"), i18n("message.warning"), onConfirm, null);
     }
 
     private void onSaveTexture(double w) {
         PopupMenu saveTextureList = new PopupMenu();
         JFXPopup saveTexturePopup = new JFXPopup(saveTextureList);
 
+        var skin = skinObjectProperty.get();
         var capeItem = new IconedMenuItem(SVG.CROP_9_16, i18n("account.skin.manage.save.cape"), () -> {
-            var fxCapeImage = Objects.requireNonNull(skinObjectProperty().get().cape()).image();
+            var fxCapeImage = Objects.requireNonNull(skin.cape());
             var bufferedCapeImage = SwingFXUtils.fromFXImage(fxCapeImage, null);
             try {
                 savePng(bufferedCapeImage, "cape");
@@ -156,7 +171,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         }, saveTexturePopup);
 
         saveTextureList.getContent().setAll(new IconedMenuItem(SVG.APPAREL, i18n("account.skin.manage.save.skin"), () -> {
-            var fxSkinImage = skinObjectProperty().get().skin().image();
+            var fxSkinImage = skin.skin();
             var bufferedSkinImage = SwingFXUtils.fromFXImage(fxSkinImage, null);
             try {
                 savePng(bufferedSkinImage, "skin");
@@ -166,7 +181,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
             }
         }, saveTexturePopup), capeItem);
 
-        capeItem.setDisable(skinObjectProperty().get().cape() == null);
+        capeItem.setDisable(skin.cape() == null);
         saveTexturePopup.show(this, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, w, -50);
     }
 
@@ -174,8 +189,6 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
     }
-
-    protected abstract ReadOnlyObjectProperty<Skin> skinObjectProperty();
 
     protected final class SkinManagePane extends HBox {
         protected VBox leftRegion = new VBox(20);
@@ -194,18 +207,18 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
 
 
             var uuid = account.getProfileID();
-            var skin = TexturesLoader.getDefaultSkin(uuid).image();
-            var slim = TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM;
+            var skin = TexturesLoader.getDefaultSkin(uuid);
+            var slim = TexturesLoader.getDefaultModel(uuid) == SkinModel.SLIM;
 
             SpinnerPane spinnerPane = new SpinnerPane();
-            spinnerPane.loadingProperty().bind(loadingProperty);
+            spinnerPane.loadingProperty().bind(skinObjectProperty.isNull());
             spinnerPane.setPrefWidth(300);
 
-            SkinCanvas canvas = new SkinCanvas(skin, 250, 400, true);
+            SkinCanvas canvas = new SkinCanvas(skin.image(), 250, 400, true);
             canvas.getScale().setX(1.25);
             canvas.getScale().setY(1.25);
-            canvas.updateSkin(skin, slim, null);
-            skinObjectProperty().addListener((obs, oldSkin, newSkin) -> canvas.updateSkin(newSkin.skin().image(), newSkin.model().isSlim(), newSkin.cape() != null ? newSkin.cape().image() : null));
+            canvas.updateSkin(skin.image(), slim, null);
+            skinObjectProperty.addListener((obs, oldSkin, newSkin) -> canvas.updateSkin(newSkin.skin(), newSkin.model().isSlim(), newSkin.cape() != null ? newSkin.cape() : null));
 
             spinnerPane.setContent(canvas);
             rightRegion.setCenter(spinnerPane);
