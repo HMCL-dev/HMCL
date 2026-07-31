@@ -152,7 +152,7 @@ final class ScrollUtils {
     }
 
     private static final double[] FRICTIONS = {0.99, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.04, 0.01, 0.008, 0.008, 0.008, 0.008, 0.0006, 0.0005, 0.00003, 0.00001};
-    private static final Duration DURATION = Duration.millis(3);
+    private static final Duration DURATION = Duration.millis(1);
 
     private static void smoothScroll(ScrollPane scrollPane, double speed, double trackPadAdjustment) {
         final double[] derivatives = new double[FRICTIONS.length];
