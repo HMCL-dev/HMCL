@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -121,7 +122,8 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         };
     }
 
-    private static List<String> sortDisplayCategories(List<String> displayCategories) {
+    @Unmodifiable
+    private static List<String> sortDisplayCategories(@Nullable List<String> displayCategories) {
         return displayCategories != null && !displayCategories.isEmpty()
                 ? displayCategories.stream().sorted(TAG_COMPARATOR).toList()
                 : List.of();
