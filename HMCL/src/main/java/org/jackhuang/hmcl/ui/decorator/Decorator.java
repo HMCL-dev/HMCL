@@ -26,7 +26,6 @@ import javafx.animation.Timeline;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -129,10 +128,10 @@ public final class Decorator {
     private final ObjectProperty<DecoratorPage.@Nullable State> state = new SimpleObjectProperty<>(this, "state");
 
     /// Whether a drag starting at the current pointer location may move the stage.
-    private final ReadOnlyBooleanWrapper allowMove = new ReadOnlyBooleanWrapper(this, "allowMove");
+    private final BooleanProperty allowMove = new SimpleBooleanProperty(this, "allowMove");
 
     /// Whether a stage move or resize gesture is currently active.
-    private final ReadOnlyBooleanWrapper dragging = new ReadOnlyBooleanWrapper(this, "dragging");
+    private final BooleanProperty dragging = new SimpleBooleanProperty(this, "dragging");
 
     /// Whether the next de-iconification should play the restore animation.
     private boolean playRestoreMinimizeAnimation;
@@ -412,13 +411,6 @@ public final class Decorator {
         this.allowMove.set(allowMove);
     }
 
-    /// Returns the read-only stage-movement eligibility property.
-    ///
-    /// @return the movement eligibility property
-    ReadOnlyBooleanProperty allowMoveProperty() {
-        return allowMove.getReadOnlyProperty();
-    }
-
     /// Returns whether a stage move or resize gesture is active.
     ///
     /// @return `true` while a gesture is active
@@ -431,13 +423,6 @@ public final class Decorator {
     /// @param dragging whether a gesture is active
     void setDragging(boolean dragging) {
         this.dragging.set(dragging);
-    }
-
-    /// Returns the read-only active-gesture property.
-    ///
-    /// @return the active-gesture property
-    ReadOnlyBooleanProperty draggingProperty() {
-        return dragging.getReadOnlyProperty();
     }
 
     /// Returns whether the navigation bar should show its close or home action.

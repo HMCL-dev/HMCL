@@ -24,6 +24,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -87,7 +88,7 @@ final class MainWindowPane extends StackPane {
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
     /// Handles primary-button double clicks on draggable title-bar content.
-    private final javafx.event.EventHandler<MouseEvent> onTitleBarDoubleClick = event -> {
+    private final EventHandler<MouseEvent> onTitleBarDoubleClick = event -> {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             return;
         }
@@ -102,13 +103,13 @@ final class MainWindowPane extends StackPane {
     };
 
     /// Ends the current move or resize gesture.
-    private final javafx.event.EventHandler<MouseEvent> onMouseReleased = this::onMouseReleased;
+    private final EventHandler<MouseEvent> onMouseReleased = this::onMouseReleased;
 
     /// Applies stage movement or resizing while the primary button is dragged.
-    private final javafx.event.EventHandler<MouseEvent> onMouseDragged = this::onMouseDragged;
+    private final EventHandler<MouseEvent> onMouseDragged = this::onMouseDragged;
 
     /// Updates the resize cursor according to the pointer position.
-    private final javafx.event.EventHandler<MouseEvent> onMouseMoved = this::onMouseMoved;
+    private final EventHandler<MouseEvent> onMouseMoved = this::onMouseMoved;
 
     /// The stable pane that receives native move and resize event filters.
     private final StackPane windowEventRoot;

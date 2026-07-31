@@ -386,8 +386,6 @@ public final class Controllers {
         FXUtils.setIcon(stage);
         stage.setTitle(Metadata.FULL_TITLE);
 
-        decorator.playOpenAnimation();
-
         if (!Architecture.SYSTEM_ARCH.isX86() && SettingsManager.userState().platformPromptVersionProperty().get() < 1) {
             Runnable continueAction = () -> {
                 UserState userState = userState();
