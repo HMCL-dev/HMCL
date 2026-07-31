@@ -383,13 +383,13 @@ public final class HTMLRenderer {
             tableView.getColumns().add(c);
         }
 
-        children.add(tableView);
-
         for (Element caption : captions) {
             appendAutoLineBreak("\n\n");
             appendChildren(caption);
             appendAutoLineBreak("\n");
         }
+
+        children.add(tableView);
     }
 
     private void appendOrderedList(Node node) {
