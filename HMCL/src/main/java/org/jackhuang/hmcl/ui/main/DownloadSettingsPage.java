@@ -62,8 +62,8 @@ public class DownloadSettingsPage extends StackPane {
         getChildren().setAll(scrollPane);
 
         {
-            var downloadSource = new ComponentList();
-            downloadSource.getStyleClass().add("card-non-transparent");
+            var gameContent = new ComponentList();
+            gameContent.getStyleClass().add("card-non-transparent");
             {
                 Function<DownloadSource, String> converter = source -> switch (source) {
                     case DEFAULT -> i18n("settings.launcher.download_source.auto");
@@ -99,10 +99,14 @@ public class DownloadSettingsPage extends StackPane {
                 defaultAddonSourcePane.setItems("modrinth", "curseforge");
                 defaultAddonSourcePane.valueProperty().bindBidirectional(settings().defaultAddonSourceProperty());
 
-                downloadSource.getContent().setAll(versionListSourcePane, downloadSourcePane, defaultAddonSourcePane);
+                var updateAddonsToPreviewButton = new LineToggleButton();
+                updateAddonsToPreviewButton.setTitle(i18n("settings.launcher.update_addons_to_preview"));
+                updateAddonsToPreviewButton.selectedProperty().bindBidirectional(settings().updateAddonsToPreviewProperty());
+
+                gameContent.getContent().setAll(versionListSourcePane, downloadSourcePane, defaultAddonSourcePane, updateAddonsToPreviewButton);
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.game_content")), gameContent);
         }
 
         {

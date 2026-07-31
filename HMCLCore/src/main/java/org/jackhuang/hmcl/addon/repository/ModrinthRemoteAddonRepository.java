@@ -376,16 +376,12 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         );
 
         public Optional<RemoteAddon.Version> toVersion() {
-            RemoteAddon.VersionType type;
-            if ("release".equals(versionType)) {
-                type = RemoteAddon.VersionType.Release;
-            } else if ("beta".equals(versionType)) {
-                type = RemoteAddon.VersionType.Beta;
-            } else if ("alpha".equals(versionType)) {
-                type = RemoteAddon.VersionType.Alpha;
-            } else {
-                type = RemoteAddon.VersionType.Release;
-            }
+            RemoteAddon.VersionType type = switch (versionType) {
+                case "release" -> RemoteAddon.VersionType.Release;
+                case "beta" -> RemoteAddon.VersionType.Beta;
+                case "alpha" -> RemoteAddon.VersionType.Alpha;
+                default -> RemoteAddon.VersionType.Release;
+            };
 
             if (files.isEmpty()) {
                 return Optional.empty();

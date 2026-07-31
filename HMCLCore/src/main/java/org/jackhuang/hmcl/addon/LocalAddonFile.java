@@ -59,7 +59,7 @@ public abstract class LocalAddonFile {
     }
 
     @Nullable
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
+    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source, boolean updateToPreview) throws IOException {
         var conditions = getUpdateConditions();
         if (conditions == null) return null;
 
@@ -70,6 +70,8 @@ public abstract class LocalAddonFile {
 
         var stream = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().modid())
                 .filter(version -> version.gameVersions().contains(gameVersion));
+        if (!updateToPreview)
+            stream = stream.filter(version -> version.versionType() == RemoteAddon.VersionType.Release);
         if (conditions.predicates() != null)
             for (var p : conditions.predicates()) {
                 stream = stream.filter(p);

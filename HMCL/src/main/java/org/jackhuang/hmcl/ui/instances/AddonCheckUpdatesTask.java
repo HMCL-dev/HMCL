@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.instances;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 
@@ -40,7 +41,7 @@ public class AddonCheckUpdatesTask extends Task<List<LocalAddonFile.AddonUpdate>
                     for (RemoteAddon.Source source : RemoteAddon.Source.values()) {
                         LocalAddonFile.AddonUpdate update = null;
                         try {
-                            update = addon.checkUpdates(downloadProvider, gameVersion, source);
+                            update = addon.checkUpdates(downloadProvider, gameVersion, source, SettingsManager.settings().updateAddonsToPreviewProperty().get());
                         } catch (IOException e) {
                             LOG.warning(String.format("Cannot check update for addon %s.", addon.getFileName()), e);
                         }
