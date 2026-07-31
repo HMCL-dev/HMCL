@@ -51,6 +51,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
     private static final PseudoClass ACTIVE = PseudoClass.getPseudoClass("active");
+    private static final double ITEM_HEIGHT = 52;
 
     /// Shows an instance selection popup relative to its owner.
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
@@ -83,10 +84,10 @@ public final class GameListPopupMenu extends StackPane {
 
         listView.setCellFactory(Cell::new);
 
-        listView.setFixedCellSize(50);
+        listView.setFixedCellSize(ITEM_HEIGHT);
         listView.setPrefWidth(300);
 
-        listView.prefHeightProperty().bind(Bindings.size(getItems()).multiply(50).add(2));
+        listView.prefHeightProperty().bind(Bindings.size(getItems()).multiply(ITEM_HEIGHT).add(2));
 
         Label placeholder = new Label(i18n("instance.empty"));
         placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
