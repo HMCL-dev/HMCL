@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -83,7 +84,7 @@ public final class UpdateHandler {
 
             try {
                 applyUpdate(Paths.get(args[1]));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOG.warning("Failed to apply update", e);
                 SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.MANUAL_UPDATE_URL) + "\n" + StringUtils.getStackTrace(e));
             }
@@ -169,7 +170,7 @@ public final class UpdateHandler {
         }));
     }
 
-    private static void applyUpdate(Path target) throws IOException {
+    private static void applyUpdate(Path target) throws Exception {
         LOG.info("Applying update to " + target);
 
         Path self = getCurrentLocation();
@@ -189,7 +190,12 @@ public final class UpdateHandler {
             }
         }
 
-        startJava(target);
+        Path macAppBundle = FileUtils.getMacAppBundleAbsolutePath(target);
+        if (macAppBundle == null) {
+            startJava(target);
+        } else {
+            startMacApp(macAppBundle);
+        }
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
@@ -226,6 +232,12 @@ public final class UpdateHandler {
                 .directory(Paths.get("").toAbsolutePath().toFile())
                 .inheritIO()
                 .start();
+    }
+
+    public static void startMacApp(Path appBundle) throws Exception {
+        List<String> commandLine = List.of("open", appBundle.toString());
+        LOG.info("Starting process: " + maskCommandline(commandLine));
+        new ProcessBuilder(commandLine).inheritIO().start();
     }
 
     private static String maskCommandline(List<String> commandline) {

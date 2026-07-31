@@ -31,7 +31,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -101,22 +100,7 @@ public final class EntryPoint {
     }
 
     private static boolean isInsideMacAppBundle() {
-        Path thisJar = JarUtils.thisJarPath();
-        if (thisJar == null)
-            return false;
-
-        for (Path current = thisJar.getParent();
-             current != null && current.getParent() != null;
-             current = current.getParent()
-        ) {
-            if ("Contents".equals(FileUtils.getName(current))
-                    && FileUtils.getName(current.getParent()).endsWith(".app")
-                    && Files.exists(current.resolve("Info.plist"))
-            ) {
-                return true;
-            }
-        }
-        return false;
+        return FileUtils.isInsideMacAppBundle(JarUtils.thisJarPath());
     }
 
     private static void initIcon() {

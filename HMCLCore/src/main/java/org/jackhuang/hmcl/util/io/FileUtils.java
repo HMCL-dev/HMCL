@@ -558,4 +558,28 @@ public final class FileUtils {
 
         return permissions;
     }
+
+    /// @return Whether the JAR is inside a Mac app bundle.
+    public static boolean isInsideMacAppBundle(Path jar) {
+        return getMacAppBundleAbsolutePath(jar) != null;
+    }
+
+    /// @return The absolute path of the Mac app bundle containing the JAR, or null if the JAR is not inside an app bundle.
+    public static Path getMacAppBundleAbsolutePath(Path jar) {
+        if (jar == null)
+            return null;
+
+        for (Path current = jar.getParent();
+             current != null && current.getParent() != null;
+             current = current.getParent()
+        ) {
+            if ("Contents".equals(FileUtils.getName(current))
+                    && FileUtils.getName(current.getParent()).endsWith(".app")
+                    && Files.exists(current.resolve("Info.plist"))
+            ) {
+                return current.getParent().toAbsolutePath();
+            }
+        }
+        return null;
+    }
 }
