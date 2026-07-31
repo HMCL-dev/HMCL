@@ -23,7 +23,8 @@ import javafx.animation.Interpolator;
 import javafx.beans.property.BooleanProperty;
 import javafx.scene.Node;
 import javafx.scene.input.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
@@ -149,9 +150,11 @@ public class DecoratorController {
     }
 
     private void back() {
-        if (navigator.getCurrentPage() instanceof DecoratorPage) {
-            DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
+        if (navigator.getCurrentPage() instanceof BackConfirmPage backConfirmPage) {
+            if (!backConfirmPage.canBack() && !backConfirmPage.confirmBack()) return;
+        }
 
+        if (navigator.getCurrentPage() instanceof DecoratorPage page) {
             if (page.back()) {
                 if (navigator.canGoBack()) {
                     navigator.close();

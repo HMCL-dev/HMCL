@@ -161,6 +161,11 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
     }
 
     @Override
+    protected void onSaveChanges() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected ReadOnlyObjectProperty<Skin> skinObjectProperty() {
         if (skinProperty == null) skinProperty = new ReadOnlyObjectWrapper<>();
         return skinProperty.getReadOnlyProperty();

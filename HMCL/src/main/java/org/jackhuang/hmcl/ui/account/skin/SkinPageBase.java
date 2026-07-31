@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.decorator.BackConfirmPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.skin.SkinCanvas;
@@ -54,11 +55,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
+public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedPage implements DecoratorPage, BackConfirmPage {
     protected final T account;
     protected final BooleanProperty loadingProperty = new SimpleBooleanProperty(true);
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -84,7 +86,12 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         AdvancedListBox sideBar = new AdvancedListBox().addNavigationDrawerTab(tab, manageTab, i18n("account.skin"), SVG.CHECKROOM);
         left.setTop(sideBar);
 
-        AdvancedListBox toolbar = new AdvancedListBox().addNavigationDrawerItem(i18n("button.save"), SVG.OUTPUT, null, item -> item.setOnAction(e -> onSaveTexture(item.getWidth())));
+        AdvancedListBox toolbar = new AdvancedListBox()
+                .addNavigationDrawerItem(i18n("account.skin.manage.save"), SVG.OUTPUT, null, item -> {
+                    item.setOnAction(e -> onSaveTexture(item.getWidth()));
+                    item.disableProperty().bind(skinObjectProperty().isNull());
+                })
+                .addNavigationDrawerItem(i18n("button.save_changes"), SVG.SAVE, this::onSaveChanges);
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 
@@ -119,7 +126,21 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         ImageIO.write(image, "png", target);
     }
 
-    public void onSaveTexture(double w) {
+    protected abstract void onSaveChanges();
+
+    @Override
+    public boolean canBack() {
+        return false;
+    }
+
+    @Override
+    public boolean confirmBack() {
+        CompletableFuture<Boolean> confirmFuture = CompletableFuture.completedFuture(false);
+        Controllers.confirm("a", "b", () -> confirmFuture.complete(false), () -> confirmFuture.complete(true));
+        return confirmFuture.join();
+    }
+
+    private void onSaveTexture(double w) {
         PopupMenu saveTextureList = new PopupMenu();
         JFXPopup saveTexturePopup = new JFXPopup(saveTextureList);
 
@@ -146,7 +167,7 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         }, saveTexturePopup), capeItem);
 
         capeItem.setDisable(skinObjectProperty().get().cape() == null);
-        saveTexturePopup.show(this, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, w, -10);
+        saveTexturePopup.show(this, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, w, -50);
     }
 
     @Override
