@@ -402,7 +402,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
             titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
-            DoubleBinding widthBinding = Controllers.windowWidthProperty().multiply(0.7);
+            DoubleBinding widthBinding = Controllers.getDecorator().contentWidthProperty().multiply(0.7);
             prefWidthProperty().bind(widthBinding);
             maxWidthProperty().bind(widthBinding);
 
@@ -442,7 +442,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             description.heightProperty().addListener((obs, oldVal, newVal) -> {
-                double maxHeight = Controllers.windowHeightProperty().get() * 0.5;
+                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });

@@ -23,13 +23,18 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -46,11 +51,14 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -77,6 +85,18 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 /// hiding or closing that stage does not discard either the scene or the decorator state.
 @NotNullByDefault
 public final class Decorator {
+    /// The minimum width, in pixels, including the 800-pixel background and two one-pixel borders.
+    private static final double MIN_CONTENT_WIDTH = 800.0 + 2.0;
+
+    /// The minimum height, in pixels, including the 450-pixel background, borders, and 40-pixel title bar.
+    private static final double MIN_CONTENT_HEIGHT = 450.0 + 2.0 + 40.0;
+
+    /// The minimum visible overlap, in pixels, used to accept a persisted window position.
+    private static final double MIN_VISIBLE_WINDOW_AREA = 20.0;
+
+    /// The primary-screen bounds used by the persisted normalized window coordinates.
+    private static final Rectangle2D PRIMARY_SCREEN_BOUNDS = Screen.getPrimary().getBounds();
+
     /// The space, in pixels, reserved on each side of the window content for the custom shadow.
     private static final double SHADOW_SIZE = 8.0;
 
@@ -119,6 +139,12 @@ public final class Decorator {
     /// Whether the navigation close action should use the home icon.
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(this, "showCloseAsHome");
 
+    /// The width of the visible window content, excluding custom decoration insets.
+    private final DoubleProperty contentWidth = new SimpleDoubleProperty(this, "contentWidth");
+
+    /// The height of the visible window content, excluding custom decoration insets.
+    private final DoubleProperty contentHeight = new SimpleDoubleProperty(this, "contentHeight");
+
     /// The stage currently controlled by this decorator, or `null` while detached.
     private @Nullable Stage stage;
 
@@ -142,6 +168,48 @@ public final class Decorator {
         if (playRestoreMinimizeAnimation && !iconified) {
             playRestoreMinimizeAnimation = false;
             playRestoreAnimation();
+        }
+    };
+
+    /// Updates the changed visible-content bound and persists normal, non-iconified stage bounds.
+    private final InvalidationListener stageBoundsListener = observable -> {
+        @Nullable Stage currentStage = stage;
+        if (currentStage == null) {
+            return;
+        }
+
+        Insets insets = getWindowInsets();
+        boolean saveBounds = !currentStage.isIconified()
+                // https://github.com/HMCL-dev/HMCL/issues/4290
+                && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                || !currentStage.isFullScreen() && !currentStage.isMaximized());
+
+        if (observable == currentStage.xProperty()) {
+            if (saveBounds) {
+                double currentContentX = currentStage.getX() + insets.getLeft();
+                SettingsManager.state().setX(currentContentX / PRIMARY_SCREEN_BOUNDS.getWidth());
+            }
+        } else if (observable == currentStage.yProperty()) {
+            if (saveBounds) {
+                double currentContentY = currentStage.getY() + insets.getTop();
+                SettingsManager.state().setY(currentContentY / PRIMARY_SCREEN_BOUNDS.getHeight());
+            }
+        } else if (observable == currentStage.widthProperty()) {
+            double currentContentWidth = Math.max(
+                    MIN_CONTENT_WIDTH,
+                    currentStage.getWidth() - insets.getLeft() - insets.getRight());
+            contentWidth.set(currentContentWidth);
+            if (saveBounds) {
+                SettingsManager.state().setWidth(currentContentWidth);
+            }
+        } else if (observable == currentStage.heightProperty()) {
+            double currentContentHeight = Math.max(
+                    MIN_CONTENT_HEIGHT,
+                    currentStage.getHeight() - insets.getTop() - insets.getBottom());
+            contentHeight.set(currentContentHeight);
+            if (saveBounds) {
+                SettingsManager.state().setHeight(currentContentHeight);
+            }
         }
     };
 
@@ -185,6 +253,20 @@ public final class Decorator {
     /// @return the root's shadow insets, or [Insets#EMPTY] when the shadow is disabled
     public Insets getWindowInsets() {
         return root.getPadding();
+    }
+
+    /// Returns the visible window-content width property, excluding custom decoration insets.
+    ///
+    /// @return the current content-width property
+    public ReadOnlyDoubleProperty contentWidthProperty() {
+        return contentWidth;
+    }
+
+    /// Returns the visible window-content height property, excluding custom decoration insets.
+    ///
+    /// @return the current content-height property
+    public ReadOnlyDoubleProperty contentHeightProperty() {
+        return contentHeight;
     }
 
     /// Returns the insets used for custom resize hit testing.
@@ -305,18 +387,65 @@ public final class Decorator {
         return root.getScene();
     }
 
+    /// Applies the persisted content bounds and current decoration insets to `targetStage`.
+    ///
+    /// An off-screen persisted position is replaced with a position centered on the primary screen.
+    ///
+    /// @param targetStage the stage receiving the initial outer bounds and minimum dimensions
+    private void initializeStageBounds(Stage targetStage) {
+        Insets insets = getWindowInsets();
+        double initialContentWidth = Math.max(MIN_CONTENT_WIDTH, SettingsManager.state().getWidth());
+        double initialContentHeight = Math.max(MIN_CONTENT_HEIGHT, SettingsManager.state().getHeight());
+        double initialContentX = SettingsManager.state().getX() * PRIMARY_SCREEN_BOUNDS.getWidth();
+        double initialContentY = SettingsManager.state().getY() * PRIMARY_SCREEN_BOUNDS.getHeight();
+
+        boolean visible = false;
+        for (Screen screen : Screen.getScreens()) {
+            Rectangle2D bounds = screen.getBounds();
+            if (bounds.getMinX() + MIN_VISIBLE_WINDOW_AREA <= initialContentX + initialContentWidth
+                    && initialContentX <= bounds.getMaxX() - MIN_VISIBLE_WINDOW_AREA
+                    && bounds.getMinY() + MIN_VISIBLE_WINDOW_AREA <= initialContentY
+                    && initialContentY <= bounds.getMaxY() - MIN_VISIBLE_WINDOW_AREA) {
+                visible = true;
+                break;
+            }
+        }
+
+        if (!visible) {
+            initialContentX = (PRIMARY_SCREEN_BOUNDS.getWidth() - initialContentWidth) / 2;
+            initialContentY = (PRIMARY_SCREEN_BOUNDS.getHeight() - initialContentHeight) / 2;
+        }
+
+        targetStage.setX(initialContentX - insets.getLeft());
+        targetStage.setY(initialContentY - insets.getTop());
+        targetStage.setWidth(initialContentWidth + insets.getLeft() + insets.getRight());
+        targetStage.setHeight(initialContentHeight + insets.getTop() + insets.getBottom());
+        targetStage.setMinWidth(MIN_CONTENT_WIDTH + insets.getLeft() + insets.getRight());
+        targetStage.setMinHeight(MIN_CONTENT_HEIGHT + insets.getTop() + insets.getBottom());
+        contentWidth.set(initialContentWidth);
+        contentHeight.set(initialContentHeight);
+    }
+
     /// Attaches the retained scene and native window behavior to `newStage`.
     ///
     /// If the root has no scene, this method reuses `newStage`'s scene and replaces its root, or creates a
     /// transparent scene when the stage has none. If the retained scene belongs to another stage, it is detached
-    /// from that stage before being installed on `newStage`. Any active window animation is cancelled and reset.
+    /// from that stage before being installed on `newStage`. A newly attached stage receives the persisted normal
+    /// content bounds and minimum size adjusted for the current decoration insets. The stage and retained scene use
+    /// transparent styles required by the custom decoration. Any active window animation is cancelled and reset.
     /// This method does not show the stage.
     ///
     /// @param newStage the stage to attach, which must be accessed on the JavaFX application thread
     /// @return the scene installed on `newStage`
+    /// @throws IllegalStateException if `newStage` has already been shown with a non-transparent style, or if the
+    ///                               retained root or scene cannot be transferred from its current owner
     public Scene attachStage(Stage newStage) {
         FXUtils.checkFxUserThread();
         stopWindowAnimation();
+
+        if (newStage.getStyle() != StageStyle.TRANSPARENT) {
+            newStage.initStyle(StageStyle.TRANSPARENT);
+        }
 
         @Nullable Scene retainedScene = root.getScene();
         Scene scene;
@@ -324,7 +453,6 @@ public final class Decorator {
             @Nullable Scene stageScene = newStage.getScene();
             if (stageScene == null) {
                 scene = new Scene(root);
-                scene.setFill(Color.TRANSPARENT);
             } else {
                 if (root.getParent() != null) {
                     throw new IllegalStateException("Decorator root is already attached to a parent");
@@ -344,6 +472,8 @@ public final class Decorator {
             }
         }
 
+        scene.setFill(Color.TRANSPARENT);
+
         if (newStage.getScene() != scene) {
             newStage.setScene(scene);
         }
@@ -352,9 +482,19 @@ public final class Decorator {
             playRestoreMinimizeAnimation = false;
             if (stage != null) {
                 stage.iconifiedProperty().removeListener(iconifiedListener);
+                stage.xProperty().removeListener(stageBoundsListener);
+                stage.yProperty().removeListener(stageBoundsListener);
+                stage.widthProperty().removeListener(stageBoundsListener);
+                stage.heightProperty().removeListener(stageBoundsListener);
             }
-            newStage.iconifiedProperty().addListener(iconifiedListener);
+
+            initializeStageBounds(newStage);
             stage = newStage;
+            newStage.iconifiedProperty().addListener(iconifiedListener);
+            newStage.xProperty().addListener(stageBoundsListener);
+            newStage.yProperty().addListener(stageBoundsListener);
+            newStage.widthProperty().addListener(stageBoundsListener);
+            newStage.heightProperty().addListener(stageBoundsListener);
         }
         root.setCursor(Cursor.DEFAULT);
         dragging.set(false);
@@ -373,6 +513,10 @@ public final class Decorator {
 
         if (stage != null) {
             stage.iconifiedProperty().removeListener(iconifiedListener);
+            stage.xProperty().removeListener(stageBoundsListener);
+            stage.yProperty().removeListener(stageBoundsListener);
+            stage.widthProperty().removeListener(stageBoundsListener);
+            stage.heightProperty().removeListener(stageBoundsListener);
             if (stage.getScene() == root.getScene()) {
                 stage.setScene(null);
             }

@@ -24,19 +24,11 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.geometry.Insets;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
-import javafx.scene.paint.Color;
 import javafx.stage.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
@@ -90,25 +82,6 @@ public final class Controllers {
     public static final String SOFTWARE_RENDERING = "softwareRendering";
     public static final String APRIL_FOOLS = "aprilFools";
 
-    private static final int CUSTOM_DECORATION_SHADOW_SIZE = 8;
-    private static final int CUSTOM_DECORATION_SHADOW_EXTENT = CUSTOM_DECORATION_SHADOW_SIZE * 2;
-
-    /// The content insets used before the main-window decorator has been initialized.
-    private static final Insets DEFAULT_WINDOW_INSETS = new Insets(CUSTOM_DECORATION_SHADOW_SIZE);
-
-    public static final int MIN_CONTENT_WIDTH = 800 + 2; // bg width + border width*2
-    public static final int MIN_CONTENT_HEIGHT = 450 + 2 + 40; // bg height + border width*2 + toolbar height
-    public static final int MIN_WIDTH = MIN_CONTENT_WIDTH + CUSTOM_DECORATION_SHADOW_EXTENT;
-    public static final int MIN_HEIGHT = MIN_CONTENT_HEIGHT + CUSTOM_DECORATION_SHADOW_EXTENT;
-    public static final Rectangle2D PRIMARY_SCREEN_BOUNDS = Screen.getPrimary().getBounds();
-    private static InvalidationListener stageSizeChangeListener;
-    private static final DoubleProperty contentX = new SimpleDoubleProperty();
-    private static final DoubleProperty contentY = new SimpleDoubleProperty();
-    private static final DoubleProperty contentWidth = new SimpleDoubleProperty();
-    private static final DoubleProperty contentHeight = new SimpleDoubleProperty();
-
-    /// The primary application stage, or `null` after controller shutdown.
-    private static @Nullable Stage stage;
     private static GameInstancePage gameInstancePage;
     private static Lazy<GameListPage> gameListPage = new Lazy<>(GameListPage::new);
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
@@ -137,16 +110,12 @@ public final class Controllers {
         void run() throws Exception;
     }
 
+    /// Returns the stage currently attached to the main-window decorator.
+    ///
+    /// @return the current stage, or `null` before initialization or after detachment
     public static @Nullable Stage getStage() {
-        return stage;
-    }
-
-    public static ReadOnlyDoubleProperty windowWidthProperty() {
-        return contentWidth;
-    }
-
-    public static ReadOnlyDoubleProperty windowHeightProperty() {
-        return contentHeight;
+        @Nullable Decorator currentDecorator = decorator;
+        return currentDecorator == null ? null : currentDecorator.getStage();
     }
 
     @FXThread
@@ -225,19 +194,8 @@ public final class Controllers {
         return Objects.requireNonNull(decorator, "Main window is not initialized");
     }
 
-    /// Returns the insets currently surrounding the persisted main-window content bounds.
-    ///
-    /// @return the active decorator insets, or the startup shadow insets before initialization
-    private static Insets getCurrentWindowInsets() {
-        @Nullable Decorator currentDecorator = decorator;
-        return currentDecorator == null
-                ? DEFAULT_WINDOW_INSETS
-                : currentDecorator.getWindowInsets();
-    }
-
     /// Releases stage-specific listeners and retained window ownership before application shutdown.
     public static void onApplicationStop() {
-        stageSizeChangeListener = null;
         if (decorator != null) {
             decorator.detachStage();
         }
@@ -263,104 +221,8 @@ public final class Controllers {
             }
         }
 
-        Controllers.stage = stage;
-
-        double initContentWidth = Math.max(MIN_CONTENT_WIDTH, state().getWidth());
-        double initContentHeight = Math.max(MIN_CONTENT_HEIGHT, state().getHeight());
-        double initWidth = initContentWidth + CUSTOM_DECORATION_SHADOW_EXTENT;
-        double initHeight = initContentHeight + CUSTOM_DECORATION_SHADOW_EXTENT;
-
-        {
-            double initContentX = state().getX() * PRIMARY_SCREEN_BOUNDS.getWidth();
-            double initContentY = state().getY() * PRIMARY_SCREEN_BOUNDS.getHeight();
-
-            boolean invalid = true;
-            double border = 20D;
-            for (Screen screen : Screen.getScreens()) {
-                Rectangle2D bound = screen.getBounds();
-
-                if (bound.getMinX() + border <= initContentX + initContentWidth
-                        && initContentX <= bound.getMaxX() - border
-                        && bound.getMinY() + border <= initContentY
-                        && initContentY <= bound.getMaxY() - border) {
-                    invalid = false;
-                    break;
-                }
-            }
-
-            if (invalid) {
-                initContentX = (0.5D - initContentWidth / PRIMARY_SCREEN_BOUNDS.getWidth() / 2)
-                        * PRIMARY_SCREEN_BOUNDS.getWidth();
-                initContentY = (0.5D - initContentHeight / PRIMARY_SCREEN_BOUNDS.getHeight() / 2)
-                        * PRIMARY_SCREEN_BOUNDS.getHeight();
-            }
-
-            double initX = initContentX - CUSTOM_DECORATION_SHADOW_SIZE;
-            double initY = initContentY - CUSTOM_DECORATION_SHADOW_SIZE;
-            stage.setX(initX);
-            stage.setY(initY);
-            contentX.set(initContentX);
-            contentY.set(initContentY);
-        }
-
-        stage.setHeight(initHeight);
-        stage.setWidth(initWidth);
-        contentHeight.set(initContentHeight);
-        contentWidth.set(initContentWidth);
-
-        stageSizeChangeListener = o -> {
-            ReadOnlyDoubleProperty property = (ReadOnlyDoubleProperty) o;
-            Stage currentStage = property.getBean() instanceof Stage s ? s : null;
-            if (currentStage == null)
-                return;
-
-            boolean saveState = !currentStage.isIconified()
-                    // https://github.com/HMCL-dev/HMCL/issues/4290
-                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
-                    || !currentStage.isFullScreen() && !currentStage.isMaximized());
-            Insets windowInsets = getCurrentWindowInsets();
-
-            switch (property.getName()) {
-                case "x" -> {
-                    double value = property.get() + windowInsets.getLeft();
-                    contentX.set(value);
-                    if (saveState)
-                        state().setX(value / PRIMARY_SCREEN_BOUNDS.getWidth());
-                }
-                case "y" -> {
-                    double value = property.get() + windowInsets.getTop();
-                    contentY.set(value);
-                    if (saveState)
-                        state().setY(value / PRIMARY_SCREEN_BOUNDS.getHeight());
-                }
-                case "width" -> {
-                    double value = Math.max(
-                            MIN_CONTENT_WIDTH,
-                            property.get() - windowInsets.getLeft() - windowInsets.getRight());
-                    contentWidth.set(value);
-                    if (saveState)
-                        state().setWidth(value);
-                }
-                case "height" -> {
-                    double value = Math.max(
-                            MIN_CONTENT_HEIGHT,
-                            property.get() - windowInsets.getTop() - windowInsets.getBottom());
-                    contentHeight.set(value);
-                    if (saveState)
-                        state().setHeight(value);
-                }
-            }
-        };
-
-        WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
-        stage.xProperty().addListener(weakListener);
-        stage.yProperty().addListener(weakListener);
-        stage.heightProperty().addListener(weakListener);
-        stage.widthProperty().addListener(weakListener);
-
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
-        stage.initStyle(StageStyle.TRANSPARENT);
         decorator = new Decorator(getRootPage());
         Scene mainScene = decorator.attachStage(stage);
         getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
@@ -378,9 +240,6 @@ public final class Controllers {
 
         Lang.thread(JavaManager::initialize, "Search Java", true);
 
-        mainScene.setFill(Color.TRANSPARENT);
-        stage.setMinWidth(MIN_WIDTH);
-        stage.setMinHeight(MIN_HEIGHT);
         StyleSheets.init(mainScene);
 
         FXUtils.setIcon(stage);
@@ -653,20 +512,36 @@ public final class Controllers {
         decorator.showToast(content);
     }
 
+    /// Shows `directoryChooser` with the current main window as its owner.
+    ///
+    /// @param directoryChooser the chooser to show
+    /// @return the selected directory, or `null` if the chooser is cancelled
     public static @Nullable Path showDialog(DirectoryChooser directoryChooser) {
-        return FileUtils.toPath(directoryChooser.showDialog(stage));
+        return FileUtils.toPath(directoryChooser.showDialog(getStage()));
     }
 
+    /// Shows `fileChooser` for opening one file with the current main window as its owner.
+    ///
+    /// @param fileChooser the chooser to show
+    /// @return the selected file, or `null` if the chooser is cancelled
     public static @Nullable Path showOpenDialog(FileChooser fileChooser) {
-        return FileUtils.toPath(fileChooser.showOpenDialog(stage));
+        return FileUtils.toPath(fileChooser.showOpenDialog(getStage()));
     }
 
+    /// Shows `fileChooser` for saving one file with the current main window as its owner.
+    ///
+    /// @param fileChooser the chooser to show
+    /// @return the selected file, or `null` if the chooser is cancelled
     public static @Nullable Path showSaveDialog(FileChooser fileChooser) {
-        return FileUtils.toPath(fileChooser.showSaveDialog(stage));
+        return FileUtils.toPath(fileChooser.showSaveDialog(getStage()));
     }
 
+    /// Shows `fileChooser` for opening multiple files with the current main window as its owner.
+    ///
+    /// @param fileChooser the chooser to show
+    /// @return the selected files, or `null` if the chooser is cancelled
     public static @Nullable List<Path> showOpenMultipleDialog(FileChooser fileChooser) {
-        return FileUtils.toPaths(fileChooser.showOpenMultipleDialog(stage));
+        return FileUtils.toPaths(fileChooser.showOpenMultipleDialog(getStage()));
     }
 
     public static void onHyperlinkAction(String href) {
@@ -701,7 +576,6 @@ public final class Controllers {
         settingsPage = null;
         terracottaPage = null;
         decorator = null;
-        stage = null;
 
         FXUtils.shutdown();
     }
