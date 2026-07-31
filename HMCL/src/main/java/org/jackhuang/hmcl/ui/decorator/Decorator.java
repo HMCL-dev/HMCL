@@ -121,8 +121,7 @@ public final class Decorator {
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(this, "showCloseAsHome");
 
     /// The stage currently controlled by this decorator, or `null` while detached.
-    private final ReadOnlyObjectWrapper<@Nullable Stage> stage =
-            new ReadOnlyObjectWrapper<>(this, "stage");
+    private final ObjectProperty<@Nullable Stage> stage = new SimpleObjectProperty<>(this, "stage");
 
     /// The title-bar state supplied by the current page, or `null` before navigation is initialized.
     private final ObjectProperty<DecoratorPage.@Nullable State> state = new SimpleObjectProperty<>(this, "state");
@@ -380,7 +379,7 @@ public final class Decorator {
     ///
     /// @return the attached-stage property
     public ReadOnlyObjectProperty<@Nullable Stage> stageProperty() {
-        return stage.getReadOnlyProperty();
+        return stage;
     }
 
     /// Returns the title-bar state supplied by the current page.
