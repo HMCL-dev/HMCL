@@ -683,6 +683,15 @@ public final class StringUtils {
 
     }
 
+    public static OptionalInt toInt(String s) {
+        if (isBlank(s)) return OptionalInt.empty();
+        try {
+            return OptionalInt.of(Integer.parseInt(s));
+        } catch (NumberFormatException e) {
+            return OptionalInt.empty();
+        }
+    }
+
     public static class LevCalculator {
         private int[][] lev;
 

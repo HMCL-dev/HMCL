@@ -394,10 +394,11 @@ public final class HTMLRenderer {
 
     private void appendOrderedList(Node node) {
         pushNode(node);
-        int ordinal = 0;
+        int ordinal = StringUtils.toInt(node.attr("start")).orElse(1);
         for (Node childNode : node.childNodes()) {
             if (childNode.nameIs("li")) {
-                appendText("\n " + "  ".repeat(listDepth) + ++ordinal + ". ");
+                ordinal = StringUtils.toInt(childNode.attr("value")).orElse(ordinal);
+                appendText("\n " + "  ".repeat(listDepth) + ordinal++ + ". ");
                 appendChildren(childNode);
                 continue;
             }
