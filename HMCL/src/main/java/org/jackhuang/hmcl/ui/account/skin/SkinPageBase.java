@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.account.skin;
 
 import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -26,6 +27,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -47,6 +49,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.skin.SkinCanvas;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingFXUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -58,6 +61,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -188,6 +192,26 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
+    }
+
+    protected Pair<HBox, ToggleGroup> createModelSelectBox() {
+        HBox hBox = new HBox(10);
+        hBox.setAlignment(Pos.CENTER);
+
+        ToggleGroup group = new ToggleGroup();
+        var slimRadio = new JFXRadioButton(i18n("account.skin.model.slim"));
+        slimRadio.setUserData(SkinModel.SLIM);
+        slimRadio.setToggleGroup(group);
+        var wideRadio = new JFXRadioButton(i18n("account.skin.model.default"));
+        wideRadio.setUserData(SkinModel.WIDE);
+        wideRadio.setToggleGroup(group);
+
+        slimRadio.setOnAction(event -> skinObjectProperty.set(new Skin(SkinModel.SLIM, skinObjectProperty.get().skin(), skinObjectProperty.get().cape())));
+        wideRadio.setOnAction(event -> skinObjectProperty.set(new Skin(SkinModel.WIDE, skinObjectProperty.get().skin(), skinObjectProperty.get().cape())));
+
+        hBox.getChildren().addAll(slimRadio, wideRadio);
+
+        return pair(hBox, group);
     }
 
     protected final class SkinManagePane extends HBox {

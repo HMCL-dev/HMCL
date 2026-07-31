@@ -37,7 +37,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
-import org.jackhuang.hmcl.ui.account.skin.AuthlibInjectorAccoubtSkinPage;
+import org.jackhuang.hmcl.ui.account.skin.AuthlibInjectorAccountSkinPage;
 import org.jackhuang.hmcl.ui.account.skin.OfflineAccountSkinPage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -121,7 +121,7 @@ public class AccountListItem extends RadioButton {
             Controllers.navigate(new OfflineAccountSkinPage((OfflineAccount) account));
             return null;
         } else if (account instanceof AuthlibInjectorAccount) {
-            Controllers.navigate(new AuthlibInjectorAccoubtSkinPage((AuthlibInjectorAccount) account));
+            Controllers.navigate(new AuthlibInjectorAccountSkinPage((AuthlibInjectorAccount) account));
             return null;
         }
 

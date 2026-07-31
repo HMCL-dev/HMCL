@@ -17,11 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.account.skin;
 
-import com.jfoenix.controls.JFXComboBox;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
-import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
@@ -31,7 +30,6 @@ import org.jackhuang.hmcl.game.skin.Skin;
 import org.jackhuang.hmcl.game.skin.SkinModel;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.FileSelector;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -45,38 +43,37 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
     private final MultiFileItem<OfflineSkinConfig.Type> skinTypeItem = new MultiFileItem<>();
-    private final JFXComboBox<SkinModel> modelCombobox = new JFXComboBox<>();
     private final FileSelector skinSelector = new FileSelector();
     private final FileSelector capeSelector = new FileSelector();
+    private final ToggleGroup toggleGroup;
 
     public OfflineAccountSkinPage(OfflineAccount account) {
         super(account);
 
-        skinTypeItem.loadChildren(Arrays.asList(new MultiFileItem.Option<>(i18n("message.default"), OfflineSkinConfig.Type.DEFAULT), new MultiFileItem.Option<>(i18n("account.skin.type.steve"), OfflineSkinConfig.Type.STEVE), new MultiFileItem.Option<>(i18n("account.skin.type.alex"), OfflineSkinConfig.Type.ALEX), new MultiFileItem.Option<>(i18n("account.skin.type.local_file"), OfflineSkinConfig.Type.LOCAL_FILE)));
+        var pair = createModelSelectBox();
+        toggleGroup = pair.getValue();
 
-        modelCombobox.setConverter(FXUtils.stringConverter(model -> i18n("account.skin.model." + model.modelName)));
-        modelCombobox.getItems().setAll(SkinModel.WIDE, SkinModel.SLIM);
+        skinTypeItem.loadChildren(Arrays.asList(new MultiFileItem.Option<>(i18n("message.default"), OfflineSkinConfig.Type.DEFAULT), new MultiFileItem.Option<>(i18n("account.skin.type.steve"), OfflineSkinConfig.Type.STEVE), new MultiFileItem.Option<>(i18n("account.skin.type.alex"), OfflineSkinConfig.Type.ALEX), new MultiFileItem.Option<>(i18n("account.skin.type.local_file"), OfflineSkinConfig.Type.LOCAL_FILE)));
 
         OfflineSkinConfig config = account.getSkin();
         if (config == null) {
             skinTypeItem.setSelectedData(OfflineSkinConfig.Type.DEFAULT);
-            modelCombobox.setValue(SkinModel.WIDE);
+            toggleGroup.selectToggle(toggleGroup.getToggles().getLast());
         } else {
             skinTypeItem.setSelectedData(config.type());
-            modelCombobox.setValue(config.textureModel() != null ? config.textureModel() : SkinModel.WIDE);
+            toggleGroup.selectToggle(config.textureModel() == SkinModel.WIDE ? toggleGroup.getToggles().getLast() : toggleGroup.getToggles().getFirst());
             skinSelector.setValue(config.localSkinPath());
             capeSelector.setValue(config.localCapePath());
         }
 
         GridPane grid = new GridPane();
-        grid.setAlignment(Pos.CENTER);
         grid.setHgap(16);
         grid.setVgap(10);
 
         ChangeListener<OfflineSkinConfig.Type> listener = (obs, oldVal, newVal) -> {
             grid.getChildren().clear();
             if (newVal == OfflineSkinConfig.Type.LOCAL_FILE) {
-                grid.addRow(0, new Label(i18n("account.skin.model")), modelCombobox);
+                grid.addRow(0, pair.getKey());
                 grid.addRow(1, new Label(i18n("account.skin")), skinSelector);
                 grid.addRow(2, new Label(i18n("account.cape")), capeSelector);
             }
@@ -90,7 +87,6 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
         InvalidationListener invalidationListener = (e) -> loadSkinPreview();
 
         skinTypeItem.selectedDataProperty().addListener(invalidationListener);
-        modelCombobox.valueProperty().addListener(invalidationListener);
         skinSelector.valueProperty().addListener(invalidationListener);
         capeSelector.valueProperty().addListener(invalidationListener);
 
@@ -100,7 +96,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
     private OfflineSkinConfig getConfig() {
         OfflineSkinConfig.Type type = skinTypeItem.getSelectedData();
         if (type == null) type = OfflineSkinConfig.Type.DEFAULT;
-        SkinModel model = modelCombobox.getValue();
+        SkinModel model = toggleGroup.getSelectedToggle().getUserData().equals(SkinModel.WIDE) ? SkinModel.WIDE : SkinModel.SLIM;
 
         var textureModel = switch (type) {
             case ALEX -> SkinModel.SLIM;
