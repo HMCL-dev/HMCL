@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -130,7 +131,7 @@ public class DownloadSettingsPage extends StackPane {
                             settings().commonDirectoryProperty(), settings().commonDirectoryTypeProperty()));
 
             JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
-            cleanButton.setOnAction(e -> clearCacheDirectory());
+            cleanButton.setOnAction(e -> clearCacheDirectory(cleanButton));
             fileCommonLocationSublist.setHeaderRight(cleanButton);
 
             ComponentSublist downloadThreadsSublist = new ComponentSublist(() -> {
@@ -350,10 +351,27 @@ public class DownloadSettingsPage extends StackPane {
 
     }
 
-    private void clearCacheDirectory() {
+    @FXThread
+    private boolean cleaningCache = false;
+
+    private void clearCacheDirectory(JFXButton cleanButton) {
+        if (cleaningCache) return;
         String commonDirectory = settings().getResolvedCommonDirectory();
         if (commonDirectory != null) {
-            Task.runAsync("Clear Cache Directory", Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")));
+            cleaningCache = true;
+            cleanButton.setMinWidth(cleanButton.getWidth());
+            var txt = cleanButton.getText();
+            cleanButton.setText("");
+            var spinner = new JFXSpinner();
+            spinner.setRadius(8);
+            cleanButton.setGraphic(spinner);
+            Task.runAsync("Clear Cache Directory", Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
+                    .thenRunAsync(Schedulers.javafx(), () -> {
+                        cleanButton.setGraphic(null);
+                        cleanButton.setText(txt);
+                        cleaningCache = true;
+                    }).setSignificance(Task.TaskSignificance.MINOR)
+                    .start();
         }
     }
 }
