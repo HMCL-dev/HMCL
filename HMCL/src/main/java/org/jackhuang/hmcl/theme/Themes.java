@@ -390,11 +390,11 @@ public final class Themes {
                 return null;
             }
         };
-        InvalidationListener autoBrightnessListner = o -> {
+        InvalidationListener autoBrightnessListener = o -> {
             boolean auto;
             if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
                 String val = settings().themeBrightnessModeProperty().get();
-                auto = val == null || switch (val.toLowerCase(Locale.ROOT)) {
+                auto = val == null || switch (val.trim().toLowerCase(Locale.ROOT)) {
                     case "light", "dark" -> false;
                     default -> true;
                 };
@@ -403,14 +403,14 @@ public final class Themes {
             }
             autoBrightness.set(auto);
         };
-        settings().selectedThemeProperty().addListener(autoBrightnessListner);
-        settings().getThemeAppearanceOverrides().addListener(autoBrightnessListner);
-        settings().themeBrightnessModeProperty().addListener(autoBrightnessListner);
-        settings().backgroundTypeProperty().addListener(autoBrightnessListner);
+        settings().selectedThemeProperty().addListener(autoBrightnessListener);
+        settings().getThemeAppearanceOverrides().addListener(autoBrightnessListener);
+        settings().themeBrightnessModeProperty().addListener(autoBrightnessListener);
+        settings().backgroundTypeProperty().addListener(autoBrightnessListener);
         if (FXUtils.DARK_MODE != null) {
-            FXUtils.DARK_MODE.addListener(autoBrightnessListner);
+            FXUtils.DARK_MODE.addListener(autoBrightnessListener);
         }
-        autoBrightnessListner.invalidated(null);
+        autoBrightnessListener.invalidated(null);
 
         ChangeListener<ResolvedTheme> listener = (observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
@@ -465,7 +465,7 @@ public final class Themes {
         }
 
         String themeBrightnessMode = settings().themeBrightnessModeProperty().get();
-        return switch (Objects.toString(themeBrightnessMode, "").toLowerCase(Locale.ROOT).trim()) {
+        return switch (Objects.toString(themeBrightnessMode, "").trim().toLowerCase(Locale.ROOT)) {
             case "light" -> Brightness.LIGHT;
             case "dark" -> Brightness.DARK;
             default -> getAutomaticBrightness();
