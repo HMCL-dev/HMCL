@@ -31,6 +31,8 @@ import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.task.FetchTask;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -351,7 +353,7 @@ public class DownloadSettingsPage extends StackPane {
     private void clearCacheDirectory() {
         String commonDirectory = settings().getResolvedCommonDirectory();
         if (commonDirectory != null) {
-            FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache"));
+            Task.runAsync("Clear Cache Directory", Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")));
         }
     }
 }
