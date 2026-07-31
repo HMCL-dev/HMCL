@@ -26,12 +26,11 @@ import javafx.animation.Timeline;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -121,7 +120,7 @@ public final class Decorator {
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(this, "showCloseAsHome");
 
     /// The stage currently controlled by this decorator, or `null` while detached.
-    private final ObjectProperty<@Nullable Stage> stage = new SimpleObjectProperty<>(this, "stage");
+    private @Nullable Stage stage;
 
     /// The title-bar state supplied by the current page, or `null` before navigation is initialized.
     private final ObjectProperty<DecoratorPage.@Nullable State> state = new SimpleObjectProperty<>(this, "state");
@@ -348,7 +347,18 @@ public final class Decorator {
         if (newStage.getScene() != scene) {
             newStage.setScene(scene);
         }
-        setAttachedStage(newStage);
+
+        if (stage != newStage) {
+            playRestoreMinimizeAnimation = false;
+            if (stage != null) {
+                stage.iconifiedProperty().removeListener(iconifiedListener);
+            }
+            newStage.iconifiedProperty().addListener(iconifiedListener);
+            stage = newStage;
+        }
+        root.setCursor(Cursor.DEFAULT);
+        dragging.set(false);
+        allowMove.set(false);
         return scene;
     }
 
@@ -361,24 +371,22 @@ public final class Decorator {
         FXUtils.checkFxUserThread();
         stopWindowAnimation();
 
-        @Nullable Stage currentStage = stage.get();
-        if (currentStage != null && currentStage.getScene() == root.getScene()) {
-            currentStage.setScene(null);
+        if (stage != null) {
+            stage.iconifiedProperty().removeListener(iconifiedListener);
+            if (stage.getScene() == root.getScene()) {
+                stage.setScene(null);
+            }
         }
-        setAttachedStage(null);
+        stage = null;
+        root.setCursor(Cursor.DEFAULT);
+        dragging.set(false);
+        allowMove.set(false);
     }
 
     /// Returns the stage currently controlled by this decorator.
     ///
     /// @return the current stage, or `null` while detached
     public @Nullable Stage getStage() {
-        return stage.get();
-    }
-
-    /// Returns the read-only stage property used by window components.
-    ///
-    /// @return the attached-stage property
-    public ReadOnlyObjectProperty<@Nullable Stage> stageProperty() {
         return stage;
     }
 
@@ -640,36 +648,6 @@ public final class Decorator {
                 url -> Controllers.dialog(new AddAuthlibInjectorServerPane(url))));
     }
 
-    /// Moves all native-stage listeners and event filters from the current stage to `newStage`.
-    ///
-    /// The read-only stage property is updated only after stage-dependent components have completed the transition.
-    ///
-    /// @param newStage the stage to publish, or `null` when detaching
-    private void setAttachedStage(@Nullable Stage newStage) {
-        @Nullable Stage oldStage = stage.get();
-        if (oldStage == newStage) {
-            return;
-        }
-
-        moveRestoreListener(oldStage, newStage);
-        mainWindowPane.updateStage(newStage);
-        stage.set(newStage);
-    }
-
-    /// Moves the restore listener from `oldStage` to `newStage`.
-    ///
-    /// @param oldStage the previously attached stage, or `null`
-    /// @param newStage the newly attached stage, or `null`
-    private void moveRestoreListener(@Nullable Stage oldStage, @Nullable Stage newStage) {
-        playRestoreMinimizeAnimation = false;
-        if (oldStage != null) {
-            oldStage.iconifiedProperty().removeListener(iconifiedListener);
-        }
-        if (newStage != null) {
-            newStage.iconifiedProperty().addListener(iconifiedListener);
-        }
-    }
-
     /// Restores the root node's transform after an animated minimization.
     private void playRestoreAnimation() {
         Timeline timeline = new Timeline(
@@ -722,5 +700,15 @@ public final class Decorator {
         root.setScaleX(1);
         root.setScaleY(1);
         root.setScaleZ(1);
+    }
+
+    void requestMaximize() {
+        @Nullable Stage currentStage = getStage();
+        if (currentStage == null)
+            return;
+
+        if (currentStage != null) {
+            currentStage.setMaximized(true);
+        }
     }
 }

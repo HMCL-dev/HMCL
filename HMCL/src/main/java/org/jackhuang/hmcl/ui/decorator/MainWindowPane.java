@@ -88,19 +88,7 @@ final class MainWindowPane extends StackPane {
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
     /// Handles primary-button double clicks on draggable title-bar content.
-    private final EventHandler<MouseEvent> onTitleBarDoubleClick = event -> {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-            return;
-        }
-
-        @Nullable Stage stage = getCurrentStage();
-        if (stage != null
-                && event.getButton() == MouseButton.PRIMARY
-                && event.getClickCount() == 2) {
-            stage.setMaximized(!stage.isMaximized());
-            event.consume();
-        }
-    };
+    private final EventHandler<MouseEvent> onTitleBarDoubleClick;
 
     /// Ends the current move or resize gesture.
     private final EventHandler<MouseEvent> onMouseReleased = this::onMouseReleased;
@@ -113,24 +101,6 @@ final class MainWindowPane extends StackPane {
 
     /// The stable pane that receives native move and resize event filters.
     private final StackPane windowEventRoot;
-
-    /// The stage whose native-state properties currently have listeners installed.
-    private @Nullable Stage observedStage;
-
-    /// Enables or disables custom resizing as the attached stage changes native state.
-    private final InvalidationListener onWindowsStatusChange = observable -> {
-        @Nullable Stage stage = observedStage;
-        if (stage == null) {
-            setWindowEventFiltersEnabled(false);
-            return;
-        }
-
-        setWindowEventFiltersEnabled(
-                !stage.isIconified() && !stage.isFullScreen() && !stage.isMaximized());
-    };
-
-    /// Whether the move and resize event filters are currently installed on the active event root.
-    private boolean windowEventFiltersInstalled;
 
     /// The initial pointer position of the active move or resize gesture.
     private double mouseInitX;
@@ -157,6 +127,19 @@ final class MainWindowPane extends StackPane {
     MainWindowPane(Decorator decorator, StackPane windowEventRoot) {
         this.decorator = decorator;
         this.windowEventRoot = windowEventRoot;
+        this.onTitleBarDoubleClick = event -> {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                return;
+            }
+
+            @Nullable Stage stage = decorator.getStage();
+            if (stage != null
+                    && event.getButton() == MouseButton.PRIMARY
+                    && event.getClickCount() == 2) {
+                stage.setMaximized(!stage.isMaximized());
+                event.consume();
+            }
+        };
 
         Rectangle clip = new Rectangle();
         clip.widthProperty().bind(widthProperty());
@@ -218,6 +201,9 @@ final class MainWindowPane extends StackPane {
         StackPane.setAlignment(rightButtonsContainer, Pos.TOP_RIGHT);
 
         getChildren().setAll(backgroundNode, dialogContainer, windowControlsLayer);
+        windowEventRoot.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
+        windowEventRoot.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
+        windowEventRoot.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
     }
 
     /// Returns the pane used as the JFoenix dialog host.
@@ -429,7 +415,7 @@ final class MainWindowPane extends StackPane {
     ///
     /// @param event the title-bar drag event
     private void onTitleBarDragged(MouseEvent event) {
-        @Nullable Stage stage = getCurrentStage();
+        @Nullable Stage stage = decorator.getStage();
         if (stage == null || decorator.isDragging() || !stage.isMaximized()) {
             return;
         }
@@ -442,82 +428,6 @@ final class MainWindowPane extends StackPane {
         stageInitHeight = stage.getHeight();
         stage.setY(stageInitY = 0);
         stage.setX(stageInitX = mouseInitX - stageInitWidth / 2);
-    }
-
-    /// Returns the stage currently attached to the owning decorator.
-    ///
-    /// @return the current stage, or `null` while detached
-    private @Nullable Stage getCurrentStage() {
-        return decorator.getStage();
-    }
-
-    /// Moves native-state listeners and resize filters to `newStage`.
-    ///
-    /// @param newStage the newly attached stage, or `null`
-    void updateStage(@Nullable Stage newStage) {
-        if (observedStage != null && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
-            observedStage.iconifiedProperty().removeListener(onWindowsStatusChange);
-            observedStage.maximizedProperty().removeListener(onWindowsStatusChange);
-            observedStage.fullScreenProperty().removeListener(onWindowsStatusChange);
-        }
-
-        observedStage = newStage;
-        setWindowEventFiltersEnabled(false);
-
-        if (newStage == null) {
-            return;
-        }
-
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-            setWindowEventFiltersEnabled(true);
-        } else {
-            newStage.iconifiedProperty().addListener(onWindowsStatusChange);
-            newStage.maximizedProperty().addListener(onWindowsStatusChange);
-            newStage.fullScreenProperty().addListener(onWindowsStatusChange);
-            onWindowsStatusChange.invalidated(null);
-        }
-    }
-
-    /// Cancels the active move or resize gesture and restores the root cursor.
-    void cancelWindowGesture() {
-        windowEventRoot.setCursor(Cursor.DEFAULT);
-        decorator.setDragging(false);
-        decorator.setAllowMove(false);
-    }
-
-    /// Installs or removes the custom move and resize filters on the active event root.
-    ///
-    /// @param enabled whether the filters should be installed
-    private void setWindowEventFiltersEnabled(boolean enabled) {
-        if (enabled == windowEventFiltersInstalled) {
-            return;
-        }
-
-        if (enabled) {
-            installWindowEventFilters(windowEventRoot);
-        } else {
-            removeWindowEventFilters(windowEventRoot);
-            cancelWindowGesture();
-        }
-        windowEventFiltersInstalled = enabled;
-    }
-
-    /// Installs the custom move and resize filters on `root`.
-    ///
-    /// @param root the event root that must receive the filters
-    private void installWindowEventFilters(StackPane root) {
-        root.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
-        root.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
-        root.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
-    }
-
-    /// Removes the custom move and resize filters from `root`.
-    ///
-    /// @param root the event root from which the filters must be removed
-    private void removeWindowEventFilters(StackPane root) {
-        root.removeEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
-        root.removeEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
-        root.removeEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
     }
 
     /// Returns whether `x` lies in the event root's right resize inset.
@@ -562,7 +472,7 @@ final class MainWindowPane extends StackPane {
     /// @param newWidth  the requested width, or a negative value to preserve it
     /// @param newHeight the requested height, or a negative value to preserve it
     private void resizeStage(double newWidth, double newHeight) {
-        @Nullable Stage stage = getCurrentStage();
+        @Nullable Stage stage = decorator.getStage();
         if (stage == null) {
             return;
         }
@@ -592,9 +502,13 @@ final class MainWindowPane extends StackPane {
     ///
     /// @param event the pointer movement event
     private void onMouseMoved(MouseEvent event) {
-        @Nullable Stage stage = getCurrentStage();
+        @Nullable Stage stage = decorator.getStage();
         StackPane root = windowEventRoot;
-        if (stage == null || stage.isFullScreen() || !stage.isResizable()) {
+        if (stage == null
+                || stage.isIconified()
+                || stage.isFullScreen()
+                || stage.isMaximized()
+                || !stage.isResizable()) {
             root.setCursor(Cursor.DEFAULT);
             return;
         }
@@ -655,8 +569,13 @@ final class MainWindowPane extends StackPane {
     ///
     /// @param event the primary-button drag event
     private void onMouseDragged(MouseEvent event) {
-        @Nullable Stage stage = getCurrentStage();
-        if (stage == null) {
+        @Nullable Stage stage = decorator.getStage();
+        if (stage == null
+                || stage.isIconified()
+                || stage.isFullScreen()
+                || stage.isMaximized()
+                || !event.isPrimaryButtonDown()
+                || event.isStillSincePress()) {
             return;
         }
 
@@ -668,10 +587,6 @@ final class MainWindowPane extends StackPane {
             stageInitY = stage.getY();
             stageInitWidth = stage.getWidth();
             stageInitHeight = stage.getHeight();
-        }
-
-        if (stage.isFullScreen() || !event.isPrimaryButtonDown() || event.isStillSincePress()) {
-            return;
         }
 
         double dx = event.getScreenX() - mouseInitX;
