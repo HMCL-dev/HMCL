@@ -93,7 +93,6 @@ public final class LauncherHelper {
     private boolean showLogs;
     private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
-    private boolean modifiedGpuReg = false;
     @Nullable
     private String javaPathGpuReg = null;
 
@@ -258,7 +257,6 @@ public final class LauncherHelper {
                                             javaPathGpuReg,
                                             "GpuPreference=2;"
                                     );
-                                    modifiedGpuReg = true;
                                 }
                             }
                         } catch (Exception e) {
@@ -920,24 +918,6 @@ public final class LauncherHelper {
         }
 
         private void finishLaunch() {
-            if (modifiedGpuReg && javaPathGpuReg != null) {
-                try {
-                    Thread.sleep(5000L);
-                } catch (InterruptedException ignored) {
-                    Thread.currentThread().interrupt();
-                }
-
-                try {
-                    WinReg.INSTANCE.deleteValue(
-                            WinReg.HKEY.HKEY_CURRENT_USER,
-                            "Software\\Microsoft\\DirectX\\UserGpuPreferences",
-                            javaPathGpuReg
-                    );
-                } catch (Exception e) {
-                    LOG.warning("Failed to revert high performance GPU preference", e);
-                }
-            }
-
             switch (launcherVisibility) {
                 case HIDE_AND_REOPEN:
                     runLater(() -> {
