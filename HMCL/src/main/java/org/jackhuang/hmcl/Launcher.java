@@ -142,8 +142,8 @@ public final class Launcher extends Application {
 
                 UpdateChecker.init();
 
-                primaryStage.show();
                 WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(primaryStage);
+                primaryStage.show();
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
