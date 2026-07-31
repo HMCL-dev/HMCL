@@ -544,7 +544,7 @@ public final class HTMLRenderer {
             if (StringUtils.isNotBlank(alt)) getChildren().add(txt);
             getChildren().add(imageView);
             FXUtils.onChangeAndOperate(imageView.imageProperty(), img -> {
-                if (img != null) txt.setVisible(false);
+                if (img != null) getChildren().remove(txt);
             });
         }
 
