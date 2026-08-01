@@ -279,9 +279,9 @@ public final class Decorator {
 
     /// Returns the pane on which application dialogs are stacked.
     ///
-    /// @return the stable dialog container inside the main window
+    /// @return the stable main-window pane used as the dialog container
     public StackPane getDialogContainer() {
-        return mainWindowPane.getDialogContainer();
+        return mainWindowPane;
     }
 
     /// Returns the navigation stack rendered by the main window.

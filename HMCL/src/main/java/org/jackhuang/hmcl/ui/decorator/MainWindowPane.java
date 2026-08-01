@@ -75,9 +75,6 @@ final class MainWindowPane extends StackPane {
     /// The frame containing the title bar and current navigation page.
     private final BorderPane frame;
 
-    /// The pane on which modal dialogs are stacked above [#frame].
-    private final StackPane dialogContainer;
-
     /// The title bar containing page navigation state.
     private final BorderPane titleBar;
 
@@ -191,19 +188,10 @@ final class MainWindowPane extends StackPane {
 
         decorator.capableDraggingWindow(titleBar);
 
-        dialogContainer = new StackPane(frame);
-
-        getChildren().setAll(backgroundNode, dialogContainer);
+        getChildren().setAll(backgroundNode, frame);
         windowEventRoot.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
         windowEventRoot.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
         windowEventRoot.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
-    }
-
-    /// Returns the pane used as the JFoenix dialog host.
-    ///
-    /// @return the stable dialog container
-    StackPane getDialogContainer() {
-        return dialogContainer;
     }
 
     /// Creates the launcher-background layer and keeps it synchronized with the active theme.
