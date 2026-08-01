@@ -171,16 +171,12 @@ final class MainWindowPane extends StackPane {
         frame.setCenter(center);
 
         HBox rightButtonsContainer = createWindowButtons();
-        Rectangle rightButtonsPlaceholder = new Rectangle();
-        rightButtonsPlaceholder.widthProperty().bind(rightButtonsContainer.widthProperty());
-
         titleBar = new BorderPane();
         titleBar.setPickOnBounds(false);
         titleBar.getStyleClass().add("jfx-tool-bar");
-        titleBar.setRight(rightButtonsPlaceholder);
+        titleBar.setRight(rightButtonsContainer);
 
         navBarPane = new TransitionPane();
-        navBarPane.setId("decoratorTitleTransitionPane");
         titleBar.setCenter(navBarPane);
         frame.setTop(titleBar);
 
@@ -197,11 +193,7 @@ final class MainWindowPane extends StackPane {
 
         dialogContainer = new StackPane(frame);
 
-        StackPane windowControlsLayer = new StackPane(rightButtonsContainer);
-        windowControlsLayer.setPickOnBounds(false);
-        StackPane.setAlignment(rightButtonsContainer, Pos.TOP_RIGHT);
-
-        getChildren().setAll(backgroundNode, dialogContainer, windowControlsLayer);
+        getChildren().setAll(backgroundNode, dialogContainer);
         windowEventRoot.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
         windowEventRoot.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
         windowEventRoot.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
