@@ -145,7 +145,7 @@ public final class Favorites {
             if (modId == null || source == null) return RemoteAddon.BROKEN;
             var repo = source.getRepoForType(RemoteAddonRepository.Type.MOD); //TODO use common repo
             assert repo != null;
-            return repo.getModById(downloadProvider, modId);
+            return repo.getAddonById(downloadProvider, modId);
         }
 
     }
