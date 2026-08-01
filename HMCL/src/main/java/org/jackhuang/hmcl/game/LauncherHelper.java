@@ -250,13 +250,19 @@ public final class LauncherHelper {
                                         "Software\\Microsoft\\DirectX\\UserGpuPreferences",
                                         javaPathGpuReg
                                 );
-                                if (!(current instanceof String)) {
-                                    reg.setValue(
+                                if (current == null) {
+                                    boolean result = reg.setValue(
                                             WinReg.HKEY.HKEY_CURRENT_USER,
                                             "Software\\Microsoft\\DirectX\\UserGpuPreferences",
                                             javaPathGpuReg,
                                             "GpuPreference=2;"
                                     );
+                                    if (result)
+                                        LOG.info("Successfully applied high performance GPU preference for java: " + javaPathGpuReg);
+                                    else
+                                        LOG.warning("Failed to apply high performance GPU preference for java: " + javaPathGpuReg);
+                                } else {
+                                    LOG.info("High performance GPU preference for java already exists: " + javaPathGpuReg);
                                 }
                             }
                         } catch (Exception e) {
