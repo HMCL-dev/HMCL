@@ -17,11 +17,13 @@
  */
 package org.jackhuang.hmcl.addon;
 
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -31,10 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public record RemoteAddon(String slug, String author, String title, String description, List<String> categories,
-                          String pageUrl, String iconUrl, IMod data, RemoteAddonRepository.Type repoType) {
+public record RemoteAddon(String projectId, String slug, String author, String title, String description, List<String> categories,
+                          String pageUrl, String iconUrl, IMod data, RemoteAddonRepository.Type repoType, Source source) {
 
-    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IMod() {
+    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IMod() {
         @Override
         public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
@@ -44,7 +46,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
         public Stream<Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
-    }, RemoteAddonRepository.Type.MOD);
+    }, RemoteAddonRepository.Type.MOD, null);
 
     public enum VersionType {
         Release,
@@ -138,7 +140,9 @@ public record RemoteAddon(String slug, String author, String title, String descr
         }
     }
 
+    @JsonSerializable
     public enum Source {
+        @SerializedName("curseforge")
         CURSEFORGE(
                 CurseForgeRemoteAddonRepository.MODS,
                 CurseForgeRemoteAddonRepository.RESOURCE_PACKS,
@@ -147,6 +151,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
                 CurseForgeRemoteAddonRepository.MODPACKS,
                 CurseForgeRemoteAddonRepository.CUSTOMIZATIONS
         ),
+        @SerializedName("modrinth")
         MODRINTH(
                 ModrinthRemoteAddonRepository.MODS,
                 ModrinthRemoteAddonRepository.RESOURCE_PACKS,
