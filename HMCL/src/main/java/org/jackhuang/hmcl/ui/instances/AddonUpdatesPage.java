@@ -350,8 +350,8 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 RemoteAddon.Version version = object.data.targetVersion();
                 if (repo == null) return null;
                 return StringUtils.convertToHtml(
-                        repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.modid(), version.versionId()),
-                        "238222".equals(object.data.targetVersion().modid())
+                        repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.projectId(), version.versionId()),
+                        "238222".equals(object.data.targetVersion().projectId())
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {

@@ -287,7 +287,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     public @NotNull String getVersionPageUrl(RemoteAddon.Version version) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
-            Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + version.modid()))
+            Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + version.projectId()))
                     .getJson(Response.typeOf(CurseAddon.class));
             var addon = response.data();
             var classId = addon.classId();

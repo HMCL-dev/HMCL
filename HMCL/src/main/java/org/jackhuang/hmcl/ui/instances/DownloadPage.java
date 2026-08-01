@@ -696,8 +696,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() ->
                     StringUtils.convertToHtml(
-                            repo.getAddonChangelog(provider, version.modid(), version.versionId()),
-                            "238222".equals(version.modid()) // https://github.com/HMCL-dev/HMCL/pull/4828#issuecomment-3791068569 FUCK YOU JEI, FUCK YOU CURSEFORGE
+                            repo.getAddonChangelog(provider, version.projectId(), version.versionId()),
+                            "238222".equals(version.projectId()) // https://github.com/HMCL-dev/HMCL/pull/4828#issuecomment-3791068569 FUCK YOU JEI, FUCK YOU CURSEFORGE
                     )
             ).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
