@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.scene.input.ScrollEvent;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +26,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /// Tests pixel-based smooth scroll target calculations.
 @NotNullByDefault
 public final class ScrollUtilsTest {
+    /// Verifies that pixel-unit input retains approximately the former friction chain's total distance.
+    @Test
+    public void calibratesPixelUnitScrollDistance() {
+        ScrollEvent mouseWheelEvent = pixelScrollEvent(-32.0);
+        ScrollEvent trackPadEvent = pixelScrollEvent(-5.0);
+
+        assertEquals(4.0, ScrollUtils.pixelScrollScale(mouseWheelEvent, 1.0, 1.0), 0.000001);
+        assertEquals(4.0, ScrollUtils.pixelScrollScale(trackPadEvent, 1.0, 1.0), 0.000001);
+        assertEquals(4.0 / 7.0, ScrollUtils.pixelScrollScale(trackPadEvent, 1.0, 7.0), 0.000001);
+    }
+
     /// Verifies that a platform pixel delta is mapped through a custom normalized range.
     @Test
     public void mapsPixelDeltaToNormalizedScrollValue() {
@@ -61,5 +73,35 @@ public final class ScrollUtilsTest {
     @Test
     public void leavesUnscrollableAxisUnchanged() {
         assertEquals(0.4, ScrollUtils.scrollTargetValue(0.4, -80.0, 0.0, 1.0, 0.0), 0.000001);
+    }
+
+    /// Creates a vertical pixel-unit scroll event.
+    ///
+    /// @param deltaY the platform vertical delta
+    /// @return the scroll event
+    private static ScrollEvent pixelScrollEvent(double deltaY) {
+        return new ScrollEvent(
+                ScrollEvent.SCROLL,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                0.0,
+                deltaY,
+                0.0,
+                deltaY,
+                ScrollEvent.HorizontalTextScrollUnits.NONE,
+                0.0,
+                ScrollEvent.VerticalTextScrollUnits.NONE,
+                0.0,
+                0,
+                null
+        );
     }
 }
