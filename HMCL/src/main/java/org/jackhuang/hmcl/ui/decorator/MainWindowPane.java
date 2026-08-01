@@ -63,6 +63,9 @@ final class MainWindowPane extends StackPane {
     /// The decorator whose state and actions are represented by this pane.
     private final Decorator decorator;
 
+    /// The clip that rounds normal window corners and becomes square while the window fills the screen.
+    private final Rectangle clip = new Rectangle();
+
     /// The frame containing the title bar and current navigation page.
     private final BorderPane frame;
 
@@ -82,7 +85,6 @@ final class MainWindowPane extends StackPane {
     MainWindowPane(Decorator decorator) {
         this.decorator = decorator;
 
-        Rectangle clip = new Rectangle();
         clip.widthProperty().bind(widthProperty());
         clip.heightProperty().bind(heightProperty());
         clip.setArcWidth(ARC);
@@ -132,6 +134,15 @@ final class MainWindowPane extends StackPane {
         decorator.capableDraggingWindow(titleBar);
 
         getChildren().setAll(backgroundNode, frame);
+    }
+
+    /// Updates the content-corner shape for an edge-to-edge window state.
+    ///
+    /// @param edgeToEdge whether the attached window is maximized or full-screen
+    void setWindowEdgeToEdge(boolean edgeToEdge) {
+        double arc = edgeToEdge ? 0.0 : ARC;
+        clip.setArcWidth(arc);
+        clip.setArcHeight(arc);
     }
 
     /// Creates the launcher-background layer and keeps it synchronized with the active theme.

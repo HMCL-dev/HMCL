@@ -189,6 +189,14 @@ public final class Decorator {
         }
     };
 
+    /// Updates the custom window decoration when the attached stage changes maximized or full-screen state.
+    private final InvalidationListener stageDecorationListener = observable -> {
+        @Nullable Stage currentStage = stage;
+        if (currentStage != null) {
+            updateWindowDecoration(currentStage.isMaximized() || currentStage.isFullScreen());
+        }
+    };
+
     /// Updates the changed visible-content bound and persists normal, non-iconified stage bounds.
     private final InvalidationListener stageBoundsListener = observable -> {
         @Nullable Stage currentStage = stage;
@@ -247,9 +255,8 @@ public final class Decorator {
         shadowContainer.getChildren().setAll(mainWindowPane);
         root.setPickOnBounds(true);
         root.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
-        root.setPadding(SHADOW_INSETS);
         root.getChildren().setAll(shadowContainer);
-        shadowContainer.setEffect(windowShadow);
+        updateWindowDecoration(false);
         root.addEventFilter(MouseEvent.MOUSE_RELEASED, this::onMouseReleased);
         root.addEventFilter(MouseEvent.MOUSE_DRAGGED, this::onMouseDragged);
         root.addEventFilter(MouseEvent.MOUSE_MOVED, this::onMouseMoved);
@@ -275,7 +282,7 @@ public final class Decorator {
 
     /// Returns the insets reserved outside the main-window content.
     ///
-    /// @return the root's shadow insets, or [Insets#EMPTY] when the shadow is disabled
+    /// @return the root's shadow insets for a normal window, or [Insets#EMPTY] while maximized or full-screen
     public Insets getWindowInsets() {
         return root.getPadding();
     }
@@ -296,10 +303,19 @@ public final class Decorator {
 
     /// Returns the insets used for custom resize hit testing.
     ///
-    /// @return the shadow insets, or an inward resize area when the shadow is disabled
+    /// @return the shadow insets for a normal window, or an inward resize area while maximized or full-screen
     private Insets getResizeInsets() {
         Insets windowInsets = getWindowInsets();
         return Insets.EMPTY.equals(windowInsets) ? RESIZE_INSETS : windowInsets;
+    }
+
+    /// Updates the shadow, outer insets, and content corner shape for an edge-to-edge window state.
+    ///
+    /// @param edgeToEdge whether the attached stage is maximized or full-screen
+    private void updateWindowDecoration(boolean edgeToEdge) {
+        root.setPadding(edgeToEdge ? Insets.EMPTY : SHADOW_INSETS);
+        shadowContainer.setEffect(edgeToEdge ? null : windowShadow);
+        mainWindowPane.setWindowEdgeToEdge(edgeToEdge);
     }
 
     /// Returns the pane on which application dialogs are stacked.
@@ -696,7 +712,7 @@ public final class Decorator {
     /// If the root has no scene, this method reuses `newStage`'s scene and replaces its root, or creates a
     /// transparent scene when the stage has none. If the retained scene belongs to another stage, it is detached
     /// from that stage before being installed on `newStage`. A newly attached stage receives the persisted normal
-    /// content bounds and minimum size adjusted for the current decoration insets. The stage and retained scene use
+    /// content bounds and minimum size adjusted for the normal decoration insets. The stage and retained scene use
     /// transparent styles required by the custom decoration. Any active window animation is cancelled and reset.
     /// This method does not show the stage.
     ///
@@ -747,15 +763,21 @@ public final class Decorator {
             playRestoreMinimizeAnimation = false;
             if (stage != null) {
                 stage.iconifiedProperty().removeListener(iconifiedListener);
+                stage.maximizedProperty().removeListener(stageDecorationListener);
+                stage.fullScreenProperty().removeListener(stageDecorationListener);
                 stage.xProperty().removeListener(stageBoundsListener);
                 stage.yProperty().removeListener(stageBoundsListener);
                 stage.widthProperty().removeListener(stageBoundsListener);
                 stage.heightProperty().removeListener(stageBoundsListener);
             }
 
+            updateWindowDecoration(false);
             initializeStageBounds(newStage);
             stage = newStage;
+            updateWindowDecoration(newStage.isMaximized() || newStage.isFullScreen());
             newStage.iconifiedProperty().addListener(iconifiedListener);
+            newStage.maximizedProperty().addListener(stageDecorationListener);
+            newStage.fullScreenProperty().addListener(stageDecorationListener);
             newStage.xProperty().addListener(stageBoundsListener);
             newStage.yProperty().addListener(stageBoundsListener);
             newStage.widthProperty().addListener(stageBoundsListener);
@@ -778,6 +800,8 @@ public final class Decorator {
 
         if (stage != null) {
             stage.iconifiedProperty().removeListener(iconifiedListener);
+            stage.maximizedProperty().removeListener(stageDecorationListener);
+            stage.fullScreenProperty().removeListener(stageDecorationListener);
             stage.xProperty().removeListener(stageBoundsListener);
             stage.yProperty().removeListener(stageBoundsListener);
             stage.widthProperty().removeListener(stageBoundsListener);
@@ -787,6 +811,7 @@ public final class Decorator {
             }
         }
         stage = null;
+        updateWindowDecoration(false);
         root.setCursor(Cursor.DEFAULT);
         dragging = false;
         allowMove = false;
