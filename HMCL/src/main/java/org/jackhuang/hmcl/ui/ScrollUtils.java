@@ -390,10 +390,7 @@ final class ScrollUtils {
                 return;
             }
 
-            double viewportHeight = virtualFlow.getViewportLength();
-            if (viewportHeight <= 0.0) {
-                viewportHeight = virtualFlow.getHeight();
-            }
+            double viewportHeight = virtualFlow.getHeight();
             double scale = event.getTextDeltaYUnits() == ScrollEvent.VerticalTextScrollUnits.NONE
                     ? pixelScrollScale(event, speed, trackPadAdjustment)
                     : speed;
