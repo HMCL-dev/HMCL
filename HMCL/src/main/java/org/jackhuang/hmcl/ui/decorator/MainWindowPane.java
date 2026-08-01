@@ -294,7 +294,6 @@ final class MainWindowPane extends StackPane {
         }
 
         Node node = createNavBar(
-                state.leftPaneWidth(),
                 state.backable(),
                 decorator.canCloseProperty().get(),
                 decorator.showCloseAsHomeProperty().get(),
@@ -317,7 +316,6 @@ final class MainWindowPane extends StackPane {
 
     /// Creates the page-specific navigation controls and title.
     ///
-    /// @param leftPaneWidth  the width reserved for the page's left pane
     /// @param canBack       whether to show the back action
     /// @param canClose      whether to show the close or home action
     /// @param showHome      whether the close action should use the home icon
@@ -326,7 +324,6 @@ final class MainWindowPane extends StackPane {
     /// @param titleNode     the custom title node, or `null`
     /// @return a newly constructed navigation bar
     private Node createNavBar(
-            double leftPaneWidth,
             boolean canBack,
             boolean canClose,
             boolean showHome,
@@ -369,17 +366,12 @@ final class MainWindowPane extends StackPane {
             Label titleLabel = new Label(title);
             titleLabel.textFillProperty().bind(Themes.titleFillProperty());
             titleLabel.getStyleClass().add("jfx-decorator-title");
+            titleLabel.setMinWidth(0);
             if (titleNode == null) {
-                titleLabel.maxWidthProperty().bind(Bindings.createDoubleBinding(
-                        () -> getWidth() - 150 - navLeft.getWidth(),
-                        widthProperty(),
-                        navLeft.widthProperty()));
+                center.setCenter(titleLabel);
             } else {
-                titleLabel.prefWidthProperty().bind(Bindings.createDoubleBinding(
-                        () -> leftPaneWidth - 8 - navLeft.getWidth(),
-                        navLeft.widthProperty()));
+                center.setLeft(titleLabel);
             }
-            center.setLeft(titleLabel);
             BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
         }
 
