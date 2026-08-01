@@ -49,6 +49,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// @see <a href="https://docs.curseforge.com/rest-api">CurseForge API Doc</a>
 public final class CurseForgeRemoteAddonRepository implements RemoteAddonRepository {
 
     private static final String PREFIX = "https://api.curseforge.com";
@@ -82,8 +83,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         return type;
     }
 
-    private int toModsSearchSortField(SortType sort) {
-        // https://docs.curseforge.com/#tocS_ModsSearchSortField
+    private static int toModsSearchSortField(SortType sort) {
+        // https://docs.curseforge.com/rest-api/#tocS_ModsSearchSortField
         return switch (sort) {
             case DATE_CREATED -> 1;
             case POPULARITY -> 2;
@@ -95,15 +96,15 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         };
     }
 
-    private String toSortOrder(SortOrder sortOrder) {
-        // https://docs.curseforge.com/#tocS_SortOrder
+    private static String toSortOrder(SortOrder sortOrder) {
+        // https://docs.curseforge.com/rest-api/#tocS_SortOrder
         return switch (sortOrder) {
             case ASC -> "asc";
             case DESC -> "desc";
         };
     }
 
-    private int calculateTotalPages(Response<List<CurseAddon>> response, int pageSize) {
+    private static int calculateTotalPages(Response<List<CurseAddon>> response, int pageSize) {
         return (int) Math.ceil((double) Math.min(response.pagination.totalCount, 10000) / pageSize);
     }
 
@@ -138,7 +139,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     response = withApiKey(HttpRequest.GET(candidate.toString()))
                             .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
                     if (searchFilter.isEmpty()) {
-                        return new SearchResult(response.data().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));
+                        return new SearchResult(response.data().stream().map(addon -> addon.toAddon(type)), calculateTotalPages(response, pageSize));
                     }
                     break;
                 } catch (IOException e) {
@@ -167,8 +168,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
             StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
-            return new SearchResult(response.data().stream().map(addon -> addon.toMod(type)).map(remoteMod -> {
-                String lowerCaseResult = remoteMod.title().toLowerCase(Locale.ROOT);
+            return new SearchResult(response.data().stream().map(addon -> addon.toAddon(type)).map(remoteAddon -> {
+                String lowerCaseResult = remoteAddon.title().toLowerCase(Locale.ROOT);
                 int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
                 for (String s : StringUtils.tokenize(lowerCaseResult)) {
@@ -177,8 +178,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     }
                 }
 
-                return pair(remoteMod, diff);
-            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.data().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));
+                return pair(remoteAddon, diff);
+            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.data().stream().map(addon -> addon.toAddon(type)), calculateTotalPages(response, pageSize));
         } finally {
             SEMAPHORE.release();
         }
@@ -222,22 +223,22 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     }
 
     @Override
-    public RemoteAddon getModById(DownloadProvider downloadProvider, String id) throws IOException {
+    public RemoteAddon getAddonById(DownloadProvider downloadProvider, String id) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
                     .getJson(Response.typeOf(CurseAddon.class));
-            return response.data.toMod(type);
+            return response.data.toAddon(type);
         } finally {
             SEMAPHORE.release();
         }
     }
 
     @Override
-    public RemoteAddon.File getModFile(String modId, String fileId) throws IOException {
+    public RemoteAddon.File getAddonFile(String projectId, String fileId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
-            Response<CurseAddon.LatestFile> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId)))
+            Response<CurseAddon.LatestFile> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, projectId, fileId)))
                     .getJson(Response.typeOf(CurseAddon.LatestFile.class));
             return response.data().toVersion().file();
         } finally {
@@ -270,7 +271,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         }
     }
 
-    private List<Category> reorganizeCategories(List<Category> categories, int rootId) {
+    private static List<Category> reorganizeCategories(List<Category> categories, int rootId) {
         List<Category> result = new ArrayList<>();
 
         Map<Integer, Category> categoryMap = new HashMap<>();
@@ -329,14 +330,14 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     }
 
     /**
-     * @see <a href="https://docs.curseforge.com/#tocS_FingerprintsMatchesResult">Schema</a>
+     * @see <a href="https://docs.curseforge.com/rest-api/#tocS_FingerprintsMatchesResult">Schema</a>
      */
     private record FingerprintMatchesResult(boolean isCacheBuilt, List<FingerprintMatch> exactMatches,
                                             List<Long> exactFingerprints) {
     }
 
     /**
-     * @see <a href="https://docs.curseforge.com/#tocS_FingerprintMatch">Schema</a>
+     * @see <a href="https://docs.curseforge.com/rest-api/#tocS_FingerprintMatch">Schema</a>
      */
     private record FingerprintMatch(int id, CurseAddon.LatestFile file, List<CurseAddon.LatestFile> latestFiles) {
     }
@@ -350,7 +351,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                              List<LatestFile> latestFiles,
                              List<LatestFileIndex> latestFileIndices, Instant dateCreated, Instant dateModified,
                              Instant dateReleased, boolean allowModDistribution, int gamePopularityRank,
-                             boolean isAvailable, int thumbsUpCount) implements RemoteAddon.IMod {
+                             boolean isAvailable, int thumbsUpCount) implements RemoteAddon.IAddon {
         public static final Map<Integer, RemoteAddon.DependencyType> RELATION_TYPE = mapOf(
                 pair(1, RemoteAddon.DependencyType.EMBEDDED),
                 pair(2, RemoteAddon.DependencyType.OPTIONAL),
@@ -361,7 +362,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         );
 
         @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             Set<Integer> dependencies = latestFiles.stream()
                     .flatMap(latestFile -> latestFile.dependencies().stream())
                     .filter(dep -> dep.relationType() == 3)
@@ -369,17 +370,17 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     .collect(Collectors.toSet());
             List<RemoteAddon> mods = new ArrayList<>();
             for (int dependencyId : dependencies) {
-                mods.add(modRepository.getModById(downloadProvider, Integer.toString(dependencyId)));
+                mods.add(repo.getAddonById(downloadProvider, Integer.toString(dependencyId)));
             }
             return mods;
         }
 
         @Override
-        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
-            return modRepository.getRemoteVersionsById(downloadProvider, Integer.toString(id));
+        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
+            return repo.getRemoteVersionsById(downloadProvider, Integer.toString(id));
         }
 
-        public RemoteAddon toMod(Type type) {
+        public RemoteAddon toAddon(Type type) {
             String iconUrl = "";
             if (logo != null) {
                 if (StringUtils.isNotBlank(logo.thumbnailUrl()))
@@ -426,14 +427,14 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         }
 
         /**
-         * @see <a href="https://docs.curseforge.com/#schemafilehash">Schema</a>
+         * @see <a href="https://docs.curseforge.com/rest-api/#tocS_FileHash">Schema</a>
          */
         @Immutable
         public record LatestFileHash(String value, int algo) {
         }
 
         /**
-         * @see <a href="https://docs.curseforge.com/#tocS_File">Schema</a>
+         * @see <a href="https://docs.curseforge.com/rest-api/#tocS_File">Schema</a>
          */
         @Immutable
         public record LatestFile(int id, int gameId, int modId, boolean isAvailable, String displayName,
@@ -454,7 +455,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             }
 
             @Override
-            public RemoteAddon.Source getType() {
+            public RemoteAddon.Source getSource() {
                 return RemoteAddon.Source.CURSEFORGE;
             }
 
@@ -494,7 +495,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         }
 
         /**
-         * @see <a href="https://docs.curseforge.com/#tocS_FileIndex">Schema</a>
+         * @see <a href="https://docs.curseforge.com/rest-api/#tocS_FileIndex">Schema</a>
          */
         @Immutable
         public record LatestFileIndex(String gameVersion, int fileId, String filename, int releaseType,
