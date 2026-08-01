@@ -320,8 +320,8 @@ final class MainWindowPane extends StackPane {
     /// @param canClose      whether to show the close or home action
     /// @param showHome      whether the close action should use the home icon
     /// @param canRefresh    whether to show the refresh action
-    /// @param title         the text title, or `null`
-    /// @param titleNode     the custom title node, or `null`
+    /// @param title         the text title used when `titleNode` is `null`, or `null`
+    /// @param titleNode     the custom title node that replaces `title`, or `null`
     /// @return a newly constructed navigation bar
     private Node createNavBar(
             boolean canBack,
@@ -361,29 +361,22 @@ final class MainWindowPane extends StackPane {
             navBar.setLeft(navLeft);
         }
 
-        BorderPane center = new BorderPane();
-        if (title != null) {
+        StackPane titleArea = new StackPane();
+        titleArea.setAlignment(Pos.CENTER_LEFT);
+        if (titleNode != null) {
+            titleArea.getChildren().setAll(titleNode);
+            StackPane.setMargin(titleNode, new Insets(0, 0, 0, 8));
+        } else if (title != null) {
             Label titleLabel = new Label(title);
             titleLabel.textFillProperty().bind(Themes.titleFillProperty());
             titleLabel.getStyleClass().add("jfx-decorator-title");
             titleLabel.setMinWidth(0);
-            if (titleNode == null) {
-                center.setCenter(titleLabel);
-            } else {
-                center.setLeft(titleLabel);
-            }
-            BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
+            titleArea.getChildren().setAll(titleLabel);
         }
 
-        if (titleNode != null) {
-            center.setCenter(titleNode);
-            BorderPane.setAlignment(titleNode, Pos.CENTER_LEFT);
-            BorderPane.setMargin(titleNode, new Insets(0, 0, 0, 8));
-        }
-
-        center.setOnMouseClicked(onTitleBarDoubleClick);
-        center.setOnMouseDragged(this::onTitleBarDragged);
-        navBar.setCenter(center);
+        titleArea.setOnMouseClicked(onTitleBarDoubleClick);
+        titleArea.setOnMouseDragged(this::onTitleBarDragged);
+        navBar.setCenter(titleArea);
 
         if (canRefresh) {
             HBox navRight = new HBox();
