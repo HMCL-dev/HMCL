@@ -85,11 +85,11 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 /// hiding or closing that stage does not discard either the scene or the decorator state.
 @NotNullByDefault
 public final class Decorator {
-    /// The minimum width, in pixels, including the 800-pixel background and two one-pixel borders.
-    private static final double MIN_CONTENT_WIDTH = 800.0 + 2.0;
+    /// The minimum width, in pixels, of the visible window content.
+    private static final double MIN_CONTENT_WIDTH = 800.0;
 
-    /// The minimum height, in pixels, including the 450-pixel background, borders, and 40-pixel title bar.
-    private static final double MIN_CONTENT_HEIGHT = 450.0 + 2.0 + 40.0;
+    /// The minimum height, in pixels, including the 450-pixel background and 40-pixel title bar.
+    private static final double MIN_CONTENT_HEIGHT = 450.0 + 40.0;
 
     /// The minimum visible overlap, in pixels, used to accept a persisted window position.
     private static final double MIN_VISIBLE_WINDOW_AREA = 20.0;
