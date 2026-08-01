@@ -259,7 +259,11 @@ public final class Decorator {
         navigator.init(mainPage);
 
         setupInputRouting();
-        setupAuthlibInjectorDnD();
+
+        // Setup authlib injector DnD
+        root.addEventFilter(DragEvent.DRAG_OVER, AuthlibInjectorDnD.dragOverHandler());
+        root.addEventFilter(DragEvent.DRAG_DROPPED, AuthlibInjectorDnD.dragDroppedHandler(
+                url -> Controllers.dialog(new AddAuthlibInjectorServerPane(url))));
     }
 
     /// Returns the node that must be installed as the scene root.
@@ -837,29 +841,6 @@ public final class Decorator {
         this.navigationDirection = navigationDirection;
     }
 
-    /// Reveals the attached window using the configured opening animation.
-    ///
-    /// Calling this method replaces any active minimize, restore, close, or earlier opening animation.
-    public void playOpenAnimation() {
-        if (!AnimationUtils.playWindowAnimation()) {
-            stopWindowAnimation();
-            return;
-        }
-
-        Timeline timeline = new Timeline(
-                new KeyFrame(Duration.ZERO,
-                        new KeyValue(root.opacityProperty(), 0, Motion.EASE),
-                        new KeyValue(root.scaleXProperty(), 0.8, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 0.8, Motion.EASE)),
-                new KeyFrame(Duration.millis(600),
-                        new KeyValue(root.opacityProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
-        playWindowAnimation(timeline, this::resetRootTransform);
-    }
-
     /// Minimizes the attached stage, using the configured window animation when supported.
     void minimizeWindow() {
         @Nullable Stage currentStage = getStage();
@@ -1015,13 +996,6 @@ public final class Decorator {
                 event.consume();
             }
         });
-    }
-
-    /// Installs drag-and-drop handling for authlib-injector server URLs.
-    private void setupAuthlibInjectorDnD() {
-        root.addEventFilter(DragEvent.DRAG_OVER, AuthlibInjectorDnD.dragOverHandler());
-        root.addEventFilter(DragEvent.DRAG_DROPPED, AuthlibInjectorDnD.dragDroppedHandler(
-                url -> Controllers.dialog(new AddAuthlibInjectorServerPane(url))));
     }
 
     /// Restores the root node's transform after an animated minimization.
