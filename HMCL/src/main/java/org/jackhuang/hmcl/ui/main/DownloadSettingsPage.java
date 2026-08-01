@@ -366,10 +366,10 @@ public class DownloadSettingsPage extends StackPane {
             spinner.setRadius(8);
             cleanButton.setGraphic(spinner);
             Task.runAsync("Clear Cache Directory", Schedulers.io(), () -> FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache")))
-                    .thenRunAsync(Schedulers.javafx(), () -> {
+                    .whenComplete(Schedulers.javafx(), ignored -> {
                         cleanButton.setGraphic(null);
                         cleanButton.setText(txt);
-                        cleaningCache = true;
+                        cleaningCache = false;
                     }).setSignificance(Task.TaskSignificance.MINOR)
                     .start();
         }
