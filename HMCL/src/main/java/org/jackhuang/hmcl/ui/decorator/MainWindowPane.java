@@ -293,7 +293,7 @@ final class MainWindowPane extends StackPane {
             return;
         }
 
-        Node node = createNavBar(
+        Node navBar = createNavBar(
                 state.backable(),
                 decorator.canCloseProperty().get(),
                 decorator.showCloseAsHomeProperty().get(),
@@ -308,9 +308,9 @@ final class MainWindowPane extends StackPane {
                 default -> ContainerAnimations.FADE;
             };
             decorator.setNavigationDirection(Navigation.NavigationDirection.START);
-            navBarPane.setContent(node, animation, Motion.SHORT4);
+            navBarPane.setContent(navBar, animation, Motion.SHORT4);
         } else {
-            navBarPane.getChildren().setAll(node);
+            navBarPane.getChildren().setAll(navBar);
         }
     }
 
