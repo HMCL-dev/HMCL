@@ -123,8 +123,8 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     }
 
     @Override
-    public RemoteAddon getModById(DownloadProvider downloadProvider, String id) throws IOException {
-        return getBackedRemoteModRepository().getModById(downloadProvider, id);
+    public RemoteAddon getAddonById(DownloadProvider downloadProvider, String id) throws IOException {
+        return getBackedRemoteModRepository().getAddonById(downloadProvider, id);
     }
 
     @Override
@@ -133,8 +133,8 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     }
 
     @Override
-    public RemoteAddon.File getModFile(String modId, String fileId) throws IOException {
-        return getBackedRemoteModRepository().getModFile(modId, fileId);
+    public RemoteAddon.File getAddonFile(String projectId, String fileId) throws IOException {
+        return getBackedRemoteModRepository().getAddonFile(projectId, fileId);
     }
 
     @Override

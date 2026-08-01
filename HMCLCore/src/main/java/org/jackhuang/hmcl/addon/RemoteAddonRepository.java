@@ -90,13 +90,13 @@ public interface RemoteAddonRepository {
 
     Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException;
 
-    RemoteAddon getModById(DownloadProvider downloadProvider, String id) throws IOException;
+    RemoteAddon getAddonById(DownloadProvider downloadProvider, String id) throws IOException;
 
     /// @return the dependency resolved, or {@link RemoteAddon#BROKEN} when the dependency is not found
     /// @throws IOException if an I/O error occurs, except for when the desired dependency is not found
     RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException;
 
-    RemoteAddon.File getModFile(String modId, String fileId) throws IOException;
+    RemoteAddon.File getAddonFile(String projectId, String fileId) throws IOException;
 
     Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException;
 

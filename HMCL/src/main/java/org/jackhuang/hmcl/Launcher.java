@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.WString;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -40,6 +41,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WindowsNativeUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -48,6 +50,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.windows.Gdi32;
+import org.jackhuang.hmcl.util.platform.windows.Shell32;
 import org.jackhuang.hmcl.util.platform.windows.User32;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,6 +142,7 @@ public final class Launcher extends Application {
 
                 UpdateChecker.init();
 
+                WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(primaryStage);
                 primaryStage.show();
             });
         } catch (Throwable e) {
@@ -339,6 +343,7 @@ public final class Launcher extends Application {
             }
 
             setupJavaFXVMOptions();
+            setupWindowsAppUserModelID();
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
@@ -370,6 +375,25 @@ public final class Launcher extends Application {
             Controllers.shutdown();
             Lang.executeDelayed(System::gc, TimeUnit.SECONDS, 5, true);
         });
+    }
+
+    /// Sets the process-level AppUserModelID on Windows so the launcher groups correctly on the taskbar.
+    private static void setupWindowsAppUserModelID() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+            return;
+        if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
+            return;
+
+        try {
+            int hr = Shell32.INSTANCE.SetCurrentProcessExplicitAppUserModelID(new WString(Metadata.WINDOWS_APP_USER_MODEL_ID));
+            if (hr < 0) {
+                LOG.warning("Failed to set AppUserModelID, HRESULT=0x" + Integer.toHexString(hr));
+            } else {
+                LOG.info("Set AppUserModelID: " + Metadata.WINDOWS_APP_USER_MODEL_ID);
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to set AppUserModelID", e);
+        }
     }
 
     private static void setupJavaFXVMOptions() {
