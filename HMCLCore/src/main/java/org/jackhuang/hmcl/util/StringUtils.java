@@ -116,7 +116,7 @@ public final class StringUtils {
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
-    public static String capitalizeWords(String str) {
+    public static @Nullable String capitalizeWords(@Nullable String str) {
         if (str == null || str.isEmpty())
             return str;
         String[] words = str.replace('-', ' ').replace('_', ' ').split(" ");

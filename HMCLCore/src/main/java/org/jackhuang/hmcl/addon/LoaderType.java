@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.addon;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Either;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Locale;
 import java.util.Set;
@@ -27,6 +28,7 @@ import java.util.Set;
 /// For mods and shaders
 public interface LoaderType {
 
+    @Unmodifiable
     Set<String> names();
 
     static boolean mightBeLoader(String str) {

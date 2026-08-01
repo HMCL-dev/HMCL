@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon.mod;
 
 import org.jackhuang.hmcl.addon.LoaderType;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -38,6 +39,7 @@ public enum ModLoaderType implements LoaderType {
     }
 
     @Override
+    @Unmodifiable
     public Set<String> names() {
         return names;
     }
