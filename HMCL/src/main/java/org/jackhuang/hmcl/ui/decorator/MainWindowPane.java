@@ -38,6 +38,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -313,7 +314,8 @@ final class MainWindowPane extends StackPane {
     /// @param state the current page state
     /// @return a newly constructed navigation bar
     private Node createNavBar(DecoratorPage.State state) {
-        BorderPane navBar = new BorderPane();
+        HBox navBar = new HBox();
+        navBar.setAlignment(Pos.CENTER_LEFT);
 
         // Left navigation buttons
         boolean canClose = decorator.canCloseProperty().get();
@@ -344,12 +346,14 @@ final class MainWindowPane extends StackPane {
                 navLeft.getChildren().add(closeButton);
             }
 
-            navBar.setLeft(navLeft);
+            navBar.getChildren().add(navLeft);
         }
 
         // Center title area
         StackPane titleArea = new StackPane();
         titleArea.setAlignment(Pos.CENTER_LEFT);
+        titleArea.setMinWidth(0);
+        HBox.setHgrow(titleArea, Priority.ALWAYS);
         if (state.titleNode() != null) {
             titleArea.getChildren().setAll(state.titleNode());
             StackPane.setMargin(state.titleNode(), new Insets(0, 0, 0, 8));
@@ -363,13 +367,10 @@ final class MainWindowPane extends StackPane {
 
         titleArea.setOnMouseClicked(onTitleBarDoubleClick);
         titleArea.setOnMouseDragged(this::onTitleBarDragged);
-        navBar.setCenter(titleArea);
+        navBar.getChildren().add(titleArea);
 
         // Right refresh button
         if (state.refreshable()) {
-            HBox navRight = new HBox();
-            navRight.setAlignment(Pos.CENTER_RIGHT);
-
             JFXButton refreshButton = new JFXButton();
             refreshButton.setFocusTraversable(false);
             refreshButton.setGraphic(SVG.REFRESH.createIcon(Themes.titleFillProperty()));
@@ -377,8 +378,7 @@ final class MainWindowPane extends StackPane {
             refreshButton.setOnAction(event -> decorator.refresh());
             decorator.forbidDraggingWindow(refreshButton);
 
-            navRight.getChildren().setAll(refreshButton);
-            navBar.setRight(navRight);
+            navBar.getChildren().add(refreshButton);
         }
 
         return navBar;
