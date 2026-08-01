@@ -313,41 +313,41 @@ final class MainWindowPane extends StackPane {
     /// @param state the current page state
     /// @return a newly constructed navigation bar
     private Node createNavBar(DecoratorPage.State state) {
-        boolean canClose = decorator.canCloseProperty().get();
-
         BorderPane navBar = new BorderPane();
-        navBar.getStyleClass().add("navigation-bar");
 
-        HBox navLeft = new HBox();
-        navLeft.setAlignment(Pos.CENTER_LEFT);
-        navLeft.setPadding(new Insets(0, 5, 0, 5));
+        // Left navigation buttons
+        boolean canClose = decorator.canCloseProperty().get();
+        if (canClose || state.backable()) {
+            HBox navLeft = new HBox();
+            navLeft.setAlignment(Pos.CENTER_LEFT);
+            navLeft.setPadding(new Insets(0, 5, 0, 5));
 
-        if (state.backable()) {
-            JFXButton backButton = new JFXButton();
-            backButton.setFocusTraversable(false);
-            backButton.setGraphic(SVG.ARROW_BACK.createIcon(Themes.titleFillProperty()));
-            backButton.getStyleClass().add("jfx-decorator-button");
-            backButton.setOnAction(event -> decorator.back());
-            decorator.forbidDraggingWindow(backButton);
-            navLeft.getChildren().add(backButton);
-        }
+            if (state.backable()) {
+                JFXButton backButton = new JFXButton();
+                backButton.setFocusTraversable(false);
+                backButton.setGraphic(SVG.ARROW_BACK.createIcon(Themes.titleFillProperty()));
+                backButton.getStyleClass().add("jfx-decorator-button");
+                backButton.setOnAction(event -> decorator.back());
+                decorator.forbidDraggingWindow(backButton);
+                navLeft.getChildren().add(backButton);
+            }
 
-        if (canClose) {
-            boolean showCloseAsHome = decorator.showCloseAsHomeProperty().get();
+            if (canClose) {
+                boolean showCloseAsHome = decorator.showCloseAsHomeProperty().get();
 
-            JFXButton closeButton = new JFXButton();
-            closeButton.setFocusTraversable(false);
-            closeButton.setGraphic((showCloseAsHome ? SVG.HOME : SVG.CLOSE).createIcon(Themes.titleFillProperty()));
-            closeButton.getStyleClass().add("jfx-decorator-button");
-            closeButton.setOnAction(event -> decorator.closeCurrentPage());
-            decorator.forbidDraggingWindow(closeButton);
-            navLeft.getChildren().add(closeButton);
-        }
+                JFXButton closeButton = new JFXButton();
+                closeButton.setFocusTraversable(false);
+                closeButton.setGraphic((showCloseAsHome ? SVG.HOME : SVG.CLOSE).createIcon(Themes.titleFillProperty()));
+                closeButton.getStyleClass().add("jfx-decorator-button");
+                closeButton.setOnAction(event -> decorator.closeCurrentPage());
+                decorator.forbidDraggingWindow(closeButton);
+                navLeft.getChildren().add(closeButton);
+            }
 
-        if (state.backable() || canClose) {
             navBar.setLeft(navLeft);
         }
 
+        // Center title area
         StackPane titleArea = new StackPane();
         titleArea.setAlignment(Pos.CENTER_LEFT);
         if (state.titleNode() != null) {
@@ -365,6 +365,7 @@ final class MainWindowPane extends StackPane {
         titleArea.setOnMouseDragged(this::onTitleBarDragged);
         navBar.setCenter(titleArea);
 
+        // Right refresh button
         if (state.refreshable()) {
             HBox navRight = new HBox();
             navRight.setAlignment(Pos.CENTER_RIGHT);
