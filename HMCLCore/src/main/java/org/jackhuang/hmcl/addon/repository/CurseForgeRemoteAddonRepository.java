@@ -236,7 +236,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     @Override
     public RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
         try {
-            return getModById(downloadProvider, id);
+            return getAddonById(downloadProvider, id);
         } catch (IOException e) {
             if (e instanceof NoCandidatesException) throw e;
             if (e instanceof FileNotFoundException
