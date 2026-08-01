@@ -31,8 +31,12 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.auth.offline.Skin;
-import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.auth.offline.OfflineSkinConfig;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.game.skin.SkinModel;
+import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -59,9 +63,7 @@ import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author yushijinhun
- */
+
 public final class TexturesLoader {
 
     private TexturesLoader() {
@@ -90,7 +92,7 @@ public final class TexturesLoader {
         return TEXTURES_DIR.resolve(prefix).resolve(hash);
     }
 
-    public static LoadedTexture loadTexture(Texture texture) throws Throwable {
+    public static LoadedTexture loadTexture(Texture texture) throws Exception {
         if (StringUtils.isBlank(texture.url())) {
             throw new IOException("Texture url is empty");
         }
@@ -136,23 +138,23 @@ public final class TexturesLoader {
 
     public static LoadedTexture getDefaultSkin(UUID uuid) {
         int idx = Math.floorMod(uuid.hashCode(), DEFAULT_SKINS.length * 2);
-        TextureModel model;
+        SkinModel model;
         Image skin;
         if (idx < DEFAULT_SKINS.length) {
-            model = TextureModel.SLIM;
+            model = SkinModel.SLIM;
             skin = FXUtils.newBuiltinImage("/assets/img/skin/slim/" + DEFAULT_SKINS[idx] + ".png");
         } else {
-            model = TextureModel.WIDE;
+            model = SkinModel.WIDE;
             skin = FXUtils.newBuiltinImage("/assets/img/skin/wide/" + DEFAULT_SKINS[idx - DEFAULT_SKINS.length] + ".png");
         }
 
         return new LoadedTexture(skin, singletonMap("model", model.modelName));
     }
 
-    public static TextureModel getDefaultModel(UUID uuid) {
-        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).metadata().get("model"))
-                ? TextureModel.WIDE
-                : TextureModel.SLIM;
+    public static SkinModel getDefaultModel(UUID uuid) {
+        return SkinModel.WIDE.modelName.equals(getDefaultSkin(uuid).metadata().get("model"))
+                ? SkinModel.WIDE
+                : SkinModel.SLIM;
     }
 
     public static ObjectBinding<LoadedTexture> skinBinding(YggdrasilService service, UUID uuid) {
@@ -188,17 +190,15 @@ public final class TexturesLoader {
 
     public static ObservableValue<LoadedTexture> skinBinding(Account account) {
         LoadedTexture uuidFallback = getDefaultSkin(account.getProfileID());
-        if (account instanceof OfflineAccount) {
-            OfflineAccount offlineAccount = (OfflineAccount) account;
+        if (account instanceof OfflineAccount offlineAccount) {
 
             SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
             InvalidationListener listener = o -> {
-                Skin skin = offlineAccount.getSkin();
-                String profileName = offlineAccount.getProfileName();
+                OfflineSkinConfig skin = offlineAccount.getSkin();
 
                 binding.set(uuidFallback);
                 if (skin != null) {
-                    skin.load(profileName).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    skin.load().setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load texture", exception);
                         } else if (result != null && result.skin() != null && result.skin().image() != null) {
@@ -267,15 +267,12 @@ public final class TexturesLoader {
                 0, 0, size, size);
     }
 
-    private static final class SkinBindingChangeListener implements ChangeListener<LoadedTexture> {
+    private record SkinBindingChangeListener(WeakReference<Canvas> canvasRef,
+                                             ObservableValue<LoadedTexture> binding) implements ChangeListener<LoadedTexture> {
         static final WeakHashMap<Canvas, SkinBindingChangeListener> hole = new WeakHashMap<>();
 
-        final WeakReference<Canvas> canvasRef;
-        final ObservableValue<LoadedTexture> binding;
-
-        SkinBindingChangeListener(Canvas canvas, ObservableValue<LoadedTexture> binding) {
-            this.canvasRef = new WeakReference<>(canvas);
-            this.binding = binding;
+        private SkinBindingChangeListener(Canvas canvasRef, ObservableValue<LoadedTexture> binding) {
+            this(new WeakReference<>(canvasRef), binding);
         }
 
         @Override

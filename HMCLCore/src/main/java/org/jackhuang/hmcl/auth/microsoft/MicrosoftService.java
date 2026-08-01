@@ -30,18 +30,19 @@ import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
-import org.jackhuang.hmcl.util.io.*;
+import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
+import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -274,7 +275,7 @@ public class MicrosoftService {
         return Optional.ofNullable(GSON.fromJson(request("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDs.toCompactString(uuid), null), CompleteGameProfile.class));
     }
 
-    public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+    public void uploadSkin(String accessToken, boolean isSlim, InputStream fis) throws AuthenticationException, UnsupportedOperationException {
         try {
             HttpURLConnection con = NetworkUtils.createHttpConnection("https://api.minecraftservices.com/minecraft/profile/skins");
             con.setRequestMethod("POST");
@@ -282,9 +283,7 @@ public class MicrosoftService {
             con.setDoOutput(true);
             try (HttpMultipartRequest request = new HttpMultipartRequest(con)) {
                 request.param("variant", isSlim ? "slim" : "classic");
-                try (InputStream fis = Files.newInputStream(file)) {
-                    request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
-                }
+                request.file("file", "skin.png", "image/png", fis);
             }
 
             String response = NetworkUtils.readFullyAsString(con);
