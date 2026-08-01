@@ -649,7 +649,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
     /// Whether to launch games with high-performance GPU.
     @SerializedName(PROPERTY_HIGH_PERFORMANCE)
     private final InheritableProperty<Boolean> highPerformance =
-            newInheritableProperty(PROPERTY_HIGH_PERFORMANCE, true);
+            newInheritableProperty(PROPERTY_HIGH_PERFORMANCE, false);
 
     /// Returns the high performance GPU preference property.
     public InheritableProperty<Boolean> highPerformanceProperty() {
