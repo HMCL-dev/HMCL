@@ -93,8 +93,6 @@ public final class LauncherHelper {
     private boolean showLogs;
     private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
-    @Nullable
-    private String javaPathGpuReg = null;
 
     public LauncherHelper(HMCLGameRepository repository, Account account, String selectedVersion) {
         this.repository = Objects.requireNonNull(repository);
@@ -241,7 +239,7 @@ public final class LauncherHelper {
                     }
 
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && setting.getInheritable(GameSettings::highPerformanceProperty)) {
-                        javaPathGpuReg = FileUtils.getAbsolutePath(javaVersionRef.get().getBinary());
+                        @Nullable String javaPathGpuReg = FileUtils.getAbsolutePath(javaVersionRef.get().getBinary());
                         try {
                             WinReg reg = WinReg.INSTANCE;
                             if (reg != null) {
@@ -262,7 +260,7 @@ public final class LauncherHelper {
                                     else
                                         LOG.warning("Failed to apply high performance GPU preference for java: " + javaPathGpuReg);
                                 } else {
-                                    LOG.info("High performance GPU preference for java already exists: " + javaPathGpuReg);
+                                    LOG.info("GPU preference for %s already exists: %s".formatted(javaPathGpuReg, current));
                                 }
                             }
                         } catch (Exception e) {
