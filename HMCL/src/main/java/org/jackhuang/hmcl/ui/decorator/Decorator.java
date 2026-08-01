@@ -152,10 +152,28 @@ public final class Decorator {
     private final ObjectProperty<DecoratorPage.@Nullable State> state = new SimpleObjectProperty<>(this, "state");
 
     /// Whether a drag starting at the current pointer location may move the stage.
-    private final BooleanProperty allowMove = new SimpleBooleanProperty(this, "allowMove");
+    private boolean allowMove;
 
     /// Whether a stage move or resize gesture is currently active.
-    private final BooleanProperty dragging = new SimpleBooleanProperty(this, "dragging");
+    private boolean dragging;
+
+    /// The initial horizontal pointer position of the active move or resize gesture.
+    private double mouseInitX;
+
+    /// The initial vertical pointer position of the active move or resize gesture.
+    private double mouseInitY;
+
+    /// The initial horizontal stage position of the active move or resize gesture.
+    private double stageInitX;
+
+    /// The initial vertical stage position of the active move or resize gesture.
+    private double stageInitY;
+
+    /// The initial stage width of the active move or resize gesture.
+    private double stageInitWidth;
+
+    /// The initial stage height of the active move or resize gesture.
+    private double stageInitHeight;
 
     /// Whether the next de-iconification should play the restore animation.
     private boolean playRestoreMinimizeAnimation;
@@ -225,13 +243,16 @@ public final class Decorator {
     public Decorator(Node mainPage) {
         navigator.setOnNavigated(this::onNavigated);
 
-        mainWindowPane = new MainWindowPane(this, root);
+        mainWindowPane = new MainWindowPane(this);
         shadowContainer.getChildren().setAll(mainWindowPane);
         root.setPickOnBounds(true);
         root.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
         root.setPadding(SHADOW_INSETS);
         root.getChildren().setAll(shadowContainer);
         shadowContainer.setEffect(windowShadow);
+        root.addEventFilter(MouseEvent.MOUSE_RELEASED, this::onMouseReleased);
+        root.addEventFilter(MouseEvent.MOUSE_DRAGGED, this::onMouseDragged);
+        root.addEventFilter(MouseEvent.MOUSE_MOVED, this::onMouseMoved);
 
         snackbar.registerSnackbarContainer(mainWindowPane);
 
@@ -272,7 +293,7 @@ public final class Decorator {
     /// Returns the insets used for custom resize hit testing.
     ///
     /// @return the shadow insets, or an inward resize area when the shadow is disabled
-    Insets getResizeInsets() {
+    private Insets getResizeInsets() {
         Insets windowInsets = getWindowInsets();
         return Insets.EMPTY.equals(windowInsets) ? RESIZE_INSETS : windowInsets;
     }
@@ -359,12 +380,20 @@ public final class Decorator {
     ///
     /// @param node the drag-enabled node
     public void capableDraggingWindow(Node node) {
-        node.addEventHandler(MouseEvent.MOUSE_MOVED, event -> allowMove.set(true));
+        node.addEventHandler(MouseEvent.MOUSE_MOVED, event -> allowMove = true);
         node.addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
-            if (!isDragging()) {
-                allowMove.set(false);
+            if (!dragging) {
+                allowMove = false;
             }
         });
+    }
+
+    /// Registers `node` as the title-bar area used to restore and maximize the attached stage.
+    ///
+    /// @param node the title-bar node
+    void registerTitleBar(Node node) {
+        node.addEventHandler(MouseEvent.MOUSE_CLICKED, this::onTitleBarDoubleClick);
+        node.addEventHandler(MouseEvent.MOUSE_DRAGGED, this::onTitleBarDragged);
     }
 
     /// Prevents a stage-move gesture from starting while the pointer is over `node`.
@@ -372,9 +401,241 @@ public final class Decorator {
     /// @param node the node that must consume drag eligibility
     public void forbidDraggingWindow(Node node) {
         node.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
-            allowMove.set(false);
+            allowMove = false;
             event.consume();
         });
+    }
+
+    /// Toggles maximization when the primary button double-clicks a movable title-bar point.
+    ///
+    /// @param event the title-bar click event
+    private void onTitleBarDoubleClick(MouseEvent event) {
+        @Nullable Stage currentStage = stage;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                || currentStage == null
+                || event.getButton() != MouseButton.PRIMARY
+                || event.getClickCount() != 2) {
+            return;
+        }
+
+        currentStage.setMaximized(!currentStage.isMaximized());
+        event.consume();
+    }
+
+    /// Restores a maximized stage under the pointer when its title bar is dragged.
+    ///
+    /// @param event the title-bar drag event
+    private void onTitleBarDragged(MouseEvent event) {
+        @Nullable Stage currentStage = stage;
+        if (currentStage == null || dragging || !currentStage.isMaximized()) {
+            return;
+        }
+
+        dragging = true;
+        mouseInitX = event.getScreenX();
+        mouseInitY = event.getScreenY();
+        currentStage.setMaximized(false);
+        stageInitWidth = currentStage.getWidth();
+        stageInitHeight = currentStage.getHeight();
+        currentStage.setY(stageInitY = 0);
+        currentStage.setX(stageInitX = mouseInitX - stageInitWidth / 2);
+    }
+
+    /// Returns whether `x` lies in the root's right resize inset.
+    ///
+    /// @param x the horizontal pointer coordinate in the root
+    /// @return `true` when the coordinate is on the right edge
+    private boolean isRightEdge(double x) {
+        Insets insets = getResizeInsets();
+        return x < root.getWidth() && x >= root.getWidth() - insets.getRight();
+    }
+
+    /// Returns whether `y` lies in the root's top resize inset.
+    ///
+    /// @param y the vertical pointer coordinate in the root
+    /// @return `true` when the coordinate is on the top edge
+    private boolean isTopEdge(double y) {
+        return y >= 0 && y <= getResizeInsets().getTop();
+    }
+
+    /// Returns whether `y` lies in the root's bottom resize inset.
+    ///
+    /// @param y the vertical pointer coordinate in the root
+    /// @return `true` when the coordinate is on the bottom edge
+    private boolean isBottomEdge(double y) {
+        return y < root.getHeight() && y >= root.getHeight() - getResizeInsets().getBottom();
+    }
+
+    /// Returns whether `x` lies in the root's left resize inset.
+    ///
+    /// @param x the horizontal pointer coordinate in the root
+    /// @return `true` when the coordinate is on the left edge
+    private boolean isLeftEdge(double x) {
+        return x >= 0 && x <= getResizeInsets().getLeft();
+    }
+
+    /// Resizes the attached stage while enforcing its configured minimum dimensions.
+    ///
+    /// A negative dimension leaves that dimension unchanged.
+    ///
+    /// @param newWidth  the requested width, or a negative value to preserve it
+    /// @param newHeight the requested height, or a negative value to preserve it
+    private void resizeStage(double newWidth, double newHeight) {
+        @Nullable Stage currentStage = stage;
+        if (currentStage == null) {
+            return;
+        }
+
+        if (newWidth < 0) {
+            newWidth = currentStage.getWidth();
+        }
+        newWidth = Math.max(newWidth, currentStage.getMinWidth());
+
+        if (newHeight < 0) {
+            newHeight = currentStage.getHeight();
+        }
+        newHeight = Math.max(newHeight, currentStage.getMinHeight());
+
+        // Width and height must be set together to avoid JDK-8344372.
+        currentStage.setWidth(newWidth);
+        currentStage.setHeight(newHeight);
+    }
+
+    /// Selects the resize cursor for the pointer's current root position.
+    ///
+    /// @param event the pointer movement event
+    private void onMouseMoved(MouseEvent event) {
+        @Nullable Stage currentStage = stage;
+        if (currentStage == null
+                || currentStage.isIconified()
+                || currentStage.isFullScreen()
+                || currentStage.isMaximized()
+                || !currentStage.isResizable()) {
+            root.setCursor(Cursor.DEFAULT);
+            return;
+        }
+
+        double x = event.getX();
+        double y = event.getY();
+        Insets insets = getResizeInsets();
+        double diagonalSize = Math.max(
+                Math.max(insets.getLeft(), insets.getRight()),
+                Math.max(insets.getTop(), insets.getBottom())) + 10;
+
+        if (isRightEdge(x)) {
+            if (y < diagonalSize) {
+                root.setCursor(Cursor.NE_RESIZE);
+            } else if (y > root.getHeight() - diagonalSize) {
+                root.setCursor(Cursor.SE_RESIZE);
+            } else {
+                root.setCursor(Cursor.E_RESIZE);
+            }
+        } else if (isLeftEdge(x)) {
+            if (y < diagonalSize) {
+                root.setCursor(Cursor.NW_RESIZE);
+            } else if (y > root.getHeight() - diagonalSize) {
+                root.setCursor(Cursor.SW_RESIZE);
+            } else {
+                root.setCursor(Cursor.W_RESIZE);
+            }
+        } else if (isTopEdge(y)) {
+            if (x < diagonalSize) {
+                root.setCursor(Cursor.NW_RESIZE);
+            } else if (x > root.getWidth() - diagonalSize) {
+                root.setCursor(Cursor.NE_RESIZE);
+            } else {
+                root.setCursor(Cursor.N_RESIZE);
+            }
+        } else if (isBottomEdge(y)) {
+            if (x < diagonalSize) {
+                root.setCursor(Cursor.SW_RESIZE);
+            } else if (x > root.getWidth() - diagonalSize) {
+                root.setCursor(Cursor.SE_RESIZE);
+            } else {
+                root.setCursor(Cursor.S_RESIZE);
+            }
+        } else {
+            root.setCursor(Cursor.DEFAULT);
+        }
+    }
+
+    /// Ends the current move or resize gesture.
+    ///
+    /// @param event the release event
+    private void onMouseReleased(MouseEvent event) {
+        dragging = false;
+        allowMove = false;
+    }
+
+    /// Moves or resizes the attached stage according to the active cursor.
+    ///
+    /// @param event the primary-button drag event
+    private void onMouseDragged(MouseEvent event) {
+        @Nullable Stage currentStage = stage;
+        if (currentStage == null
+                || currentStage.isIconified()
+                || currentStage.isFullScreen()
+                || currentStage.isMaximized()
+                || !event.isPrimaryButtonDown()
+                || event.isStillSincePress()) {
+            return;
+        }
+
+        if (!dragging) {
+            dragging = true;
+            mouseInitX = event.getScreenX();
+            mouseInitY = event.getScreenY();
+            stageInitX = currentStage.getX();
+            stageInitY = currentStage.getY();
+            stageInitWidth = currentStage.getWidth();
+            stageInitHeight = currentStage.getHeight();
+        }
+
+        double dx = event.getScreenX() - mouseInitX;
+        double dy = event.getScreenY() - mouseInitY;
+        Cursor cursor = root.getCursor();
+
+        if (allowMove && cursor == Cursor.DEFAULT) {
+            currentStage.setX(stageInitX + dx);
+            currentStage.setY(stageInitY + dy);
+            event.consume();
+        }
+
+        if (!currentStage.isResizable()) {
+            return;
+        }
+
+        if (cursor == Cursor.E_RESIZE) {
+            resizeStage(stageInitWidth + dx, -1);
+            event.consume();
+        } else if (cursor == Cursor.S_RESIZE) {
+            resizeStage(-1, stageInitHeight + dy);
+            event.consume();
+        } else if (cursor == Cursor.W_RESIZE) {
+            resizeStage(stageInitWidth - dx, -1);
+            currentStage.setX(stageInitX + stageInitWidth - currentStage.getWidth());
+            event.consume();
+        } else if (cursor == Cursor.N_RESIZE) {
+            resizeStage(-1, stageInitHeight - dy);
+            currentStage.setY(stageInitY + stageInitHeight - currentStage.getHeight());
+            event.consume();
+        } else if (cursor == Cursor.SE_RESIZE) {
+            resizeStage(stageInitWidth + dx, stageInitHeight + dy);
+            event.consume();
+        } else if (cursor == Cursor.SW_RESIZE) {
+            resizeStage(stageInitWidth - dx, stageInitHeight + dy);
+            currentStage.setX(stageInitX + stageInitWidth - currentStage.getWidth());
+            event.consume();
+        } else if (cursor == Cursor.NW_RESIZE) {
+            resizeStage(stageInitWidth - dx, stageInitHeight - dy);
+            currentStage.setX(stageInitX + stageInitWidth - currentStage.getWidth());
+            currentStage.setY(stageInitY + stageInitHeight - currentStage.getHeight());
+            event.consume();
+        } else if (cursor == Cursor.NE_RESIZE) {
+            resizeStage(stageInitWidth + dx, stageInitHeight - dy);
+            currentStage.setY(stageInitY + stageInitHeight - currentStage.getHeight());
+            event.consume();
+        }
     }
 
     /// Returns the scene retained by this decorator's root.
@@ -497,8 +758,8 @@ public final class Decorator {
             newStage.heightProperty().addListener(stageBoundsListener);
         }
         root.setCursor(Cursor.DEFAULT);
-        dragging.set(false);
-        allowMove.set(false);
+        dragging = false;
+        allowMove = false;
         return scene;
     }
 
@@ -523,8 +784,8 @@ public final class Decorator {
         }
         stage = null;
         root.setCursor(Cursor.DEFAULT);
-        dragging.set(false);
-        allowMove.set(false);
+        dragging = false;
+        allowMove = false;
     }
 
     /// Returns the stage currently controlled by this decorator.
@@ -546,34 +807,6 @@ public final class Decorator {
     /// @return the current-page state property
     ObjectProperty<DecoratorPage.@Nullable State> stateProperty() {
         return state;
-    }
-
-    /// Returns whether a pointer drag may move the stage.
-    ///
-    /// @return `true` when stage movement is permitted
-    boolean isAllowMove() {
-        return allowMove.get();
-    }
-
-    /// Updates whether a pointer drag may move the stage.
-    ///
-    /// @param allowMove whether stage movement is permitted
-    void setAllowMove(boolean allowMove) {
-        this.allowMove.set(allowMove);
-    }
-
-    /// Returns whether a stage move or resize gesture is active.
-    ///
-    /// @return `true` while a gesture is active
-    boolean isDragging() {
-        return dragging.get();
-    }
-
-    /// Updates whether a stage move or resize gesture is active.
-    ///
-    /// @param dragging whether a gesture is active
-    void setDragging(boolean dragging) {
-        this.dragging.set(dragging);
     }
 
     /// Returns whether the navigation bar should show its close or home action.

@@ -24,14 +24,10 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
@@ -43,7 +39,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorScheme;
@@ -56,14 +51,10 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-/// Renders the clipped window content and implements custom title-bar, move, and resize behavior.
-///
-/// The owning decorator's stable root receives native resize events. Its shadow padding supplies the resize area
-/// while the shadow is enabled; otherwise an inward edge region supplies the same behavior.
+/// Renders the clipped background, title bar, and navigation content owned by a [Decorator].
 @NotNullByDefault
 final class MainWindowPane extends StackPane {
     /// The diameter, in pixels, of the rounded window corners.
@@ -85,59 +76,11 @@ final class MainWindowPane extends StackPane {
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
-    /// Handles primary-button double clicks on draggable title-bar content.
-    private final EventHandler<MouseEvent> onTitleBarDoubleClick;
-
-    /// Ends the current move or resize gesture.
-    private final EventHandler<MouseEvent> onMouseReleased = this::onMouseReleased;
-
-    /// Applies stage movement or resizing while the primary button is dragged.
-    private final EventHandler<MouseEvent> onMouseDragged = this::onMouseDragged;
-
-    /// Updates the resize cursor according to the pointer position.
-    private final EventHandler<MouseEvent> onMouseMoved = this::onMouseMoved;
-
-    /// The stable pane that receives native move and resize event filters.
-    private final StackPane windowEventRoot;
-
-    /// The initial pointer position of the active move or resize gesture.
-    private double mouseInitX;
-
-    /// The initial vertical pointer position of the active move or resize gesture.
-    private double mouseInitY;
-
-    /// The initial horizontal stage position of the active move or resize gesture.
-    private double stageInitX;
-
-    /// The initial vertical stage position of the active move or resize gesture.
-    private double stageInitY;
-
-    /// The initial stage width of the active move or resize gesture.
-    private double stageInitWidth;
-
-    /// The initial stage height of the active move or resize gesture.
-    private double stageInitHeight;
-
     /// Creates and wires the main-window content for `decorator`.
     ///
-    /// @param decorator       the owning window decorator
-    /// @param windowEventRoot the stable root that receives move and resize events
-    MainWindowPane(Decorator decorator, StackPane windowEventRoot) {
+    /// @param decorator the owning window decorator
+    MainWindowPane(Decorator decorator) {
         this.decorator = decorator;
-        this.windowEventRoot = windowEventRoot;
-        this.onTitleBarDoubleClick = event -> {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                return;
-            }
-
-            @Nullable Stage stage = decorator.getStage();
-            if (stage != null
-                    && event.getButton() == MouseButton.PRIMARY
-                    && event.getClickCount() == 2) {
-                stage.setMaximized(!stage.isMaximized());
-                event.consume();
-            }
-        };
 
         Rectangle clip = new Rectangle();
         clip.widthProperty().bind(widthProperty());
@@ -189,9 +132,6 @@ final class MainWindowPane extends StackPane {
         decorator.capableDraggingWindow(titleBar);
 
         getChildren().setAll(backgroundNode, frame);
-        windowEventRoot.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
-        windowEventRoot.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
-        windowEventRoot.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
     }
 
     /// Creates the launcher-background layer and keeps it synchronized with the active theme.
@@ -336,8 +276,7 @@ final class MainWindowPane extends StackPane {
             titleArea.getChildren().setAll(titleLabel);
         }
 
-        titleArea.setOnMouseClicked(onTitleBarDoubleClick);
-        titleArea.setOnMouseDragged(this::onTitleBarDragged);
+        decorator.registerTitleBar(titleArea);
 
         if (!navBar.getChildren().isEmpty()) {
             Insets padding = new Insets(0, 0, 0, 5);
@@ -360,231 +299,6 @@ final class MainWindowPane extends StackPane {
         }
 
         return navBar;
-    }
-
-    /// Restores a maximized stage under the pointer when its title bar is dragged.
-    ///
-    /// @param event the title-bar drag event
-    private void onTitleBarDragged(MouseEvent event) {
-        @Nullable Stage stage = decorator.getStage();
-        if (stage == null || decorator.isDragging() || !stage.isMaximized()) {
-            return;
-        }
-
-        decorator.setDragging(true);
-        mouseInitX = event.getScreenX();
-        mouseInitY = event.getScreenY();
-        stage.setMaximized(false);
-        stageInitWidth = stage.getWidth();
-        stageInitHeight = stage.getHeight();
-        stage.setY(stageInitY = 0);
-        stage.setX(stageInitX = mouseInitX - stageInitWidth / 2);
-    }
-
-    /// Returns whether `x` lies in the event root's right resize inset.
-    ///
-    /// @param x the horizontal pointer coordinate in the event root
-    /// @return `true` when the coordinate is on the right edge
-    private boolean isRightEdge(double x) {
-        Insets insets = decorator.getResizeInsets();
-        return x < windowEventRoot.getWidth()
-                && x >= windowEventRoot.getWidth() - insets.getRight();
-    }
-
-    /// Returns whether `y` lies in the event root's top resize inset.
-    ///
-    /// @param y the vertical pointer coordinate in the event root
-    /// @return `true` when the coordinate is on the top edge
-    private boolean isTopEdge(double y) {
-        return y >= 0 && y <= decorator.getResizeInsets().getTop();
-    }
-
-    /// Returns whether `y` lies in the event root's bottom resize inset.
-    ///
-    /// @param y the vertical pointer coordinate in the event root
-    /// @return `true` when the coordinate is on the bottom edge
-    private boolean isBottomEdge(double y) {
-        return y < windowEventRoot.getHeight()
-                && y >= windowEventRoot.getHeight() - decorator.getResizeInsets().getBottom();
-    }
-
-    /// Returns whether `x` lies in the event root's left resize inset.
-    ///
-    /// @param x the horizontal pointer coordinate in the event root
-    /// @return `true` when the coordinate is on the left edge
-    private boolean isLeftEdge(double x) {
-        return x >= 0 && x <= decorator.getResizeInsets().getLeft();
-    }
-
-    /// Resizes the current stage while enforcing its configured minimum dimensions.
-    ///
-    /// A negative dimension leaves that dimension unchanged.
-    ///
-    /// @param newWidth  the requested width, or a negative value to preserve it
-    /// @param newHeight the requested height, or a negative value to preserve it
-    private void resizeStage(double newWidth, double newHeight) {
-        @Nullable Stage stage = decorator.getStage();
-        if (stage == null) {
-            return;
-        }
-
-        if (newWidth < 0) {
-            newWidth = stage.getWidth();
-        }
-        newWidth = Math.max(newWidth, stage.getMinWidth());
-        if (titleBar.getMinWidth() >= 0) {
-            newWidth = Math.max(newWidth, titleBar.getMinWidth());
-        }
-
-        if (newHeight < 0) {
-            newHeight = stage.getHeight();
-        }
-        newHeight = Math.max(newHeight, stage.getMinHeight());
-        if (titleBar.getMinHeight() >= 0) {
-            newHeight = Math.max(newHeight, titleBar.getMinHeight());
-        }
-
-        // Width and height must be set together to avoid JDK-8344372.
-        stage.setWidth(newWidth);
-        stage.setHeight(newHeight);
-    }
-
-    /// Selects the resize cursor for the pointer's current event-root position.
-    ///
-    /// @param event the pointer movement event
-    private void onMouseMoved(MouseEvent event) {
-        @Nullable Stage stage = decorator.getStage();
-        StackPane root = windowEventRoot;
-        if (stage == null
-                || stage.isIconified()
-                || stage.isFullScreen()
-                || stage.isMaximized()
-                || !stage.isResizable()) {
-            root.setCursor(Cursor.DEFAULT);
-            return;
-        }
-
-        double x = event.getX();
-        double y = event.getY();
-        Insets insets = decorator.getResizeInsets();
-        double diagonalSize = Math.max(
-                Math.max(insets.getLeft(), insets.getRight()),
-                Math.max(insets.getTop(), insets.getBottom())) + 10;
-
-        if (isRightEdge(x)) {
-            if (y < diagonalSize) {
-                root.setCursor(Cursor.NE_RESIZE);
-            } else if (y > root.getHeight() - diagonalSize) {
-                root.setCursor(Cursor.SE_RESIZE);
-            } else {
-                root.setCursor(Cursor.E_RESIZE);
-            }
-        } else if (isLeftEdge(x)) {
-            if (y < diagonalSize) {
-                root.setCursor(Cursor.NW_RESIZE);
-            } else if (y > root.getHeight() - diagonalSize) {
-                root.setCursor(Cursor.SW_RESIZE);
-            } else {
-                root.setCursor(Cursor.W_RESIZE);
-            }
-        } else if (isTopEdge(y)) {
-            if (x < diagonalSize) {
-                root.setCursor(Cursor.NW_RESIZE);
-            } else if (x > root.getWidth() - diagonalSize) {
-                root.setCursor(Cursor.NE_RESIZE);
-            } else {
-                root.setCursor(Cursor.N_RESIZE);
-            }
-        } else if (isBottomEdge(y)) {
-            if (x < diagonalSize) {
-                root.setCursor(Cursor.SW_RESIZE);
-            } else if (x > root.getWidth() - diagonalSize) {
-                root.setCursor(Cursor.SE_RESIZE);
-            } else {
-                root.setCursor(Cursor.S_RESIZE);
-            }
-        } else {
-            root.setCursor(Cursor.DEFAULT);
-        }
-    }
-
-    /// Ends the current move or resize gesture.
-    ///
-    /// @param event the release event
-    private void onMouseReleased(MouseEvent event) {
-        decorator.setDragging(false);
-        decorator.setAllowMove(false);
-    }
-
-    /// Moves or resizes the attached stage according to the active cursor.
-    ///
-    /// @param event the primary-button drag event
-    private void onMouseDragged(MouseEvent event) {
-        @Nullable Stage stage = decorator.getStage();
-        if (stage == null
-                || stage.isIconified()
-                || stage.isFullScreen()
-                || stage.isMaximized()
-                || !event.isPrimaryButtonDown()
-                || event.isStillSincePress()) {
-            return;
-        }
-
-        if (!decorator.isDragging()) {
-            decorator.setDragging(true);
-            mouseInitX = event.getScreenX();
-            mouseInitY = event.getScreenY();
-            stageInitX = stage.getX();
-            stageInitY = stage.getY();
-            stageInitWidth = stage.getWidth();
-            stageInitHeight = stage.getHeight();
-        }
-
-        double dx = event.getScreenX() - mouseInitX;
-        double dy = event.getScreenY() - mouseInitY;
-        Cursor cursor = windowEventRoot.getCursor();
-
-        if (decorator.isAllowMove() && cursor == Cursor.DEFAULT) {
-            stage.setX(stageInitX + dx);
-            stage.setY(stageInitY + dy);
-            event.consume();
-        }
-
-        if (!stage.isResizable()) {
-            return;
-        }
-
-        if (cursor == Cursor.E_RESIZE) {
-            resizeStage(stageInitWidth + dx, -1);
-            event.consume();
-        } else if (cursor == Cursor.S_RESIZE) {
-            resizeStage(-1, stageInitHeight + dy);
-            event.consume();
-        } else if (cursor == Cursor.W_RESIZE) {
-            resizeStage(stageInitWidth - dx, -1);
-            stage.setX(stageInitX + stageInitWidth - stage.getWidth());
-            event.consume();
-        } else if (cursor == Cursor.N_RESIZE) {
-            resizeStage(-1, stageInitHeight - dy);
-            stage.setY(stageInitY + stageInitHeight - stage.getHeight());
-            event.consume();
-        } else if (cursor == Cursor.SE_RESIZE) {
-            resizeStage(stageInitWidth + dx, stageInitHeight + dy);
-            event.consume();
-        } else if (cursor == Cursor.SW_RESIZE) {
-            resizeStage(stageInitWidth - dx, stageInitHeight + dy);
-            stage.setX(stageInitX + stageInitWidth - stage.getWidth());
-            event.consume();
-        } else if (cursor == Cursor.NW_RESIZE) {
-            resizeStage(stageInitWidth - dx, stageInitHeight - dy);
-            stage.setX(stageInitX + stageInitWidth - stage.getWidth());
-            stage.setY(stageInitY + stageInitHeight - stage.getHeight());
-            event.consume();
-        } else if (cursor == Cursor.NE_RESIZE) {
-            resizeStage(stageInitWidth + dx, stageInitHeight - dy);
-            stage.setY(stageInitY + stageInitHeight - stage.getHeight());
-            event.consume();
-        }
     }
 
     /// Produces directional transitions for page-title changes.
