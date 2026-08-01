@@ -152,9 +152,9 @@ final class MainWindowPane extends StackPane {
                 () -> Themes.windowTransparentProperty().get()
                         ? null
                         : new Background(new BackgroundFill(
-                                Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER),
-                                CornerRadii.EMPTY,
-                                Insets.EMPTY)),
+                        Themes.getColorScheme().getColor(ColorRole.SURFACE_CONTAINER),
+                        CornerRadii.EMPTY,
+                        Insets.EMPTY)),
                 Themes.windowTransparentProperty(),
                 Themes.colorSchemeProperty()));
 
@@ -293,13 +293,7 @@ final class MainWindowPane extends StackPane {
             return;
         }
 
-        Node navBar = createNavBar(
-                state.backable(),
-                decorator.canCloseProperty().get(),
-                decorator.showCloseAsHomeProperty().get(),
-                state.refreshable(),
-                state.title(),
-                state.titleNode());
+        Node navBar = createNavBar(state);
 
         if (state.animate()) {
             TransitionPane.AnimationProducer animation = switch (decorator.getNavigationDirection()) {
@@ -316,20 +310,11 @@ final class MainWindowPane extends StackPane {
 
     /// Creates the page-specific navigation controls and title.
     ///
-    /// @param canBack       whether to show the back action
-    /// @param canClose      whether to show the close or home action
-    /// @param showHome      whether the close action should use the home icon
-    /// @param canRefresh    whether to show the refresh action
-    /// @param title         the text title used when `titleNode` is `null`, or `null`
-    /// @param titleNode     the custom title node that replaces `title`, or `null`
+    /// @param state the current page state
     /// @return a newly constructed navigation bar
-    private Node createNavBar(
-            boolean canBack,
-            boolean canClose,
-            boolean showHome,
-            boolean canRefresh,
-            @Nullable String title,
-            @Nullable Node titleNode) {
+    private Node createNavBar(DecoratorPage.State state) {
+        boolean canClose = decorator.canCloseProperty().get();
+
         BorderPane navBar = new BorderPane();
         navBar.getStyleClass().add("navigation-bar");
 
@@ -337,7 +322,7 @@ final class MainWindowPane extends StackPane {
         navLeft.setAlignment(Pos.CENTER_LEFT);
         navLeft.setPadding(new Insets(0, 5, 0, 5));
 
-        if (canBack) {
+        if (state.backable()) {
             JFXButton backButton = new JFXButton();
             backButton.setFocusTraversable(false);
             backButton.setGraphic(SVG.ARROW_BACK.createIcon(Themes.titleFillProperty()));
@@ -348,26 +333,28 @@ final class MainWindowPane extends StackPane {
         }
 
         if (canClose) {
+            boolean showCloseAsHome = decorator.showCloseAsHomeProperty().get();
+
             JFXButton closeButton = new JFXButton();
             closeButton.setFocusTraversable(false);
-            closeButton.setGraphic((showHome ? SVG.HOME : SVG.CLOSE).createIcon(Themes.titleFillProperty()));
+            closeButton.setGraphic((showCloseAsHome ? SVG.HOME : SVG.CLOSE).createIcon(Themes.titleFillProperty()));
             closeButton.getStyleClass().add("jfx-decorator-button");
             closeButton.setOnAction(event -> decorator.closeCurrentPage());
             decorator.forbidDraggingWindow(closeButton);
             navLeft.getChildren().add(closeButton);
         }
 
-        if (canBack || canClose) {
+        if (state.backable() || canClose) {
             navBar.setLeft(navLeft);
         }
 
         StackPane titleArea = new StackPane();
         titleArea.setAlignment(Pos.CENTER_LEFT);
-        if (titleNode != null) {
-            titleArea.getChildren().setAll(titleNode);
-            StackPane.setMargin(titleNode, new Insets(0, 0, 0, 8));
-        } else if (title != null) {
-            Label titleLabel = new Label(title);
+        if (state.titleNode() != null) {
+            titleArea.getChildren().setAll(state.titleNode());
+            StackPane.setMargin(state.titleNode(), new Insets(0, 0, 0, 8));
+        } else if (state.title() != null) {
+            Label titleLabel = new Label(state.title());
             titleLabel.textFillProperty().bind(Themes.titleFillProperty());
             titleLabel.getStyleClass().add("jfx-decorator-title");
             titleLabel.setMinWidth(0);
@@ -378,7 +365,7 @@ final class MainWindowPane extends StackPane {
         titleArea.setOnMouseDragged(this::onTitleBarDragged);
         navBar.setCenter(titleArea);
 
-        if (canRefresh) {
+        if (state.refreshable()) {
             HBox navRight = new HBox();
             navRight.setAlignment(Pos.CENTER_RIGHT);
 
@@ -679,12 +666,12 @@ final class MainWindowPane extends StackPane {
 
         /// Creates a title transition with the supplied horizontal offsets.
         ///
-        /// @param previousNode  the title being removed
-        /// @param nextNode      the title being shown
-        /// @param nextOffset    the initial offset of the next title
+        /// @param previousNode   the title being removed
+        /// @param nextNode       the title being shown
+        /// @param nextOffset     the initial offset of the next title
         /// @param previousOffset the final offset of the previous title
-        /// @param duration      the transition duration
-        /// @param interpolator  the transition interpolator
+        /// @param duration       the transition duration
+        /// @param interpolator   the transition interpolator
         /// @return the unstarted transition timeline
         private static Timeline createTimeline(
                 Node previousNode,
