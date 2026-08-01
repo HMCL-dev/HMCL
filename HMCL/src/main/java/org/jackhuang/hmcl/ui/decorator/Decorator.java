@@ -686,11 +686,10 @@ public final class Decorator {
 
     /// Closes the current page according to its [DecoratorPage] lifecycle contract.
     void closeCurrentPage() {
-        if (navigator.getCurrentPage() instanceof DecoratorPage page && page.isPageCloseable()) {
+        if (navigator.getCurrentPage() instanceof DecoratorPage page && page.isPageCloseable())
             page.closePage();
-            return;
-        }
-        navigator.clear();
+        else
+            navigator.clear();
     }
 
     /// Navigates back if the current page permits the operation.
