@@ -32,16 +32,16 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public record RemoteAddon(String slug, String author, String title, String description, List<String> categories,
-                          String pageUrl, String iconUrl, IMod data, @Nullable Type type) {
+                          String pageUrl, String iconUrl, IAddon data, @Nullable Type type) {
 
-    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IMod() {
+    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IAddon() {
         @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
 
         @Override
-        public Stream<Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
     }, Type.MOD);
@@ -67,23 +67,23 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
         private final DependencyType type;
 
-        private final Source source;
+        private final @Nullable Source source;
 
-        private final String id;
+        private final @Nullable String id;
 
         private transient RemoteAddon remoteAddon = null;
 
-        private Dependency(DependencyType type, Source source, String modid) {
+        private Dependency(DependencyType type, @Nullable Source source, @Nullable String id) {
             this.type = type;
             this.source = source;
-            this.id = modid;
+            this.id = id;
         }
 
-        public static Dependency ofGeneral(DependencyType type, Source source, String modid) {
+        public static Dependency ofGeneral(DependencyType type, Source source, String id) {
             if (type == DependencyType.BROKEN) {
                 return ofBroken();
             } else {
-                return new Dependency(type, source, modid);
+                return new Dependency(type, source, id);
             }
         }
 
@@ -98,10 +98,12 @@ public record RemoteAddon(String slug, String author, String title, String descr
             return this.type;
         }
 
+        @Nullable
         public Source getSource() {
             return this.source;
         }
 
+        @Nullable
         public String getId() {
             return this.id;
         }
@@ -210,17 +212,17 @@ public record RemoteAddon(String slug, String author, String title, String descr
         CUSTOMIZATION
     }
 
-    public interface IMod {
-        List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException;
+    public interface IAddon {
+        List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
 
-        Stream<Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException;
+        Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
     }
 
     public interface IVersion {
         Source getSource();
     }
 
-    public record Version(IVersion self, String modid, String name, String version, String changelog,
+    public record Version(IVersion self, String projectId, String name, String version, String changelog,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
                           List<String> gameVersions, List<ModLoaderType> loaders) {
     }

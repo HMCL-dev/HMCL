@@ -542,6 +542,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
                 listView.setCellFactory(x -> new ListCell<>() {
                     private static final Insets PADDING = new Insets(9, 9, 0, 9);
+                    private static final Insets LAST_PADDING = new Insets(9, 9, 9, 9);
 
                     private final RipplerContainer graphic;
                     private final StackPane wrapper = new StackPane();
@@ -584,6 +585,12 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
                         if (empty || item == null) {
                             setGraphic(null);
                         } else {
+                            setPadding(
+                                    getIndex() == getListView().getItems().size() - 1
+                                            ? LAST_PADDING
+                                            : PADDING
+                            );
+
                             ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(getSkinnable().repository.getType()).getModByCurseForgeId(item.slug());
                             content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.title());
                             String description = item.description();
