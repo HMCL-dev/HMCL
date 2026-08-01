@@ -32,16 +32,16 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public record RemoteAddon(String slug, String author, String title, String description, List<String> categories,
-                          String pageUrl, String iconUrl, IMod data, RemoteAddonRepository.Type repoType) {
+                          String pageUrl, String iconUrl, IAddon data, RemoteAddonRepository.Type repoType) {
 
-    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IMod() {
+    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IAddon() {
         @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
 
         @Override
-        public Stream<Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
     }, RemoteAddonRepository.Type.MOD);
@@ -67,23 +67,23 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
         private final DependencyType type;
 
-        private final RemoteAddonRepository remoteAddonRepository;
+        private final @Nullable RemoteAddonRepository remoteAddonRepository;
 
-        private final String id;
+        private final @Nullable String id;
 
         private transient RemoteAddon remoteAddon = null;
 
-        private Dependency(DependencyType type, RemoteAddonRepository remoteAddonRepository, String modid) {
+        private Dependency(DependencyType type, @Nullable RemoteAddonRepository remoteAddonRepository, @Nullable String id) {
             this.type = type;
             this.remoteAddonRepository = remoteAddonRepository;
-            this.id = modid;
+            this.id = id;
         }
 
-        public static Dependency ofGeneral(DependencyType type, RemoteAddonRepository remoteAddonRepository, String modid) {
+        public static Dependency ofGeneral(DependencyType type, RemoteAddonRepository remoteAddonRepository, String id) {
             if (type == DependencyType.BROKEN) {
                 return ofBroken();
             } else {
-                return new Dependency(type, remoteAddonRepository, modid);
+                return new Dependency(type, remoteAddonRepository, id);
             }
         }
 
@@ -98,10 +98,12 @@ public record RemoteAddon(String slug, String author, String title, String descr
             return this.type;
         }
 
+        @Nullable
         public RemoteAddonRepository getRemoteModRepository() {
             return this.remoteAddonRepository;
         }
 
+        @Nullable
         public String getId() {
             return this.id;
         }
@@ -192,17 +194,17 @@ public record RemoteAddon(String slug, String author, String title, String descr
         }
     }
 
-    public interface IMod {
-        List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException;
+    public interface IAddon {
+        List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
 
-        Stream<Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException;
+        Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
     }
 
     public interface IVersion {
-        Source getType();
+        Source getSource();
     }
 
-    public record Version(IVersion self, String modid, String name, String version, String changelog,
+    public record Version(IVersion self, String projectId, String name, String version, String changelog,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
                           List<String> gameVersions, List<ModLoaderType> loaders) {
     }
