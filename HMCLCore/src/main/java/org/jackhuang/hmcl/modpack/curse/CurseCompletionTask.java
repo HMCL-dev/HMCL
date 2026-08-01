@@ -123,7 +123,7 @@ public final class CurseCompletionTask extends Task<Void> {
                             updateProgress(finished.incrementAndGet(), manifest.files().size());
                             if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
                                 try {
-                                    RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.MODS.getModFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
+                                    RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.MODS.getAddonFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
                                     return file.withFileName(remoteFile.filename()).withURL(remoteFile.url());
                                 } catch (FileNotFoundException fof) {
                                     LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.projectID() + ", " + file.fileID(), fof);
@@ -185,7 +185,7 @@ public final class CurseCompletionTask extends Task<Void> {
      * @throws IOException If IOException was encountered during getting data from CurseForge.
      */
     private Path guessFilePath(CurseManifestFile file, DownloadProvider downloadProvider, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
-        RemoteAddon mod = CurseForgeRemoteAddonRepository.MODS.getModById(downloadProvider, Integer.toString(file.projectID()));
+        RemoteAddon mod = CurseForgeRemoteAddonRepository.MODS.getAddonById(downloadProvider, Integer.toString(file.projectID()));
         int classID = ((CurseForgeRemoteAddonRepository.CurseAddon) mod.data()).classId();
         String fileName = file.fileName();
         return switch (classID) {
