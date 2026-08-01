@@ -318,35 +318,26 @@ final class MainWindowPane extends StackPane {
         navBar.setAlignment(Pos.CENTER_LEFT);
 
         // Left navigation buttons
-        boolean canClose = decorator.canCloseProperty().get();
-        if (canClose || state.backable()) {
-            HBox navLeft = new HBox();
-            navLeft.setAlignment(Pos.CENTER_LEFT);
-            navLeft.setPadding(new Insets(0, 5, 0, 5));
+        if (state.backable()) {
+            JFXButton backButton = new JFXButton();
+            backButton.setFocusTraversable(false);
+            backButton.setGraphic(SVG.ARROW_BACK.createIcon(Themes.titleFillProperty()));
+            backButton.getStyleClass().add("jfx-decorator-button");
+            backButton.setOnAction(event -> decorator.back());
+            decorator.forbidDraggingWindow(backButton);
+            navBar.getChildren().add(backButton);
+        }
 
-            if (state.backable()) {
-                JFXButton backButton = new JFXButton();
-                backButton.setFocusTraversable(false);
-                backButton.setGraphic(SVG.ARROW_BACK.createIcon(Themes.titleFillProperty()));
-                backButton.getStyleClass().add("jfx-decorator-button");
-                backButton.setOnAction(event -> decorator.back());
-                decorator.forbidDraggingWindow(backButton);
-                navLeft.getChildren().add(backButton);
-            }
+        if (decorator.canCloseProperty().get()) {
+            boolean showCloseAsHome = decorator.showCloseAsHomeProperty().get();
 
-            if (canClose) {
-                boolean showCloseAsHome = decorator.showCloseAsHomeProperty().get();
-
-                JFXButton closeButton = new JFXButton();
-                closeButton.setFocusTraversable(false);
-                closeButton.setGraphic((showCloseAsHome ? SVG.HOME : SVG.CLOSE).createIcon(Themes.titleFillProperty()));
-                closeButton.getStyleClass().add("jfx-decorator-button");
-                closeButton.setOnAction(event -> decorator.closeCurrentPage());
-                decorator.forbidDraggingWindow(closeButton);
-                navLeft.getChildren().add(closeButton);
-            }
-
-            navBar.getChildren().add(navLeft);
+            JFXButton closeButton = new JFXButton();
+            closeButton.setFocusTraversable(false);
+            closeButton.setGraphic((showCloseAsHome ? SVG.HOME : SVG.CLOSE).createIcon(Themes.titleFillProperty()));
+            closeButton.getStyleClass().add("jfx-decorator-button");
+            closeButton.setOnAction(event -> decorator.closeCurrentPage());
+            decorator.forbidDraggingWindow(closeButton);
+            navBar.getChildren().add(closeButton);
         }
 
         // Center title area
@@ -367,6 +358,13 @@ final class MainWindowPane extends StackPane {
 
         titleArea.setOnMouseClicked(onTitleBarDoubleClick);
         titleArea.setOnMouseDragged(this::onTitleBarDragged);
+
+        if (!navBar.getChildren().isEmpty()) {
+            Insets padding = new Insets(0, 0, 0, 5);
+            navBar.setPadding(padding);
+            titleArea.setPadding(padding);
+        }
+
         navBar.getChildren().add(titleArea);
 
         // Right refresh button
