@@ -94,6 +94,9 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         targetVersionColumn.setPrefWidth(200);
         setupCellValueFactory(targetVersionColumn, AddonUpdateObject::targetVersionProperty);
 
+        TableColumn<AddonUpdateObject, String> targetVersionTypeColumn = new TableColumn<>(i18n("addon.version_type"));
+        setupCellValueFactory(targetVersionTypeColumn, AddonUpdateObject::targetVersionTypeProperty);
+
         TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("addon.check_update.source"));
         setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceProperty);
 
@@ -102,7 +105,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         TableView<AddonUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
-        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn);
+        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, targetVersionTypeColumn, sourceColumn);
         setMargin(table, new Insets(10, 10, 5, 10));
 
         setCenter(table);
@@ -197,6 +200,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         final StringProperty fileName = new SimpleStringProperty();
         final StringProperty currentVersion = new SimpleStringProperty();
         final StringProperty targetVersion = new SimpleStringProperty();
+        final StringProperty targetVersionType = new SimpleStringProperty();
         final StringProperty source = new SimpleStringProperty();
 
         public AddonUpdateObject(LocalAddonFile.AddonUpdate data) {
@@ -206,13 +210,11 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             fileName.set(data.localAddonFile().getFileName());
             currentVersion.set(data.currentVersion().version());
             targetVersion.set(data.targetVersion().version());
-            switch (data.currentVersion().source()) {
-                case CURSEFORGE:
-                    source.set(i18n("addon.curseforge"));
-                    break;
-                case MODRINTH:
-                    source.set(i18n("addon.modrinth"));
-            }
+            targetVersionType.set(data.targetVersion().versionType().name());
+            source.set(switch (data.currentVersion().source()) {
+                case CURSEFORGE -> i18n("addon.curseforge");
+                case MODRINTH -> i18n("addon.modrinth");
+            });
         }
 
         public LocalAddonFile.AddonUpdate getData() {
@@ -227,57 +229,26 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             return enabled;
         }
 
-        public void setEnabled(boolean enabled) {
-            this.enabled.set(enabled);
-        }
-
-        public String getFileName() {
-            return fileName.get();
-        }
-
         public StringProperty fileNameProperty() {
             return fileName;
-        }
-
-        public void setFileName(String fileName) {
-            this.fileName.set(fileName);
-        }
-
-        public String getCurrentVersion() {
-            return currentVersion.get();
         }
 
         public StringProperty currentVersionProperty() {
             return currentVersion;
         }
 
-        public void setCurrentVersion(String currentVersion) {
-            this.currentVersion.set(currentVersion);
-        }
-
-        public String getTargetVersion() {
-            return targetVersion.get();
-        }
-
         public StringProperty targetVersionProperty() {
             return targetVersion;
         }
 
-        public void setTargetVersion(String targetVersion) {
-            this.targetVersion.set(targetVersion);
-        }
-
-        public String getSource() {
-            return source.get();
+        public StringProperty targetVersionTypeProperty() {
+            return targetVersionType;
         }
 
         public StringProperty sourceProperty() {
             return source;
         }
 
-        public void setSource(String source) {
-            this.source.set(source);
-        }
     }
 
     public static class AddonUpdateTask extends Task<Void> {
