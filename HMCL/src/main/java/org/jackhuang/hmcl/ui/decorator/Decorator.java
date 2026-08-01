@@ -1077,13 +1077,4 @@ public final class Decorator {
         root.setScaleZ(1);
     }
 
-    void requestMaximize() {
-        @Nullable Stage currentStage = getStage();
-        if (currentStage == null)
-            return;
-
-        if (currentStage != null) {
-            currentStage.setMaximized(true);
-        }
-    }
 }
