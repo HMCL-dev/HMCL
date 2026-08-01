@@ -33,6 +33,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
@@ -55,6 +56,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
+import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
@@ -188,6 +190,9 @@ public final class Decorator {
             playRestoreAnimation();
         }
     };
+
+    /// Plays the opening animation immediately before the attached stage becomes visible.
+    private final EventHandler<WindowEvent> windowShowingHandler = event -> playOpenAnimation();
 
     /// Updates the custom window decoration when the attached stage changes maximized or full-screen state.
     private final InvalidationListener stageDecorationListener = observable -> {
@@ -714,7 +719,8 @@ public final class Decorator {
     /// from that stage before being installed on `newStage`. A newly attached stage receives the persisted normal
     /// content bounds and minimum size adjusted for the normal decoration insets. The stage and retained scene use
     /// transparent styles required by the custom decoration. Any active window animation is cancelled and reset.
-    /// This method does not show the stage.
+    /// When window animations are enabled, each subsequent showing starts the opening animation. This method does
+    /// not show the stage.
     ///
     /// @param newStage the stage to attach, which must be accessed on the JavaFX application thread
     /// @return the scene installed on `newStage`
@@ -762,6 +768,7 @@ public final class Decorator {
         if (stage != newStage) {
             playRestoreMinimizeAnimation = false;
             if (stage != null) {
+                stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
                 stage.iconifiedProperty().removeListener(iconifiedListener);
                 stage.maximizedProperty().removeListener(stageDecorationListener);
                 stage.fullScreenProperty().removeListener(stageDecorationListener);
@@ -775,6 +782,7 @@ public final class Decorator {
             initializeStageBounds(newStage);
             stage = newStage;
             updateWindowDecoration(newStage.isMaximized() || newStage.isFullScreen());
+            newStage.addEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
             newStage.iconifiedProperty().addListener(iconifiedListener);
             newStage.maximizedProperty().addListener(stageDecorationListener);
             newStage.fullScreenProperty().addListener(stageDecorationListener);
@@ -799,6 +807,7 @@ public final class Decorator {
         stopWindowAnimation();
 
         if (stage != null) {
+            stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
             stage.iconifiedProperty().removeListener(iconifiedListener);
             stage.maximizedProperty().removeListener(stageDecorationListener);
             stage.fullScreenProperty().removeListener(stageDecorationListener);
@@ -864,6 +873,32 @@ public final class Decorator {
     /// @param navigationDirection the pending navigation direction
     void setNavigationDirection(Navigation.NavigationDirection navigationDirection) {
         this.navigationDirection = navigationDirection;
+    }
+
+    /// Plays the configured root-node animation for a stage that is beginning to show.
+    ///
+    /// Calling this method replaces any active minimize, restore, close, or earlier opening animation. If window
+    /// animations are disabled, it restores the stable root transform without starting an animation.
+    private void playOpenAnimation() {
+        if (!AnimationUtils.playWindowAnimation()) {
+            stopWindowAnimation();
+            return;
+        }
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(root.opacityProperty(), 0, Motion.EASE),
+                        new KeyValue(root.scaleXProperty(), 0.8, Motion.EASE),
+                        new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE),
+                        new KeyValue(root.scaleZProperty(), 0.8, Motion.EASE)),
+                new KeyFrame(Duration.millis(600),
+                        new KeyValue(root.opacityProperty(), 1, Motion.EASE),
+                        new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
+                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
+                        new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
+        playWindowAnimation(timeline, this::resetRootTransform);
+        // Apply the initial frame before WINDOW_SHOWING returns so the window cannot flash at full opacity.
+        timeline.jumpTo(Duration.ZERO);
     }
 
     /// Minimizes the attached stage, using the configured window animation when supported.
