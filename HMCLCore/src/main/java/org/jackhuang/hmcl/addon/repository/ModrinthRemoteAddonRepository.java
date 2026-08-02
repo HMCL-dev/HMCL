@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -50,6 +51,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @see <a href="https://docs.modrinth.com/api">Modrinth API Doc</a>
 public final class ModrinthRemoteAddonRepository implements RemoteAddonRepository {
+    public static final ModrinthRemoteAddonRepository COMMON = new ModrinthRemoteAddonRepository();
     public static final ModrinthRemoteAddonRepository MODS = new ModrinthRemoteAddonRepository("mod");
     public static final ModrinthRemoteAddonRepository MODPACKS = new ModrinthRemoteAddonRepository("modpack");
     public static final ModrinthRemoteAddonRepository RESOURCE_PACKS = new ModrinthRemoteAddonRepository("resourcepack");
@@ -90,28 +92,41 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
             false
     );
 
+    @Nullable
+    private static RemoteAddon.Type toAddonType(String projectType) {
+        return switch (projectType) {
+            case "modpack" -> RemoteAddon.Type.MODPACK;
+            case "resourcepack" -> RemoteAddon.Type.RESOURCE_PACK;
+            case "shader" -> RemoteAddon.Type.SHADER_PACK;
+            case "mod" -> RemoteAddon.Type.MOD;
+            default -> null;
+        };
+    }
+
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     private static final String PREFIX = "https://api.modrinth.com";
 
     private static final String BASE = "https://modrinth.com";
 
-    private final String projectType;
+    private final @Nullable String projectType;
 
-    private final RemoteAddonRepository.Type type;
+    private final @Nullable RemoteAddon.Type type;
 
-    private ModrinthRemoteAddonRepository(String projectType) {
+    private ModrinthRemoteAddonRepository() {
+        this.projectType = null;
+        this.type = null;
+    }
+
+    private ModrinthRemoteAddonRepository(@NotNull String projectType) {
         this.projectType = projectType;
-        this.type = switch (projectType) {
-            case "modpack" -> Type.MODPACK;
-            case "resourcepack" -> Type.RESOURCE_PACK;
-            case "shader" -> Type.SHADER_PACK;
-            default -> Type.MOD;
-        };
+        this.type = toAddonType(projectType);
+        if (type == null) throw new IllegalArgumentException("Unsupported Modrinth project type: " + projectType);
     }
 
     @Override
-    public Type getType() {
+    public RemoteAddon.Type getType() {
+        if (type == null) throw new UnsupportedOperationException();
         return this.type;
     }
 
@@ -144,6 +159,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+        if (projectType == null) throw new UnsupportedOperationException();
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<List<String>> facets = new ArrayList<>();
@@ -334,6 +350,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     @Override
     public Stream<RemoteAddonRepository.Category> getCategories() throws IOException {
+        if (projectType == null) throw new UnsupportedOperationException();
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));
@@ -345,6 +362,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         }
     }
 
+    @JsonSerializable
     public record Category(String icon, String name, @SerializedName("project_type") String projectType) {
         public Category() {
             this("", "", "");
@@ -384,12 +402,6 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         }
 
         public RemoteAddon toAddon() {
-            Type type = switch (projectType) {
-                case "modpack" -> Type.MODPACK;
-                case "resourcepack" -> Type.RESOURCE_PACK;
-                case "shader" -> Type.SHADER_PACK;
-                default -> Type.MOD;
-            };
             return new RemoteAddon(
                     slug,
                     "",
@@ -399,7 +411,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
                     this,
-                    type
+                    toAddonType(projectType)
             );
         }
     }
@@ -465,7 +477,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                             throw new IllegalStateException("Broken datas");
                         }
 
-                        return RemoteAddon.Dependency.ofGeneral(DEPENDENCY_TYPE.get(dependency.dependencyType), MODS, dependency.projectId);
+                        return RemoteAddon.Dependency.ofGeneral(DEPENDENCY_TYPE.get(dependency.dependencyType), RemoteAddon.Source.MODRINTH, dependency.projectId);
                     }).filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions,
                     loaders.stream().flatMap(loader -> {
@@ -516,12 +528,6 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         }
 
         public RemoteAddon toAddon() {
-            Type type = switch (projectType) {
-                case "modpack" -> Type.MODPACK;
-                case "resourcepack" -> Type.RESOURCE_PACK;
-                case "shader" -> Type.SHADER_PACK;
-                default -> Type.MOD;
-            };
             return new RemoteAddon(
                     slug,
                     author,
@@ -531,7 +537,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
                     this,
-                    type
+                    toAddonType(projectType)
             );
         }
     }

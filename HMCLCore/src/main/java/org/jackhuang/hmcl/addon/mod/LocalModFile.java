@@ -196,7 +196,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     @Override
     public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
-        RemoteAddonRepository repository = source.getRepoForType(RemoteAddonRepository.Type.MOD);
+        RemoteAddonRepository repository = source.getRepoForType(RemoteAddon.Type.MOD);
         if (repository == null) return null;
         Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
         if (currentVersion.isEmpty()) return null;

@@ -29,16 +29,7 @@ import java.util.stream.Stream;
 
 public interface RemoteAddonRepository {
 
-    enum Type {
-        MOD,
-        MODPACK,
-        RESOURCE_PACK,
-        SHADER_PACK,
-        WORLD,
-        CUSTOMIZATION
-    }
-
-    Type getType();
+    RemoteAddon.Type getType();
 
     String getApiBaseUrl();
 

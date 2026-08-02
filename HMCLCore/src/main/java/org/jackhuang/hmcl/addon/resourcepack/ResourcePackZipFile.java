@@ -91,7 +91,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
 
     @Override
     public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
-        RemoteAddonRepository repository = source.getRepoForType(RemoteAddonRepository.Type.RESOURCE_PACK);
+        RemoteAddonRepository repository = source.getRepoForType(RemoteAddon.Type.RESOURCE_PACK);
         if (repository == null) return null;
         Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
         if (currentVersion.isEmpty()) return null;

@@ -72,7 +72,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final HMCLGameRepository.InstanceReference instanceReference;
     private final DownloadCallback callback;
     private final DownloadListPage page;
-    private final RemoteAddonRepository.Type type;
+    private final RemoteAddon.Type type;
 
     private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
 
@@ -80,8 +80,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
-        this.type = Objects.requireNonNullElse(addon.repoType(), repository.getType());
-        this.translations = ModTranslations.getTranslationsByRepositoryType(this.type);
+        this.type = Objects.requireNonNullElse(addon.type(), repository.getType());
+        this.translations = ModTranslations.getTranslationsByAddonType(this.type);
         this.mod = translations.getModByCurseForgeId(addon.slug());
         this.instanceReference = instanceReference;
         this.callback = callback;
@@ -283,7 +283,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                                 resolve:
                                 for (RemoteAddon.Version addonVersion : addonVersions) {
-                                    if (getSkinnable().type == RemoteAddonRepository.Type.MOD) {
+                                    if (getSkinnable().type == RemoteAddon.Type.MOD) {
                                         for (ModLoaderType loader : addonVersion.loaders()) {
                                             if (targetLoaders.contains(loader)) {
                                                 list.getContent().addAll(
@@ -388,8 +388,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.getChildren().setAll(imageView, content);
             FXUtils.setLimitHeight(this, 60);
 
-            RemoteAddonRepository.Type type = addon.repoType();
-            DownloadCallback callback = switch (type) {
+            RemoteAddon.Type type = addon.type();
+            DownloadCallback callback = type == null ? null : switch (type) {
                 case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
                 case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
                 case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
@@ -402,7 +402,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             setNode(IDX_LEADING, pane);
 
             if (addon != RemoteAddon.BROKEN) {
-                ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(type).getModByCurseForgeId(addon.slug());
+                ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(addon.slug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
                 content.setSubtitle(addon.description());
                 for (String category : addon.categories()) {
@@ -512,7 +512,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonVersion extends JFXDialogLayout {
         public AddonVersion(RemoteAddon mod, RemoteAddon.Version version, DownloadPage selfPage) {
-            RemoteAddonRepository.Type type = selfPage.type;
+            RemoteAddon.Type type = selfPage.type;
 
             String title = switch (type) {
                 case WORLD -> "world.download.title";
@@ -559,10 +559,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             JFXButton downloadButton = null;
             if (selfPage.callback != null) {
-                downloadButton = new JFXButton(type == RemoteAddonRepository.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
+                downloadButton = new JFXButton(type == RemoteAddon.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
                 downloadButton.getStyleClass().add("dialog-accept");
                 downloadButton.setOnAction(e -> {
-                    if (type == RemoteAddonRepository.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                    if (type == RemoteAddon.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                         fireEvent(new DialogCloseEvent());
                     }
                     selfPage.download(mod, version);
@@ -588,8 +588,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                 this.setActions(downloadButton, saveAsButton, cancelButton);
             }
 
-            this.prefWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.windowHeightProperty().multiply(0.8));
+            this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
+            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.8));
 
             onEscPressed(this, cancelButton::fire);
         }
