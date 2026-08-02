@@ -501,7 +501,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInst
                 Task.runAsync(() -> {
                     Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(shaderFile.getFile());
                     if (versionOptional.isPresent()) {
-                        RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
+                        RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                         FXUtils.runInFX(() -> {
                             button.setOnAction(e -> {
                                 fireEvent(new DialogCloseEvent());
