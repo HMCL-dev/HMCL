@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.addon;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +109,7 @@ public final class Favorites {
                 lastProvider = downloadProvider;
             }
             LinkedHashMap<RemoteAddon, Item> resultReversed = new LinkedHashMap<>(items.size());
-            for (var item : items.reversed()) {
+            for (var item : Lang.reversedCopyOf(items)) {
                 RemoteAddon addon;
                 if (cache.containsKey(item)) {
                     addon = cache.get(item);
@@ -125,7 +126,7 @@ public final class Favorites {
                     cache.put(item, addon);
                 }
             }
-            addons.addAll(resultReversed.reversed().keySet());
+            addons.addAll(Lang.reversedCopyOf(resultReversed.keySet()));
             if (items.retainAll(resultReversed.values())) { // Remove duplicate items
                 save();
             }

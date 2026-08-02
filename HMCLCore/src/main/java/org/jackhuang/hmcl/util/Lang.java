@@ -71,6 +71,12 @@ public final class Lang {
         return Collections.unmodifiableList(Arrays.asList(elements));
     }
 
+    public static <E> Collection<E> reversedCopyOf(Collection<E> set) {
+        ArrayList<E> list = new ArrayList<>(set);
+        Collections.reverse(list);
+        return new LinkedHashSet<>(list);
+    }
+
     public static boolean test(ExceptionalRunnable<?> r) {
         try {
             r.run();
