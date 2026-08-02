@@ -21,7 +21,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
-import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
@@ -92,11 +92,6 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         } else {
             mod.getFiles().add(this);
         }
-    }
-
-    @Override
-    public RemoteAddonRepository.Type getType() {
-        return RemoteAddonRepository.Type.MOD;
     }
 
     public ModManager getModManager() {
@@ -199,7 +194,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     @Override
     protected UpdateConditions getUpdateConditions() {
-        return new UpdateConditions(List.of(v -> v.loaders().contains(getModLoaderType())));
+        return new UpdateConditions(RemoteAddon.Type.MOD, List.of(v -> v.loaders().contains(getModLoaderType())));
     }
 
     @Override

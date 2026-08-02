@@ -34,8 +34,6 @@ public abstract class LocalAddonFile {
     protected LocalAddonFile() {
     }
 
-    public abstract RemoteAddonRepository.Type getType();
-
     public abstract Path getFile();
 
     /// Without extension
@@ -63,7 +61,7 @@ public abstract class LocalAddonFile {
         var conditions = getUpdateConditions();
         if (conditions == null) return null;
 
-        RemoteAddonRepository repository = source.getRepoForType(getType());
+        RemoteAddonRepository repository = source.getRepoForType(conditions.type());
         if (repository == null) return null;
         Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(getFile());
         if (currentVersion.isEmpty()) return null;
@@ -85,7 +83,7 @@ public abstract class LocalAddonFile {
     }
 
     @SuppressWarnings("RedundantRecordConstructor")
-    protected record UpdateConditions(@Nullable List<Predicate<RemoteAddon.Version>> predicates) {
+    protected record UpdateConditions(RemoteAddon.Type type, @Nullable List<Predicate<RemoteAddon.Version>> predicates) {
         public UpdateConditions {
         }
     }

@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.addon.resourcepack;
 
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
-import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -60,11 +59,6 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
         this.file = file;
         this.fileName = StringUtils.parseColorEscapes(FileUtils.getNameWithoutExtension(file));
         this.fileNameWithExtension = file.getFileName().toString();
-    }
-
-    @Override
-    public final RemoteAddonRepository.Type getType() {
-        return RemoteAddonRepository.Type.RESOURCE_PACK;
     }
 
     @Override
