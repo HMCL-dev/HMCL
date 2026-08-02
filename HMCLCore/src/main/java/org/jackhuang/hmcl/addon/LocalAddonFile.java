@@ -68,7 +68,7 @@ public abstract class LocalAddonFile {
         Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(getFile());
         if (currentVersion.isEmpty()) return null;
 
-        var stream = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().modid())
+        var stream = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().projectId())
                 .filter(version -> version.gameVersions().contains(gameVersion));
         if (!updateToPreview)
             stream = stream.filter(version -> version.versionType() == RemoteAddon.VersionType.Release);
