@@ -85,9 +85,13 @@ public interface GameRepository {
 
     /// Returns the directory that stores files belonging to an instance.
     ///
+    /// Delegates to [GameRepositoryLayout#getInstanceRoot(GameInstanceID)].
+    ///
     /// @param instanceId the instance id
     /// @return the instance root directory
-    Path getInstanceRoot(GameInstanceID instanceId);
+    default Path getInstanceRoot(GameInstanceID instanceId) {
+        return getLayout().getInstanceRoot(instanceId);
+    }
 
     /// Returns the working directory used when launching an instance.
     ///
@@ -97,16 +101,26 @@ public interface GameRepository {
 
     /// Returns the base directory used to store shared libraries for a manifest.
     ///
+    /// Delegates to [GameRepositoryLayout#getLibrariesDirectory()]. The manifest argument is
+    /// retained for API compatibility and is not used by the default implementation.
+    ///
     /// @param manifest the manifest whose libraries are being resolved
     /// @return the libraries directory
-    Path getLibrariesDirectory(GameInstanceManifest manifest);
+    default Path getLibrariesDirectory(GameInstanceManifest manifest) {
+        return getLayout().getLibrariesDirectory();
+    }
 
     /// Returns the expected filesystem path for a library.
+    ///
+    /// Delegates to [GameRepositoryLayout#getLibraryFile(GameInstanceID, Library)] using
+    /// [GameInstanceManifest#id()] as the library owner.
     ///
     /// @param manifest the manifest that owns or references the library
     /// @param lib      the library descriptor
     /// @return the library file path
-    Path getLibraryFile(GameInstanceManifest manifest, Library lib);
+    default Path getLibraryFile(GameInstanceManifest manifest, Library lib) {
+        return getLayout().getLibraryFile(manifest.id(), lib);
+    }
 
     /// Returns the directory used for extracted native libraries of an instance and platform.
     ///
@@ -173,10 +187,15 @@ public interface GameRepository {
 
     /// Returns the base asset storage directory for an instance.
     ///
+    /// Delegates to [GameRepositoryLayout#getAssetDirectory()]. The instance and asset id
+    /// arguments are retained for API compatibility and are not used by the default implementation.
+    ///
     /// @param instanceId the instance id
     /// @param assetId    the asset index id
     /// @return the asset storage directory
-    Path getAssetDirectory(GameInstanceID instanceId, String assetId);
+    default Path getAssetDirectory(GameInstanceID instanceId, String assetId) {
+        return getLayout().getAssetDirectory();
+    }
 
     /// Returns an existing asset object path by logical asset name.
     ///
@@ -189,11 +208,16 @@ public interface GameRepository {
 
     /// Returns the expected path for an asset object descriptor.
     ///
+    /// Delegates to [GameRepositoryLayout#getAssetObject(AssetObject)]. The instance and asset id
+    /// arguments are retained for API compatibility and are not used by the default implementation.
+    ///
     /// @param instanceId the instance id
     /// @param assetId    the asset index id
     /// @param obj        the asset object descriptor
     /// @return the asset object path
-    Path getAssetObject(GameInstanceID instanceId, String assetId, AssetObject obj);
+    default Path getAssetObject(GameInstanceID instanceId, String assetId, AssetObject obj) {
+        return getLayout().getAssetObject(obj);
+    }
 
     /// Reads an asset index.
     ///
@@ -205,18 +229,28 @@ public interface GameRepository {
 
     /// Returns the path of an asset index file.
     ///
+    /// Delegates to [GameRepositoryLayout#getAssetIndexFile(String)]. The instance id is retained
+    /// for API compatibility and is not used by the default implementation.
+    ///
     /// @param instanceId the instance id
     /// @param assetId    the asset index id
     /// @return the asset index file path
-    Path getIndexFile(GameInstanceID instanceId, String assetId);
+    default Path getIndexFile(GameInstanceID instanceId, String assetId) {
+        return getLayout().getAssetIndexFile(assetId);
+    }
 
     /// Returns the path of a logging configuration object.
+    ///
+    /// Delegates to [GameRepositoryLayout#getLoggingObject(String, LoggingInfo)]. The instance id is
+    /// retained for API compatibility and is not used by the default implementation.
     ///
     /// @param instanceId  the instance id
     /// @param assetId     the asset index id used as the logging object namespace
     /// @param loggingInfo the logging configuration descriptor
     /// @return the logging object path
-    Path getLoggingObject(GameInstanceID instanceId, String assetId, LoggingInfo loggingInfo);
+    default Path getLoggingObject(GameInstanceID instanceId, String assetId, LoggingInfo loggingInfo) {
+        return getLayout().getLoggingObject(assetId, loggingInfo);
+    }
 
     /// Returns the classpath entries whose library files are present on disk.
     ///

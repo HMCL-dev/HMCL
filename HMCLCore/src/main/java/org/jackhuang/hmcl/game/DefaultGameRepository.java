@@ -303,35 +303,12 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public Path getInstanceRoot(GameInstanceID instanceId) {
-        return getBaseDirectory().resolve("versions").resolve(instanceId.id());
-    }
-
-    @Override
     public Collection<GameInstanceManifest> getInstanceManifests() {
         return status.instances.values().stream().map(i -> i.manifest).toList();
     }
 
-    @Override
-    public Path getLibrariesDirectory(GameInstanceManifest manifest) {
-        return getBaseDirectory().resolve("libraries");
-    }
-
-    @Override
-    public Path getLibraryFile(GameInstanceManifest manifest, Library lib) {
-        if ("local".equals(lib.hint())) {
-            if (lib.filename() != null) {
-                return getInstanceRoot(manifest.id()).resolve("libraries/" + lib.filename());
-            }
-
-            return getInstanceRoot(manifest.id()).resolve("libraries/" + lib.artifact().getFileName());
-        }
-
-        return getLibrariesDirectory(manifest).resolve(lib.getPath());
-    }
-
     public Path getArtifactFile(GameInstanceManifest manifest, Artifact artifact) {
-        return artifact.getPath(getBaseDirectory().resolve("libraries"));
+        return artifact.getPath(getLayout().getLibrariesDirectory());
     }
 
     @Override
@@ -340,15 +317,10 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getInstanceJar(getResolvedInstanceManifest(instanceId).launchManifest());
-    }
-
-    @Override
     public Path getInstanceJar(GameInstanceManifest manifest) {
         GameInstanceManifest resolved = this.resolve(manifest).launchManifest();
         GameInstanceID id = Optional.ofNullable(resolved.jar()).orElse(resolved.id());
-        return getInstanceRoot(id).resolve(id + ".jar");
+        return getLayout().getInstanceJarFile(id);
     }
 
     @Override
@@ -478,7 +450,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Path getInstanceJson(GameInstanceID instanceId) {
-        return getInstanceRoot(instanceId).resolve(instanceId.id() + ".json");
+        return getLayout().getInstanceJson(instanceId);
     }
 
     @Override
@@ -501,11 +473,6 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public Path getAssetDirectory(GameInstanceID instanceId, String assetId) {
-        return getBaseDirectory().resolve("assets");
-    }
-
-    @Override
     public Optional<Path> getAssetObject(GameInstanceID instanceId, String assetId, String name) throws IOException {
         try {
             AssetObject assetObject = getAssetIndex(instanceId, assetId).getObjects().get(name);
@@ -518,23 +485,8 @@ public class DefaultGameRepository implements GameRepository {
         }
     }
 
-    @Override
-    public Path getAssetObject(GameInstanceID instanceId, String assetId, AssetObject obj) {
-        return getAssetObject(instanceId, getAssetDirectory(instanceId, assetId), obj);
-    }
-
     public Path getAssetObject(GameInstanceID instanceId, Path assetDir, AssetObject obj) {
         return assetDir.resolve("objects").resolve(obj.getLocation());
-    }
-
-    @Override
-    public Path getIndexFile(GameInstanceID instanceId, String assetId) {
-        return getAssetDirectory(instanceId, assetId).resolve("indexes").resolve(assetId + ".json");
-    }
-
-    @Override
-    public Path getLoggingObject(GameInstanceID instanceId, String assetId, LoggingInfo loggingInfo) {
-        return getAssetDirectory(instanceId, assetId).resolve("log_configs").resolve(loggingInfo.file().getId());
     }
 
     protected Path reconstructAssets(GameInstanceID instanceId, String assetId) throws IOException, JsonParseException {
