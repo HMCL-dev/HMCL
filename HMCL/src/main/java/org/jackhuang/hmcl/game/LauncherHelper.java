@@ -186,7 +186,9 @@ public final class LauncherHelper {
                                 Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
                                 if (lib == null)
                                     return null;
-                                Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
+                                GameRepository gameRepository = dependencyManager.getGameRepository();
+                                GameInstanceManifest manifest = version.get();
+                                Path file = gameRepository.getLayout().getLibraryFile(manifest.id(), lib);
                                 if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
                                     LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
                                     return null;

@@ -180,7 +180,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         Library library = new Library(new Artifact("org.glavo", "lwjgl-unsafe-agent", agentVersion));
         String fileName = library.artifact().getFileName();
 
-        Path agentPath = repository.getLibraryFile(manifest, library).toAbsolutePath().normalize();
+        Path agentPath = repository.getLayout().getLibraryFile(manifest.id(), library).toAbsolutePath().normalize();
         if (agentPath.toString().contains("=")) {
             throw new IOException("Invalid library path: " + agentPath);
         }

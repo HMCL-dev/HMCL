@@ -378,7 +378,7 @@ public class DefaultGameRepository implements GameRepository {
         Status currentStatus = status;
         currentStatus.instances.remove(id);
 
-        Path file = getInstanceRoot(id);
+        Path file = getLayout().getInstanceRoot(id);
         if (Files.notExists(file)) {
             return true;
         }
@@ -436,7 +436,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getNativeDirectory(GameInstanceID instanceId, Platform platform) {
-        return getInstanceRoot(instanceId).resolve("natives-" + platform);
+        return getLayout().getInstanceRoot(instanceId).resolve("natives-" + platform);
     }
 
     @Override
@@ -456,7 +456,7 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public AssetIndex getAssetIndex(GameInstanceID instanceId, String assetId) throws IOException {
         try {
-            return Objects.requireNonNull(JsonUtils.fromJsonFile(getIndexFile(instanceId, assetId), AssetIndex.class));
+            return Objects.requireNonNull(JsonUtils.fromJsonFile(getLayout().getAssetIndexFile(assetId), AssetIndex.class));
         } catch (JsonParseException | NullPointerException e) {
             throw new IOException("Asset index file malformed", e);
         }
@@ -468,7 +468,7 @@ public class DefaultGameRepository implements GameRepository {
             return reconstructAssets(instanceId, assetId);
         } catch (IOException | JsonParseException e) {
             LOG.error("Unable to reconstruct asset directory", e);
-            return getAssetDirectory(instanceId, assetId);
+            return getLayout().getAssetDirectory();
         }
     }
 
@@ -477,7 +477,7 @@ public class DefaultGameRepository implements GameRepository {
         try {
             AssetObject assetObject = getAssetIndex(instanceId, assetId).getObjects().get(name);
             if (assetObject == null) return Optional.empty();
-            return Optional.of(getAssetObject(instanceId, assetId, assetObject));
+            return Optional.of(getLayout().getAssetObject(assetObject));
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
@@ -490,8 +490,8 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     protected Path reconstructAssets(GameInstanceID instanceId, String assetId) throws IOException, JsonParseException {
-        Path assetsDir = getAssetDirectory(instanceId, assetId);
-        Path indexFile = getIndexFile(instanceId, assetId);
+        Path assetsDir = getLayout().getAssetDirectory();
+        Path indexFile = getLayout().getAssetIndexFile(assetId);
         Path virtualRoot = assetsDir.resolve("virtual").resolve(assetId);
 
         if (!Files.isRegularFile(indexFile))
@@ -551,7 +551,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Path getModpackConfiguration(GameInstanceID instanceId) {
-        return getInstanceRoot(instanceId).resolve("modpack.json");
+        return getLayout().getInstanceRoot(instanceId).resolve("modpack.json");
     }
 
     @Nullable

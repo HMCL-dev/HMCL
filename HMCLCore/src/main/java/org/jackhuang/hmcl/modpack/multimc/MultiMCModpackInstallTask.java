@@ -249,7 +249,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             Path libraries = root.resolve("libraries");
             if (Files.exists(libraries))
-                FileUtils.copyDirectory(libraries, repository.getInstanceRoot(instanceId).resolve("libraries"));
+                FileUtils.copyDirectory(libraries, repository.getLayout().getInstanceRoot(instanceId).resolve("libraries"));
 
             for (Library library : artifact.getManifest().getLibraries()) {
                 if ("local".equals(library.hint())) {
@@ -257,15 +257,15 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                         Retain them will facilitate compatibility, as some embedded libraries may check where their JAR is.
                         Meanwhile, potential compatibility issue with other launcher which never supports these fields might occur.
                         Here, we make the file stored twice, to keep maximum compatibility. */
-                    Path from = repository.getLibraryFile(artifact.getManifest(), library);
-                    Path target = repository.getLibraryFile(artifact.getManifest(), library.withoutCommunityFields());
+                    Path from = repository.getLayout().getLibraryFile(artifact.getManifest().id(), library);
+                    Path target = repository.getLayout().getLibraryFile(artifact.getManifest().id(), library.withoutCommunityFields());
                     Files.createDirectories(target.getParent());
                     Files.copy(from, target, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
 
             try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
-                Path libraryPath = repository.getLibraryFile(artifact.getManifest(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
+                Path libraryPath = repository.getLayout().getLibraryFile(artifact.getManifest().id(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
 
                 Files.createDirectories(libraryPath.getParent());
                 Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), libraryPath, StandardCopyOption.REPLACE_EXISTING);
@@ -275,7 +275,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             if (iconKey != null) {
                 Path iconFile = root.resolve(iconKey + ".png");
                 if (Files.exists(iconFile)) {
-                    FileUtils.copyFile(iconFile, repository.getInstanceRoot(instanceId).resolve("icon.png"));
+                    FileUtils.copyFile(iconFile, repository.getLayout().getInstanceRoot(instanceId).resolve("icon.png"));
                 }
             }
         }
@@ -335,7 +335,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             Path root = getRootPath(fs).resolve("jarmods");
 
             try (FileSystem mc = CompressingUtils.writable(
-                    repository.getInstanceRoot(instanceId).resolve(instanceId + ".jar")
+                    repository.getLayout().getInstanceRoot(instanceId).resolve(instanceId + ".jar")
             ).setAutoDetectEncoding(true).build()) {
                 for (String fileName : files) {
                     try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).setAutoDetectEncoding(true).build()) {

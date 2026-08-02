@@ -463,7 +463,7 @@ public class DefaultLauncher extends Launcher {
             FileUtils.cleanDirectoryQuietly(destination);
             for (Library library : manifest.getLibraries())
                 if (library.isNative())
-                    new Unzipper(repository.getLibraryFile(manifest, library), destination)
+                    new Unzipper(repository.getLayout().getLibraryFile(manifest.id(), library), destination)
                             .setFilter((zipEntry, destFile, relativePath) -> {
                                 if (!zipEntry.isDirectory() && !zipEntry.isUnixSymlink()
                                         && Files.isRegularFile(destFile)
@@ -494,7 +494,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     public Path getLog4jConfigurationFile() {
-        return repository.getInstanceRoot(manifest.id()).resolve("log4j2.xml");
+        return repository.getLayout().getInstanceRoot(manifest.id()).resolve("log4j2.xml");
     }
 
     public void extractLog4jConfigurationFile() throws IOException {
@@ -537,7 +537,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${user_properties}", authInfo.getUserProperties()),
                 pair("${resolution_width}", options.getWidth().toString()),
                 pair("${resolution_height}", options.getHeight().toString()),
-                pair("${library_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(manifest))),
+                pair("${library_directory}", FileUtils.getAbsolutePath(repository.getLayout().getLibrariesDirectory())),
                 pair("${classpath_separator}", File.pathSeparator),
                 pair("${primary_jar}", FileUtils.getAbsolutePath(repository.getInstanceJar(manifest))),
                 pair("${language}", Locale.getDefault().toLanguageTag()),
@@ -546,7 +546,7 @@ public class DefaultLauncher extends Launcher {
                 // libraries_directory stands for historical reasons here. We don't know the official launcher
                 // had already defined "library_directory" as the placeholder for path to ".minecraft/libraries"
                 // when we propose this placeholder.
-                pair("${libraries_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(manifest))),
+                pair("${libraries_directory}", FileUtils.getAbsolutePath(repository.getLayout().getLibrariesDirectory())),
                 // file_separator is used in -DignoreList
                 pair("${file_separator}", File.separator),
                 pair("${primary_jar_name}", FileUtils.getName(repository.getInstanceJar(manifest)))
@@ -622,7 +622,7 @@ public class DefaultLauncher extends Launcher {
         Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
-        env.put("INST_DIR", FileUtils.getAbsolutePath(repository.getInstanceRoot(manifest.id())));
+        env.put("INST_DIR", FileUtils.getAbsolutePath(repository.getLayout().getInstanceRoot(manifest.id())));
         env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(manifest.id())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 

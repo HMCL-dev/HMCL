@@ -165,7 +165,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     @Override
     public Path getRunDirectory(GameInstanceID instanceId) {
         if (beingModpackInstances.contains(instanceId) || isModpack(instanceId)) {
-            return getInstanceRoot(instanceId);
+            return getLayout().getInstanceRoot(instanceId);
         }
 
         GameSettings.Instance localSetting = getInstanceGameSettings(instanceId);
@@ -174,13 +174,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         String runningDirectory = getSelectedRunningDirectory(localSetting, useInstanceRunningDirectory);
         if (StringUtils.isBlank(runningDirectory)) {
-            return useInstanceRunningDirectory ? getInstanceRoot(instanceId) : super.getRunDirectory(instanceId);
+            return useInstanceRunningDirectory ? getLayout().getInstanceRoot(instanceId) : super.getRunDirectory(instanceId);
         }
 
         try {
             return Path.of(runningDirectory);
         } catch (InvalidPathException ignored) {
-            return getInstanceRoot(instanceId);
+            return getLayout().getInstanceRoot(instanceId);
         }
     }
 
@@ -257,8 +257,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public void duplicateInstance(GameInstanceID srcId, GameInstanceID dstId, boolean copySaves) throws IOException {
-        Path srcDir = getInstanceRoot(srcId);
-        Path dstDir = getInstanceRoot(dstId);
+        Path srcDir = getLayout().getInstanceRoot(srcId);
+        Path dstDir = getLayout().getInstanceRoot(dstId);
 
         GameInstanceManifest fromManifest = getInstanceManifest(srcId);
 
@@ -287,7 +287,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         boolean copyOriginalGameDir;
         try {
-            copyOriginalGameDir = !Files.isSameFile(getRunDirectory(srcId), getInstanceRoot(srcId));
+            copyOriginalGameDir = !Files.isSameFile(getRunDirectory(srcId), getLayout().getInstanceRoot(srcId));
         } catch (IOException e) {
             copyOriginalGameDir = true;
         }
@@ -321,7 +321,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     ///
     /// This directory stores instance-scoped files owned by HMCL.
     public Path getInstanceMetadataDirectory(GameInstanceID instanceId) {
-        return getInstanceRoot(instanceId).resolve(INSTANCE_METADATA_DIRECTORY);
+        return getLayout().getInstanceRoot(instanceId).resolve(INSTANCE_METADATA_DIRECTORY);
     }
 
     /// Returns the HMCL-managed configuration directory under the instance metadata directory.
@@ -589,7 +589,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public Optional<Path> getInstanceIconFile(GameInstanceID instanceId) {
-        Path root = getInstanceRoot(instanceId);
+        Path root = getLayout().getInstanceRoot(instanceId);
 
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
             Path file = root.resolve("icon." + extension);
@@ -609,11 +609,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         deleteIconFile(instanceId);
 
-        FileUtils.copyFile(iconFile, getInstanceRoot(instanceId).resolve("icon." + ext));
+        FileUtils.copyFile(iconFile, getLayout().getInstanceRoot(instanceId).resolve("icon." + ext));
     }
 
     public void deleteIconFile(GameInstanceID instanceId) {
-        Path root = getInstanceRoot(instanceId);
+        Path root = getLayout().getInstanceRoot(instanceId);
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
             Path file = root.resolve("icon." + extension);
             try {
@@ -817,7 +817,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public Path getModpackConfiguration(GameInstanceID instanceId) {
-        return getInstanceRoot(instanceId).resolve("modpack.cfg");
+        return getLayout().getInstanceRoot(instanceId).resolve("modpack.cfg");
     }
 
     public void markInstanceAsModpack(GameInstanceID instanceId) {
@@ -830,13 +830,13 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public void markInstanceLaunchedAbnormally(GameInstanceID instanceId) {
         try {
-            Files.createFile(getInstanceRoot(instanceId).resolve(".abnormal"));
+            Files.createFile(getLayout().getInstanceRoot(instanceId).resolve(".abnormal"));
         } catch (IOException ignored) {
         }
     }
 
     public boolean unmarkInstanceLaunchedAbnormally(GameInstanceID instanceId) {
-        Path file = getInstanceRoot(instanceId).resolve(".abnormal");
+        Path file = getLayout().getInstanceRoot(instanceId).resolve(".abnormal");
         if (Files.isRegularFile(file)) {
             try {
                 Files.delete(file);

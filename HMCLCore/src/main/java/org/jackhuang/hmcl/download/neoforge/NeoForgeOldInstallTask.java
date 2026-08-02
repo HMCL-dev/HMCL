@@ -280,7 +280,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
             for (Library library : profile.getLibraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());
                 if (Files.exists(file)) {
-                    Path dest = gameRepository.getLibraryFile(manifest, library);
+                    Path dest = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
                     FileUtils.copyFile(file, dest);
                 }
             }
@@ -391,7 +391,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
         vars.put("MINECRAFT_VERSION", FileUtils.getAbsolutePath(gameRepository.getInstanceJar(manifest)));
         vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
-        vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLibrariesDirectory(manifest)));
+        vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
 
         updateProgress(0, processors.size());
 

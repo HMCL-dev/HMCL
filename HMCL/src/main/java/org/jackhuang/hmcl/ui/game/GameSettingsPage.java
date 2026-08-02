@@ -1869,7 +1869,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return "";
         }
 
-        return repository.getInstanceRoot(instanceId).toString();
+        return repository.getLayout().getInstanceRoot(instanceId).toString();
     }
 
     /// Keeps a listener attached to the current instance's parent preset property.

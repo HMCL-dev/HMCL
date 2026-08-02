@@ -28,11 +28,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.game.QuickPlayOption;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -121,7 +117,7 @@ public final class Instances {
 
     public static void deleteInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
         boolean isIndependent = repository.getRunDirectory(instanceId).toAbsolutePath().normalize()
-                .equals(repository.getInstanceRoot(instanceId).toAbsolutePath().normalize());
+                .equals(repository.getLayout().getInstanceRoot(instanceId).toAbsolutePath().normalize());
         String message = isIndependent ? i18n("instance.manage.remove.confirm.independent", instanceId) :
                 i18n("instance.manage.remove.confirm.trash", instanceId, instanceId + "_removed");
 

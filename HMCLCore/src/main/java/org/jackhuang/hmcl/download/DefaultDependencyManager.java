@@ -24,10 +24,7 @@ import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -136,7 +133,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         if (GameLibrariesTask.shouldDownloadLibrary(repository, manifest, installer, integrityCheck)) {
                             tasks.add(installLibraryAsync(gameVersion, original, "optifine", optifinePatchVersion));
                         } else {
-                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(manifest, installer)));
+                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLayout().getLibraryFile(manifest.id(), installer)));
                         }
                     }
                 }
