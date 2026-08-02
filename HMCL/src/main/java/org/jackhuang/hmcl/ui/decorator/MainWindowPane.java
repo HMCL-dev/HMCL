@@ -75,6 +75,9 @@ final class MainWindowPane extends StackPane {
     /// The transition container used when the title-bar state changes.
     private final TransitionPane navBarPane;
 
+    /// The pane that behaves as the overlay of dialogs.
+    private final StackPane dialogOverlayPane;
+
     /// Retains listener delegates that are registered through weak listener wrappers.
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
@@ -133,7 +136,10 @@ final class MainWindowPane extends StackPane {
 
         decorator.capableDraggingWindow(titleBar);
 
-        getChildren().setAll(backgroundNode, frame);
+        dialogOverlayPane = new StackPane();
+        dialogOverlayPane.setVisible(false);
+
+        getChildren().setAll(backgroundNode, dialogOverlayPane, frame);
     }
 
     /// Updates the content-corner shape for an edge-to-edge window state.
@@ -310,6 +316,10 @@ final class MainWindowPane extends StackPane {
         }
 
         return navBar;
+    }
+
+    public StackPane getDialogOverlayPane() {
+        return dialogOverlayPane;
     }
 
     /// Produces directional transitions for page-title changes.
