@@ -116,6 +116,19 @@ final class ExecutableHeaderHelper {
                 if (header.isPresent()) {
                     out.write(ByteBuffer.wrap(header.get()));
                 }
+            } else {
+                // Fallback: when the destination file has no recognizable suffix
+                // (e.g. the user removed the .sh extension), try to detect and
+                // preserve the header from the source file by checking all known
+                // suffixes. This prevents the update from turning an executable
+                // shell script into a plain .jar file.
+                for (String knownSuffix : suffix2header.keySet()) {
+                    Optional<byte[]> header = readHeader(zip, knownSuffix);
+                    if (header.isPresent()) {
+                        out.write(ByteBuffer.wrap(header.get()));
+                        break;
+                    }
+                }
             }
 
             in.transferTo(detectHeaderLength(zip, in), Long.MAX_VALUE, out);

@@ -25,6 +25,7 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -45,6 +46,10 @@ public class TwoLineListItem extends VBox {
 
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
+        lblTitle.setTextOverrun(OverrunStyle.ELLIPSIS);
+        lblTitle.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(lblTitle, Priority.SOMETIMES);
+        lblTitle.setMinWidth(0);
 
         this.firstLine = new HBox(lblTitle);
         firstLine.getStyleClass().add("first-line");

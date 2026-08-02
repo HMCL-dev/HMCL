@@ -1151,10 +1151,28 @@ public final class Themes {
                 });
             }
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && MacOSNativeUtils.isSupported()) {
-            MacOSNativeUtils.setAppearance(darkModeProperty().get());
+            // On macOS, calling NSApplication.setAppearance() overrides the system
+            // appearance, which locks the JavaFX colorScheme property and prevents it
+            // from following the system theme. Therefore, only set the appearance when
+            // the user explicitly chooses "light" or "dark" mode. When in "auto" (follow
+            // system) mode, leave the appearance unset so the JavaFX colorScheme tracks
+            // the system automatically.
+            Runnable syncMacAppearance = () -> {
+                String mode = settings().themeBrightnessModeProperty().get();
+                if ("auto".equalsIgnoreCase(Objects.toString(mode, "").trim())) {
+                    MacOSNativeUtils.resetAppearance();
+                } else {
+                    MacOSNativeUtils.setAppearance(darkModeProperty().get());
+                }
+            };
 
-            ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), MacOSNativeUtils::setAppearance);
-            stage.getProperties().put("Themes.applyNativeDarkMode.listener", listener);
+            syncMacAppearance.run();
+
+            // Re-evaluate when the user switches between auto / explicit brightness modes.
+            ChangeListener<String> modeListener = FXUtils.onWeakChange(
+                    settings().themeBrightnessModeProperty(),
+                    mode -> syncMacAppearance.run());
+            stage.getProperties().put("Themes.applyNativeDarkMode.modeListener", modeListener);
         }
     }
 

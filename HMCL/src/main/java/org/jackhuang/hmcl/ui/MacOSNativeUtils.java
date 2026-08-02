@@ -96,6 +96,22 @@ public final class MacOSNativeUtils {
         }
     }
 
+    /// Resets the application appearance to `nil` so the system controls it.
+    /// Call this when switching to "follow system" mode so that the JavaFX
+    /// [colorScheme] property continues to track the system theme automatically.
+    public static void resetAppearance() {
+        if (nsApp == null) return;
+
+        try {
+            var objc = ObjectiveCRuntime.INSTANCE;
+
+            Pointer setSel = objc.sel_registerName("setAppearance:");
+            objc.objc_msgSend(nsApp, setSel, (Pointer) null);
+        } catch (Throwable t) {
+            LOG.warning("Failed to reset macOS appearance", t);
+        }
+    }
+
     private MacOSNativeUtils() {
     }
 }

@@ -53,6 +53,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
         this.scrollBar = scrollBar;
         scrollBar.setPrefHeight(1e-18);
         scrollBar.setPrefWidth(1e-18);
+        scrollBar.setFocusTraversable(false);
 
         this.group = new Region() {
             Point2D dragStart;

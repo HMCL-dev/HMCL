@@ -133,7 +133,10 @@ public final class GameListPopupMenu extends StackPane {
             StackPane rootPane = new StackPane();
             rootPane.getStyleClass().add("advanced-list-item");
             rootPane.getChildren().setAll(ripplerContainer);
-            rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(5));
+            // Allow items to fill the full width; the right padding prevents
+            // overlap with the floating scrollbar (6px wide at x=-6).
+            rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(8));
+            rootPane.setPadding(new Insets(0, 8, 0, 0));
 
             FXUtils.onClicked(rootPane, () -> {
                 GameItem item = getItem();
