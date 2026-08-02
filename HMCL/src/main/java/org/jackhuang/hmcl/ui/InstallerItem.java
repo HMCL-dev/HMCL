@@ -315,6 +315,8 @@ public class InstallerItem extends Control {
             Label statusLabel = new Label();
             statusLabel.getStyleClass().add("installer-item-status");
             statusLabel.setMouseTransparent(true);
+            statusLabel.setWrapText(true);
+            statusLabel.setMaxWidth(Double.MAX_VALUE);
             pane.getChildren().add(statusLabel);
             HBox.setHgrow(statusLabel, Priority.ALWAYS);
             statusLabel.textProperty().bind(Bindings.createStringBinding(() -> {

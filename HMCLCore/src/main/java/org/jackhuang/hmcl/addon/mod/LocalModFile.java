@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.addon.mod;
 
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
@@ -75,14 +76,17 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
                 if (isOld()) return;
 
                 Path path = LocalModFile.this.file.toAbsolutePath();
+                boolean newValue = get();
 
                 try {
-                    if (get())
+                    if (newValue)
                         LocalModFile.this.file = modManager.enableMod(path);
                     else
                         LocalModFile.this.file = modManager.disableMod(path);
                 } catch (IOException e) {
                     LOG.error("Unable to invert state of mod file " + path, e);
+                    // Revert so the UI stays consistent with the actual file state.
+                    Platform.runLater(() -> set(!newValue));
                 }
             }
         };
