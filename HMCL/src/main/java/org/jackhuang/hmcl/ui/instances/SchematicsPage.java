@@ -86,7 +86,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     private static final SynchronizedLazy<RemoteAddon> litematicaLazy = new SynchronizedLazy<>(() -> {
         try {
-            return ModrinthRemoteAddonRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "litematica");
+            return ModrinthRemoteAddonRepository.MODS.getAddonById(DownloadProviders.getDownloadProvider(), "litematica");
         } catch (IOException e) {
             LOG.warning("Failed to fetch litematica", e);
             return null;
@@ -94,7 +94,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     });
     private static final SynchronizedLazy<RemoteAddon> forgematicaLazy = new SynchronizedLazy<>(() -> {
         try {
-            return ModrinthRemoteAddonRepository.MODS.getModById(DownloadProviders.getDownloadProvider(), "forgematica");
+            return ModrinthRemoteAddonRepository.MODS.getAddonById(DownloadProviders.getDownloadProvider(), "forgematica");
         } catch (IOException e) {
             LOG.warning("Failed to fetch forgematica", e);
             return null;
