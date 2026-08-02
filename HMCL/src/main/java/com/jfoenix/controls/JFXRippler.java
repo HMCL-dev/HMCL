@@ -134,22 +134,20 @@ public class JFXRippler extends StackPane {
         setCacheHint(CacheHint.SPEED);
         setCacheShape(true);
 
-        EventHandler<MouseEvent> mouseEventHandler;
-        if (AnimationUtils.isAnimationEnabled()) {
-            mouseEventHandler = event -> {
-                if (coverAnimation != null) {
-                    coverAnimation.stop();
-                }
+        EventHandler<MouseEvent> mouseEventHandler = event -> {
+            if (coverAnimation != null) {
+                coverAnimation.stop();
+            }
+            boolean isEntered = event.getEventType() == MouseEvent.MOUSE_ENTERED;
 
-                boolean isEntered = event.getEventType() == MouseEvent.MOUSE_ENTERED;
+            if (AnimationUtils.isAnimationEnabled()) {
                 coverAnimation = new Timeline(new KeyFrame(Motion.SHORT4,
                         new KeyValue(hoverOverlay.opacityProperty(), isEntered ? 1 : 0, isEntered ? Motion.EASE_IN : Motion.EASE_OUT)));
                 coverAnimation.play();
-            };
-        } else {
-            mouseEventHandler = event ->
-                    interpolateBackground(event.getEventType() == MouseEvent.MOUSE_ENTERED ? 1 : 0);
-        }
+            } else {
+                interpolateBackground(isEntered ? 1 : 0);
+            }
+        };
 
         addEventHandler(MouseEvent.MOUSE_ENTERED, mouseEventHandler);
         addEventHandler(MouseEvent.MOUSE_EXITED, mouseEventHandler);
@@ -371,16 +369,25 @@ public class JFXRippler extends StackPane {
             rippler.overlayRect.outAnimation.stop();
         }
         rippler.createOverlay();
-        rippler.overlayRect.inAnimation.play();
+
+        if (AnimationUtils.isAnimationEnabled()) {
+            rippler.overlayRect.inAnimation.play();
+        } else {
+            rippler.overlayRect.inAnimation.stop();
+            rippler.overlayRect.setOpacity(1);
+        }
     }
 
     public void hideOverlay() {
         if (!forceOverlay) {
             if (rippler.overlayRect != null) {
                 rippler.overlayRect.inAnimation.stop();
-            }
-            if (rippler.overlayRect != null) {
-                rippler.overlayRect.outAnimation.play();
+                if (AnimationUtils.isAnimationEnabled()) {
+                    rippler.overlayRect.outAnimation.play();
+                } else {
+                    rippler.overlayRect.outAnimation.stop();
+                    rippler.overlayRect.setOpacity(0);
+                }
             }
         } else {
             System.err.println("Ripple Overlay is forced!");
@@ -419,15 +426,22 @@ public class JFXRippler extends StackPane {
                 }
                 this.resetClip = false;
 
-                // create the ripple effect
-                final Ripple ripple = new Ripple(generatorCenterX, generatorCenterY);
-                getChildren().add(ripple);
-                ripplesQueue.add(ripple);
+                if (AnimationUtils.isAnimationEnabled()) {
+                    // create the ripple effect
+                    final Ripple ripple = new Ripple(generatorCenterX, generatorCenterY);
+                    getChildren().add(ripple);
+                    ripplesQueue.add(ripple);
 
-                // animate the ripple
-                overlayRect.outAnimation.stop();
-                overlayRect.inAnimation.play();
-                ripple.inAnimation.play();
+                    // animate the ripple
+                    overlayRect.outAnimation.stop();
+                    overlayRect.inAnimation.play();
+                    ripple.inAnimation.play();
+                } else {
+                    // apply simple press effect when animation is disabled
+                    overlayRect.outAnimation.stop();
+                    overlayRect.inAnimation.stop();
+                    overlayRect.setOpacity(1);
+                }
             }
         }
 
@@ -435,16 +449,25 @@ public class JFXRippler extends StackPane {
             Ripple ripple = ripplesQueue.poll();
             if (ripple != null) {
                 ripple.inAnimation.stop();
-                ripple.outAnimation = new Timeline(
-                        new KeyFrame(Duration.millis(Math.min(800, (0.9 * 500) / ripple.getScaleX()))
-                                , ripple.outKeyValues));
-                ripple.outAnimation.setOnFinished((event) -> getChildren().remove(ripple));
-                ripple.outAnimation.play();
-                if (generating.getAndSet(false)) {
-                    if (overlayRect != null) {
-                        overlayRect.inAnimation.stop();
-                        if (!forceOverlay) {
+                if (AnimationUtils.isAnimationEnabled()) {
+                    ripple.outAnimation = new Timeline(
+                            new KeyFrame(Duration.millis(Math.min(800, (0.9 * 500) / ripple.getScaleX()))
+                                    , ripple.outKeyValues));
+                    ripple.outAnimation.setOnFinished((event) -> getChildren().remove(ripple));
+                    ripple.outAnimation.play();
+                } else {
+                    getChildren().remove(ripple);
+                }
+            }
+            if (generating.getAndSet(false)) {
+                if (overlayRect != null) {
+                    overlayRect.inAnimation.stop();
+                    if (!forceOverlay) {
+                        if (AnimationUtils.isAnimationEnabled()) {
                             overlayRect.outAnimation.play();
+                        } else {
+                            overlayRect.outAnimation.stop();
+                            overlayRect.setOpacity(0);
                         }
                     }
                 }
@@ -594,8 +617,14 @@ public class JFXRippler extends StackPane {
         if (rippler.overlayRect != null) {
             rippler.overlayRect.inAnimation.stop();
             final RippleGenerator.OverLayRipple oldOverlay = rippler.overlayRect;
-            rippler.overlayRect.outAnimation.setOnFinished((finish) -> rippler.getChildren().remove(oldOverlay));
-            rippler.overlayRect.outAnimation.play();
+
+            if (AnimationUtils.isAnimationEnabled()) {
+                rippler.overlayRect.outAnimation.setOnFinished((finish) -> rippler.getChildren().remove(oldOverlay));
+                rippler.overlayRect.outAnimation.play();
+            } else {
+                rippler.overlayRect.outAnimation.stop();
+                rippler.getChildren().remove(oldOverlay);
+            }
             rippler.overlayRect = null;
         }
     }
