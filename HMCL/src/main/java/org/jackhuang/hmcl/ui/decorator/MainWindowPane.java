@@ -28,15 +28,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
@@ -115,11 +107,12 @@ final class MainWindowPane extends StackPane {
         center.getChildren().setAll(decorator.getNavigator());
         frame.setCenter(center);
 
-        HBox rightButtonsContainer = createWindowButtons();
+        Rectangle buttonsPlaceholder = new Rectangle();
+        buttonsPlaceholder.setFill(null);
         titleBar = new BorderPane();
         titleBar.setPickOnBounds(false);
         titleBar.getStyleClass().add("jfx-tool-bar");
-        titleBar.setRight(rightButtonsContainer);
+        titleBar.setRight(buttonsPlaceholder);
 
         navBarPane = new TransitionPane();
         titleBar.setCenter(navBarPane);
@@ -139,7 +132,15 @@ final class MainWindowPane extends StackPane {
         dialogOverlayPane = new StackPane();
         dialogOverlayPane.setVisible(false);
 
-        getChildren().setAll(backgroundNode, dialogOverlayPane, frame);
+        HBox rightButtonsContainer = createWindowButtons();
+        AnchorPane buttonsLayer = new AnchorPane(rightButtonsContainer);
+        buttonsLayer.setPickOnBounds(false);
+        AnchorPane.setTopAnchor(rightButtonsContainer, 0D);
+        AnchorPane.setRightAnchor(rightButtonsContainer, 0D);
+        buttonsPlaceholder.heightProperty().bind(rightButtonsContainer.heightProperty());
+        buttonsPlaceholder.widthProperty().bind(rightButtonsContainer.widthProperty());
+
+        getChildren().setAll(backgroundNode, frame, dialogOverlayPane, buttonsLayer);
     }
 
     /// Updates the content-corner shape for an edge-to-edge window state.
