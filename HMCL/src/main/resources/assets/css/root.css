@@ -1762,11 +1762,6 @@
     -fx-font-size: 14;
 }
 
-.window {
-    -fx-background-color: transparent;
-    -fx-padding: 8;
-}
-
 .debug-border {
     -fx-border-color: red;
     -fx-border-width: 1;

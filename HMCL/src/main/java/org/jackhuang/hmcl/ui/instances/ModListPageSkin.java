@@ -162,7 +162,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                             .toList()
                             )
                     ),
-                    createToolbarButton2(i18n("download"), SVG.DOWNLOAD, skinnable::download),
+                    createToolbarButton2(i18n("mods.download"), SVG.DOWNLOAD, skinnable::download),
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
@@ -402,7 +402,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
             titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
-            DoubleBinding widthBinding = Controllers.windowWidthProperty().multiply(0.7);
+            DoubleBinding widthBinding = Controllers.getDecorator().contentWidthProperty().multiply(0.7);
             prefWidthProperty().bind(widthBinding);
             maxWidthProperty().bind(widthBinding);
 
@@ -442,7 +442,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             description.heightProperty().addListener((obs, oldVal, newVal) -> {
-                double maxHeight = Controllers.windowHeightProperty().get() * 0.5;
+                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });
@@ -459,7 +459,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     Task.runAsync(() -> {
                         Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
+                            RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
                                     String loaderName = switch (modLoaderType) {
