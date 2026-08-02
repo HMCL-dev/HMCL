@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -46,6 +47,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// @see <a href="https://docs.modrinth.com/api">Modrinth API Doc</a>
 public final class ModrinthRemoteAddonRepository implements RemoteAddonRepository {
     public static final ModrinthRemoteAddonRepository MODS = new ModrinthRemoteAddonRepository("mod");
     public static final ModrinthRemoteAddonRepository MODPACKS = new ModrinthRemoteAddonRepository("modpack");
@@ -120,7 +122,8 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         };
     }
 
-    static List<String> sortDisplayCategories(List<String> displayCategories) {
+    @Unmodifiable
+    private static List<String> sortDisplayCategories(@Nullable List<String> displayCategories) {
         return displayCategories != null && !displayCategories.isEmpty()
                 ? displayCategories.stream().sorted(TAG_COMPARATOR).toList()
                 : List.of();
@@ -153,7 +156,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     LOG.info("Fetching " + candidate);
                     Response<ProjectSearchResult> response = HttpRequest.GET(candidate.toString())
                             .getJson(Response.typeOf(ProjectSearchResult.class));
-                    return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
+                    return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toAddon), (int) Math.ceil((double) response.totalHits / pageSize));
                 } catch (IOException e) {
                     LOG.warning("Failed to search addons: " + candidate, e);
 
@@ -181,10 +184,10 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
         SEMAPHORE.acquireUninterruptibly();
         try {
-            ProjectVersion mod = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
+            ProjectVersion projectVersion = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
                             pair("algorithm", "sha1"))
                     .getJson(ProjectVersion.class);
-            return mod.toVersion();
+            return projectVersion.toVersion();
         } catch (ResponseCodeException e) {
             if (e.getResponseCode() == 404) {
                 return Optional.empty();
@@ -199,7 +202,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
-    public RemoteAddon getModById(DownloadProvider downloadProvider, String id) throws IOException {
+    public RemoteAddon getAddonById(DownloadProvider downloadProvider, String id) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
@@ -209,14 +212,14 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
             for (URI candidate : candidates) {
                 try {
                     Project project = HttpRequest.GET(candidate.toString()).getJson(Project.class);
-                    return project.toMod();
+                    return project.toAddon();
                 } catch (IOException e) {
-                    IOException wrapper = new IOException("Failed to get mod: " + candidate, e);
+                    IOException wrapper = new IOException("Failed to get addon: " + candidate, e);
                     if (candidates.size() == 1) {
                         exception = wrapper;
                     } else {
                         if (exception == null) {
-                            exception = new IOException("Failed to get mod");
+                            exception = new IOException("Failed to get addon");
                         }
                         exception.addSuppressed(wrapper);
                     }
@@ -232,7 +235,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     @Override
     public RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
         try {
-            return getModById(downloadProvider, id);
+            return getAddonById(downloadProvider, id);
         } catch (ResponseCodeException e) {
             if (e.getResponseCode() == 502 || e.getResponseCode() == 404) {
                 return RemoteAddon.BROKEN;
@@ -244,7 +247,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
-    public RemoteAddon.File getModFile(String modId, String fileId) throws IOException {
+    public RemoteAddon.File getAddonFile(String projectId, String fileId) throws IOException {
         throw new UnsupportedOperationException();
     }
 
@@ -313,26 +316,26 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     public record Project(String slug, String title, String description, List<String> categories, String body,
                           @SerializedName("project_type") String projectType, int downloads,
                           @SerializedName("icon_url") String iconUrl, String id, String team, Instant published,
-                          Instant updated, List<String> versions) implements RemoteAddon.IMod {
+                          Instant updated, List<String> versions) implements RemoteAddon.IAddon {
 
         @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
-            Set<RemoteAddon.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, id())
+        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
+            Set<RemoteAddon.Dependency> dependencies = repo.getRemoteVersionsById(downloadProvider, id())
                     .flatMap(version -> version.dependencies().stream())
                     .collect(Collectors.toSet());
-            List<RemoteAddon> mods = new ArrayList<>();
+            List<RemoteAddon> addons = new ArrayList<>();
             for (RemoteAddon.Dependency dependency : dependencies) {
-                mods.add(dependency.load(downloadProvider));
+                addons.add(dependency.load(downloadProvider));
             }
-            return mods;
+            return addons;
         }
 
         @Override
-        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
-            return modRepository.getRemoteVersionsById(downloadProvider, id());
+        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
+            return repo.getRemoteVersionsById(downloadProvider, id());
         }
 
-        public RemoteAddon toMod() {
+        public RemoteAddon toAddon() {
             Type type = switch (projectType) {
                 case "modpack" -> Type.MODPACK;
                 case "resourcepack" -> Type.RESOURCE_PACK;
@@ -376,7 +379,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         );
 
         @Override
-        public RemoteAddon.Source getType() {
+        public RemoteAddon.Source getSource() {
             return RemoteAddon.Source.MODRINTH;
         }
 
@@ -445,26 +448,26 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                                       @SerializedName("project_id") String projectId, String author,
                                       List<String> versions, @SerializedName("date_created") Instant dateCreated,
                                       @SerializedName("date_modified") Instant dateModified,
-                                      @SerializedName("latest_version") String latestVersion) implements RemoteAddon.IMod {
+                                      @SerializedName("latest_version") String latestVersion) implements RemoteAddon.IAddon {
 
         @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
-            Set<RemoteAddon.Dependency> dependencies = modRepository.getRemoteVersionsById(downloadProvider, projectId())
+        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
+            Set<RemoteAddon.Dependency> dependencies = repo.getRemoteVersionsById(downloadProvider, projectId())
                     .flatMap(version -> version.dependencies().stream())
                     .collect(Collectors.toSet());
-            List<RemoteAddon> mods = new ArrayList<>();
+            List<RemoteAddon> addons = new ArrayList<>();
             for (RemoteAddon.Dependency dependency : dependencies) {
-                mods.add(dependency.load(downloadProvider));
+                addons.add(dependency.load(downloadProvider));
             }
-            return mods;
+            return addons;
         }
 
         @Override
-        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
-            return modRepository.getRemoteVersionsById(downloadProvider, projectId());
+        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
+            return repo.getRemoteVersionsById(downloadProvider, projectId());
         }
 
-        public RemoteAddon toMod() {
+        public RemoteAddon toAddon() {
             Type type = switch (projectType) {
                 case "modpack" -> Type.MODPACK;
                 case "resourcepack" -> Type.RESOURCE_PACK;

@@ -22,10 +22,9 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /// @author huangyuhui
@@ -33,14 +32,14 @@ import java.util.List;
 public record CurseManifestMinecraft(@SerializedName("version") String gameVersion,
                                      @SerializedName("modLoaders") @Unmodifiable List<CurseManifestModLoader> modLoaders) implements Validation {
 
-    public CurseManifestMinecraft(String gameVersion, List<CurseManifestModLoader> modLoaders) {
+    public CurseManifestMinecraft(String gameVersion, List<@NotNull CurseManifestModLoader> modLoaders) {
         this.gameVersion = gameVersion;
-        this.modLoaders = Collections.unmodifiableList(new ArrayList<>(modLoaders)); // TODO: Is the modLoaders nullable?
+        this.modLoaders = List.copyOf(modLoaders);
     }
 
     @Override
     public List<CurseManifestModLoader> modLoaders() {
-        return Collections.unmodifiableList(modLoaders);
+        return modLoaders;
     }
 
     @Override
