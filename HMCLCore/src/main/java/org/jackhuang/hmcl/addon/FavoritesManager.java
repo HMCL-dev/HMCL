@@ -104,7 +104,7 @@ public final class FavoritesManager {
         }
     }
 
-    public static class Favorites {
+    public static final class Favorites {
 
         private final FavoritesManager manager;
         private final String name;
