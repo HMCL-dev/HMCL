@@ -95,7 +95,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         if (!manifest.isResolvedPreservingPatches())
             throw new IllegalArgumentException("MaintainTask requires independent game version");
         GameInstanceManifest newVersion = maintain(repository, manifest.resolve(repository));
-        return newVersion.withPatches(manifest.getPatches());
+        return newVersion.patches() == null ? newVersion : newVersion.withPatches(manifest.getPatches());
     }
 
     private static GameInstanceManifest maintainGameWithLaunchWrapper(GameRepository repository, GameInstanceManifest manifest, boolean reorderTweakClass) {
