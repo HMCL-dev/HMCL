@@ -18,17 +18,30 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Control;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.setting.FavoritesManager;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jetbrains.annotations.Nullable;
 
 public class AddonFavoritesPage extends Control implements DecoratorPage, GameInstancePage.GameInstanceLoadable {
 
+    private static final FavoritesManager manager = FavoritesManager.getInstance();
+
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
+    private final ObservableList<GameInstanceID> instances = FXCollections.observableArrayList();
+    private final ObjectProperty<GameInstanceID> selectedInstance = new SimpleObjectProperty<>();
+
+    private final ListProperty<FavoritesManager.Favorites> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
 
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
@@ -38,5 +51,22 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, GameIn
     @Override
     public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
         instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId));
+        instances.setAll(repository.getDisplayInstanceManifests()
+                .map(GameInstanceManifest::id)
+                .toList());
+        selectedInstance.set(repository.getSelectedInstance());
+        refresh();
+    }
+
+    public void refresh() {
+        setLoading(true);
+        Task.runAsync(Schedulers.io(), manager::load)
+                .thenRunAsync(Schedulers.javafx(), () -> {
+                    items.setAll(manager.getFavorites());
+                }).start();
+    }
+
+    public void setLoading(boolean loading) {
+        this.loading.set(loading);
     }
 }

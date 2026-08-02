@@ -15,10 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon;
+package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
@@ -41,13 +44,18 @@ public final class FavoritesManager {
     private static final TypeToken<TreeMap<String, LinkedHashSet<Item>>> typeToken = new TypeToken<>() {
     };
 
-    private final Path file; // Any external changes to this file might be lost
+    private static final FavoritesManager instance = new FavoritesManager(Metadata.HMCL_USER_HOME.resolve("config").resolve("user-addon-favorites.json"));
 
+    public static FavoritesManager getInstance() {
+        return instance;
+    }
+
+    private final Path file; // Any external changes to this file while the application is running might be lost
     private final TreeMap<String, Favorites> favoritesMap = new TreeMap<>(String::compareToIgnoreCase);
-
     private final ReentrantLock lock = new ReentrantLock();
+    private boolean loaded;
 
-    public FavoritesManager(Path favoritesFile) {
+    private FavoritesManager(Path favoritesFile) {
         this.file = Objects.requireNonNull(favoritesFile);
     }
 
@@ -55,13 +63,26 @@ public final class FavoritesManager {
         return file;
     }
 
-    public void load() {
+    public void refresh() {
         lock.lock();
         try {
+            loaded = false;
+            load();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void load() {
+        if (loaded) return;
+        lock.lock();
+        try {
+            if (loaded) return;
             favoritesMap.clear();
             var map = JsonUtils.fromJsonFile(file, typeToken);
             if (map != null)
                 map.forEach((name, items) -> favoritesMap.put(name, new Favorites(this, name, items)));
+            loaded = true;
         } catch (IOException | JsonSyntaxException e) {
             LOG.warning("Failed to load favorites file at " + file, e);
         } finally {
@@ -84,11 +105,18 @@ public final class FavoritesManager {
     public void resolveAll(DownloadProvider downloadProvider) {
         lock.lock();
         try {
-            boolean modified = false;
-            for (var fav : favoritesMap.values())
-                modified |= fav.resolve0(downloadProvider);
-            if (modified)
-                save();
+            favoritesMap.values().forEach(fav -> fav.resolve0(downloadProvider));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Unmodifiable
+    public List<Favorites> getFavorites() {
+        lock.lock();
+        try {
+            if (!loaded) throw new IllegalStateException("Favorites not loaded");
+            return List.copyOf(favoritesMap.values());
         } finally {
             lock.unlock();
         }
@@ -147,15 +175,14 @@ public final class FavoritesManager {
             }
         }
 
-        /// @return Whether the item list was modified.
-        private boolean resolve0(DownloadProvider downloadProvider) {
+        private void resolve0(DownloadProvider downloadProvider) {
             resolvedAddons.clear();
             if (downloadProvider != lastProvider) {
                 cache.clear();
                 lastProvider = downloadProvider;
             }
-            LinkedHashMap<RemoteAddon, Item> resultReversed = new LinkedHashMap<>(items.size());
-            for (var item : Lang.reversedCopyOf(items)) { // TODO migrate to SequencedSet::reversed after upgrading to JDK 21+
+            List<RemoteAddon> result = new ArrayList<>(items.size());
+            for (var item : items) {
                 RemoteAddon addon;
                 if (cache.containsKey(item)) {
                     addon = cache.get(item);
@@ -167,20 +194,16 @@ public final class FavoritesManager {
                         continue;
                     }
                 }
-                if (!resultReversed.containsKey(addon)) {
-                    resultReversed.put(addon, item);
-                    cache.put(item, addon);
-                }
+                cache.put(item, addon);
+                result.add(addon);
             }
-            resolvedAddons.addAll(Lang.reversedCopyOf(resultReversed.keySet()));
-            return items.retainAll(resultReversed.values()); // Remove duplicate items
+            resolvedAddons.addAll(result);
         }
 
         public void resolve(DownloadProvider downloadProvider) {
             lock.lock();
             try {
-                if (resolve0(downloadProvider))
-                    manager.save();
+                resolve0(downloadProvider);
             } finally {
                 lock.unlock();
             }
