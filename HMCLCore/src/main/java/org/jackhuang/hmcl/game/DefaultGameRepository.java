@@ -93,17 +93,22 @@ public class DefaultGameRepository implements GameRepository {
     private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
     public DefaultGameRepository(Path baseDirectory) {
-        this.status = new Status(baseDirectory);
+        this.status = new Status(new DefaultGameRepositoryLayout(baseDirectory));
     }
 
     public Path getBaseDirectory() {
-        return status.baseDirectory;
+        return status.layout.getBaseDirectory();
     }
 
     public void setBaseDirectory(Path baseDirectory) {
-        this.status = new Status(baseDirectory);
+        this.status = new Status(new DefaultGameRepositoryLayout(baseDirectory));
         this.loaded = false;
         this.gameVersions.clear();
+    }
+
+    @Override
+    public GameRepositoryLayout getLayout() {
+        return status.layout;
     }
 
     public boolean isLoaded() {
@@ -122,14 +127,14 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     protected void refreshImpl() {
-        Status newStatus = new Status(status.baseDirectory);
+        Status newStatus = new Status(status.layout);
 
-        if (hasClassicVersion(newStatus.baseDirectory)) {
+        if (hasClassicVersion(newStatus.layout.getBaseDirectory())) {
             GameInstanceID id = CLASSIC_MANIFEST.id();
             newStatus.instances.put(id, new InstanceHolder(newStatus, id, CLASSIC_MANIFEST));
         }
 
-        Path versionsDir = newStatus.baseDirectory.resolve("versions");
+        Path versionsDir = newStatus.layout.getBaseDirectory().resolve("versions");
         if (Files.isDirectory(versionsDir)) {
             try (Stream<Path> stream = Files.list(versionsDir)) {
                 stream.parallel().filter(Files::isDirectory).flatMap(dir -> {
@@ -189,7 +194,7 @@ public class DefaultGameRepository implements GameRepository {
 
                     if (!id.equals(manifest.id())) {
                         try {
-                            moveInstanceFiles(newStatus.baseDirectory, id, manifest.id());
+                            moveInstanceFiles(newStatus.layout.getBaseDirectory(), id, manifest.id());
                         } catch (IOException e) {
                             LOG.warning("Ignoring instance " + manifest.id()
                                     + " because instance id does not match folder name " + id
@@ -359,7 +364,7 @@ public class DefaultGameRepository implements GameRepository {
                 throw new NoSuchGameInstanceException(from);
             }
 
-            moveInstanceFiles(currentStatus.baseDirectory, from, to);
+            moveInstanceFiles(currentStatus.layout.getBaseDirectory(), from, to);
 
             GameInstanceManifest renamedManifest = fromHolder.manifest;
             if (from.equals(renamedManifest.jar())) {
@@ -635,11 +640,11 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     protected static class Status {
-        private final Path baseDirectory;
+        private final DefaultGameRepositoryLayout layout;
         private final Map<GameInstanceID, InstanceHolder> instances = new TreeMap<>();
 
-        protected Status(Path baseDirectory) {
-            this.baseDirectory = baseDirectory;
+        protected Status(DefaultGameRepositoryLayout layout) {
+            this.layout = layout;
         }
 
         private GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,

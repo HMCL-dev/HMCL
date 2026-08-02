@@ -36,6 +36,8 @@ import java.util.Set;
 /// locating instance-owned files, and exposing helper paths used by launch, download, and maintenance code.
 @NotNullByDefault
 public interface GameRepository {
+    GameRepositoryLayout getLayout();
+
     /// Resolves inheritance into launch and standalone manifest views.
     ///
     /// @param manifest the manifest to resolve
@@ -233,5 +235,4 @@ public interface GameRepository {
 
         return classpath;
     }
-
 }
