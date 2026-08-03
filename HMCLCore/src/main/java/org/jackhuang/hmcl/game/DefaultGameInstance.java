@@ -103,6 +103,6 @@ public abstract class DefaultGameInstance implements GameInstance {
 
     @Override
     public Path getRunDirectory() {
-        return layout.getBaseDirectory();
+        return getRepository().getRunDirectory(id);
     }
 }

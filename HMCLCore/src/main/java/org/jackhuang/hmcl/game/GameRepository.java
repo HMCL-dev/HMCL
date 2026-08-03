@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,9 +34,23 @@ import java.util.Set;
 ///
 /// Implementations are responsible for loading instance manifests, resolving inheritance and patches,
 /// locating instance-owned files, and exposing helper paths used by launch, download, and maintenance code.
+///
+/// Path helpers that only forward to [GameRepositoryLayout] describe concepts shared by multiple
+/// repository layouts (official and MultiMC-family layouts alike). Layout-specific storage details
+/// remain on concrete layout types such as [DefaultGameRepositoryLayout].
 @NotNullByDefault
 public interface GameRepository {
+    /// Returns the filesystem layout used by this repository.
+    ///
+    /// @return the repository layout
     GameRepositoryLayout getLayout();
+
+    /// Returns the repository base directory.
+    ///
+    /// @return the base directory from [#getLayout()]
+    default Path getBaseDirectory() {
+        return getLayout().getBaseDirectory();
+    }
 
     /// Resolves inheritance into launch and standalone manifest views.
     ///
@@ -74,6 +87,11 @@ public interface GameRepository {
     /// @return the loaded instance manifests
     Collection<GameInstanceManifest> getInstanceManifests();
 
+    /// Returns the indexed game instance for the given id.
+    ///
+    /// @param id the instance id
+    /// @return the game instance
+    /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
     GameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException;
 
     /// Reloads repository state from the backing storage.
@@ -84,6 +102,14 @@ public interface GameRepository {
     /// @return a task that calls [#refresh()]
     default Task<Void> refreshAsync() {
         return Task.runAsync(this::refresh);
+    }
+
+    /// Returns the directory containing the files owned by an instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the instance root directory
+    default Path getInstanceRoot(GameInstanceID instanceId) {
+        return getLayout().getInstanceRoot(instanceId);
     }
 
     /// Returns the working directory used when launching an instance.
@@ -97,19 +123,49 @@ public interface GameRepository {
     /// @param instanceId the instance id
     /// @param platform   the target platform
     /// @return the native library directory
-    Path getNativeDirectory(GameInstanceID instanceId, Platform platform);
+    default Path getNativeDirectory(GameInstanceID instanceId, Platform platform) {
+        return getInstanceRoot(instanceId).resolve("natives-" + platform);
+    }
 
     /// Returns the mods directory for an instance.
     ///
     /// @param instanceId the instance id
-    /// @return the mods directory
-    Path getModsDirectory(GameInstanceID instanceId);
+    /// @return the mods directory below the run directory
+    default Path getModsDirectory(GameInstanceID instanceId) {
+        return getRunDirectory(instanceId).resolve("mods");
+    }
 
     /// Returns the resource pack directory for an instance.
     ///
     /// @param instanceId the instance id
-    /// @return the resource pack directory
-    Path getResourcePackDirectory(GameInstanceID instanceId);
+    /// @return the resource pack directory below the run directory
+    default Path getResourcePackDirectory(GameInstanceID instanceId) {
+        return getRunDirectory(instanceId).resolve("resourcepacks");
+    }
+
+    /// Returns the saves directory for an instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the saves directory below the run directory
+    default Path getSavesDirectory(GameInstanceID instanceId) {
+        return getRunDirectory(instanceId).resolve("saves");
+    }
+
+    /// Returns the world backups directory for an instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the backups directory below the run directory
+    default Path getBackupsDirectory(GameInstanceID instanceId) {
+        return getRunDirectory(instanceId).resolve("backups");
+    }
+
+    /// Returns the schematics directory for an instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the schematics directory below the run directory
+    default Path getSchematicsDirectory(GameInstanceID instanceId) {
+        return getRunDirectory(instanceId).resolve("schematics");
+    }
 
     /// Returns the primary client jar path for a manifest.
     ///

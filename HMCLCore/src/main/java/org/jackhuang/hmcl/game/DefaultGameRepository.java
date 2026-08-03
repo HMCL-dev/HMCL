@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,10 +99,6 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @param baseDirectory the repository base directory
     /// @return the layout used by this repository
     protected abstract DefaultGameRepositoryLayout createLayout(Path baseDirectory);
-
-    public Path getBaseDirectory() {
-        return status.layout.getBaseDirectory();
-    }
 
     public void setBaseDirectory(Path baseDirectory) {
         this.status = new Status(this, createLayout(baseDirectory));
@@ -451,21 +446,10 @@ public abstract class DefaultGameRepository implements GameRepository {
         }
     }
 
-    @Override
-    public Path getNativeDirectory(GameInstanceID instanceId, Platform platform) {
-        return getLayout().getInstanceRoot(instanceId).resolve("natives-" + platform);
-    }
-
-    @Override
-    public Path getModsDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("mods");
-    }
-
-    @Override
-    public Path getResourcePackDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("resourcepacks");
-    }
-
+    /// Returns the official version manifest file for an instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the path `versions/<id>/<id>.json` below the base directory
     public Path getInstanceJson(GameInstanceID instanceId) {
         return getLayout().getInstanceJson(instanceId);
     }
@@ -575,7 +559,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     }
 
     public Path getModpackConfiguration(GameInstanceID instanceId) {
-        return getLayout().getInstanceRoot(instanceId).resolve("modpack.json");
+        return getInstanceRoot(instanceId).resolve("modpack.json");
     }
 
     @Nullable
@@ -588,18 +572,6 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     public boolean isModpack(GameInstanceID instanceId) {
         return Files.exists(getModpackConfiguration(instanceId));
-    }
-
-    public Path getSavesDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("saves");
-    }
-
-    public Path getBackupsDirectory(GameInstanceID instanceID) {
-        return getRunDirectory(instanceID).resolve("backups");
-    }
-
-    public Path getSchematicsDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("schematics");
     }
 
     public ModManager getModManager(GameInstanceID instanceId) {

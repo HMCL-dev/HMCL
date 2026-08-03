@@ -22,7 +22,11 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.nio.file.Path;
 import java.util.Objects;
 
-/// Implements the conventional Minecraft repository directory layout.
+/// Implements the conventional official Minecraft launcher repository directory layout.
+///
+/// Instance definitions are stored as `versions/<id>/<id>.json`, client jars as
+/// `versions/<id>/<id>.jar`, with shared `libraries/` and `assets/` directories under the base
+/// directory.
 @NotNullByDefault
 public class DefaultGameRepositoryLayout implements GameRepositoryLayout {
     private final Path baseDirectory;
@@ -36,29 +40,39 @@ public class DefaultGameRepositoryLayout implements GameRepositoryLayout {
         this.baseDirectory = Objects.requireNonNull(baseDirectory);
     }
 
+    /// {@inheritDoc}
+    @Override
     public Path getBaseDirectory() {
         return baseDirectory;
     }
 
     /// {@inheritDoc}
+    ///
+    /// Official layout path: `versions/<id>/` below the base directory.
     @Override
     public Path getInstanceRoot(GameInstanceID instanceId) {
         return getBaseDirectory().resolve("versions").resolve(instanceId.id());
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Returns the official version manifest file for an instance.
+    ///
+    /// @param instanceId the instance ID
+    /// @return the path `versions/<id>/<id>.json` below the base directory
     public Path getInstanceJson(GameInstanceID instanceId) {
         return getInstanceRoot(instanceId).resolve(instanceId.id() + ".json");
     }
 
-    /// {@inheritDoc}
-    @Override
+    /// Returns the conventional client jar file for an instance under the official layout.
+    ///
+    /// @param instanceId the instance ID
+    /// @return the path `versions/<id>/<id>.jar` below the base directory
     public Path getInstanceJarFile(GameInstanceID instanceId) {
         return getInstanceRoot(instanceId).resolve(instanceId.id() + ".jar");
     }
 
     /// {@inheritDoc}
+    ///
+    /// Official layout path: `libraries/` below the base directory.
     @Override
     public Path getLibrariesDirectory() {
         return getBaseDirectory().resolve("libraries");
@@ -79,6 +93,8 @@ public class DefaultGameRepositoryLayout implements GameRepositoryLayout {
     }
 
     /// {@inheritDoc}
+    ///
+    /// Official layout path: `assets/` below the base directory.
     @Override
     public Path getAssetDirectory() {
         return getBaseDirectory().resolve("assets");
@@ -98,8 +114,8 @@ public class DefaultGameRepositoryLayout implements GameRepositoryLayout {
 
     /// {@inheritDoc}
     ///
-    /// The conventional layout stores logging configurations in a shared directory, so
-    /// `assetId` does not alter the returned path.
+    /// The official layout stores logging configurations in a shared directory, so `assetId` does
+    /// not alter the returned path.
     @Override
     public Path getLoggingObject(String assetId, LoggingInfo loggingInfo) {
         return getAssetDirectory().resolve("log_configs").resolve(loggingInfo.file().getId());
