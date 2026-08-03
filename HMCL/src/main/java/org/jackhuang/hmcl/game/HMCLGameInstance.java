@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 @NotNullByDefault
 public class HMCLGameInstance extends DefaultGameInstance {
-    protected HMCLGameInstance(DefaultGameRepository.Status status, DefaultGameRepository repository, DefaultGameRepositoryLayout layout, GameInstanceID id, GameInstanceManifest manifest) {
+    protected HMCLGameInstance(DefaultGameRepository.Status status, GameInstanceID id, GameInstanceManifest manifest) {
         super(status, id, manifest);
     }
 

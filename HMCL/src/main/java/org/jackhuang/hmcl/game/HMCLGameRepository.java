@@ -120,6 +120,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         gameDirectory.pathProperty().addListener((a, b, newValue) -> changeDirectory(newValue.toPath()));
     }
 
+    @Override
+    protected HMCLGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest) {
+        return new HMCLGameInstance(status, id, manifest);
+    }
+
     /// Returns the persistent game directory for this repository.
     public GameDirectory getGameDirectory() {
         return gameDirectory;
@@ -397,7 +402,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: "
                         + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA ->
-                    LOG.warning("Unsupported instance game settings schema. Expected: "
+                        LOG.warning("Unsupported instance game settings schema. Expected: "
                                 + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
                 }
