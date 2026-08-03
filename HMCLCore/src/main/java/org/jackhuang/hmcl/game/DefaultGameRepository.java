@@ -619,12 +619,22 @@ public abstract class DefaultGameRepository implements GameRepository {
         return Files.exists(getModpackConfiguration(instanceId));
     }
 
-    public ModManager getModManager(GameInstanceID instanceId) {
-        return new ModManager(this, instanceId);
+    /// Returns the mod manager for the registered instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the instance's shared mod manager
+    /// @throws NoSuchGameInstanceException if the instance is not registered
+    public ModManager getModManager(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        return getInstance(instanceId).getModManager();
     }
 
-    public ResourcePackManager getResourcePackManager(GameInstanceID instanceId) {
-        return new ResourcePackManager(this, instanceId);
+    /// Returns the resource-pack manager for the registered instance.
+    ///
+    /// @param instanceId the instance id
+    /// @return the instance's shared resource-pack manager
+    /// @throws NoSuchGameInstanceException if the instance is not registered
+    public ResourcePackManager getResourcePackManager(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        return getInstance(instanceId).getResourcePackManager();
     }
 
     @Override

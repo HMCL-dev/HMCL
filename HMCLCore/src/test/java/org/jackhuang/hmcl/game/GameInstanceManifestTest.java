@@ -67,14 +67,22 @@ public final class GameInstanceManifestTest {
                         super(snapshot, id, manifest);
                     }
 
+                    MyGameInstance(
+                            DefaultGameRepositorySnapshot snapshot,
+                            GameInstanceID id,
+                            GameInstanceManifest manifest,
+                            DefaultGameInstance shareSession) {
+                        super(snapshot, id, manifest, shareSession);
+                    }
+
                     @Override
                     protected DefaultGameInstance withNewSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
-                        return new MyGameInstance(newSnapshot, id, manifest);
+                        return new MyGameInstance(newSnapshot, id, manifest, this);
                     }
 
                     @Override
                     protected DefaultGameInstance withManifest(DefaultGameRepositorySnapshot newSnapshot, GameInstanceManifest manifest) {
-                        return new MyGameInstance(newSnapshot, id, manifest);
+                        return new MyGameInstance(newSnapshot, id, manifest, this);
                     }
                 }
 

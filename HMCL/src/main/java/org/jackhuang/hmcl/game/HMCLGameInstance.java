@@ -100,13 +100,12 @@ public class HMCLGameInstance extends DefaultGameInstance {
             GameInstanceManifest manifest,
             boolean provisional,
             HMCLGameInstance shareState) {
-        super(snapshot, id, manifest);
+        super(snapshot, id, manifest, shareState);
         this.provisional = provisional;
         this.treatingAsModpack = shareState.treatingAsModpack;
         this.gameSettingsLoaded = shareState.gameSettingsLoaded;
         this.gameSettingsReadOnly = shareState.gameSettingsReadOnly;
         this.gameSettings = shareState.gameSettings;
-        this.version = shareState.version;
     }
 
     @Override
