@@ -86,11 +86,11 @@ public abstract class DefaultGameRepository implements GameRepository {
                 && Files.exists(bin.resolve("lwjgl_util.jar"));
     }
 
-    private volatile Status status;
+    private volatile DefaultGameRepositoryStatus status;
     private volatile boolean loaded;
 
     public DefaultGameRepository(Path baseDirectory) {
-        Status initial = new Status(this, createLayout(baseDirectory));
+        DefaultGameRepositoryStatus initial = createStatus(createLayout(baseDirectory));
         initial.seal();
         this.status = initial;
     }
@@ -102,7 +102,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     protected abstract DefaultGameRepositoryLayout createLayout(Path baseDirectory);
 
     public void setBaseDirectory(Path baseDirectory) {
-        Status initial = new Status(this, createLayout(baseDirectory));
+        DefaultGameRepositoryStatus initial = createStatus(createLayout(baseDirectory));
         publishStatus(initial);
         this.loaded = false;
     }
@@ -110,10 +110,10 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// Returns the current published repository status snapshot.
     ///
     /// The returned status is sealed and must not be modified. Writers must [#clone()] it, edit the
-    /// copy, and publish the result with [#publishStatus(Status)].
+    /// copy, and publish the result with [#publishStatus(DefaultGameRepositoryStatus)].
     ///
     /// @return the current status
-    protected Status currentStatus() {
+    protected DefaultGameRepositoryStatus currentStatus() {
         return status;
     }
 
@@ -127,14 +127,14 @@ public abstract class DefaultGameRepository implements GameRepository {
     ///
     /// @param newStatus the status to publish; must not already be visible as [#currentStatus()]
     ///                  unless it is a freshly built replacement
-    protected void publishStatus(Status newStatus) {
+    protected void publishStatus(DefaultGameRepositoryStatus newStatus) {
         newStatus.seal();
         this.status = newStatus;
     }
 
     @Override
     public DefaultGameRepositoryLayout getLayout() {
-        return status.layout;
+        return status.getLayout();
     }
 
     public boolean isLoaded() {
@@ -153,14 +153,14 @@ public abstract class DefaultGameRepository implements GameRepository {
     }
 
     protected void refreshImpl() {
-        Status newStatus = new Status(this, status.layout);
+        DefaultGameRepositoryStatus newStatus = createStatus(status.getLayout());
 
-        if (hasClassicVersion(newStatus.layout.getBaseDirectory())) {
+        if (hasClassicVersion(newStatus.getLayout().getBaseDirectory())) {
             GameInstanceID id = CLASSIC_MANIFEST.id();
             newStatus.put(createInstance(newStatus, id, CLASSIC_MANIFEST));
         }
 
-        Path versionsDir = newStatus.layout.getBaseDirectory().resolve("versions");
+        Path versionsDir = newStatus.getLayout().getBaseDirectory().resolve("versions");
         if (Files.isDirectory(versionsDir)) {
             try (Stream<Path> stream = Files.list(versionsDir)) {
                 stream.parallel().filter(Files::isDirectory).flatMap(dir -> {
@@ -220,7 +220,7 @@ public abstract class DefaultGameRepository implements GameRepository {
 
                     if (!id.equals(manifest.id())) {
                         try {
-                            moveInstanceFiles(newStatus.layout.getBaseDirectory(), id, manifest.id());
+                            moveInstanceFiles(newStatus.getLayout().getBaseDirectory(), id, manifest.id());
                         } catch (IOException e) {
                             LOG.warning("Ignoring instance " + manifest.id()
                                     + " because instance id does not match folder name " + id
@@ -239,7 +239,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         Map<GameInstanceID, DefaultGameInstance> loadedInstances = new TreeMap<>();
         for (DefaultGameInstance instance : newStatus.values()) {
             try {
-                GameInstanceManifest resolved = newStatus.resolve(instance.getManifest(), new HashSet<>()).launchManifest();
+                GameInstanceManifest resolved = newStatus.resolve(instance.getManifest()).launchManifest();
                 if (CompatibilityRule.appliesToCurrentEnvironment(resolved.compatibilityRules())) {
                     loadedInstances.put(instance.getId(), instance);
                 }
@@ -326,13 +326,13 @@ public abstract class DefaultGameRepository implements GameRepository {
         }
 
         try {
-            Status newStatus = status.clone();
+            DefaultGameRepositoryStatus newStatus = status.clone();
             DefaultGameInstance fromHolder = newStatus.get(from);
             if (fromHolder == null || fromHolder.isProvisional()) {
                 throw new NoSuchGameInstanceException(from);
             }
 
-            moveInstanceFiles(newStatus.layout.getBaseDirectory(), from, to);
+            moveInstanceFiles(newStatus.getLayout().getBaseDirectory(), from, to);
 
             GameInstanceManifest renamedManifest = fromHolder.manifest;
             if (from.equals(renamedManifest.jar())) {
@@ -369,7 +369,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         }
 
         if (status.get(id) != null) {
-            Status newStatus = status.clone();
+            DefaultGameRepositoryStatus newStatus = status.clone();
             newStatus.remove(id);
             publishStatus(newStatus);
         }
@@ -544,7 +544,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             Files.createDirectories(json.getParent());
             JsonUtils.writeToJsonFile(json, savedManifest);
 
-            Status newStatus = status.clone();
+            DefaultGameRepositoryStatus newStatus = status.clone();
             DefaultGameInstance existing = newStatus.get(savedManifest.id());
             if (existing != null) {
                 newStatus.put(existing.withManifest(newStatus, savedManifest));
@@ -582,280 +582,18 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        return status.resolve(manifest, new HashSet<>());
+        return status.resolve(manifest);
     }
 
-    protected abstract DefaultGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest);
-
-    /// Mutable builder and sealed published snapshot of the repository index.
+    /// Creates an empty unsealed status for the given layout.
     ///
-    /// A status begins unsealed so that writers can populate it. [#seal()] freezes the instance map;
-    /// afterwards any mutating method throws. Callers must [#clone()] a published status, edit the
-    /// copy, and publish it with [DefaultGameRepository#publishStatus(Status)].
-    ///
-    /// Once sealed, this object is exposed as a [GameRepositorySnapshot]. Provisional placeholders
-    /// remain reachable through package/internal accessors such as [#get(GameInstanceID)] but are
-    /// excluded from the public snapshot view.
-    protected static class Status implements GameRepositorySnapshot {
-        public final DefaultGameRepository repository;
-        public final DefaultGameRepositoryLayout layout;
-        private Map<GameInstanceID, DefaultGameInstance> instances;
-        private boolean sealed;
-
-        /// Creates an empty unsealed status for building a new snapshot.
-        ///
-        /// @param repository the owning repository
-        /// @param layout     the layout for this snapshot
-        protected Status(DefaultGameRepository repository, DefaultGameRepositoryLayout layout) {
-            this.repository = repository;
-            this.layout = layout;
-            this.instances = new TreeMap<>();
-            this.sealed = false;
-        }
-
-        /// Freezes this status so its instance map can no longer be modified.
-        void seal() {
-            if (!sealed) {
-                instances = Collections.unmodifiableMap(new TreeMap<>(instances));
-                sealed = true;
-            }
-        }
-
-        /// Returns whether this status has been sealed.
-        ///
-        /// @return whether mutation is forbidden
-        public boolean isSealed() {
-            return sealed;
-        }
-
-        private void checkMutable() {
-            if (sealed) {
-                throw new IllegalStateException("Status has been published and cannot be modified");
-            }
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public DefaultGameRepository getRepository() {
-            return repository;
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public DefaultGameRepositoryLayout getLayout() {
-            return layout;
-        }
-
-        /// Returns the instance with the given id, including provisional placeholders.
-        ///
-        /// @param id the instance id
-        /// @return the instance, or `null` when absent
-        public @Nullable DefaultGameInstance get(GameInstanceID id) {
-            return instances.get(id);
-        }
-
-        /// Returns the registered instance with the given id.
-        ///
-        /// @param id the instance id
-        /// @return the registered instance
-        /// @throws NoSuchGameInstanceException if the instance is absent or provisional
-        public DefaultGameInstance getRegistered(GameInstanceID id) throws NoSuchGameInstanceException {
-            DefaultGameInstance instance = instances.get(id);
-            if (instance != null && !instance.isProvisional()) {
-                return instance;
-            }
-            throw new NoSuchGameInstanceException(id);
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public boolean hasInstance(GameInstanceID instanceId) {
-            DefaultGameInstance instance = instances.get(instanceId);
-            return instance != null && !instance.isProvisional();
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public DefaultGameInstance getInstance(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-            return getRegistered(instanceId);
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public @Nullable DefaultGameInstance findInstance(GameInstanceID instanceId) {
-            DefaultGameInstance instance = instances.get(instanceId);
-            if (instance != null && !instance.isProvisional()) {
-                return instance;
-            }
-            return null;
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public int getInstanceCount() {
-            int count = 0;
-            for (DefaultGameInstance instance : instances.values()) {
-                if (!instance.isProvisional()) {
-                    count++;
-                }
-            }
-            return count;
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public Collection<DefaultGameInstance> getInstances() {
-            return instances.values().stream()
-                    .filter(instance -> !instance.isProvisional())
-                    .toList();
-        }
-
-        /// {@inheritDoc}
-        @Override
-        public Collection<GameInstanceManifest> getInstanceManifests() {
-            return instances.values().stream()
-                    .filter(instance -> !instance.isProvisional())
-                    .map(instance -> instance.manifest)
-                    .toList();
-        }
-
-        /// Returns a view of all instances in this status, including provisional placeholders.
-        ///
-        /// @return the instances; unmodifiable after [#seal()]
-        public Collection<DefaultGameInstance> values() {
-            return instances.values();
-        }
-
-        /// Returns an unmodifiable map view after seal, or the live map while building.
-        ///
-        /// @return the instance map
-        public Map<GameInstanceID, DefaultGameInstance> asMap() {
-            return instances;
-        }
-
-        /// Adds or replaces an instance in this unsealed status.
-        ///
-        /// @param instance the instance bound to this status
-        void put(DefaultGameInstance instance) {
-            checkMutable();
-            instances.put(instance.getId(), instance);
-        }
-
-        /// Adds or replaces all instances from the given map.
-        ///
-        /// @param map instances keyed by id
-        void putAll(Map<GameInstanceID, DefaultGameInstance> map) {
-            checkMutable();
-            instances.putAll(map);
-        }
-
-        /// Removes the instance with the given id.
-        ///
-        /// @param id the instance id
-        void remove(GameInstanceID id) {
-            checkMutable();
-            instances.remove(id);
-        }
-
-        /// Removes all instances from this unsealed status.
-        void clear() {
-            checkMutable();
-            instances.clear();
-        }
-
-        /// Creates an unsealed copy of this status with instances rebound to the copy.
-        ///
-        /// @return a mutable status ready for further edits before publish
-        @Override
-        public Status clone() {
-            Status newStatus = new Status(repository, layout);
-            for (DefaultGameInstance instance : instances.values()) {
-                newStatus.instances.put(instance.getId(), instance.withNewStatus(newStatus));
-            }
-            return newStatus;
-        }
-
-        GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,
-                                              Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
-            GameInstanceManifest launchManifest;
-            GameInstanceManifest standaloneManifest = manifest.isRoot()
-                    ? manifest
-                    : addPatches(
-                    addPatches(new GameInstanceManifest(manifest.id()), List.of(manifest.toPatch())),
-                    manifest.patches());
-
-            if (manifest.inheritsFrom() == null) {
-                if (manifest.isRoot()) {
-                    // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
-                    launchManifest = manifest.patches() != null ? new GameInstanceManifest(manifest.id()).withPatches(manifest.patches()) : manifest;
-                } else {
-                    launchManifest = manifest;
-                }
-                launchManifest = launchManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar());
-            } else {
-                // To maximize the compatibility.
-                if (!resolvedSoFar.add(manifest.id())) {
-                    LOG.warning("Found circular dependency versions: " + resolvedSoFar);
-                    launchManifest = (manifest.jar() == null ? manifest.withJar(manifest.id()) : manifest)
-                            .withInheritsFrom(null);
-                } else {
-                    DefaultGameInstance parentInstance = instances.get(manifest.inheritsFrom());
-                    if (parentInstance == null) {
-                        throw new NoSuchGameInstanceException(manifest.inheritsFrom());
-                    }
-
-                    // It is supposed to auto-install a version in getVersion.
-                    GameInstanceManifest.Resolved parentResolved = resolve(parentInstance.getManifest(), resolvedSoFar);
-                    launchManifest = manifest.merge(parentResolved.launchManifest());
-                    standaloneManifest = addPatches(
-                            addPatches(parentResolved.standaloneManifest(), Collections.singleton(manifest.toPatch())),
-                            manifest.patches());
-                }
-            }
-
-            if (manifest.patches() != null && !manifest.patches().isEmpty()) {
-                // Assume patches themselves do not have patches recursively.
-                List<GameInstancePatch> sortedPatches = manifest.patches().stream()
-                        .sorted(Comparator.comparing(GameInstancePatch::getPriority))
-                        .toList();
-                for (GameInstancePatch patch : sortedPatches) {
-                    launchManifest = patch.merge(launchManifest);
-                }
-            }
-
-            launchManifest = launchManifest.withId(manifest.id()).withPatches(null);
-            standaloneManifest = standaloneManifest.withId(manifest.id());
-            if (launchManifest.jar() != null) {
-                standaloneManifest = standaloneManifest.withJar(launchManifest.jar());
-            }
-
-            return new GameInstanceManifest.Resolved(manifest, launchManifest, standaloneManifest);
-        }
-
-        private static GameInstanceManifest addPatches(GameInstanceManifest manifest, @Nullable Collection<GameInstancePatch> additional) {
-            if (additional == null || additional.isEmpty()) {
-                return manifest;
-            }
-
-            Set<String> patchIds = new HashSet<>();
-            for (GameInstancePatch patch : additional) {
-                if (patch.id() != null) {
-                    patchIds.add(patch.id());
-                }
-            }
-
-            List<GameInstancePatch> patches = new ArrayList<>();
-            if (manifest.patches() != null) {
-                for (GameInstancePatch patch : manifest.patches()) {
-                    if (patch.id() == null || !patchIds.contains(patch.id())) {
-                        patches.add(patch);
-                    }
-                }
-            }
-            patches.addAll(additional);
-            return manifest.withPatches(patches);
-        }
-
+    /// @param layout the layout for the new status
+    /// @return a new unsealed status
+    protected DefaultGameRepositoryStatus createStatus(DefaultGameRepositoryLayout layout) {
+        return new DefaultGameRepositoryStatus(this, layout);
     }
+
+    protected abstract DefaultGameInstance createInstance(DefaultGameRepositoryStatus status, GameInstanceID id, GameInstanceManifest manifest);
+
 
 }

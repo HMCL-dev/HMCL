@@ -68,7 +68,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// @param status   the repository status that owns this instance
     /// @param id       the instance id
     /// @param manifest the stored instance manifest
-    protected HMCLGameInstance(DefaultGameRepository.Status status, GameInstanceID id, GameInstanceManifest manifest) {
+    protected HMCLGameInstance(DefaultGameRepositoryStatus status, GameInstanceID id, GameInstanceManifest manifest) {
         this(status, id, manifest, false);
     }
 
@@ -77,12 +77,12 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// @param status the repository status that owns this instance
     /// @param id     the instance id
     /// @return a provisional instance with an empty placeholder manifest
-    static HMCLGameInstance provisional(DefaultGameRepository.Status status, GameInstanceID id) {
+    static HMCLGameInstance provisional(DefaultGameRepositoryStatus status, GameInstanceID id) {
         return new HMCLGameInstance(status, id, new GameInstanceManifest(id), true);
     }
 
     private HMCLGameInstance(
-            DefaultGameRepository.Status status,
+            DefaultGameRepositoryStatus status,
             GameInstanceID id,
             GameInstanceManifest manifest,
             boolean provisional) {
@@ -95,7 +95,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// Used when the repository clones a status snapshot or promotes a provisional instance so that
     /// settings and install-time flags remain available on the new wrapper.
     private HMCLGameInstance(
-            DefaultGameRepository.Status status,
+            DefaultGameRepositoryStatus status,
             GameInstanceID id,
             GameInstanceManifest manifest,
             boolean provisional,
@@ -110,12 +110,12 @@ public class HMCLGameInstance extends DefaultGameInstance {
     }
 
     @Override
-    protected HMCLGameInstance withNewStatus(DefaultGameRepository.Status newStatus) {
+    protected HMCLGameInstance withNewStatus(DefaultGameRepositoryStatus newStatus) {
         return new HMCLGameInstance(newStatus, id, manifest, provisional, this);
     }
 
     @Override
-    protected HMCLGameInstance withManifest(DefaultGameRepository.Status newStatus, GameInstanceManifest manifest) {
+    protected HMCLGameInstance withManifest(DefaultGameRepositoryStatus newStatus, GameInstanceManifest manifest) {
         // A real stored manifest promotes a provisional placeholder to a registered instance.
         return new HMCLGameInstance(newStatus, id, manifest, false, this);
     }

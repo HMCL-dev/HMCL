@@ -99,7 +99,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
-    protected HMCLGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest) {
+    protected HMCLGameRepositoryStatus createStatus(DefaultGameRepositoryLayout layout) {
+        return new HMCLGameRepositoryStatus(this, (HMCLGameRepositoryLayout) layout);
+    }
+
+    @Override
+    protected HMCLGameInstance createInstance(DefaultGameRepositoryStatus status, GameInstanceID id, GameInstanceManifest manifest) {
         DefaultGameInstance existing = status.get(id);
         if (existing instanceof HMCLGameInstance hmcl) {
             return hmcl.withManifest(status, manifest);
@@ -130,7 +135,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Returns the instance that owns local state for the given id.
     ///
-    /// When the id is already present in the current [Status] (including provisional
+    /// When the id is already present in the current [DefaultGameRepositoryStatus] (including provisional
     /// placeholders), that instance is returned. Otherwise a provisional [HMCLGameInstance] is
     /// created and published in a new status until it is promoted by a real manifest or the
     /// status is replaced by refresh.
@@ -143,7 +148,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return hmcl;
         }
 
-        Status newStatus = currentStatus().clone();
+        DefaultGameRepositoryStatus newStatus = currentStatus().clone();
         HMCLGameInstance provisional = HMCLGameInstance.provisional(newStatus, instanceId);
         newStatus.put(provisional);
         publishStatus(newStatus);
