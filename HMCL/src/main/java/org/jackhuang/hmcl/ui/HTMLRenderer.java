@@ -22,6 +22,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -167,6 +168,12 @@ public final class HTMLRenderer {
     }
 
     private void applyStyle(Text text) {
+        if (code) {
+            text.getStyleClass().add("html-code");
+            text.setStyle("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)));
+            return;
+        }
+
         var styleBuilder = new StringBuilder();
 
         if (hyperlink != null) {
@@ -190,11 +197,6 @@ public final class HTMLRenderer {
         if (italic)
             text.getStyleClass().add("html-italic");
 
-        if (code) {
-            text.getStyleClass().add("html-code");
-            styleBuilder.append("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)));
-        }
-
         if (headerLevel != null)
             text.getStyleClass().add("html-" + headerLevel);
 
@@ -207,7 +209,7 @@ public final class HTMLRenderer {
         Text textNode = new Text(text);
         applyStyle(textNode);
         if (code) {
-            var codeFlow = new TextFlow(textNode);
+            var codeFlow = new CodeFlow(textNode);
             codeFlow.getStyleClass().add("html-code-block");
             children.add(codeFlow);
         } else {
@@ -398,7 +400,8 @@ public final class HTMLRenderer {
         for (Node childNode : node.childNodes()) {
             if (childNode.nameIs("li")) {
                 ordinal = StringUtils.toInt(childNode.attr("value")).orElse(ordinal);
-                appendText("\n " + "  ".repeat(listDepth) + ordinal++ + ". ");
+                appendAutoLineBreak("\n");
+                appendText(" " + "  ".repeat(listDepth) + ordinal++ + ". ");
                 appendChildren(childNode);
                 continue;
             }
@@ -449,6 +452,10 @@ public final class HTMLRenderer {
             case "h1", "h2", "h3", "h4", "h5", "h6" -> {
                 if (!children.isEmpty())
                     appendAutoLineBreak("\n\n");
+            }
+            case "hr" -> {
+                appendAutoLineBreak("\n");
+                this.children.add(new Separator());
             }
         }
 
@@ -520,6 +527,7 @@ public final class HTMLRenderer {
 
     public TextFlow render() {
         if (rendered) throw new IllegalStateException("Should not render twice");
+        rendered = true;
         TextFlow textFlow = new TextFlow();
         textFlow.getStyleClass().add("html");
         textFlow.getChildren().setAll(children);
@@ -531,11 +539,12 @@ public final class HTMLRenderer {
                 img.imageProperty().addListener(listener);
             } else if (node instanceof TableView<?> table) {
                 table.prefWidthProperty().bind(textFlow.widthProperty().multiply(0.8));
-            } else if (node instanceof TextFlow codeFlow) {
+            } else if (node instanceof CodeFlow codeFlow) {
                 codeFlow.maxWidthProperty().bind(textFlow.widthProperty().multiply(0.8));
+            } else if (node instanceof Separator separator) {
+                separator.prefWidthProperty().bind(textFlow.widthProperty().subtract(24));
             }
         }
-        rendered = true;
         return textFlow;
     }
 
@@ -559,6 +568,14 @@ public final class HTMLRenderer {
             FXUtils.onChangeAndOperate(imageView.imageProperty(), img -> {
                 if (img != null) getChildren().remove(txt);
             });
+        }
+
+    }
+
+    private static final class CodeFlow extends TextFlow {
+
+        public CodeFlow(Text text) {
+            super(text);
         }
 
     }

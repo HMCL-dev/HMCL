@@ -1927,6 +1927,11 @@
     -fx-font-size: 15;
 }
 
+.html .separator > .line {
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 0.5;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Tooltip                                                                     *
