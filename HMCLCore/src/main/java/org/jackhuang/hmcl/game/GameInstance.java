@@ -23,11 +23,13 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Path;
 
-/// Provides an immutable view of a game instance and its instance-specific paths.
+/// Provides a view of a game instance and its instance-specific paths within a
+/// [GameRepositorySnapshot].
 ///
-/// Core repository implementations replace instances as complete values when repository state
-/// changes. Callers that need a long-lived identity must use a higher-level implementation that
-/// explicitly provides that guarantee.
+/// Core repository implementations publish instances as values belonging to a sealed snapshot.
+/// When the repository publishes a newer snapshot, previously obtained instances may be stale.
+/// Callers that need a long-lived identity should retain a [GameInstanceID] (or a higher-level
+/// handle) and resolve it again from [GameRepository#getSnapshot()].
 @NotNullByDefault
 public interface GameInstance {
 

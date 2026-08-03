@@ -124,11 +124,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// @param id the instance id
     /// @return the instance, or `null` when absent
     public @Nullable HMCLGameInstance findInstance(GameInstanceID id) {
-        try {
-            return getInstance(id);
-        } catch (NoSuchGameInstanceException e) {
-            return null;
-        }
+        GameInstance instance = getSnapshot().findInstance(id);
+        return instance instanceof HMCLGameInstance hmcl ? hmcl : null;
     }
 
     /// Returns the instance that owns local state for the given id.

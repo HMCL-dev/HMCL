@@ -117,6 +117,12 @@ public abstract class DefaultGameRepository implements GameRepository {
         return status;
     }
 
+    /// {@inheritDoc}
+    @Override
+    public GameRepositorySnapshot getSnapshot() {
+        return status;
+    }
+
     /// Seals `newStatus` if needed and publishes it as the current repository snapshot.
     ///
     /// @param newStatus the status to publish; must not already be visible as [#currentStatus()]
@@ -284,48 +290,8 @@ public abstract class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public boolean hasInstance(GameInstanceID instanceId) {
-        DefaultGameInstance instance = status.get(instanceId);
-        return instance != null && !instance.isProvisional();
-    }
-
-    @Override
-    public GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getInstance(instanceId).getManifest();
-    }
-
-    @Override
-    public GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getInstance(instanceId).getResolvedManifest();
-    }
-
-    @Override
-    public int getInstanceCount() {
-        int count = 0;
-        for (DefaultGameInstance instance : status.values()) {
-            if (!instance.isProvisional()) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    @Override
-    public Collection<GameInstanceManifest> getInstanceManifests() {
-        return status.values().stream()
-                .filter(instance -> !instance.isProvisional())
-                .map(instance -> instance.manifest)
-                .toList();
-    }
-
-    @Override
     public DefaultGameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException {
-        @Nullable DefaultGameInstance instance = status.get(id);
-        if (instance != null && !instance.isProvisional()) {
-            return instance;
-        } else {
-            throw new NoSuchGameInstanceException(id);
-        }
+        return status.getRegistered(id);
     }
 
     /// Returns the instance recorded in the current status for the given id, including provisional
@@ -621,12 +587,16 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     protected abstract DefaultGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest);
 
-    /// Immutable snapshot of the repository index once published.
+    /// Mutable builder and sealed published snapshot of the repository index.
     ///
     /// A status begins unsealed so that writers can populate it. [#seal()] freezes the instance map;
     /// afterwards any mutating method throws. Callers must [#clone()] a published status, edit the
     /// copy, and publish it with [DefaultGameRepository#publishStatus(Status)].
-    protected static class Status {
+    ///
+    /// Once sealed, this object is exposed as a [GameRepositorySnapshot]. Provisional placeholders
+    /// remain reachable through package/internal accessors such as [#get(GameInstanceID)] but are
+    /// excluded from the public snapshot view.
+    protected static class Status implements GameRepositorySnapshot {
         public final DefaultGameRepository repository;
         public final DefaultGameRepositoryLayout layout;
         private Map<GameInstanceID, DefaultGameInstance> instances;
@@ -664,12 +634,89 @@ public abstract class DefaultGameRepository implements GameRepository {
             }
         }
 
+        /// {@inheritDoc}
+        @Override
+        public DefaultGameRepository getRepository() {
+            return repository;
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public DefaultGameRepositoryLayout getLayout() {
+            return layout;
+        }
+
         /// Returns the instance with the given id, including provisional placeholders.
         ///
         /// @param id the instance id
         /// @return the instance, or `null` when absent
         public @Nullable DefaultGameInstance get(GameInstanceID id) {
             return instances.get(id);
+        }
+
+        /// Returns the registered instance with the given id.
+        ///
+        /// @param id the instance id
+        /// @return the registered instance
+        /// @throws NoSuchGameInstanceException if the instance is absent or provisional
+        public DefaultGameInstance getRegistered(GameInstanceID id) throws NoSuchGameInstanceException {
+            DefaultGameInstance instance = instances.get(id);
+            if (instance != null && !instance.isProvisional()) {
+                return instance;
+            }
+            throw new NoSuchGameInstanceException(id);
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public boolean hasInstance(GameInstanceID instanceId) {
+            DefaultGameInstance instance = instances.get(instanceId);
+            return instance != null && !instance.isProvisional();
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public DefaultGameInstance getInstance(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+            return getRegistered(instanceId);
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public @Nullable DefaultGameInstance findInstance(GameInstanceID instanceId) {
+            DefaultGameInstance instance = instances.get(instanceId);
+            if (instance != null && !instance.isProvisional()) {
+                return instance;
+            }
+            return null;
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public int getInstanceCount() {
+            int count = 0;
+            for (DefaultGameInstance instance : instances.values()) {
+                if (!instance.isProvisional()) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public Collection<DefaultGameInstance> getInstances() {
+            return instances.values().stream()
+                    .filter(instance -> !instance.isProvisional())
+                    .toList();
+        }
+
+        /// {@inheritDoc}
+        @Override
+        public Collection<GameInstanceManifest> getInstanceManifests() {
+            return instances.values().stream()
+                    .filter(instance -> !instance.isProvisional())
+                    .map(instance -> instance.manifest)
+                    .toList();
         }
 
         /// Returns a view of all instances in this status, including provisional placeholders.

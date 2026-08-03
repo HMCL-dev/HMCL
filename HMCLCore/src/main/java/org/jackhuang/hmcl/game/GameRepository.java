@@ -32,6 +32,10 @@ import java.util.Set;
 
 /// Provides indexed access to local game instances and the filesystem layout used by those instances.
 ///
+/// The registered instance index is published as immutable [GameRepositorySnapshot] values. Readers
+/// that need a consistent view across multiple lookups should retain [#getSnapshot()] rather than
+/// interleaving queries with repository writes such as [#refresh()].
+///
 /// Implementations are responsible for loading instance manifests, resolving inheritance and patches,
 /// locating instance-owned files, and exposing helper paths used by launch, download, and maintenance code.
 ///
@@ -52,6 +56,14 @@ public interface GameRepository {
         return getLayout().getBaseDirectory();
     }
 
+    /// Returns the current published snapshot of the registered instance index.
+    ///
+    /// The snapshot is immutable. Subsequent repository writes publish a replacement snapshot and
+    /// do not mutate the returned object.
+    ///
+    /// @return the current repository snapshot
+    GameRepositorySnapshot getSnapshot();
+
     /// Resolves inheritance into launch and standalone manifest views.
     ///
     /// @param manifest the manifest to resolve
@@ -62,37 +74,50 @@ public interface GameRepository {
     ///
     /// @param instanceId the instance id
     /// @return whether the instance exists
-    boolean hasInstance(GameInstanceID instanceId);
+    default boolean hasInstance(GameInstanceID instanceId) {
+        return getSnapshot().hasInstance(instanceId);
+    }
 
     /// Returns the stored manifest for an instance without resolving inheritance or patches.
     ///
     /// @param instanceId the instance id
     /// @return the stored instance manifest
     /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
-    GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+    default GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        return getSnapshot().getInstance(instanceId).getManifest();
+    }
 
     /// Returns a cached launch-ready manifest view for the instance.
     ///
     /// @param instanceId the instance id
     /// @return the resolved manifest view
-    GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+    default GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId)
+            throws NoSuchGameInstanceException {
+        return getSnapshot().getInstance(instanceId).getResolvedManifest();
+    }
 
     /// Returns the number of loaded instances.
     ///
     /// @return the loaded instance count
-    int getInstanceCount();
+    default int getInstanceCount() {
+        return getSnapshot().getInstanceCount();
+    }
 
     /// Returns the stored manifests for all loaded instances.
     ///
     /// @return the loaded instance manifests
-    Collection<GameInstanceManifest> getInstanceManifests();
+    default Collection<GameInstanceManifest> getInstanceManifests() {
+        return getSnapshot().getInstanceManifests();
+    }
 
     /// Returns the indexed game instance for the given id.
     ///
     /// @param id the instance id
     /// @return the game instance
     /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
-    GameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException;
+    default GameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException {
+        return getSnapshot().getInstance(id);
+    }
 
     /// Reloads repository state from the backing storage.
     void refresh();
