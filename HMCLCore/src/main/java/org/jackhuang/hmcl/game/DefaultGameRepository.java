@@ -18,6 +18,10 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
+import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.download.MaintainTask;
@@ -86,13 +90,19 @@ public abstract class DefaultGameRepository implements GameRepository {
                 && Files.exists(bin.resolve("lwjgl_util.jar"));
     }
 
+    /// Immediately-visible published snapshot for programmatic reads on any thread.
     private volatile DefaultGameRepositorySnapshot snapshot;
+
+    /// Observable projection of [#snapshot], updated on the JavaFX application thread.
+    private final ObjectProperty<GameRepositorySnapshot> snapshotProperty;
+
     private volatile boolean loaded;
 
     public DefaultGameRepository(Path baseDirectory) {
         DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
         initial.seal();
         this.snapshot = initial;
+        this.snapshotProperty = new SimpleObjectProperty<>(initial);
     }
 
     /// Creates the repository layout rooted at the given directory.
@@ -112,24 +122,61 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// The returned snapshot is sealed and must not be modified. Writers must [#clone()] it, edit the
     /// copy, and publish the result with [#publishSnapshot(DefaultGameRepositorySnapshot)].
     ///
+    /// This method is safe to call from any thread and reflects the latest published value immediately,
+    /// including before the JavaFX [#snapshotProperty()] has been updated.
+    ///
     /// @return the current snapshot
     protected DefaultGameRepositorySnapshot currentSnapshot() {
         return snapshot;
     }
 
     /// {@inheritDoc}
+    ///
+    /// Safe to call from any thread. The value is updated immediately on publish; UI code that must
+    /// react on the JavaFX thread should observe [#snapshotProperty()] instead.
     @Override
     public GameRepositorySnapshot getSnapshot() {
         return snapshot;
     }
 
+    /// Returns a read-only view of the current published snapshot for JavaFX bindings.
+    ///
+    /// The property is updated on the JavaFX application thread when a snapshot is published from a
+    /// background thread, so listeners may safely touch the scene graph. The value may lag slightly
+    /// behind [#getSnapshot()] until the FX pulse processes the update.
+    ///
+    /// @return the observable snapshot property
+    public final ReadOnlyObjectProperty<GameRepositorySnapshot> snapshotProperty() {
+        return snapshotProperty;
+    }
+
     /// Seals `newSnapshot` if needed and publishes it as the current repository snapshot.
+    ///
+    /// The sealed snapshot becomes visible to [#getSnapshot()] immediately. The observable
+    /// [#snapshotProperty()] is updated on the JavaFX application thread so UI listeners run there.
     ///
     /// @param newSnapshot the snapshot to publish; must not already be visible as [#currentSnapshot()]
     ///                    unless it is a freshly built replacement
     protected void publishSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
         newSnapshot.seal();
         this.snapshot = newSnapshot;
+        publishSnapshotProperty(newSnapshot);
+    }
+
+    /// Updates [#snapshotProperty()] on the JavaFX application thread.
+    private void publishSnapshotProperty(GameRepositorySnapshot newSnapshot) {
+        if (Platform.isFxApplicationThread()) {
+            snapshotProperty.set(newSnapshot);
+            return;
+        }
+
+        try {
+            // Read the volatile field inside runLater so queued publishes converge on the latest value.
+            Platform.runLater(() -> snapshotProperty.set(this.snapshot));
+        } catch (IllegalStateException ignored) {
+            // JavaFX toolkit is not initialized (for example in headless unit tests).
+            snapshotProperty.set(newSnapshot);
+        }
     }
 
     @Override
