@@ -32,6 +32,8 @@ public interface GameInstance {
 
     GameRepository getRepository();
 
+    GameRepositoryLayout getLayout();
+
     /// Returns the instance ID.
     ///
     /// @return the instance ID
