@@ -275,48 +275,56 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public boolean hasInstance(GameInstanceID instanceId) {
-        return status.instances.containsKey(instanceId);
+        DefaultGameInstance instance = status.instances.get(instanceId);
+        return instance != null && !instance.isProvisional();
     }
 
     @Override
     public GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        DefaultGameInstance instance = status.instances.get(instanceId);
-        if (instance == null) {
-            throw new NoSuchGameInstanceException(instanceId);
-        }
-        return instance.getManifest();
+        return getInstance(instanceId).getManifest();
     }
 
     @Override
     public GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        Status currentStatus = status;
-
-        DefaultGameInstance instance = currentStatus.instances.get(instanceId);
-        if (instance == null) {
-            throw new NoSuchGameInstanceException(instanceId);
-        }
-
-        return instance.getResolvedManifest();
+        return getInstance(instanceId).getResolvedManifest();
     }
 
     @Override
     public int getInstanceCount() {
-        return status.instances.size();
+        int count = 0;
+        for (DefaultGameInstance instance : status.instances.values()) {
+            if (!instance.isProvisional()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     @Override
     public Collection<GameInstanceManifest> getInstanceManifests() {
-        return status.instances.values().stream().map(i -> i.manifest).toList();
+        return status.instances.values().stream()
+                .filter(instance -> !instance.isProvisional())
+                .map(instance -> instance.manifest)
+                .toList();
     }
 
     @Override
-    public DefaultGameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException{
+    public DefaultGameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException {
         @Nullable DefaultGameInstance instance = status.instances.get(id);
-        if (instance != null) {
+        if (instance != null && !instance.isProvisional()) {
             return instance;
         } else {
             throw new NoSuchGameInstanceException(id);
         }
+    }
+
+    /// Returns the instance recorded in the current status for the given id, including provisional
+    /// placeholders.
+    ///
+    /// @param id the instance id
+    /// @return the instance, or `null` when absent from the current status
+    protected @Nullable DefaultGameInstance findStatusInstance(GameInstanceID id) {
+        return status.instances.get(id);
     }
 
     public Path getArtifactFile(GameInstanceManifest manifest, Artifact artifact) {

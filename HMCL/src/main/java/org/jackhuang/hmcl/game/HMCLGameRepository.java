@@ -56,7 +56,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
@@ -84,14 +83,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// The selected instance ID persisted for this repository's game directory.
     private final ObjectBinding<@Nullable GameInstanceID> selectedInstance;
 
-    /// Instances that are not yet present in the repository index.
-    ///
-    /// Used during new-instance installation and similar flows that need isolation settings before
-    /// the instance manifest has been saved and indexed.
-    private final Map<GameInstanceID, HMCLGameInstance> pendingInstances = new HashMap<>();
-
-    private final Set<GameInstanceID> beingModpackInstances = new HashSet<>();
-
     public final EventManager<Event> onInstanceIconChanged = new EventManager<>();
 
     /// Creates a repository backed by the given game directory.
@@ -109,9 +100,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     protected HMCLGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest) {
-        HMCLGameInstance pending = pendingInstances.remove(id);
-        if (pending != null) {
-            return pending.withManifest(status, manifest);
+        DefaultGameInstance existing = status.instances.get(id);
+        if (existing instanceof HMCLGameInstance hmcl) {
+            return hmcl.withManifest(status, manifest);
         }
         return new HMCLGameInstance(status, id, manifest);
     }
@@ -128,6 +119,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Returns the indexed instance for the given id, or `null` when it is not loaded.
     ///
+    /// Provisional placeholders are excluded.
+    ///
     /// @param id the instance id
     /// @return the instance, or `null` when absent
     public @Nullable HMCLGameInstance findInstance(GameInstanceID id) {
@@ -138,21 +131,25 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    /// Returns the instance that owns local game settings for the given id.
+    /// Returns the instance that owns local state for the given id.
     ///
-    /// When the instance is already indexed, that instance is returned. Otherwise a pending
-    /// [HMCLGameInstance] is created and retained until the instance is registered or the
-    /// repository is refreshed.
+    /// When the id is already present in the current [Status] (including provisional
+    /// placeholders), that instance is returned. Otherwise a provisional [HMCLGameInstance] is
+    /// created and recorded in the current status until it is promoted by a real manifest or the
+    /// status is replaced by refresh.
     ///
     /// @param instanceId the instance id
-    /// @return the instance used to manage settings for the id
+    /// @return the instance used to manage settings and install-time state for the id
     private HMCLGameInstance resolveInstance(GameInstanceID instanceId) {
-        HMCLGameInstance instance = findInstance(instanceId);
-        if (instance != null) {
-            return instance;
+        DefaultGameInstance existing = findStatusInstance(instanceId);
+        if (existing instanceof HMCLGameInstance hmcl) {
+            return hmcl;
         }
-        return pendingInstances.computeIfAbsent(
-                instanceId, id -> new HMCLGameInstance(currentStatus(), id, new GameInstanceManifest(id)));
+
+        Status current = currentStatus();
+        HMCLGameInstance provisional = HMCLGameInstance.provisional(current, instanceId);
+        current.instances.put(instanceId, provisional);
+        return provisional;
     }
 
     /// Returns the persistent game directory for this repository.
@@ -199,42 +196,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public Path getRunDirectory(GameInstanceID instanceId) {
-        if (beingModpackInstances.contains(instanceId) || isModpack(instanceId)) {
-            return getLayout().getInstanceRoot(instanceId);
-        }
-
-        GameSettings.Instance localSetting = getInstanceGameSettings(instanceId);
-        boolean useInstanceRunningDirectory =
-                localSetting != null && localSetting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-
-        String runningDirectory = getSelectedRunningDirectory(localSetting, useInstanceRunningDirectory);
-        if (StringUtils.isBlank(runningDirectory)) {
-            return useInstanceRunningDirectory ? getLayout().getInstanceRoot(instanceId) : super.getRunDirectory(instanceId);
-        }
-
-        try {
-            return Path.of(runningDirectory);
-        } catch (InvalidPathException ignored) {
-            return getLayout().getInstanceRoot(instanceId);
-        }
-    }
-
-    /// Returns the running directory string selected by the current source.
-    private String getSelectedRunningDirectory(
-            @Nullable GameSettings.Instance localSetting,
-            boolean useInstanceRunningDirectory) {
-        if (useInstanceRunningDirectory) {
-            if (localSetting == null) {
-                return "";
-            }
-
-            //noinspection DataFlowIssue
-            return Objects.requireNonNullElse(localSetting.runningDirectoryProperty().getValue(), "");
-        }
-
-        GameSettings.Preset parent = getParentGameSettings(localSetting);
-        //noinspection DataFlowIssue
-        return Objects.requireNonNullElse(parent.runningDirectoryProperty().getValue(), "");
+        return resolveInstance(instanceId).getRunDirectory();
     }
 
     public Stream<GameInstanceManifest> getDisplayInstanceManifests() {
@@ -246,7 +208,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     protected void refreshImpl() {
-        pendingInstances.clear();
         super.refreshImpl();
 
         try {
@@ -273,17 +234,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public void clean(GameInstanceID instanceId) throws IOException {
         clean(getBaseDirectory());
         clean(getRunDirectory(instanceId));
-    }
-
-    /// Removes an instance from disk and clears its cached HMCL settings state.
-    @Override
-    public boolean removeInstanceFromDisk(GameInstanceID instanceId) {
-        boolean removed = super.removeInstanceFromDisk(instanceId);
-        if (removed) {
-            pendingInstances.remove(instanceId);
-            beingModpackInstances.remove(instanceId);
-        }
-        return removed;
     }
 
     public void duplicateInstance(GameInstanceID srcId, GameInstanceID dstId, boolean copySaves) throws IOException {
@@ -632,12 +582,21 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return getLayout().getInstanceRoot(instanceId).resolve("modpack.cfg");
     }
 
+    /// Marks the instance as a modpack for run-directory resolution during installation.
+    ///
+    /// @param instanceId the instance id
     public void markInstanceAsModpack(GameInstanceID instanceId) {
-        beingModpackInstances.add(instanceId);
+        resolveInstance(instanceId).markAsModpack();
     }
 
+    /// Clears the install-time modpack mark for the instance.
+    ///
+    /// @param instanceId the instance id
     public void undoMark(GameInstanceID instanceId) {
-        beingModpackInstances.remove(instanceId);
+        DefaultGameInstance existing = findStatusInstance(instanceId);
+        if (existing instanceof HMCLGameInstance hmcl) {
+            hmcl.unmarkAsModpack();
+        }
     }
 
     public void markInstanceLaunchedAbnormally(GameInstanceID instanceId) {

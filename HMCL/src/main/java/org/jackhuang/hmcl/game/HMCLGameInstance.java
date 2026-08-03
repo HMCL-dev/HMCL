@@ -37,13 +37,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// HMCL-specific game instance that owns the lifecycle of instance-local [GameSettings.Instance].
+/// HMCL-specific game instance that owns instance-local settings and run-directory policy.
 @NotNullByDefault
 public class HMCLGameInstance extends DefaultGameInstance {
+
+    /// Whether this instance is only a provisional placeholder in the current status.
+    private final boolean provisional;
+
+    /// Whether install-time code currently treats this instance as a modpack for run-directory
+    /// resolution, before [HMCLGameRepository#isModpack(GameInstanceID)] becomes true.
+    private boolean treatingAsModpack;
 
     /// Whether the instance-local game settings file has already been inspected.
     private boolean gameSettingsLoaded;
@@ -54,43 +63,65 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// Cached instance-local game settings, or `null` when none exist after loading.
     private GameSettings.@Nullable Instance gameSettings;
 
-    /// Creates an instance bound to the given repository status snapshot.
+    /// Creates a registered instance bound to the given repository status snapshot.
     ///
     /// @param status   the repository status that owns this instance
     /// @param id       the instance id
     /// @param manifest the stored instance manifest
     protected HMCLGameInstance(DefaultGameRepository.Status status, GameInstanceID id, GameInstanceManifest manifest) {
-        super(status, id, manifest);
+        this(status, id, manifest, false);
     }
 
-    /// Creates an instance that shares already-loaded game settings with another instance.
+    /// Creates a provisional instance used before a real manifest is indexed.
     ///
-    /// Used when the repository clones a status snapshot or promotes a pending instance so that
-    /// cached settings remain available on the new wrapper.
-    ///
-    /// @param status            the repository status that owns this instance
-    /// @param id                the instance id
-    /// @param manifest          the stored instance manifest
-    /// @param shareGameSettings the instance whose settings fields should be shared
+    /// @param status the repository status that owns this instance
+    /// @param id     the instance id
+    /// @return a provisional instance with an empty placeholder manifest
+    static HMCLGameInstance provisional(DefaultGameRepository.Status status, GameInstanceID id) {
+        return new HMCLGameInstance(status, id, new GameInstanceManifest(id), true);
+    }
+
     private HMCLGameInstance(
             DefaultGameRepository.Status status,
             GameInstanceID id,
             GameInstanceManifest manifest,
-            HMCLGameInstance shareGameSettings) {
+            boolean provisional) {
         super(status, id, manifest);
-        this.gameSettingsLoaded = shareGameSettings.gameSettingsLoaded;
-        this.gameSettingsReadOnly = shareGameSettings.gameSettingsReadOnly;
-        this.gameSettings = shareGameSettings.gameSettings;
+        this.provisional = provisional;
+    }
+
+    /// Creates an instance that shares mutable instance-local state with another instance.
+    ///
+    /// Used when the repository clones a status snapshot or promotes a provisional instance so that
+    /// settings and install-time flags remain available on the new wrapper.
+    private HMCLGameInstance(
+            DefaultGameRepository.Status status,
+            GameInstanceID id,
+            GameInstanceManifest manifest,
+            boolean provisional,
+            HMCLGameInstance shareState) {
+        super(status, id, manifest);
+        this.provisional = provisional;
+        this.treatingAsModpack = shareState.treatingAsModpack;
+        this.gameSettingsLoaded = shareState.gameSettingsLoaded;
+        this.gameSettingsReadOnly = shareState.gameSettingsReadOnly;
+        this.gameSettings = shareState.gameSettings;
     }
 
     @Override
     protected HMCLGameInstance withNewStatus(DefaultGameRepository.Status newStatus) {
-        return new HMCLGameInstance(newStatus, id, manifest, this);
+        return new HMCLGameInstance(newStatus, id, manifest, provisional, this);
     }
 
     @Override
     protected HMCLGameInstance withManifest(DefaultGameRepository.Status newStatus, GameInstanceManifest manifest) {
-        return new HMCLGameInstance(newStatus, id, manifest, this);
+        // A real stored manifest promotes a provisional placeholder to a registered instance.
+        return new HMCLGameInstance(newStatus, id, manifest, false, this);
+    }
+
+    @Override
+    public boolean isProvisional() {
+        return provisional;
     }
 
     @Override
@@ -101,6 +132,63 @@ public class HMCLGameInstance extends DefaultGameInstance {
     @Override
     public HMCLGameRepositoryLayout getLayout() {
         return (HMCLGameRepositoryLayout) super.getLayout();
+    }
+
+    /// Marks this instance as a modpack for run-directory resolution during installation.
+    public void markAsModpack() {
+        treatingAsModpack = true;
+    }
+
+    /// Clears the install-time modpack mark.
+    public void unmarkAsModpack() {
+        treatingAsModpack = false;
+    }
+
+    /// Returns whether install-time code currently treats this instance as a modpack.
+    ///
+    /// @return whether [#markAsModpack()] is in effect
+    public boolean isTreatingAsModpack() {
+        return treatingAsModpack;
+    }
+
+    @Override
+    public Path getRunDirectory() {
+        if (treatingAsModpack || getRepository().isModpack(id)) {
+            return getInstanceRoot();
+        }
+
+        GameSettings.Instance localSetting = getSettings();
+        boolean useInstanceRunningDirectory =
+                localSetting != null
+                        && localSetting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+
+        String runningDirectory = selectedRunningDirectory(localSetting, useInstanceRunningDirectory);
+        if (StringUtils.isBlank(runningDirectory)) {
+            return useInstanceRunningDirectory ? getInstanceRoot() : getLayout().getBaseDirectory();
+        }
+
+        try {
+            return Path.of(runningDirectory);
+        } catch (InvalidPathException ignored) {
+            return getInstanceRoot();
+        }
+    }
+
+    private String selectedRunningDirectory(
+            @Nullable GameSettings.Instance localSetting,
+            boolean useInstanceRunningDirectory) {
+        if (useInstanceRunningDirectory) {
+            if (localSetting == null) {
+                return "";
+            }
+
+            //noinspection DataFlowIssue
+            return Objects.requireNonNullElse(localSetting.runningDirectoryProperty().getValue(), "");
+        }
+
+        GameSettings.Preset parent = getRepository().getParentGameSettings(localSetting);
+        //noinspection DataFlowIssue
+        return Objects.requireNonNullElse(parent.runningDirectoryProperty().getValue(), "");
     }
 
     /// Returns the loaded instance-local game settings, loading them on first access.
