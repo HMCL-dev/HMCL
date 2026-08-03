@@ -30,6 +30,7 @@ public abstract class MDListCell<T> extends ListCell<T> {
 
     private final StackPane container = new StackPane();
     private final StackPane root = new StackPane();
+    private final RipplerContainer ripplerContainer = new RipplerContainer(container);
 
     public MDListCell(JFXListView<T> listView) {
 
@@ -37,7 +38,6 @@ public abstract class MDListCell<T> extends ListCell<T> {
         setGraphic(null);
 
         root.getStyleClass().add("md-list-cell");
-        RipplerContainer ripplerContainer = new RipplerContainer(container);
         root.getChildren().setAll(ripplerContainer);
 
         Region clippedContainer = (Region) listView.lookup(".clipped-container");
@@ -56,12 +56,13 @@ public abstract class MDListCell<T> extends ListCell<T> {
         T oldItem = getItem();
         boolean oldEmpty = isEmpty();
 
+        ripplerContainer.clearRippleImmediately();
         super.updateItem(item, empty);
 
         if (oldItem == item && oldEmpty == empty) return;
 
         updateControl(item, empty);
-        if (empty) {
+        if (empty || item == null) {
             setGraphic(null);
         } else {
             setGraphic(root);

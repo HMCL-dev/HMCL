@@ -40,7 +40,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class GameListCell extends ListCell<GameListItem> {
 
-    private final Region graphic;
+    private final RipplerContainer graphic;
 
     private final ImageContainer imageView;
     private final TwoLineListItem content;
@@ -162,6 +162,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     @Override
     public void updateItem(GameListItem item, boolean empty) {
+        this.graphic.clearRippleImmediately();
         super.updateItem(item, empty);
 
         this.imageView.imageProperty().unbind();

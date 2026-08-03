@@ -205,6 +205,10 @@ public class RipplerContainer extends StackPane {
         ripplerFillProperty().set(ripplerFill);
     }
 
+    public void clearRippleImmediately() {
+        buttonRippler.clearRippleImmediately();
+    }
+
     @Override
     public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
         return getClassCssMetaData();

@@ -278,6 +278,10 @@ public class JFXRippler extends StackPane {
         rippler.releaseRipple();
     }
 
+    public void clearRippleImmediately() {
+        rippler.clearRippleImmediately();
+    }
+
     /**
      * creates Ripple effect in the center of the control
      *
@@ -399,6 +403,21 @@ public class JFXRippler extends StackPane {
                         overlayRect.inAnimation.stop();
                         if (!forceOverlay) {
                             overlayRect.outAnimation.play();
+                        }
+                    }
+                }
+            }
+        }
+
+        private void clearRippleImmediately() {
+            Ripple ripple = ripplesQueue.poll();
+            if (ripple != null) {
+                getChildren().remove(ripple);
+                if (generating.getAndSet(false)) {
+                    if (overlayRect != null) {
+                        overlayRect.inAnimation.stop();
+                        if (!forceOverlay) {
+                            overlayRect.setOpacity(0D);
                         }
                     }
                 }

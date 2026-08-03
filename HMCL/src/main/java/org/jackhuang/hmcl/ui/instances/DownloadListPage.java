@@ -581,6 +581,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
 
                     @Override
                     protected void updateItem(RemoteAddon item, boolean empty) {
+                        this.graphic.clearRippleImmediately();
                         super.updateItem(item, empty);
                         if (empty || item == null) {
                             setGraphic(null);

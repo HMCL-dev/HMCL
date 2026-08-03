@@ -158,6 +158,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final TwoLineListItem twoLineListItem = new TwoLineListItem();
         private final ImageView imageView = new ImageView();
         private final StackPane pane = new StackPane();
+        private final RipplerContainer ripplerContainer;
 
         RemoteVersionListCell(VersionsPage control) {
             this.control = control;
@@ -188,7 +189,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             pane.getStyleClass().add("md-list-cell");
             StackPane.setMargin(hbox, new Insets(10, 16, 10, 16));
-            pane.getChildren().setAll(new RipplerContainer(hbox));
+            pane.getChildren().setAll(ripplerContainer = new RipplerContainer(hbox));
 
             FXUtils.onClicked(this, this::onAction);
         }
@@ -214,6 +215,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         public void updateItem(RemoteVersion remoteVersion, boolean empty) {
             RemoteVersion oldRemoteVersion = getItem();
 
+            ripplerContainer.clearRippleImmediately();
             super.updateItem(remoteVersion, empty);
 
             if (empty) {
