@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -72,6 +73,8 @@ public interface GameRepository {
     ///
     /// @return the loaded instance manifests
     Collection<GameInstanceManifest> getInstanceManifests();
+
+    @Nullable GameInstance getInstance(GameInstanceID id);
 
     /// Reloads repository state from the backing storage.
     void refresh();

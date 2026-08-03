@@ -26,21 +26,25 @@ import java.nio.file.Path;
 @NotNullByDefault
 public class DefaultGameInstance implements GameInstance {
 
-    private final DefaultGameRepository repository;
-    private final DefaultGameRepositoryLayout layout;
-    private final GameInstanceID id;
-    private final GameInstanceManifest manifest;
-    private GameInstanceManifest.@Nullable Resolved resolvedManifest;
-    private @Nullable GameVersionNumber version;
+    protected final DefaultGameRepository repository;
+    protected final DefaultGameRepositoryLayout layout;
+    protected final GameInstanceID id;
+    protected final GameInstanceManifest manifest;
+    protected GameInstanceManifest.@Nullable Resolved resolvedManifest;
+    protected @Nullable GameVersionNumber version;
 
     protected DefaultGameInstance(
             DefaultGameRepository.Status status,
-            DefaultGameRepository repository, DefaultGameRepositoryLayout layout,
-            GameInstanceID id, GameInstanceManifest manifest) {
-        this.repository = repository;
-        this.layout = layout;
+            GameInstanceID id,
+            GameInstanceManifest manifest) {
+        this.repository = status.repository;
+        this.layout = status.layout;
         this.id = id;
         this.manifest = manifest;
+    }
+
+    protected DefaultGameInstance withNewStatus(DefaultGameRepository.Status newStatus) {
+        return new DefaultGameInstance(newStatus, id, manifest);
     }
 
     @Override

@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +92,7 @@ public class DefaultGameRepository implements GameRepository {
     private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
     public DefaultGameRepository(Path baseDirectory) {
-        this.status = new Status(new DefaultGameRepositoryLayout(baseDirectory));
+        this.status = new Status(this, new DefaultGameRepositoryLayout(baseDirectory));
     }
 
     public Path getBaseDirectory() {
@@ -101,7 +100,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public void setBaseDirectory(Path baseDirectory) {
-        this.status = new Status(new DefaultGameRepositoryLayout(baseDirectory));
+        this.status = new Status(this, new DefaultGameRepositoryLayout(baseDirectory));
         this.loaded = false;
         this.gameVersions.clear();
     }
@@ -127,11 +126,11 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     protected void refreshImpl() {
-        Status newStatus = new Status(status.layout);
+        Status newStatus = new Status(this, status.layout);
 
         if (hasClassicVersion(newStatus.layout.getBaseDirectory())) {
             GameInstanceID id = CLASSIC_MANIFEST.id();
-            newStatus.instances.put(id, new InstanceHolder(newStatus, id, CLASSIC_MANIFEST));
+            newStatus.instances.put(id, createInstance(newStatus, id, CLASSIC_MANIFEST));
         }
 
         Path versionsDir = newStatus.layout.getBaseDirectory().resolve("versions");
@@ -206,21 +205,21 @@ public class DefaultGameRepository implements GameRepository {
                     return Stream.of(manifest);
                 }).forEachOrdered(it -> newStatus.instances.put(
                         it.id(),
-                        new InstanceHolder(newStatus, it.id(), it)));
+                        createInstance(newStatus, it.id(), it)));
             } catch (IOException e) {
                 LOG.warning("Failed to load versions from " + versionsDir, e);
             }
         }
 
-        Map<GameInstanceID, InstanceHolder> loadedInstances = new TreeMap<>();
-        for (InstanceHolder holder : newStatus.instances.values()) {
+        Map<GameInstanceID, DefaultGameInstance> loadedInstances = new TreeMap<>();
+        for (DefaultGameInstance instance : newStatus.instances.values()) {
             try {
-                GameInstanceManifest resolved = newStatus.resolve(holder.manifest, new HashSet<>()).launchManifest();
+                GameInstanceManifest resolved = newStatus.resolve(instance.getManifest(), new HashSet<>()).launchManifest();
                 if (CompatibilityRule.appliesToCurrentEnvironment(resolved.compatibilityRules())) {
-                    loadedInstances.put(holder.id, holder);
+                    loadedInstances.put(instance.getId(), instance);
                 }
             } catch (NoSuchGameInstanceException e) {
-                LOG.warning("Ignoring version " + holder.id + " because it inherits from a nonexistent version.");
+                LOG.warning("Ignoring instance " + instance.getId() + " because it inherits from a nonexistent version.");
             }
         }
 
@@ -273,26 +272,26 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        InstanceHolder instanceHolder = status.instances.get(instanceId);
-        if (instanceHolder == null) {
+        DefaultGameInstance instance = status.instances.get(instanceId);
+        if (instance == null) {
             throw new NoSuchGameInstanceException(instanceId);
         }
-        return instanceHolder.manifest;
+        return instance.getManifest();
     }
 
     @Override
     public GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
         Status currentStatus = status;
 
-        InstanceHolder instanceHolder = currentStatus.instances.get(instanceId);
-        if (instanceHolder == null) {
+        DefaultGameInstance instance = currentStatus.instances.get(instanceId);
+        if (instance == null) {
             throw new NoSuchGameInstanceException(instanceId);
         }
 
-        GameInstanceManifest.Resolved resolvedManifest = instanceHolder.resolvedManifest;
+        GameInstanceManifest.Resolved resolvedManifest = instance.resolvedManifest;
         if (resolvedManifest == null) {
-            resolvedManifest = currentStatus.resolve(instanceHolder.manifest, new HashSet<>());
-            instanceHolder.resolvedManifest = resolvedManifest;
+            resolvedManifest = currentStatus.resolve(instance.manifest, new HashSet<>());
+            instance.resolvedManifest = resolvedManifest;
         }
         return resolvedManifest;
     }
@@ -305,6 +304,11 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public Collection<GameInstanceManifest> getInstanceManifests() {
         return status.instances.values().stream().map(i -> i.manifest).toList();
+    }
+
+    @Override
+    public @Nullable GameInstance getInstance(GameInstanceID id) {
+        return null;
     }
 
     public Path getArtifactFile(GameInstanceManifest manifest, Artifact artifact) {
@@ -331,7 +335,7 @@ public class DefaultGameRepository implements GameRepository {
 
         try {
             Status currentStatus = status;
-            InstanceHolder fromHolder = currentStatus.instances.get(from);
+            DefaultGameInstance fromHolder = currentStatus.instances.get(from);
             if (fromHolder == null) {
                 throw new NoSuchGameInstanceException(from);
             }
@@ -345,18 +349,18 @@ public class DefaultGameRepository implements GameRepository {
             renamedManifest = renamedManifest.withId(to);
             JsonUtils.writeToJsonFile(getInstanceJson(to), renamedManifest);
 
-            Map<GameInstanceID, InstanceHolder> updatedInstances = new TreeMap<>(currentStatus.instances);
+            Map<GameInstanceID, DefaultGameInstance> updatedInstances = new TreeMap<>(currentStatus.instances);
             updatedInstances.remove(from);
-            updatedInstances.put(to, new InstanceHolder(currentStatus, to, renamedManifest));
+            updatedInstances.put(to, createInstance(currentStatus, to, renamedManifest));
 
-            for (InstanceHolder holder : currentStatus.instances.values()) {
-                GameInstanceManifest manifest = holder.manifest;
+            for (DefaultGameInstance instance : currentStatus.instances.values()) {
+                GameInstanceManifest manifest = instance.manifest;
                 if (from.equals(manifest.inheritsFrom())) {
                     GameInstanceManifest updatedManifest = manifest.withInheritsFrom(to);
                     Path targetPath = getInstanceJson(updatedManifest.id());
                     Files.createDirectories(targetPath.getParent());
                     JsonUtils.writeToJsonFile(targetPath, updatedManifest);
-                    updatedInstances.put(updatedManifest.id(), new InstanceHolder(currentStatus, updatedManifest.id(), updatedManifest));
+                    updatedInstances.put(updatedManifest.id(), createInstance(currentStatus, updatedManifest.id(), updatedManifest));
                 }
             }
 
@@ -543,8 +547,13 @@ public class DefaultGameRepository implements GameRepository {
             Files.createDirectories(json.getParent());
             JsonUtils.writeToJsonFile(json, savedManifest);
 
-            Status currentStatus = status;
-            currentStatus.instances.put(savedManifest.id(), new InstanceHolder(currentStatus, savedManifest.id(), savedManifest));
+            Status newStatus = status.clone();
+            newStatus.instances.put(savedManifest.id(), new DefaultGameInstance(newStatus, savedManifest.id(), savedManifest)); // TODO
+
+            // TODO
+
+            status = newStatus;
+
             gameVersions.clear();
             return savedManifest;
         });
@@ -591,12 +600,26 @@ public class DefaultGameRepository implements GameRepository {
         return status.resolve(manifest, new HashSet<>());
     }
 
-    protected static class Status {
-        private final DefaultGameRepositoryLayout layout;
-        private final Map<GameInstanceID, InstanceHolder> instances = new TreeMap<>();
+    protected DefaultGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest) {
+        return new DefaultGameInstance(status, id, manifest);
+    }
 
-        protected Status(DefaultGameRepositoryLayout layout) {
+    protected static class Status {
+        public final DefaultGameRepository repository;
+        public final DefaultGameRepositoryLayout layout;
+        public final Map<GameInstanceID, DefaultGameInstance> instances = new TreeMap<>();
+
+        protected Status(DefaultGameRepository repository, DefaultGameRepositoryLayout layout) {
+            this.repository = repository;
             this.layout = layout;
+        }
+
+        public Status clone() {
+            Status newStatus = new Status(repository, layout);
+            for (DefaultGameInstance instance : instances.values()) {
+                newStatus.instances.put(instance.getId(), instance.withNewStatus(newStatus));
+            }
+            return newStatus;
         }
 
         private GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,
@@ -623,13 +646,13 @@ public class DefaultGameRepository implements GameRepository {
                     launchManifest = (manifest.jar() == null ? manifest.withJar(manifest.id()) : manifest)
                             .withInheritsFrom(null);
                 } else {
-                    InstanceHolder parentInstance = instances.get(manifest.inheritsFrom());
+                    DefaultGameInstance parentInstance = instances.get(manifest.inheritsFrom());
                     if (parentInstance == null) {
                         throw new NoSuchGameInstanceException(manifest.inheritsFrom());
                     }
 
                     // It is supposed to auto-install a version in getVersion.
-                    GameInstanceManifest.Resolved parentResolved = resolve(parentInstance.manifest, resolvedSoFar);
+                    GameInstanceManifest.Resolved parentResolved = resolve(parentInstance.getManifest(), resolvedSoFar);
                     launchManifest = manifest.merge(parentResolved.launchManifest());
                     standaloneManifest = addPatches(
                             addPatches(parentResolved.standaloneManifest(), Collections.singleton(manifest.toPatch())),
@@ -682,17 +705,4 @@ public class DefaultGameRepository implements GameRepository {
 
     }
 
-    protected static class InstanceHolder {
-        protected final Status status;
-        protected final GameInstanceID id;
-        protected final GameInstanceManifest manifest;
-        protected @Nullable GameInstanceManifest.Resolved resolvedManifest;
-        protected @Nullable GameVersionNumber version;
-
-        protected InstanceHolder(Status status, GameInstanceID id, GameInstanceManifest manifest) {
-            this.status = status;
-            this.id = id;
-            this.manifest = manifest;
-        }
-    }
 }
