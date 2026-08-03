@@ -436,7 +436,10 @@ public final class HTMLRenderer {
                 appendImage(node);
                 appendAutoLineBreak("\n");
             }
-            case "li" -> appendText("\n " + "  ".repeat(listDepth) + "\u2022 ");
+            case "li" -> {
+                appendAutoLineBreak("\n");
+                appendText(" " + "  ".repeat(listDepth) + "\u2022 ");
+            }
             case "dt" -> appendText(" ");
             case "p" -> {
                 var n = node.parent();
@@ -486,7 +489,7 @@ public final class HTMLRenderer {
 
                     if (otherChild instanceof AutoLineBreak) {
                         lastAutoLineBreak = j;
-                    } else if (otherChild instanceof Text && isSpacing(((Text) otherChild).getText())) {
+                    } else if (otherChild instanceof Text txt && isSpacing(txt.getText())) {
                         // do nothing
                     } else {
                         break;
@@ -500,6 +503,16 @@ public final class HTMLRenderer {
                         ((Text) child).setText("\n\n");
                     }
                 }
+            }
+        }
+        int size = children.size();
+        for (int i = 0; i < size; i++) {
+            var child = children.get(i);
+            if (child instanceof AutoLineBreak || (child instanceof Text txt && isSpacing(txt.getText()))) {
+                // do nothing
+            } else {
+                children.subList(0, i).clear();
+                break;
             }
         }
         return this;
