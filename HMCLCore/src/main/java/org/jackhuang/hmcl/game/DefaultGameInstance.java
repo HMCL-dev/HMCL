@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 
 @NotNullByDefault
-public class DefaultGameInstance implements GameInstance {
+public abstract class DefaultGameInstance implements GameInstance {
 
     protected final DefaultGameRepository.Status status;
     protected final DefaultGameRepository repository;
@@ -46,18 +46,14 @@ public class DefaultGameInstance implements GameInstance {
         this.manifest = manifest;
     }
 
-    protected DefaultGameInstance withNewStatus(DefaultGameRepository.Status newStatus) {
-        return new DefaultGameInstance(newStatus, id, manifest);
-    }
+    protected abstract DefaultGameInstance withNewStatus(DefaultGameRepository.Status newStatus);
 
     /// Returns a copy of this instance bound to a new status and stored manifest.
     ///
     /// @param newStatus the status that will own the copy
     /// @param manifest  the stored instance manifest
     /// @return the updated instance
-    protected DefaultGameInstance withManifest(DefaultGameRepository.Status newStatus, GameInstanceManifest manifest) {
-        return new DefaultGameInstance(newStatus, id, manifest);
-    }
+    protected abstract DefaultGameInstance withManifest(DefaultGameRepository.Status newStatus, GameInstanceManifest manifest);
 
     @Override
     public DefaultGameRepository getRepository() {

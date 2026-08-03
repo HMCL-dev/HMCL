@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
-public class DefaultGameRepository implements GameRepository {
+public abstract class DefaultGameRepository implements GameRepository {
 
     private static final GameInstanceManifest CLASSIC_MANIFEST = new GameInstanceManifest(
             new GameInstanceID("Classic"),
@@ -99,9 +99,7 @@ public class DefaultGameRepository implements GameRepository {
     ///
     /// @param baseDirectory the repository base directory
     /// @return the layout used by this repository
-    protected DefaultGameRepositoryLayout createLayout(Path baseDirectory) {
-        return new DefaultGameRepositoryLayout(baseDirectory);
-    }
+    protected abstract DefaultGameRepositoryLayout createLayout(Path baseDirectory);
 
     public Path getBaseDirectory() {
         return status.layout.getBaseDirectory();
@@ -610,9 +608,7 @@ public class DefaultGameRepository implements GameRepository {
         return status.resolve(manifest, new HashSet<>());
     }
 
-    protected DefaultGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest) {
-        return new DefaultGameInstance(status, id, manifest);
-    }
+    protected abstract DefaultGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest);
 
     protected static class Status {
         public final DefaultGameRepository repository;
