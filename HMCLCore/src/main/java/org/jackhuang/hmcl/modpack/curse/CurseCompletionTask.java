@@ -186,7 +186,7 @@ public final class CurseCompletionTask extends Task<Void> {
                             return Stream.empty();
                         }
 
-                        var task = new FileDownloadTask(List.of(NetworkUtils.toURI(f.url())), path, f.getIntegrityCheck());
+                        var task = new FileDownloadTask(f.url(), path, f.getIntegrityCheck());
                         task.setCacheRepository(dependency.getCacheRepository());
                         task.setCaching(true);
                         return Stream.of(task.withCounter("hmcl.modpack.download"));
