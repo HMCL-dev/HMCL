@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Path;
@@ -55,6 +56,8 @@ public interface GameInstance {
     default GameInstanceManifest getLaunchManifest() {
         return getResolvedManifest().launchManifest();
     }
+
+    GameVersionNumber getVersion();
 
     /// Returns the directory containing files owned by this instance.
     ///

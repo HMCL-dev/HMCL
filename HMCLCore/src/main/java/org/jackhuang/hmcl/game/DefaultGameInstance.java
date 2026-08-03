@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ public class DefaultGameInstance implements GameInstance {
     private final GameInstanceID id;
     private final GameInstanceManifest manifest;
     private GameInstanceManifest.@Nullable Resolved resolvedManifest;
+    private @Nullable GameVersionNumber version;
 
     protected DefaultGameInstance(
             DefaultGameRepository.Status status,
@@ -42,8 +44,13 @@ public class DefaultGameInstance implements GameInstance {
     }
 
     @Override
-    public GameRepository getRepository() {
+    public DefaultGameRepository getRepository() {
         return repository;
+    }
+
+    @Override
+    public DefaultGameRepositoryLayout getLayout() {
+        return layout;
     }
 
     @Override
@@ -63,6 +70,14 @@ public class DefaultGameInstance implements GameInstance {
         }
 
         return resolvedManifest;
+    }
+
+    @Override
+    public GameVersionNumber getVersion() {
+        if (version == null) {
+            version = GameVersionNumber.asGameVersion(repository.getGameVersion(getId())); // TODO
+        }
+        return version;
     }
 
     @Override
