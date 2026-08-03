@@ -66,6 +66,7 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -156,7 +157,11 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> versionItems = repository.getDisplayInstanceManifests().map(instance -> new GameListItem(repository, instance.id())).toList();
+            List<GameListItem> versionItems = repository.getDisplayInstanceManifests()
+                    .map(manifest -> repository.findInstance(manifest.id()))
+                    .filter(Objects::nonNull)
+                    .map(GameListItem::new)
+                    .toList();
 
             sourceList.setAll(versionItems);
 

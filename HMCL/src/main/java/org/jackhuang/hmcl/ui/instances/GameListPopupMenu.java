@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -62,8 +63,9 @@ public final class GameListPopupMenu extends StackPane {
                                            HMCLGameRepository repository, List<GameInstanceManifest> versions) {
         GameListPopupMenu menu = new GameListPopupMenu();
         menu.getItems().setAll(versions.stream()
-                .filter(it -> repository.hasInstance(it.id()))
-                .map(it -> new GameItem(repository, it.id()))
+                .map(it -> repository.findInstance(it.id()))
+                .filter(Objects::nonNull)
+                .map(GameItem::new)
                 .toList());
         JFXPopup popup = new JFXPopup(menu);
         popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);

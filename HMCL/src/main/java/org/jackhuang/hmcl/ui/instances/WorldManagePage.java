@@ -38,13 +38,11 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -79,7 +77,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public WorldManagePage(World world, HMCLGameInstance gameInstance) {
         this.world = world;
         this.gameInstance = gameInstance;
-        this.backupsDir = gameInstance.getRepository().getBackupsDirectory(gameInstance.getId());
+        this.backupsDir = gameInstance.getBackupsDirectory();
 
         updateSessionLockChannel();
 
@@ -96,8 +94,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
-        Optional<String> gameVersion = gameInstance.getRepository().getGameVersion(gameInstance.getId());
-        supportQuickPlay = World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
+        supportQuickPlay = World.supportQuickPlay(gameInstance.getVersion());
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -156,11 +153,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public void launch() {
         fireEvent(new PageCloseEvent());
-        Instances.launchAndEnterWorld(gameInstance.getRepository(), gameInstance.getId(), world.getFileName());
+        Instances.launchAndEnterWorld(gameInstance, world.getFileName());
     }
 
     public void generateLaunchScript() {
-        Instances.generateLaunchScriptForQuickEnterWorld(gameInstance.getRepository(), gameInstance.getId(), world.getFileName());
+        Instances.generateLaunchScriptForQuickEnterWorld(gameInstance, world.getFileName());
     }
 
     @Override

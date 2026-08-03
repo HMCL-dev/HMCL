@@ -56,8 +56,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private final ReentrantLock lock = new ReentrantLock();
 
     private ModManager modManager;
-    private HMCLGameRepository repository;
-    private GameInstanceID instanceId;
+    private @Nullable HMCLGameInstance gameInstance;
     private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
@@ -86,15 +85,13 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     @Override
     public void loadInstance(HMCLGameInstance.Optional instance) {
-        this.repository = instance.repository();
-        this.instanceId = instance.instanceId();
-        HMCLGameInstance gameInstance = instance.instance();
+        this.gameInstance = instance.instance();
         if (gameInstance == null) {
             return;
         }
 
         GameInstanceManifest resolved = gameInstance.getResolvedManifest().standaloneManifest();
-        this.gameVersion = repository.getGameVersion(resolved).orElse(null);
+        this.gameVersion = gameInstance.getRepository().getGameVersion(resolved).orElse(null);
 
         loadMods(gameInstance.getModManager());
     }
@@ -240,18 +237,21 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void openModFolder() {
-        FXUtils.openFolder(repository.getRunDirectory(instanceId).resolve("mods"));
+        if (gameInstance != null) {
+            FXUtils.openFolder(gameInstance.getModsDirectory());
+        }
     }
 
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
-        if (isLoading()) {
+        if (isLoading() || gameInstance == null) {
             return;
         }
 
+        HMCLGameInstance gameInstance = this.gameInstance;
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = repository.getGameVersion(instanceId);
+                            Optional<String> gameVersion = gameInstance.getRepository().getGameVersion(gameInstance.getId());
                             return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, mods)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -267,7 +267,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .withStagesHints("update.checking"),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (repository.isModpack(instanceId)) {
+        if (gameInstance.getRepository().isModpack(gameInstance.getId())) {
             Controllers.confirm(
                     i18n("mods.update_modpack_mod.warning"), null,
                     MessageDialogPane.MessageType.WARNING,
@@ -278,7 +278,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void download() {
-        Controllers.getDownloadPage().showModDownloads().selectInstance(instanceId);
+        if (gameInstance == null) {
+            return;
+        }
+        Controllers.getDownloadPage().showModDownloads().selectInstance(gameInstance.getId());
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
@@ -292,14 +295,14 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public GameDirectory getGameDirectory() {
-        return this.repository.getGameDirectory();
+        return gameInstance != null ? gameInstance.getRepository().getGameDirectory() : null;
     }
 
     public HMCLGameRepository getRepository() {
-        return this.repository;
+        return gameInstance != null ? gameInstance.getRepository() : null;
     }
 
     public GameInstanceID getInstanceId() {
-        return this.instanceId;
+        return gameInstance != null ? gameInstance.getId() : null;
     }
 }

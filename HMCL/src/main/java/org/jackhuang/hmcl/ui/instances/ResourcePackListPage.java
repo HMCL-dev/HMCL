@@ -43,10 +43,9 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -91,8 +90,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         };
     }
 
-    private HMCLGameRepository repository;
-    private GameInstanceID instanceId;
+    private @Nullable HMCLGameInstance gameInstance;
 
     private Path resourcePackDirectory;
     private ResourcePackManager resourcePackManager;
@@ -110,11 +108,15 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     @Override
     public void loadInstance(HMCLGameInstance.Optional instance) {
-        HMCLGameRepository repository = instance.repository();
-        @Nullable GameInstanceID instanceId = instance.instanceId();
-        this.repository = repository;
-        this.instanceId = instanceId;
-        this.resourcePackManager = new ResourcePackManager(repository, instanceId);
+        this.gameInstance = instance.instance();
+        if (gameInstance == null) {
+            this.resourcePackManager = null;
+            this.resourcePackDirectory = null;
+            getItems().clear();
+            return;
+        }
+
+        this.resourcePackManager = gameInstance.getResourcePackManager();
         this.resourcePackDirectory = this.resourcePackManager.getDirectory();
 
         refresh();
@@ -188,7 +190,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void onDownload() {
-        Controllers.getDownloadPage().showResourcePackDownloads().selectInstance(instanceId);
+        if (gameInstance == null) {
+            return;
+        }
+        Controllers.getDownloadPage().showResourcePackDownloads().selectInstance(gameInstance.getId());
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
@@ -235,9 +240,14 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
+        HMCLGameInstance gameInstance = this.gameInstance;
+        if (gameInstance == null) {
+            return;
+        }
+
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = repository.getGameVersion(instanceId);
+                            Optional<String> gameVersion = gameInstance.getRepository().getGameVersion(gameInstance.getId());
                             return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, resourcePacks)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -252,7 +262,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         .withStagesHints("update.checking"),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (repository.isModpack(instanceId)) {
+        if (gameInstance.getRepository().isModpack(gameInstance.getId())) {
             Controllers.confirm(
                     i18n("resourcepack.update_in_modpack.warning"), null,
                     MessageDialogPane.MessageType.WARNING,
@@ -648,7 +658,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                                 ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
                                                 : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
                                         remoteAddon,
-                                        HMCLGameInstance.Optional.of(page.repository, page.instanceId),
+                                        page.gameInstance != null
+                                                ? HMCLGameInstance.Optional.of(page.gameInstance)
+                                                : HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()),
                                         org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
                                 ));
                             });

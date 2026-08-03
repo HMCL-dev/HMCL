@@ -173,7 +173,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             worldListTab.getNode().loadInstance(current);
         if (schematicsTab.isInitialized())
             schematicsTab.getNode().loadInstance(current);
-        currentInstanceUpgradable.set(repository.isModpack(instanceId));
+        HMCLGameInstance gameInstance = current.instance();
+        currentInstanceUpgradable.set(gameInstance != null && repository.isModpack(gameInstance.getId()));
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
@@ -192,11 +193,18 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     private void onBrowse(String sub) {
-        FXUtils.openFolder(getRepository().getRunDirectory(getInstanceId()).resolve(sub));
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance == null) {
+            return;
+        }
+        FXUtils.openFolder(gameInstance.getRunDirectory().resolve(sub));
     }
 
     private void redownloadAssetIndex() {
-        Instances.updateGameAssets(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.updateGameAssets(gameInstance);
+        }
     }
 
     private void clearLibraries() {
@@ -231,36 +239,65 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     private void clearJunkFiles() {
-        Instances.cleanInstance(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.cleanInstance(gameInstance);
+        }
     }
 
     private void testGame() {
-        Instances.testGame(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.testGame(gameInstance);
+        }
     }
 
     private void updateGame() {
-        Instances.updateInstance(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.updateInstance(gameInstance);
+        }
     }
 
     private void generateLaunchScript() {
-        Instances.generateLaunchScript(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.generateLaunchScript(gameInstance);
+        }
     }
 
     private void export() {
-        Instances.exportInstance(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.exportInstance(gameInstance);
+        }
     }
 
     private void rename() {
-        Instances.renameInstance(getRepository(), getInstanceId())
-                .thenApply(newInstanceId -> this.preferredInstanceId = new GameInstanceID(newInstanceId));
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.renameInstance(gameInstance)
+                    .thenApply(newInstanceId -> this.preferredInstanceId = new GameInstanceID(newInstanceId));
+        }
     }
 
     private void remove() {
-        Instances.deleteInstance(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.deleteInstance(gameInstance);
+        }
     }
 
     private void duplicate() {
-        Instances.duplicateInstance(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.duplicateInstance(gameInstance);
+        }
+    }
+
+    private @Nullable HMCLGameInstance requireGameInstance() {
+        HMCLGameInstance.Optional current = instance.get();
+        return current != null ? current.instance() : null;
     }
 
     public HMCLGameRepository getRepository() {

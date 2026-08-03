@@ -27,11 +27,11 @@ import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -96,7 +96,8 @@ public class GameItem {
 
         CompletableFuture.supplyAsync(() -> {
             // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
-            Optional<String> gameVersion = gameInstance.getRepository().getGameVersion(gameInstance.getId());
+            GameVersionNumber version = gameInstance.getVersion();
+            String gameVersion = version == GameVersionNumber.unknown() ? null : version.toString();
             String modPackVersion = null;
             try {
                 ModpackConfiguration<?> config = gameInstance.getRepository().readModpackConfiguration(gameInstance.getId());
@@ -104,7 +105,7 @@ public class GameItem {
             } catch (IOException e) {
                 LOG.warning("Failed to read modpack configuration from " + getId(), e);
             }
-            return new Result(gameVersion.orElse(null), modPackVersion);
+            return new Result(gameVersion, modPackVersion);
         }, POOL_VERSION_RESOLVE).whenCompleteAsync((result, exception) -> {
             if (exception == null) {
                 if (result.tag != null) {

@@ -85,9 +85,7 @@ public final class LauncherHelper {
     private static final String LWJGL_3_4_1_TIP = "lwjgl3.4.1-ffm";
 
     private final HMCLGameInstance gameInstance;
-    private final HMCLGameRepository repository;
     private Account account;
-    private final GameInstanceID selectedInstanceId;
     private Path scriptFile;
     private final GameSettings.Effective setting;
     private LauncherVisibility launcherVisibility;
@@ -97,10 +95,8 @@ public final class LauncherHelper {
 
     public LauncherHelper(HMCLGameInstance gameInstance, Account account) {
         this.gameInstance = Objects.requireNonNull(gameInstance);
-        this.repository = gameInstance.getRepository();
         this.account = Objects.requireNonNull(account);
-        this.selectedInstanceId = gameInstance.getId();
-        this.setting = repository.getEffectiveGameSettings(selectedInstanceId);
+        this.setting = gameInstance.getRepository().getEffectiveGameSettings(gameInstance.getId());
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
         this.launchingStepsPane.setTitle(i18n("instance.launch"));
@@ -113,6 +109,14 @@ public final class LauncherHelper {
 
     public HMCLGameInstance getGameInstance() {
         return gameInstance;
+    }
+
+    private HMCLGameRepository repository() {
+        return gameInstance.getRepository();
+    }
+
+    private GameInstanceID instanceId() {
+        return gameInstance.getId();
     }
 
     private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
@@ -145,7 +149,7 @@ public final class LauncherHelper {
     public void launch() {
         FXUtils.checkFxUserThread();
 
-        LOG.info("Launching game version: " + selectedInstanceId);
+        LOG.info("Launching game version: " + instanceId());
 
         Controllers.dialog(launchingStepsPane);
         launch0();
@@ -160,8 +164,10 @@ public final class LauncherHelper {
         // https://github.com/HMCL-dev/HMCL/pull/4121
         PROCESSES.removeIf(it -> it.get() == null);
 
+        HMCLGameRepository repository = repository();
+        GameInstanceID selectedInstanceId = instanceId();
         DefaultDependencyManager dependencyManager = repository.getDependency();
-        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedInstanceManifest(selectedInstanceId).launchManifest()));
+        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, gameInstance.getResolvedManifest().launchManifest()));
         Optional<String> gameVersion = repository.getGameVersion(version.get());
         boolean integrityCheck = repository.unmarkInstanceLaunchedAbnormally(selectedInstanceId);
         CountDownLatch launchingLatch = new CountDownLatch(1);
@@ -288,7 +294,7 @@ public final class LauncherHelper {
 
                     LaunchOptions launchOptions = launchOptionsBuilder.create();
 
-                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedInstanceId), 10));
+                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(gameInstance.getModsDirectory(), 10));
 
                     return new HMCLGameLauncher(
                             repository,
