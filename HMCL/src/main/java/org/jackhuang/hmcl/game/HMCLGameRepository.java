@@ -244,8 +244,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     /// Removes an instance from disk and clears its cached HMCL settings state.
+    ///
+    /// Pending instance settings writes are flushed first. [#saveGameSettings(GameInstanceID)] hands the file to
+    /// [FileSaver], which batches writes on a background thread, and the settings file lives inside the instance
+    /// root that is about to be removed. Because [FileUtils#saveSafely] recreates missing parent directories, a
+    /// write that lands after the removal would recreate the instance directory and bring the removed settings
+    /// back on the next refresh.
     @Override
     public boolean removeInstanceFromDisk(GameInstanceID instanceId) {
+        flushPendingSettingsWrites();
+
         boolean removed = super.removeInstanceFromDisk(instanceId);
         if (removed) {
             instanceGameSettings.remove(instanceId);
@@ -254,6 +262,18 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             beingModpackInstances.remove(instanceId);
         }
         return removed;
+    }
+
+    /// Waits until [FileSaver] has written everything queued so far.
+    ///
+    /// Called before removing files that queued writes may target, so that a pending write cannot recreate them.
+    private static void flushPendingSettingsWrites() {
+        try {
+            FileSaver.waitForAllSaves();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOG.warning("Interrupted while flushing pending settings writes", e);
+        }
     }
 
     public void duplicateInstance(GameInstanceID srcId, GameInstanceID dstId, boolean copySaves) throws IOException {
