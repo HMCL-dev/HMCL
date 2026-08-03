@@ -96,6 +96,63 @@ public final class MacOSNativeUtils {
         }
     }
 
+    /// Clears the explicit application appearance, so that the application inherits the system appearance again.
+    ///
+    /// While an explicit appearance is set, `NSApp.effectiveAppearance` reports that appearance rather than the
+    /// system one. JavaFX derives [javafx.application.Platform.Preferences#colorSchemeProperty()] from
+    /// `effectiveAppearance`, so leaving an appearance pinned makes the reported color scheme follow the launcher
+    /// instead of the system.
+    public static void clearAppearance() {
+        if (nsApp == null) return;
+
+        try {
+            var objc = ObjectiveCRuntime.INSTANCE;
+            // A null Pointer maps to Objective-C nil, which resets the appearance to inherited.
+            objc.objc_msgSend(nsApp, objc.sel_registerName("setAppearance:"), (Pointer) null);
+        } catch (Throwable t) {
+            LOG.warning("Failed to clear macOS appearance", t);
+        }
+    }
+
+    /// Reads whether the system is currently using dark mode, independently of the application appearance.
+    ///
+    /// This reads the `AppleInterfaceStyle` user default, which reflects the system setting and is unaffected by
+    /// [#setAppearance(boolean)]. It must not be derived from `effectiveAppearance` or from the JavaFX color
+    /// scheme, because both report the pinned application appearance once one has been set.
+    ///
+    /// @return whether the system is in dark mode, or `null` if it could not be determined
+    public static @Nullable Boolean isSystemInDarkMode() {
+        if (nsApp == null) return null;
+
+        try {
+            var objc = ObjectiveCRuntime.INSTANCE;
+
+            @Nullable Pointer userDefaults = objc.objc_getClass("NSUserDefaults");
+            if (isNull(userDefaults)) return null;
+
+            @Nullable Pointer defaults = objc.objc_msgSend(userDefaults, objc.sel_registerName("standardUserDefaults"));
+            if (isNull(defaults)) return null;
+
+            @Nullable Pointer nsString = objc.objc_getClass("NSString");
+            if (isNull(nsString)) return null;
+
+            @Nullable Pointer key = objc.objc_msgSend(nsString, objc.sel_registerName("stringWithUTF8String:"), "AppleInterfaceStyle");
+            if (isNull(key)) return null;
+
+            @Nullable Pointer value = objc.objc_msgSend(defaults, objc.sel_registerName("stringForKey:"), key);
+            // The key is absent in light mode.
+            if (isNull(value)) return Boolean.FALSE;
+
+            @Nullable Pointer utf8 = objc.objc_msgSend(value, objc.sel_registerName("UTF8String"));
+            if (isNull(utf8)) return null;
+
+            return "Dark".equalsIgnoreCase(utf8.getString(0));
+        } catch (Throwable t) {
+            LOG.warning("Failed to read macOS system appearance", t);
+            return null;
+        }
+    }
+
     private MacOSNativeUtils() {
     }
 }

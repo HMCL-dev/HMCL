@@ -466,6 +466,16 @@ public final class Themes {
 
     /// Returns the brightness requested by the current system or platform settings.
     private static Brightness getAutomaticBrightness() {
+        // On macOS the launcher pins the application appearance (see #applyNativeDarkMode), and JavaFX derives its
+        // color scheme from NSApp.effectiveAppearance. Reading FXUtils.DARK_MODE here would therefore read back the
+        // brightness this launcher itself applied, so the system setting is read directly instead.
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && MacOSNativeUtils.isSupported()) {
+            @Nullable Boolean systemDarkMode = MacOSNativeUtils.isSystemInDarkMode();
+            if (systemDarkMode != null) {
+                return systemDarkMode ? Brightness.DARK : Brightness.LIGHT;
+            }
+        }
+
         if (FXUtils.DARK_MODE != null) {
             return FXUtils.DARK_MODE.get() ? Brightness.DARK : Brightness.LIGHT;
         }
@@ -1151,10 +1161,29 @@ public final class Themes {
                 });
             }
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && MacOSNativeUtils.isSupported()) {
-            MacOSNativeUtils.setAppearance(darkModeProperty().get());
+            applyMacOSAppearance(darkModeProperty().get());
 
-            ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), MacOSNativeUtils::setAppearance);
+            ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), Themes::applyMacOSAppearance);
             stage.getProperties().put("Themes.applyNativeDarkMode.listener", listener);
+        }
+    }
+
+    /// Applies the launcher brightness to the macOS application appearance.
+    ///
+    /// Setting an explicit appearance is what makes native windows owned by the application - notably the file
+    /// chooser - follow the launcher brightness instead of the system one. It has a cost: while an appearance is
+    /// pinned, `NSApp.effectiveAppearance` no longer reports the system appearance, so JavaFX stops reporting
+    /// system color scheme changes.
+    ///
+    /// The appearance is therefore only pinned while the launcher brightness actually differs from the system
+    /// brightness. When they agree - which is the case whenever the brightness mode follows the system - the
+    /// appearance is cleared, so the system appearance is inherited and JavaFX keeps observing system changes.
+    private static void applyMacOSAppearance(boolean dark) {
+        @Nullable Boolean systemDarkMode = MacOSNativeUtils.isSystemInDarkMode();
+        if (systemDarkMode != null && systemDarkMode == dark) {
+            MacOSNativeUtils.clearAppearance();
+        } else {
+            MacOSNativeUtils.setAppearance(dark);
         }
     }
 
