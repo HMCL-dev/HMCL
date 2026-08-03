@@ -59,9 +59,7 @@ public interface GameRepository {
     /// Returns the current published snapshot of the registered instance index.
     ///
     /// The snapshot is immutable. Subsequent repository writes publish a replacement snapshot and
-    /// do not mutate the returned object. Implementations that expose a JavaFX property for UI
-    /// observation may update that property asynchronously on the JavaFX thread; this method still
-    /// returns the latest published snapshot immediately.
+    /// do not mutate the returned object.
     ///
     /// @return the current repository snapshot
     GameRepositorySnapshot getSnapshot();

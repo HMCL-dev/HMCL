@@ -41,6 +41,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -90,19 +91,15 @@ public abstract class DefaultGameRepository implements GameRepository {
                 && Files.exists(bin.resolve("lwjgl_util.jar"));
     }
 
-    /// Immediately-visible published snapshot for programmatic reads on any thread.
-    private volatile DefaultGameRepositorySnapshot snapshot;
-
-    /// Observable projection of [#snapshot], updated on the JavaFX application thread.
-    private final ObjectProperty<GameRepositorySnapshot> snapshotProperty;
+    /// Published snapshot, always updated on the JavaFX application thread when the toolkit is live.
+    private final ObjectProperty<GameRepositorySnapshot> snapshot;
 
     private volatile boolean loaded;
 
     public DefaultGameRepository(Path baseDirectory) {
         DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
         initial.seal();
-        this.snapshot = initial;
-        this.snapshotProperty = new SimpleObjectProperty<>(initial);
+        this.snapshot = new SimpleObjectProperty<>(initial);
     }
 
     /// Creates the repository layout rooted at the given directory.
@@ -122,66 +119,69 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// The returned snapshot is sealed and must not be modified. Writers must [#clone()] it, edit the
     /// copy, and publish the result with [#publishSnapshot(DefaultGameRepositorySnapshot)].
     ///
-    /// This method is safe to call from any thread and reflects the latest published value immediately,
-    /// including before the JavaFX [#snapshotProperty()] has been updated.
-    ///
     /// @return the current snapshot
     protected DefaultGameRepositorySnapshot currentSnapshot() {
-        return snapshot;
+        return (DefaultGameRepositorySnapshot) Objects.requireNonNull(snapshot.get());
     }
 
     /// {@inheritDoc}
-    ///
-    /// Safe to call from any thread. The value is updated immediately on publish; UI code that must
-    /// react on the JavaFX thread should observe [#snapshotProperty()] instead.
     @Override
     public GameRepositorySnapshot getSnapshot() {
-        return snapshot;
+        return Objects.requireNonNull(snapshot.get());
     }
 
     /// Returns a read-only view of the current published snapshot for JavaFX bindings.
     ///
-    /// The property is updated on the JavaFX application thread when a snapshot is published from a
-    /// background thread, so listeners may safely touch the scene graph. The value may lag slightly
-    /// behind [#getSnapshot()] until the FX pulse processes the update.
+    /// The property is the sole holder of the published snapshot. Updates are applied on the JavaFX
+    /// application thread so listeners may safely touch the scene graph.
     ///
     /// @return the observable snapshot property
     public final ReadOnlyObjectProperty<GameRepositorySnapshot> snapshotProperty() {
-        return snapshotProperty;
+        return snapshot;
     }
 
     /// Seals `newSnapshot` if needed and publishes it as the current repository snapshot.
     ///
-    /// The sealed snapshot becomes visible to [#getSnapshot()] immediately. The observable
-    /// [#snapshotProperty()] is updated on the JavaFX application thread so UI listeners run there.
+    /// When the JavaFX toolkit is running, the property is updated on the JavaFX application thread
+    /// (blocking the caller if publish happens off the FX thread) so that listeners run on FX and
+    /// [#getSnapshot()] observes the new value before this method returns.
     ///
     /// @param newSnapshot the snapshot to publish; must not already be visible as [#currentSnapshot()]
     ///                    unless it is a freshly built replacement
     protected void publishSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
         newSnapshot.seal();
-        this.snapshot = newSnapshot;
-        publishSnapshotProperty(newSnapshot);
+        setSnapshotOnFxThread(newSnapshot);
     }
 
-    /// Updates [#snapshotProperty()] on the JavaFX application thread.
-    private void publishSnapshotProperty(GameRepositorySnapshot newSnapshot) {
+    /// Sets [#snapshot] on the JavaFX application thread when possible.
+    private void setSnapshotOnFxThread(GameRepositorySnapshot newSnapshot) {
         if (Platform.isFxApplicationThread()) {
-            snapshotProperty.set(newSnapshot);
+            snapshot.set(newSnapshot);
             return;
         }
 
         try {
-            // Read the volatile field inside runLater so queued publishes converge on the latest value.
-            Platform.runLater(() -> snapshotProperty.set(this.snapshot));
+            CountDownLatch published = new CountDownLatch(1);
+            Platform.runLater(() -> {
+                try {
+                    snapshot.set(newSnapshot);
+                } finally {
+                    published.countDown();
+                }
+            });
+            published.await();
         } catch (IllegalStateException ignored) {
             // JavaFX toolkit is not initialized (for example in headless unit tests).
-            snapshotProperty.set(newSnapshot);
+            snapshot.set(newSnapshot);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            snapshot.set(newSnapshot);
         }
     }
 
     @Override
     public DefaultGameRepositoryLayout getLayout() {
-        return snapshot.getLayout();
+        return currentSnapshot().getLayout();
     }
 
     public boolean isLoaded() {
@@ -200,7 +200,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     }
 
     protected void refreshImpl() {
-        DefaultGameRepositorySnapshot newSnapshot = createSnapshot(snapshot.getLayout());
+        DefaultGameRepositorySnapshot newSnapshot = createSnapshot(currentSnapshot().getLayout());
 
         if (hasClassicVersion(newSnapshot.getLayout().getBaseDirectory())) {
             GameInstanceID id = CLASSIC_MANIFEST.id();
@@ -338,7 +338,7 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public DefaultGameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException {
-        return snapshot.getRegistered(id);
+        return currentSnapshot().getRegistered(id);
     }
 
     /// Returns the instance recorded in the current snapshot for the given id, including provisional
@@ -347,7 +347,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @param id the instance id
     /// @return the instance, or `null` when absent from the current snapshot
     protected @Nullable DefaultGameInstance findSnapshotInstance(GameInstanceID id) {
-        return snapshot.get(id);
+        return currentSnapshot().get(id);
     }
 
     public Path getArtifactFile(GameInstanceManifest manifest, Artifact artifact) {
@@ -373,7 +373,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         }
 
         try {
-            DefaultGameRepositorySnapshot newSnapshot = snapshot.clone();
+            DefaultGameRepositorySnapshot newSnapshot = currentSnapshot().clone();
             DefaultGameInstance fromHolder = newSnapshot.get(from);
             if (fromHolder == null || fromHolder.isProvisional()) {
                 throw new NoSuchGameInstanceException(from);
@@ -415,8 +415,8 @@ public abstract class DefaultGameRepository implements GameRepository {
             return false;
         }
 
-        if (snapshot.get(id) != null) {
-            DefaultGameRepositorySnapshot newSnapshot = snapshot.clone();
+        if (currentSnapshot().get(id) != null) {
+            DefaultGameRepositorySnapshot newSnapshot = currentSnapshot().clone();
             newSnapshot.remove(id);
             publishSnapshot(newSnapshot);
         }
@@ -591,7 +591,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             Files.createDirectories(json.getParent());
             JsonUtils.writeToJsonFile(json, savedManifest);
 
-            DefaultGameRepositorySnapshot newSnapshot = snapshot.clone();
+            DefaultGameRepositorySnapshot newSnapshot = currentSnapshot().clone();
             DefaultGameInstance existing = newSnapshot.get(savedManifest.id());
             if (existing != null) {
                 newSnapshot.put(existing.withManifest(newSnapshot, savedManifest));
@@ -629,7 +629,7 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        return snapshot.resolve(manifest);
+        return currentSnapshot().resolve(manifest);
     }
 
     /// Creates an empty unsealed snapshot for the given layout.
