@@ -21,7 +21,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -79,7 +79,7 @@ public final class FavoritesManager {
         try {
             if (loaded) return;
             favoritesMap.clear();
-            var map = JsonUtils.fromJsonFile(file, typeToken);
+            var map = Files.isRegularFile(file) ? JsonUtils.fromJsonFile(file, typeToken) : null;
             if (map != null)
                 map.forEach((name, items) -> favoritesMap.put(name, new Favorites(this, name, items)));
             loaded = true;
@@ -234,17 +234,15 @@ public final class FavoritesManager {
     }
 
     @JsonSerializable
-    public record Item(@Nullable String modId, @Nullable RemoteAddon.Source source) {
+    public record Item(@Nullable String projectId, @Nullable RemoteAddon.Source source) {
 
         public static Item fromAddon(RemoteAddon addon) {
             return new Item(addon.projectId(), addon.source());
         }
 
         public @NotNull RemoteAddon resolve(DownloadProvider downloadProvider) throws IOException {
-            if (modId == null || source == null) return RemoteAddon.BROKEN;
-            var repo = source.getRepoForType(RemoteAddonRepository.Type.MOD); //TODO use common repo
-            assert repo != null;
-            return repo.getAddonById(downloadProvider, modId);
+            if (projectId == null || source == null) return RemoteAddon.BROKEN;
+            return source.getCommonRepo().getAddonById(downloadProvider, projectId);
         }
 
     }
