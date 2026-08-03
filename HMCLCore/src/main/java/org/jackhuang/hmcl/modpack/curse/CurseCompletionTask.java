@@ -121,7 +121,7 @@ public final class CurseCompletionTask extends Task<Void> {
                 manifest.files().parallelStream()
                         .map(file -> {
                             updateProgress(finished.incrementAndGet(), manifest.files().size());
-                            if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
+                            if (StringUtils.isBlank(file.fileName()) || file.url() == null || file.hashes() == null || file.hashes().isEmpty()) {
                                 RemoteAddon.File remoteFile = null;
                                 Exception lastException = null;
                                 for (int attempt = 0; attempt < 3; attempt++) {
