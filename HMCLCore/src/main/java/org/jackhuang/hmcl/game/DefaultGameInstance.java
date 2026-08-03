@@ -30,7 +30,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public abstract class DefaultGameInstance implements GameInstance {
 
-    protected final DefaultGameRepositoryStatus status;
+    protected final DefaultGameRepositorySnapshot snapshot;
     protected final DefaultGameRepository repository;
     protected final DefaultGameRepositoryLayout layout;
     protected final GameInstanceID id;
@@ -44,24 +44,24 @@ public abstract class DefaultGameInstance implements GameInstance {
     protected @Nullable GameVersionNumber version;
 
     protected DefaultGameInstance(
-            DefaultGameRepositoryStatus status,
+            DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
             GameInstanceManifest manifest) {
-        this.status = status;
-        this.repository = status.getRepository();
-        this.layout = status.getLayout();
+        this.snapshot = snapshot;
+        this.repository = snapshot.getRepository();
+        this.layout = snapshot.getLayout();
         this.id = id;
         this.manifest = manifest;
     }
 
-    protected abstract DefaultGameInstance withNewStatus(DefaultGameRepositoryStatus newStatus);
+    protected abstract DefaultGameInstance withNewSnapshot(DefaultGameRepositorySnapshot newSnapshot);
 
-    /// Returns a copy of this instance bound to a new status and stored manifest.
+    /// Returns a copy of this instance bound to a new snapshot and stored manifest.
     ///
-    /// @param newStatus the status that will own the copy
-    /// @param manifest  the stored instance manifest
+    /// @param newSnapshot the snapshot that will own the copy
+    /// @param manifest    the stored instance manifest
     /// @return the updated instance
-    protected abstract DefaultGameInstance withManifest(DefaultGameRepositoryStatus newStatus, GameInstanceManifest manifest);
+    protected abstract DefaultGameInstance withManifest(DefaultGameRepositorySnapshot newSnapshot, GameInstanceManifest manifest);
 
     @Override
     public DefaultGameRepository getRepository() {
@@ -80,7 +80,7 @@ public abstract class DefaultGameInstance implements GameInstance {
 
     /// Returns whether this instance is only a provisional placeholder.
     ///
-    /// Provisional instances may appear in the current [DefaultGameRepositoryStatus] so that
+    /// Provisional instances may appear in the current [DefaultGameRepositorySnapshot] so that
     /// instance-local state (for example install-time settings) can be tracked before a real
     /// manifest is saved. They must not be treated as indexed repository members.
     ///
@@ -97,7 +97,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     @Override
     public GameInstanceManifest.Resolved getResolvedManifest() {
         if (resolvedManifest == null) {
-            resolvedManifest = status.resolve(manifest);
+            resolvedManifest = snapshot.resolve(manifest);
         }
         return resolvedManifest;
     }

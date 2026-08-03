@@ -47,7 +47,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public class HMCLGameInstance extends DefaultGameInstance {
 
-    /// Whether this instance is only a provisional placeholder in the current status.
+    /// Whether this instance is only a provisional placeholder in the current snapshot.
     private final boolean provisional;
 
     /// Whether install-time code currently treats this instance as a modpack for run-directory
@@ -63,44 +63,44 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// Cached instance-local game settings, or `null` when none exist after loading.
     private GameSettings.@Nullable Instance gameSettings;
 
-    /// Creates a registered instance bound to the given repository status snapshot.
+    /// Creates a registered instance bound to the given repository snapshot.
     ///
-    /// @param status   the repository status that owns this instance
+    /// @param snapshot the repository snapshot that owns this instance
     /// @param id       the instance id
     /// @param manifest the stored instance manifest
-    protected HMCLGameInstance(DefaultGameRepositoryStatus status, GameInstanceID id, GameInstanceManifest manifest) {
-        this(status, id, manifest, false);
+    protected HMCLGameInstance(DefaultGameRepositorySnapshot snapshot, GameInstanceID id, GameInstanceManifest manifest) {
+        this(snapshot, id, manifest, false);
     }
 
     /// Creates a provisional instance used before a real manifest is indexed.
     ///
-    /// @param status the repository status that owns this instance
+    /// @param snapshot the repository snapshot that owns this instance
     /// @param id     the instance id
     /// @return a provisional instance with an empty placeholder manifest
-    static HMCLGameInstance provisional(DefaultGameRepositoryStatus status, GameInstanceID id) {
-        return new HMCLGameInstance(status, id, new GameInstanceManifest(id), true);
+    static HMCLGameInstance provisional(DefaultGameRepositorySnapshot snapshot, GameInstanceID id) {
+        return new HMCLGameInstance(snapshot, id, new GameInstanceManifest(id), true);
     }
 
     private HMCLGameInstance(
-            DefaultGameRepositoryStatus status,
+            DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
             GameInstanceManifest manifest,
             boolean provisional) {
-        super(status, id, manifest);
+        super(snapshot, id, manifest);
         this.provisional = provisional;
     }
 
     /// Creates an instance that shares mutable instance-local state with another instance.
     ///
-    /// Used when the repository clones a status snapshot or promotes a provisional instance so that
+    /// Used when the repository clones a snapshot or promotes a provisional instance so that
     /// settings and install-time flags remain available on the new wrapper.
     private HMCLGameInstance(
-            DefaultGameRepositoryStatus status,
+            DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
             GameInstanceManifest manifest,
             boolean provisional,
             HMCLGameInstance shareState) {
-        super(status, id, manifest);
+        super(snapshot, id, manifest);
         this.provisional = provisional;
         this.treatingAsModpack = shareState.treatingAsModpack;
         this.gameSettingsLoaded = shareState.gameSettingsLoaded;
@@ -110,14 +110,14 @@ public class HMCLGameInstance extends DefaultGameInstance {
     }
 
     @Override
-    protected HMCLGameInstance withNewStatus(DefaultGameRepositoryStatus newStatus) {
-        return new HMCLGameInstance(newStatus, id, manifest, provisional, this);
+    protected HMCLGameInstance withNewSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
+        return new HMCLGameInstance(newSnapshot, id, manifest, provisional, this);
     }
 
     @Override
-    protected HMCLGameInstance withManifest(DefaultGameRepositoryStatus newStatus, GameInstanceManifest manifest) {
+    protected HMCLGameInstance withManifest(DefaultGameRepositorySnapshot newSnapshot, GameInstanceManifest manifest) {
         // A real stored manifest promotes a provisional placeholder to a registered instance.
-        return new HMCLGameInstance(newStatus, id, manifest, false, this);
+        return new HMCLGameInstance(newSnapshot, id, manifest, false, this);
     }
 
     @Override

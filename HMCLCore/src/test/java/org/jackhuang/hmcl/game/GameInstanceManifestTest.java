@@ -61,24 +61,24 @@ public final class GameInstanceManifestTest {
             }
 
             @Override
-            protected DefaultGameInstance createInstance(DefaultGameRepositoryStatus status, GameInstanceID id, GameInstanceManifest manifest) {
+            protected DefaultGameInstance createInstance(DefaultGameRepositorySnapshot snapshot, GameInstanceID id, GameInstanceManifest manifest) {
                 final class MyGameInstance extends DefaultGameInstance {
-                    MyGameInstance(DefaultGameRepositoryStatus status, GameInstanceID id, GameInstanceManifest manifest) {
-                        super(status, id, manifest);
+                    MyGameInstance(DefaultGameRepositorySnapshot snapshot, GameInstanceID id, GameInstanceManifest manifest) {
+                        super(snapshot, id, manifest);
                     }
 
                     @Override
-                    protected DefaultGameInstance withNewStatus(DefaultGameRepositoryStatus newStatus) {
-                        return new MyGameInstance(newStatus, id, manifest);
+                    protected DefaultGameInstance withNewSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
+                        return new MyGameInstance(newSnapshot, id, manifest);
                     }
 
                     @Override
-                    protected DefaultGameInstance withManifest(DefaultGameRepositoryStatus newStatus, GameInstanceManifest manifest) {
-                        return new MyGameInstance(newStatus, id, manifest);
+                    protected DefaultGameInstance withManifest(DefaultGameRepositorySnapshot newSnapshot, GameInstanceManifest manifest) {
+                        return new MyGameInstance(newSnapshot, id, manifest);
                     }
                 }
 
-                return new MyGameInstance(status, id, manifest);
+                return new MyGameInstance(snapshot, id, manifest);
             }
         }.resolve(manifest);
 

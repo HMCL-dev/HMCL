@@ -99,17 +99,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
-    protected HMCLGameRepositoryStatus createStatus(DefaultGameRepositoryLayout layout) {
-        return new HMCLGameRepositoryStatus(this, (HMCLGameRepositoryLayout) layout);
+    protected HMCLGameRepositorySnapshot createSnapshot(DefaultGameRepositoryLayout layout) {
+        return new HMCLGameRepositorySnapshot(this, (HMCLGameRepositoryLayout) layout);
     }
 
     @Override
-    protected HMCLGameInstance createInstance(DefaultGameRepositoryStatus status, GameInstanceID id, GameInstanceManifest manifest) {
-        DefaultGameInstance existing = status.get(id);
+    protected HMCLGameInstance createInstance(DefaultGameRepositorySnapshot snapshot, GameInstanceID id, GameInstanceManifest manifest) {
+        DefaultGameInstance existing = snapshot.get(id);
         if (existing instanceof HMCLGameInstance hmcl) {
-            return hmcl.withManifest(status, manifest);
+            return hmcl.withManifest(snapshot, manifest);
         }
-        return new HMCLGameInstance(status, id, manifest);
+        return new HMCLGameInstance(snapshot, id, manifest);
     }
 
     @Override
@@ -135,23 +135,23 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Returns the instance that owns local state for the given id.
     ///
-    /// When the id is already present in the current [DefaultGameRepositoryStatus] (including provisional
+    /// When the id is already present in the current [DefaultGameRepositorySnapshot] (including provisional
     /// placeholders), that instance is returned. Otherwise a provisional [HMCLGameInstance] is
-    /// created and published in a new status until it is promoted by a real manifest or the
-    /// status is replaced by refresh.
+    /// created and published in a new snapshot until it is promoted by a real manifest or the
+    /// snapshot is replaced by refresh.
     ///
     /// @param instanceId the instance id
     /// @return the instance used to manage settings and install-time state for the id
     private HMCLGameInstance resolveInstance(GameInstanceID instanceId) {
-        DefaultGameInstance existing = findStatusInstance(instanceId);
+        DefaultGameInstance existing = findSnapshotInstance(instanceId);
         if (existing instanceof HMCLGameInstance hmcl) {
             return hmcl;
         }
 
-        DefaultGameRepositoryStatus newStatus = currentStatus().clone();
-        HMCLGameInstance provisional = HMCLGameInstance.provisional(newStatus, instanceId);
-        newStatus.put(provisional);
-        publishStatus(newStatus);
+        DefaultGameRepositorySnapshot newSnapshot = currentSnapshot().clone();
+        HMCLGameInstance provisional = HMCLGameInstance.provisional(newSnapshot, instanceId);
+        newSnapshot.put(provisional);
+        publishSnapshot(newSnapshot);
         return provisional;
     }
 
@@ -596,7 +596,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     ///
     /// @param instanceId the instance id
     public void undoMark(GameInstanceID instanceId) {
-        DefaultGameInstance existing = findStatusInstance(instanceId);
+        DefaultGameInstance existing = findSnapshotInstance(instanceId);
         if (existing instanceof HMCLGameInstance hmcl) {
             hmcl.unmarkAsModpack();
         }

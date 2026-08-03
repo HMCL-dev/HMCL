@@ -19,14 +19,14 @@ package org.jackhuang.hmcl.game;
 
 import org.jetbrains.annotations.NotNullByDefault;
 
-/// HMCL repository status snapshot, parallel to [HMCLGameInstance] in the instance hierarchy.
+/// HMCL repository snapshot, parallel to [HMCLGameInstance] in the instance hierarchy.
 @NotNullByDefault
-public class HMCLGameRepositoryStatus extends DefaultGameRepositoryStatus {
-    /// Creates an empty unsealed HMCL status.
+public class HMCLGameRepositorySnapshot extends DefaultGameRepositorySnapshot {
+    /// Creates an empty unsealed HMCL snapshot.
     ///
     /// @param repository the owning repository
     /// @param layout     the HMCL layout for this snapshot
-    public HMCLGameRepositoryStatus(HMCLGameRepository repository, HMCLGameRepositoryLayout layout) {
+    public HMCLGameRepositorySnapshot(HMCLGameRepository repository, HMCLGameRepositoryLayout layout) {
         super(repository, layout);
     }
 
@@ -41,12 +41,12 @@ public class HMCLGameRepositoryStatus extends DefaultGameRepositoryStatus {
     }
 
     @Override
-    protected HMCLGameRepositoryStatus newEmpty() {
-        return new HMCLGameRepositoryStatus(getRepository(), getLayout());
+    protected HMCLGameRepositorySnapshot newEmpty() {
+        return new HMCLGameRepositorySnapshot(getRepository(), getLayout());
     }
 
     @Override
-    public HMCLGameRepositoryStatus clone() {
-        return (HMCLGameRepositoryStatus) super.clone();
+    public HMCLGameRepositorySnapshot clone() {
+        return (HMCLGameRepositorySnapshot) super.clone();
     }
 }

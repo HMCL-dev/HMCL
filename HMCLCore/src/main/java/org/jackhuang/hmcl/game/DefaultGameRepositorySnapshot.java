@@ -34,41 +34,41 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Default implementation of a repository index snapshot for [DefaultGameRepository].
 ///
-/// A status begins unsealed so writers can populate it. [#seal()] freezes the instance map;
-/// afterwards any mutating method throws. Callers must [#clone()] a published status, edit the
-/// copy, and publish it with [DefaultGameRepository#publishStatus(DefaultGameRepositoryStatus)].
+/// A snapshot begins unsealed so writers can populate it. [#seal()] freezes the instance map;
+/// afterwards any mutating method throws. Callers must [#clone()] a published snapshot, edit the
+/// copy, and publish it with [DefaultGameRepository#publishSnapshot(DefaultGameRepositorySnapshot)].
 ///
 /// Once sealed, this object is exposed as a [GameRepositorySnapshot]. Provisional placeholders
 /// remain reachable through [#get(GameInstanceID)] but are excluded from the public snapshot view.
 ///
-/// Subclasses such as HMCL-specific statuses may override [#newEmpty()] to preserve concrete type
-/// through [#clone()], analogous to [DefaultGameInstance#withNewStatus(DefaultGameRepositoryStatus)].
+/// Subclasses such as HMCL-specific snapshots may override [#newEmpty()] to preserve concrete type
+/// through [#clone()], analogous to [DefaultGameInstance#withNewSnapshot(DefaultGameRepositorySnapshot)].
 @NotNullByDefault
-public class DefaultGameRepositoryStatus implements GameRepositorySnapshot {
+public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     protected final DefaultGameRepository repository;
     protected final DefaultGameRepositoryLayout layout;
     private Map<GameInstanceID, DefaultGameInstance> instances;
     private boolean sealed;
 
-    /// Creates an empty unsealed status for building a new snapshot.
+    /// Creates an empty unsealed snapshot for building a new snapshot.
     ///
     /// @param repository the owning repository
     /// @param layout     the layout for this snapshot
-    public DefaultGameRepositoryStatus(DefaultGameRepository repository, DefaultGameRepositoryLayout layout) {
+    public DefaultGameRepositorySnapshot(DefaultGameRepository repository, DefaultGameRepositoryLayout layout) {
         this.repository = repository;
         this.layout = layout;
         this.instances = new TreeMap<>();
         this.sealed = false;
     }
 
-    /// Creates an empty unsealed status of the same concrete type as this status.
+    /// Creates an empty unsealed snapshot of the same concrete type as this snapshot.
     ///
-    /// @return a new empty unsealed status
-    protected DefaultGameRepositoryStatus newEmpty() {
-        return new DefaultGameRepositoryStatus(repository, layout);
+    /// @return a new empty unsealed snapshot
+    protected DefaultGameRepositorySnapshot newEmpty() {
+        return new DefaultGameRepositorySnapshot(repository, layout);
     }
 
-    /// Freezes this status so its instance map can no longer be modified.
+    /// Freezes this snapshot so its instance map can no longer be modified.
     public void seal() {
         if (!sealed) {
             instances = Collections.unmodifiableMap(new TreeMap<>(instances));
@@ -76,7 +76,7 @@ public class DefaultGameRepositoryStatus implements GameRepositorySnapshot {
         }
     }
 
-    /// Returns whether this status has been sealed.
+    /// Returns whether this snapshot has been sealed.
     ///
     /// @return whether mutation is forbidden
     public boolean isSealed() {
@@ -85,7 +85,7 @@ public class DefaultGameRepositoryStatus implements GameRepositorySnapshot {
 
     private void checkMutable() {
         if (sealed) {
-            throw new IllegalStateException("Status has been published and cannot be modified");
+            throw new IllegalStateException("Snapshot has been published and cannot be modified");
         }
     }
 
@@ -174,7 +174,7 @@ public class DefaultGameRepositoryStatus implements GameRepositorySnapshot {
                 .toList();
     }
 
-    /// Returns a view of all instances in this status, including provisional placeholders.
+    /// Returns a view of all instances in this snapshot, including provisional placeholders.
     ///
     /// @return the instances; unmodifiable after [#seal()]
     public Collection<DefaultGameInstance> values() {
@@ -188,9 +188,9 @@ public class DefaultGameRepositoryStatus implements GameRepositorySnapshot {
         return instances;
     }
 
-    /// Adds or replaces an instance in this unsealed status.
+    /// Adds or replaces an instance in this unsealed snapshot.
     ///
-    /// @param instance the instance bound to this status
+    /// @param instance the instance bound to this snapshot
     public void put(DefaultGameInstance instance) {
         checkMutable();
         instances.put(instance.getId(), instance);
@@ -212,29 +212,29 @@ public class DefaultGameRepositoryStatus implements GameRepositorySnapshot {
         instances.remove(id);
     }
 
-    /// Removes all instances from this unsealed status.
+    /// Removes all instances from this unsealed snapshot.
     public void clear() {
         checkMutable();
         instances.clear();
     }
 
-    /// Creates an unsealed copy of this status with instances rebound to the copy.
+    /// Creates an unsealed copy of this snapshot with instances rebound to the copy.
     ///
-    /// @return a mutable status ready for further edits before publish
+    /// @return a mutable snapshot ready for further edits before publish
     @Override
-    public DefaultGameRepositoryStatus clone() {
-        DefaultGameRepositoryStatus newStatus = newEmpty();
+    public DefaultGameRepositorySnapshot clone() {
+        DefaultGameRepositorySnapshot newSnapshot = newEmpty();
         for (DefaultGameInstance instance : instances.values()) {
-            newStatus.put(instance.withNewStatus(newStatus));
+            newSnapshot.put(instance.withNewSnapshot(newSnapshot));
         }
-        return newStatus;
+        return newSnapshot;
     }
 
     /// Resolves official-layout inheritance and patches into launch and standalone views.
     ///
     /// @param manifest the manifest to resolve
     /// @return the resolved manifest views
-    /// @throws NoSuchGameInstanceException if an inherited parent is missing from this status
+    /// @throws NoSuchGameInstanceException if an inherited parent is missing from this snapshot
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
         return resolve(manifest, new HashSet<>());
     }
@@ -244,7 +244,7 @@ public class DefaultGameRepositoryStatus implements GameRepositorySnapshot {
     /// @param manifest      the manifest to resolve
     /// @param resolvedSoFar instance ids already visited in the inheritance chain
     /// @return the resolved manifest views
-    /// @throws NoSuchGameInstanceException if an inherited parent is missing from this status
+    /// @throws NoSuchGameInstanceException if an inherited parent is missing from this snapshot
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,
                                                  Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
         GameInstanceManifest launchManifest;
