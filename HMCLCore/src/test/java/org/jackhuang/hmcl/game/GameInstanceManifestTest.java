@@ -27,10 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for game instance manifest parsing and resolution behavior.
 @NotNullByDefault
@@ -57,7 +54,33 @@ public final class GameInstanceManifestTest {
                 false,
                 List.of(patch("patch", null)));
 
-        GameInstanceManifest.Resolved resolved = new DefaultGameRepository(Path.of(".")).resolve(manifest);
+        GameInstanceManifest.Resolved resolved = new DefaultGameRepository(Path.of(".")) {
+            @Override
+            protected DefaultGameRepositoryLayout createLayout(Path baseDirectory) {
+                return new DefaultGameRepositoryLayout(baseDirectory);
+            }
+
+            @Override
+            protected DefaultGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest) {
+                final class MyGameInstance extends DefaultGameInstance {
+                    MyGameInstance(Status status, GameInstanceID id, GameInstanceManifest manifest) {
+                        super(status, id, manifest);
+                    }
+
+                    @Override
+                    protected DefaultGameInstance withNewStatus(Status newStatus) {
+                        return new MyGameInstance(newStatus, id, manifest);
+                    }
+
+                    @Override
+                    protected DefaultGameInstance withManifest(Status newStatus, GameInstanceManifest manifest) {
+                        return new MyGameInstance(newStatus, id, manifest);
+                    }
+                }
+
+                return new MyGameInstance(status, id, manifest);
+            }
+        }.resolve(manifest);
 
         assertNull(resolved.launchManifest().mainClass());
         assertNull(resolved.launchManifest().patches());

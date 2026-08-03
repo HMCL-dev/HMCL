@@ -111,6 +111,13 @@ public abstract class DefaultGameRepository implements GameRepository {
         this.gameVersions.clear();
     }
 
+    /// Returns the current repository status snapshot.
+    ///
+    /// @return the current status
+    protected Status currentStatus() {
+        return status;
+    }
+
     @Override
     public DefaultGameRepositoryLayout getLayout() {
         return status.layout;

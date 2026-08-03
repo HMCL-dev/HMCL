@@ -24,7 +24,7 @@ import java.util.Objects;
 
 /// Implements the conventional Minecraft repository directory layout.
 @NotNullByDefault
-public abstract class DefaultGameRepositoryLayout implements GameRepositoryLayout {
+public class DefaultGameRepositoryLayout implements GameRepositoryLayout {
     private final Path baseDirectory;
 
     /// Creates a layout rooted at the given directory.

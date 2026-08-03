@@ -84,11 +84,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// The selected instance ID persisted for this repository's game directory.
     private final ObjectBinding<@Nullable GameInstanceID> selectedInstance;
 
-    /// Settings controllers for instance IDs that are not yet present in the repository index.
+    /// Instances that are not yet present in the repository index.
     ///
     /// Used during new-instance installation and similar flows that need isolation settings before
     /// the instance manifest has been saved and indexed.
-    private final Map<GameInstanceID, HMCLGameInstance.GameSettingsController> detachedGameSettings = new HashMap<>();
+    private final Map<GameInstanceID, HMCLGameInstance> pendingInstances = new HashMap<>();
 
     private final Set<GameInstanceID> beingModpackInstances = new HashSet<>();
 
@@ -109,12 +109,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     protected HMCLGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest) {
-        HMCLGameInstance instance = new HMCLGameInstance(status, id, manifest);
-        HMCLGameInstance.GameSettingsController detached = detachedGameSettings.remove(id);
-        if (detached != null) {
-            instance.adoptGameSettings(detached);
+        HMCLGameInstance pending = pendingInstances.remove(id);
+        if (pending != null) {
+            return pending.withManifest(status, manifest);
         }
-        return instance;
+        return new HMCLGameInstance(status, id, manifest);
     }
 
     @Override
@@ -139,21 +138,21 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    /// Returns the settings controller for the given instance id.
+    /// Returns the instance that owns local game settings for the given id.
     ///
-    /// When the instance is already indexed, its own controller is returned. Otherwise a detached
-    /// controller is created and retained until the instance is registered or the repository is
-    /// refreshed.
+    /// When the instance is already indexed, that instance is returned. Otherwise a pending
+    /// [HMCLGameInstance] is created and retained until the instance is registered or the
+    /// repository is refreshed.
     ///
     /// @param instanceId the instance id
-    /// @return the settings controller for the id
-    private HMCLGameInstance.GameSettingsController gameSettings(GameInstanceID instanceId) {
+    /// @return the instance used to manage settings for the id
+    private HMCLGameInstance resolveInstance(GameInstanceID instanceId) {
         HMCLGameInstance instance = findInstance(instanceId);
         if (instance != null) {
-            return instance.gameSettings();
+            return instance;
         }
-        return detachedGameSettings.computeIfAbsent(
-                instanceId, id -> new HMCLGameInstance.GameSettingsController(this, id));
+        return pendingInstances.computeIfAbsent(
+                instanceId, id -> new HMCLGameInstance(currentStatus(), id, new GameInstanceManifest(id)));
     }
 
     /// Returns the persistent game directory for this repository.
@@ -247,7 +246,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     protected void refreshImpl() {
-        detachedGameSettings.clear();
+        pendingInstances.clear();
         super.refreshImpl();
 
         try {
@@ -281,7 +280,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public boolean removeInstanceFromDisk(GameInstanceID instanceId) {
         boolean removed = super.removeInstanceFromDisk(instanceId);
         if (removed) {
-            detachedGameSettings.remove(instanceId);
+            pendingInstances.remove(instanceId);
             beingModpackInstances.remove(instanceId);
         }
         return removed;
@@ -325,12 +324,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         Path srcGameDir = getRunDirectory(srcId);
 
-        GameSettings.Instance newGameSettings = gameSettings(srcId).copy();
+        GameSettings.Instance newGameSettings = resolveInstance(srcId).copySettings();
         newGameSettings.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
         newGameSettings.runningDirectoryProperty().setValue("");
-        HMCLGameInstance.GameSettingsController dstSettings = gameSettings(dstId);
-        dstSettings.init(newGameSettings, true);
-        dstSettings.saveSync();
+        HMCLGameInstance dstInstance = resolveInstance(dstId);
+        dstInstance.initSettings(newGameSettings, true);
+        dstInstance.saveSettingsSync();
 
         Path dstGameDir = getRunDirectory(dstId);
 
@@ -346,7 +345,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (!hasInstance(instanceId)) {
             return null;
         }
-        return gameSettings(instanceId).create();
+        return resolveInstance(instanceId).createSettings();
     }
 
     /// Returns the loaded instance-local game settings for the given id.
@@ -355,7 +354,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// @return the settings, or `null` when no local settings exist after loading
     @Nullable
     public GameSettings.Instance getInstanceGameSettings(GameInstanceID instanceId) {
-        return gameSettings(instanceId).get();
+        return resolveInstance(instanceId).getSettings();
     }
 
     /// Returns the instance-local game settings, creating empty settings when absent.
@@ -376,14 +375,14 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// @param instanceId the instance ID
     /// @return whether the instance settings are loaded in read-only mode
     public boolean isInstanceGameSettingsReadOnly(GameInstanceID instanceId) {
-        return gameSettings(instanceId).isReadOnly();
+        return resolveInstance(instanceId).isSettingsReadOnly();
     }
 
     /// Backs up and overwrites the instance-specific game settings file with the currently loaded settings.
     ///
     /// @param instanceId the instance ID
     public void forceOverwriteInstanceGameSettings(GameInstanceID instanceId) {
-        gameSettings(instanceId).forceOverwrite();
+        resolveInstance(instanceId).forceOverwriteSettings();
     }
 
     /// Returns the explicit parent preset of the instance, falling back to the default preset.
@@ -433,17 +432,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Applies default isolation to a new instance before its manifest is saved.
     public void applyDefaultIsolationSettingForNewInstance(GameInstanceID instanceId, boolean modded) {
-        HMCLGameInstance.GameSettingsController settings = gameSettings(instanceId);
-        if (!shouldIsolateNewInstance(modded) || settings.isReadOnly()) {
+        HMCLGameInstance instance = resolveInstance(instanceId);
+        if (!shouldIsolateNewInstance(modded) || instance.isSettingsReadOnly()) {
             return;
         }
 
-        GameSettings.Instance setting = settings.get();
+        GameSettings.Instance setting = instance.getSettings();
         if (setting == null) {
-            setting = settings.init(new GameSettings.Instance(), true);
+            setting = instance.initSettings(new GameSettings.Instance(), true);
         }
         if (setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
-            settings.save();
+            instance.saveSettings();
         }
     }
 
@@ -542,7 +541,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     ///
     /// @param instanceId the instance ID
     public void saveGameSettings(GameInstanceID instanceId) {
-        gameSettings(instanceId).save();
+        resolveInstance(instanceId).saveSettings();
     }
 
     public LaunchOptions.Builder getLaunchOptions(GameInstanceID instanceId, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
