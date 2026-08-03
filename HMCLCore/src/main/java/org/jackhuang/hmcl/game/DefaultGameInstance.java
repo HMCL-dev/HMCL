@@ -50,6 +50,15 @@ public class DefaultGameInstance implements GameInstance {
         return new DefaultGameInstance(newStatus, id, manifest);
     }
 
+    /// Returns a copy of this instance bound to a new status and stored manifest.
+    ///
+    /// @param newStatus the status that will own the copy
+    /// @param manifest  the stored instance manifest
+    /// @return the updated instance
+    protected DefaultGameInstance withManifest(DefaultGameRepository.Status newStatus, GameInstanceManifest manifest) {
+        return new DefaultGameInstance(newStatus, id, manifest);
+    }
+
     @Override
     public DefaultGameRepository getRepository() {
         return repository;

@@ -74,7 +74,7 @@ public interface GameRepository {
     /// @return the loaded instance manifests
     Collection<GameInstanceManifest> getInstanceManifests();
 
-    @Nullable GameInstance getInstance(GameInstanceID id);
+    GameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException;
 
     /// Reloads repository state from the backing storage.
     void refresh();

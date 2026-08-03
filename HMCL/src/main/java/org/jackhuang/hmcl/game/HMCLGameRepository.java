@@ -17,9 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import javafx.beans.binding.Binding;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -35,22 +33,17 @@ import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
-import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DefaultIsolationType;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameWindowType;
-import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.ProxyType;
-import org.jackhuang.hmcl.setting.SettingFileUtils;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -85,29 +78,18 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public record InstanceReference(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
     }
 
-    /// Directory under the instance root that stores HMCL-managed instance metadata.
-    private static final String INSTANCE_METADATA_DIRECTORY = ".hmcl";
-
-    /// Directory under the instance metadata directory that stores instance configuration files.
-    private static final String INSTANCE_CONFIG_DIRECTORY = "config";
-
-    /// Directory under the instance metadata directory that stores instance state files.
-    private static final String INSTANCE_STATE_DIRECTORY = "state";
-
-    /// Current file name for instance-specific game settings.
-    private static final String INSTANCE_GAME_SETTINGS_FILENAME = "instance-game-settings.json";
-
     /// The persistent game directory for this repository.
     private final GameDirectory gameDirectory;
 
     /// The selected instance ID persisted for this repository's game directory.
     private final ObjectBinding<@Nullable GameInstanceID> selectedInstance;
 
-    // instance game settings
-    private final Map<GameInstanceID, GameSettings.Instance> instanceGameSettings = new HashMap<>();
-    /// Instance IDs whose local game settings file has already been checked.
-    private final Set<GameInstanceID> loadedInstanceGameSettings = new HashSet<>();
-    private final Set<GameInstanceID> readOnlyInstanceGameSettings = new HashSet<>();
+    /// Settings controllers for instance IDs that are not yet present in the repository index.
+    ///
+    /// Used during new-instance installation and similar flows that need isolation settings before
+    /// the instance manifest has been saved and indexed.
+    private final Map<GameInstanceID, HMCLGameInstance.GameSettingsController> detachedGameSettings = new HashMap<>();
+
     private final Set<GameInstanceID> beingModpackInstances = new HashSet<>();
 
     public final EventManager<Event> onInstanceIconChanged = new EventManager<>();
@@ -121,8 +103,57 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
+    protected HMCLGameRepositoryLayout createLayout(Path baseDirectory) {
+        return new HMCLGameRepositoryLayout(baseDirectory);
+    }
+
+    @Override
     protected HMCLGameInstance createInstance(Status status, GameInstanceID id, GameInstanceManifest manifest) {
-        return new HMCLGameInstance(status, id, manifest);
+        HMCLGameInstance instance = new HMCLGameInstance(status, id, manifest);
+        HMCLGameInstance.GameSettingsController detached = detachedGameSettings.remove(id);
+        if (detached != null) {
+            instance.adoptGameSettings(detached);
+        }
+        return instance;
+    }
+
+    @Override
+    public HMCLGameRepositoryLayout getLayout() {
+        return (HMCLGameRepositoryLayout) super.getLayout();
+    }
+
+    @Override
+    public HMCLGameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException {
+        return (HMCLGameInstance) super.getInstance(id);
+    }
+
+    /// Returns the indexed instance for the given id, or `null` when it is not loaded.
+    ///
+    /// @param id the instance id
+    /// @return the instance, or `null` when absent
+    public @Nullable HMCLGameInstance findInstance(GameInstanceID id) {
+        try {
+            return getInstance(id);
+        } catch (NoSuchGameInstanceException e) {
+            return null;
+        }
+    }
+
+    /// Returns the settings controller for the given instance id.
+    ///
+    /// When the instance is already indexed, its own controller is returned. Otherwise a detached
+    /// controller is created and retained until the instance is registered or the repository is
+    /// refreshed.
+    ///
+    /// @param instanceId the instance id
+    /// @return the settings controller for the id
+    private HMCLGameInstance.GameSettingsController gameSettings(GameInstanceID instanceId) {
+        HMCLGameInstance instance = findInstance(instanceId);
+        if (instance != null) {
+            return instance.gameSettings();
+        }
+        return detachedGameSettings.computeIfAbsent(
+                instanceId, id -> new HMCLGameInstance.GameSettingsController(this, id));
     }
 
     /// Returns the persistent game directory for this repository.
@@ -216,11 +247,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     protected void refreshImpl() {
-        instanceGameSettings.clear();
-        loadedInstanceGameSettings.clear();
-        readOnlyInstanceGameSettings.clear();
+        detachedGameSettings.clear();
         super.refreshImpl();
-        getInstanceManifests().stream().map(GameInstanceManifest::id).forEach(this::loadInstanceGameSettings);
 
         try {
             Path file = getBaseDirectory().resolve("launcher_profiles.json");
@@ -253,9 +281,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public boolean removeInstanceFromDisk(GameInstanceID instanceId) {
         boolean removed = super.removeInstanceFromDisk(instanceId);
         if (removed) {
-            instanceGameSettings.remove(instanceId);
-            loadedInstanceGameSettings.remove(instanceId);
-            readOnlyInstanceGameSettings.remove(instanceId);
+            detachedGameSettings.remove(instanceId);
             beingModpackInstances.remove(instanceId);
         }
         return removed;
@@ -299,11 +325,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         Path srcGameDir = getRunDirectory(srcId);
 
-        GameSettings.Instance newGameSettings = copyInstanceGameSettings(srcId);
+        GameSettings.Instance newGameSettings = gameSettings(srcId).copy();
         newGameSettings.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
         newGameSettings.runningDirectoryProperty().setValue("");
-        initInstanceGameSettings(dstId, newGameSettings);
-        saveGameSettingsSync(dstId);
+        HMCLGameInstance.GameSettingsController dstSettings = gameSettings(dstId);
+        dstSettings.init(newGameSettings, true);
+        dstSettings.saveSync();
 
         Path dstGameDir = getRunDirectory(dstId);
 
@@ -311,179 +338,30 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
     }
 
-    private GameSettings.Instance copyInstanceGameSettings(GameInstanceID instanceId) {
-        GameSettings.Instance setting = getInstanceGameSettings(instanceId);
-        if (setting != null) {
-            return JsonUtils.clone(LauncherSettings.SETTINGS_GSON, setting, TypeToken.get(GameSettings.Instance.class));
-        }
-
-        GameSettings.Instance copied = new GameSettings.Instance();
-        copied.parentProperty().setValue(getEffectiveGameSettings(instanceId).getPreset().idProperty().getValue());
-        return copied;
-    }
-
-    /// Returns the HMCL-managed metadata directory under the instance root.
+    /// Creates empty instance-local game settings for an indexed instance when none are loaded.
     ///
-    /// This directory stores instance-scoped files owned by HMCL.
-    public Path getInstanceMetadataDirectory(GameInstanceID instanceId) {
-        return getLayout().getInstanceRoot(instanceId).resolve(INSTANCE_METADATA_DIRECTORY);
-    }
-
-    /// Returns the HMCL-managed configuration directory under the instance metadata directory.
-    public Path getInstanceConfigDirectory(GameInstanceID instanceId) {
-        return getInstanceMetadataDirectory(instanceId).resolve(INSTANCE_CONFIG_DIRECTORY);
-    }
-
-    /// Returns the HMCL-managed state directory under the instance metadata directory.
-    public Path getInstanceStateDirectory(GameInstanceID instanceId) {
-        return getInstanceMetadataDirectory(instanceId).resolve(INSTANCE_STATE_DIRECTORY);
-    }
-
-    /// Returns the current local game settings path under the instance configuration directory.
-    private Path getInstanceGameSettingsFile(GameInstanceID instanceId) {
-        return getInstanceConfigDirectory(instanceId).resolve(INSTANCE_GAME_SETTINGS_FILENAME);
-    }
-
-    private void loadInstanceGameSettings(GameInstanceID instanceId) {
-        loadedInstanceGameSettings.add(instanceId);
-        InstanceGameSettingsLoadResult result = loadGameSettingsFile(getInstanceGameSettingsFile(instanceId));
-        if (result.setting() != null) {
-            initInstanceGameSettings(instanceId, result.setting(), result.allowSave());
-            return;
-        }
-        if (!result.allowSave()) {
-            readOnlyInstanceGameSettings.add(instanceId);
-            return;
-        }
-
-        @Nullable GameSettingsPresetID legacyParent = gameDirectory.getLegacyGameSettings();
-        if (SettingsManager.getGameSettings(legacyParent) == null) {
-            legacyParent = null;
-        }
-
-        LegacyGameSettingsMigrator.InstanceMigrationResult migrationResult =
-                LegacyGameSettingsMigrator.migrateInstanceGameSettings(
-                        this, instanceId,
-                        legacyParent);
-        if (migrationResult != null) {
-            initInstanceGameSettings(instanceId, migrationResult.setting());
-            try {
-                saveGameSettingsSync(instanceId);
-                migrationResult.saveReceipt();
-            } catch (IOException e) {
-                LOG.warning("Failed to save migrated instance game settings for " + instanceId, e);
-            }
-            return;
-        }
-    }
-
-    /// Loads a new-format instance game settings file.
-    private InstanceGameSettingsLoadResult loadGameSettingsFile(Path file) {
-        if (!Files.exists(file)) {
-            return new InstanceGameSettingsLoadResult(null, true);
-        }
-
-        try {
-            JsonObject jsonObject = JsonUtils.fromJsonFile(LauncherSettings.SETTINGS_GSON, file, JsonObject.class);
-            if (jsonObject == null) {
-                LOG.warning("Instance game settings are empty: " + file);
-                GameSettings.Instance fallback = new GameSettings.Instance();
-                return new InstanceGameSettingsLoadResult(fallback, true);
-            }
-
-            JsonSchema.CompatibilityResult schemaResult =
-                    JsonSchema.check(jsonObject, GameSettings.Instance.CURRENT_SCHEMA);
-            switch (schemaResult.status()) {
-                case MISSING -> LOG.warning("Missing schema in instance game settings: " + file);
-                case INVALID -> LOG.warning("Invalid schema in instance game settings: "
-                        + file + ", Actual: " + schemaResult.invalidValue());
-                case UNPARSEABLE -> LOG.warning("Unparseable schema in instance game settings: "
-                        + file + ", Actual: " + schemaResult.actual());
-                case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: "
-                        + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
-                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA ->
-                        LOG.warning("Unsupported instance game settings schema. Expected: "
-                                + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
-                case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
-                }
-            }
-            if (!schemaResult.readable()) {
-                GameSettings.Instance fallback = new GameSettings.Instance();
-                fallback.setSavable(false);
-                return new InstanceGameSettingsLoadResult(fallback, false);
-            }
-
-            GameSettings.Instance setting =
-                    LauncherSettings.SETTINGS_GSON.fromJson(jsonObject, GameSettings.Instance.class);
-            if (setting == null) {
-                LOG.warning("Instance game settings deserialized to null: " + file);
-                GameSettings.Instance fallback = new GameSettings.Instance();
-                fallback.setBackupOnNextSave(true);
-                return new InstanceGameSettingsLoadResult(fallback, true);
-            }
-            if (!schemaResult.preserveSchema() && !GameSettings.Instance.CURRENT_SCHEMA.equals(setting.getSchema())) {
-                setting.setSchema(GameSettings.Instance.CURRENT_SCHEMA);
-            }
-            return new InstanceGameSettingsLoadResult(setting, schemaResult.allowSave());
-        } catch (JsonParseException ex) {
-            LOG.warning("Failed to parse game setting " + file, ex);
-            GameSettings.Instance fallback = new GameSettings.Instance();
-            fallback.setBackupOnNextSave(true);
-            return new InstanceGameSettingsLoadResult(fallback, true);
-        } catch (Exception ex) {
-            LOG.warning("Failed to load game setting " + file, ex);
-            return new InstanceGameSettingsLoadResult(null, false);
-        }
-    }
-
+    /// @param instanceId the instance id
+    /// @return the settings, or `null` when the instance is missing or settings are read-only
     public @Nullable GameSettings.Instance createInstanceGameSettings(GameInstanceID instanceId) {
         if (!hasInstance(instanceId)) {
             return null;
         }
-        if (readOnlyInstanceGameSettings.contains(instanceId)) {
-            return null;
-        }
-        if (instanceGameSettings.containsKey(instanceId)) {
-            return getInstanceGameSettings(instanceId);
-        }
-
-        GameSettings.Instance setting = new GameSettings.Instance();
-        return initInstanceGameSettings(instanceId, setting);
+        return gameSettings(instanceId).create();
     }
 
-    private GameSettings.Instance initInstanceGameSettings(GameInstanceID instanceId, GameSettings.Instance setting) {
-        return initInstanceGameSettings(instanceId, setting, true);
-    }
-
-    private GameSettings.Instance initInstanceGameSettings(GameInstanceID instanceId, GameSettings.Instance setting, boolean allowSave) {
-        normalizeRunningDirectoryOverride(setting);
-        setting.setSavable(allowSave);
-        loadedInstanceGameSettings.add(instanceId);
-        instanceGameSettings.put(instanceId, setting);
-        if (allowSave) {
-            readOnlyInstanceGameSettings.remove(instanceId);
-            setting.addListener(a -> saveGameSettings(instanceId));
-        } else {
-            readOnlyInstanceGameSettings.add(instanceId);
-        }
-        return setting;
-    }
-
-    /// Keeps old local custom running directories effective under the new source-selection model.
-    private void normalizeRunningDirectoryOverride(GameSettings.Instance setting) {
-        if (StringUtils.isNotBlank(setting.runningDirectoryProperty().getValue())) {
-            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-        }
-    }
-
+    /// Returns the loaded instance-local game settings for the given id.
+    ///
+    /// @param instanceId the instance id
+    /// @return the settings, or `null` when no local settings exist after loading
     @Nullable
     public GameSettings.Instance getInstanceGameSettings(GameInstanceID instanceId) {
-        if (!loadedInstanceGameSettings.contains(instanceId)) {
-            loadInstanceGameSettings(instanceId);
-        }
-        return instanceGameSettings.get(instanceId);
+        return gameSettings(instanceId).get();
     }
 
+    /// Returns the instance-local game settings, creating empty settings when absent.
+    ///
+    /// @param instanceId the instance id
+    /// @return the settings, or `null` when the instance is not indexed and no settings can be created
     @Nullable
     public GameSettings.Instance getInstanceGameSettingsOrCreate(GameInstanceID instanceId) {
         GameSettings.Instance setting = getInstanceGameSettings(instanceId);
@@ -498,39 +376,14 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// @param instanceId the instance ID
     /// @return whether the instance settings are loaded in read-only mode
     public boolean isInstanceGameSettingsReadOnly(GameInstanceID instanceId) {
-        if (!loadedInstanceGameSettings.contains(instanceId)) {
-            loadInstanceGameSettings(instanceId);
-        }
-
-        return readOnlyInstanceGameSettings.contains(instanceId);
+        return gameSettings(instanceId).isReadOnly();
     }
 
     /// Backs up and overwrites the instance-specific game settings file with the currently loaded settings.
     ///
     /// @param instanceId the instance ID
     public void forceOverwriteInstanceGameSettings(GameInstanceID instanceId) {
-        if (!loadedInstanceGameSettings.contains(instanceId)) {
-            loadInstanceGameSettings(instanceId);
-        }
-
-        GameSettings.Instance setting = instanceGameSettings.get(instanceId);
-        if (setting == null) {
-            setting = new GameSettings.Instance();
-            instanceGameSettings.put(instanceId, setting);
-            loadedInstanceGameSettings.add(instanceId);
-        }
-
-        boolean installAutoSave = !setting.isSavable();
-        Path file = getInstanceGameSettingsFile(instanceId).toAbsolutePath().normalize();
-        SettingFileUtils.backupInvalidConfig(file);
-        setting.setSchema(GameSettings.Instance.CURRENT_SCHEMA);
-        setting.setSavable(true);
-        setting.setBackupOnNextSave(false);
-        readOnlyInstanceGameSettings.remove(instanceId);
-        saveGameSettings(instanceId);
-        if (installAutoSave) {
-            setting.addListener(a -> saveGameSettings(instanceId));
-        }
+        gameSettings(instanceId).forceOverwrite();
     }
 
     /// Returns the explicit parent preset of the instance, falling back to the default preset.
@@ -580,16 +433,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Applies default isolation to a new instance before its manifest is saved.
     public void applyDefaultIsolationSettingForNewInstance(GameInstanceID instanceId, boolean modded) {
-        if (!shouldIsolateNewInstance(modded) || readOnlyInstanceGameSettings.contains(instanceId)) {
+        HMCLGameInstance.GameSettingsController settings = gameSettings(instanceId);
+        if (!shouldIsolateNewInstance(modded) || settings.isReadOnly()) {
             return;
         }
 
-        GameSettings.Instance setting = getInstanceGameSettings(instanceId);
+        GameSettings.Instance setting = settings.get();
         if (setting == null) {
-            setting = initInstanceGameSettings(instanceId, new GameSettings.Instance());
+            setting = settings.init(new GameSettings.Instance(), true);
         }
         if (setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
-            saveGameSettings(instanceId);
+            settings.save();
         }
     }
 
@@ -684,57 +538,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public void saveGameSettings(GameInstanceID instanceId) {
-        if (!instanceGameSettings.containsKey(instanceId) || readOnlyInstanceGameSettings.contains(instanceId))
-            return;
-        GameSettings.Instance setting = instanceGameSettings.get(instanceId);
-        if (setting == null) {
-            return;
-        }
-        Path file = getInstanceGameSettingsFile(instanceId).toAbsolutePath().normalize();
-        try {
-            Files.createDirectories(file.getParent());
-        } catch (IOException e) {
-            LOG.warning("Failed to create directory: " + file.getParent(), e);
-        }
-
-        if (setting.isBackupOnNextSave()) {
-            setting.setBackupOnNextSave(false);
-            SettingFileUtils.backupInvalidConfig(file);
-        }
-        FileSaver.save(file, LauncherSettings.SETTINGS_GSON.toJson(setting));
-    }
-
-    /// Saves instance-specific game settings synchronously.
+    /// Saves instance-specific game settings asynchronously when writable.
     ///
     /// @param instanceId the instance ID
-    /// @throws IOException if saving the file fails
-    private void saveGameSettingsSync(GameInstanceID instanceId) throws IOException {
-        if (!instanceGameSettings.containsKey(instanceId) || readOnlyInstanceGameSettings.contains(instanceId)) {
-            return;
-        }
-
-        GameSettings.Instance setting = instanceGameSettings.get(instanceId);
-        if (setting == null) {
-            return;
-        }
-
-        Path file = getInstanceGameSettingsFile(instanceId).toAbsolutePath().normalize();
-        Files.createDirectories(file.getParent());
-        if (setting.isBackupOnNextSave()) {
-            setting.setBackupOnNextSave(false);
-            SettingFileUtils.backupInvalidConfig(file);
-        }
-        FileUtils.saveSafely(file, LauncherSettings.SETTINGS_GSON.toJson(setting));
-    }
-
-    /// Result of loading an instance-specific game settings file.
-    ///
-    /// @param setting   the loaded instance settings, or `null` when unavailable
-    /// @param allowSave whether the file may be overwritten
-    private record InstanceGameSettingsLoadResult(
-            @Nullable GameSettings.Instance setting,
-            boolean allowSave) {
+    public void saveGameSettings(GameInstanceID instanceId) {
+        gameSettings(instanceId).save();
     }
 
     public LaunchOptions.Builder getLaunchOptions(GameInstanceID instanceId, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {

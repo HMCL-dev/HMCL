@@ -580,7 +580,7 @@ public final class GameDirectoriesTest {
 
             LegacyConfigMigrator.migrateLegacyInstanceGameSettings(localDirectories, presets);
 
-            assertFalse(Files.exists(repository.getInstanceConfigDirectory(instanceId)
+            assertFalse(Files.exists(repository.getLayout().getInstanceConfigDirectory(instanceId)
                     .resolve(LegacyGameSettingsMigrator.INSTANCE_GAME_SETTINGS_FILENAME)));
             GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettings(instanceId));
             assertEquals(legacyPresetId, setting.parentProperty().getValue());

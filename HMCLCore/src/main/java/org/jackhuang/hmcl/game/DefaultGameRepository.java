@@ -92,7 +92,15 @@ public class DefaultGameRepository implements GameRepository {
     private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
     public DefaultGameRepository(Path baseDirectory) {
-        this.status = new Status(this, new DefaultGameRepositoryLayout(baseDirectory));
+        this.status = new Status(this, createLayout(baseDirectory));
+    }
+
+    /// Creates the repository layout rooted at the given directory.
+    ///
+    /// @param baseDirectory the repository base directory
+    /// @return the layout used by this repository
+    protected DefaultGameRepositoryLayout createLayout(Path baseDirectory) {
+        return new DefaultGameRepositoryLayout(baseDirectory);
     }
 
     public Path getBaseDirectory() {
@@ -100,13 +108,13 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public void setBaseDirectory(Path baseDirectory) {
-        this.status = new Status(this, new DefaultGameRepositoryLayout(baseDirectory));
+        this.status = new Status(this, createLayout(baseDirectory));
         this.loaded = false;
         this.gameVersions.clear();
     }
 
     @Override
-    public GameRepositoryLayout getLayout() {
+    public DefaultGameRepositoryLayout getLayout() {
         return status.layout;
     }
 
@@ -302,8 +310,13 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public @Nullable GameInstance getInstance(GameInstanceID id) {
-        return null;
+    public DefaultGameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException{
+        @Nullable DefaultGameInstance instance = status.instances.get(id);
+        if (instance != null) {
+            return instance;
+        } else {
+            throw new NoSuchGameInstanceException(id);
+        }
     }
 
     public Path getArtifactFile(GameInstanceManifest manifest, Artifact artifact) {
@@ -543,10 +556,12 @@ public class DefaultGameRepository implements GameRepository {
             JsonUtils.writeToJsonFile(json, savedManifest);
 
             Status newStatus = status.clone();
-            newStatus.instances.put(savedManifest.id(), new DefaultGameInstance(newStatus, savedManifest.id(), savedManifest)); // TODO
-
-            // TODO
-
+            DefaultGameInstance existing = newStatus.instances.get(savedManifest.id());
+            if (existing != null) {
+                newStatus.instances.put(savedManifest.id(), existing.withManifest(newStatus, savedManifest));
+            } else {
+                newStatus.instances.put(savedManifest.id(), createInstance(newStatus, savedManifest.id(), savedManifest));
+            }
             status = newStatus;
 
             gameVersions.clear();
