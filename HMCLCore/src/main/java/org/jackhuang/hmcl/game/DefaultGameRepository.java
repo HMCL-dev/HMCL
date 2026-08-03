@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -88,7 +88,6 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     private volatile Status status;
     private volatile boolean loaded;
-    private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
     public DefaultGameRepository(Path baseDirectory) {
         this.status = new Status(this, createLayout(baseDirectory));
@@ -103,7 +102,6 @@ public abstract class DefaultGameRepository implements GameRepository {
     public void setBaseDirectory(Path baseDirectory) {
         this.status = new Status(this, createLayout(baseDirectory));
         this.loaded = false;
-        this.gameVersions.clear();
     }
 
     /// Returns the current repository status snapshot.
@@ -233,7 +231,6 @@ public abstract class DefaultGameRepository implements GameRepository {
 
         newStatus.instances.clear();
         newStatus.instances.putAll(loadedInstances);
-        gameVersions.clear();
         this.status = newStatus;
     }
 
@@ -382,7 +379,6 @@ public abstract class DefaultGameRepository implements GameRepository {
 
             currentStatus.instances.clear();
             currentStatus.instances.putAll(updatedInstances);
-            gameVersions.clear();
             return true;
         } catch (IOException | JsonParseException | NoSuchGameInstanceException | InvalidPathException e) {
             LOG.warning("Unable to rename version " + from + " to " + to, e);
@@ -436,19 +432,35 @@ public abstract class DefaultGameRepository implements GameRepository {
     }
 
     @Override
+    public Optional<String> getGameVersion(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        GameVersionNumber version = getInstance(instanceId).getVersion();
+        if (version == GameVersionNumber.unknown()) {
+            return Optional.empty();
+        }
+        return Optional.of(version.toString());
+    }
+
+    @Override
     public Optional<String> getGameVersion(GameInstanceManifest manifest) {
+        DefaultGameInstance instance = findStatusInstance(manifest.id());
+        if (instance != null && !instance.isProvisional()) {
+            GameVersionNumber version = instance.getVersion();
+            if (version == GameVersionNumber.unknown()) {
+                return Optional.empty();
+            }
+            return Optional.of(version.toString());
+        }
+
         try {
             GameInstanceManifest resolved = resolve(manifest).launchManifest();
             Path instanceJar = getInstanceJar(resolved);
-            return gameVersions.computeIfAbsent(instanceJar, jar -> {
-                Optional<String> gameVersion = GameVersion.minecraftVersion(jar);
-                if (gameVersion.isEmpty()) {
-                    LOG.warning("Cannot find out game version of " + manifest.id()
-                            + ", primary jar: " + jar
-                            + ", jar exists: " + Files.exists(jar));
-                }
-                return gameVersion;
-            });
+            Optional<String> gameVersion = GameVersion.minecraftVersion(instanceJar);
+            if (gameVersion.isEmpty()) {
+                LOG.warning("Cannot find out game version of " + manifest.id()
+                        + ", primary jar: " + instanceJar
+                        + ", jar exists: " + Files.exists(instanceJar));
+            }
+            return gameVersion;
         } catch (NoSuchGameInstanceException e) {
             return Optional.empty();
         }
@@ -560,8 +572,6 @@ public abstract class DefaultGameRepository implements GameRepository {
                 newStatus.instances.put(savedManifest.id(), createInstance(newStatus, savedManifest.id(), savedManifest));
             }
             status = newStatus;
-
-            gameVersions.clear();
             return savedManifest;
         });
     }

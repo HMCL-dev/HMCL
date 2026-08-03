@@ -106,6 +106,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
         this.gameSettingsLoaded = shareState.gameSettingsLoaded;
         this.gameSettingsReadOnly = shareState.gameSettingsReadOnly;
         this.gameSettings = shareState.gameSettings;
+        this.version = shareState.version;
     }
 
     @Override

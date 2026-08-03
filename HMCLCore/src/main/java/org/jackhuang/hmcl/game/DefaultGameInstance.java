@@ -21,8 +21,12 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Optional;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
 public abstract class DefaultGameInstance implements GameInstance {
@@ -33,6 +37,11 @@ public abstract class DefaultGameInstance implements GameInstance {
     protected final GameInstanceID id;
     protected final GameInstanceManifest manifest;
     protected GameInstanceManifest.@Nullable Resolved resolvedManifest;
+
+    /// Cached Minecraft game version detected from this instance's primary jar.
+    ///
+    /// `null` means detection has not been attempted yet. After detection, unknown results are
+    /// stored as [GameVersionNumber#unknown()] rather than left null.
     protected @Nullable GameVersionNumber version;
 
     protected DefaultGameInstance(
@@ -94,12 +103,38 @@ public abstract class DefaultGameInstance implements GameInstance {
         return resolvedManifest;
     }
 
+    /// {@inheritDoc}
+    ///
+    /// The detected version is cached on this instance. When the primary jar cannot be resolved or
+    /// its Minecraft version cannot be recognized, [GameVersionNumber#unknown()] is cached and
+    /// returned.
     @Override
     public GameVersionNumber getVersion() {
         if (version == null) {
-            version = GameVersionNumber.asGameVersion(repository.getGameVersion(getId())); // TODO
+            version = detectVersion();
         }
         return version;
+    }
+
+    /// Detects the Minecraft game version from this instance's primary client jar.
+    ///
+    /// @return the detected version, or [GameVersionNumber#unknown()] when detection fails
+    private GameVersionNumber detectVersion() {
+        try {
+            GameInstanceManifest launchManifest = getResolvedManifest().launchManifest();
+            Path jar = repository.getInstanceJar(launchManifest);
+            Optional<String> detected = GameVersion.minecraftVersion(jar);
+            if (detected.isEmpty()) {
+                LOG.warning("Cannot find out game version of " + id
+                        + ", primary jar: " + jar
+                        + ", jar exists: " + Files.exists(jar));
+                return GameVersionNumber.unknown();
+            }
+            return GameVersionNumber.asGameVersion(detected.get());
+        } catch (NoSuchGameInstanceException e) {
+            LOG.warning("Cannot resolve game version of " + id, e);
+            return GameVersionNumber.unknown();
+        }
     }
 
     @Override
