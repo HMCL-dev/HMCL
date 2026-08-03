@@ -22,10 +22,12 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.HashSet;
 
 @NotNullByDefault
 public class DefaultGameInstance implements GameInstance {
 
+    protected final DefaultGameRepository.Status status;
     protected final DefaultGameRepository repository;
     protected final DefaultGameRepositoryLayout layout;
     protected final GameInstanceID id;
@@ -37,6 +39,7 @@ public class DefaultGameInstance implements GameInstance {
             DefaultGameRepository.Status status,
             GameInstanceID id,
             GameInstanceManifest manifest) {
+        this.status = status;
         this.repository = status.repository;
         this.layout = status.layout;
         this.id = id;
@@ -70,9 +73,8 @@ public class DefaultGameInstance implements GameInstance {
     @Override
     public GameInstanceManifest.Resolved getResolvedManifest() {
         if (resolvedManifest == null) {
-            resolvedManifest = repository.resolve(manifest); // TODO
+            resolvedManifest = status.resolve(manifest, new HashSet<>());
         }
-
         return resolvedManifest;
     }
 

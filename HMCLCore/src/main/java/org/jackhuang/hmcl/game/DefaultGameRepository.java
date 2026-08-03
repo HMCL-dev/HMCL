@@ -288,12 +288,7 @@ public class DefaultGameRepository implements GameRepository {
             throw new NoSuchGameInstanceException(instanceId);
         }
 
-        GameInstanceManifest.Resolved resolvedManifest = instance.resolvedManifest;
-        if (resolvedManifest == null) {
-            resolvedManifest = currentStatus.resolve(instance.manifest, new HashSet<>());
-            instance.resolvedManifest = resolvedManifest;
-        }
-        return resolvedManifest;
+        return instance.getResolvedManifest();
     }
 
     @Override
@@ -622,8 +617,8 @@ public class DefaultGameRepository implements GameRepository {
             return newStatus;
         }
 
-        private GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,
-                                                      Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
+        GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,
+                                              Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
             GameInstanceManifest launchManifest;
             GameInstanceManifest standaloneManifest = manifest.isRoot()
                     ? manifest
