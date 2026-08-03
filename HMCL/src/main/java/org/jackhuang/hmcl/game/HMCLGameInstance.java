@@ -452,7 +452,12 @@ public class HMCLGameInstance extends DefaultGameInstance {
     private record LoadResult(@Nullable GameSettings.Instance setting, boolean allowSave) {
     }
 
-    /// Optional reference to an HMCL game instance and its repository.
+    /// Optional reference to an HMCL game instance bound to a repository.
+    ///
+    /// Replaces the former `(repository, instanceId)` pair for UI and service context that may or
+    /// may not have a selected instance. When present, [#instance()] is a snapshot member and may
+    /// become stale after the repository publishes a new snapshot; call [#refreshed()] to re-resolve
+    /// from the current snapshot while preserving repository context.
     @NotNullByDefault
     public static final class Optional {
         private final HMCLGameRepository repository;
@@ -462,7 +467,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
         ///
         /// @param repository the repository
         public Optional(HMCLGameRepository repository) {
-            this.repository = repository;
+            this.repository = Objects.requireNonNull(repository);
             this.instance = null;
         }
 
@@ -472,6 +477,35 @@ public class HMCLGameInstance extends DefaultGameInstance {
         public Optional(HMCLGameInstance instance) {
             this.repository = instance.getRepository();
             this.instance = instance;
+        }
+
+        /// Creates an optional by resolving `instanceId` from the repository's current snapshot.
+        ///
+        /// @param repository the repository
+        /// @param instanceId the instance id, or `null` for an empty optional
+        /// @return an optional that is empty when `instanceId` is null or not registered
+        public static Optional of(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
+            if (instanceId == null) {
+                return new Optional(repository);
+            }
+            HMCLGameInstance instance = repository.findInstance(instanceId);
+            return instance != null ? new Optional(instance) : new Optional(repository);
+        }
+
+        /// Creates an optional that holds the given instance.
+        ///
+        /// @param instance the instance
+        /// @return the optional
+        public static Optional of(HMCLGameInstance instance) {
+            return new Optional(instance);
+        }
+
+        /// Creates an empty optional bound only to a repository.
+        ///
+        /// @param repository the repository
+        /// @return the empty optional
+        public static Optional empty(HMCLGameRepository repository) {
+            return new Optional(repository);
         }
 
         /// Returns the repository associated with this optional.
@@ -509,6 +543,16 @@ public class HMCLGameInstance extends DefaultGameInstance {
         /// @return whether [#instance()] is null
         public boolean isEmpty() {
             return instance == null;
+        }
+
+        /// Re-resolves the held instance id from the repository's current snapshot.
+        ///
+        /// @return this optional when empty; otherwise a fresh optional for the same id
+        public Optional refreshed() {
+            if (instance == null) {
+                return this;
+            }
+            return of(repository, instance.getId());
         }
     }
 }

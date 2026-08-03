@@ -23,6 +23,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -84,14 +85,18 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        this.repository = repository;
-        this.instanceId = instanceId;
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        this.repository = instance.repository();
+        this.instanceId = instance.instanceId();
+        HMCLGameInstance gameInstance = instance.instance();
+        if (gameInstance == null) {
+            return;
+        }
 
-        GameInstanceManifest resolved = repository.getResolvedInstanceManifest(instanceId).standaloneManifest();
+        GameInstanceManifest resolved = gameInstance.getResolvedManifest().standaloneManifest();
         this.gameVersion = repository.getGameVersion(resolved).orElse(null);
 
-        loadMods(repository.getModManager(instanceId));
+        loadMods(gameInstance.getModManager());
     }
 
     private void loadMods(ModManager modManager) {

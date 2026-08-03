@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.ui.export;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import java.util.Objects;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackExportTask;
@@ -47,12 +49,15 @@ import java.util.List;
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 public final class ExportWizardProvider implements WizardProvider {
-    private final HMCLGameRepository repository;
-    private final GameInstanceID instanceId;
+    private final HMCLGameInstance gameInstance;
+
+    public ExportWizardProvider(HMCLGameInstance gameInstance) {
+        this.gameInstance = gameInstance;
+    }
 
     public ExportWizardProvider(HMCLGameRepository repository, GameInstanceID instanceId) {
-        this.repository = repository;
-        this.instanceId = instanceId;
+        this(Objects.requireNonNull(repository.findInstance(instanceId),
+                () -> "Instance not found: " + instanceId));
     }
 
     @Override
@@ -165,7 +170,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new McbbsModpackExportTask(repository, instanceId, exportInfo, modpackFile);
+                dependency = new McbbsModpackExportTask(gameInstance.getRepository(), gameInstance.getId(), exportInfo, modpackFile);
             }
 
             @Override
@@ -185,8 +190,8 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                GameSettings.Effective setting = repository.getEffectiveGameSettings(instanceId);
-                dependency = new MultiMCModpackExportTask(repository, instanceId, exportInfo.getWhitelist(),
+                GameSettings.Effective setting = gameInstance.getRepository().getEffectiveGameSettings(gameInstance.getId());
+                dependency = new MultiMCModpackExportTask(gameInstance.getRepository(), gameInstance.getId(), exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",
                                 exportInfo.getName() + "-" + exportInfo.getVersion(),
@@ -233,7 +238,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new ServerModpackExportTask(repository, instanceId, exportInfo, modpackFile);
+                dependency = new ServerModpackExportTask(gameInstance.getRepository(), gameInstance.getId(), exportInfo, modpackFile);
             }
 
             @Override
@@ -254,8 +259,8 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
             public void execute() {
                 dependency = new ModrinthModpackExportTask(
-                        repository,
-                        instanceId,
+                        gameInstance.getRepository(),
+                        gameInstance.getId(),
                         exportInfo,
                         modpackFile
                 );
@@ -272,8 +277,8 @@ public final class ExportWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
         return switch (step) {
             case 0 -> new ModpackTypeSelectionPage(controller);
-            case 1 -> new ModpackInfoPage(controller, repository, instanceId);
-            case 2 -> new ModpackFileSelectionPage(controller, repository, instanceId, ModAdviser::suggestMod);
+            case 1 -> new ModpackInfoPage(controller, gameInstance);
+            case 2 -> new ModpackFileSelectionPage(controller, gameInstance, ModAdviser::suggestMod);
             default -> throw new IllegalArgumentException("step");
         };
     }

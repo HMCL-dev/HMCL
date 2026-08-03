@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.game;
 
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
@@ -2630,7 +2632,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     @SuppressWarnings("unchecked")
     @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        HMCLGameRepository repository = instance.repository();
+        @Nullable GameInstanceID instanceId = instance.instanceId();
         this.gameDirectory = repository.getGameDirectory();
         this.repository = repository;
         this.instanceId = instanceId;
@@ -2840,7 +2844,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         if (repository == null || instanceId == null)
             return;
 
-        Controllers.dialog(new GameInstanceIconDialog(repository, instanceId, this::loadIcon));
+        HMCLGameInstance gameInstance = repository.findInstance(instanceId);
+        if (gameInstance == null) {
+            return;
+        }
+        Controllers.dialog(new GameInstanceIconDialog(gameInstance, this::loadIcon));
     }
 
     private void onDeleteIcon() {

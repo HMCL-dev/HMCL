@@ -35,6 +35,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -88,7 +89,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        HMCLGameRepository repository = instance.repository();
+        @Nullable GameInstanceID instanceId = instance.instanceId();
         this.schematicsDirectory = repository.getSchematicsDirectory(instanceId);
 
         refresh();

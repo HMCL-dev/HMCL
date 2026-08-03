@@ -84,6 +84,7 @@ public final class LauncherHelper {
 
     private static final String LWJGL_3_4_1_TIP = "lwjgl3.4.1-ffm";
 
+    private final HMCLGameInstance gameInstance;
     private final HMCLGameRepository repository;
     private Account account;
     private final GameInstanceID selectedInstanceId;
@@ -94,14 +95,24 @@ public final class LauncherHelper {
     private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
 
-    public LauncherHelper(HMCLGameRepository repository, Account account, GameInstanceID selectedInstanceId) {
-        this.repository = Objects.requireNonNull(repository);
+    public LauncherHelper(HMCLGameInstance gameInstance, Account account) {
+        this.gameInstance = Objects.requireNonNull(gameInstance);
+        this.repository = gameInstance.getRepository();
         this.account = Objects.requireNonNull(account);
-        this.selectedInstanceId = selectedInstanceId;
+        this.selectedInstanceId = gameInstance.getId();
         this.setting = repository.getEffectiveGameSettings(selectedInstanceId);
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
         this.launchingStepsPane.setTitle(i18n("instance.launch"));
+    }
+
+    public LauncherHelper(HMCLGameRepository repository, Account account, GameInstanceID selectedInstanceId) {
+        this(Objects.requireNonNull(repository.findInstance(selectedInstanceId),
+                () -> "Instance not found: " + selectedInstanceId), account);
+    }
+
+    public HMCLGameInstance getGameInstance() {
+        return gameInstance;
     }
 
     private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);

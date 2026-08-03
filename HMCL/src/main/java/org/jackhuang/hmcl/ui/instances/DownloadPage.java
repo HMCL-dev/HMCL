@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -67,14 +68,14 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final ModTranslations translations;
     private final RemoteAddon addon;
     private final ModTranslations.Mod mod;
-    private final HMCLGameRepository.InstanceReference instanceReference;
+    private final HMCLGameInstance.Optional instanceReference;
     private final DownloadCallback callback;
     private final DownloadListPage page;
     private final RemoteAddon.Type type;
 
     private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
 
-    public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.InstanceReference instanceReference, @Nullable DownloadCallback callback) {
+    public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference, @Nullable DownloadCallback callback) {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
@@ -128,7 +129,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         return addon;
     }
 
-    public HMCLGameRepository.InstanceReference getInstanceReference() {
+    public HMCLGameInstance.Optional getInstanceOptional() {
         return instanceReference;
     }
 
@@ -373,7 +374,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         public final RemoteAddon addon;
 
-        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameRepository.InstanceReference instanceReference) {
+        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference) {
             this.addon = addon;
 
             HBox pane = new HBox(8);

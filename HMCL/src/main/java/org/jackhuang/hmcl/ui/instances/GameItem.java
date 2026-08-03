@@ -21,6 +21,7 @@ import javafx.beans.property.*;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.GameDirectory;
@@ -43,9 +44,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class GameItem {
     private static final ThreadPoolExecutor POOL_VERSION_RESOLVE = threadPool("VersionResolve", true, 1, 10, TimeUnit.SECONDS);
 
-    protected final HMCLGameRepository repository;
-    protected final String id;
-    protected final GameInstanceID instanceId;
+    protected final HMCLGameInstance gameInstance;
 
     private boolean initialized = false;
     private StringProperty title;
@@ -53,22 +52,33 @@ public class GameItem {
     private StringProperty subtitle;
     private ObjectProperty<Image> image;
 
+    public GameItem(HMCLGameInstance gameInstance) {
+        this.gameInstance = gameInstance;
+    }
+
     public GameItem(HMCLGameRepository repository, GameInstanceID instanceId) {
-        this.repository = repository;
-        this.id = instanceId.toString();
-        this.instanceId = instanceId;
+        this(Objects.requireNonNull(repository.findInstance(instanceId),
+                () -> "Instance not found: " + instanceId));
     }
 
     public GameDirectory getGameDirectory() {
-        return repository.getGameDirectory();
+        return gameInstance.getRepository().getGameDirectory();
     }
 
     public HMCLGameRepository getRepository() {
-        return repository;
+        return gameInstance.getRepository();
+    }
+
+    public GameInstanceID getInstanceId() {
+        return gameInstance.getId();
+    }
+
+    public HMCLGameInstance getGameInstance() {
+        return gameInstance;
     }
 
     public String getId() {
-        return id;
+        return gameInstance.getId().toString();
     }
 
     private void init() {
@@ -86,13 +96,13 @@ public class GameItem {
 
         CompletableFuture.supplyAsync(() -> {
             // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
-            Optional<String> gameVersion = repository.getGameVersion(instanceId);
+            Optional<String> gameVersion = gameInstance.getRepository().getGameVersion(gameInstance.getId());
             String modPackVersion = null;
             try {
-                ModpackConfiguration<?> config = repository.readModpackConfiguration(instanceId);
+                ModpackConfiguration<?> config = gameInstance.getRepository().readModpackConfiguration(gameInstance.getId());
                 modPackVersion = config != null ? config.getVersion() : null;
             } catch (IOException e) {
-                LOG.warning("Failed to read modpack configuration from " + id, e);
+                LOG.warning("Failed to read modpack configuration from " + getId(), e);
             }
             return new Result(gameVersion.orElse(null), modPackVersion);
         }, POOL_VERSION_RESOLVE).whenCompleteAsync((result, exception) -> {
@@ -102,7 +112,7 @@ public class GameItem {
                 }
 
                 StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
-                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId), result.gameVersion);
+                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(gameInstance.getResolvedManifest(), result.gameVersion);
                 for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                     String libraryId = mark.getLibraryId();
                     String libraryVersion = mark.getLibraryVersion();
@@ -116,12 +126,12 @@ public class GameItem {
 
                 subtitle.set(libraries.toString());
             } else {
-                LOG.warning("Failed to read version info from " + id, exception);
+                LOG.warning("Failed to read version info from " + getId(), exception);
             }
         }, Schedulers.javafx());
 
-        title.set(id);
-        image.set(repository.getInstanceIconImage(instanceId));
+        title.set(getId());
+        image.set(gameInstance.getRepository().getInstanceIconImage(gameInstance.getId()));
     }
 
     public ReadOnlyStringProperty titleProperty() {

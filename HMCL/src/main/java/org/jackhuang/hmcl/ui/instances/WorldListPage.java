@@ -37,6 +37,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -89,7 +90,9 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        HMCLGameRepository repository = instance.repository();
+        @Nullable GameInstanceID instanceId = instance.instanceId();
         this.repository = repository;
         this.instanceId = instanceId;
         this.savesDir = repository.getSavesDirectory(instanceId);

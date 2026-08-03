@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -108,7 +109,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        HMCLGameRepository repository = instance.repository();
+        @Nullable GameInstanceID instanceId = instance.instanceId();
         this.repository = repository;
         this.instanceId = instanceId;
         this.resourcePackManager = new ResourcePackManager(repository, instanceId);
@@ -645,7 +648,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                                 ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
                                                 : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
                                         remoteAddon,
-                                        new HMCLGameRepository.InstanceReference(page.repository, page.instanceId),
+                                        HMCLGameInstance.Optional.of(page.repository, page.instanceId),
                                         org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
                                 ));
                             });

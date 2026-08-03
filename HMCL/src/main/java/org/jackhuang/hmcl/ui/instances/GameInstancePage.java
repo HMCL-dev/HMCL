@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -65,7 +66,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
-    private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
+    private final ObjectProperty<HMCLGameInstance.Optional> instance = new SimpleObjectProperty<>();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private GameInstanceID preferredInstanceId = null;
@@ -92,17 +93,20 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
         addEventHandler(WorkingDirChangedEvent.EVENT_TYPE, event -> {
-            if (this.instanceReference.get() != null) {
+            HMCLGameInstance.Optional current = this.instance.get();
+            if (current != null) {
+                current = current.refreshed();
+                this.instance.set(current);
                 if (installerListTab.isInitialized())
-                    installerListTab.getNode().loadInstance(getRepository(), getInstanceId());
+                    installerListTab.getNode().loadInstance(current);
                 if (modListTab.isInitialized())
-                    modListTab.getNode().loadInstance(getRepository(), getInstanceId());
+                    modListTab.getNode().loadInstance(current);
                 if (resourcePackTab.isInitialized())
-                    resourcePackTab.getNode().loadInstance(getRepository(), getInstanceId());
+                    resourcePackTab.getNode().loadInstance(current);
                 if (worldListTab.isInitialized())
-                    worldListTab.getNode().loadInstance(getRepository(), getInstanceId());
+                    worldListTab.getNode().loadInstance(current);
                 if (schematicsTab.isInitialized())
-                    schematicsTab.getNode().loadInstance(getRepository(), getInstanceId());
+                    schematicsTab.getNode().loadInstance(current);
             }
         });
 
@@ -111,12 +115,13 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
     private void checkSelectedInstance() {
         runInFX(() -> {
-            if (this.instanceReference.get() == null) return;
-            HMCLGameRepository repository = this.instanceReference.get().repository();
-            @Nullable GameInstanceID instanceId = this.instanceReference.get().instanceId();
-            if (instanceId == null || !repository.hasInstance(instanceId)) {
+            HMCLGameInstance.Optional current = this.instance.get();
+            if (current == null) return;
+            current = current.refreshed();
+            this.instance.set(current);
+            if (current.isEmpty()) {
                 if (preferredInstanceId != null) {
-                    loadInstance(preferredInstanceId, repository);
+                    loadInstance(preferredInstanceId, current.repository());
                 } else {
                     fireEvent(new PageCloseEvent());
                 }
@@ -127,11 +132,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private <T extends Node> Supplier<T> loadInstanceFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
-            if (instanceReference.get() != null) {
-                if (node instanceof GameInstancePage.GameInstanceLoadable loadable) {
-                    @Nullable GameInstanceID instanceId = instanceReference.get().instanceId();
-                    loadable.loadInstance(instanceReference.get().repository(), instanceId);
-                }
+            HMCLGameInstance.Optional current = instance.get();
+            if (current != null && node instanceof GameInstancePage.GameInstanceLoadable loadable) {
+                loadable.loadInstance(current);
             }
             return node;
         };
@@ -142,38 +145,39 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     public void setInstance(GameInstanceID instanceId, HMCLGameRepository repository) {
-        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId));
+        this.instance.set(HMCLGameInstance.Optional.of(repository, instanceId));
     }
 
     public void loadInstance(GameInstanceID instanceId, HMCLGameRepository repository) {
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
-        if (this.instanceReference.get() != null && (!getRepository().isLoaded() ||
+        if (this.instance.get() != null && (!getRepository().isLoaded() ||
                 !getRepository().hasInstance(instanceId))) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }
 
-        setInstance(instanceId, repository);
+        HMCLGameInstance.Optional current = HMCLGameInstance.Optional.of(repository, instanceId);
+        this.instance.set(current);
         preferredInstanceId = instanceId;
 
         if (gameSettingsTab.isInitialized())
-            gameSettingsTab.getNode().loadInstance(repository, instanceId);
+            gameSettingsTab.getNode().loadInstance(current);
         if (installerListTab.isInitialized())
-            installerListTab.getNode().loadInstance(repository, instanceId);
+            installerListTab.getNode().loadInstance(current);
         if (modListTab.isInitialized())
-            modListTab.getNode().loadInstance(repository, instanceId);
+            modListTab.getNode().loadInstance(current);
         if (resourcePackTab.isInitialized())
-            resourcePackTab.getNode().loadInstance(repository, instanceId);
+            resourcePackTab.getNode().loadInstance(current);
         if (worldListTab.isInitialized())
-            worldListTab.getNode().loadInstance(repository, instanceId);
+            worldListTab.getNode().loadInstance(current);
         if (schematicsTab.isInitialized())
-            schematicsTab.getNode().loadInstance(repository, instanceId);
+            schematicsTab.getNode().loadInstance(current);
         currentInstanceUpgradable.set(repository.isModpack(instanceId));
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
-        if (this.instanceReference.get() == null)
+        if (this.instance.get() == null)
             throw new IllegalStateException();
 
         // If we jumped to game list page and deleted this version
@@ -209,9 +213,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private void clearAssets() {
         Path assetsDir = getRepository().getBaseDirectory().resolve("assets");
 
-        HMCLGameRepository.InstanceReference currentInstanceReference = instanceReference.get();
-        Path resourcesDir = currentInstanceReference != null
-                ? getRepository().getRunDirectory(currentInstanceReference.instanceId()).resolve("resources")
+        HMCLGameInstance.Optional current = instance.get();
+        Path resourcesDir = current != null && current.isPresent()
+                ? current.instance().getRunDirectory().resolve("resources")
                 : null;
 
         Task.runAsync(Schedulers.io(), () -> {
@@ -260,13 +264,17 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     public HMCLGameRepository getRepository() {
-        return Optional.ofNullable(instanceReference.get()).map(HMCLGameRepository.InstanceReference::repository).orElse(null);
+        HMCLGameInstance.Optional current = instance.get();
+        return current != null ? current.repository() : null;
     }
 
     public @Nullable GameInstanceID getInstanceId() {
-        return Optional.ofNullable(instanceReference.get())
-                .map(HMCLGameRepository.InstanceReference::instanceId)
-                .orElse(null);
+        HMCLGameInstance.Optional current = instance.get();
+        return current != null ? current.instanceId() : null;
+    }
+
+    public HMCLGameInstance.Optional getInstance() {
+        return instance.get();
     }
 
     @Override
@@ -350,7 +358,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
             control.state.bind(Bindings.createObjectBinding(() ->
                             State.fromTitle(i18n("instance.manage.manage.title", getSkinnable().getInstanceId()), -1),
-                    getSkinnable().instanceReference));
+                    getSkinnable().instance));
 
             //control.transitionPane.getStyleClass().add("gray-background");
             //FXUtils.setOverflowHidden(control.transitionPane, 8);
@@ -360,10 +368,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
     /// Loads page content for a game instance in a repository.
     public interface GameInstanceLoadable {
-        /// Loads page content for the given repository and game instance.
+        /// Loads page content for the given optional game instance.
         ///
-        /// @param repository the repository containing the game instance
-        /// @param instanceId the game instance ID, or `null` when only repository context is available
-        void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId);
+        /// @param instance the instance context; may be empty when only repository context is available
+        void loadInstance(HMCLGameInstance.Optional instance);
     }
 }

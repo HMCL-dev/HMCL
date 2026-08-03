@@ -24,6 +24,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -63,7 +64,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        HMCLGameRepository repository = instance.repository();
+        @Nullable GameInstanceID instanceId = instance.instanceId();
         this.repository = repository;
         this.instanceId = instanceId;
         this.manifest = repository.getInstanceManifest(instanceId);
@@ -106,7 +109,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
                 item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(manifest, libraryId)
                         .thenComposeAsync(repository::saveAsync)
                         .withComposeAsync(repository.refreshAsync())
-                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.instanceId))
+                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(HMCLGameInstance.Optional.of(this.repository, this.instanceId)))
                         .start());
 
                 itemsProperty().add(item);
@@ -128,7 +131,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
                 installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(manifest, libraryId)
                         .thenComposeAsync(repository::saveAsync)
                         .withComposeAsync(repository.refreshAsync())
-                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.instanceId))
+                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(HMCLGameInstance.Optional.of(this.repository, this.instanceId)))
                         .start());
 
                 itemsProperty().add(installerItem);
@@ -153,7 +156,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
             public void onStop(boolean success, TaskExecutor executor) {
                 runInFX(() -> {
                     if (success) {
-                        loadInstance(repository, instanceId);
+                        loadInstance(HMCLGameInstance.Optional.of(repository, instanceId));
                         Controllers.dialog(i18n("install.success"));
                     } else {
                         if (executor.getException() == null)

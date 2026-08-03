@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -136,7 +137,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         return () -> {
             T node = nodeSupplier.get();
             if (node instanceof GameInstancePage.GameInstanceLoadable loadable) {
-                loadable.loadInstance(GameDirectoryManager.getSelectedRepository(), null);
+                loadable.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
             }
             return node;
         };
@@ -191,19 +192,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             if (repository.getGameDirectory() == GameDirectoryManager.getSelectedGameDirectory()) {
                 listenerHolder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), version -> {
                     if (modTab.isInitialized()) {
-                        modTab.getNode().loadInstance(repository, null);
+                        modTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                     if (modpackTab.isInitialized()) {
-                        modpackTab.getNode().loadInstance(repository, null);
+                        modpackTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                     if (resourcePackTab.isInitialized()) {
-                        resourcePackTab.getNode().loadInstance(repository, null);
+                        resourcePackTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                     if (shaderTab.isInitialized()) {
-                        shaderTab.getNode().loadInstance(repository, null);
+                        shaderTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                     if (worldTab.isInitialized()) {
-                        worldTab.getNode().loadInstance(repository, null);
+                        worldTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                 }));
             }

@@ -29,6 +29,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -62,14 +63,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class ModpackFileSelectionPage extends BorderPane implements WizardPage {
     private final WizardController controller;
-    private final GameInstanceID instanceId;
+    private final HMCLGameInstance gameInstance;
     private final ModAdviser adviser;
     private @Nullable ModpackFileTreeItem rootNode;
 
-    public ModpackFileSelectionPage(WizardController controller, HMCLGameRepository repository, GameInstanceID instanceId, ModAdviser adviser) {
+    public ModpackFileSelectionPage(WizardController controller, HMCLGameInstance gameInstance, ModAdviser adviser) {
         this.controller = controller;
-        this.instanceId = instanceId;
+        this.gameInstance = gameInstance;
         this.adviser = adviser;
+        HMCLGameRepository repository = gameInstance.getRepository();
+        GameInstanceID instanceId = gameInstance.getId();
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
@@ -107,7 +110,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         spinnerPane.setLoading(true);
         btnNext.setDisable(true);
         CompletableFuture
-                .supplyAsync(() -> getTreeItem(repository.getRunDirectory(instanceId), "minecraft", 0), Schedulers.io())
+                .supplyAsync(() -> getTreeItem(repository.getRunDirectory(gameInstance.getId()), "minecraft", 0), Schedulers.io())
                 .whenCompleteAsync((root, throwable) -> {
                     if (throwable == null) {
                         if (root != null) {
@@ -145,12 +148,12 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                 }
                 if (fileName.startsWith("._")) // macOS system file
                     state = ModAdviser.ModSuggestion.HIDDEN;
-                if (FileUtils.getNameWithoutExtension(file).equals(instanceId.toString()))
+                if (FileUtils.getNameWithoutExtension(file).equals(gameInstance.getId().toString()))
                     state = ModAdviser.ModSuggestion.HIDDEN;
             }
 
             if (isDirectory) {
-                if (fileName.equals(instanceId + "-natives")) { // Ignore <version>-natives
+                if (fileName.equals(gameInstance.getId() + "-natives")) { // Ignore <version>-natives
                     state = ModAdviser.ModSuggestion.HIDDEN;
                 }
                 if (level == 1 && fileName.startsWith("natives-")) { // Ignore natives-os-arch
@@ -161,7 +164,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                 return null;
         }
 
-        ModpackFileTreeItem node = new ModpackFileTreeItem(level == 0 ? instanceId.toString() : StringUtils.substringAfterLast(basePath, '/'), basePath);
+        ModpackFileTreeItem node = new ModpackFileTreeItem(level == 0 ? gameInstance.getId().toString() : StringUtils.substringAfterLast(basePath, '/'), basePath);
         if (state == ModAdviser.ModSuggestion.SUGGESTED)
             node.setSelected(true);
 
