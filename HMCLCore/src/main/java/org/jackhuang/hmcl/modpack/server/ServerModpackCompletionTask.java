@@ -86,7 +86,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
         dependencyManager.validateGameInstance(instance);
         this.dependencyManager = dependencyManager;
         this.instance = instance;
-        this.configurationFile = instance.getRepository().getModpackConfiguration(instance.getId());
+        this.configurationFile = instance.getModpackConfigurationFile();
 
         if (manifest == null) {
             try {

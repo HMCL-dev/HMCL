@@ -96,7 +96,7 @@ public final class LauncherHelper {
     public LauncherHelper(HMCLGameInstance gameInstance, Account account) {
         this.gameInstance = Objects.requireNonNull(gameInstance);
         this.account = Objects.requireNonNull(account);
-        this.setting = gameInstance.getRepository().getEffectiveGameSettings(gameInstance.getId());
+        this.setting = gameInstance.getEffectiveSettings();
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
         this.launchingStepsPane.setTitle(i18n("instance.launch"));
@@ -164,7 +164,7 @@ public final class LauncherHelper {
         DefaultDependencyManager dependencyManager = repository.getDependency();
         AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, gameInstance.getResolvedManifest().launchManifest()));
         Optional<String> gameVersion = repository.getGameVersion(version.get());
-        boolean integrityCheck = repository.unmarkInstanceLaunchedAbnormally(selectedInstanceId);
+        boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
         List<String> javaArguments = new ArrayList<>(0);
@@ -181,8 +181,11 @@ public final class LauncherHelper {
                             dependencyManager.checkGameCompletionAsync(gameInstance, version.get(), integrityCheck),
                             Task.composeAsync(() -> {
                                 try {
-                                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedInstanceId));
-                                    ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
+                                    @Nullable ModpackConfiguration<?> configuration =
+                                            gameInstance.readModpackConfiguration();
+                                    if (configuration == null) return null;
+                                    @Nullable ModpackProvider provider =
+                                            ModpackHelper.getProviderByType(configuration.getType());
                                     if (provider == null) return null;
                                     else return provider.createCompletionTask(
                                             dependencyManager,
@@ -1053,7 +1056,7 @@ public final class LauncherHelper {
             }
 
             if (exitType != ExitType.NORMAL) {
-                repository.markInstanceLaunchedAbnormally(manifest.id());
+                gameInstance.markLaunchedAbnormally();
                 runLater(() -> new GameCrashWindow(process, exitType, repository, manifest, launchOptions, logs).show());
             }
 

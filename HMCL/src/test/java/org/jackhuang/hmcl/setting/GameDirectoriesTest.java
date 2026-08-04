@@ -665,6 +665,45 @@ public final class GameDirectoriesTest {
         }
     }
 
+    /// Tests that HMCL-specific instance files are managed through [HMCLGameInstance].
+    @Test
+    public void instanceOwnsHmclSpecificFiles(@TempDir Path tempDirectory) throws Exception {
+        GameDirectory gameDirectory = new GameDirectory(
+                GameDirectoryID.generate(),
+                LocalizedText.plain("Dev"),
+                PortablePath.of(tempDirectory.toString()));
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(gameDirectory);
+        GameDirectories userDirectories = new GameDirectories();
+
+        try (GameDirectoryEnvironment ignored =
+                     new GameDirectoryEnvironment(localDirectories, userDirectories)) {
+            HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
+            GameInstanceID instanceId = new GameInstanceID("1.20.1");
+            repository.saveAsync(new GameInstanceManifest(instanceId)).run();
+            HMCLGameInstance instance = repository.getInstance(instanceId);
+
+            Path configurationFile = instance.getInstanceRoot().resolve("modpack.cfg");
+            assertEquals(configurationFile, instance.getModpackConfigurationFile());
+            assertFalse(instance.isModpack());
+            Files.writeString(configurationFile, "{}");
+            assertTrue(instance.isModpack());
+
+            Path abnormalMarker = instance.getInstanceRoot().resolve(".abnormal");
+            instance.markLaunchedAbnormally();
+            assertTrue(Files.isRegularFile(abnormalMarker));
+            assertTrue(instance.unmarkLaunchedAbnormally());
+            assertFalse(Files.exists(abnormalMarker));
+
+            Path sourceIcon = tempDirectory.resolve("source.png");
+            Files.write(sourceIcon, new byte[]{1, 2, 3});
+            instance.setIconFile(sourceIcon);
+            assertEquals(instance.getInstanceRoot().resolve("icon.png"), instance.getIconFile().orElseThrow());
+            instance.deleteIconFile();
+            assertTrue(instance.getIconFile().isEmpty());
+        }
+    }
+
     /// Tests that repository selection exposes the current snapshot member while persisting its ID.
     @Test
     public void selectedInstanceTracksRepositorySnapshots(@TempDir Path tempDirectory)

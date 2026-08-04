@@ -21,7 +21,9 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /// Provides a view of a game instance and its instance-specific paths within a
 /// [GameRepositorySnapshot].
@@ -71,6 +73,11 @@ public interface GameInstance {
     /// @return the manifest JSON path
     Path getManifestFile();
 
+    /// Returns the launcher-specific modpack configuration file for this instance.
+    ///
+    /// @return the modpack configuration path in the instance root
+    Path getModpackConfigurationFile();
+
     /// Returns the primary client jar selected by the resolved launch manifest.
     ///
     /// @return the primary client jar path
@@ -80,6 +87,29 @@ public interface GameInstance {
     ///
     /// @return the run directory
     Path getRunDirectory();
+
+    /// Reads an asset index used by this instance.
+    ///
+    /// @param assetId the asset index ID
+    /// @return the parsed asset index
+    /// @throws IOException if the asset index cannot be read
+    AssetIndex getAssetIndex(String assetId) throws IOException;
+
+    /// Returns the asset directory that should be supplied when launching this instance.
+    ///
+    /// Implementations may reconstruct virtual or legacy resource layouts before returning.
+    ///
+    /// @param assetId the asset index ID
+    /// @return the launch-time asset directory
+    Path getActualAssetDirectory(String assetId);
+
+    /// Returns an existing asset object by its logical name.
+    ///
+    /// @param assetId the asset index ID
+    /// @param name    the logical asset name
+    /// @return the asset object path, or empty when the index has no such object
+    /// @throws IOException if the asset index cannot be read
+    Optional<Path> getAssetObject(String assetId, String name) throws IOException;
 
     /// Returns the directory containing mods used by this instance.
     ///

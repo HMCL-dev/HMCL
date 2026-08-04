@@ -112,8 +112,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 return;
             }
             HMCLGameInstance gameInstance = current.instance();
-            currentInstanceUpgradable.set(
-                    gameInstance != null && current.repository().isModpack(gameInstance.getId()));
+            currentInstanceUpgradable.set(gameInstance != null && gameInstance.isModpack());
             if (gameInstance != null) {
                 preferredInstanceId = gameInstance.getId();
             }

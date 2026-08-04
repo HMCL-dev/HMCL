@@ -30,7 +30,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -71,7 +70,6 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.controller = controller;
         this.gameInstance = gameInstance;
         this.adviser = adviser;
-        HMCLGameRepository repository = gameInstance.getRepository();
         GameInstanceID instanceId = gameInstance.getId();
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
@@ -100,17 +98,17 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         btnNext.setOnAction(e -> onNext());
         nextPane.getChildren().setAll(btnNext);
 
-        loadRoot(repository, treeView, placeholderPane, spinnerPane, btnNext);
-        spinnerPane.setOnFailedAction((__) -> loadRoot(repository, treeView, placeholderPane, spinnerPane, btnNext));
+        loadRoot(treeView, placeholderPane, spinnerPane, btnNext);
+        spinnerPane.setOnFailedAction((__) -> loadRoot(treeView, placeholderPane, spinnerPane, btnNext));
 
         this.setBottom(nextPane);
     }
 
-    private void loadRoot(HMCLGameRepository repository, JFXTreeView<String> treeView, StackPane placeholderPane, SpinnerPane spinnerPane, JFXButton btnNext) {
+    private void loadRoot(JFXTreeView<String> treeView, StackPane placeholderPane, SpinnerPane spinnerPane, JFXButton btnNext) {
         spinnerPane.setLoading(true);
         btnNext.setDisable(true);
         CompletableFuture
-                .supplyAsync(() -> getTreeItem(repository.getRunDirectory(gameInstance.getId()), "minecraft", 0), Schedulers.io())
+                .supplyAsync(() -> getTreeItem(gameInstance.getRunDirectory(), "minecraft", 0), Schedulers.io())
                 .whenCompleteAsync((root, throwable) -> {
                     if (throwable == null) {
                         if (root != null) {

@@ -92,10 +92,10 @@ public class GameItem {
         CompletableFuture.supplyAsync(() -> {
             // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
             GameVersionNumber version = gameInstance.getVersion();
-            String gameVersion = version == GameVersionNumber.unknown() ? null : version.toString();
-            String modPackVersion = null;
+            @Nullable String gameVersion = version == GameVersionNumber.unknown() ? null : version.toString();
+            @Nullable String modPackVersion = null;
             try {
-                ModpackConfiguration<?> config = gameInstance.getRepository().readModpackConfiguration(gameInstance.getId());
+                @Nullable ModpackConfiguration<?> config = gameInstance.readModpackConfiguration();
                 modPackVersion = config != null ? config.getVersion() : null;
             } catch (IOException e) {
                 LOG.warning("Failed to read modpack configuration from " + getId(), e);
@@ -127,7 +127,7 @@ public class GameItem {
         }, Schedulers.javafx());
 
         title.set(getId());
-        image.set(gameInstance.getRepository().getInstanceIconImage(gameInstance.getId()));
+        image.set(gameInstance.getIconImage());
     }
 
     public ReadOnlyStringProperty titleProperty() {

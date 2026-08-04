@@ -156,7 +156,7 @@ public class DefaultLauncher extends Launcher {
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                 res.addDefault("-Xdock:name=", "Minecraft " + manifest.id());
-                instance.getRepository().getAssetObject(instance.getId(), manifest.getAssetIndex().getId(), "icons/minecraft.icns")
+                instance.getAssetObject(manifest.getAssetIndex().getId(), "icons/minecraft.icns")
                         .ifPresent(minecraftIcns -> {
                             res.addDefault("-Xdock:icon=", FileUtils.getAbsolutePath(minecraftIcns));
                         });
@@ -287,7 +287,7 @@ public class DefaultLauncher extends Launcher {
         classpath.add(FileUtils.getAbsolutePath(jar.toAbsolutePath()));
 
         // Provided Minecraft arguments
-        Path gameAssets = instance.getRepository().getActualAssetDirectory(instance.getId(), manifest.getAssetIndex().getId());
+        Path gameAssets = instance.getActualAssetDirectory(manifest.getAssetIndex().getId());
         Map<String, String> configuration = getConfigurations();
         configuration.put("${classpath}", String.join(File.pathSeparator, classpath));
         configuration.put("${game_assets}", FileUtils.getAbsolutePath(gameAssets));
@@ -482,7 +482,6 @@ public class DefaultLauncher extends Launcher {
             throw new NotDecompressingNativesException(e);
         }
     }
-
 
     /// Returns the detected Minecraft version string for this instance, if known.
     ///

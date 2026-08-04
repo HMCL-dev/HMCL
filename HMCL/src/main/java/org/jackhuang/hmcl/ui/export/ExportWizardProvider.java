@@ -184,7 +184,7 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
             public void execute() {
                 HMCLGameInstance instance = resolveCurrentGameInstance();
-                GameSettings.Effective setting = instance.getRepository().getEffectiveGameSettings(instance.getId());
+                GameSettings.Effective setting = instance.getEffectiveSettings();
                 dependency = new MultiMCModpackExportTask(instance, exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",

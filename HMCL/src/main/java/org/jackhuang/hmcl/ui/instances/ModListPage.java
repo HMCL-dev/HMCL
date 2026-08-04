@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -264,8 +265,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         HMCLGameInstance gameInstance = this.gameInstance;
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = gameInstance.getRepository().getGameVersion(gameInstance.getId());
-                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, mods)).orElse(null);
+                            GameVersionNumber version = gameInstance.getVersion();
+                            return version != GameVersionNumber.unknown()
+                                    ? new AddonCheckUpdatesTask<>(
+                                            DownloadProviders.getDownloadProvider(), version.toString(), mods)
+                                    : null;
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
@@ -280,7 +284,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .withStagesHints("update.checking"),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (gameInstance.getRepository().isModpack(gameInstance.getId())) {
+        if (gameInstance.isModpack()) {
             Controllers.confirm(
                     i18n("mods.update_modpack_mod.warning"), null,
                     MessageDialogPane.MessageType.WARNING,

@@ -20,17 +20,25 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import javafx.scene.image.Image;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.setting.DefaultIsolationType;
 import org.jackhuang.hmcl.setting.GameSettings;
+import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.SettingFileUtils;
 import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +47,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -51,7 +60,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
     private final boolean provisional;
 
     /// Whether install-time code currently treats this instance as a modpack for run-directory
-    /// resolution, before [HMCLGameRepository#isModpack(GameInstanceID)] becomes true.
+    /// resolution, before [#isModpack()] becomes true.
     private boolean treatingAsModpack;
 
     /// Whether the instance-local game settings file has already been inspected.
@@ -166,13 +175,44 @@ public class HMCLGameInstance extends DefaultGameInstance {
         return treatingAsModpack;
     }
 
+    /// Returns the HMCL modpack configuration file for this instance.
+    ///
+    /// @return the `modpack.cfg` path in the instance root
+    @Override
+    public Path getModpackConfigurationFile() {
+        return getInstanceRoot().resolve("modpack.cfg");
+    }
+
+    /// Returns whether this instance has an HMCL modpack configuration file.
+    ///
+    /// @return whether [#getModpackConfigurationFile()] exists
+    public boolean isModpack() {
+        return Files.exists(getModpackConfigurationFile());
+    }
+
+    /// Reads this instance's HMCL modpack configuration.
+    ///
+    /// @return the parsed configuration, or `null` when the file does not exist
+    /// @throws IOException if the configuration cannot be read
+    public @Nullable ModpackConfiguration<?> readModpackConfiguration() throws IOException {
+        Path file = getModpackConfigurationFile();
+        if (Files.notExists(file)) {
+            return null;
+        }
+        try {
+            return JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
+        } catch (JsonParseException e) {
+            throw new IOException("Malformed modpack configuration: " + file, e);
+        }
+    }
+
     @Override
     public Path getRunDirectory() {
-        if (treatingAsModpack || getRepository().isModpack(id)) {
+        if (treatingAsModpack || isModpack()) {
             return getInstanceRoot();
         }
 
-        GameSettings.Instance localSetting = getSettings();
+        @Nullable GameSettings.Instance localSetting = getSettings();
         boolean useInstanceRunningDirectory =
                 localSetting != null
                         && localSetting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY);
@@ -223,6 +263,42 @@ public class HMCLGameInstance extends DefaultGameInstance {
             setting = createSettings();
         }
         return setting;
+    }
+
+    /// Resolves this instance's effective settings against its selected parent preset.
+    ///
+    /// @return the effective settings
+    public GameSettings.Effective getEffectiveSettings() {
+        @Nullable GameSettings.Instance setting = getSettings();
+        return GameSettings.resolve(getRepository().getParentGameSettings(setting), setting);
+    }
+
+    /// Applies the selected parent preset's default isolation policy to this registered instance.
+    ///
+    /// Provisional instances are unchanged because their final manifest has not been indexed yet.
+    public void applyDefaultIsolationSetting() {
+        if (isProvisional()) {
+            return;
+        }
+
+        @Nullable GameSettings.Instance instanceSetting = getSettings();
+        GameSettings.Preset preset = getRepository().getParentGameSettings(instanceSetting);
+        DefaultIsolationType type = Lang.requireNonNullElse(
+                preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
+        boolean isolated = switch (type) {
+            case NEVER -> false;
+            case ALWAYS -> true;
+            case MODDED -> LibraryAnalyzer.isModded(getResolvedManifest());
+        };
+
+        if (isolated) {
+            @Nullable GameSettings.Instance setting =
+                    instanceSetting != null ? instanceSetting : getSettingsOrCreate();
+            if (setting != null
+                    && setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
+                saveSettings();
+            }
+        }
     }
 
     /// Creates empty instance-local game settings when none are loaded.
@@ -342,15 +418,147 @@ public class HMCLGameInstance extends DefaultGameInstance {
     ///
     /// @return a detached copy suitable for installing into another instance
     public GameSettings.Instance copySettings() {
-        GameSettings.Instance setting = getSettings();
+        @Nullable GameSettings.Instance setting = getSettings();
         if (setting != null) {
             return JsonUtils.clone(LauncherSettings.SETTINGS_GSON, setting, TypeToken.get(GameSettings.Instance.class));
         }
 
         GameSettings.Instance copied = new GameSettings.Instance();
         copied.parentProperty().setValue(
-                getRepository().getEffectiveGameSettings(id).getPreset().idProperty().getValue());
+                getEffectiveSettings().getPreset().idProperty().getValue());
         return copied;
+    }
+
+    /// Returns the first custom icon file found in this instance's root directory.
+    ///
+    /// @return the icon file, or empty when no supported icon file exists
+    public java.util.Optional<Path> getIconFile() {
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            Path file = getInstanceRoot().resolve("icon." + extension);
+            if (Files.exists(file)) {
+                return java.util.Optional.of(file);
+            }
+        }
+        return java.util.Optional.empty();
+    }
+
+    /// Replaces this instance's custom icon file.
+    ///
+    /// Existing supported icon files are removed before `iconFile` is copied.
+    ///
+    /// @param iconFile the source icon file
+    /// @throws IOException              if the icon cannot be copied
+    /// @throws IllegalArgumentException if the file extension is unsupported
+    public void setIconFile(Path iconFile) throws IOException {
+        String extension = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
+        if (!FXUtils.IMAGE_EXTENSIONS.contains(extension)) {
+            throw new IllegalArgumentException("Unsupported icon file: " + extension);
+        }
+
+        deleteIconFile();
+        FileUtils.copyFile(iconFile, getInstanceRoot().resolve("icon." + extension));
+    }
+
+    /// Deletes all supported custom icon files for this instance.
+    ///
+    /// Individual deletion failures are logged and do not stop later files from being attempted.
+    public void deleteIconFile() {
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            Path file = getInstanceRoot().resolve("icon." + extension);
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                LOG.warning("Failed to delete instance icon file: " + file, e);
+            }
+        }
+    }
+
+    /// Returns the icon image selected for this instance.
+    ///
+    /// The configured built-in icon takes precedence. When the default icon is selected, this method
+    /// tries a custom icon file and then derives a built-in icon from the instance manifest.
+    ///
+    /// @return the selected or derived icon image
+    public Image getIconImage() {
+        if (!getRepository().isLoaded()) {
+            return GameInstanceIconType.DEFAULT.getIcon();
+        }
+
+        @Nullable GameSettings.Instance setting = getSettings();
+        GameInstanceIconType iconType = setting != null
+                ? Lang.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT)
+                : GameInstanceIconType.DEFAULT;
+        if (iconType != GameInstanceIconType.DEFAULT) {
+            return iconType.getIcon();
+        }
+
+        java.util.Optional<Path> iconFile = getIconFile();
+        if (iconFile.isPresent()) {
+            try {
+                return FXUtils.loadImage(iconFile.get(), 64, 64, true, true);
+            } catch (Exception e) {
+                LOG.warning("Failed to load instance icon for " + id, e);
+            }
+        }
+
+        GameInstanceManifest.Resolved resolvedManifest = getResolvedManifest();
+        if (LibraryAnalyzer.isModded(resolvedManifest)) {
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolvedManifest, null);
+            if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
+                return GameInstanceIconType.FABRIC.getIcon();
+            else if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                return GameInstanceIconType.QUILT.getIcon();
+            else if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
+                return GameInstanceIconType.LEGACY_FABRIC.getIcon();
+            else if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
+                return GameInstanceIconType.NEO_FORGE.getIcon();
+            else if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE))
+                return GameInstanceIconType.FORGE.getIcon();
+            else if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
+                return GameInstanceIconType.CLEANROOM.getIcon();
+            else if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
+                return GameInstanceIconType.CHICKEN.getIcon();
+            else if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
+                return GameInstanceIconType.OPTIFINE.getIcon();
+        }
+
+        @Nullable String gameVersion = getRepository().getGameVersion(getLaunchManifest()).orElse(null);
+        if (gameVersion != null) {
+            GameVersionNumber version = GameVersionNumber.asGameVersion(gameVersion);
+            if (version.isAprilFools()) {
+                return GameInstanceIconType.APRIL_FOOLS.getIcon();
+            } else if (version instanceof GameVersionNumber.LegacySnapshot) {
+                return GameInstanceIconType.COMMAND.getIcon();
+            } else if (version instanceof GameVersionNumber.Old) {
+                return GameInstanceIconType.CRAFT_TABLE.getIcon();
+            }
+        }
+        return GameInstanceIconType.GRASS.getIcon();
+    }
+
+    /// Creates the marker indicating that the most recent launch ended abnormally.
+    public void markLaunchedAbnormally() {
+        try {
+            Files.createFile(getInstanceRoot().resolve(".abnormal"));
+        } catch (IOException ignored) {
+        }
+    }
+
+    /// Deletes the abnormal-launch marker when present.
+    ///
+    /// @return whether a regular marker file was present
+    public boolean unmarkLaunchedAbnormally() {
+        Path file = getInstanceRoot().resolve(".abnormal");
+        if (!Files.isRegularFile(file)) {
+            return false;
+        }
+
+        try {
+            Files.delete(file);
+        } catch (IOException e) {
+            LOG.warning("Failed to delete abnormal launch marker: " + file, e);
+        }
+        return true;
     }
 
     private void ensureGameSettingsLoaded() {
@@ -419,8 +627,8 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: "
                         + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA ->
-                        LOG.warning("Unsupported instance game settings schema. Expected: "
-                                + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
+                    LOG.warning("Unsupported instance game settings schema. Expected: "
+                            + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
                 }
             }

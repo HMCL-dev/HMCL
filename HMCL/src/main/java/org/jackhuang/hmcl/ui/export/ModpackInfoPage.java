@@ -35,10 +35,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import java.util.Objects;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -100,7 +97,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         name.set(gameInstance.getId().toString());
         author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getProfileName).orElse(""));
 
-        GameSettings.Effective versionSetting = gameInstance.getRepository().getEffectiveGameSettings(gameInstance.getId());
+        GameSettings.Effective versionSetting = gameInstance.getEffectiveSettings();
         minMemory.set(Optional.ofNullable(versionSetting.getInheritable(GameSettings::minMemoryProperty)).orElse(0));
         launchArguments.set(versionSetting.getInheritable(GameSettings::gameArgumentsProperty));
         javaArguments.set(versionSetting.getInheritable(GameSettings::jvmOptionsProperty));

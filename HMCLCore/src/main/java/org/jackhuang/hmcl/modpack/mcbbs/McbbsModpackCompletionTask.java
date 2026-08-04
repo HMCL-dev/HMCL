@@ -92,7 +92,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         this.dependency = dependencyManager;
         this.instance = instance;
         this.modManager = instance.getModManager();
-        this.configurationFile = instance.getRepository().getModpackConfiguration(instance.getId());
+        this.configurationFile = instance.getModpackConfigurationFile();
         this.configuration = configuration;
 
         setStage("hmcl.modpack.download");

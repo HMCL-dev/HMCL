@@ -55,6 +55,38 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @NotNullByDefault
 public final class DefaultGameInstanceTest {
 
+    /// Asset and modpack paths are resolved directly from the owning instance.
+    @Test
+    public void testInstanceOwnsAssetAndModpackPaths(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        TestGameInstance instance = repository.publish(instanceId, new GameInstanceManifest(instanceId));
+        String assetId = "legacy";
+        String assetName = "icons/minecraft.icns";
+        String assetHash = "abcdef0123456789";
+        Path indexFile = repository.getLayout().getAssetIndexFile(assetId);
+        Files.createDirectories(indexFile.getParent());
+        Files.writeString(indexFile, """
+                {
+                  "objects": {
+                    "%s": {
+                      "hash": "%s",
+                      "size": 1
+                    }
+                  }
+                }
+                """.formatted(assetName, assetHash));
+
+        AssetIndex index = instance.getAssetIndex(assetId);
+        assertEquals(assetHash, index.getObjects().get(assetName).hash());
+        assertEquals(
+                Optional.of(repository.getLayout().getAssetObject(index.getObjects().get(assetName))),
+                instance.getAssetObject(assetId, assetName));
+        assertEquals(Optional.empty(), instance.getAssetObject(assetId, "missing"));
+        assertEquals(repository.getLayout().getAssetDirectory(), instance.getActualAssetDirectory(assetId));
+        assertEquals(instance.getInstanceRoot().resolve("modpack.json"), instance.getModpackConfigurationFile());
+    }
+
     /// The selected primary jar follows the resolved manifest's `jar` field.
     @Test
     public void testPrimaryJarUsesResolvedJarField(@TempDir Path tempDirectory) {

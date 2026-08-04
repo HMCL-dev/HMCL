@@ -17,15 +17,19 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -242,6 +246,12 @@ public abstract class DefaultGameInstance implements GameInstance {
     }
 
     /// {@inheritDoc}
+    @Override
+    public Path getModpackConfigurationFile() {
+        return getInstanceRoot().resolve("modpack.json");
+    }
+
+    /// {@inheritDoc}
     ///
     /// When the launch manifest redirects to another version via [GameInstanceManifest#jar()], the
     /// jar is resolved through the layout (or that other instance when present). Otherwise this
@@ -276,5 +286,88 @@ public abstract class DefaultGameInstance implements GameInstance {
     @Override
     public Path getRunDirectory() {
         return getRepository().getRunDirectory(id);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public AssetIndex getAssetIndex(String assetId) throws IOException {
+        try {
+            return Objects.requireNonNull(
+                    JsonUtils.fromJsonFile(getLayout().getAssetIndexFile(assetId), AssetIndex.class));
+        } catch (JsonParseException | NullPointerException e) {
+            throw new IOException("Asset index file malformed", e);
+        }
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public Path getActualAssetDirectory(String assetId) {
+        try {
+            return reconstructAssets(assetId);
+        } catch (IOException | JsonParseException e) {
+            LOG.error("Unable to reconstruct asset directory", e);
+            return getLayout().getAssetDirectory();
+        }
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public Optional<Path> getAssetObject(String assetId, String name) throws IOException {
+        try {
+            @Nullable AssetObject assetObject = getAssetIndex(assetId).getObjects().get(name);
+            return assetObject != null
+                    ? Optional.of(getLayout().getAssetObject(assetObject))
+                    : Optional.empty();
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException(
+                    "Unrecognized asset object " + name + " in asset " + assetId + " of version " + id,
+                    e);
+        }
+    }
+
+    /// Reconstructs virtual and legacy resource layouts for an asset index when required.
+    ///
+    /// @param assetId the asset index ID
+    /// @return the directory to supply at launch time
+    /// @throws IOException        if an asset cannot be copied
+    /// @throws JsonParseException if the asset index is malformed
+    private Path reconstructAssets(String assetId) throws IOException, JsonParseException {
+        Path assetsDir = getLayout().getAssetDirectory();
+        Path indexFile = getLayout().getAssetIndexFile(assetId);
+        Path virtualRoot = assetsDir.resolve("virtual").resolve(assetId);
+
+        if (!Files.isRegularFile(indexFile)) {
+            return assetsDir;
+        }
+
+        @Nullable AssetIndex index = JsonUtils.fromJsonFile(indexFile, AssetIndex.class);
+        if (index == null || !index.isVirtual()) {
+            return assetsDir;
+        }
+
+        Path resourcesDir = getRunDirectory().resolve("resources");
+        int existingObjects = 0;
+        int totalObjects = index.getObjects().size();
+        for (Map.Entry<String, AssetObject> entry : index.getObjects().entrySet()) {
+            Path target = virtualRoot.resolve(entry.getKey());
+            Path original = getLayout().getAssetObject(entry.getValue());
+            if (Files.exists(original)) {
+                existingObjects++;
+                if (!Files.isRegularFile(target)) {
+                    FileUtils.copyFile(original, target);
+                }
+
+                if (index.needMapToResources()) {
+                    target = resourcesDir.resolve(entry.getKey());
+                    if (!Files.isRegularFile(target)) {
+                        FileUtils.copyFile(original, target);
+                    }
+                }
+            }
+        }
+
+        return existingObjects * 10 < totalObjects ? assetsDir : virtualRoot;
     }
 }

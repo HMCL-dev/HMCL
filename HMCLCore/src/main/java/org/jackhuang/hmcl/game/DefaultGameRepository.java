@@ -25,7 +25,6 @@ import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.download.MaintainTask;
-import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -568,86 +567,6 @@ public abstract class DefaultGameRepository implements GameRepository {
         return getLayout().getInstanceJson(instanceId);
     }
 
-    @Override
-    public AssetIndex getAssetIndex(GameInstanceID instanceId, String assetId) throws IOException {
-        try {
-            return Objects.requireNonNull(JsonUtils.fromJsonFile(getLayout().getAssetIndexFile(assetId), AssetIndex.class));
-        } catch (JsonParseException | NullPointerException e) {
-            throw new IOException("Asset index file malformed", e);
-        }
-    }
-
-    @Override
-    public Path getActualAssetDirectory(GameInstanceID instanceId, String assetId) {
-        try {
-            return reconstructAssets(instanceId, assetId);
-        } catch (IOException | JsonParseException e) {
-            LOG.error("Unable to reconstruct asset directory", e);
-            return getLayout().getAssetDirectory();
-        }
-    }
-
-    @Override
-    public Optional<Path> getAssetObject(GameInstanceID instanceId, String assetId, String name) throws IOException {
-        try {
-            AssetObject assetObject = getAssetIndex(instanceId, assetId).getObjects().get(name);
-            if (assetObject == null) return Optional.empty();
-            return Optional.of(getLayout().getAssetObject(assetObject));
-        } catch (IOException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IOException("Unrecognized asset object " + name + " in asset " + assetId + " of version " + instanceId, e);
-        }
-    }
-
-    public Path getAssetObject(GameInstanceID instanceId, Path assetDir, AssetObject obj) {
-        return assetDir.resolve("objects").resolve(obj.getLocation());
-    }
-
-    protected Path reconstructAssets(GameInstanceID instanceId, String assetId) throws IOException, JsonParseException {
-        Path assetsDir = getLayout().getAssetDirectory();
-        Path indexFile = getLayout().getAssetIndexFile(assetId);
-        Path virtualRoot = assetsDir.resolve("virtual").resolve(assetId);
-
-        if (!Files.isRegularFile(indexFile))
-            return assetsDir;
-
-        AssetIndex index = JsonUtils.fromJsonFile(indexFile, AssetIndex.class);
-
-        if (index == null)
-            return assetsDir;
-
-        if (index.isVirtual()) {
-            Path resourcesDir = getRunDirectory(instanceId).resolve("resources");
-
-            int cnt = 0;
-            int tot = index.getObjects().size();
-            for (Map.Entry<String, AssetObject> entry : index.getObjects().entrySet()) {
-                Path target = virtualRoot.resolve(entry.getKey());
-                Path original = getAssetObject(instanceId, assetsDir, entry.getValue());
-                if (Files.exists(original)) {
-                    cnt++;
-                    if (!Files.isRegularFile(target))
-                        FileUtils.copyFile(original, target);
-
-                    if (index.needMapToResources()) {
-                        target = resourcesDir.resolve(entry.getKey());
-                        if (!Files.isRegularFile(target))
-                            FileUtils.copyFile(original, target);
-                    }
-                }
-            }
-
-            // If the scale new format existent file is lower than 0.1, use the old format.
-            if (cnt * 10 < tot)
-                return assetsDir;
-            else
-                return virtualRoot;
-        }
-
-        return assetsDir;
-    }
-
     public Task<GameInstanceManifest> saveAsync(GameInstanceManifest instanceManifest) {
         return Task.supplyAsync(() -> {
             GameInstanceManifest savedManifest = instanceManifest.isResolvedPreservingPatches()
@@ -672,18 +591,6 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     public Path getModpackConfiguration(GameInstanceID instanceId) {
         return getInstanceRoot(instanceId).resolve("modpack.json");
-    }
-
-    @Nullable
-    public ModpackConfiguration<?> readModpackConfiguration(GameInstanceID instanceId) throws IOException, NoSuchGameInstanceException {
-        if (!hasInstance(instanceId)) throw new NoSuchGameInstanceException(instanceId);
-        Path file = getModpackConfiguration(instanceId);
-        if (Files.notExists(file)) return null;
-        return JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
-    }
-
-    public boolean isModpack(GameInstanceID instanceId) {
-        return Files.exists(getModpackConfiguration(instanceId));
     }
 
     @Override

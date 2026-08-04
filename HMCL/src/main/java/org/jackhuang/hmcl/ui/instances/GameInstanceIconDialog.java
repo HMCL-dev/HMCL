@@ -22,9 +22,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -32,6 +30,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -42,12 +41,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class GameInstanceIconDialog extends DialogPane {
     private final HMCLGameInstance gameInstance;
     private final Runnable onFinish;
-    private final GameSettings.Instance setting;
+    private final GameSettings.@Nullable Instance setting;
 
     public GameInstanceIconDialog(HMCLGameInstance gameInstance, Runnable onFinish) {
         this.gameInstance = gameInstance;
         this.onFinish = onFinish;
-        this.setting = gameInstance.getRepository().getInstanceGameSettingsOrCreate(gameInstance.getId());
+        this.setting = gameInstance.getSettingsOrCreate();
 
         setTitle(i18n("settings.icon"));
         FlowPane pane = new FlowPane();
@@ -78,7 +77,7 @@ public class GameInstanceIconDialog extends DialogPane {
         Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile != null) {
             try {
-                gameInstance.getRepository().setInstanceIconFile(gameInstance.getId(), selectedFile);
+                gameInstance.setIconFile(selectedFile);
 
                 if (setting != null) {
                     setting.iconProperty().setValue(GameInstanceIconType.DEFAULT);

@@ -1872,7 +1872,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     private boolean isCurrentInstanceModpack() {
         HMCLGameInstance gameInstance = this.gameInstance.get();
-        return gameInstance != null && gameInstance.getRepository().isModpack(gameInstance.getId());
+        return gameInstance != null && gameInstance.isModpack();
     }
 
     /// Returns the current instance version root displayed for modpack running directories.
@@ -2732,7 +2732,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return;
         }
 
-        iconPickerItem.setImage(gameInstance.getRepository().getInstanceIconImage(gameInstance.getId()));
+        iconPickerItem.setImage(gameInstance.getIconImage());
     }
 
     /// Refreshes Java selection controls and keeps inherited parent Java properties observed.
@@ -2803,9 +2803,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         JavaVersionType javaVersionType = setting.javaTypeProperty().getValue();
         HMCLGameInstance gameInstance = this.gameInstance.get();
-        GameSettings.Effective effectiveSetting = gameInstance != null
-                ? gameInstance.getRepository().getEffectiveGameSettings(gameInstance.getId())
-                : null;
+        @Nullable GameSettings.Effective effectiveSetting =
+                gameInstance != null ? gameInstance.getEffectiveSettings() : null;
         JavaVersionType effectiveJavaVersionType = effectiveSetting != null ? effectiveSetting.getInheritable(GameSettings::javaTypeProperty) : javaVersionType;
         boolean autoSelected = effectiveJavaVersionType == JavaVersionType.AUTO || effectiveJavaVersionType == JavaVersionType.VERSION;
 
@@ -2857,7 +2856,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return;
         }
 
-        gameInstance.getRepository().deleteIconFile(gameInstance.getId());
+        gameInstance.deleteIconFile();
         GameSettings.Instance localGameSettings = gameInstance.getSettingsOrCreate();
         if (localGameSettings != null) {
             localGameSettings.iconProperty().setValue(GameInstanceIconType.DEFAULT);

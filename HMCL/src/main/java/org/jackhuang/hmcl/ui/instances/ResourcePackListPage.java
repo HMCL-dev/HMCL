@@ -61,6 +61,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -260,8 +261,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = gameInstance.getRepository().getGameVersion(gameInstance.getId());
-                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, resourcePacks)).orElse(null);
+                            GameVersionNumber version = gameInstance.getVersion();
+                            return version != GameVersionNumber.unknown()
+                                    ? new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(),
+                                            version.toString(), resourcePacks)
+                                    : null;
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {
@@ -275,7 +279,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         .withStagesHints("update.checking"),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (gameInstance.getRepository().isModpack(gameInstance.getId())) {
+        if (gameInstance.isModpack()) {
             Controllers.confirm(
                     i18n("resourcepack.update_in_modpack.warning"), null,
                     MessageDialogPane.MessageType.WARNING,

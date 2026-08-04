@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -195,30 +194,6 @@ public interface GameRepository {
     /// @param to   the target instance id
     /// @return whether the instance was renamed
     boolean renameInstance(GameInstanceID from, GameInstanceID to);
-
-    /// Returns the asset directory that should be used at launch time.
-    ///
-    /// @param instanceId the instance id
-    /// @param assetId    the asset index id
-    /// @return the actual asset directory
-    Path getActualAssetDirectory(GameInstanceID instanceId, String assetId);
-
-    /// Returns an existing asset object path by logical asset name.
-    ///
-    /// @param instanceId the instance id
-    /// @param assetId    the asset index id
-    /// @param name       the logical asset name
-    /// @return the asset object path, or empty if the object is not present in the asset index
-    /// @throws IOException if the asset index cannot be read
-    Optional<Path> getAssetObject(GameInstanceID instanceId, String assetId, String name) throws IOException;
-
-    /// Reads an asset index.
-    ///
-    /// @param instanceId the instance id
-    /// @param assetId    the asset index id
-    /// @return the asset index
-    /// @throws IOException if the asset index cannot be read
-    AssetIndex getAssetIndex(GameInstanceID instanceId, String assetId) throws IOException;
 
     /// Returns the classpath entries whose library files are present on disk.
     ///
