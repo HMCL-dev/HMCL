@@ -92,7 +92,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     }
 
     /// Published snapshot, always updated on the JavaFX application thread when the toolkit is live.
-    private final ObjectProperty<GameRepositorySnapshot> snapshot;
+    private final ObjectProperty<DefaultGameRepositorySnapshot> snapshot;
 
     private volatile boolean loaded;
 
@@ -114,20 +114,13 @@ public abstract class DefaultGameRepository implements GameRepository {
         this.loaded = false;
     }
 
-    /// Returns the current published repository snapshot.
+    /// {@inheritDoc}
     ///
     /// The returned snapshot is sealed and must not be modified. Writers must [#clone()] it, edit the
     /// copy, and publish the result with [#publishSnapshot(DefaultGameRepositorySnapshot)].
-    ///
-    /// @return the current snapshot
-    protected DefaultGameRepositorySnapshot currentSnapshot() {
-        return (DefaultGameRepositorySnapshot) snapshot.get();
-    }
-
-    /// {@inheritDoc}
     @Override
     public DefaultGameRepositorySnapshot getSnapshot() {
-        return (DefaultGameRepositorySnapshot) snapshot.get();
+        return snapshot.get();
     }
 
     /// Returns a read-only view of the current published snapshot for JavaFX bindings.
@@ -136,7 +129,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// application thread so listeners may safely touch the scene graph.
     ///
     /// @return the observable snapshot property
-    public final ReadOnlyObjectProperty<GameRepositorySnapshot> snapshotProperty() {
+    public final ReadOnlyObjectProperty<DefaultGameRepositorySnapshot> snapshotProperty() {
         return snapshot;
     }
 
@@ -146,7 +139,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// (blocking the caller if publish happens off the FX thread) so that listeners run on FX and
     /// [#getSnapshot()] observes the new value before this method returns.
     ///
-    /// @param newSnapshot the snapshot to publish; must not already be visible as [#currentSnapshot()]
+    /// @param newSnapshot the snapshot to publish; must not already be visible as [#getSnapshot()]
     ///                    unless it is a freshly built replacement
     protected void publishSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
         newSnapshot.seal();
@@ -154,7 +147,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     }
 
     /// Sets [#snapshot] on the JavaFX application thread when possible.
-    private void setSnapshotOnFxThread(GameRepositorySnapshot newSnapshot) {
+    private void setSnapshotOnFxThread(DefaultGameRepositorySnapshot newSnapshot) {
         if (Platform.isFxApplicationThread()) {
             snapshot.set(newSnapshot);
             return;
@@ -181,7 +174,7 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public DefaultGameRepositoryLayout getLayout() {
-        return currentSnapshot().getLayout();
+        return getSnapshot().getLayout();
     }
 
     public boolean isLoaded() {
@@ -200,7 +193,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     }
 
     protected void refreshImpl() {
-        DefaultGameRepositorySnapshot newSnapshot = createSnapshot(currentSnapshot().getLayout());
+        DefaultGameRepositorySnapshot newSnapshot = createSnapshot(getSnapshot().getLayout());
 
         if (hasClassicVersion(newSnapshot.getLayout().getBaseDirectory())) {
             GameInstanceID id = CLASSIC_MANIFEST.id();
@@ -338,7 +331,7 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public DefaultGameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException {
-        return currentSnapshot().getRegistered(id);
+        return getSnapshot().getRegistered(id);
     }
 
     /// Returns the instance recorded in the current snapshot for the given id, including provisional
@@ -347,7 +340,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @param id the instance id
     /// @return the instance, or `null` when absent from the current snapshot
     protected @Nullable DefaultGameInstance findSnapshotInstance(GameInstanceID id) {
-        return currentSnapshot().get(id);
+        return getSnapshot().get(id);
     }
 
     @Override
@@ -369,7 +362,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         }
 
         try {
-            DefaultGameRepositorySnapshot newSnapshot = currentSnapshot().clone();
+            DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
             DefaultGameInstance fromHolder = newSnapshot.get(from);
             if (fromHolder == null || fromHolder.isProvisional()) {
                 throw new NoSuchGameInstanceException(from);
@@ -421,8 +414,8 @@ public abstract class DefaultGameRepository implements GameRepository {
             return false;
         }
 
-        if (currentSnapshot().get(id) != null) {
-            DefaultGameRepositorySnapshot newSnapshot = currentSnapshot().clone();
+        if (getSnapshot().get(id) != null) {
+            DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
             newSnapshot.remove(id);
             publishSnapshot(newSnapshot);
         }
@@ -597,7 +590,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             Files.createDirectories(json.getParent());
             JsonUtils.writeToJsonFile(json, savedManifest);
 
-            DefaultGameRepositorySnapshot newSnapshot = currentSnapshot().clone();
+            DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
             DefaultGameInstance existing = newSnapshot.get(savedManifest.id());
             if (existing != null) {
                 newSnapshot.put(existing.withManifest(newSnapshot, savedManifest));
@@ -645,7 +638,7 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        return currentSnapshot().resolve(manifest);
+        return getSnapshot().resolve(manifest);
     }
 
     /// Creates an empty unsealed snapshot for the given layout.
