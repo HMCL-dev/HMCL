@@ -56,11 +56,6 @@ public class GameItem {
         this.gameInstance = gameInstance;
     }
 
-    public GameItem(HMCLGameRepository repository, GameInstanceID instanceId) {
-        this(Objects.requireNonNull(repository.findInstance(instanceId),
-                () -> "Instance not found: " + instanceId));
-    }
-
     public GameDirectory getGameDirectory() {
         return gameInstance.getRepository().getGameDirectory();
     }

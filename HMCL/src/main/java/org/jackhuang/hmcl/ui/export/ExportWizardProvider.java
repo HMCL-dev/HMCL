@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.ui.export;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import java.util.Objects;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackExportTask;
@@ -54,11 +51,6 @@ public final class ExportWizardProvider implements WizardProvider {
 
     public ExportWizardProvider(HMCLGameInstance gameInstance) {
         this.gameInstance = gameInstance;
-    }
-
-    public ExportWizardProvider(HMCLGameRepository repository, GameInstanceID instanceId) {
-        this(Objects.requireNonNull(repository.findInstance(instanceId),
-                () -> "Instance not found: " + instanceId));
     }
 
     @Override

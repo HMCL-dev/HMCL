@@ -102,11 +102,6 @@ public final class LauncherHelper {
         this.launchingStepsPane.setTitle(i18n("instance.launch"));
     }
 
-    public LauncherHelper(HMCLGameRepository repository, Account account, GameInstanceID selectedInstanceId) {
-        this(Objects.requireNonNull(repository.findInstance(selectedInstanceId),
-                () -> "Instance not found: " + selectedInstanceId), account);
-    }
-
     public HMCLGameInstance getGameInstance() {
         return gameInstance;
     }

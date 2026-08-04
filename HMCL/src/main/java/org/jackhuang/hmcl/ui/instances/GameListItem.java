@@ -46,11 +46,6 @@ public class GameListItem extends GameItem {
                 GameDirectoryManager.selectedInstanceProperty()));
     }
 
-    public GameListItem(HMCLGameRepository repository, GameInstanceID instanceId) {
-        this(Objects.requireNonNull(repository.findInstance(instanceId),
-                () -> "Instance not found: " + instanceId));
-    }
-
     public ReadOnlyBooleanProperty selectedProperty() {
         return selected;
     }
