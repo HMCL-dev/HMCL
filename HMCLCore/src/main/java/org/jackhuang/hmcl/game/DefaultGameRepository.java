@@ -402,7 +402,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             publishSnapshot(newSnapshot);
             return true;
         } catch (IOException | JsonParseException | NoSuchGameInstanceException | InvalidPathException e) {
-            LOG.warning("Unable to rename version " + from + " to " + to, e);
+            LOG.warning("Unable to rename instance " + from + " to " + to, e);
             return false;
         }
     }
@@ -434,7 +434,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             try {
                 Files.move(file, removedFile, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
-                LOG.warning("Unable to remove version folder: " + file, e);
+                LOG.warning("Unable to remove instance directory: " + file, e);
                 return false;
             }
 
@@ -453,7 +453,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             try {
                 FileUtils.deleteDirectory(removedFile);
             } catch (IOException e) {
-                LOG.warning("Unable to remove version folder: " + file, e);
+                LOG.warning("Unable to remove instance directory: " + removedFile, e);
             }
             return true;
         } finally {
