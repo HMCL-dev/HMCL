@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -47,13 +48,10 @@ public abstract class DefaultGameInstance implements GameInstance {
     protected final GameInstanceManifest manifest;
 
     /// Non-conventional manifest file path discovered at load time, or `null` for the layout default.
-    protected final @Nullable Path manifestFile;
-
-    /// Non-conventional primary jar path discovered at load time, or `null` for the layout default.
     ///
-    /// Used only when the launch manifest does not redirect to another version's jar via
-    /// [GameInstanceManifest#jar()].
-    protected final @Nullable Path jarFile;
+    /// When set, this instance's own primary jar is the sibling path with the same base name and a
+    /// `.jar` extension.
+    protected final @Nullable Path manifestFile;
 
     protected GameInstanceManifest.@Nullable Resolved resolvedManifest;
 
@@ -73,34 +71,31 @@ public abstract class DefaultGameInstance implements GameInstance {
             DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
             GameInstanceManifest manifest) {
-        this(snapshot, id, manifest, null, null);
+        this(snapshot, id, manifest, (Path) null);
     }
 
-    /// Creates an instance with optional non-conventional storage paths.
+    /// Creates an instance with an optional non-conventional manifest path.
     ///
     /// @param snapshot     the snapshot that owns this instance
     /// @param id           the instance id (directory name under the official layout)
     /// @param manifest     the stored instance manifest
     /// @param manifestFile the actual manifest JSON path, or `null` for [DefaultGameRepositoryLayout#getInstanceJson]
-    /// @param jarFile      the actual primary jar path, or `null` for [DefaultGameRepositoryLayout#getInstanceJarFile]
     protected DefaultGameInstance(
             DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
             GameInstanceManifest manifest,
-            @Nullable Path manifestFile,
-            @Nullable Path jarFile) {
+            @Nullable Path manifestFile) {
         this.snapshot = snapshot;
         this.repository = snapshot.getRepository();
         this.layout = snapshot.getLayout();
         this.id = id;
         this.manifest = manifest;
         this.manifestFile = manifestFile;
-        this.jarFile = jarFile;
     }
 
     /// Creates an instance that may reuse session state and storage paths from another snapshot wrapper.
     ///
-    /// Storage paths are copied when `id` equals that of `shareSession`. Cached version and manager
+    /// The manifest path is copied when `id` equals that of `shareSession`. Cached version and manager
     /// state is copied only when `id` and `manifest` also equal those of `shareSession`.
     ///
     /// @param snapshot     the snapshot that will own the copy
@@ -116,8 +111,7 @@ public abstract class DefaultGameInstance implements GameInstance {
                 snapshot,
                 id,
                 manifest,
-                Objects.equals(id, shareSession.id) ? shareSession.manifestFile : null,
-                Objects.equals(id, shareSession.id) ? shareSession.jarFile : null);
+                Objects.equals(id, shareSession.id) ? shareSession.manifestFile : null);
         if (Objects.equals(id, shareSession.id) && Objects.equals(manifest, shareSession.manifest)) {
             this.version = shareSession.version;
             this.modManager = shareSession.modManager;
@@ -249,8 +243,8 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// {@inheritDoc}
     ///
     /// When the launch manifest redirects to another version via [GameInstanceManifest#jar()], the
-    /// jar is resolved through the layout (or that other instance when present). Otherwise a
-    /// non-conventional jar path discovered at load time is preferred over the layout default.
+    /// jar is resolved through the layout (or that other instance when present). Otherwise this
+    /// instance's own jar is returned from [#getOwnJarFile()].
     @Override
     public Path getInstanceJarFile() {
         GameInstanceManifest launchManifest = getResolvedManifest().launchManifest();
@@ -267,9 +261,15 @@ public abstract class DefaultGameInstance implements GameInstance {
 
     /// Returns this instance's own primary jar without following `jar` inheritance.
     ///
-    /// @return the jar path stored on this instance or the layout default
+    /// When a non-conventional manifest path is recorded, the jar is the sibling path with the same
+    /// base name. Otherwise the layout default `versions/<id>/<id>.jar` is used.
+    ///
+    /// @return the jar path derived from the manifest file or the layout default
     Path getOwnJarFile() {
-        return jarFile != null ? jarFile : layout.getInstanceJarFile(id);
+        if (manifestFile != null) {
+            return manifestFile.resolveSibling(FileUtils.getNameWithoutExtension(manifestFile) + ".jar");
+        }
+        return layout.getInstanceJarFile(id);
     }
 
     @Override

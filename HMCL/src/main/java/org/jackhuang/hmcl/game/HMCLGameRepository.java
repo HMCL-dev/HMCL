@@ -100,9 +100,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
             GameInstanceManifest manifest,
-            @Nullable Path manifestFile,
-            @Nullable Path jarFile) {
-        return new HMCLGameInstance(snapshot, id, manifest, manifestFile, jarFile);
+            @Nullable Path manifestFile) {
+        return new HMCLGameInstance(snapshot, id, manifest, manifestFile);
     }
 
     @Override

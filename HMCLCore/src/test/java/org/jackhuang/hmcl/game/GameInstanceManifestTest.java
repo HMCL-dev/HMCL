@@ -65,16 +65,14 @@ public final class GameInstanceManifestTest {
                     DefaultGameRepositorySnapshot snapshot,
                     GameInstanceID id,
                     GameInstanceManifest manifest,
-                    @Nullable Path manifestFile,
-                    @Nullable Path jarFile) {
+                    @Nullable Path manifestFile) {
                 final class MyGameInstance extends DefaultGameInstance {
                     MyGameInstance(
                             DefaultGameRepositorySnapshot snapshot,
                             GameInstanceID id,
                             GameInstanceManifest manifest,
-                            @Nullable Path manifestFile,
-                            @Nullable Path jarFile) {
-                        super(snapshot, id, manifest, manifestFile, jarFile);
+                            @Nullable Path manifestFile) {
+                        super(snapshot, id, manifest, manifestFile);
                     }
 
                     MyGameInstance(
@@ -96,7 +94,7 @@ public final class GameInstanceManifestTest {
                     }
                 }
 
-                return new MyGameInstance(snapshot, id, manifest, manifestFile, jarFile);
+                return new MyGameInstance(snapshot, id, manifest, manifestFile);
             }
         }.resolve(manifest);
 

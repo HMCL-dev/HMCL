@@ -251,7 +251,8 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// Loads one instance directory without renaming on-disk JSON or jar files.
     ///
     /// When the conventional `versions/<id>/<id>.json` is missing but the directory contains exactly
-    /// one JSON file, that file and its sibling jar (same base name) are recorded on the instance.
+    /// one JSON file, that manifest path is recorded on the instance. The primary jar is derived as
+    /// the sibling path with the same base name.
     ///
     /// @param snapshot the unsealed snapshot that will own the instance
     /// @param dir      the instance directory under `versions/`
@@ -267,16 +268,12 @@ public abstract class DefaultGameRepository implements GameRepository {
 
         DefaultGameRepositoryLayout layout = snapshot.getLayout();
         Path conventionalJson = layout.getInstanceJson(id);
-        Path conventionalJar = layout.getInstanceJarFile(id);
 
         Path json;
-        @Nullable Path jar;
         @Nullable Path manifestFileOverride = null;
-        @Nullable Path jarFileOverride = null;
 
         if (Files.isRegularFile(conventionalJson)) {
             json = conventionalJson;
-            jar = Files.isRegularFile(conventionalJar) ? conventionalJar : null;
         } else {
             List<Path> jsons = FileUtils.listFilesByExtension(dir, "json");
             if (jsons.size() != 1) {
@@ -285,22 +282,11 @@ public abstract class DefaultGameRepository implements GameRepository {
             }
 
             json = jsons.get(0);
-            Path siblingJar = dir.resolve(FileUtils.getNameWithoutExtension(json) + ".jar");
-            jar = Files.isRegularFile(siblingJar) ? siblingJar : null;
-
             if (!json.equals(conventionalJson)) {
                 manifestFileOverride = json;
             }
-            if (jar != null && !jar.equals(conventionalJar)) {
-                jarFileOverride = jar;
-            } else if (jar == null && !siblingJar.equals(conventionalJar)) {
-                // Remember the expected sibling path even when the jar is not present yet.
-                jarFileOverride = siblingJar;
-            }
 
-            LOG.info("Using non-conventional instance files for " + id
-                    + ": manifest=" + json
-                    + (jar != null ? ", jar=" + jar : ""));
+            LOG.info("Using non-conventional instance manifest for " + id + ": " + json);
         }
 
         GameInstanceManifest manifest;
@@ -325,7 +311,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             manifest = manifest.withId(id);
         }
 
-        return createInstance(snapshot, id, manifest, manifestFileOverride, jarFileOverride);
+        return createInstance(snapshot, id, manifest, manifestFileOverride);
     }
 
     private static GameInstanceManifest readInstanceManifest(Path json) throws IOException, JsonParseException {
@@ -705,22 +691,20 @@ public abstract class DefaultGameRepository implements GameRepository {
             DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
             GameInstanceManifest manifest) {
-        return createInstance(snapshot, id, manifest, null, null);
+        return createInstance(snapshot, id, manifest, null);
     }
 
-    /// Creates an instance, optionally recording non-conventional storage paths.
+    /// Creates an instance, optionally recording a non-conventional manifest path.
     ///
     /// @param snapshot     the snapshot that will own the instance
     /// @param id           the instance id
     /// @param manifest     the stored instance manifest
     /// @param manifestFile the actual manifest JSON path, or `null` for the layout default
-    /// @param jarFile      the actual primary jar path, or `null` for the layout default
     /// @return the new instance
     protected abstract DefaultGameInstance createInstance(
             DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
             GameInstanceManifest manifest,
-            @Nullable Path manifestFile,
-            @Nullable Path jarFile);
+            @Nullable Path manifestFile);
 
 }

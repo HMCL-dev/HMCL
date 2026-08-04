@@ -69,23 +69,21 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// @param id       the instance id
     /// @param manifest the stored instance manifest
     protected HMCLGameInstance(DefaultGameRepositorySnapshot snapshot, GameInstanceID id, GameInstanceManifest manifest) {
-        this(snapshot, id, manifest, null, null, false);
+        this(snapshot, id, manifest, null, false);
     }
 
-    /// Creates a registered instance with optional non-conventional storage paths.
+    /// Creates a registered instance with an optional non-conventional manifest path.
     ///
     /// @param snapshot     the repository snapshot that owns this instance
     /// @param id           the instance id
     /// @param manifest     the stored instance manifest
     /// @param manifestFile the actual manifest JSON path, or `null` for the layout default
-    /// @param jarFile      the actual primary jar path, or `null` for the layout default
     protected HMCLGameInstance(
             DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
             GameInstanceManifest manifest,
-            @Nullable Path manifestFile,
-            @Nullable Path jarFile) {
-        this(snapshot, id, manifest, manifestFile, jarFile, false);
+            @Nullable Path manifestFile) {
+        this(snapshot, id, manifest, manifestFile, false);
     }
 
     /// Creates a provisional instance used before a real manifest is indexed.
@@ -94,7 +92,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// @param id     the instance id
     /// @return a provisional instance with an empty placeholder manifest
     static HMCLGameInstance provisional(DefaultGameRepositorySnapshot snapshot, GameInstanceID id) {
-        return new HMCLGameInstance(snapshot, id, new GameInstanceManifest(id), null, null, true);
+        return new HMCLGameInstance(snapshot, id, new GameInstanceManifest(id), null, true);
     }
 
     private HMCLGameInstance(
@@ -102,9 +100,8 @@ public class HMCLGameInstance extends DefaultGameInstance {
             GameInstanceID id,
             GameInstanceManifest manifest,
             @Nullable Path manifestFile,
-            @Nullable Path jarFile,
             boolean provisional) {
-        super(snapshot, id, manifest, manifestFile, jarFile);
+        super(snapshot, id, manifest, manifestFile);
         this.provisional = provisional;
     }
 

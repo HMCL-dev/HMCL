@@ -159,9 +159,8 @@ public final class DefaultGameInstanceTest {
                 DefaultGameRepositorySnapshot snapshot,
                 GameInstanceID id,
                 GameInstanceManifest manifest,
-                @Nullable Path manifestFile,
-                @Nullable Path jarFile) {
-            return new TestGameInstance(snapshot, id, manifest, manifestFile, jarFile);
+                @Nullable Path manifestFile) {
+            return new TestGameInstance(snapshot, id, manifest, manifestFile);
         }
 
         /// Publishes a snapshot containing one test instance.
@@ -195,14 +194,12 @@ public final class DefaultGameInstanceTest {
         /// @param id           the instance id
         /// @param manifest     the stored manifest
         /// @param manifestFile non-conventional manifest path, or `null`
-        /// @param jarFile      non-conventional jar path, or `null`
         private TestGameInstance(
                 DefaultGameRepositorySnapshot snapshot,
                 GameInstanceID id,
                 GameInstanceManifest manifest,
-                @Nullable Path manifestFile,
-                @Nullable Path jarFile) {
-            super(snapshot, id, manifest, manifestFile, jarFile);
+                @Nullable Path manifestFile) {
+            super(snapshot, id, manifest, manifestFile);
         }
 
         /// Creates a test instance that may reuse compatible session state.
