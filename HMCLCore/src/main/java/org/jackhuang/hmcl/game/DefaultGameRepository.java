@@ -230,7 +230,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         Map<GameInstanceID, DefaultGameInstance> loadedInstances = new TreeMap<>();
         for (DefaultGameInstance instance : newSnapshot.values()) {
             try {
-                GameInstanceManifest resolved = newSnapshot.resolve(instance.getManifest()).launchManifest();
+                GameInstanceManifest resolved = instance.getResolvedManifest().launchManifest();
                 if (CompatibilityRule.appliesToCurrentEnvironment(resolved.compatibilityRules())) {
                     loadedInstances.put(instance.getId(), instance);
                 }
