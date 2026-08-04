@@ -250,6 +250,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return getSnapshot().getInstances().stream()
                 .filter(it -> !it.getManifest().isHidden())
                 .sorted(Comparator.comparing((HMCLGameInstance instance) -> Lang.requireNonNullElse(instance.getLaunchManifest().releaseTime(), Instant.EPOCH))
+                        .thenComparing(DefaultGameInstance::getVersion)
                         .thenComparing(instance -> VersionNumber.asVersion(instance.getId().id())));
     }
 
