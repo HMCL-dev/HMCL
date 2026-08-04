@@ -47,10 +47,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.game.DefaultGameRepositorySnapshot;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -76,14 +73,10 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
@@ -112,7 +105,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             FXCollections.unmodifiableObservableList(mutableInstances);
 
     /// Current snapshot of the repository selected by [GameDirectoryManager].
-    private final ObservableValue<DefaultGameRepositorySnapshot> selectedRepositorySnapshot =
+    private final ObservableValue<HMCLGameRepositorySnapshot> selectedRepositorySnapshot =
             BindingMapping.of(GameDirectoryManager.selectedRepositoryProperty())
                     .flatMap(HMCLGameRepository::snapshotProperty);
 
@@ -226,7 +219,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         HBox launchPane = new HBox();
         launchPane.getStyleClass().add("launch-pane");
-        FXUtils.onChangeAndOperate(selectedRepositorySnapshot, ignored -> updateInstances());
+        FXUtils.onChangeAndOperate(selectedRepositorySnapshot, ignored -> mutableInstances.setAll(GameDirectoryManager.getSelectedRepository().getDisplayInstances().toList()));
         FXUtils.onScroll(launchPane, instances, list -> {
             @Nullable HMCLGameInstance currentGame = getCurrentGame();
             @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
@@ -491,19 +484,4 @@ public final class MainPage extends StackPane implements DecoratorPage {
         this.latestVersion.set(latestVersion);
     }
 
-    /// Rebuilds the launch-menu instances from the selected repository's current snapshot.
-    private void updateInstances() {
-        FXUtils.checkFxUserThread();
-        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-        List<HMCLGameInstance> sortedInstances = repository.getSnapshot().getInstances().stream()
-                .filter(instance -> !instance.getManifest().isHidden())
-                .sorted(Comparator
-                        .comparing((HMCLGameInstance instance) -> Lang.requireNonNullElse(
-                                instance.getManifest().releaseTime(), Instant.EPOCH))
-                        .thenComparing(instance -> VersionNumber.asVersion(repository
-                                .getGameVersion(instance.getManifest())
-                                .orElse(instance.getId().toString()))))
-                .toList();
-        mutableInstances.setAll(sortedInstances);
-    }
 }

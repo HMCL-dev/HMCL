@@ -122,6 +122,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public ReadOnlyObjectProperty<HMCLGameRepositorySnapshot> snapshotProperty() {
+        return (ReadOnlyObjectProperty<HMCLGameRepositorySnapshot>) super.snapshotProperty();
+    }
+
+    @Override
     public HMCLGameRepositoryLayout getLayout() {
         return (HMCLGameRepositoryLayout) super.getLayout();
     }

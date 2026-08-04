@@ -143,7 +143,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// application thread so listeners may safely touch the scene graph.
     ///
     /// @return the observable snapshot property
-    public final ReadOnlyObjectProperty<DefaultGameRepositorySnapshot> snapshotProperty() {
+    public ReadOnlyObjectProperty<? extends DefaultGameRepositorySnapshot> snapshotProperty() {
         return snapshot;
     }
 
