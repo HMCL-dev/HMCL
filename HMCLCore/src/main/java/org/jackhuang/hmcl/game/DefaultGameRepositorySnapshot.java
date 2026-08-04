@@ -34,15 +34,18 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Default implementation of a repository index snapshot for [DefaultGameRepository].
 ///
-/// A snapshot begins unsealed so writers can populate it. [#seal()] freezes the instance map;
-/// afterwards any mutating method throws. Callers must [#clone()] a published snapshot, edit the
-/// copy, and publish it with [DefaultGameRepository#publishSnapshot(DefaultGameRepositorySnapshot)].
+/// A snapshot begins unsealed so package-private writers can populate it. [#seal()] freezes the
+/// instance map; afterwards any mutating method throws. Repository write paths must [#clone()] a
+/// published snapshot, edit the copy, and publish it with
+/// [DefaultGameRepository#publishSnapshot(DefaultGameRepositorySnapshot)].
 ///
 /// Once sealed, this object is exposed as a [GameRepositorySnapshot]. Provisional placeholders
 /// remain reachable through [#get(GameInstanceID)] but are excluded from the public snapshot view.
 ///
-/// Subclasses such as HMCL-specific snapshots may override [#newEmpty()] to preserve concrete type
-/// through [#clone()], analogous to [DefaultGameInstance#withNewSnapshot(DefaultGameRepositorySnapshot)].
+/// Mutation methods are package-private: only code in `org.jackhuang.hmcl.game` may assemble a
+/// snapshot. Subclasses such as HMCL-specific snapshots may override [#newEmpty()] to preserve
+/// concrete type through [#clone()], analogous to
+/// [DefaultGameInstance#withNewSnapshot(DefaultGameRepositorySnapshot)].
 @NotNullByDefault
 public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     protected final DefaultGameRepository repository;
@@ -69,7 +72,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     }
 
     /// Freezes this snapshot so its instance map can no longer be modified.
-    public void seal() {
+    void seal() {
         if (!sealed) {
             instances = Collections.unmodifiableMap(new TreeMap<>(instances));
             sealed = true;
@@ -191,7 +194,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     /// Adds or replaces an instance in this unsealed snapshot.
     ///
     /// @param instance the instance bound to this snapshot
-    public void put(DefaultGameInstance instance) {
+    void put(DefaultGameInstance instance) {
         checkMutable();
         instances.put(instance.getId(), instance);
     }
@@ -199,7 +202,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     /// Adds or replaces all instances from the given map.
     ///
     /// @param map instances keyed by id
-    public void putAll(Map<GameInstanceID, DefaultGameInstance> map) {
+    void putAll(Map<GameInstanceID, DefaultGameInstance> map) {
         checkMutable();
         instances.putAll(map);
     }
@@ -207,13 +210,13 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     /// Removes the instance with the given id.
     ///
     /// @param id the instance id
-    public void remove(GameInstanceID id) {
+    void remove(GameInstanceID id) {
         checkMutable();
         instances.remove(id);
     }
 
     /// Removes all instances from this unsealed snapshot.
-    public void clear() {
+    void clear() {
         checkMutable();
         instances.clear();
     }
