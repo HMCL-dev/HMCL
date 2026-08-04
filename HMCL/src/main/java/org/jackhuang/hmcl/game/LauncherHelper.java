@@ -299,7 +299,7 @@ public final class LauncherHelper {
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(gameInstance.getModsDirectory(), 10));
 
                     return new HMCLGameLauncher(
-                            repository,
+                            gameInstance,
                             version.get(),
                             authInfo,
                             launchOptions,

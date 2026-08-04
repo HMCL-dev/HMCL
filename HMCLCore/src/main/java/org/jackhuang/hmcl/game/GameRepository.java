@@ -189,15 +189,6 @@ public interface GameRepository {
         return getGameVersion(getInstanceManifest(instanceId));
     }
 
-    /// Returns the primary client jar path for an instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the primary client jar path
-    /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
-    default Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getInstanceJar(getResolvedInstanceManifest(instanceId).launchManifest());
-    }
-
     /// Renames an instance and updates repository-managed references.
     ///
     /// @param from the current instance id
