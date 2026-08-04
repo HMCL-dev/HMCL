@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -152,7 +153,7 @@ public final class Instances {
                 repository.refreshAsync()
                         .thenRunAsync(Schedulers.javafx(), () -> {
                             if (repository.hasInstance(newInstanceId)) {
-                                repository.setSelectedInstance(newInstanceId);
+                                repository.setSelectedInstance(repository.getInstance(newInstanceId));
                             }
                         }).start();
             } else {
@@ -203,7 +204,7 @@ public final class Instances {
                             .thenRunAsync(repository::refresh)
                             .whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
-                                    repository.setSelectedInstance(new GameInstanceID(result));
+                                    repository.setSelectedInstance(repository.getInstance(instanceId));
                                 } else {
                                     Controllers.dialog(
                                             DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
@@ -310,8 +311,27 @@ public final class Instances {
         };
     }
 
+    /// Launches the given instance after ensuring that an account is selected.
+    ///
+    /// If `gameInstance` is `null`, an error dialog is shown and no account selection or launch is
+    /// attempted.
+    ///
+    /// @param gameInstance the instance to launch, or `null` when no instance is available
+    /// @param injecters callbacks that configure the launcher before launch
     @SafeVarargs
-    public static void launch(HMCLGameInstance gameInstance, Consumer<LauncherHelper>... injecters) {
+    public static void launch(@Nullable HMCLGameInstance gameInstance, Consumer<LauncherHelper>... injecters) {
+        if (gameInstance == null) {
+            JFXButton gotoDownload = new JFXButton(i18n("instance.empty.launch.goto_download"));
+            gotoDownload.getStyleClass().add("dialog-accept");
+            gotoDownload.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+
+            Controllers.confirmAction(i18n("instance.empty.launch"), i18n("launch.failed"),
+                    MessageDialogPane.MessageType.ERROR,
+                    gotoDownload,
+                    null);
+            return;
+        }
+
         ensureSelectedAccount(account -> {
             LauncherHelper launcherHelper = new LauncherHelper(gameInstance, account);
             for (Consumer<LauncherHelper> injecter : injecters) {
@@ -319,15 +339,6 @@ public final class Instances {
             }
             launcherHelper.launch();
         });
-    }
-
-    /// Resolves the selected instance (which may be missing) and launches it.
-    @SafeVarargs
-    public static void launch(HMCLGameRepository repository, GameInstanceID instanceId, Consumer<LauncherHelper>... injecters) {
-        HMCLGameInstance gameInstance = resolveLaunchInstance(repository, instanceId);
-        if (gameInstance != null) {
-            launch(gameInstance, injecters);
-        }
     }
 
     public static void testGame(HMCLGameInstance gameInstance) {
@@ -342,36 +353,6 @@ public final class Instances {
     public static void generateLaunchScriptForQuickEnterWorld(HMCLGameInstance gameInstance, String worldFolderName) {
         generateLaunchScript(gameInstance, launcherHelper ->
                 launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
-    }
-
-    private static HMCLGameInstance resolveLaunchInstance(HMCLGameRepository repository, GameInstanceID instanceId) {
-        if (!checkVersionForLaunching(repository, instanceId)) {
-            return null;
-        }
-        return repository.findInstance(instanceId);
-    }
-
-    private static boolean checkVersionForLaunching(HMCLGameRepository repository, GameInstanceID instanceId) {
-        boolean unavailable;
-        if (instanceId == null || !repository.isLoaded()) {
-            unavailable = true;
-        } else {
-            unavailable = !repository.hasInstance(instanceId);
-        }
-
-        if (unavailable) {
-            JFXButton gotoDownload = new JFXButton(i18n("instance.empty.launch.goto_download"));
-            gotoDownload.getStyleClass().add("dialog-accept");
-            gotoDownload.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
-
-            Controllers.confirmAction(i18n("instance.empty.launch"), i18n("launch.failed"),
-                    MessageDialogPane.MessageType.ERROR,
-                    gotoDownload,
-                    null);
-            return false;
-        } else {
-            return true;
-        }
     }
 
     private static void ensureSelectedAccount(Consumer<Account> action) {
@@ -416,10 +397,4 @@ public final class Instances {
         Controllers.navigate(Controllers.getGameInstancePage());
     }
 
-    public static void modifyGameSettings(HMCLGameRepository repository, GameInstanceID instanceId) {
-        HMCLGameInstance gameInstance = repository.findInstance(instanceId);
-        if (gameInstance != null) {
-            modifyGameSettings(gameInstance);
-        }
-    }
 }

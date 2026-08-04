@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
@@ -94,7 +95,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
 
-    private final ObjectProperty<@Nullable GameInstanceID> currentGame = new SimpleObjectProperty<>(this, "currentGame");
+    private final ObjectProperty<@Nullable HMCLGameInstance> currentGame = new SimpleObjectProperty<>(this, "currentGame");
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
     private final BooleanProperty showUpdateDialog = new SimpleBooleanProperty(this, "showUpdateDialog");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
@@ -212,9 +213,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         HBox launchPane = new HBox();
         launchPane.getStyleClass().add("launch-pane");
         FXUtils.onScroll(launchPane, versions, list -> {
-            GameInstanceID currentId = getCurrentGame();
+            @Nullable HMCLGameInstance currentGame = getCurrentGame();
+            @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
             return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
-        }, it -> repository.setSelectedInstance(it.id()));
+        }, it -> repository.setSelectedInstance(repository.getInstance(it.id())));
 
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
@@ -233,7 +235,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     private Tooltip tooltip;
 
                     @Override
-                    public void accept(@Nullable GameInstanceID currentGame) {
+                    public void accept(@Nullable HMCLGameInstance currentGame) {
                         if (currentGame == null) {
                             launchLabel.setText(i18n("instance.launch.empty"));
                             currentLabel.setText(null);
@@ -244,7 +246,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             FXUtils.installFastTooltip(launchButton, tooltip);
                         } else {
                             launchLabel.setText(i18n("instance.launch"));
-                            currentLabel.setText(currentGame.toString());
+                            currentLabel.setText(currentGame.getId().toString());
                             graphic.getChildren().setAll(launchLabel, currentLabel);
                             FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launch);
                             if (tooltip != null)
@@ -342,7 +344,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launch() {
         HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-        Instances.launch(repository, repository.getSelectedInstance());
+        Instances.launch(repository.getSelectedInstance());
     }
 
     private void launchNoGame() {
@@ -374,7 +376,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refresh())
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        GameDirectoryManager.getSelectedRepository().setSelectedInstance(instanceHolder.value);
+                        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+                        repository.setSelectedInstance(repository.getInstance(instanceHolder.value));
                         launch();
                     } else if (exception instanceof CancellationException) {
                         Controllers.showToast(i18n("message.cancelled"));
@@ -414,15 +417,24 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return repository;
     }
 
-    public GameInstanceID getCurrentGame() {
+    /// Returns the instance shown by the launch controls.
+    ///
+    /// @return the current instance, or `null` when no instance is selected
+    public @Nullable HMCLGameInstance getCurrentGame() {
         return currentGame.get();
     }
 
-    public ObjectProperty<@Nullable GameInstanceID> currentGameProperty() {
+    /// Returns the property for the instance shown by the launch controls.
+    ///
+    /// @return the current-instance property
+    public ObjectProperty<@Nullable HMCLGameInstance> currentGameProperty() {
         return currentGame;
     }
 
-    public void setCurrentGame(@Nullable GameInstanceID currentGame) {
+    /// Sets the instance shown by the launch controls.
+    ///
+    /// @param currentGame the instance to show, or `null` to show the empty state
+    public void setCurrentGame(@Nullable HMCLGameInstance currentGame) {
         this.currentGame.set(currentGame);
     }
 

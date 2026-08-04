@@ -23,9 +23,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.PortablePath;
@@ -33,6 +36,7 @@ import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -41,6 +45,7 @@ import java.lang.reflect.Field;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -657,6 +662,63 @@ public final class GameDirectoriesTest {
             writeVersionJson(repository, "1.20.1");
 
             assertNull(repository.getInstanceGameSettings(new GameInstanceID("1.20.1")));
+        }
+    }
+
+    /// Tests that repository selection exposes the current snapshot member while persisting its ID.
+    @Test
+    public void selectedInstanceTracksRepositorySnapshots(@TempDir Path tempDirectory)
+            throws Exception {
+        GameDirectory gameDirectory = new GameDirectory(
+                GameDirectoryID.generate(),
+                LocalizedText.plain("Dev"),
+                PortablePath.of(tempDirectory.toString()));
+        GameDirectories localDirectories = new GameDirectories();
+        localDirectories.getGameDirectories().add(gameDirectory);
+        GameDirectories userDirectories = new GameDirectories();
+
+        try (GameDirectoryEnvironment ignored =
+                     new GameDirectoryEnvironment(localDirectories, userDirectories)) {
+            HMCLGameRepository repository = new HMCLGameRepository(gameDirectory);
+            GameInstanceID firstId = new GameInstanceID("1.20.1");
+            GameInstanceID secondId = new GameInstanceID("1.21.1");
+            GameInstanceManifest firstManifest = new GameInstanceManifest(firstId);
+            repository.saveAsync(firstManifest).run();
+            repository.saveAsync(new GameInstanceManifest(secondId)).run();
+
+            ReadOnlyObjectProperty<@Nullable HMCLGameInstance> selectedInstance =
+                    repository.selectedInstanceProperty();
+            List<HMCLGameInstance> observedSelections = new ArrayList<>();
+            selectedInstance.addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    observedSelections.add(newValue);
+                }
+            });
+            HMCLGameInstance firstInstance = repository.getInstance(firstId);
+            repository.setSelectedInstance(firstInstance);
+
+            assertSame(firstInstance, selectedInstance.get());
+            assertSame(firstInstance, observedSelections.getLast());
+            assertEquals(firstId, settings().getSelectedInstance(gameDirectory.getId()));
+
+            repository.saveAsync(firstManifest).run();
+            HMCLGameInstance refreshedFirstInstance = repository.getInstance(firstId);
+            assertNotSame(firstInstance, refreshedFirstInstance);
+            assertSame(refreshedFirstInstance, selectedInstance.get());
+            assertSame(refreshedFirstInstance, observedSelections.getLast());
+            repository.setSelectedInstance(firstInstance);
+            assertSame(refreshedFirstInstance, selectedInstance.get());
+
+            settings().setSelectedInstance(gameDirectory.getId(), secondId);
+            assertSame(repository.getInstance(secondId), selectedInstance.get());
+
+            settings().setSelectedInstance(gameDirectory.getId(), new GameInstanceID("missing"));
+            assertNull(selectedInstance.get());
+            repository.refreshSelectedInstance();
+            HMCLGameInstance fallbackInstance = assertDoesNotThrow(() ->
+                    Objects.requireNonNull(repository.getSelectedInstance()));
+            assertSame(repository.getInstance(fallbackInstance.getId()), fallbackInstance);
+            assertEquals(fallbackInstance.getId(), settings().getSelectedInstance(gameDirectory.getId()));
         }
     }
 

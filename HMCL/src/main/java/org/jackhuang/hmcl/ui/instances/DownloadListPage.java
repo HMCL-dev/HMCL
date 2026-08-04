@@ -125,7 +125,8 @@ public class DownloadListPage extends Control implements DecoratorPage {
             instances.setAll(repository.getDisplayInstances()
                     .map(DefaultGameInstance::getId)
                     .toList());
-            selectedInstance.set(repository.getSelectedInstance());
+            @Nullable HMCLGameInstance repositorySelection = repository.getSelectedInstance();
+            selectedInstance.set(repositorySelection != null ? repositorySelection.getId() : null);
         }
     }
 

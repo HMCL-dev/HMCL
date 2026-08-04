@@ -24,7 +24,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
-import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -141,11 +141,12 @@ public final class GameDirectoryManager {
     /// The selected game repository, or `null` before the fallback game directory is resolved.
     private static final ObjectProperty<@UnknownNullability HMCLGameRepository> selectedRepository = new SimpleObjectProperty<>(GameDirectoryManager.class, "selectedRepository");
 
-    /// The selected instance ID projected from the selected repository.
-    private static final ReadOnlyObjectWrapper<GameInstanceID> selectedInstance = new ReadOnlyObjectWrapper<>(GameDirectoryManager.class, "selectedInstance");
+    /// The selected instance projected from the selected repository's current snapshot.
+    private static final ReadOnlyObjectWrapper<@Nullable HMCLGameInstance> selectedInstance =
+            new ReadOnlyObjectWrapper<>(GameDirectoryManager.class, "selectedInstance");
 
     /// Updates [#selectedInstance] when the selected repository changes its selected instance.
-    private static final ChangeListener<GameInstanceID> selectedRepositoryInstanceListener =
+    private static final ChangeListener<@Nullable HMCLGameInstance> selectedRepositoryInstanceListener =
             (observable, oldValue, newValue) -> selectedInstance.set(newValue);
 
     /// Initializes game directory state from the stores loaded by [SettingsManager].
@@ -480,17 +481,26 @@ public final class GameDirectoryManager {
     }
 
     /// Returns the selected instance property projected from the selected repository.
-    public static ReadOnlyObjectProperty<@Nullable GameInstanceID> selectedInstanceProperty() {
+    ///
+    /// The value is `null` when the selected repository has no registered selected instance.
+    ///
+    /// @return the read-only selected-instance property
+    public static ReadOnlyObjectProperty<@Nullable HMCLGameInstance> selectedInstanceProperty() {
         return selectedInstance.getReadOnlyProperty();
     }
 
-    /// Returns the selected instance ID for the selected repository.
-    public static @Nullable GameInstanceID getSelectedInstance() {
+    /// Returns the selected instance from the selected repository's current snapshot.
+    ///
+    /// @return the selected instance, or `null` when none is registered
+    public static @Nullable HMCLGameInstance getSelectedInstance() {
         return getSelectedRepository().getSelectedInstance();
     }
 
-    /// Sets the selected instance ID for the selected repository.
-    public static void setSelectedInstance(@Nullable GameInstanceID instance) {
+    /// Sets the selected instance for the selected repository.
+    ///
+    /// @param instance the instance to select, or `null` to clear the selection
+    /// @throws IllegalArgumentException if `instance` belongs to another repository
+    public static void setSelectedInstance(@Nullable HMCLGameInstance instance) {
         getSelectedRepository().setSelectedInstance(instance);
     }
 

@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.instances.DownloadListPage;
 import org.jackhuang.hmcl.ui.instances.HMCLLocalizedDownloadListPage;
-import org.jackhuang.hmcl.ui.instances.GameInstancePage;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -144,11 +143,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
-        if (instanceId == null) {
-            instanceId = repository.getSelectedInstance();
-        }
-
-        Path runDirectory = instanceId != null && repository.hasInstance(instanceId) ? repository.getRunDirectory(instanceId) : repository.getBaseDirectory();
+        @Nullable HMCLGameInstance instance = instanceId != null
+                ? repository.findInstance(instanceId)
+                : repository.getSelectedInstance();
+        Path runDirectory = instance != null ? instance.getRunDirectory() : repository.getBaseDirectory();
 
         Set<String> existingFiles;
 
@@ -326,7 +324,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             return builder.buildAsync().whenComplete(any -> {
                 repository.refresh();
                 repository.applyDefaultIsolationSetting(instanceId);
-            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(instanceId));
+            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
         }
 
         @Override

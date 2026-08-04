@@ -553,7 +553,7 @@ public final class Controllers {
                     break;
                 case "hmcl://game/launch":
                     var repository = GameDirectoryManager.getSelectedRepository();
-                    Instances.launch(repository, repository.getSelectedInstance(), LauncherHelper::setKeep);
+                    Instances.launch(repository.getSelectedInstance(), LauncherHelper::setKeep);
                     break;
             }
         } else {

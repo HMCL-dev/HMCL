@@ -18,9 +18,10 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import javafx.beans.binding.Binding;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -73,15 +74,26 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private final GameDirectory gameDirectory;
 
     /// The selected instance ID persisted for this repository's game directory.
-    private final ObjectBinding<@Nullable GameInstanceID> selectedInstance;
+    private final ObjectBinding<@Nullable GameInstanceID> selectedInstanceId;
 
+    /// The selected instance resolved from the current repository snapshot.
+    private final ReadOnlyObjectWrapper<@Nullable HMCLGameInstance> selectedInstance;
+
+    /// Publishes notifications after an instance icon changes.
     public final EventManager<Event> onInstanceIconChanged = new EventManager<>();
 
     /// Creates a repository backed by the given game directory.
+    ///
+    /// @param gameDirectory the persistent game directory represented by this repository
     public HMCLGameRepository(GameDirectory gameDirectory) {
         super(gameDirectory.getPath().toPath());
         this.gameDirectory = gameDirectory;
-        this.selectedInstance = Bindings.valueAt(settings().getSelectedInstance(), gameDirectory.getId());
+        this.selectedInstanceId = Bindings.valueAt(settings().getSelectedInstance(), gameDirectory.getId());
+        this.selectedInstance = new ReadOnlyObjectWrapper<>(this, "selectedInstance");
+        this.selectedInstance.bind(Bindings.createObjectBinding(
+                this::resolveSelectedInstance,
+                selectedInstanceId,
+                snapshotProperty()));
         gameDirectory.pathProperty().addListener((a, b, newValue) -> changeDirectory(newValue.toPath()));
     }
 
@@ -156,31 +168,61 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return gameDirectory;
     }
 
-    /// Returns the selected instance ID property for this repository's game directory.
-    public Binding<@Nullable GameInstanceID> selectedInstanceProperty() {
-        return selectedInstance;
+    /// Returns the selected instance resolved from the current repository snapshot.
+    ///
+    /// The property is `null` when the persisted selection is absent or is not registered in the
+    /// current snapshot. Publishing a new snapshot replaces the value with that snapshot's member,
+    /// even when the selected ID is unchanged.
+    ///
+    /// @return the read-only selected-instance property
+    public ReadOnlyObjectProperty<@Nullable HMCLGameInstance> selectedInstanceProperty() {
+        return selectedInstance.getReadOnlyProperty();
     }
 
-    /// Returns the selected instance ID for this repository's game directory.
-    public @Nullable GameInstanceID getSelectedInstance() {
+    /// Returns the selected instance from the current repository snapshot.
+    ///
+    /// @return the selected instance, or `null` when no registered instance is selected
+    public @Nullable HMCLGameInstance getSelectedInstance() {
         return selectedInstance.get();
     }
 
-    /// Sets the selected instance ID for this repository's game directory.
-    public void setSelectedInstance(@Nullable GameInstanceID instanceId) {
-        settings().setSelectedInstance(gameDirectory.getId(), instanceId);
+    /// Persists an instance as this repository's current selection.
+    ///
+    /// A stale snapshot member from this repository is accepted; the observable property resolves
+    /// its ID against the current snapshot.
+    ///
+    /// @param instance the instance to select, or `null` to clear the selection
+    /// @throws IllegalArgumentException if `instance` belongs to another repository
+    public void setSelectedInstance(@Nullable HMCLGameInstance instance) {
+        if (instance != null && instance.getRepository() != this) {
+            throw new IllegalArgumentException("Selected instance belongs to another repository");
+        }
+        settings().setSelectedInstance(gameDirectory.getId(), instance != null ? instance.getId() : null);
     }
 
-    /// Refreshes the selected instance ID after instances are loaded.
+    /// Restores a valid selected instance after repository instances are loaded.
+    ///
+    /// If the persisted ID is not registered, the first indexed instance is selected. If the
+    /// repository is empty, the persisted selection is cleared.
     public void refreshSelectedInstance() {
-        @Nullable GameInstanceID selectedInstance = settings().getSelectedInstance(gameDirectory.getId());
-        @Nullable GameInstanceID refreshedInstance = selectedInstance;
-        if (refreshedInstance == null || !hasInstance(refreshedInstance)) {
-            refreshedInstance = getInstanceManifests().isEmpty() ? null : getInstanceManifests().iterator().next().id();
+        @Nullable GameInstanceID persistedId = selectedInstanceId.get();
+        @Nullable HMCLGameInstance refreshedInstance = persistedId != null ? findInstance(persistedId) : null;
+        if (refreshedInstance == null) {
+            refreshedInstance = getSnapshot().getInstances().stream().findFirst().orElse(null);
         }
-        if (!Objects.equals(selectedInstance, refreshedInstance)) {
+
+        @Nullable GameInstanceID refreshedId = refreshedInstance != null ? refreshedInstance.getId() : null;
+        if (!Objects.equals(persistedId, refreshedId)) {
             setSelectedInstance(refreshedInstance);
         }
+    }
+
+    /// Resolves the persisted selected ID from the current repository snapshot.
+    ///
+    /// @return the current snapshot member, or `null` when the selected ID is absent or unregistered
+    private @Nullable HMCLGameInstance resolveSelectedInstance() {
+        @Nullable GameInstanceID instanceId = selectedInstanceId.get();
+        return instanceId != null ? findInstance(instanceId) : null;
     }
 
     /// Returns a dependency manager using the currently selected download provider.

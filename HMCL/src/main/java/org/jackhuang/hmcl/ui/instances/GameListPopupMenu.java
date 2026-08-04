@@ -33,7 +33,6 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -140,7 +139,7 @@ public final class GameListPopupMenu extends StackPane {
             FXUtils.onClicked(rootPane, () -> {
                 GameItem item = getItem();
                 if (item != null) {
-                    item.getRepository().setSelectedInstance(new GameInstanceID(item.getId()));
+                    item.getRepository().setSelectedInstance(item.getGameInstance());
                     if (getScene().getWindow() instanceof JFXPopup popup)
                         popup.hide();
                 }

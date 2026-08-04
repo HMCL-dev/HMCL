@@ -25,8 +25,7 @@ import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
-
-import java.util.Objects;
+import org.jetbrains.annotations.Nullable;
 
 public class GameListItem extends GameItem {
     private final boolean isModpack;
@@ -40,7 +39,8 @@ public class GameListItem extends GameItem {
         selected.bind(Bindings.createBooleanBinding(
                 () -> {
                     if (repository.getGameDirectory() != GameDirectoryManager.getSelectedGameDirectory()) return false;
-                    return Objects.equals(repository.getSelectedInstance(), instanceId);
+                    @Nullable HMCLGameInstance selectedInstance = repository.getSelectedInstance();
+                    return selectedInstance != null && selectedInstance.getId().equals(instanceId);
                 },
                 GameDirectoryManager.selectedGameDirectoryProperty(),
                 GameDirectoryManager.selectedInstanceProperty()));

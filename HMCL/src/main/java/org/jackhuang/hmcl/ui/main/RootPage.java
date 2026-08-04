@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -58,6 +59,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -155,17 +157,21 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // second item in left sidebar
             GameAdvancedListItem gameListItem = new GameAdvancedListItem();
             gameListItem.setOnAction(e -> {
-                GameInstanceID instanceId = GameDirectoryManager.getSelectedRepository().getSelectedInstance();
-                if (instanceId == null) {
+                @Nullable HMCLGameInstance instance = GameDirectoryManager.getSelectedRepository().getSelectedInstance();
+                if (instance == null) {
                     Controllers.navigate(Controllers.getGameListPage());
                 } else {
-                    Instances.modifyGameSettings(GameDirectoryManager.getSelectedRepository(), instanceId);
+                    Instances.modifyGameSettings(instance);
                 }
             });
             FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
-                GameInstanceID currentId = getSkinnable().getMainPage().getCurrentGame();
+                @Nullable HMCLGameInstance currentGame = getSkinnable().getMainPage().getCurrentGame();
+                @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
                 return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
-            }, it -> getSkinnable().getMainPage().getRepository().setSelectedInstance(it.id()));
+            }, it -> {
+                HMCLGameRepository repository = getSkinnable().getMainPage().getRepository();
+                repository.setSelectedInstance(repository.getInstance(it.id()));
+            });
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareGameInstancePage);
             }
