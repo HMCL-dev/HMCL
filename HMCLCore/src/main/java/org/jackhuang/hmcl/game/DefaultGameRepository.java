@@ -126,8 +126,8 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     /// {@inheritDoc}
     @Override
-    public GameRepositorySnapshot getSnapshot() {
-        return snapshot.get();
+    public DefaultGameRepositorySnapshot getSnapshot() {
+        return (DefaultGameRepositorySnapshot) snapshot.get();
     }
 
     /// Returns a read-only view of the current published snapshot for JavaFX bindings.
