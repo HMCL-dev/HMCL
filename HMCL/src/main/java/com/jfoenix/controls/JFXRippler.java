@@ -284,7 +284,7 @@ public class JFXRippler extends StackPane {
         rippler.releaseRipple(isAnimationEnabled());
     }
 
-    public void clearRippleImmediately() {
+    public void releaseRippleImmediately() {
         rippler.releaseRipple(false);
     }
 

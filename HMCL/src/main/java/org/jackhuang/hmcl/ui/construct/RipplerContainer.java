@@ -206,7 +206,7 @@ public class RipplerContainer extends StackPane {
     }
 
     public void clearRippleImmediately() {
-        buttonRippler.clearRippleImmediately();
+        buttonRippler.releaseRippleImmediately();
     }
 
     @Override
