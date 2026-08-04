@@ -200,7 +200,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     private final String selfVersion;
 
     private Path tempDir;
-    private AtomicInteger processorDoneCount = new AtomicInteger(0);
+    private final AtomicInteger processorDoneCount = new AtomicInteger(0);
 
     public ForgeNewInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;

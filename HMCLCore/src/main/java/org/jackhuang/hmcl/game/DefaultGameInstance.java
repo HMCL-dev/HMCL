@@ -188,7 +188,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// @return the mod manager
     public ModManager getModManager() {
         if (modManager == null) {
-            modManager = new ModManager(repository, id);
+            modManager = new ModManager(this);
         }
         return modManager;
     }
@@ -202,7 +202,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// @return the resource-pack manager
     public ResourcePackManager getResourcePackManager() {
         if (resourcePackManager == null) {
-            resourcePackManager = new ResourcePackManager(repository, id);
+            resourcePackManager = new ResourcePackManager(this);
         }
         return resourcePackManager;
     }
