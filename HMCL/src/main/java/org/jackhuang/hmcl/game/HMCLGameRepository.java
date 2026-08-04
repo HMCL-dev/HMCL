@@ -361,21 +361,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return setting;
     }
 
-    /// Returns whether the instance-specific game settings file cannot be overwritten safely.
-    ///
-    /// @param instanceId the instance ID
-    /// @return whether the instance settings are loaded in read-only mode
-    public boolean isInstanceGameSettingsReadOnly(GameInstanceID instanceId) {
-        return resolveInstance(instanceId).isSettingsReadOnly();
-    }
-
-    /// Backs up and overwrites the instance-specific game settings file with the currently loaded settings.
-    ///
-    /// @param instanceId the instance ID
-    public void forceOverwriteInstanceGameSettings(GameInstanceID instanceId) {
-        resolveInstance(instanceId).forceOverwriteSettings();
-    }
-
     /// Returns the explicit parent preset of the instance, falling back to the default preset.
     public GameSettings.Preset getParentGameSettings(@Nullable GameSettings.Instance instance) {
         @Nullable GameSettingsPresetID parent = instance != null ? instance.parentProperty().getValue() : null;
@@ -663,7 +648,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private static final String PROFILE = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
-
 
     // These instance ids are forbidden because they may conflict with modpack configuration filenames
     private static final Set<String> FORBIDDEN_INSTANCE_IDS = Set.of("modpack", "minecraftinstance", "manifest");
