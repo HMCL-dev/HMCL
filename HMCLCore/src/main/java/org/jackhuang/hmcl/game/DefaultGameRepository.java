@@ -188,10 +188,6 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public void refresh() {
-        if (EventBus.EVENT_BUS.fireEvent(new RefreshingInstancesEvent(this)) == Event.Result.DENY) {
-            return;
-        }
-
         refreshImpl();
         loaded = true;
         EventBus.EVENT_BUS.fireEvent(new RefreshedGameInstancesEvent(this));
@@ -239,7 +235,7 @@ public abstract class DefaultGameRepository implements GameRepository {
                     loadedInstances.put(instance.getId(), instance);
                 }
             } catch (NoSuchGameInstanceException e) {
-                LOG.warning("Ignoring instance " + instance.getId() + " because it inherits from a nonexistent version.");
+                LOG.warning("Ignoring instance " + instance.getId() + " because it inherits from a nonexistent instance.");
             }
         }
 
