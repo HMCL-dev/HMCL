@@ -25,7 +25,6 @@ import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.addon.mod.ModManager;
-import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
@@ -695,15 +694,6 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @throws NoSuchGameInstanceException if the instance is not registered
     public ModManager getModManager(GameInstanceID instanceId) throws NoSuchGameInstanceException {
         return getInstance(instanceId).getModManager();
-    }
-
-    /// Returns the resource-pack manager for the registered instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the instance's shared resource-pack manager
-    /// @throws NoSuchGameInstanceException if the instance is not registered
-    public ResourcePackManager getResourcePackManager(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getInstance(instanceId).getResourcePackManager();
     }
 
     @Override
