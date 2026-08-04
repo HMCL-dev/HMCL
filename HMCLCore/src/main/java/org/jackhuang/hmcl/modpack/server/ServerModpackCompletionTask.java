@@ -83,6 +83,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             DefaultDependencyManager dependencyManager,
             DefaultGameInstance instance,
             @Nullable ModpackConfiguration<ServerModpackManifest> manifest) {
+        dependencyManager.validateGameInstance(instance);
         this.dependencyManager = dependencyManager;
         this.instance = instance;
         this.configurationFile = instance.getRepository().getModpackConfiguration(instance.getId());

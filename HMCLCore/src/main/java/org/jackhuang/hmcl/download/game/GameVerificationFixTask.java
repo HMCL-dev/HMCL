@@ -17,48 +17,52 @@
  */
 package org.jackhuang.hmcl.download.game;
 
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
-/**
- * Remove class digital verification file in game jar
- * @author huangyuhui
- */
+/// Removes obsolete signature files from a legacy Forge instance's fixed client jar.
+@NotNullByDefault
 public final class GameVerificationFixTask extends Task<Void> {
-    private final DefaultDependencyManager dependencyManager;
-    private final String gameVersion;
-    private final GameInstanceManifest manifest;
-    private final List<Task<?>> dependencies = new ArrayList<>();
 
-    public GameVerificationFixTask(DefaultDependencyManager dependencyManager, String gameVersion, GameInstanceManifest manifest) {
-        this.dependencyManager = dependencyManager;
+    /// The snapshot-bound instance whose client jar may be modified.
+    private final GameInstance instance;
+
+    /// The detected Minecraft version.
+    private final String gameVersion;
+
+    /// The effective launch manifest used to detect Forge.
+    private final GameInstanceManifest manifest;
+
+    /// Creates a task for a fixed instance and effective launch manifest.
+    ///
+    /// @param instance    the instance whose client jar may be modified
+    /// @param gameVersion the detected Minecraft version
+    /// @param manifest    the effective launch manifest used to detect Forge
+    public GameVerificationFixTask(GameInstance instance, String gameVersion, GameInstanceManifest manifest) {
+        this.instance = instance;
         this.gameVersion = gameVersion;
         this.manifest = manifest;
 
         setSignificance(TaskSignificance.MODERATE);
     }
 
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
+    /// Removes legacy Mojang signature entries when this is a pre-1.6 Forge installation.
+    ///
+    /// @throws IOException if the client jar cannot be opened or modified
     @Override
     public void execute() throws IOException {
-        Path jar = dependencyManager.getGameRepository().getInstanceJar(manifest);
+        Path jar = instance.getInstanceJarFile();
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, gameVersion);
 
         if (Files.exists(jar) && GameVersionNumber.compare(gameVersion, "1.6") < 0 && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
@@ -68,5 +72,4 @@ public final class GameVerificationFixTask extends Task<Void> {
             }
         }
     }
-    
 }

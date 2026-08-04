@@ -90,6 +90,7 @@ public final class CurseCompletionTask extends Task<Void> {
             DefaultDependencyManager dependencyManager,
             DefaultGameInstance instance,
             @Nullable CurseManifest manifest) {
+        dependencyManager.validateGameInstance(instance);
         this.dependency = dependencyManager;
         this.instance = instance;
         this.modManager = instance.getModManager();

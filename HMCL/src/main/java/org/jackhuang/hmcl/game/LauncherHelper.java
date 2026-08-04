@@ -183,7 +183,7 @@ public final class LauncherHelper {
                     if (setting.getInheritable(GameSettings::notCheckGameProperty))
                         return null;
                     return Task.allOf(
-                            dependencyManager.checkGameCompletionAsync(version.get(), integrityCheck),
+                            dependencyManager.checkGameCompletionAsync(gameInstance, version.get(), integrityCheck),
                             Task.composeAsync(() -> {
                                 try {
                                     ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedInstanceId));
@@ -191,7 +191,7 @@ public final class LauncherHelper {
                                     if (provider == null) return null;
                                     else return provider.createCompletionTask(
                                             dependencyManager,
-                                            repository.getInstance(selectedInstanceId));
+                                            gameInstance);
                                 } catch (IOException e) {
                                     return null;
                                 }
@@ -229,7 +229,7 @@ public final class LauncherHelper {
                     if (gameVersion.isEmpty()) {
                         return null;
                     }
-                    return new GameVerificationFixTask(dependencyManager, gameVersion.get(), version.get());
+                    return new GameVerificationFixTask(gameInstance, gameVersion.get(), version.get());
                 })
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)

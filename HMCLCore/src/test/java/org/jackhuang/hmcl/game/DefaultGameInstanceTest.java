@@ -17,6 +17,16 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.download.DefaultCacheRepository;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.MojangDownloadProvider;
+import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
+import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -27,14 +37,19 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Tests snapshot-bound behavior of [DefaultGameInstance].
 @NotNullByDefault
@@ -99,6 +114,72 @@ public final class DefaultGameInstanceTest {
         assertEquals(Optional.of("1.21.1"), repository.getGameVersion(requestedManifest));
     }
 
+    /// A game download with an explicit destination does not follow a later repository snapshot.
+    @Test
+    public void testGameDownloadKeepsExplicitDestination(@TempDir Path tempDirectory) {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+        GameInstanceManifest manifest = new GameInstanceManifest(new GameInstanceID("instance"));
+        Path destination = tempDirectory.resolve("fixed.jar");
+
+        GameDownloadTask task = new GameDownloadTask(dependencyManager, null, manifest, destination);
+        task.execute();
+
+        FileDownloadTask download = (FileDownloadTask) task.getDependencies().iterator().next();
+        assertEquals(destination, download.getPath());
+    }
+
+    /// Legacy verification fixes the captured instance jar rather than a newer same-id snapshot.
+    @Test
+    public void testVerificationFixKeepsCapturedInstance(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        GameInstanceManifest manifest = new GameInstanceManifest(instanceId).withLibraries(List.of(
+                new Library(new Artifact("net.minecraftforge", "forge", "1.5.2-7.8.1.738"))));
+
+        TestGameInstance captured = repository.publish(
+                instanceId,
+                manifest,
+                tempDirectory.resolve("versions/instance/captured.json"));
+        writeSignedJar(captured.getInstanceJarFile());
+
+        TestGameInstance current = repository.publish(
+                instanceId,
+                manifest,
+                tempDirectory.resolve("versions/instance/current.json"));
+        writeSignedJar(current.getInstanceJarFile());
+
+        new GameVerificationFixTask(captured, "1.5.2", manifest).execute();
+
+        assertFalse(hasZipEntry(captured.getInstanceJarFile(), "META-INF/MOJANG_C.DSA"));
+        assertFalse(hasZipEntry(captured.getInstanceJarFile(), "META-INF/MOJANG_C.SF"));
+        assertTrue(hasZipEntry(current.getInstanceJarFile(), "META-INF/MOJANG_C.DSA"));
+        assertTrue(hasZipEntry(current.getInstanceJarFile(), "META-INF/MOJANG_C.SF"));
+    }
+
+    /// Dependency managers and modpack completion tasks reject cross-repository instances.
+    @Test
+    public void testDependencyManagerValidatesInstanceRepository(@TempDir Path tempDirectory) {
+        TestRepository instanceRepository = new TestRepository(tempDirectory.resolve("instance"));
+        TestRepository managerRepository = new TestRepository(tempDirectory.resolve("manager"));
+        TestGameInstance instance = instanceRepository.publish(
+                new GameInstanceID("instance"),
+                new GameInstanceManifest(new GameInstanceID("instance")));
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                managerRepository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+
+        assertThrows(IllegalArgumentException.class, () -> dependencyManager.validateGameInstance(instance));
+        assertThrows(IllegalArgumentException.class, () -> new CurseCompletionTask(dependencyManager, instance));
+        assertThrows(IllegalArgumentException.class, () -> new McbbsModpackCompletionTask(dependencyManager, instance));
+        assertThrows(IllegalArgumentException.class, () -> new ModrinthCompletionTask(dependencyManager, instance));
+        assertThrows(IllegalArgumentException.class, () -> new ServerModpackCompletionTask(dependencyManager, instance));
+    }
+
     /// Non-conventional JSON/jar basenames are kept on disk and recorded on the instance.
     @Test
     public void testRefreshRecordsNonConventionalStoragePaths(@TempDir Path tempDirectory) throws IOException {
@@ -136,6 +217,32 @@ public final class DefaultGameInstanceTest {
         }
     }
 
+    /// Writes a jar containing the legacy signature entries removed before launching Forge.
+    ///
+    /// @param jar the jar path
+    private static void writeSignedJar(Path jar) throws IOException {
+        Files.createDirectories(jar.getParent());
+        try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(jar))) {
+            output.putNextEntry(new ZipEntry("META-INF/MOJANG_C.DSA"));
+            output.write(1);
+            output.closeEntry();
+            output.putNextEntry(new ZipEntry("META-INF/MOJANG_C.SF"));
+            output.write(1);
+            output.closeEntry();
+        }
+    }
+
+    /// Returns whether a zip contains an entry with the given name.
+    ///
+    /// @param zipFile   the zip path
+    /// @param entryName the entry name
+    /// @return `true` when the entry exists
+    private static boolean hasZipEntry(Path zipFile, String entryName) throws IOException {
+        try (ZipFile zip = new ZipFile(zipFile.toFile())) {
+            return zip.getEntry(entryName) != null;
+        }
+    }
+
     /// Minimal repository implementation for snapshot-bound instance tests.
     @NotNullByDefault
     private static final class TestRepository extends DefaultGameRepository {
@@ -169,8 +276,21 @@ public final class DefaultGameInstanceTest {
         /// @param manifest the stored manifest
         /// @return the published instance
         private TestGameInstance publish(GameInstanceID id, GameInstanceManifest manifest) {
+            return publish(id, manifest, null);
+        }
+
+        /// Publishes a snapshot containing one test instance with an optional manifest path.
+        ///
+        /// @param id           the instance id
+        /// @param manifest     the stored manifest
+        /// @param manifestFile the non-conventional manifest path, or `null`
+        /// @return the published instance
+        private TestGameInstance publish(
+                GameInstanceID id,
+                GameInstanceManifest manifest,
+                @Nullable Path manifestFile) {
             DefaultGameRepositorySnapshot snapshot = newSnapshot();
-            TestGameInstance instance = (TestGameInstance) createInstance(snapshot, id, manifest);
+            TestGameInstance instance = createInstance(snapshot, id, manifest, manifestFile);
             snapshot.put(instance);
             publishSnapshot(snapshot);
             return instance;

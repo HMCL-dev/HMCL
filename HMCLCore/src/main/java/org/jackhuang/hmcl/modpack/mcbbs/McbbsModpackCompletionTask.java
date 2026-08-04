@@ -88,6 +88,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
             DefaultDependencyManager dependencyManager,
             DefaultGameInstance instance,
             @Nullable ModpackConfiguration<McbbsModpackManifest> configuration) {
+        dependencyManager.validateGameInstance(instance);
         this.dependency = dependencyManager;
         this.instance = instance;
         this.modManager = instance.getModManager();

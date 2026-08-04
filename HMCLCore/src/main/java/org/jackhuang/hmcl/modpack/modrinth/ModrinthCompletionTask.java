@@ -85,6 +85,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             DefaultDependencyManager dependencyManager,
             DefaultGameInstance instance,
             @Nullable ModrinthManifest manifest) {
+        dependencyManager.validateGameInstance(instance);
         this.dependency = dependencyManager;
         this.instance = instance;
         this.modManager = instance.getModManager();
