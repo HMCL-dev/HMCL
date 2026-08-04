@@ -639,8 +639,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    private static final String PROFILE = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
-
     // These instance ids are forbidden because they may conflict with modpack configuration filenames
     private static final Set<String> FORBIDDEN_INSTANCE_IDS = Set.of("modpack", "minecraftinstance", "manifest");
 
