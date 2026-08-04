@@ -168,30 +168,6 @@ public interface GameRepository {
         return getRunDirectory(instanceId).resolve("resourcepacks");
     }
 
-    /// Returns the saves directory for an instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the saves directory below the run directory
-    default Path getSavesDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("saves");
-    }
-
-    /// Returns the world backups directory for an instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the backups directory below the run directory
-    default Path getBackupsDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("backups");
-    }
-
-    /// Returns the schematics directory for an instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the schematics directory below the run directory
-    default Path getSchematicsDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("schematics");
-    }
-
     /// Returns the primary client jar path for a manifest.
     ///
     /// @param manifest the manifest whose jar should be located

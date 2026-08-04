@@ -52,9 +52,9 @@ public final class DefaultGameInstanceTest {
         assertEquals(repository.getLayout().getInstanceJarFile(jarId), instance.getInstanceJarFile());
     }
 
-    /// Manifest changes do not reuse version or manager caches from the previous snapshot member.
+    /// Snapshot copies never reuse addon managers; only the version cache is shared for the same manifest.
     @Test
-    public void testManifestChangeInvalidatesDerivedState(@TempDir Path tempDirectory) throws IOException {
+    public void testSnapshotCopyDoesNotShareAddonManagers(@TempDir Path tempDirectory) throws IOException {
         TestRepository repository = new TestRepository(tempDirectory);
         GameInstanceID instanceId = new GameInstanceID("instance");
         GameInstanceID oldJarId = new GameInstanceID("old-jar");
@@ -68,10 +68,10 @@ public final class DefaultGameInstanceTest {
         var originalModManager = original.getModManager();
         var originalResourcePackManager = original.getResourcePackManager();
 
-        TestGameInstance unchanged = original.withNewSnapshot(repository.newSnapshot());
-        assertSame(original.cachedVersion(), unchanged.cachedVersion());
-        assertSame(originalModManager, unchanged.getModManager());
-        assertSame(originalResourcePackManager, unchanged.getResourcePackManager());
+        TestGameInstance sameManifestCopy = original.withNewSnapshot(repository.newSnapshot());
+        assertSame(original.cachedVersion(), sameManifestCopy.cachedVersion());
+        assertNotSame(originalModManager, sameManifestCopy.getModManager());
+        assertNotSame(originalResourcePackManager, sameManifestCopy.getResourcePackManager());
 
         GameInstanceManifest newManifest = oldManifest.withJar(newJarId);
         TestGameInstance updated = original.withManifest(repository.newSnapshot(), newManifest);

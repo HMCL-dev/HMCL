@@ -34,10 +34,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Default snapshot member for an official-layout game instance.
 ///
 /// Index fields (`id`, `manifest`, layout binding, and optional non-conventional file paths) belong
-/// to a [DefaultGameRepositorySnapshot]. Session services such as [#getModManager()] and
-/// [#getResourcePackManager()] are lazy and are shared across copies only while the instance ID
-/// and stored manifest remain unchanged, so ordinary COW publishes preserve caches without leaking
-/// manifest-derived state into an updated instance.
+/// to a [DefaultGameRepositorySnapshot]. Lazy services such as [#getModManager()] and
+/// [#getResourcePackManager()] belong to this snapshot member only: copies produced by
+/// [#withNewSnapshot] / [#withManifest] do not inherit them, so a repository refresh or COW publish
+/// does not keep a long-lived addon-manager session.
 @NotNullByDefault
 public abstract class DefaultGameInstance implements GameInstance {
 
@@ -61,10 +61,10 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// stored as [GameVersionNumber#unknown()] rather than left null.
     protected @Nullable GameVersionNumber version;
 
-    /// Lazily created mod manager shared across snapshot wrappers for this instance id.
+    /// Lazily created mod manager for this snapshot member only.
     private @Nullable ModManager modManager;
 
-    /// Lazily created resource-pack manager shared across snapshot wrappers for this instance id.
+    /// Lazily created resource-pack manager for this snapshot member only.
     private @Nullable ResourcePackManager resourcePackManager;
 
     protected DefaultGameInstance(
@@ -93,15 +93,16 @@ public abstract class DefaultGameInstance implements GameInstance {
         this.manifestFile = manifestFile;
     }
 
-    /// Creates an instance that may reuse session state and storage paths from another snapshot wrapper.
+    /// Creates an instance that may reuse storage paths and version cache from another snapshot wrapper.
     ///
-    /// The manifest path is copied when `id` equals that of `shareSession`. Cached version and manager
-    /// state is copied only when `id` and `manifest` also equal those of `shareSession`.
+    /// The manifest path is copied when `id` equals that of `shareSession`. The cached game version is
+    /// copied only when `id` and `manifest` also equal those of `shareSession`. Addon managers are
+    /// never shared: each snapshot member creates its own managers on first use.
     ///
     /// @param snapshot     the snapshot that will own the copy
     /// @param id           the instance id
     /// @param manifest     the stored instance manifest
-    /// @param shareSession the instance whose session services and caches should be shared
+    /// @param shareSession the instance whose stable path/version state may be reused
     protected DefaultGameInstance(
             DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
@@ -114,8 +115,6 @@ public abstract class DefaultGameInstance implements GameInstance {
                 Objects.equals(id, shareSession.id) ? shareSession.manifestFile : null);
         if (Objects.equals(id, shareSession.id) && Objects.equals(manifest, shareSession.manifest)) {
             this.version = shareSession.version;
-            this.modManager = shareSession.modManager;
-            this.resourcePackManager = shareSession.resourcePackManager;
         }
     }
 
@@ -180,10 +179,11 @@ public abstract class DefaultGameInstance implements GameInstance {
         return version;
     }
 
-    /// Returns the mod manager for this instance.
+    /// Returns the mod manager for this snapshot member.
     ///
-    /// The manager is created on first use and shared across snapshot wrappers whose instance ID
-    /// and stored manifest remain unchanged.
+    /// The manager is created on first use and is not shared with other snapshot wrappers. After a
+    /// repository refresh or COW publish, callers should obtain the manager from the current
+    /// instance again.
     ///
     /// @return the mod manager
     public ModManager getModManager() {
@@ -193,10 +193,11 @@ public abstract class DefaultGameInstance implements GameInstance {
         return modManager;
     }
 
-    /// Returns the resource-pack manager for this instance.
+    /// Returns the resource-pack manager for this snapshot member.
     ///
-    /// The manager is created on first use and shared across snapshot wrappers whose instance ID
-    /// and stored manifest remain unchanged.
+    /// The manager is created on first use and is not shared with other snapshot wrappers. After a
+    /// repository refresh or COW publish, callers should obtain the manager from the current
+    /// instance again.
     ///
     /// @return the resource-pack manager
     public ResourcePackManager getResourcePackManager() {
