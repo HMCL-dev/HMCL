@@ -217,9 +217,13 @@ public abstract class DefaultGameRepository implements GameRepository {
                         .toList();
 
                 for (CompletableFuture<@Nullable DefaultGameInstance> future : futures) {
-                    DefaultGameInstance instance = future.join();
-                    if (instance != null) {
-                        newSnapshot.put(instance);
+                    try {
+                        DefaultGameInstance instance = future.join();
+                        if (instance != null) {
+                            newSnapshot.put(instance);
+                        }
+                    } catch (Exception e) {
+                        LOG.warning("Failed to load instance", e);
                     }
                 }
             } catch (IOException e) {
