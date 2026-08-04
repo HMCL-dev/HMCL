@@ -121,13 +121,13 @@ public abstract class DefaultGameRepository implements GameRepository {
     ///
     /// @return the current snapshot
     protected DefaultGameRepositorySnapshot currentSnapshot() {
-        return (DefaultGameRepositorySnapshot) Objects.requireNonNull(snapshot.get());
+        return (DefaultGameRepositorySnapshot) snapshot.get();
     }
 
     /// {@inheritDoc}
     @Override
     public GameRepositorySnapshot getSnapshot() {
-        return Objects.requireNonNull(snapshot.get());
+        return snapshot.get();
     }
 
     /// Returns a read-only view of the current published snapshot for JavaFX bindings.
@@ -348,10 +348,6 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @return the instance, or `null` when absent from the current snapshot
     protected @Nullable DefaultGameInstance findSnapshotInstance(GameInstanceID id) {
         return currentSnapshot().get(id);
-    }
-
-    public Path getArtifactFile(GameInstanceManifest manifest, Artifact artifact) {
-        return artifact.getPath(getLayout().getLibrariesDirectory());
     }
 
     @Override

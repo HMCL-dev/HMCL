@@ -56,6 +56,17 @@ public interface GameRepositoryLayout {
     /// @return the libraries directory below the base directory
     Path getLibrariesDirectory();
 
+    /// Returns the shared library file for a Maven artifact coordinate.
+    ///
+    /// Unlike [#getLibraryFile], this always resolves under [#getLibrariesDirectory] and does not
+    /// consult instance-local library storage.
+    ///
+    /// @param artifact the Maven artifact coordinate
+    /// @return the artifact file path below the shared libraries directory
+    default Path getArtifactFile(Artifact artifact) {
+        return artifact.getPath(getLibrariesDirectory());
+    }
+
     /// Returns the file used for a library referenced by an instance.
     ///
     /// Libraries with the `local` hint are resolved below the owning instance's private libraries
