@@ -20,12 +20,13 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyLongProperty;
+import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.download.MaintainTask;
-import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
@@ -99,12 +100,20 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// Published snapshot, always updated on the JavaFX application thread when the toolkit is live.
     private final ObjectProperty<DefaultGameRepositorySnapshot> snapshot;
 
+    /// Number of completed full refreshes.
+    private final ReadOnlyLongWrapper refreshCount;
+
+    /// Whether at least one full refresh has completed since the base directory was set.
     private volatile boolean loaded;
 
+    /// Creates a repository rooted at the given directory with an empty initial snapshot.
+    ///
+    /// @param baseDirectory the initial repository base directory
     public DefaultGameRepository(Path baseDirectory) {
         DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
         initial.seal();
         this.snapshot = new SimpleObjectProperty<>(initial);
+        this.refreshCount = new ReadOnlyLongWrapper(this, "refreshCount");
     }
 
     /// Creates the repository layout rooted at the given directory.
@@ -138,6 +147,25 @@ public abstract class DefaultGameRepository implements GameRepository {
         return snapshot;
     }
 
+    /// Returns the number of completed full repository refreshes.
+    ///
+    /// The property is incremented after a refreshed snapshot is published and [#isLoaded()] becomes
+    /// `true`. When the JavaFX toolkit is running, listeners are notified on its application thread.
+    /// Snapshot publications caused by operations such as saving or renaming an instance do not
+    /// increment this property.
+    ///
+    /// @return the read-only refresh-count property
+    public final ReadOnlyLongProperty refreshCountProperty() {
+        return refreshCount.getReadOnlyProperty();
+    }
+
+    /// Returns the number of completed full repository refreshes.
+    ///
+    /// @return the completed refresh count
+    public final long getRefreshCount() {
+        return refreshCount.get();
+    }
+
     /// Seals `newSnapshot` if needed and publishes it as the current repository snapshot.
     ///
     /// When the JavaFX toolkit is running, the property is updated on the JavaFX application thread
@@ -153,27 +181,47 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     /// Sets [#snapshot] on the JavaFX application thread when possible.
     private void setSnapshotOnFxThread(DefaultGameRepositorySnapshot newSnapshot) {
+        runOnFxThreadAndWait(() -> snapshot.set(newSnapshot));
+    }
+
+    /// Runs an action on the JavaFX application thread and waits for its completion.
+    ///
+    /// The action runs on the calling thread when the JavaFX toolkit has not been initialized.
+    /// Interruptions are restored after a queued JavaFX action completes.
+    ///
+    /// @param action the action to run
+    private static void runOnFxThreadAndWait(Runnable action) {
         if (Platform.isFxApplicationThread()) {
-            snapshot.set(newSnapshot);
+            action.run();
             return;
         }
 
+        CountDownLatch completed = new CountDownLatch(1);
         try {
-            CountDownLatch published = new CountDownLatch(1);
             Platform.runLater(() -> {
                 try {
-                    snapshot.set(newSnapshot);
+                    action.run();
                 } finally {
-                    published.countDown();
+                    completed.countDown();
                 }
             });
-            published.await();
         } catch (IllegalStateException ignored) {
             // JavaFX toolkit is not initialized (for example in headless unit tests).
-            snapshot.set(newSnapshot);
-        } catch (InterruptedException e) {
+            action.run();
+            return;
+        }
+
+        boolean interrupted = false;
+        while (true) {
+            try {
+                completed.await();
+                break;
+            } catch (InterruptedException e) {
+                interrupted = true;
+            }
+        }
+        if (interrupted) {
             Thread.currentThread().interrupt();
-            snapshot.set(newSnapshot);
         }
     }
 
@@ -238,7 +286,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         publishSnapshot(newSnapshot);
 
         loaded = true;
-        EventBus.EVENT_BUS.fireEvent(new RefreshedGameInstancesEvent(this));
+        runOnFxThreadAndWait(() -> refreshCount.set(refreshCount.get() + 1));
     }
 
     /// Loads one instance directory without renaming on-disk JSON or jar files.

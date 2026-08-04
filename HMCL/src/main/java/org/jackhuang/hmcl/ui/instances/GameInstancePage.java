@@ -21,14 +21,11 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.event.Event;
 import javafx.event.EventType;
-import javafx.scene.Node;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.EventPriority;
-import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -68,7 +65,15 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             new SimpleObjectProperty<>(this, "instance");
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
-    private GameInstanceID preferredInstanceId = null;
+    /// Refreshes the page context when its repository finishes a full refresh.
+    private final ChangeListener<Number> repositoryRefreshListener =
+            (observable, oldValue, newValue) -> checkSelectedInstance();
+
+    /// Repository currently observed for full-refresh completion.
+    private @Nullable HMCLGameRepository observedRepository;
+
+    /// Last concrete instance displayed by this page.
+    private @Nullable GameInstanceID preferredInstanceId;
 
     public static class WorkingDirChangedEvent extends Event {
         public static final EventType<WorkingDirChangedEvent> EVENT_TYPE = new EventType<>(Event.ANY, "WORKING_DIR_CHANGED");
@@ -100,10 +105,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             }
         });
 
-        listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class).registerWeak(event -> checkSelectedInstance(), EventPriority.HIGHEST));
-
         // Page chrome that depends on the current instance.
         listenerHolder.add(FXUtils.onWeakChange(instance, current -> {
+            observeRepository(current);
             if (current == null) {
                 return;
             }
@@ -114,6 +118,24 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 preferredInstanceId = gameInstance.getId();
             }
         }));
+    }
+
+    /// Observes refresh completion for the repository associated with the current page context.
+    ///
+    /// @param current the current page context, or `null` when the page has no context
+    private void observeRepository(HMCLGameInstance.@Nullable Optional current) {
+        @Nullable HMCLGameRepository repository = current != null ? current.repository() : null;
+        if (repository == observedRepository) {
+            return;
+        }
+
+        if (observedRepository != null) {
+            observedRepository.refreshCountProperty().removeListener(repositoryRefreshListener);
+        }
+        observedRepository = repository;
+        if (repository != null) {
+            repository.refreshCountProperty().addListener(repositoryRefreshListener);
+        }
     }
 
     /// Returns the current instance context for this page and its tabs.

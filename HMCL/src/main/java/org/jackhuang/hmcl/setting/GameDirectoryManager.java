@@ -22,8 +22,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.PortablePath;
@@ -44,7 +42,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.*;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Manages the merged runtime view of local and user game directories.
@@ -149,6 +146,10 @@ public final class GameDirectoryManager {
     private static final ChangeListener<@Nullable HMCLGameInstance> selectedRepositoryInstanceListener =
             (observable, oldValue, newValue) -> selectedInstance.set(newValue);
 
+    /// Handles completion of a full refresh by the selected repository.
+    private static final ChangeListener<Number> selectedRepositoryRefreshListener =
+            (observable, oldValue, newValue) -> onSelectedRepositoryRefreshed();
+
     /// Initializes game directory state from the stores loaded by [SettingsManager].
     ///
     /// This method creates the built-in local and user-home game directories when required, rebuilds
@@ -203,25 +204,29 @@ public final class GameDirectoryManager {
             @Nullable HMCLGameRepository oldRepository = selectedRepository.get();
             if (oldRepository != null) {
                 oldRepository.selectedInstanceProperty().removeListener(selectedRepositoryInstanceListener);
+                oldRepository.refreshCountProperty().removeListener(selectedRepositoryRefreshListener);
             }
             HMCLGameRepository repository = getOrCreateRepository(newValue);
             selectedRepository.set(repository);
             selectedInstance.set(repository.getSelectedInstance());
             repository.selectedInstanceProperty().addListener(selectedRepositoryInstanceListener);
+            repository.refreshCountProperty().addListener(selectedRepositoryRefreshListener);
             repository.refreshAsync().start();
         });
         selectedGameDirectory.set(currentGameDirectory != null ? currentGameDirectory : mergedGameDirectories.get(0));
+    }
 
-        EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class).registerWeak(event -> {
-            runInFX(() -> {
-                @Nullable HMCLGameRepository repository = selectedRepository.get();
-                if (repository != null && repository == event.getSource()) {
-                    repository.refreshSelectedInstance();
-                    for (Consumer<HMCLGameRepository> listener : versionsListeners)
-                        listener.accept(repository);
-                }
-            });
-        });
+    /// Restores selection and notifies consumers after the selected repository finishes refreshing.
+    private static void onSelectedRepositoryRefreshed() {
+        @Nullable HMCLGameRepository repository = selectedRepository.get();
+        if (repository == null) {
+            return;
+        }
+
+        repository.refreshSelectedInstance();
+        for (Consumer<HMCLGameRepository> listener : versionsListeners) {
+            listener.accept(repository);
+        }
     }
 
     /// Creates the built-in game directories only when no game directory exists.

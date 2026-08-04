@@ -21,8 +21,6 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
@@ -77,12 +75,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage mainPage = null;
 
     public RootPage() {
-        EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class)
-                .register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
-
-        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-        if (repository.isLoaded())
-            onRefreshedVersions(GameDirectoryManager.getSelectedRepository());
+        GameDirectoryManager.registerVersionsListener(this::onRefreshedVersions);
 
         getStyleClass().remove("gray-background");
         getLeft().getStyleClass().add("gray-background");
