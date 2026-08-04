@@ -336,9 +336,9 @@ public class JFXRippler extends StackPane {
         }
         rippler.createOverlay();
         if (isAnimationEnabled()) {
-            rippler.overlayRect.setOpacity(1D);
-        } else {
             rippler.overlayRect.inAnimation.play();
+        } else {
+            rippler.overlayRect.setOpacity(1D);
         }
     }
 
