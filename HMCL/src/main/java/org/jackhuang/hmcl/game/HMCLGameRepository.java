@@ -198,11 +198,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return resolveInstance(instanceId).getRunDirectory();
     }
 
-    public Stream<GameInstanceManifest> getDisplayInstanceManifests() {
-        return getInstanceManifests().stream()
-                .filter(v -> !v.isHidden())
-                .sorted(Comparator.comparing((GameInstanceManifest v) -> Lang.requireNonNullElse(v.releaseTime(), Instant.EPOCH))
-                        .thenComparing(v -> VersionNumber.asVersion(v.id().id())));
+    public Stream<HMCLGameInstance> getDisplayInstances() {
+        return getSnapshot().getInstances().stream()
+                .filter(it -> !it.getManifest().isHidden())
+                .sorted(Comparator.comparing((HMCLGameInstance instance) -> Lang.requireNonNullElse(instance.getLaunchManifest().releaseTime(), Instant.EPOCH))
+                        .thenComparing(instance -> VersionNumber.asVersion(instance.getId().id())));
     }
 
     @Override

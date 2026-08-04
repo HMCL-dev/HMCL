@@ -38,10 +38,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
@@ -125,8 +122,8 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
         if (instanceSelection) {
             HMCLGameRepository repository = instance.repository();
-            instances.setAll(repository.getDisplayInstanceManifests()
-                    .map(GameInstanceManifest::id)
+            instances.setAll(repository.getDisplayInstances()
+                    .map(DefaultGameInstance::getId)
                     .toList());
             selectedInstance.set(repository.getSelectedInstance());
         }

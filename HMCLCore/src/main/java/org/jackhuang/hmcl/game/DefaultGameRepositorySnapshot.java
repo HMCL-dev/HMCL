@@ -162,7 +162,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
 
     /// {@inheritDoc}
     @Override
-    public Collection<DefaultGameInstance> getInstances() {
+    public Collection<? extends DefaultGameInstance> getInstances() {
         return instances.values().stream()
                 .filter(instance -> !instance.isProvisional())
                 .toList();

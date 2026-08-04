@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.game;
 
 import org.jetbrains.annotations.NotNullByDefault;
 
+import java.util.Collection;
+
 /// HMCL repository snapshot, parallel to [HMCLGameInstance] in the instance hierarchy.
 @NotNullByDefault
 public class HMCLGameRepositorySnapshot extends DefaultGameRepositorySnapshot {
@@ -48,5 +50,11 @@ public class HMCLGameRepositorySnapshot extends DefaultGameRepositorySnapshot {
     @Override
     public HMCLGameRepositorySnapshot clone() {
         return (HMCLGameRepositorySnapshot) super.clone();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Collection<HMCLGameInstance> getInstances() {
+        return (Collection<HMCLGameInstance>) super.getInstances();
     }
 }
