@@ -155,8 +155,58 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));
     }
 
+    private static boolean isLoaderLibrary(Library library, String libraryId) {
+        if (library == null || library.groupId() == null) return false;
+        String groupId = library.groupId().toLowerCase(java.util.Locale.ROOT);
+        String targetId = libraryId.toLowerCase(java.util.Locale.ROOT);
+        return switch (targetId) {
+            case "forge" -> groupId.startsWith("net.minecraftforge");
+            case "neoforge" -> groupId.startsWith("net.neoforged");
+            case "optifine" -> "optifine".equals(groupId);
+            case "fabric" -> groupId.startsWith("net.fabricmc");
+            case "quilt" -> groupId.startsWith("org.quiltmc");
+            case "legacyfabric" -> groupId.startsWith("net.legacyfabric");
+            case "cleanroom" -> groupId.startsWith("zone.rong");
+            default -> groupId.contains(targetId);
+        };
+    }
+
+    private boolean isLibraryUpToDateAndIntact(GameInstanceManifest baseVersion, RemoteVersion libraryVersion) {
+        if (!repository.hasInstance(baseVersion.id())) {
+            return false;
+        }
+
+        try {
+            GameInstanceManifest existingManifest = repository.getInstanceManifest(baseVersion.id());
+            String currentGameVersion = repository.getGameVersion(existingManifest).orElse(null);
+            if (!java.util.Objects.equals(currentGameVersion, libraryVersion.getGameVersion())) {
+                return false;
+            }
+
+            boolean hasMatchingPatch = existingManifest.getPatches().stream()
+                    .anyMatch(patch -> libraryVersion.getLibraryId().equals(patch.id())
+                            && java.util.Objects.equals(patch.version(), libraryVersion.getSelfVersion()));
+            if (!hasMatchingPatch) {
+                return false;
+            }
+
+            GameInstanceManifest.Resolved resolved = repository.getResolvedInstanceManifest(baseVersion.id());
+            boolean needsRepair = resolved.launchManifest().getLibraries().stream()
+                    .filter(lib -> isLoaderLibrary(lib, libraryVersion.getLibraryId()))
+                    .anyMatch(lib -> GameLibrariesTask.shouldDownloadLibrary(repository, existingManifest, lib, false));
+
+            return !needsRepair;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
     @Override
     public Task<GameInstanceManifest> installLibraryAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion) {
+        if (isLibraryUpToDateAndIntact(baseVersion, libraryVersion)) {
+            return Task.completed(baseVersion);
+        }
+
         AtomicReference<GameInstanceManifest> removedLibraryVersion = new AtomicReference<>();
 
         return removeLibraryAsync(baseVersion, libraryVersion.getLibraryId())
