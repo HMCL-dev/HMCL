@@ -246,9 +246,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// @param libraryId the patch identifier, such as `forge`, `optifine`, or `fabric`
     /// @return the task producing the updated independent manifest
     public Task<GameInstanceManifest> removeLibraryAsync(GameInstanceManifest manifest, String libraryId) {
-        // MaintainTask requires version that does not inherits from any version.
-        // If we want to remove a library in dependent version, we should keep the dependents not changed
-        // So resolving this game version to preserve all information in this version.json is necessary.
+        // Library removal operates on a standalone manifest so inherited launch metadata is retained.
         return Task.supplyAsync(() -> {
             GameInstanceManifest independentVersion = repository.resolve(manifest).standaloneManifest();
             String gameVersion = repository.getGameVersion(independentVersion).orElse(null);

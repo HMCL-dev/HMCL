@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameRepository;
@@ -136,6 +135,7 @@ public final class GameLibrariesTask extends Task<Void> {
         }
     }
 
+    /// {@inheritDoc}
     @Override
     public void execute() throws IOException {
         int progress = 0;
@@ -177,12 +177,25 @@ public final class GameLibrariesTask extends Task<Void> {
                         throw new IOException("Cannot fix optifine", e);
                     }
                 }
-            } else if ("org.jackhuang.hmcl".equals(library.groupId()) && "mmc-bootstrap".equals(library.artifactId())) {
+            } else if ("org.jackhuang.hmcl".equals(library.groupId())
+                    && "mmc-bootstrap".equals(library.artifactId())) {
                 if (!Files.exists(file)) {
-                    try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
+                    try (InputStream input = Objects.requireNonNull(
+                            GameLibrariesTask.class.getResourceAsStream(
+                                    "/assets/game/HMCLMultiMCBootstrap-1.0.jar"),
+                            "Bundled HMCLMultiMCBootstrap is missing.")) {
                         Files.createDirectories(file.getParent());
-                        Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), file, StandardCopyOption.REPLACE_EXISTING);
+                        Files.copy(input, file, StandardCopyOption.REPLACE_EXISTING);
                     }
+                }
+            } else if ("org.jackhuang.hmcl".equals(library.groupId())
+                    && "transformer-discovery-service".equals(library.artifactId())) {
+                try (InputStream input = Objects.requireNonNull(
+                        GameLibrariesTask.class.getResourceAsStream(
+                                "/assets/game/HMCLTransformerDiscoveryService-1.0.jar"),
+                        "Bundled HMCLTransformerDiscoveryService is missing.")) {
+                    Files.createDirectories(file.getParent());
+                    Files.copy(input, file, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
 

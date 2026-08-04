@@ -63,7 +63,7 @@ public interface GameRepository {
     /// @return the current repository snapshot
     GameRepositorySnapshot getSnapshot();
 
-    /// Resolves inheritance into launch and standalone manifest views.
+    /// Resolves inheritance into a normalized launch view and a patch-preserving standalone view.
     ///
     /// @param manifest the manifest to resolve
     /// @return the resolved manifest view

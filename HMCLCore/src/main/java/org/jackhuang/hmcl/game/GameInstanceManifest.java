@@ -65,8 +65,9 @@ public record GameInstanceManifest(
 
     /// Resolved manifest views with inheritance folded.
     ///
-    /// @param launchManifest     the final manifest data used by launch-time consumers
-    /// @param standaloneManifest the standalone manifest data with pending patches preserved
+    /// @param unresolved         the stored manifest supplied to resolution
+    /// @param launchManifest     the normalized final manifest data used by launch-time consumers
+    /// @param standaloneManifest the structural standalone manifest with pending patches preserved
     @NotNullByDefault
     public record Resolved(GameInstanceManifest unresolved,
                            GameInstanceManifest launchManifest,
@@ -338,13 +339,6 @@ public record GameInstanceManifest(
     /// @return whether the manifest is a root manifest
     public boolean isRoot() {
         return root != null && root;
-    }
-
-    /// Returns whether this manifest is already a standalone view.
-    ///
-    /// @return whether this manifest has no parent
-    public boolean isResolvedPreservingPatches() {
-        return inheritsFrom == null;
     }
 
     /// Returns the pending patches.

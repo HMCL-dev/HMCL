@@ -233,23 +233,28 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         return newSnapshot;
     }
 
-    /// Resolves official-layout inheritance and patches into launch and standalone views.
+    /// Resolves official-layout inheritance and patches, then normalizes the final launch view.
     ///
     /// @param manifest the manifest to resolve
     /// @return the resolved manifest views
     /// @throws NoSuchGameInstanceException if an inherited parent is missing from this snapshot
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        return resolve(manifest, new HashSet<>());
+        GameInstanceManifest.Resolved resolved = resolveStructure(manifest, new HashSet<>());
+        GameInstanceManifest normalizedLaunchManifest =
+                LaunchManifestNormalizer.normalize(resolved.launchManifest());
+        return new GameInstanceManifest.Resolved(
+                resolved.unresolved(), normalizedLaunchManifest, resolved.standaloneManifest());
     }
 
-    /// Resolves official-layout inheritance and patches into launch and standalone views.
+    /// Resolves official-layout inheritance and patches without launch compatibility normalization.
     ///
     /// @param manifest      the manifest to resolve
     /// @param resolvedSoFar instance ids already visited in the inheritance chain
     /// @return the resolved manifest views
     /// @throws NoSuchGameInstanceException if an inherited parent is missing from this snapshot
-    public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,
-                                                 Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
+    private GameInstanceManifest.Resolved resolveStructure(
+            GameInstanceManifest manifest,
+            Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
         GameInstanceManifest launchManifest;
         GameInstanceManifest standaloneManifest = manifest.isRoot()
                 ? manifest
@@ -280,7 +285,8 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
                 }
 
                 // It is supposed to auto-install a version in getVersion.
-                GameInstanceManifest.Resolved parentResolved = resolve(parentInstance.getManifest(), resolvedSoFar);
+                GameInstanceManifest.Resolved parentResolved =
+                        resolveStructure(parentInstance.getManifest(), resolvedSoFar);
                 launchManifest = manifest.merge(parentResolved.launchManifest());
                 standaloneManifest = addPatches(
                         addPatches(parentResolved.standaloneManifest(), Collections.singleton(manifest.toPatch())),

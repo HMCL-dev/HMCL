@@ -24,7 +24,6 @@ import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -567,25 +566,28 @@ public abstract class DefaultGameRepository implements GameRepository {
         return getLayout().getInstanceJson(instanceId);
     }
 
+    /// Saves a stored manifest without applying derived launch-view normalization.
+    ///
+    /// The returned task writes the manifest and publishes a snapshot containing exactly that
+    /// persistent representation, including its inheritance and pending patches.
+    ///
+    /// @param instanceManifest the persistent manifest to save
+    /// @return the task that saves and publishes the manifest
     public Task<GameInstanceManifest> saveAsync(GameInstanceManifest instanceManifest) {
         return Task.supplyAsync(() -> {
-            GameInstanceManifest savedManifest = instanceManifest.isResolvedPreservingPatches()
-                    ? MaintainTask.maintainPreservingPatches(this, instanceManifest)
-                    : instanceManifest;
-
-            Path json = getInstanceJson(savedManifest.id()).toAbsolutePath();
+            Path json = getInstanceJson(instanceManifest.id()).toAbsolutePath();
             Files.createDirectories(json.getParent());
-            JsonUtils.writeToJsonFile(json, savedManifest);
+            JsonUtils.writeToJsonFile(json, instanceManifest);
 
             DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
-            DefaultGameInstance existing = newSnapshot.get(savedManifest.id());
+            DefaultGameInstance existing = newSnapshot.get(instanceManifest.id());
             if (existing != null) {
-                newSnapshot.put(existing.withManifest(newSnapshot, savedManifest));
+                newSnapshot.put(existing.withManifest(newSnapshot, instanceManifest));
             } else {
-                newSnapshot.put(createInstance(newSnapshot, savedManifest.id(), savedManifest));
+                newSnapshot.put(createInstance(newSnapshot, instanceManifest.id(), instanceManifest));
             }
             publishSnapshot(newSnapshot);
-            return savedManifest;
+            return instanceManifest;
         });
     }
 

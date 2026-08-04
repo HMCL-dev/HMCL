@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.modpack.multimc;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -35,6 +34,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -230,10 +230,11 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         return dependents;
     }
 
+    /// {@inheritDoc}
     @Override
     public void execute() throws Exception {
         // Stage #3: Build Json-Patch artifact.
-        MultiMCInstancePatch.ResolvedInstance artifact = null;
+        @Nullable MultiMCInstancePatch.ResolvedInstance artifact = null;
         for (int i = dependents.size() - 1; i >= 0; i--) {
             Task<?> task = dependents.get(i);
             if (task instanceof MMCInstancePatchesAssembleTask) {
@@ -264,14 +265,17 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                 }
             }
 
-            try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
+            try (InputStream input = Objects.requireNonNull(
+                    MultiMCModpackInstallTask.class.getResourceAsStream(
+                            "/assets/game/HMCLMultiMCBootstrap-1.0.jar"),
+                    "Bundled HMCLMultiMCBootstrap is missing.")) {
                 Path libraryPath = repository.getLayout().getLibraryFile(artifact.getManifest().id(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
 
                 Files.createDirectories(libraryPath.getParent());
-                Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), libraryPath, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(input, libraryPath, StandardCopyOption.REPLACE_EXISTING);
             }
 
-            String iconKey = this.manifest.getIconKey();
+            @Nullable String iconKey = this.manifest.getIconKey();
             if (iconKey != null) {
                 Path iconFile = root.resolve(iconKey + ".png");
                 if (Files.exists(iconFile)) {

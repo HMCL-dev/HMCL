@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.download.MaintainTask;
+import org.jackhuang.hmcl.download.LaunchManifestPreparation;
 import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -155,6 +155,7 @@ public final class LauncherHelper {
         launch();
     }
 
+    /// Builds and executes the launch pipeline for the captured game instance.
     private void launch0() {
         // https://github.com/HMCL-dev/HMCL/pull/4121
         PROCESSES.removeIf(it -> it.get() == null);
@@ -162,7 +163,9 @@ public final class LauncherHelper {
         HMCLGameRepository repository = repository();
         GameInstanceID selectedInstanceId = instanceId();
         DefaultDependencyManager dependencyManager = repository.getDependency();
-        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(MaintainTask.maintain(repository, gameInstance.getResolvedManifest().launchManifest()));
+        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(
+                LaunchManifestPreparation.prepare(
+                        repository, gameInstance.getResolvedManifest().launchManifest()));
         Optional<String> gameVersion = repository.getGameVersion(version.get());
         boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);

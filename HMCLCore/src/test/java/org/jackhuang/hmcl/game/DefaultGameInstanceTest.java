@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LaunchManifestPreparation;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
@@ -54,6 +56,110 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// Tests snapshot-bound behavior of [DefaultGameInstance].
 @NotNullByDefault
 public final class DefaultGameInstanceTest {
+
+    /// Resolve normalizes only the derived launch view and leaves the stored patch structure intact.
+    @Test
+    public void testResolveNormalizesLaunchWithoutChangingStoredPatches(@TempDir Path tempDirectory) {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        Library oldLibrary = new Library(new Artifact("example", "library", "1.0"));
+        Library newLibrary = new Library(new Artifact("example", "library", "2.0"));
+        List<GameInstancePatch> patches = List.of(new GameInstancePatch(
+                "loader", null, 0, null, null, List.of(oldLibrary, newLibrary)));
+        GameInstanceManifest storedManifest = new GameInstanceManifest(instanceId)
+                .withRoot(true)
+                .withPatches(patches);
+        TestGameInstance instance = repository.publish(instanceId, storedManifest);
+
+        GameInstanceManifest.Resolved resolved = instance.getResolvedManifest();
+
+        assertEquals(1, resolved.launchManifest().getLibraries().size());
+        assertEquals("2.0", resolved.launchManifest().getLibraries().getFirst().version());
+        assertEquals(patches, resolved.standaloneManifest().getPatches());
+        assertEquals(storedManifest, instance.getManifest());
+        assertEquals(
+                resolved.launchManifest(),
+                LaunchManifestNormalizer.normalize(resolved.launchManifest()));
+    }
+
+    /// ModLauncher normalization adds support metadata without materializing bundled files.
+    @Test
+    public void testModLauncherNormalizationDoesNotWriteBundledLibraries(@TempDir Path tempDirectory) {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        GameInstanceManifest manifest = new GameInstanceManifest(instanceId)
+                .withMainClass(LibraryAnalyzer.MOD_LAUNCHER_MAIN)
+                .withLibraries(List.of(
+                        new Library(new Artifact("net.minecraftforge", "forge", "1.0")),
+                        new Library(new Artifact("optifine", "OptiFine", "1.0"))));
+        TestGameInstance instance = repository.publish(instanceId, manifest);
+        GameInstanceManifest launchManifest = instance.getResolvedManifest().launchManifest();
+        Library transformerService = launchManifest.getLibraries().stream()
+                .filter(library -> library.is(
+                        "org.jackhuang.hmcl", "transformer-discovery-service"))
+                .findAny()
+                .orElseThrow();
+        Path transformerFile = repository.getLayout().getLibraryFile(instanceId, transformerService);
+
+        assertFalse(Files.exists(transformerFile));
+        assertEquals(launchManifest, LaunchManifestNormalizer.normalize(launchManifest));
+    }
+
+    /// Launch preparation selects an installed OptiFine installer without changing the resolved view.
+    @Test
+    public void testLaunchPreparationSelectsInstalledOptiFine(@TempDir Path tempDirectory)
+            throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        GameInstanceManifest manifest = new GameInstanceManifest(instanceId)
+                .withMainClass(LibraryAnalyzer.LAUNCH_WRAPPER_MAIN)
+                .withLibraries(List.of(
+                        new Library(new Artifact("net.minecraftforge", "forge", "1.0")),
+                        new Library(new Artifact("optifine", "OptiFine", "1.0")),
+                        new Library(new Artifact("optifine", "launchwrapper-of", "2.0"))));
+        GameInstanceManifest launchManifest = repository.publish(instanceId, manifest)
+                .getResolvedManifest()
+                .launchManifest();
+        Library installer = new Library(new Artifact("optifine", "OptiFine", "1.0", "installer"));
+        Path installerFile = repository.getLayout().getLibraryFile(instanceId, installer);
+        Files.createDirectories(installerFile.getParent());
+        Files.write(installerFile, new byte[]{1});
+
+        GameInstanceManifest prepared = LaunchManifestPreparation.prepare(repository, launchManifest);
+
+        assertTrue(prepared.getLibraries().stream()
+                .anyMatch(library -> library.is("optifine", "OptiFine")
+                        && "installer".equals(library.classifier())));
+        assertFalse(prepared.getLibraries().stream()
+                .anyMatch(library -> library.is("optifine", "launchwrapper-of")));
+        assertTrue(launchManifest.getLibraries().stream()
+                .anyMatch(library -> library.is("optifine", "OptiFine")
+                        && library.classifier() == null));
+    }
+
+    /// Saving a manifest preserves its root flag and pending patches without baking in normalization.
+    @Test
+    public void testSavePreservesManifestPatchStructure(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        List<GameInstancePatch> patches = List.of(new GameInstancePatch(
+                "loader",
+                null,
+                0,
+                null,
+                null,
+                List.of(new Library(new Artifact("example", "library", "1.0")))));
+        GameInstanceManifest manifest = new GameInstanceManifest(instanceId)
+                .withRoot(true)
+                .withPatches(patches);
+
+        repository.saveAsync(manifest).run();
+
+        GameInstanceManifest savedManifest = repository.getInstance(instanceId).getManifest();
+        assertTrue(savedManifest.isRoot());
+        assertEquals(patches, savedManifest.getPatches());
+        assertTrue(savedManifest.getLibraries().isEmpty());
+    }
 
     /// Asset and modpack paths are resolved directly from the owning instance.
     @Test
