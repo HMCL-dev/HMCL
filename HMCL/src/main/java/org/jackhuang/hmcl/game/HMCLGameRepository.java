@@ -677,8 +677,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public boolean instanceIdConflicts(GameInstanceID id) {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             // on Windows, filenames are case-insensitive
-            for (GameInstanceManifest manifest : getInstanceManifests()) {
-                if (manifest.id().toString().equalsIgnoreCase(id.toString())) {
+            for (HMCLGameInstance instance : getSnapshot().getInstances()) {
+                if (instance.getId().toString().equalsIgnoreCase(id.toString())) {
                     return true;
                 }
             }
