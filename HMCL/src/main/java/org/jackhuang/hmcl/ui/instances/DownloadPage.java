@@ -285,7 +285,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                         for (ModLoaderType loader : modVersion.loaders()) {
                                             if (targetLoaders.contains(loader)) {
                                                 list.getContent().addAll(
-                                                        ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
+                                                        ComponentList.createComponentListTitle(i18n("addon.download.recommend", gameVersion)),
                                                         new AddonItem(control.addon, modVersion, control)
                                                 );
                                                 break resolve;
@@ -293,7 +293,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                         }
                                     } else {
                                         list.getContent().addAll(
-                                                ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
+                                                ComponentList.createComponentListTitle(i18n("addon.download.recommend", gameVersion)),
                                                 new AddonItem(control.addon, modVersion, control)
                                         );
                                         break;
