@@ -293,7 +293,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         try {
             manifest = readInstanceManifest(json);
         } catch (Exception e) {
-            LOG.warning("Malformed version json " + id, e);
+            LOG.warning("Malformed instance json " + id, e);
             if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id.id())) != Event.Result.ALLOW) {
                 return null;
             }
@@ -301,7 +301,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             try {
                 manifest = readInstanceManifest(json);
             } catch (Exception e2) {
-                LOG.error("User corrected version json is still malformed", e2);
+                LOG.error("User corrected instance json is still malformed", e2);
                 return null;
             }
         }
