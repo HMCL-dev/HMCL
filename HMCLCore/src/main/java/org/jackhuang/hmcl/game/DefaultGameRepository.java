@@ -223,7 +223,7 @@ public abstract class DefaultGameRepository implements GameRepository {
                     }
                 }
             } catch (IOException e) {
-                LOG.warning("Failed to load versions from " + instancesDir, e);
+                LOG.warning("Failed to load instance from " + instancesDir, e);
             }
         }
 
@@ -310,9 +310,9 @@ public abstract class DefaultGameRepository implements GameRepository {
     }
 
     private static void moveInstanceFiles(Path baseDirectory, GameInstanceID from, GameInstanceID to) throws IOException {
-        Path versionsDir = baseDirectory.resolve("versions");
-        Path fromDir = versionsDir.resolve(from.id());
-        Path toDir = versionsDir.resolve(to.id());
+        Path instancesDir = baseDirectory.resolve("versions");
+        Path fromDir = instancesDir.resolve(from.id());
+        Path toDir = instancesDir.resolve(to.id());
         Files.move(fromDir, toDir);
 
         Path fromJson = toDir.resolve(from + ".json");
@@ -369,10 +369,6 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public boolean renameInstance(GameInstanceID from, GameInstanceID to) {
-        if (EventBus.EVENT_BUS.fireEvent(new RenameInstanceEvent(this, from, to)) == Event.Result.DENY) {
-            return false;
-        }
-
         try {
             DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
             DefaultGameInstance fromHolder = newSnapshot.get(from);
@@ -422,10 +418,6 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @return `false` if removal is denied or the instance directory cannot be staged; `true` if
     ///         the directory is absent or staging succeeds
     public boolean removeInstanceFromDisk(GameInstanceID id) {
-        if (EventBus.EVENT_BUS.fireEvent(new RemoveInstanceEvent(this, id)) == Event.Result.DENY) {
-            return false;
-        }
-
         if (getSnapshot().get(id) != null) {
             DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
             newSnapshot.remove(id);
