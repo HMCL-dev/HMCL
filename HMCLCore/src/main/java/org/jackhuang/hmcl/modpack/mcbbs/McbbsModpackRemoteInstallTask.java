@@ -68,8 +68,8 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
-                if (!MODPACK_TYPE.equals(config.getType()))
-                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Mcbbs modpack. Cannot update this instance.");
+                if (config.getType() != null && !McbbsModpackProvider.INSTANCE.getName().equals(config.getType()))
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a MCBBS modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }

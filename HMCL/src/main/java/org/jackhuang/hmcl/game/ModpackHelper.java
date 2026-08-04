@@ -236,19 +236,23 @@ public final class ModpackHelper {
     }
 
     public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, Charset charset, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
-        switch (configuration.getType()) {
-            case ServerModpackRemoteInstallTask.MODPACK_TYPE:
-                return new ModpackUpdateTask(repository, instanceId, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId))
-                        .thenComposeAsync(repository.refreshAsync())
-                        .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
-            default:
-                throw new UnsupportedModpackException();
+        String type = configuration.getType();
+        if (type == null || ServerModpackRemoteInstallTask.MODPACK_TYPE.equals(type)) {
+            return new ModpackUpdateTask(repository, instanceId, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId))
+                    .thenComposeAsync(repository.refreshAsync())
+                    .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
+        } else {
+            throw new UnsupportedModpackException();
         }
     }
 
     public static Task<?> getUpdateTask(HMCLGameRepository repository, Path zipFile, Charset charset, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
-        ModpackProvider provider = getProviderByType(configuration.getType());
+        String type = configuration.getType();
+        if (type == null) {
+            type = modpack.getManifest().getProvider().getName();
+        }
+        ModpackProvider provider = getProviderByType(type);
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
