@@ -41,13 +41,18 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
 public abstract class DefaultGameRepository implements GameRepository {
+
+    private static final ExecutorService POOL = Lang.threadPool("DefaultGameRepository", true, 4, 10, TimeUnit.SECONDS);
 
     private static final GameInstanceManifest CLASSIC_MANIFEST = new GameInstanceManifest(
             new GameInstanceID("Classic"),
@@ -194,85 +199,31 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     protected void refreshImpl() {
         DefaultGameRepositorySnapshot newSnapshot = createSnapshot(getSnapshot().getLayout());
+        DefaultGameRepositoryLayout layout = newSnapshot.getLayout();
 
-        if (hasClassicVersion(newSnapshot.getLayout().getBaseDirectory())) {
+        if (hasClassicVersion(layout.getBaseDirectory())) {
             GameInstanceID id = CLASSIC_MANIFEST.id();
             newSnapshot.put(createInstance(newSnapshot, id, CLASSIC_MANIFEST));
         }
 
-        Path versionsDir = newSnapshot.getLayout().getBaseDirectory().resolve("versions");
-        if (Files.isDirectory(versionsDir)) {
-            try (Stream<Path> stream = Files.list(versionsDir)) {
-                stream.parallel().filter(Files::isDirectory).flatMap(dir -> {
-                    GameInstanceID id;
-                    try {
-                        id = new GameInstanceID(FileUtils.getName(dir));
-                    } catch (IllegalArgumentException e) {
-                        LOG.warning("Ignoring instance directory with invalid id " + dir, e);
-                        return Stream.empty();
+        Path instancesDir = layout.getBaseDirectory().resolve("versions");
+        if (Files.isDirectory(instancesDir)) {
+            try (Stream<Path> stream = Files.list(instancesDir)) {
+                List<CompletableFuture<@Nullable DefaultGameInstance>> futures = stream
+                        .filter(Files::isDirectory)
+                        .map(dir -> CompletableFuture.supplyAsync(
+                                Lang.wrap(() -> loadInstanceDirectory(newSnapshot, dir)),
+                                POOL))
+                        .toList();
+
+                for (CompletableFuture<@Nullable DefaultGameInstance> future : futures) {
+                    DefaultGameInstance instance = future.join();
+                    if (instance != null) {
+                        newSnapshot.put(instance);
                     }
-
-                    Path json = dir.resolve(id + ".json");
-
-                    if (Files.notExists(json)) {
-                        List<Path> jsons = FileUtils.listFilesByExtension(dir, "json");
-                        if (jsons.size() == 1) {
-                            LOG.info("Renaming json file " + jsons.get(0) + " to " + json);
-
-                            try {
-                                Files.move(jsons.get(0), json);
-                            } catch (IOException e) {
-                                LOG.warning("Cannot rename json file, ignoring version " + id, e);
-                                return Stream.empty();
-                            }
-
-                            Path jar = dir.resolve(FileUtils.getNameWithoutExtension(jsons.get(0)) + ".jar");
-                            if (Files.exists(jar)) {
-                                try {
-                                    Files.move(jar, dir.resolve(id + ".jar"));
-                                } catch (IOException e) {
-                                    LOG.warning("Cannot rename jar file, ignoring version " + id, e);
-                                    return Stream.empty();
-                                }
-                            }
-                        } else {
-                            LOG.info("No available json file found, ignoring version " + id);
-                            return Stream.empty();
-                        }
-                    }
-
-                    GameInstanceManifest manifest;
-                    try {
-                        manifest = readInstanceManifest(json);
-                    } catch (Exception e) {
-                        LOG.warning("Malformed version json " + id, e);
-                        if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id.id())) != Event.Result.ALLOW) {
-                            return Stream.empty();
-                        }
-
-                        try {
-                            manifest = readInstanceManifest(json);
-                        } catch (Exception e2) {
-                            LOG.error("User corrected version json is still malformed", e2);
-                            return Stream.empty();
-                        }
-                    }
-
-                    if (!id.equals(manifest.id())) {
-                        try {
-                            moveInstanceFiles(newSnapshot.getLayout().getBaseDirectory(), id, manifest.id());
-                        } catch (IOException e) {
-                            LOG.warning("Ignoring instance " + manifest.id()
-                                    + " because instance id does not match folder name " + id
-                                    + ", and we cannot correct it.", e);
-                            return Stream.empty();
-                        }
-                    }
-
-                    return Stream.of(manifest);
-                }).forEachOrdered(it -> newSnapshot.put(createInstance(newSnapshot, it.id(), it)));
+                }
             } catch (IOException e) {
-                LOG.warning("Failed to load versions from " + versionsDir, e);
+                LOG.warning("Failed to load versions from " + instancesDir, e);
             }
         }
 
@@ -291,6 +242,86 @@ public abstract class DefaultGameRepository implements GameRepository {
         newSnapshot.clear();
         newSnapshot.putAll(loadedInstances);
         publishSnapshot(newSnapshot);
+    }
+
+    /// Loads one instance directory without renaming on-disk JSON or jar files.
+    ///
+    /// When the conventional `versions/<id>/<id>.json` is missing but the directory contains exactly
+    /// one JSON file, that file and its sibling jar (same base name) are recorded on the instance.
+    ///
+    /// @param snapshot the unsealed snapshot that will own the instance
+    /// @param dir      the instance directory under `versions/`
+    /// @return the loaded instance, or `null` when the directory should be ignored
+    private @Nullable DefaultGameInstance loadInstanceDirectory(DefaultGameRepositorySnapshot snapshot, Path dir) {
+        GameInstanceID id;
+        try {
+            id = new GameInstanceID(FileUtils.getName(dir));
+        } catch (IllegalArgumentException e) {
+            LOG.warning("Ignoring instance directory with invalid id " + dir, e);
+            return null;
+        }
+
+        DefaultGameRepositoryLayout layout = snapshot.getLayout();
+        Path conventionalJson = layout.getInstanceJson(id);
+        Path conventionalJar = layout.getInstanceJarFile(id);
+
+        Path json;
+        @Nullable Path jar;
+        @Nullable Path manifestFileOverride = null;
+        @Nullable Path jarFileOverride = null;
+
+        if (Files.isRegularFile(conventionalJson)) {
+            json = conventionalJson;
+            jar = Files.isRegularFile(conventionalJar) ? conventionalJar : null;
+        } else {
+            List<Path> jsons = FileUtils.listFilesByExtension(dir, "json");
+            if (jsons.size() != 1) {
+                LOG.info("No available json file found, ignoring instance " + id);
+                return null;
+            }
+
+            json = jsons.get(0);
+            Path siblingJar = dir.resolve(FileUtils.getNameWithoutExtension(json) + ".jar");
+            jar = Files.isRegularFile(siblingJar) ? siblingJar : null;
+
+            if (!json.equals(conventionalJson)) {
+                manifestFileOverride = json;
+            }
+            if (jar != null && !jar.equals(conventionalJar)) {
+                jarFileOverride = jar;
+            } else if (jar == null && !siblingJar.equals(conventionalJar)) {
+                // Remember the expected sibling path even when the jar is not present yet.
+                jarFileOverride = siblingJar;
+            }
+
+            LOG.info("Using non-conventional instance files for " + id
+                    + ": manifest=" + json
+                    + (jar != null ? ", jar=" + jar : ""));
+        }
+
+        GameInstanceManifest manifest;
+        try {
+            manifest = readInstanceManifest(json);
+        } catch (Exception e) {
+            LOG.warning("Malformed version json " + id, e);
+            if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id.id())) != Event.Result.ALLOW) {
+                return null;
+            }
+
+            try {
+                manifest = readInstanceManifest(json);
+            } catch (Exception e2) {
+                LOG.error("User corrected version json is still malformed", e2);
+                return null;
+            }
+        }
+
+        // Directory name is the repository identity; keep the on-disk files untouched.
+        if (!id.equals(manifest.id())) {
+            manifest = manifest.withId(id);
+        }
+
+        return createInstance(snapshot, id, manifest, manifestFileOverride, jarFileOverride);
     }
 
     private static GameInstanceManifest readInstanceManifest(Path json) throws IOException, JsonParseException {
@@ -352,6 +383,10 @@ public abstract class DefaultGameRepository implements GameRepository {
     public Path getInstanceJar(GameInstanceManifest manifest) {
         GameInstanceManifest resolved = this.resolve(manifest).launchManifest();
         GameInstanceID id = Optional.ofNullable(resolved.jar()).orElse(resolved.id());
+        DefaultGameInstance instance = findSnapshotInstance(id);
+        if (instance != null) {
+            return instance.getOwnJarFile();
+        }
         return getLayout().getInstanceJarFile(id);
     }
 
@@ -492,11 +527,18 @@ public abstract class DefaultGameRepository implements GameRepository {
         }
     }
 
-    /// Returns the official version manifest file for an instance.
+    /// Returns the stored instance manifest file for an instance.
+    ///
+    /// When the instance is loaded with a non-conventional path, that path is returned; otherwise
+    /// the layout default `versions/<id>/<id>.json` is used.
     ///
     /// @param instanceId the instance id
-    /// @return the path `versions/<id>/<id>.json` below the base directory
+    /// @return the manifest JSON path
     public Path getInstanceJson(GameInstanceID instanceId) {
+        DefaultGameInstance instance = findSnapshotInstance(instanceId);
+        if (instance != null) {
+            return instance.getManifestFile();
+        }
         return getLayout().getInstanceJson(instanceId);
     }
 
@@ -649,6 +691,32 @@ public abstract class DefaultGameRepository implements GameRepository {
         return new DefaultGameRepositorySnapshot(this, layout);
     }
 
-    protected abstract DefaultGameInstance createInstance(DefaultGameRepositorySnapshot snapshot, GameInstanceID id, GameInstanceManifest manifest);
+    /// Creates a conventional instance with layout-default storage paths.
+    ///
+    /// @param snapshot the snapshot that will own the instance
+    /// @param id       the instance id
+    /// @param manifest the stored instance manifest
+    /// @return the new instance
+    protected final DefaultGameInstance createInstance(
+            DefaultGameRepositorySnapshot snapshot,
+            GameInstanceID id,
+            GameInstanceManifest manifest) {
+        return createInstance(snapshot, id, manifest, null, null);
+    }
+
+    /// Creates an instance, optionally recording non-conventional storage paths.
+    ///
+    /// @param snapshot     the snapshot that will own the instance
+    /// @param id           the instance id
+    /// @param manifest     the stored instance manifest
+    /// @param manifestFile the actual manifest JSON path, or `null` for the layout default
+    /// @param jarFile      the actual primary jar path, or `null` for the layout default
+    /// @return the new instance
+    protected abstract DefaultGameInstance createInstance(
+            DefaultGameRepositorySnapshot snapshot,
+            GameInstanceID id,
+            GameInstanceManifest manifest,
+            @Nullable Path manifestFile,
+            @Nullable Path jarFile);
 
 }

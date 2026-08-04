@@ -61,10 +61,20 @@ public final class GameInstanceManifestTest {
             }
 
             @Override
-            protected DefaultGameInstance createInstance(DefaultGameRepositorySnapshot snapshot, GameInstanceID id, GameInstanceManifest manifest) {
+            protected DefaultGameInstance createInstance(
+                    DefaultGameRepositorySnapshot snapshot,
+                    GameInstanceID id,
+                    GameInstanceManifest manifest,
+                    @Nullable Path manifestFile,
+                    @Nullable Path jarFile) {
                 final class MyGameInstance extends DefaultGameInstance {
-                    MyGameInstance(DefaultGameRepositorySnapshot snapshot, GameInstanceID id, GameInstanceManifest manifest) {
-                        super(snapshot, id, manifest);
+                    MyGameInstance(
+                            DefaultGameRepositorySnapshot snapshot,
+                            GameInstanceID id,
+                            GameInstanceManifest manifest,
+                            @Nullable Path manifestFile,
+                            @Nullable Path jarFile) {
+                        super(snapshot, id, manifest, manifestFile, jarFile);
                     }
 
                     MyGameInstance(
@@ -86,7 +96,7 @@ public final class GameInstanceManifestTest {
                     }
                 }
 
-                return new MyGameInstance(snapshot, id, manifest);
+                return new MyGameInstance(snapshot, id, manifest, manifestFile, jarFile);
             }
         }.resolve(manifest);
 

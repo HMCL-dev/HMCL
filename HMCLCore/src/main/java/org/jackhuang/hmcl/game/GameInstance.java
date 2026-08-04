@@ -66,6 +66,11 @@ public interface GameInstance {
     /// @return the instance root directory
     Path getInstanceRoot();
 
+    /// Returns the stored instance manifest file for this instance.
+    ///
+    /// @return the manifest JSON path
+    Path getManifestFile();
+
     /// Returns the primary client jar selected by the resolved launch manifest.
     ///
     /// @return the primary client jar path

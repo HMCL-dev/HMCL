@@ -99,6 +99,30 @@ public final class DefaultGameInstanceTest {
         assertEquals(Optional.of("1.21.1"), repository.getGameVersion(requestedManifest));
     }
 
+    /// Non-conventional JSON/jar basenames are kept on disk and recorded on the instance.
+    @Test
+    public void testRefreshRecordsNonConventionalStoragePaths(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID folderId = new GameInstanceID("MyInstance");
+        Path instanceDir = repository.getLayout().getInstanceRoot(folderId);
+        Files.createDirectories(instanceDir);
+
+        Path json = instanceDir.resolve("1.20.1.json");
+        Path jar = instanceDir.resolve("1.20.1.jar");
+        Files.writeString(json, "{\"id\":\"1.20.1\",\"mainClass\":\"net.minecraft.client.main.Main\",\"libraries\":[]}");
+        writeVersionJar(jar, "1.20.1");
+
+        repository.refresh();
+
+        DefaultGameInstance instance = repository.getInstance(folderId);
+        assertEquals(json, instance.getManifestFile());
+        assertEquals(jar, instance.getInstanceJarFile());
+        assertEquals(GameVersionNumber.asGameVersion("1.20.1"), instance.getVersion());
+        assertEquals(folderId, instance.getId());
+        assertEquals(folderId, instance.getManifest().id());
+        assertEquals(json, repository.getInstanceJson(folderId));
+    }
+
     /// Writes a minimal jar containing the version metadata consumed by [GameVersion].
     ///
     /// @param jar     the jar path
@@ -134,8 +158,10 @@ public final class DefaultGameInstanceTest {
         protected TestGameInstance createInstance(
                 DefaultGameRepositorySnapshot snapshot,
                 GameInstanceID id,
-                GameInstanceManifest manifest) {
-            return new TestGameInstance(snapshot, id, manifest);
+                GameInstanceManifest manifest,
+                @Nullable Path manifestFile,
+                @Nullable Path jarFile) {
+            return new TestGameInstance(snapshot, id, manifest, manifestFile, jarFile);
         }
 
         /// Publishes a snapshot containing one test instance.
@@ -145,7 +171,7 @@ public final class DefaultGameInstanceTest {
         /// @return the published instance
         private TestGameInstance publish(GameInstanceID id, GameInstanceManifest manifest) {
             DefaultGameRepositorySnapshot snapshot = newSnapshot();
-            TestGameInstance instance = createInstance(snapshot, id, manifest);
+            TestGameInstance instance = (TestGameInstance) createInstance(snapshot, id, manifest);
             snapshot.put(instance);
             publishSnapshot(snapshot);
             return instance;
@@ -165,14 +191,18 @@ public final class DefaultGameInstanceTest {
 
         /// Creates a test instance without shared session state.
         ///
-        /// @param snapshot the owning snapshot
-        /// @param id       the instance id
-        /// @param manifest the stored manifest
+        /// @param snapshot     the owning snapshot
+        /// @param id           the instance id
+        /// @param manifest     the stored manifest
+        /// @param manifestFile non-conventional manifest path, or `null`
+        /// @param jarFile      non-conventional jar path, or `null`
         private TestGameInstance(
                 DefaultGameRepositorySnapshot snapshot,
                 GameInstanceID id,
-                GameInstanceManifest manifest) {
-            super(snapshot, id, manifest);
+                GameInstanceManifest manifest,
+                @Nullable Path manifestFile,
+                @Nullable Path jarFile) {
+            super(snapshot, id, manifest, manifestFile, jarFile);
         }
 
         /// Creates a test instance that may reuse compatible session state.

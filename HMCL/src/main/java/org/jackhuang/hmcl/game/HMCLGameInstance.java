@@ -69,7 +69,23 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// @param id       the instance id
     /// @param manifest the stored instance manifest
     protected HMCLGameInstance(DefaultGameRepositorySnapshot snapshot, GameInstanceID id, GameInstanceManifest manifest) {
-        this(snapshot, id, manifest, false);
+        this(snapshot, id, manifest, null, null, false);
+    }
+
+    /// Creates a registered instance with optional non-conventional storage paths.
+    ///
+    /// @param snapshot     the repository snapshot that owns this instance
+    /// @param id           the instance id
+    /// @param manifest     the stored instance manifest
+    /// @param manifestFile the actual manifest JSON path, or `null` for the layout default
+    /// @param jarFile      the actual primary jar path, or `null` for the layout default
+    protected HMCLGameInstance(
+            DefaultGameRepositorySnapshot snapshot,
+            GameInstanceID id,
+            GameInstanceManifest manifest,
+            @Nullable Path manifestFile,
+            @Nullable Path jarFile) {
+        this(snapshot, id, manifest, manifestFile, jarFile, false);
     }
 
     /// Creates a provisional instance used before a real manifest is indexed.
@@ -78,15 +94,17 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// @param id     the instance id
     /// @return a provisional instance with an empty placeholder manifest
     static HMCLGameInstance provisional(DefaultGameRepositorySnapshot snapshot, GameInstanceID id) {
-        return new HMCLGameInstance(snapshot, id, new GameInstanceManifest(id), true);
+        return new HMCLGameInstance(snapshot, id, new GameInstanceManifest(id), null, null, true);
     }
 
     private HMCLGameInstance(
             DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
             GameInstanceManifest manifest,
+            @Nullable Path manifestFile,
+            @Nullable Path jarFile,
             boolean provisional) {
-        super(snapshot, id, manifest);
+        super(snapshot, id, manifest, manifestFile, jarFile);
         this.provisional = provisional;
     }
 
