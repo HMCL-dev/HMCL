@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -35,6 +36,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -45,6 +47,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -52,8 +55,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements GameInstancePage.GameInstanceLoadable, PageAware {
+public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements PageAware {
     private final ReentrantLock lock = new ReentrantLock();
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
@@ -61,7 +65,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
-    public ModListPage() {
+    /// Creates a mod list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public ModListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this, it -> ModManager.MOD_EXTENSIONS.contains(FileUtils.getExtension(it).toLowerCase(Locale.ROOT)), mods -> {
             mods.forEach(it -> {
                 try {
@@ -72,6 +80,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             });
             loadMods(modManager);
         });
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -83,7 +97,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         loadMods(modManager);
     }
 
-    @Override
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.gameInstance = instance.instance();
         if (gameInstance == null) {

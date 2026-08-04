@@ -49,8 +49,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -66,7 +64,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
-    private final ObjectProperty<HMCLGameInstance.Optional> instance = new SimpleObjectProperty<>();
+    private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
+            new SimpleObjectProperty<>(this, "instance");
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private GameInstanceID preferredInstanceId = null;
@@ -80,12 +79,13 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     public GameInstancePage() {
-        gameSettingsTab.setNodeSupplier(loadInstanceFor(() -> new GameSettingsPage<>(GameSettings.Instance.class)));
-        installerListTab.setNodeSupplier(loadInstanceFor(InstallerListPage::new));
-        modListTab.setNodeSupplier(loadInstanceFor(ModListPage::new));
-        resourcePackTab.setNodeSupplier(loadInstanceFor(ResourcePackListPage::new));
-        worldListTab.setNodeSupplier(loadInstanceFor(WorldListPage::new));
-        schematicsTab.setNodeSupplier(loadInstanceFor(SchematicsPage::new));
+        // Child tabs subscribe to instanceProperty() themselves and reload on change.
+        gameSettingsTab.setNodeSupplier(() -> new GameSettingsPage<>(GameSettings.Instance.class, instance));
+        installerListTab.setNodeSupplier(() -> new InstallerListPage(instance));
+        modListTab.setNodeSupplier(() -> new ModListPage(instance));
+        resourcePackTab.setNodeSupplier(() -> new ResourcePackListPage(instance));
+        worldListTab.setNodeSupplier(() -> new WorldListPage(instance));
+        schematicsTab.setNodeSupplier(() -> new SchematicsPage(instance));
 
         tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab);
         tab.select(gameSettingsTab);
@@ -95,22 +95,35 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         addEventHandler(WorkingDirChangedEvent.EVENT_TYPE, event -> {
             HMCLGameInstance.Optional current = this.instance.get();
             if (current != null) {
-                current = current.refreshed();
-                this.instance.set(current);
-                if (installerListTab.isInitialized())
-                    installerListTab.getNode().loadInstance(current);
-                if (modListTab.isInitialized())
-                    modListTab.getNode().loadInstance(current);
-                if (resourcePackTab.isInitialized())
-                    resourcePackTab.getNode().loadInstance(current);
-                if (worldListTab.isInitialized())
-                    worldListTab.getNode().loadInstance(current);
-                if (schematicsTab.isInitialized())
-                    schematicsTab.getNode().loadInstance(current);
+                // Re-resolve so subscribed tabs reload from the current snapshot.
+                this.instance.set(current.refreshed());
             }
         });
 
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class).registerWeak(event -> checkSelectedInstance(), EventPriority.HIGHEST));
+
+        // Page chrome that depends on the current instance.
+        listenerHolder.add(FXUtils.onWeakChange(instance, current -> {
+            if (current == null) {
+                return;
+            }
+            HMCLGameInstance gameInstance = current.instance();
+            currentInstanceUpgradable.set(
+                    gameInstance != null && current.repository().isModpack(gameInstance.getId()));
+            if (gameInstance != null) {
+                preferredInstanceId = gameInstance.getId();
+            }
+        }));
+    }
+
+    /// Returns the current instance context for this page and its tabs.
+    ///
+    /// Child tabs subscribe to this property and reload when it changes. The page only publishes
+    /// context; it does not push `loadInstance` into children.
+    ///
+    /// @return the observable instance context
+    public ReadOnlyObjectProperty<HMCLGameInstance.@Nullable Optional> instanceProperty() {
+        return instance;
     }
 
     private void checkSelectedInstance() {
@@ -127,17 +140,6 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 }
             }
         });
-    }
-
-    private <T extends Node> Supplier<T> loadInstanceFor(Supplier<T> nodeSupplier) {
-        return () -> {
-            T node = nodeSupplier.get();
-            HMCLGameInstance.Optional current = instance.get();
-            if (current != null && node instanceof GameInstancePage.GameInstanceLoadable loadable) {
-                loadable.loadInstance(current);
-            }
-            return node;
-        };
     }
 
     public void showInstanceSettings() {
@@ -157,24 +159,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             return;
         }
 
-        HMCLGameInstance.Optional current = HMCLGameInstance.Optional.of(repository, instanceId);
-        this.instance.set(current);
-        preferredInstanceId = instanceId;
-
-        if (gameSettingsTab.isInitialized())
-            gameSettingsTab.getNode().loadInstance(current);
-        if (installerListTab.isInitialized())
-            installerListTab.getNode().loadInstance(current);
-        if (modListTab.isInitialized())
-            modListTab.getNode().loadInstance(current);
-        if (resourcePackTab.isInitialized())
-            resourcePackTab.getNode().loadInstance(current);
-        if (worldListTab.isInitialized())
-            worldListTab.getNode().loadInstance(current);
-        if (schematicsTab.isInitialized())
-            schematicsTab.getNode().loadInstance(current);
-        HMCLGameInstance gameInstance = current.instance();
-        currentInstanceUpgradable.set(gameInstance != null && repository.isModpack(gameInstance.getId()));
+        this.instance.set(HMCLGameInstance.Optional.of(repository, instanceId));
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
@@ -403,11 +388,4 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         }
     }
 
-    /// Loads page content for a game instance in a repository.
-    public interface GameInstanceLoadable {
-        /// Loads page content for the given optional game instance.
-        ///
-        /// @param instance the instance context; may be empty when only repository context is available
-        void loadInstance(HMCLGameInstance.Optional instance);
-    }
 }

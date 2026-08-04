@@ -29,6 +29,7 @@ import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -78,7 +79,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Glavo
 @NotNullByDefault
 public final class GameSettingsPage<S extends GameSettings> extends StackPane
-        implements DecoratorPage, GameInstancePage.GameInstanceLoadable, PageAware {
+        implements DecoratorPage, PageAware {
 
     private static final Object INHERIT_BUTTON_TOOLTIP_KEY = new Object();
     private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");
@@ -124,12 +125,24 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final InvalidationListener javaListener = o -> refreshJavaSettings();
     private final InvalidationListener weakJavaListener = holder.weak(javaListener);
 
-    public GameSettingsPage(Class<S> settingType) {
+    /// Creates a settings page.
+    ///
+    /// @param settingType     [GameSettings.Instance] or [GameSettings.Preset]
+    /// @param instanceContext parent instance property for instance settings; ignored for presets and may be `null`
+    public GameSettingsPage(
+            Class<S> settingType,
+            @Nullable ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         assert settingType == GameSettings.Preset.class || settingType == GameSettings.Instance.class;
 
         this.isPresetSetting = settingType == GameSettings.Preset.class;
         if (!isPresetSetting) {
             bindActiveParentSetting();
+            Objects.requireNonNull(instanceContext, "instanceContext");
+            holder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+                if (current != null) {
+                    loadInstance(current);
+                }
+            }));
         }
 
         this.scrollPane = new ScrollPane();
@@ -2632,7 +2645,6 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public void loadInstance(HMCLGameInstance.Optional instance) {
         HMCLGameInstance gameInstance = instance.instance();
         this.gameInstance.set(gameInstance);

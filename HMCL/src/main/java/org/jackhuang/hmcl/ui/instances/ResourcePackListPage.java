@@ -23,6 +23,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -53,6 +54,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -65,6 +67,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -76,7 +79,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements GameInstancePage.GameInstanceLoadable {
+public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> {
 
     private static final String TIP_KEY = "resourcePackWarning";
     private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
@@ -90,6 +93,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         };
     }
 
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private @Nullable HMCLGameInstance gameInstance;
 
     private Path resourcePackDirectory;
@@ -97,8 +101,18 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    public ResourcePackListPage() {
+    /// Creates a resource-pack list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public ResourcePackListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this, ResourcePackFile::isFileResourcePack, this::addFiles);
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -106,7 +120,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         return new ResourcePackListPageSkin(this);
     }
 
-    @Override
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.gameInstance = instance.instance();
         if (gameInstance == null) {

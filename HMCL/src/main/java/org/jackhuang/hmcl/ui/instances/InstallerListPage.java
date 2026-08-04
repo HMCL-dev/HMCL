@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -39,21 +40,33 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class InstallerListPage extends ListPageBase<InstallerItem> implements GameInstancePage.GameInstanceLoadable {
+public class InstallerListPage extends ListPageBase<InstallerItem> {
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private @Nullable HMCLGameInstance gameInstance;
     private GameInstanceManifest manifest;
     private String gameVersion;
 
-    {
+    /// Creates an installer list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public InstallerListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
             if (!mods.isEmpty())
                 doInstallOffline(mods.get(0));
         });
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -61,7 +74,6 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
         return new InstallerListPageSkin();
     }
 
-    @Override
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.gameInstance = instance.instance();
         if (gameInstance == null) {

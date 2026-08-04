@@ -69,7 +69,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
-public class DownloadListPage extends Control implements DecoratorPage, GameInstancePage.GameInstanceLoadable {
+public class DownloadListPage extends Control implements DecoratorPage {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
@@ -112,7 +112,6 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
         return actions;
     }
 
-    @Override
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.instanceReference.set(instance);
 

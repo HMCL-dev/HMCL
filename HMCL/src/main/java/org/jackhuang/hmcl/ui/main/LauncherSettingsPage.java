@@ -49,7 +49,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {
-        gameTab.setNodeSupplier(() -> new GameSettingsPage<>(GameSettings.Preset.class));
+        gameTab.setNodeSupplier(() -> new GameSettingsPage<>(GameSettings.Preset.class, null));
         javaManagementTab.setNodeSupplier(JavaManagementPage::new);
         settingsTab.setNodeSupplier(SettingsPage::new);
         personalizationTab.setNodeSupplier(PersonalizationPage::new);

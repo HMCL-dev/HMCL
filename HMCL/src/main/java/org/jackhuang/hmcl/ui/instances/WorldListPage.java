@@ -24,6 +24,7 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -55,6 +56,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -62,8 +64,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class WorldListPage extends ListPageBase<World> implements GameInstancePage.GameInstanceLoadable {
+public final class WorldListPage extends ListPageBase<World> {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private Path savesDir;
     private List<World> worlds;
@@ -72,12 +75,22 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
 
     private int refreshCount = 0;
 
-    public WorldListPage() {
+    /// Creates a world list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public WorldListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
             installWorld(modpacks.get(0));
         });
 
         showAll.addListener(e -> updateWorldList());
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -85,7 +98,6 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
         return new WorldListPageSkin();
     }
 
-    @Override
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.gameInstance = instance.instance();
         this.savesDir = gameInstance != null ? gameInstance.getSavesDirectory() : null;
