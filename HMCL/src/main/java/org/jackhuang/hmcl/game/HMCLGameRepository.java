@@ -97,10 +97,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     protected HMCLGameInstance createInstance(DefaultGameRepositorySnapshot snapshot, GameInstanceID id, GameInstanceManifest manifest) {
-        DefaultGameInstance existing = snapshot.get(id);
-        if (existing != null) {
-            return ((HMCLGameInstance) existing).withManifest(snapshot, manifest);
-        }
         return new HMCLGameInstance(snapshot, id, manifest);
     }
 
