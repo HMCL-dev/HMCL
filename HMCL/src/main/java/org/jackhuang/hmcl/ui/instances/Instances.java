@@ -295,15 +295,6 @@ public final class Instances {
         });
     }
 
-    /// Resolves the selected instance (which may be missing) and generates a launch script.
-    @SafeVarargs
-    public static void generateLaunchScript(HMCLGameRepository repository, GameInstanceID instanceId, Consumer<LauncherHelper>... injecters) {
-        HMCLGameInstance gameInstance = resolveLaunchInstance(repository, instanceId);
-        if (gameInstance != null) {
-            generateLaunchScript(gameInstance, injecters);
-        }
-    }
-
     private static boolean isValidScriptExtension(String ext) {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             return ext.equalsIgnoreCase("bat") || ext.equalsIgnoreCase("ps1");
