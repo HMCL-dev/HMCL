@@ -293,17 +293,8 @@ public abstract class DefaultGameRepository implements GameRepository {
         try {
             manifest = readInstanceManifest(json);
         } catch (Exception e) {
-            LOG.warning("Malformed instance json " + id, e);
-            if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id.id())) != Event.Result.ALLOW) {
-                return null;
-            }
-
-            try {
-                manifest = readInstanceManifest(json);
-            } catch (Exception e2) {
-                LOG.error("User corrected instance json is still malformed", e2);
-                return null;
-            }
+            LOG.warning("Malformed instance json " + id + " (" + json + ")", e);
+            return null;
         }
 
         // Directory name is the repository identity; keep the on-disk files untouched.
