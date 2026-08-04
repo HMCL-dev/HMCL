@@ -238,7 +238,9 @@ public final class ModpackHelper {
     public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, Charset charset, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
-                return new ModpackUpdateTask(repository, instanceId, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId))
+                return new ModpackUpdateTask(
+                        repository.getInstance(instanceId),
+                        new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId))
                         .thenComposeAsync(repository.refreshAsync())
                         .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
             default:
@@ -253,11 +255,11 @@ public final class ModpackHelper {
             throw new UnsupportedModpackException();
         }
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return provider.createUpdateTask(repository.getDependency(), instanceId, zipFile, modpack)
+            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack)
                     .thenComposeAsync(() -> createMultiMCPostUpdateTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
                     .thenComposeAsync(repository.refreshAsync());
         else
-            return provider.createUpdateTask(repository.getDependency(), instanceId, zipFile, modpack)
+            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack)
                     .thenComposeAsync(repository.refreshAsync());
     }
 

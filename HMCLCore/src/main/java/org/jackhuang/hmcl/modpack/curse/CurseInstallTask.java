@@ -126,7 +126,6 @@ public final class CurseInstallTask extends Task<Void> {
                 dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
             }
         }
-        dependencies.add(new CurseCompletionTask(dependencyManager, instanceId, manifest));
     }
 
     @Override
@@ -208,5 +207,8 @@ public final class CurseInstallTask extends Task<Void> {
                 LOG.warning("Failed to copy modpack icon", e);
             }
         }
+
+        // The game builder runs as a dependent and registers the instance before this phase.
+        dependencies.add(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest));
     }
 }

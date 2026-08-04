@@ -18,8 +18,7 @@
 package org.jackhuang.hmcl.modpack.mcbbs;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -32,6 +31,8 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,15 +45,25 @@ import java.util.List;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Exports one registered game instance as an MCBBS modpack archive.
+@NotNullByDefault
 public class McbbsModpackExportTask extends Task<Void> {
-    private final DefaultGameRepository repository;
-    private final GameInstanceID instanceId;
+    /// The fixed instance snapshot exported by this task.
+    private final DefaultGameInstance instance;
+
+    /// The validated export configuration.
     private final ModpackExportInfo info;
+
+    /// The archive written by this task.
     private final Path modpackFile;
 
-    public McbbsModpackExportTask(DefaultGameRepository repository, GameInstanceID instanceId, ModpackExportInfo info, Path modpackFile) {
-        this.repository = repository;
-        this.instanceId = instanceId;
+    /// Creates an MCBBS modpack export task.
+    ///
+    /// @param instance    the registered instance snapshot to export
+    /// @param info        the export configuration
+    /// @param modpackFile the archive to write
+    public McbbsModpackExportTask(DefaultGameInstance instance, ModpackExportInfo info, Path modpackFile) {
+        this.instance = instance;
         this.info = info.validate();
         this.modpackFile = modpackFile;
 
@@ -67,14 +78,16 @@ public class McbbsModpackExportTask extends Task<Void> {
         });
     }
 
+    /// {@inheritDoc}
     @Override
     public void execute() throws Exception {
+        var instanceId = instance.getId();
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(instanceId + ".jar");
         blackList.add(instanceId + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (var zip = new Zipper(modpackFile)) {
-            Path runDirectory = repository.getRunDirectory(instanceId);
+            Path runDirectory = instance.getRunDirectory();
             List<McbbsModpackManifest.File> files = new ArrayList<>();
             zip.putDirectory(runDirectory, "overrides", path -> {
                 if (Modpack.acceptFile(path, blackList, info.getWhitelist())) {
@@ -89,9 +102,12 @@ public class McbbsModpackExportTask extends Task<Void> {
                 }
             });
 
-            String gameVersion = repository.getGameVersion(instanceId)
-                    .orElseThrow(() -> new IOException("Cannot parse the version of " + instanceId));
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId), gameVersion);
+            GameVersionNumber version = instance.getVersion();
+            if (version == GameVersionNumber.unknown()) {
+                throw new IOException("Cannot parse the version of " + instanceId);
+            }
+            String gameVersion = version.toString();
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(instance.getResolvedManifest(), gameVersion);
 
             // Mcbbs manifest
             List<McbbsModpackManifest.Addon> addons = new ArrayList<>();
@@ -136,6 +152,7 @@ public class McbbsModpackExportTask extends Task<Void> {
         }
     }
 
+    /// Export options supported by the MCBBS format.
     public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
             .requireFileApi(true)
             .requireUrl()

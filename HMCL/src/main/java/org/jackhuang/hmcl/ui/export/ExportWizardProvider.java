@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -76,11 +77,11 @@ public final class ExportWizardProvider implements WizardProvider {
     }
 
     private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, Path modpackFile) {
-        Path launcherJar = JarUtils.thisJarPath();
+        @Nullable Path launcherJar = JarUtils.thisJarPath();
         boolean packWithLauncher = exportInfo.isPackWithLauncher() && launcherJar != null;
         return new Task<>() {
-            Path tempModpack;
-            Task<?> exportTask;
+            @Nullable Path tempModpack;
+            @Nullable Task<?> exportTask;
 
             {
                 setSignificance(TaskSignificance.MODERATE);
@@ -162,7 +163,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
     private Task<?> exportAsMcbbs(ModpackExportInfo exportInfo, Path modpackFile) {
         return new Task<Void>() {
-            Task<?> dependency = null;
+            @Nullable Task<?> dependency;
 
             {
                 setSignificance(TaskSignificance.MODERATE);
@@ -170,7 +171,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new McbbsModpackExportTask(gameInstance.getRepository(), gameInstance.getId(), exportInfo, modpackFile);
+                dependency = new McbbsModpackExportTask(resolveCurrentGameInstance(), exportInfo, modpackFile);
             }
 
             @Override
@@ -182,7 +183,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
     private Task<?> exportAsMultiMC(ModpackExportInfo exportInfo, Path modpackFile) {
         return new Task<Void>() {
-            Task<?> dependency;
+            @Nullable Task<?> dependency;
 
             {
                 setSignificance(TaskSignificance.MODERATE);
@@ -190,8 +191,9 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                GameSettings.Effective setting = gameInstance.getRepository().getEffectiveGameSettings(gameInstance.getId());
-                dependency = new MultiMCModpackExportTask(gameInstance.getRepository(), gameInstance.getId(), exportInfo.getWhitelist(),
+                HMCLGameInstance instance = resolveCurrentGameInstance();
+                GameSettings.Effective setting = instance.getRepository().getEffectiveGameSettings(instance.getId());
+                dependency = new MultiMCModpackExportTask(instance, exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",
                                 exportInfo.getName() + "-" + exportInfo.getVersion(),
@@ -230,7 +232,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
     private Task<?> exportAsServer(ModpackExportInfo exportInfo, Path modpackFile) {
         return new Task<Void>() {
-            Task<?> dependency;
+            @Nullable Task<?> dependency;
 
             {
                 setSignificance(TaskSignificance.MODERATE);
@@ -238,7 +240,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new ServerModpackExportTask(gameInstance.getRepository(), gameInstance.getId(), exportInfo, modpackFile);
+                dependency = new ServerModpackExportTask(resolveCurrentGameInstance(), exportInfo, modpackFile);
             }
 
             @Override
@@ -250,7 +252,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
     private Task<?> exportAsModrinth(ModpackExportInfo exportInfo, Path modpackFile) {
         return new Task<Void>() {
-            Task<?> dependency;
+            @Nullable Task<?> dependency;
 
             {
                 setSignificance(TaskSignificance.MODERATE);
@@ -259,8 +261,7 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
             public void execute() {
                 dependency = new ModrinthModpackExportTask(
-                        gameInstance.getRepository(),
-                        gameInstance.getId(),
+                        resolveCurrentGameInstance(),
                         exportInfo,
                         modpackFile
                 );
@@ -271,6 +272,13 @@ public final class ExportWizardProvider implements WizardProvider {
                 return Collections.singleton(dependency);
             }
         };
+    }
+
+    /// Returns the current registered snapshot for the instance selected by this wizard.
+    ///
+    /// @return the current registered instance
+    private HMCLGameInstance resolveCurrentGameInstance() {
+        return gameInstance.getRepository().getInstance(gameInstance.getId());
     }
 
     @Override

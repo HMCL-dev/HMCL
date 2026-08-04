@@ -410,6 +410,16 @@ public abstract class DefaultGameRepository implements GameRepository {
         }
     }
 
+    /// Removes an instance from the published index and attempts to remove its backing directory.
+    ///
+    /// The repository is refreshed before this method returns, including when filesystem removal
+    /// fails after the instance has been removed from the published snapshot. After the instance
+    /// directory is staged under its `_removed` sibling, failure to trash or fully delete that
+    /// staging directory is logged but does not change the return value.
+    ///
+    /// @param id the instance id
+    /// @return `false` if removal is denied or the instance directory cannot be staged; `true` if
+    ///         the directory is absent or staging succeeds
     public boolean removeInstanceFromDisk(GameInstanceID id) {
         if (EventBus.EVENT_BUS.fireEvent(new RemoveInstanceEvent(this, id)) == Event.Result.DENY) {
             return false;
@@ -421,20 +431,20 @@ public abstract class DefaultGameRepository implements GameRepository {
             publishSnapshot(newSnapshot);
         }
 
-        Path file = getLayout().getInstanceRoot(id);
-        if (Files.notExists(file)) {
-            return true;
-        }
-
-        Path removedFile = file.toAbsolutePath().resolveSibling(FileUtils.getName(file) + "_removed");
         try {
-            Files.move(file, removedFile, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            LOG.warning("Unable to remove version folder: " + file, e);
-            return false;
-        }
+            Path file = getLayout().getInstanceRoot(id);
+            if (Files.notExists(file)) {
+                return true;
+            }
 
-        try {
+            Path removedFile = file.toAbsolutePath().resolveSibling(FileUtils.getName(file) + "_removed");
+            try {
+                Files.move(file, removedFile, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                LOG.warning("Unable to remove version folder: " + file, e);
+                return false;
+            }
+
             if (FileUtils.moveToTrash(removedFile)) {
                 return true;
             }
@@ -454,7 +464,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             }
             return true;
         } finally {
-            refreshAsync().start();
+            refresh();
         }
     }
 
@@ -470,7 +480,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     @Override
     public Optional<String> getGameVersion(GameInstanceManifest manifest) {
         DefaultGameInstance instance = findSnapshotInstance(manifest.id());
-        if (instance != null && !instance.isProvisional()) {
+        if (instance != null && !instance.isProvisional() && manifest.equals(instance.getManifest())) {
             GameVersionNumber version = instance.getVersion();
             if (version == GameVersionNumber.unknown()) {
                 return Optional.empty();

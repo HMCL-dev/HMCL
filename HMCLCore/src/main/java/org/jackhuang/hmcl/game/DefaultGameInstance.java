@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -33,8 +34,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 ///
 /// Index fields (`id`, `manifest`, layout binding) belong to a
 /// [DefaultGameRepositorySnapshot]. Session services such as [#getModManager()] and
-/// [#getResourcePackManager()] are lazy and are shared across [#withNewSnapshot] /
-/// [#withManifest] copies so caches survive COW publishes.
+/// [#getResourcePackManager()] are lazy and are shared across copies only while the instance ID
+/// and stored manifest remain unchanged, so ordinary COW publishes preserve caches without leaking
+/// manifest-derived state into an updated instance.
 @NotNullByDefault
 public abstract class DefaultGameInstance implements GameInstance {
 
@@ -68,8 +70,10 @@ public abstract class DefaultGameInstance implements GameInstance {
         this.manifest = manifest;
     }
 
-    /// Creates an instance that reuses session state from another wrapper of the same logical
-    /// instance.
+    /// Creates an instance that may reuse session state from another snapshot wrapper.
+    ///
+    /// Cached version and manager state is copied only when `id` and `manifest` equal those of
+    /// `shareSession`; otherwise the new wrapper starts with empty derived state.
     ///
     /// @param snapshot     the snapshot that will own the copy
     /// @param id           the instance id
@@ -81,9 +85,11 @@ public abstract class DefaultGameInstance implements GameInstance {
             GameInstanceManifest manifest,
             DefaultGameInstance shareSession) {
         this(snapshot, id, manifest);
-        this.version = shareSession.version;
-        this.modManager = shareSession.modManager;
-        this.resourcePackManager = shareSession.resourcePackManager;
+        if (Objects.equals(id, shareSession.id) && Objects.equals(manifest, shareSession.manifest)) {
+            this.version = shareSession.version;
+            this.modManager = shareSession.modManager;
+            this.resourcePackManager = shareSession.resourcePackManager;
+        }
     }
 
     protected abstract DefaultGameInstance withNewSnapshot(DefaultGameRepositorySnapshot newSnapshot);
@@ -149,8 +155,8 @@ public abstract class DefaultGameInstance implements GameInstance {
 
     /// Returns the mod manager for this instance.
     ///
-    /// The manager is created on first use and shared across snapshot wrappers produced by
-    /// [#withNewSnapshot] / [#withManifest].
+    /// The manager is created on first use and shared across snapshot wrappers whose instance ID
+    /// and stored manifest remain unchanged.
     ///
     /// @return the mod manager
     public ModManager getModManager() {
@@ -162,8 +168,8 @@ public abstract class DefaultGameInstance implements GameInstance {
 
     /// Returns the resource-pack manager for this instance.
     ///
-    /// The manager is created on first use and shared across snapshot wrappers produced by
-    /// [#withNewSnapshot] / [#withManifest].
+    /// The manager is created on first use and shared across snapshot wrappers whose instance ID
+    /// and stored manifest remain unchanged.
     ///
     /// @return the resource-pack manager
     public ResourcePackManager getResourcePackManager() {
@@ -178,8 +184,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// @return the detected version, or [GameVersionNumber#unknown()] when detection fails
     private GameVersionNumber detectVersion() {
         try {
-            GameInstanceManifest launchManifest = getResolvedManifest().launchManifest();
-            Path jar = repository.getInstanceJar(launchManifest);
+            Path jar = getInstanceJarFile();
             Optional<String> detected = GameVersion.minecraftVersion(jar);
             if (detected.isEmpty()) {
                 LOG.warning("Cannot find out game version of " + id
@@ -201,7 +206,9 @@ public abstract class DefaultGameInstance implements GameInstance {
 
     @Override
     public Path getInstanceJarFile() {
-        return layout.getInstanceJarFile(id);
+        GameInstanceManifest launchManifest = getResolvedManifest().launchManifest();
+        GameInstanceID jarId = Optional.ofNullable(launchManifest.jar()).orElse(launchManifest.id());
+        return layout.getInstanceJarFile(jarId);
     }
 
     @Override

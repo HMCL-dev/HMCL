@@ -127,7 +127,6 @@ public class ModrinthInstallTask extends Task<Void> {
                 dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
             }
         }
-        dependencies.add(new ModrinthCompletionTask(dependencyManager, instanceId, manifest));
     }
 
     @Override
@@ -164,5 +163,8 @@ public class ModrinthInstallTask extends Task<Void> {
                 LOG.warning("Failed to copy modpack icon", e);
             }
         }
+
+        // The game builder runs as a dependent and registers the instance before this phase.
+        dependencies.add(new ModrinthCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest));
     }
 }

@@ -87,7 +87,10 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        dependencies.add(new McbbsModpackCompletionTask(dependency, instanceId, new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
+        dependencies.add(new McbbsModpackCompletionTask(
+                dependency,
+                repository.getInstance(instanceId),
+                new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
     }
 
     public static final String MODPACK_TYPE = "Server";
