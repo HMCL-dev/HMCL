@@ -556,7 +556,15 @@ public class DefaultLauncher extends Launcher {
     /// Returns the native library directory selected by the launch options.
     private Path getNativeFolder() {
         if (StringUtils.isBlank(options.getNativesDir())) {
-            return repository.getNativeDirectory(manifest.id(), options.getJava().getPlatform());
+            Path defaultPath = repository.getNativeDirectory(manifest.id(), options.getJava().getPlatform());
+            // JDK 17+ uses the ANSI-native LoadLibraryA internally,
+            // which cannot resolve native libraries from non-ASCII paths.
+            // Use a temp directory with ASCII-only path as a workaround.
+            if (!StringUtils.isASCII(defaultPath.toString())) {
+                return Paths.get(System.getProperty("java.io.tmpdir"),
+                        "hmcl-natives-" + Math.abs(manifest.id().id().hashCode()) + "-" + options.getJava().getPlatform());
+            }
+            return defaultPath;
         }
 
         return Path.of(options.getNativesDir());
