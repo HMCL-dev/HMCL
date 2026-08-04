@@ -247,21 +247,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                         .thenComparing(instance -> VersionNumber.asVersion(instance.getId().id())));
     }
 
-    @Override
-    protected void refreshImpl() {
-        super.refreshImpl();
-
-        try {
-            Path file = getBaseDirectory().resolve("launcher_profiles.json");
-            if (!Files.exists(file) && !getInstanceManifests().isEmpty()) {
-                Files.createDirectories(file.getParent());
-                Files.writeString(file, PROFILE);
-            }
-        } catch (IOException ex) {
-            LOG.warning("Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
-        }
-    }
-
     public void changeDirectory(Path newDirectory) {
         setBaseDirectory(newDirectory);
         refreshAsync().start();

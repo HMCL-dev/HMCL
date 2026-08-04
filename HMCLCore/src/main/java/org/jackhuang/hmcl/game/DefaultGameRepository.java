@@ -188,12 +188,6 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public void refresh() {
-        refreshImpl();
-        loaded = true;
-        EventBus.EVENT_BUS.fireEvent(new RefreshedGameInstancesEvent(this));
-    }
-
-    protected void refreshImpl() {
         DefaultGameRepositorySnapshot newSnapshot = createSnapshot(getSnapshot().getLayout());
         DefaultGameRepositoryLayout layout = newSnapshot.getLayout();
 
@@ -242,6 +236,9 @@ public abstract class DefaultGameRepository implements GameRepository {
         newSnapshot.clear();
         newSnapshot.putAll(loadedInstances);
         publishSnapshot(newSnapshot);
+
+        loaded = true;
+        EventBus.EVENT_BUS.fireEvent(new RefreshedGameInstancesEvent(this));
     }
 
     /// Loads one instance directory without renaming on-disk JSON or jar files.
