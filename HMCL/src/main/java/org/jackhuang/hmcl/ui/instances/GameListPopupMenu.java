@@ -33,8 +33,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -42,28 +41,42 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.List;
-import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Displays game instances in a popup selection list.
+///
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
 
     /// Shows an instance selection popup relative to its owner.
+    ///
+    /// @param owner       the node used to position the popup
+    /// @param vAlign      the popup's vertical alignment relative to `owner`
+    /// @param hAlign      the popup's horizontal alignment relative to `owner`
+    /// @param initOffsetX the horizontal offset from the aligned position
+    /// @param initOffsetY the vertical offset from the aligned position
+    /// @param instances   the instances to copy into the popup, in display order
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY,
-                            HMCLGameRepository repository, List<GameInstanceManifest> versions) {
-        showAndGetPopup(owner, vAlign, hAlign, initOffsetX, initOffsetY, repository, versions);
+                            List<HMCLGameInstance> instances) {
+        showAndGetPopup(owner, vAlign, hAlign, initOffsetX, initOffsetY, instances);
     }
 
     /// Shows and returns an instance selection popup relative to its owner.
+    ///
+    /// @param owner       the node used to position the popup
+    /// @param vAlign      the popup's vertical alignment relative to `owner`
+    /// @param hAlign      the popup's horizontal alignment relative to `owner`
+    /// @param initOffsetX the horizontal offset from the aligned position
+    /// @param initOffsetY the vertical offset from the aligned position
+    /// @param instances   the instances to copy into the popup, in display order
+    /// @return the shown popup
     public static JFXPopup showAndGetPopup(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                                            double initOffsetX, double initOffsetY,
-                                           HMCLGameRepository repository, List<GameInstanceManifest> versions) {
+                                           List<HMCLGameInstance> instances) {
         GameListPopupMenu menu = new GameListPopupMenu();
-        menu.getItems().setAll(versions.stream()
-                .map(it -> repository.findInstance(it.id()))
-                .filter(Objects::nonNull)
+        menu.getItems().setAll(instances.stream()
                 .map(GameItem::new)
                 .toList());
         JFXPopup popup = new JFXPopup(menu);

@@ -22,12 +22,10 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -56,16 +54,11 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -117,20 +110,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             FXUtils.onChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), mainPage::setCurrentGame);
             mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
-
-            GameDirectoryManager.registerVersionsListener(repository -> {
-                GameDirectory gameDirectory = repository.getGameDirectory();
-                List<GameInstanceManifest> children = repository.getInstanceManifests().parallelStream()
-                        .filter(version -> !version.isHidden())
-                        .sorted(Comparator
-                                .comparing((GameInstanceManifest manifest) -> Lang.requireNonNullElse(manifest.releaseTime(), Instant.EPOCH))
-                                .thenComparing(manifest -> VersionNumber.asVersion(repository.getGameVersion(manifest).orElse(manifest.id().toString()))))
-                        .collect(Collectors.toList());
-                runInFX(() -> {
-                    if (gameDirectory == GameDirectoryManager.getSelectedGameDirectory())
-                        mainPage.initVersions(repository, children);
-                });
-            });
             this.mainPage = mainPage;
         }
         return mainPage;
@@ -157,14 +136,11 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     Instances.modifyGameSettings(instance);
                 }
             });
-            FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
+            FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getInstances(), list -> {
                 @Nullable HMCLGameInstance currentGame = getSkinnable().getMainPage().getCurrentGame();
                 @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
-                return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
-            }, it -> {
-                HMCLGameRepository repository = getSkinnable().getMainPage().getRepository();
-                repository.setSelectedInstance(repository.getInstance(it.id()));
-            });
+                return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
+            }, instance -> instance.getRepository().setSelectedInstance(instance));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareGameInstancePage);
             }
@@ -251,8 +227,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     JFXPopup.PopupHPosition.LEFT,
                     gameListItem.getWidth(),
                     0,
-                    getSkinnable().getMainPage().getRepository(),
-                    getSkinnable().getMainPage().getVersions());
+                    getSkinnable().getMainPage().getInstances());
         }
     }
 

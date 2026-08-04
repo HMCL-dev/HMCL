@@ -24,6 +24,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.beans.property.*;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -46,12 +47,11 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.game.DefaultGameRepositorySnapshot;
 import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -76,9 +76,13 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
@@ -90,6 +94,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Displays the launcher home controls for the currently selected game repository.
 public final class MainPage extends StackPane implements DecoratorPage {
     private static final String ANNOUNCEMENT = "announcement";
 
@@ -99,8 +104,17 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
     private final BooleanProperty showUpdateDialog = new SimpleBooleanProperty(this, "showUpdateDialog");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
-    private final ObservableList<GameInstanceManifest> versions = FXCollections.observableArrayList();
-    private HMCLGameRepository repository;
+    /// Mutable storage for visible instances from the selected repository's current snapshot.
+    private final ObservableList<HMCLGameInstance> mutableInstances = FXCollections.observableArrayList();
+
+    /// Read-only observable view of [#mutableInstances].
+    private final @UnmodifiableView ObservableList<HMCLGameInstance> instances =
+            FXCollections.unmodifiableObservableList(mutableInstances);
+
+    /// Current snapshot of the repository selected by [GameDirectoryManager].
+    private final ObservableValue<DefaultGameRepositorySnapshot> selectedRepositorySnapshot =
+            BindingMapping.of(GameDirectoryManager.selectedRepositoryProperty())
+                    .flatMap(HMCLGameRepository::snapshotProperty);
 
     private TransitionPane announcementPane;
     private final StackPane updatePane;
@@ -212,11 +226,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         HBox launchPane = new HBox();
         launchPane.getStyleClass().add("launch-pane");
-        FXUtils.onScroll(launchPane, versions, list -> {
+        FXUtils.onChangeAndOperate(selectedRepositorySnapshot, ignored -> updateInstances());
+        FXUtils.onScroll(launchPane, instances, list -> {
             @Nullable HMCLGameInstance currentGame = getCurrentGame();
             @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
-            return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
-        }, it -> repository.setSelectedInstance(repository.getInstance(it.id())));
+            return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
+        }, instance -> instance.getRepository().setSelectedInstance(instance));
 
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
@@ -267,7 +282,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         JFXPopup.PopupHPosition.RIGHT,
                         0,
                         -menuButton.getHeight(),
-                        repository, versions
+                        instances
                 );
 
                 Node graphic = menuButton.getGraphic();
@@ -409,14 +424,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return state;
     }
 
-    public GameDirectory getGameDirectory() {
-        return repository.getGameDirectory();
-    }
-
-    public HMCLGameRepository getRepository() {
-        return repository;
-    }
-
     /// Returns the instance shown by the launch controls.
     ///
     /// @return the current instance, or `null` when no instance is selected
@@ -438,8 +445,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
         this.currentGame.set(currentGame);
     }
 
-    public ObservableList<GameInstanceManifest> getVersions() {
-        return versions;
+    /// Returns the observable instances displayed by launch-selection controls.
+    ///
+    /// The list is updated from the selected repository's published snapshot and contains no hidden
+    /// instances. The returned view cannot be mutated.
+    ///
+    /// @return the observable launch-menu instances
+    public @UnmodifiableView ObservableList<HMCLGameInstance> getInstances() {
+        return instances;
     }
 
     public boolean isShowUpdate() {
@@ -478,9 +491,19 @@ public final class MainPage extends StackPane implements DecoratorPage {
         this.latestVersion.set(latestVersion);
     }
 
-    public void initVersions(HMCLGameRepository repository, List<GameInstanceManifest> versions) {
+    /// Rebuilds the launch-menu instances from the selected repository's current snapshot.
+    private void updateInstances() {
         FXUtils.checkFxUserThread();
-        this.repository = repository;
-        this.versions.setAll(versions);
+        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+        List<HMCLGameInstance> sortedInstances = repository.getSnapshot().getInstances().stream()
+                .filter(instance -> !instance.getManifest().isHidden())
+                .sorted(Comparator
+                        .comparing((HMCLGameInstance instance) -> Lang.requireNonNullElse(
+                                instance.getManifest().releaseTime(), Instant.EPOCH))
+                        .thenComparing(instance -> VersionNumber.asVersion(repository
+                                .getGameVersion(instance.getManifest())
+                                .orElse(instance.getId().toString()))))
+                .toList();
+        mutableInstances.setAll(sortedInstances);
     }
 }

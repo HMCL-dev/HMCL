@@ -91,18 +91,18 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                     );
 
                     MainPage mainPage = Controllers.getRootPage().getMainPage();
-                    FXUtils.onScroll(item, mainPage.getVersions(), list -> {
+                    FXUtils.onScroll(item, mainPage.getInstances(), list -> {
                         @Nullable HMCLGameInstance currentGame = mainPage.getCurrentGame();
                         @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
-                        return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
-                    }, it -> mainPage.getRepository().setSelectedInstance(mainPage.getRepository().getInstance(it.id())));
+                        return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
+                    }, instance -> instance.getRepository().setSelectedInstance(instance));
 
                     FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
                             JFXPopup.PopupVPosition.BOTTOM,
                             JFXPopup.PopupHPosition.LEFT,
                             item.getWidth(),
                             0,
-                            mainPage.getRepository(), mainPage.getVersions()));
+                            mainPage.getInstances()));
                 })
                 .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
