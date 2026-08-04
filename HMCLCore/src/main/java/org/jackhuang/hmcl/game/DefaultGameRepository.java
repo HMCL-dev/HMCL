@@ -88,7 +88,7 @@ public abstract class DefaultGameRepository implements GameRepository {
                 null, null, null, null, null, null);
     }
 
-    private static boolean hasClassicVersion(Path baseDirectory) {
+    private static boolean hasClassicInstance(Path baseDirectory) {
         Path bin = baseDirectory.resolve("bin");
         return Files.isDirectory(bin)
                 && Files.exists(bin.resolve("lwjgl.jar"))
@@ -197,7 +197,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         DefaultGameRepositorySnapshot newSnapshot = createSnapshot(getSnapshot().getLayout());
         DefaultGameRepositoryLayout layout = newSnapshot.getLayout();
 
-        if (hasClassicVersion(layout.getBaseDirectory())) {
+        if (hasClassicInstance(layout.getBaseDirectory())) {
             GameInstanceID id = CLASSIC_MANIFEST.id();
             newSnapshot.put(createInstance(newSnapshot, id, CLASSIC_MANIFEST));
         }
@@ -328,11 +328,25 @@ public abstract class DefaultGameRepository implements GameRepository {
                 Files.move(fromJar, toJar);
             }
         } catch (IOException e) {
-            Lang.ignoringException(() -> Files.move(toJson, fromJson));
-            if (hasJarFile) {
-                Lang.ignoringException(() -> Files.move(toJar, fromJar));
+            try {
+                Files.move(toJson, fromJson);
+            } catch (Throwable e2) {
+                e.addSuppressed(e2);
             }
-            Lang.ignoringException(() -> Files.move(toDir, fromDir));
+
+            if (hasJarFile) {
+                try {
+                    Files.move(toJar, fromJar);
+                } catch (Throwable e2) {
+                    e.addSuppressed(e2);
+                }
+            }
+
+            try {
+                Files.move(toDir, fromDir);
+            } catch (Exception e2) {
+                e.addSuppressed(e2);
+            }
             throw e;
         }
     }
