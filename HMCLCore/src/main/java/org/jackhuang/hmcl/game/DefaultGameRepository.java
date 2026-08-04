@@ -208,7 +208,7 @@ public abstract class DefaultGameRepository implements GameRepository {
                     try {
                         id = new GameInstanceID(FileUtils.getName(dir));
                     } catch (IllegalArgumentException e) {
-                        LOG.warning("Ignoring version folder with invalid id " + dir, e);
+                        LOG.warning("Ignoring instance directory with invalid id " + dir, e);
                         return Stream.empty();
                     }
 
