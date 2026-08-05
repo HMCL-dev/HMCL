@@ -149,14 +149,6 @@ public interface GameRepository {
         return getRunDirectory(instanceId).resolve("mods");
     }
 
-    /// Returns the resource pack directory for an instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the resource pack directory below the run directory
-    default Path getResourcePackDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("resourcepacks");
-    }
-
     /// Returns the primary client jar path for a manifest.
     ///
     /// @param manifest the manifest whose jar should be located
