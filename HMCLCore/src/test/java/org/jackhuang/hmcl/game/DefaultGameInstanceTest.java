@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
+import org.jackhuang.hmcl.launch.LaunchClasspathResolver;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
@@ -41,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -105,36 +107,89 @@ public final class DefaultGameInstanceTest {
         assertEquals(launchManifest, LaunchManifestNormalizer.normalize(launchManifest));
     }
 
-    /// Launch preparation selects an installed OptiFine installer without changing the resolved view.
+    /// Launch classpath resolution selects an installed OptiFine installer without changing the manifest.
     @Test
-    public void testLaunchPreparationSelectsInstalledOptiFine(@TempDir Path tempDirectory)
+    public void testLaunchClasspathSelectsInstalledOptiFine(@TempDir Path tempDirectory)
             throws IOException {
         TestRepository repository = new TestRepository(tempDirectory);
         GameInstanceID instanceId = new GameInstanceID("instance");
+        Library forge = new Library(new Artifact("net.minecraftforge", "forge", "1.0"));
+        Library optiFine = new Library(new Artifact("optifine", "OptiFine", "1.0"));
+        Library optiFineLaunchWrapper = new Library(
+                new Artifact("optifine", "launchwrapper-of", "2.0"));
         GameInstanceManifest manifest = new GameInstanceManifest(instanceId)
                 .withMainClass(LibraryAnalyzer.LAUNCH_WRAPPER_MAIN)
-                .withLibraries(List.of(
-                        new Library(new Artifact("net.minecraftforge", "forge", "1.0")),
-                        new Library(new Artifact("optifine", "OptiFine", "1.0")),
-                        new Library(new Artifact("optifine", "launchwrapper-of", "2.0"))));
+                .withLibraries(List.of(forge, optiFine, optiFineLaunchWrapper));
         GameInstanceManifest launchManifest = repository.publish(instanceId, manifest)
                 .getResolvedManifest()
                 .launchManifest();
         Library installer = new Library(new Artifact("optifine", "OptiFine", "1.0", "installer"));
+        Path forgeFile = repository.getLayout().getLibraryFile(instanceId, forge);
+        Path optiFineFile = repository.getLayout().getLibraryFile(instanceId, optiFine);
+        Path optiFineLaunchWrapperFile = repository.getLayout()
+                .getLibraryFile(instanceId, optiFineLaunchWrapper);
         Path installerFile = repository.getLayout().getLibraryFile(instanceId, installer);
+        Files.createDirectories(forgeFile.getParent());
         Files.createDirectories(installerFile.getParent());
+        Files.createDirectories(optiFineLaunchWrapperFile.getParent());
+        Files.write(forgeFile, new byte[]{1});
+        Files.write(optiFineFile, new byte[]{1});
+        Files.write(optiFineLaunchWrapperFile, new byte[]{1});
         Files.write(installerFile, new byte[]{1});
 
         GameInstanceManifest prepared = LaunchManifestPreparation.prepare(repository, launchManifest);
+        Set<String> classpath = LaunchClasspathResolver.resolve(repository, prepared);
 
+        assertSame(launchManifest, prepared);
+        assertEquals(Set.of(
+                forgeFile.toAbsolutePath().toString(),
+                installerFile.toAbsolutePath().toString()), classpath);
         assertTrue(prepared.getLibraries().stream()
                 .anyMatch(library -> library.is("optifine", "OptiFine")
-                        && "installer".equals(library.classifier())));
-        assertFalse(prepared.getLibraries().stream()
-                .anyMatch(library -> library.is("optifine", "launchwrapper-of")));
-        assertTrue(launchManifest.getLibraries().stream()
-                .anyMatch(library -> library.is("optifine", "OptiFine")
                         && library.classifier() == null));
+        assertTrue(prepared.getLibraries().stream()
+                .anyMatch(library -> library.is("optifine", "launchwrapper-of")));
+    }
+
+    /// ModLauncher keeps an installed OptiFine installer outside its ordinary classpath.
+    @Test
+    public void testModLauncherClasspathOmitsInstalledOptiFine(@TempDir Path tempDirectory)
+            throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        Library forge = new Library(new Artifact("net.minecraftforge", "forge", "1.0"));
+        Library optiFine = new Library(new Artifact("optifine", "OptiFine", "1.0"));
+        GameInstanceManifest manifest = new GameInstanceManifest(instanceId)
+                .withMainClass(LibraryAnalyzer.MOD_LAUNCHER_MAIN)
+                .withLibraries(List.of(forge, optiFine));
+        GameInstanceManifest launchManifest = repository.publish(instanceId, manifest)
+                .getResolvedManifest()
+                .launchManifest();
+        Library installer = new Library(new Artifact("optifine", "OptiFine", "1.0", "installer"));
+        Library transformerService = launchManifest.getLibraries().stream()
+                .filter(library -> library.is(
+                        "org.jackhuang.hmcl", "transformer-discovery-service"))
+                .findAny()
+                .orElseThrow();
+        Path forgeFile = repository.getLayout().getLibraryFile(instanceId, forge);
+        Path optiFineFile = repository.getLayout().getLibraryFile(instanceId, optiFine);
+        Path installerFile = repository.getLayout().getLibraryFile(instanceId, installer);
+        Path transformerServiceFile = repository.getLayout()
+                .getLibraryFile(instanceId, transformerService);
+        Files.createDirectories(forgeFile.getParent());
+        Files.createDirectories(installerFile.getParent());
+        Files.createDirectories(transformerServiceFile.getParent());
+        Files.write(forgeFile, new byte[]{1});
+        Files.write(optiFineFile, new byte[]{1});
+        Files.write(installerFile, new byte[]{1});
+        Files.write(transformerServiceFile, new byte[]{1});
+
+        Set<String> classpath = LaunchClasspathResolver.resolve(repository, launchManifest);
+
+        assertEquals(Set.of(
+                forgeFile.toAbsolutePath().toString(),
+                transformerServiceFile.toAbsolutePath().toString()), classpath);
+        assertTrue(launchManifest.getLibraries().contains(optiFine));
     }
 
     /// Saving a manifest preserves its root flag and pending patches without baking in normalization.

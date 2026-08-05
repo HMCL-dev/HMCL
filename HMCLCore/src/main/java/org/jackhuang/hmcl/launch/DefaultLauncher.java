@@ -275,7 +275,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        Set<String> classpath = instance.getRepository().getClasspath(manifest);
+        Set<String> classpath = LaunchClasspathResolver.resolve(instance.getRepository(), manifest);
 
         if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
             classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
