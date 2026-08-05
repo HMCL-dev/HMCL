@@ -21,16 +21,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
-import org.jackhuang.hmcl.setting.DefaultIsolationType;
-import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.GameInstanceIconType;
-import org.jackhuang.hmcl.setting.GameSettingsPresetID;
-import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
-import org.jackhuang.hmcl.setting.SettingFileUtils;
-import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.modpack.ModpackProvider;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
@@ -38,6 +34,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -47,9 +44,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// HMCL-specific game instance that owns instance-local settings and run-directory policy.
@@ -180,7 +180,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// @return the `modpack.cfg` path in the instance root
     @Override
     public Path getModpackConfigurationFile() {
-        return getInstanceRoot().resolve("modpack.cfg");
+        return getLayout().getModpackConfigurationFile(getId());
     }
 
     /// Returns whether this instance has an HMCL modpack configuration file.
@@ -600,6 +600,89 @@ public class HMCLGameInstance extends DefaultGameInstance {
 
     private Path getGameSettingsFile() {
         return getLayout().getInstanceGameSettingsFile(id);
+    }
+
+    public LaunchOptions.Builder getLaunchOptions(JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
+        GameSettings.Effective vs = getEffectiveSettings();
+        boolean noJVMOptions = vs.getInheritable(GameSettings::noJVMOptionsProperty);
+        boolean autoMemory = vs.getInheritable(GameSettings::autoMemoryProperty);
+        GameVersionNumber gameVersionNumber = getVersion();
+
+        @Nullable Integer maxMemory;
+        if (autoMemory) {
+            maxMemory = noJVMOptions
+                    ? null
+                    : Math.toIntExact(HMCLGameRepository.getAutoAllocatedMemory(SystemInfo.getPhysicalMemoryStatus().available()) / 1024L / 1024L);
+        } else {
+            maxMemory = vs.getMaxMemory();
+        }
+
+        LaunchOptions.Builder builder = new LaunchOptions.Builder()
+                .setInstanceId(getId())
+                .setGameDir(gameDir)
+                .setJava(javaVersion)
+                .setVersionType(Metadata.TITLE)
+                .setVersionName(getId().id())
+                .setProfileName(Metadata.TITLE)
+                .setGameArguments(StringUtils.tokenize(vs.getInheritable(GameSettings::gameArgumentsProperty)))
+                .setOverrideJavaArguments(StringUtils.tokenize(vs.getInheritable(GameSettings::jvmOptionsProperty)))
+                .setMaxMemory(maxMemory)
+                .setMinMemory(vs.getInheritable(GameSettings::minMemoryProperty))
+                .setMetaspace(Lang.toIntOrNull(vs.getInheritable(GameSettings::permSizeProperty)))
+                .setEnvironmentVariables(
+                        Lang.mapOf(StringUtils.tokenize(vs.getInheritable(GameSettings::environmentVariablesProperty))
+                                .stream()
+                                .map(it -> {
+                                    int idx = it.indexOf('=');
+                                    return idx >= 0 ? pair(it.substring(0, idx), it.substring(idx + 1)) : pair(it, "");
+                                })
+                                .collect(Collectors.toList())
+                        )
+                )
+                .setWidth(vs.getWidth())
+                .setHeight(vs.getHeight())
+                .setFullscreen(vs.getInheritable(GameSettings::windowTypeProperty) == GameWindowType.FULLSCREEN)
+                .setWrapper(vs.getInheritable(GameSettings::commandWrapperProperty))
+                .setProxyOption(HMCLGameRepository.getProxyOption())
+                .setPreLaunchCommand(vs.getInheritable(GameSettings::preLaunchCommandProperty))
+                .setPostExitCommand(vs.getInheritable(GameSettings::postExitCommandProperty))
+                .setNoGeneratedJVMArgs(noJVMOptions)
+                .setNoGeneratedOptimizingJVMArgs(vs.getInheritable(GameSettings::noOptimizingJVMOptionsProperty))
+                .setUseCustomNatives(vs.getInheritable(GameSettings::useCustomNativesProperty))
+                .setNativesDir(vs.getInheritable(GameSettings::nativesDirectoryProperty))
+                .setProcessPriority(vs.getInheritable(GameSettings::processPriorityProperty))
+                .setGraphicsBackend(vs.getInheritable(GameSettings::graphicsBackendProperty))
+                .setRenderer(vs.getRenderer(gameVersionNumber))
+                .setEnableDebugLogOutput(vs.getInheritable(GameSettings::enableDebugLogOutputProperty))
+                .setAllowAutoAgent(vs.getInheritable(GameSettings::allowAutoAgentProperty))
+                .setDisableAutoGameOptions(vs.getInheritable(GameSettings::disableAutoGameOptionsProperty))
+                .setUseNativeGLFW(vs.getInheritable(GameSettings::useNativeGLFWProperty))
+                .setUseNativeOpenAL(vs.getInheritable(GameSettings::useNativeOpenALProperty))
+                .setDaemon(!makeLaunchScript && vs.getInheritable(GameSettings::launcherVisibilityProperty).isDaemon())
+                .setJavaAgents(javaAgents)
+                .setJavaArguments(javaArguments);
+
+        QuickPlayOption quickPlayOption = vs.getQuickPlayOption();
+        if (quickPlayOption != null) {
+            builder.setQuickPlayOption(quickPlayOption);
+        }
+
+        Path json = getModpackConfigurationFile();
+        if (Files.exists(json)) {
+            try {
+                String jsonText = Files.readString(json);
+                ModpackConfiguration<?> modpackConfiguration = JsonUtils.GSON.fromJson(jsonText, ModpackConfiguration.class);
+                ModpackProvider provider = ModpackHelper.getProviderByType(modpackConfiguration.getType());
+                if (provider != null) provider.injectLaunchOptions(jsonText, builder);
+            } catch (IOException | JsonParseException e) {
+                LOG.warning("Failed to parse modpack configuration file " + json, e);
+            }
+        }
+
+        if (autoMemory && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
+            builder.setMaxMemory(null);
+
+        return builder;
     }
 
     /// Loads a new-format instance game settings file.

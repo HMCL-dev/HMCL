@@ -110,10 +110,6 @@ public final class LauncherHelper {
         return gameInstance.getRepository();
     }
 
-    private GameInstanceID instanceId() {
-        return gameInstance.getId();
-    }
-
     private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
 
     public Account getAccount() {
@@ -144,7 +140,7 @@ public final class LauncherHelper {
     public void launch() {
         FXUtils.checkFxUserThread();
 
-        LOG.info("Launching game version: " + instanceId());
+        LOG.info("Launching game instance: " + gameInstance.getId());
 
         Controllers.dialog(launchingStepsPane);
         launch0();
@@ -161,7 +157,6 @@ public final class LauncherHelper {
         PROCESSES.removeIf(it -> it.get() == null);
 
         HMCLGameRepository repository = repository();
-        GameInstanceID selectedInstanceId = instanceId();
         DefaultDependencyManager dependencyManager = repository.getDependency();
         AtomicReference<GameInstanceManifest> version = new AtomicReference<>(
                 LaunchManifestPreparation.prepare(
@@ -256,8 +251,8 @@ public final class LauncherHelper {
                 })
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions.Builder launchOptionsBuilder = repository.getLaunchOptions(
-                            selectedInstanceId, javaVersionRef.get(), repository.getBaseDirectory(), javaAgents, javaArguments, scriptFile != null);
+                    LaunchOptions.Builder launchOptionsBuilder = gameInstance.getLaunchOptions(
+                            javaVersionRef.get(), repository.getBaseDirectory(), javaAgents, javaArguments, scriptFile != null);
                     if (disableOfflineSkin) {
                         launchOptionsBuilder.setDaemon(false);
                     }
