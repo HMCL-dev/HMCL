@@ -222,7 +222,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
         Source getSource();
     }
 
-    public record Version(IVersion self, String projectId, String name, String version, String changelog,
+    public record Version(IVersion self, String versionId, String projectId, String name, String version,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
                           List<String> gameVersions, List<ModLoaderType> loaders) {
     }
