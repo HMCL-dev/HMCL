@@ -62,7 +62,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.instanceId = instanceId;
         this.iconUrl = iconUrl;
         this.repository = dependencyManager.getGameRepository();
-        this.run = repository.resolveRunDirectory(instanceId);
+        this.run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
         if (repository.hasInstance(instanceId) && Files.notExists(json))

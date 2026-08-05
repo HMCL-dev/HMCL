@@ -51,7 +51,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         this.instanceId = instanceId;
         this.modpack = modpack;
 
-        Path run = repository.resolveRunDirectory(this.instanceId);
+        Path run = repository.getLayout().getInstanceRoot(this.instanceId);
         Path json = repository.getLayout().getModpackConfigurationFile(this.instanceId);
         if (repository.hasInstance(this.instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists");

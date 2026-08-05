@@ -142,7 +142,11 @@ public class GameCrashWindow extends Stage {
 
             return pair(CrashReportAnalyzer.analyze(rawLog), crashReport != null ? CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport) : new HashSet<>());
         }), Task.supplyAsync(() -> {
-            Path latestLog = repository.resolveRunDirectory(manifest.id()).resolve("logs/latest.log");
+            DefaultGameInstance gameInstance = repository.getSnapshot().findInstance(manifest.id());
+            Path runDirectory = gameInstance != null
+                    ? gameInstance.getRunDirectory()
+                    : repository.getBaseDirectory();
+            Path latestLog = runDirectory.resolve("logs/latest.log");
             if (!Files.isReadable(latestLog)) {
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }

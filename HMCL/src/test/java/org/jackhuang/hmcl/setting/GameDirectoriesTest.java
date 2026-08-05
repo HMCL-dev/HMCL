@@ -438,10 +438,10 @@ public final class GameDirectoriesTest {
         }
     }
 
-    /// Tests that new isolated installing instances resolve content directories under the version root before metadata is saved.
+    /// Tests that isolation settings written before install make a registered instance use the version root.
     @Test
-    public void newIsolatedInstallingInstanceUsesVersionRootBeforeVersionExists(@TempDir Path tempDirectory)
-            throws ReflectiveOperationException {
+    public void newIsolatedInstallingInstanceUsesVersionRootAfterPlaceholderSave(@TempDir Path tempDirectory)
+            throws Exception {
         GameSettingsPresetID defaultPresetId =
                 GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174002");
         GameSettings.Preset defaultPreset = new GameSettings.Preset(defaultPresetId);
@@ -464,16 +464,17 @@ public final class GameDirectoriesTest {
             GameInstanceID id = new GameInstanceID("1.21.11-fabric");
 
             assertFalse(repository.hasInstance(id));
-            assertEquals(repository.getBaseDirectory(), repository.resolveRunDirectory(id));
 
+            // Isolation is configured first; install then registers a placeholder instance.
             repository.applyDefaultIsolationSettingForNewInstance(id, true);
+            repository.saveAsync(new GameInstanceManifest(id)).run();
 
-            assertEquals(repository.getLayout().getInstanceRoot(id), repository.resolveRunDirectory(id));
-            assertEquals(repository.getLayout().getInstanceRoot(id).resolve("mods"),
-                    repository.resolveRunDirectory(id).resolve("mods"));
+            HMCLGameInstance instance = repository.getInstance(id);
+            assertEquals(repository.getLayout().getInstanceRoot(id), instance.getRunDirectory());
+            assertEquals(repository.getLayout().getInstanceRoot(id).resolve("mods"), instance.getModsDirectory());
 
             assertTrue(repository.removeInstanceFromDisk(id));
-            assertEquals(repository.getBaseDirectory(), repository.resolveRunDirectory(id));
+            assertFalse(repository.hasInstance(id));
         }
     }
 

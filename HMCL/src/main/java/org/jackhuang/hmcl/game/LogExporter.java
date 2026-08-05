@@ -43,7 +43,8 @@ public final class LogExporter {
     public static CompletableFuture<Void> exportLogs(
             Path zipFile, DefaultGameRepository repository, GameInstanceID instanceId, String logs, String launchScript,
             PathMatcher logMatcher) {
-        Path runDirectory = repository.resolveRunDirectory(instanceId);
+        DefaultGameInstance instance = repository.getSnapshot().findInstance(instanceId);
+        Path runDirectory = instance != null ? instance.getRunDirectory() : repository.getBaseDirectory();
         Path baseDirectory = repository.getBaseDirectory();
         List<GameInstanceID> instances = new ArrayList<>();
 

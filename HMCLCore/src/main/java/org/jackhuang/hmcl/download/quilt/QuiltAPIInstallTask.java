@@ -18,12 +18,15 @@
 package org.jackhuang.hmcl.download.quilt;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -60,8 +63,17 @@ public final class QuiltAPIInstallTask extends Task<GameInstancePatch> {
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
                 remote.getVersion().file().url(),
-                dependencyManager.getGameRepository().resolveRunDirectory(manifest.id()).resolve("mods").resolve("quilt-api-" + remote.getVersion().version() + ".jar"),
+                modsDirectory(dependencyManager.getGameRepository(), manifest)
+                        .resolve("quilt-api-" + remote.getVersion().version() + ".jar"),
                 remote.getVersion().file().getIntegrityCheck())
         );
+    }
+
+    private static Path modsDirectory(DefaultGameRepository repository, GameInstanceManifest manifest) {
+        DefaultGameInstance instance = repository.getSnapshot().findInstance(manifest.id());
+        if (instance != null) {
+            return instance.getModsDirectory();
+        }
+        return repository.getBaseDirectory().resolve("mods");
     }
 }

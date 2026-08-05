@@ -44,7 +44,10 @@ public class DefaultGameBuilder extends GameBuilder {
     public Task<?> buildAsync() {
         var hints = new ArrayList<Task.StagesHint>();
 
-        Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> new GameInstanceManifest(name));
+        // Register a placeholder instance first so install tasks can resolve run/mods directories
+        // through GameInstance instead of repository-level path helpers.
+        Task<GameInstanceManifest> libraryTask = dependencyManager.getGameRepository()
+                .saveAsync(new GameInstanceManifest(name));
         libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "game", gameVersion));
         hints.add(new Task.StagesHint("hmcl.install.game:" + gameVersion));
         hints.add(new Task.StagesHint("hmcl.install.libraries"));

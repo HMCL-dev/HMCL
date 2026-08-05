@@ -199,20 +199,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return new DefaultDependencyManager(this, downloadProvider, HMCLCacheRepository.REPOSITORY);
     }
 
-    /// {@inheritDoc}
-    ///
-    /// When the instance is not yet registered, isolation is resolved from on-disk settings and
-    /// `modpack.cfg` so install tasks can target the correct directory before `save`/`refresh`.
-    @Override
-    public Path resolveRunDirectory(GameInstanceID instanceId) {
-        HMCLGameInstance instance = findInstance(instanceId);
-        if (instance != null) {
-            return instance.getRunDirectory();
-        }
-        boolean modpack = Files.exists(getLayout().getModpackConfigurationFile(instanceId));
-        return computeRunDirectory(instanceId, modpack, peekInstanceGameSettings(instanceId));
-    }
-
     /// Resolves the run directory from modpack state and local settings.
     ///
     /// @param instanceId   the instance id
@@ -296,7 +282,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     ///
     /// When the instance is already registered, settings are updated through
     /// [HMCLGameInstance]. Otherwise the isolation flag is written to the instance settings file
-    /// so install tasks that call [#resolveRunDirectory(GameInstanceID)] see the isolated path.
+    /// so a later [HMCLGameInstance#getRunDirectory] sees the isolated path.
     ///
     /// @param instanceId the instance id
     public void ensureIsolatedRunningDirectory(GameInstanceID instanceId) {
@@ -346,7 +332,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public void clean(GameInstanceID instanceId) throws IOException {
         clean(getBaseDirectory());
-        clean(resolveRunDirectory(instanceId));
+        clean(getInstance(instanceId).getRunDirectory());
     }
 
     public void duplicateInstance(GameInstanceID srcId, GameInstanceID dstId, boolean copySaves) throws IOException {
@@ -378,21 +364,20 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         JsonUtils.writeToJsonFile(toJson, fromManifest.withId(dstId).withJar(dstId));
 
+        Path srcGameDir = getInstance(srcId).getRunDirectory();
         boolean copyOriginalGameDir;
         try {
-            copyOriginalGameDir = !Files.isSameFile(resolveRunDirectory(srcId), getLayout().getInstanceRoot(srcId));
+            copyOriginalGameDir = !Files.isSameFile(srcGameDir, getLayout().getInstanceRoot(srcId));
         } catch (IOException e) {
             copyOriginalGameDir = true;
         }
-
-        Path srcGameDir = resolveRunDirectory(srcId);
 
         GameSettings.Instance newGameSettings = getInstance(srcId).copySettings();
         newGameSettings.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
         newGameSettings.runningDirectoryProperty().setValue("");
         writeInstanceGameSettings(dstId, newGameSettings);
 
-        Path dstGameDir = resolveRunDirectory(dstId);
+        Path dstGameDir = computeRunDirectory(dstId, false, newGameSettings);
 
         if (copyOriginalGameDir)
             FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
@@ -463,9 +448,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Applies default isolation to a new instance before its manifest is saved.
     ///
-    /// Writes the isolation flag to the instance settings file so
-    /// [#resolveRunDirectory(GameInstanceID)] returns the instance root without requiring a snapshot
-    /// member.
+    /// Writes the isolation flag to the instance settings file so a later
+    /// [HMCLGameInstance#getRunDirectory] returns the instance root.
     public void applyDefaultIsolationSettingForNewInstance(GameInstanceID instanceId, boolean modded) {
         if (!shouldIsolateNewInstance(modded)) {
             return;

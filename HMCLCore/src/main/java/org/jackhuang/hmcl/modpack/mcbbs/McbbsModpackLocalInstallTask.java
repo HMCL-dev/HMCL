@@ -59,7 +59,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         this.manifest = manifest;
         this.instanceId = instanceId;
         this.repository = dependencyManager.getGameRepository();
-        Path run = repository.resolveRunDirectory(instanceId);
+        Path run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
         if (repository.hasInstance(instanceId) && Files.notExists(json))
