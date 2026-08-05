@@ -237,12 +237,10 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 return "";
             }
 
-            //noinspection DataFlowIssue
             return Objects.requireNonNullElse(localSetting.runningDirectoryProperty().getValue(), "");
         }
 
         GameSettings.Preset parent = getRepository().getParentGameSettings(localSetting);
-        //noinspection DataFlowIssue
         return Objects.requireNonNullElse(parent.runningDirectoryProperty().getValue(), "");
     }
 
