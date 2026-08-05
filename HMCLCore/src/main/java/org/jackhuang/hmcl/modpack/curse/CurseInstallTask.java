@@ -79,7 +79,7 @@ public final class CurseInstallTask extends Task<Void> {
 
         this.run = repository.getRunDirectory(instanceId);
 
-        Path json = repository.getModpackConfiguration(instanceId);
+        Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
         if (repository.hasInstance(instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
@@ -116,7 +116,7 @@ public final class CurseInstallTask extends Task<Void> {
         }
         this.config = config;
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getModpackConfiguration(instanceId)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
         URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
         if (iconUri != null) {

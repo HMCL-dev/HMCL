@@ -54,7 +54,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         this.repository = dependencyManager.getGameRepository();
         Path run = repository.getRunDirectory(instanceId);
 
-        Path json = repository.getModpackConfiguration(instanceId);
+        Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
         if (repository.hasInstance(instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
@@ -80,7 +80,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(instanceId)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
     }
 
     @Override

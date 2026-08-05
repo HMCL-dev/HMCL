@@ -61,7 +61,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         this.repository = dependencyManager.getGameRepository();
         Path run = repository.getRunDirectory(instanceId);
 
-        Path json = repository.getModpackConfiguration(instanceId);
+        Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
         if (repository.hasInstance(instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
         this.update = repository.hasInstance(instanceId);
@@ -89,7 +89,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
-        instanceTask = new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(instanceId));
+        instanceTask = new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, McbbsModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId));
         dependents.add(instanceTask.withStage("hmcl.modpack"));
     }
 

@@ -64,7 +64,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getRunDirectory(instanceId);
 
-        Path json = repository.getModpackConfiguration(instanceId);
+        Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
         if (repository.hasInstance(instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
@@ -116,7 +116,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.config = config;
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(instanceId)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
         URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
         if (iconUri != null) {

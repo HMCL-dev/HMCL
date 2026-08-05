@@ -591,10 +591,6 @@ public abstract class DefaultGameRepository implements GameRepository {
         });
     }
 
-    public Path getModpackConfiguration(GameInstanceID instanceId) {
-        return getInstanceRoot(instanceId).resolve("modpack.json");
-    }
-
     @Override
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
         return getSnapshot().resolve(manifest);

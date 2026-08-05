@@ -28,13 +28,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+/// @author Glavo
 @NotNullByDefault
 @JsonAdapter(GameInstanceID.Adapter.class)
 @JsonSerializable
 public record GameInstanceID(String id) implements Comparable<GameInstanceID> {
+
+    public static boolean isValid(String id) {
+        return !id.isBlank() && !id.contains("/") && !id.contains("\\");
+    }
+
     public GameInstanceID {
-        if (id.isBlank()) {
-            throw new IllegalArgumentException("Game instance id cannot be empty");
+        if (!isValid(id)) {
+            throw new IllegalArgumentException("Invalid game instance id: " + id);
         }
     }
 

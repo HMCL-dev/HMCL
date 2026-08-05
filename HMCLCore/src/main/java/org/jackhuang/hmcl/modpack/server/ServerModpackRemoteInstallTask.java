@@ -48,7 +48,7 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
         this.repository = dependencyManager.getGameRepository();
         this.manifest = manifest;
 
-        Path json = repository.getModpackConfiguration(instanceId);
+        Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
         if (repository.hasInstance(instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 

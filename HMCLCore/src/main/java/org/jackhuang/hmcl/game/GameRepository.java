@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Files;
@@ -141,15 +140,6 @@ public interface GameRepository {
     /// @param instanceId the instance id
     /// @return the run directory
     Path getRunDirectory(GameInstanceID instanceId);
-
-    /// Returns the directory used for extracted native libraries of an instance and platform.
-    ///
-    /// @param instanceId the instance id
-    /// @param platform   the target platform
-    /// @return the native library directory
-    default Path getNativeDirectory(GameInstanceID instanceId, Platform platform) {
-        return getInstanceRoot(instanceId).resolve("natives-" + platform);
-    }
 
     /// Returns the mods directory for an instance.
     ///

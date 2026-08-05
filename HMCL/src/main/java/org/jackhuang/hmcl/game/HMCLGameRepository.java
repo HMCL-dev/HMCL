@@ -457,7 +457,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             builder.setQuickPlayOption(quickPlayOption);
         }
 
-        Path json = getModpackConfiguration(instanceId);
+        Path json = getLayout().getModpackConfigurationFile(instanceId);
         if (Files.exists(json)) {
             try {
                 String jsonText = Files.readString(json);
@@ -473,11 +473,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             builder.setMaxMemory(null);
 
         return builder;
-    }
-
-    @Override
-    public Path getModpackConfiguration(GameInstanceID instanceId) {
-        return getLayout().getInstanceRoot(instanceId).resolve("modpack.cfg");
     }
 
     /// Marks the instance as a modpack for run-directory resolution during installation.
@@ -501,6 +496,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private static final Set<String> FORBIDDEN_INSTANCE_IDS = Set.of("modpack", "minecraftinstance", "manifest");
 
     public static boolean isValidInstanceId(String id) {
+        if (!GameInstanceID.isValid(id))
+            return false;
+
         if (FORBIDDEN_INSTANCE_IDS.contains(id))
             return false;
 

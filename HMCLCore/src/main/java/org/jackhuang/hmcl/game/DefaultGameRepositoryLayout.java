@@ -70,6 +70,10 @@ public class DefaultGameRepositoryLayout implements GameRepositoryLayout {
         return getInstanceRoot(instanceId).resolve(instanceId.id() + ".jar");
     }
 
+    public Path getModpackConfigurationFile(GameInstanceID instanceId) {
+        return getInstanceRoot(instanceId).resolve("modpack.cfg");
+    }
+
     /// {@inheritDoc}
     ///
     /// Official layout path: `libraries/` below the base directory.

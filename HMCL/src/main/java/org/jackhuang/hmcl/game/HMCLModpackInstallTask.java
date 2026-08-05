@@ -52,7 +52,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         this.modpack = modpack;
 
         Path run = repository.getRunDirectory(this.instanceId);
-        Path json = repository.getModpackConfiguration(this.instanceId);
+        Path json = repository.getLayout().getModpackConfigurationFile(this.instanceId);
         if (repository.hasInstance(this.instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists");
 
@@ -73,7 +73,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/minecraft"), it -> !"pack.json".equals(it), config));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(this.instanceId)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
     }
 
     @Override
