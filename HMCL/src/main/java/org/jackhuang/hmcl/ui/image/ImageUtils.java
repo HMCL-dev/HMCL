@@ -202,7 +202,7 @@ public final class ImageUtils {
     // ------
 
     /// Maximum number of leading bytes inspected when selecting an image loader.
-    public static final int HEADER_BUFFER_SIZE = 4096;
+    public static final int HEADER_BUFFER_SIZE = 1024;
 
     private static final byte[] RIFF_HEADER = {'R', 'I', 'F', 'F'};
     private static final byte[] WEBP_HEADER = {'W', 'E', 'B', 'P'};
