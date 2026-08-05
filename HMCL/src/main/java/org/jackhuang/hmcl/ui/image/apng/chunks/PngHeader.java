@@ -4,10 +4,10 @@
 package org.jackhuang.hmcl.ui.image.apng.chunks;
 
 import org.jackhuang.hmcl.ui.image.apng.PngColourType;
-import org.jackhuang.hmcl.ui.image.apng.reader.PngReadHelper;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngFeatureException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
+import org.jackhuang.hmcl.ui.image.apng.reader.PngReadHelper;
 
 import java.io.DataInput;
 import java.io.IOException;

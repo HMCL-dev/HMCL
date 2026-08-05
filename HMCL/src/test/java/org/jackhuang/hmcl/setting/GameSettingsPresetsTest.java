@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;

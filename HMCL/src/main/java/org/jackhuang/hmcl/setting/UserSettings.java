@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.*;
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.*;
@@ -30,7 +30,8 @@ import org.jackhuang.hmcl.util.gson.ObservableSetting;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 
 /// Stores launcher settings shared by all workspaces for the current user.
 @NotNullByDefault

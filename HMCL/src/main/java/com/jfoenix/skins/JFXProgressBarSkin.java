@@ -24,7 +24,7 @@ import com.jfoenix.utils.TreeShowingProperty;
 import javafx.animation.*;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
-import javafx.scene.layout.*;
+import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;

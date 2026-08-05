@@ -18,12 +18,15 @@
 package org.jackhuang.hmcl.ui.directory;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.animation.ScaleTransition;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -82,6 +85,15 @@ public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
 
         item.titleProperty().set(GameDirectoryManager.getGameDirectoryDisplayName(skinnable.getGameDirectory()));
         item.subtitleProperty().set(skinnable.getGameDirectory().getPath().toString());
+
+        ScaleTransition itemScaleIn = new ScaleTransition(Duration.millis(150), root);
+        itemScaleIn.setToX(1.05);
+        itemScaleIn.setToY(1.05);
+        ScaleTransition itemScaleOut = new ScaleTransition(Duration.millis(150), root);
+        itemScaleOut.setToX(1.0);
+        itemScaleOut.setToY(1.0);
+        root.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> itemScaleIn.playFromStart());
+        root.addEventHandler(MouseEvent.MOUSE_EXITED, e -> itemScaleOut.playFromStart());
 
         getChildren().setAll(container);
     }

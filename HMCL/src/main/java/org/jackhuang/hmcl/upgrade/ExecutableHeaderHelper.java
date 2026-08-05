@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import org.jackhuang.hmcl.util.io.IOUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.Buffer;
@@ -28,8 +30,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import static java.nio.file.StandardOpenOption.*;
 import static org.jackhuang.hmcl.util.Lang.mapOf;

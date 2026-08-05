@@ -175,6 +175,10 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         }
 
         JFXCheckBox control = (JFXCheckBox) this.getSkinnable();
+        this.transition.setRate(selection ? 1.0 : -1.0);
+        this.select.setRate(selection ? 1.0 : -1.0);
+        this.transition.play();
+        this.select.play();
 
         this.box.setBorder(new Border(new BorderStroke(
                 selection ? control.getCheckedColor() : Themes.getColorScheme().getOnSurfaceVariant(),

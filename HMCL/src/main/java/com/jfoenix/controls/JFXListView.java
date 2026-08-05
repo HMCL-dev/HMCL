@@ -21,14 +21,19 @@ package com.jfoenix.controls;
 
 import com.jfoenix.skins.JFXListViewSkin;
 import javafx.beans.property.*;
-import javafx.css.*;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
+import javafx.css.StyleableBooleanProperty;
+import javafx.css.StyleableDoubleProperty;
 import javafx.css.converter.BooleanConverter;
 import javafx.css.converter.SizeConverter;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Skin;
 import javafx.scene.input.MouseEvent;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /// Material design implementation of List View
 ///

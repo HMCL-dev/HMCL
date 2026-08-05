@@ -17,11 +17,15 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import javafx.animation.ScaleTransition;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.scene.Node;
+import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -72,6 +76,22 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                 .addNavigationDrawerTab(tab, helpTab, i18n("help"), SVG.HELP, SVG.HELP_FILL)
                 .addNavigationDrawerTab(tab, feedbackTab, i18n("contact"), SVG.FEEDBACK, SVG.FEEDBACK_FILL)
                 .addNavigationDrawerTab(tab, aboutTab, i18n("about"), SVG.INFO, SVG.INFO_FILL);
+
+        VBox container = (VBox) sideBar.getContent();
+
+        for (Node node : container.getChildren()) {
+            if (node instanceof AdvancedListItem item) {
+                ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), item);
+                scaleIn.setToX(1.05);
+                scaleIn.setToY(1.05);
+                ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), item);
+                scaleOut.setToX(1.0);
+                scaleOut.setToY(1.0);
+                item.setOnMouseEntered(e -> scaleIn.playFromStart());
+                item.setOnMouseExited(e -> scaleOut.playFromStart());
+            }
+        }
+
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
 

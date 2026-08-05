@@ -18,9 +18,11 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.*;
+import javafx.animation.ScaleTransition;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -34,6 +36,8 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -64,6 +68,21 @@ public final class AboutPage extends SpinnerPane {
             author.setTitle("huanghongxun");
             author.setSubtitle(i18n("about.author.statement"));
 
+            List<LineButton> btns = Arrays.asList(
+                    launcher, author
+            );
+
+            for (LineButton btn : btns) {
+                ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), btn);
+                scaleIn.setToX(1.01);
+                scaleIn.setToY(1.01);
+                ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), btn);
+                scaleOut.setToX(1.0);
+                scaleOut.setToY(1.0);
+                btn.setOnMouseEntered(e -> scaleIn.playFromStart());
+                btn.setOnMouseExited(e -> scaleOut.playFromStart());
+            }
+
             about.getContent().setAll(launcher, author);
         }
 
@@ -87,6 +106,21 @@ public final class AboutPage extends SpinnerPane {
             openSource.setLargeTitle(true);
             openSource.setTitle(i18n("about.open_source"));
             openSource.setSubtitle(i18n("about.open_source.statement"));
+
+            List<LineButton> btns = Arrays.asList(
+                    copyright, claim, openSource
+            );
+
+            for (LineButton btn : btns) {
+                ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), btn);
+                scaleIn.setToX(1.01);
+                scaleIn.setToY(1.01);
+                ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), btn);
+                scaleOut.setToX(1.0);
+                scaleOut.setToY(1.0);
+                btn.setOnMouseEntered(e -> scaleIn.playFromStart());
+                btn.setOnMouseExited(e -> scaleOut.playFromStart());
+            }
 
             legal.getContent().setAll(copyright, claim, openSource);
         }
@@ -160,6 +194,15 @@ public final class AboutPage extends SpinnerPane {
                     button.setSubtitle(subtitle.getAsString());
                 else if (obj.get("subtitleLocalized") instanceof JsonPrimitive subtitleLocalized)
                     button.setSubtitle(i18n(subtitleLocalized.getAsString()));
+
+                ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), button);
+                scaleIn.setToX(1.01);
+                scaleIn.setToY(1.01);
+                ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), button);
+                scaleOut.setToX(1.0);
+                scaleOut.setToY(1.0);
+                button.setOnMouseEntered(e -> scaleIn.playFromStart());
+                button.setOnMouseExited(e -> scaleOut.playFromStart());
 
                 componentList.getContent().add(button);
             }

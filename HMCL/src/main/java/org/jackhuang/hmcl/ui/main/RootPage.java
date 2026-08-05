@@ -18,8 +18,12 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXPopup;
+import javafx.animation.ScaleTransition;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.scene.Node;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
@@ -45,11 +49,11 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
-import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
-import org.jackhuang.hmcl.ui.nbt.NBTFileType;
 import org.jackhuang.hmcl.ui.instances.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
+import org.jackhuang.hmcl.ui.nbt.NBTFileType;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -62,6 +66,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -225,6 +230,26 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 }
             });
 
+            List<AdvancedListItem> items = Arrays.asList(
+                    accountListItem,
+                    gameListItem,
+                    gameItem,
+                    downloadItem,
+                    launcherSettingsItem,
+                    terracottaItem
+            );
+
+            for (AdvancedListItem item : items) {
+                ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), item);
+                scaleIn.setToX(1.05);
+                scaleIn.setToY(1.05);
+                ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), item);
+                scaleOut.setToX(1.0);
+                scaleOut.setToY(1.0);
+                item.setOnMouseEntered(e -> scaleIn.playFromStart());
+                item.setOnMouseExited(e -> scaleOut.playFromStart());
+            }
+
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
                     .startCategory(i18n("account").toUpperCase(Locale.ROOT))
@@ -240,6 +265,21 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         Controllers.getSettingsPage().showFeedback();
                         Controllers.navigate(Controllers.getSettingsPage());
                     });
+
+            VBox container = (VBox) sideBar.getContent();
+
+            for (Node node : container.getChildren()) {
+                if (node instanceof AdvancedListItem item) {
+                    ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), item);
+                    scaleIn.setToX(1.05);
+                    scaleIn.setToY(1.05);
+                    ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), item);
+                    scaleOut.setToX(1.0);
+                    scaleOut.setToY(1.0);
+                    item.setOnMouseEntered(e -> scaleIn.playFromStart());
+                    item.setOnMouseExited(e -> scaleOut.playFromStart());
+                }
+            }
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);

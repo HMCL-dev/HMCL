@@ -26,9 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for theme-pack manifest parsing and resolution behavior.
 @NotNullByDefault

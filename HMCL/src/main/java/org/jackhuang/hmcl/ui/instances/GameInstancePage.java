@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXPopup;
+import javafx.animation.ScaleTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
@@ -26,6 +27,7 @@ import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
@@ -299,6 +301,21 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
+                VBox container = (VBox) sideBar.getContent();
+
+                for (Node node : container.getChildren()) {
+                    if (node instanceof AdvancedListItem item) {
+                        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), item);
+                        scaleIn.setToX(1.05);
+                        scaleIn.setToY(1.05);
+                        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), item);
+                        scaleOut.setToX(1.0);
+                        scaleOut.setToY(1.0);
+                        item.setOnMouseEntered(e -> scaleIn.playFromStart());
+                        item.setOnMouseExited(e -> scaleOut.playFromStart());
+                    }
+                }
+
                 PopupMenu browseList = new PopupMenu();
                 JFXPopup browsePopup = new JFXPopup(browseList);
                 browseList.getContent().setAll(
@@ -344,6 +361,21 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         });
                 toolbar.getStyleClass().add("advanced-list-box-clear-padding");
                 FXUtils.setLimitHeight(toolbar, 40 * 4 + 12 * 2);
+
+                VBox container2 = (VBox) toolbar.getContent();
+
+                for (Node node : container2.getChildren()) {
+                    if (node instanceof AdvancedListItem item) {
+                        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), item);
+                        scaleIn.setToX(1.05);
+                        scaleIn.setToY(1.05);
+                        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), item);
+                        scaleOut.setToX(1.0);
+                        scaleOut.setToY(1.0);
+                        item.setOnMouseEntered(e -> scaleIn.playFromStart());
+                        item.setOnMouseExited(e -> scaleOut.playFromStart());
+                    }
+                }
 
                 setLeft(sideBar, toolbar);
             }

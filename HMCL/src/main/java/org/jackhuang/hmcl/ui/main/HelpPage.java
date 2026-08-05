@@ -18,8 +18,10 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.annotations.SerializedName;
+import javafx.animation.ScaleTransition;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -52,6 +54,15 @@ public class HelpPage extends SpinnerPane {
         docPane.setTitle(i18n("help.doc"));
         docPane.setSubtitle(i18n("help.detail"));
 
+        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), docPane);
+        scaleIn.setToX(1.01);
+        scaleIn.setToY(1.01);
+        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), docPane);
+        scaleOut.setToX(1.0);
+        scaleOut.setToY(1.0);
+        docPane.setOnMouseEntered(e -> scaleIn.playFromStart());
+        docPane.setOnMouseExited(e -> scaleOut.playFromStart());
+
         ComponentList doc = new ComponentList();
         doc.getContent().setAll(docPane);
         content.getChildren().add(doc);
@@ -71,6 +82,15 @@ public class HelpPage extends SpinnerPane {
                             item.setLargeTitle(true);
                             item.setTitle(help.title());
                             item.setSubtitle(help.subtitle());
+
+                            ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), item);
+                            scaleIn.setToX(1.01);
+                            scaleIn.setToY(1.01);
+                            ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), item);
+                            scaleOut.setToX(1.0);
+                            scaleOut.setToY(1.0);
+                            item.setOnMouseEntered(e -> scaleIn.playFromStart());
+                            item.setOnMouseExited(e -> scaleOut.playFromStart());
 
                             categoryPane.getContent().add(item);
                         }

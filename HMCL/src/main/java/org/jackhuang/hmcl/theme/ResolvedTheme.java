@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.theme;
 import org.glavo.monetfx.*;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.util.*;
-
 /// Concrete launcher theme values resolved for MonetFX.
 ///
 /// @param primaryColorSeed Color seed used to generate the MonetFX color scheme.

@@ -3,12 +3,12 @@ package org.jackhuang.hmcl.ui.skin.test;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.ui.skin.FunctionHelper;
 import org.jackhuang.hmcl.ui.skin.SkinCanvas;
 import org.jackhuang.hmcl.ui.skin.SkinCanvasSupport;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
-import org.jackhuang.hmcl.game.TexturesLoader;
 
 import java.util.function.Consumer;
 

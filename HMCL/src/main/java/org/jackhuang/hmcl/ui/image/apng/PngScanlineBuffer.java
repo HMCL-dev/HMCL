@@ -3,8 +3,8 @@
 
 package org.jackhuang.hmcl.ui.image.apng;
 
-import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.chunks.PngHeader;
+import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.reader.PngScanlineProcessor;
 
 import java.io.IOException;

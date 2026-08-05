@@ -451,6 +451,12 @@
     -fx-cursor: hand;
 }
 
+.launch-pane > .label:hover {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+>>>>>>> upstream/main
 .launch-pane > .jfx-button.launch-button {
     -fx-max-width: 200px;
     -fx-min-width: 200px;

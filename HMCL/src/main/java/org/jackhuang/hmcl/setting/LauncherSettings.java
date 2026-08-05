@@ -36,11 +36,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
-import org.jackhuang.hmcl.theme.BuiltinBackground;
-import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
-import org.jackhuang.hmcl.theme.ThemeColor;
-import org.jackhuang.hmcl.theme.ThemeReference;
+import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
@@ -49,7 +45,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Objects;
+import java.util.UUID;
 
 /// Stores the current workspace's main launcher settings.
 ///

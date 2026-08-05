@@ -17,8 +17,11 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import javafx.animation.ScaleTransition;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -26,9 +29,10 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import java.util.Arrays;
+import java.util.List;
 
-import org.jackhuang.hmcl.Metadata;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class FeedbackPage extends SpinnerPane {
 
@@ -56,6 +60,21 @@ public class FeedbackPage extends SpinnerPane {
             discord.setTitle(i18n("contact.chat.discord"));
             discord.setSubtitle(i18n("contact.chat.discord.statement"));
 
+            List<LineButton> btns = Arrays.asList(
+                    users, discord
+            );
+
+            for (LineButton btn : btns) {
+                ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), btn);
+                scaleIn.setToX(1.01);
+                scaleIn.setToY(1.01);
+                ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), btn);
+                scaleOut.setToX(1.0);
+                scaleOut.setToY(1.0);
+                btn.setOnMouseEntered(e -> scaleIn.playFromStart());
+                btn.setOnMouseExited(e -> scaleOut.playFromStart());
+            }
+
             groups.getContent().setAll(users, discord);
         }
 
@@ -71,6 +90,15 @@ public class FeedbackPage extends SpinnerPane {
                         ? FXUtils.newBuiltinImage("/assets/img/github-white.png")
                         : FXUtils.newBuiltinImage("/assets/img/github.png"));
             }));
+
+            ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), github);
+            scaleIn.setToX(1.01);
+            scaleIn.setToY(1.01);
+            ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), github);
+            scaleOut.setToX(1.0);
+            scaleOut.setToY(1.0);
+            github.setOnMouseEntered(e -> scaleIn.playFromStart());
+            github.setOnMouseExited(e -> scaleOut.playFromStart());
 
             feedback.getContent().setAll(github);
         }

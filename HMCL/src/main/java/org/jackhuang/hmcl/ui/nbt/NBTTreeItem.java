@@ -22,7 +22,6 @@ import javafx.scene.control.TreeItem;
 import org.glavo.nbt.NBTElement;
 import org.glavo.nbt.NBTParent;
 import org.glavo.nbt.chunk.Chunk;
-import org.glavo.nbt.tag.*;
 import org.jetbrains.annotations.Nullable;
 
 /// @author Glavo

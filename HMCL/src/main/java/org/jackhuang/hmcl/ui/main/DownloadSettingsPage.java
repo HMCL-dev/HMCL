@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.*;
+import javafx.animation.ScaleTransition;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -27,6 +28,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.ProxyType;
@@ -101,6 +103,21 @@ public class DownloadSettingsPage extends StackPane {
                 defaultAddonSourcePane.setNullSafeConverter(key -> I18n.i18n("addon." + key));
                 defaultAddonSourcePane.setItems("modrinth", "curseforge");
                 defaultAddonSourcePane.valueProperty().bindBidirectional(settings().defaultAddonSourceProperty());
+
+                List<LineSelectButton> btns = Arrays.asList(
+                        versionListSourcePane, downloadSourcePane, defaultAddonSourcePane
+                );
+
+                for (LineSelectButton btn : btns) {
+                    ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), btn);
+                    scaleIn.setToX(1.01);
+                    scaleIn.setToY(1.01);
+                    ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), btn);
+                    scaleOut.setToX(1.0);
+                    scaleOut.setToY(1.0);
+                    btn.setOnMouseEntered(e -> scaleIn.playFromStart());
+                    btn.setOnMouseExited(e -> scaleOut.playFromStart());
+                }
 
                 downloadSource.getContent().setAll(versionListSourcePane, downloadSourcePane, defaultAddonSourcePane);
             }

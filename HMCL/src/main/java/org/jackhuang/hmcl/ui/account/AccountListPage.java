@@ -17,14 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
+import javafx.animation.ScaleTransition;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -35,6 +30,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -138,6 +134,14 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                             Controllers.dialog(new MicrosoftAccountLoginPane());
                         }
                     });
+                    ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), microsoftItem);
+                    scaleIn.setToX(1.05);
+                    scaleIn.setToY(1.05);
+                    ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), microsoftItem);
+                    scaleOut.setToX(1.0);
+                    scaleOut.setToY(1.0);
+                    microsoftItem.setOnMouseEntered(e -> scaleIn.playFromStart());
+                    microsoftItem.setOnMouseExited(e -> scaleOut.playFromStart());
 
                     AdvancedListItem offlineItem = new AdvancedListItem();
                     offlineItem.getStyleClass().add("navigation-drawer-item");
@@ -150,6 +154,14 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                             Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE));
                         }
                     });
+                    ScaleTransition scaleIn2 = new ScaleTransition(Duration.millis(150), offlineItem);
+                    scaleIn2.setToX(1.05);
+                    scaleIn2.setToY(1.05);
+                    ScaleTransition scaleOut2 = new ScaleTransition(Duration.millis(150), offlineItem);
+                    scaleOut2.setToX(1.0);
+                    scaleOut2.setToY(1.0);
+                    offlineItem.setOnMouseEntered(e -> scaleIn2.playFromStart());
+                    offlineItem.setOnMouseExited(e -> scaleOut2.playFromStart());
 
                     VBox boxAuthServers = new VBox();
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
@@ -183,6 +195,15 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         Tooltip tooltip = new Tooltip();
                         tooltip.textProperty().bind(Bindings.format("%s (%s)", title, server.getUrl()));
                         FXUtils.installFastTooltip(item, tooltip);
+
+                        ScaleTransition scaleIn3 = new ScaleTransition(Duration.millis(150), item);
+                        scaleIn3.setToX(1.05);
+                        scaleIn3.setToY(1.05);
+                        ScaleTransition scaleOut3 = new ScaleTransition(Duration.millis(150), item);
+                        scaleOut3.setToX(1.0);
+                        scaleOut3.setToY(1.0);
+                        item.setOnMouseEntered(e -> scaleIn3.playFromStart());
+                        item.setOnMouseExited(e -> scaleOut3.playFromStart());
 
                         return item;
                     });
@@ -228,6 +249,15 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     });
                     VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
                 }
+
+                ScaleTransition scaleIn4 = new ScaleTransition(Duration.millis(150), addAuthServerItem);
+                scaleIn4.setToX(1.05);
+                scaleIn4.setToY(1.05);
+                ScaleTransition scaleOut4 = new ScaleTransition(Duration.millis(150), addAuthServerItem);
+                scaleOut4.setToX(1.0);
+                scaleOut4.setToY(1.0);
+                addAuthServerItem.setOnMouseEntered(e -> scaleIn4.playFromStart());
+                addAuthServerItem.setOnMouseExited(e -> scaleOut4.playFromStart());
 
                 ScrollPane scrollPane = new ScrollPane(boxMethods);
                 VBox.setVgrow(scrollPane, Priority.ALWAYS);

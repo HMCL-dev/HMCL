@@ -21,7 +21,10 @@ import javafx.scene.Node;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.SettingsMap;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Stack;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 

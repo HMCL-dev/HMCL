@@ -18,9 +18,12 @@
 package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.animation.ScaleTransition;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
+import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
@@ -37,15 +40,12 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
-import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.instances.DownloadListPage;
-import org.jackhuang.hmcl.ui.instances.HMCLLocalizedDownloadListPage;
 import org.jackhuang.hmcl.ui.instances.GameInstancePage;
+import org.jackhuang.hmcl.ui.instances.HMCLLocalizedDownloadListPage;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -126,6 +126,22 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
                 .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
+
+        VBox container = (VBox) sideBar.getContent();
+
+        for (Node node : container.getChildren()) {
+            if (node instanceof AdvancedListItem item) {
+                ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), item);
+                scaleIn.setToX(1.05);
+                scaleIn.setToY(1.05);
+                ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), item);
+                scaleOut.setToX(1.0);
+                scaleOut.setToY(1.0);
+                item.setOnMouseEntered(e -> scaleIn.playFromStart());
+                item.setOnMouseExited(e -> scaleOut.playFromStart());
+            }
+        }
+
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
 
