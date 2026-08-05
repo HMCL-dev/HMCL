@@ -12,31 +12,20 @@ import com.jfoenix.controls.JFXRippler.RipplerPos;
 import com.jfoenix.transitions.CachedTransition;
 import com.jfoenix.transitions.JFXFillTransition;
 import com.jfoenix.utils.JFXNodeUtils;
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
-import javafx.animation.Transition;
+import javafx.animation.*;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.VPos;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.skin.CheckBoxSkin;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
 public class JFXCheckBoxSkin extends CheckBoxSkin {
     private final StackPane box = new StackPane();
@@ -186,15 +175,32 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         }
 
         JFXCheckBox control = (JFXCheckBox) this.getSkinnable();
-        this.transition.setRate(selection ? 1.0 : -1.0);
-        this.select.setRate(selection ? 1.0 : -1.0);
-        this.transition.play();
-        this.select.play();
+
         this.box.setBorder(new Border(new BorderStroke(
                 selection ? control.getCheckedColor() : Themes.getColorScheme().getOnSurfaceVariant(),
                 BorderStrokeStyle.SOLID,
                 new CornerRadii(2.0),
                 new BorderWidths(this.lineThick))));
+
+        if (!AnimationUtils.isAnimationEnabled()) {
+            if (selection) {
+                this.mark.setVisible(true);
+                this.mark.setScaleX(1.0);
+                this.mark.setScaleY(1.0);
+                JFXNodeUtils.updateBackground(box.getBackground(), box, control.getCheckedColor());
+            } else {
+                this.mark.setVisible(false);
+                this.mark.setScaleX(0.0);
+                this.mark.setScaleY(0.0);
+                JFXNodeUtils.updateBackground(box.getBackground(), box, Color.TRANSPARENT);
+            }
+            return;
+        }
+
+        this.transition.setRate(selection ? 1.0 : -1.0);
+        this.select.setRate(selection ? 1.0 : -1.0);
+        this.transition.play();
+        this.select.play();
     }
 
     private void createFillTransition() {

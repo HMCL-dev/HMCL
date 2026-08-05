@@ -49,7 +49,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
         Set<String> englishSearchFiltersSet = new LinkedHashSet<>(INITIAL_CAPACITY);
 
         int count = 0;
-        for (ModTranslations.Mod mod : ModTranslations.getTranslationsByRepositoryType(getType()).searchMod(searchFilter)) {
+        for (ModTranslations.Mod mod : ModTranslations.getTranslationsByAddonType(getType()).searchMod(searchFilter)) {
             String englishSearchFilter = String.join(" ", StringUtils.tokenize(StringUtils.isNotBlank(mod.getSubname()) ? mod.getSubname() : mod.getName()));
             if (StringUtils.isNotBlank(englishSearchFilter)) {
                 englishSearchFiltersSet.add(englishSearchFilter);
@@ -82,7 +82,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
                     continue;
                 }
 
-                ModTranslations.Mod chineseTranslation = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteAddon.slug());
+                ModTranslations.Mod chineseTranslation = ModTranslations.getTranslationsByAddonType(getType()).getModByCurseForgeId(remoteAddon.slug());
                 if (chineseTranslation != null && !StringUtils.isBlank(chineseTranslation.getName()) && StringUtils.containsChinese(chineseTranslation.getName())) {
                     searchResultArray[chineseIndex++] = remoteAddon;
                 } else {
@@ -94,7 +94,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
 
         StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
         return new SearchResult(Stream.concat(Arrays.stream(searchResultArray, 0, chineseIndex).map(remoteMod -> {
-            ModTranslations.Mod chineseRemoteMod = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.slug());
+            ModTranslations.Mod chineseRemoteMod = ModTranslations.getTranslationsByAddonType(getType()).getModByCurseForgeId(remoteMod.slug());
             if (chineseRemoteMod == null || StringUtils.isBlank(chineseRemoteMod.getName()) || !StringUtils.containsChinese(chineseRemoteMod.getName())) {
                 return Pair.pair(remoteMod, Integer.MAX_VALUE);
             }
