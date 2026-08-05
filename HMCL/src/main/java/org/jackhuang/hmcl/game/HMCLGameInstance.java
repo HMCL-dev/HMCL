@@ -387,14 +387,6 @@ public class HMCLGameInstance extends DefaultGameInstance {
 
     /// Initializes this instance with the given settings object.
     ///
-    /// @param setting the settings to install
-    /// @return the installed settings
-    public GameSettings.Instance initSettings(GameSettings.Instance setting) {
-        return initSettings(setting, true);
-    }
-
-    /// Initializes this instance with the given settings object.
-    ///
     /// @param setting   the settings to install
     /// @param allowSave whether the settings may be written back to disk
     /// @return the installed settings
@@ -431,14 +423,14 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// Returns the first custom icon file found in this instance's root directory.
     ///
     /// @return the icon file, or empty when no supported icon file exists
-    public java.util.Optional<Path> getIconFile() {
+    public @Nullable Path getIconFile() {
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
             Path file = getInstanceRoot().resolve("icon." + extension);
             if (Files.exists(file)) {
-                return java.util.Optional.of(file);
+                return file;
             }
         }
-        return java.util.Optional.empty();
+        return null;
     }
 
     /// Replaces this instance's custom icon file.
@@ -491,10 +483,10 @@ public class HMCLGameInstance extends DefaultGameInstance {
             return iconType.getIcon();
         }
 
-        java.util.Optional<Path> iconFile = getIconFile();
-        if (iconFile.isPresent()) {
+        @Nullable Path iconFile = getIconFile();
+        if (iconFile != null) {
             try {
-                return FXUtils.loadImage(iconFile.get(), 64, 64, true, true);
+                return FXUtils.loadImage(iconFile, 64, 64, true, true);
             } catch (Exception e) {
                 LOG.warning("Failed to load instance icon for " + id, e);
             }
