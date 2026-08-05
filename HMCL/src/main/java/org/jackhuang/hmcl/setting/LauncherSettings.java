@@ -97,6 +97,12 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     /// Theme appearance override key for background opacity.
     public static final String THEME_APPEARANCE_BACKGROUND_OPACITY = "backgroundOpacity";
 
+    private final BooleanProperty enableButtonHoverScale = new SimpleBooleanProperty(this, "enableButtonHoverScale", true);
+
+    public BooleanProperty enableButtonHoverScaleProperty() {
+        return enableButtonHoverScale;
+    }
+
     /// Gson instance used for launcher settings and related settings objects that depend on JavaFX properties.
     public static final Gson SETTINGS_GSON = new GsonBuilder()
             .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)

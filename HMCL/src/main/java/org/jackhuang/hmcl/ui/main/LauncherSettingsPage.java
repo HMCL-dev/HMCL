@@ -78,7 +78,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         VBox container = (VBox) sideBar.getContent();
         for (Node node : container.getChildren()) {
             if (node instanceof AdvancedListItem item) {
-                ButtonSizeEffects.applyHoverScale(item);
+                ButtonSizeEffects.hoverScale(item);
             }
         }
         FXUtils.setLimitWidth(sideBar, 200);

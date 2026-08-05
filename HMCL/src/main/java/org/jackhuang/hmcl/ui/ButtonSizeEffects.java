@@ -23,6 +23,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+
 public final class ButtonSizeEffects {
     private static final Duration ANIMATION_DURATION = Duration.millis(150);
     private static final double SCALE_FACTOR = 1.05;
@@ -31,23 +33,26 @@ public final class ButtonSizeEffects {
 
     }
 
-    public static void applyHoverScale(Node node) {
-        ScaleTransition scaleIn = new ScaleTransition(ANIMATION_DURATION, node);
-        scaleIn.setToX(SCALE_FACTOR);
-        scaleIn.setToY(SCALE_FACTOR);
+    public static void hoverScale (Node node) {
+        if (settings().enableButtonHoverScaleProperty().get()) {
+            ScaleTransition scaleIn = new ScaleTransition(ANIMATION_DURATION, node);
+            scaleIn.setToX(SCALE_FACTOR);
+            scaleIn.setToY(SCALE_FACTOR);
 
-        ScaleTransition scaleOut = new ScaleTransition(ANIMATION_DURATION, node);
-        scaleOut.setToX(1.0);
-        scaleOut.setToY(1.0);
+            ScaleTransition scaleOut = new ScaleTransition(ANIMATION_DURATION, node);
+            scaleOut.setToX(1.0);
+            scaleOut.setToY(1.0);
 
-        // 使用 addEventHandler 以避免覆盖已有的事件处理器
-        node.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> scaleIn.playFromStart());
-        node.addEventHandler(MouseEvent.MOUSE_EXITED, e -> scaleOut.playFromStart());
+            node.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> scaleIn.playFromStart());
+            node.addEventHandler(MouseEvent.MOUSE_EXITED, e -> scaleOut.playFromStart());
+        }
     }
 
-    public static void applyHoverScaleToVBox(VBox vbox) {
-        for (Node child : vbox.getChildren()) {
-            applyHoverScale(child);
+    public static void hoverScaleToVBox (VBox vbox) {
+        if (settings().enableButtonHoverScaleProperty().get()) {
+            for (Node child : vbox.getChildren()) {
+                hoverScale(child);
+            }
         }
     }
 }

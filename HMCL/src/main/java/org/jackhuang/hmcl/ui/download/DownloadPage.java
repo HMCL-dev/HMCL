@@ -125,7 +125,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         VBox container = (VBox) sideBar.getContent();
         for (Node node : container.getChildren()) {
             if (node instanceof AdvancedListItem) {
-                ButtonSizeEffects.applyHoverScale(node);
+                ButtonSizeEffects.hoverScale(node);
             }
         }
 

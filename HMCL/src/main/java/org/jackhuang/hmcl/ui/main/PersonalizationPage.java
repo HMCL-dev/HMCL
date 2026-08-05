@@ -1188,6 +1188,12 @@ public class PersonalizationPage extends StackPane {
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
 
+            LineToggleButton hoverScaleButton = new LineToggleButton();
+            appearanceList.getContent().add(hoverScaleButton);
+            hoverScaleButton.selectedProperty().bindBidirectional(settings().enableButtonHoverScaleProperty());
+            hoverScaleButton.setTitle(i18n("settings.launcher.button_hover_scale"));
+            hoverScaleButton.setSubtitle(i18n("settings.launcher.button_hover_scale.subtitle"));
+
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.animation")), appearanceList);
         }
 
