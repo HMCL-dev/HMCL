@@ -17,18 +17,14 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import static javafx.collections.FXCollections.emptyObservableList;
-import static javafx.collections.FXCollections.observableList;
-import static javafx.collections.FXCollections.singletonObservableList;
-
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXListCell;
+import javafx.beans.binding.Bindings;
+import javafx.scene.text.Font;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXListCell;
-
-import javafx.beans.binding.Bindings;
-import javafx.scene.text.Font;
+import static javafx.collections.FXCollections.*;
 
 public final class FontComboBox extends JFXComboBox<String> {
 

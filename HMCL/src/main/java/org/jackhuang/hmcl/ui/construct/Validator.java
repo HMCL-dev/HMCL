@@ -19,15 +19,13 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
-
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.scene.control.TextInputControl;
+import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-
-import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 public final class Validator extends ValidatorBase {
 

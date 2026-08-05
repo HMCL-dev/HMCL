@@ -5,8 +5,6 @@
 
 package com.jfoenix.controls;
 
-import java.util.List;
-
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -14,6 +12,8 @@ import javafx.scene.Node;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+
+import java.util.List;
 
 public class JFXDialogLayout extends StackPane {
     private final StackPane heading = new StackPane();

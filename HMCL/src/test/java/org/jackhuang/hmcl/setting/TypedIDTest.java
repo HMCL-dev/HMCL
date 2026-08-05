@@ -28,7 +28,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /// Tests for typed object identifiers.
 @NotNullByDefault

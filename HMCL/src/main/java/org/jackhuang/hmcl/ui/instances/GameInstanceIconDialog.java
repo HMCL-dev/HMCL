@@ -24,8 +24,8 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -35,8 +35,8 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameInstanceIconDialog extends DialogPane {
     private final HMCLGameRepository repository;

@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.main;
 
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -27,8 +28,6 @@ import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
-import org.jackhuang.hmcl.Metadata;
 
 public class FeedbackPage extends SpinnerPane {
 

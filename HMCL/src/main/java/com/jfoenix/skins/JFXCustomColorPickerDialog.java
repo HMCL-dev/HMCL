@@ -19,7 +19,10 @@
 
 package com.jfoenix.skins;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDecorator;
+import com.jfoenix.controls.JFXTabPane;
+import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.svg.SVGGlyph;
 import com.jfoenix.transitions.JFXFillTransition;
 import javafx.animation.*;

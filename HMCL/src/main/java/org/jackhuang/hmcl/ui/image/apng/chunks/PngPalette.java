@@ -3,9 +3,9 @@
 
 package org.jackhuang.hmcl.ui.image.apng.chunks;
 
+import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Palette;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
-import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Palette;
 
 import java.util.Arrays;
 

@@ -19,7 +19,10 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXRippler;
 import javafx.animation.Transition;
-import javafx.css.*;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
+import javafx.css.StyleableObjectProperty;
+import javafx.css.StyleableProperty;
 import javafx.css.converter.PaintConverter;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;

@@ -5,9 +5,9 @@ package org.jackhuang.hmcl.ui.image.apng.util;
 
 import org.jackhuang.hmcl.ui.image.apng.PngChunkCode;
 import org.jackhuang.hmcl.ui.image.apng.chunks.*;
-import org.jackhuang.hmcl.ui.image.apng.reader.PngChunkProcessor;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.map.PngChunkMap;
+import org.jackhuang.hmcl.ui.image.apng.reader.PngChunkProcessor;
 
 import java.io.IOException;
 import java.io.InputStream;

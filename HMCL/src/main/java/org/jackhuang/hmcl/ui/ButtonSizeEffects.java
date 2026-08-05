@@ -23,7 +23,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
-public class ButtonSizeEffects {
+public final class ButtonSizeEffects {
     private static final Duration ANIMATION_DURATION = Duration.millis(150);
     private static final double SCALE_FACTOR = 1.05;
 

@@ -43,8 +43,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class LocalModpackPage extends ModpackPage {
 
