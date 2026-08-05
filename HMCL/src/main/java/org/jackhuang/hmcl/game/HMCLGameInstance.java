@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectPropertyBase;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -41,6 +43,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -65,6 +69,12 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// Cached instance-local game settings, or `null` when none exist after loading.
     private GameSettings.@Nullable Instance gameSettings;
 
+    /// Soft-cached icon image for this instance id.
+    ///
+    /// Shared across COW snapshot wrappers. The computed [Image] is retained only via a
+    /// [SoftReference], so it can be reclaimed under memory pressure when nothing else holds it.
+    private final WeakCachedIconImageProperty iconImage;
+
     /// Creates a registered instance bound to the given repository snapshot.
     ///
     /// @param snapshot the repository snapshot that owns this instance
@@ -86,12 +96,13 @@ public class HMCLGameInstance extends DefaultGameInstance {
             GameInstanceManifest manifest,
             @Nullable Path manifestFile) {
         super(snapshot, id, manifest, manifestFile);
+        this.iconImage = new WeakCachedIconImageProperty(getRepository(), id);
     }
 
     /// Creates an instance that shares mutable instance-local state with another instance.
     ///
-    /// Used when the repository clones a snapshot so that settings remain available on the new
-    /// wrapper.
+    /// Used when the repository clones a snapshot so that settings and the icon property remain
+    /// available on the new wrapper.
     private HMCLGameInstance(
             DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
@@ -101,6 +112,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
         this.gameSettingsLoaded = shareState.gameSettingsLoaded;
         this.gameSettingsReadOnly = shareState.gameSettingsReadOnly;
         this.gameSettings = shareState.gameSettings;
+        this.iconImage = shareState.iconImage;
     }
 
     @Override
@@ -303,6 +315,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
         setting.setSavable(allowSave);
         gameSettingsLoaded = true;
         gameSettings = setting;
+        setting.iconProperty().addListener(observable -> invalidateIconImage());
         if (allowSave) {
             gameSettingsReadOnly = false;
             setting.addListener(a -> saveSettings());
@@ -354,14 +367,20 @@ public class HMCLGameInstance extends DefaultGameInstance {
             throw new IllegalArgumentException("Unsupported icon file: " + extension);
         }
 
-        deleteIconFile();
+        clearIconFiles();
         FileUtils.copyFile(iconFile, getInstanceRoot().resolve("icon." + extension));
+        invalidateIconImage();
     }
 
     /// Deletes all supported custom icon files for this instance.
     ///
     /// Individual deletion failures are logged and do not stop later files from being attempted.
     public void deleteIconFile() {
+        clearIconFiles();
+        invalidateIconImage();
+    }
+
+    private void clearIconFiles() {
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
             Path file = getInstanceRoot().resolve("icon." + extension);
             try {
@@ -372,18 +391,41 @@ public class HMCLGameInstance extends DefaultGameInstance {
         }
     }
 
+    /// Returns the observable icon image for this instance.
+    ///
+    /// The image is stored in a [SoftReference] cache: when nothing else strongly references it
+    /// (for example no UI node is displaying it), the JVM may reclaim the [Image] under memory
+    /// pressure. The next [#getIconImage] reloads it.
+    ///
+    /// @return the icon image property
+    public ReadOnlyObjectProperty<Image> iconImageProperty() {
+        return iconImage;
+    }
+
     /// Returns the icon image selected for this instance.
     ///
-    /// The configured built-in icon takes precedence. When the default icon is selected, this method
-    /// tries a custom icon file and then derives a built-in icon from the instance manifest.
+    /// Equivalent to [ReadOnlyObjectProperty#get()] on [#iconImageProperty].
     ///
     /// @return the selected or derived icon image
     public Image getIconImage() {
-        if (!getRepository().isLoaded()) {
+        return iconImage.get();
+    }
+
+    /// Drops the soft-cached icon image and notifies observers.
+    public void invalidateIconImage() {
+        iconImage.invalidate();
+    }
+
+    /// Computes the icon image from settings, custom files, and the launch manifest.
+    ///
+    /// @param instance the instance to inspect; must be a current snapshot member when possible
+    /// @return the selected or derived icon image
+    private static Image computeIconImage(HMCLGameInstance instance) {
+        if (!instance.getRepository().isLoaded()) {
             return GameInstanceIconType.DEFAULT.getIcon();
         }
 
-        @Nullable GameSettings.Instance setting = getSettings();
+        @Nullable GameSettings.Instance setting = instance.getSettings();
         GameInstanceIconType iconType = setting != null
                 ? Lang.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT)
                 : GameInstanceIconType.DEFAULT;
@@ -391,16 +433,16 @@ public class HMCLGameInstance extends DefaultGameInstance {
             return iconType.getIcon();
         }
 
-        @Nullable Path iconFile = getIconFile();
+        @Nullable Path iconFile = instance.getIconFile();
         if (iconFile != null) {
             try {
                 return FXUtils.loadImage(iconFile, 64, 64, true, true);
             } catch (Exception e) {
-                LOG.warning("Failed to load instance icon for " + id, e);
+                LOG.warning("Failed to load instance icon for " + instance.getId(), e);
             }
         }
 
-        GameInstanceManifest.Resolved resolvedManifest = getResolvedManifest();
+        GameInstanceManifest.Resolved resolvedManifest = instance.getResolvedManifest();
         if (LibraryAnalyzer.isModded(resolvedManifest)) {
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolvedManifest, null);
             if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
@@ -421,7 +463,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 return GameInstanceIconType.OPTIFINE.getIcon();
         }
 
-        @Nullable String gameVersion = getRepository().getGameVersion(getLaunchManifest()).orElse(null);
+        @Nullable String gameVersion = instance.getRepository().getGameVersion(instance.getLaunchManifest()).orElse(null);
         if (gameVersion != null) {
             GameVersionNumber version = GameVersionNumber.asGameVersion(gameVersion);
             if (version.isAprilFools()) {
@@ -433,6 +475,52 @@ public class HMCLGameInstance extends DefaultGameInstance {
             }
         }
         return GameInstanceIconType.GRASS.getIcon();
+    }
+
+    /// Soft-cached read-only icon property compatible with JavaFX versions before 19.
+    private static final class WeakCachedIconImageProperty extends ReadOnlyObjectPropertyBase<Image> {
+        private final HMCLGameRepository repository;
+        private final GameInstanceID instanceId;
+        private @Nullable WeakReference<Image> cache;
+
+        /// @param repository the repository that owns the instance
+        /// @param instanceId the instance id
+        WeakCachedIconImageProperty(HMCLGameRepository repository, GameInstanceID instanceId) {
+            this.repository = repository;
+            this.instanceId = instanceId;
+        }
+
+        @Override
+        public Object getBean() {
+            return repository;
+        }
+
+        @Override
+        public String getName() {
+            return "iconImage";
+        }
+
+        @Override
+        public Image get() {
+            WeakReference<Image> current = cache;
+            Image image = current != null ? current.get() : null;
+            if (image != null) {
+                return image;
+            }
+
+            HMCLGameInstance instance = repository.findInstance(instanceId);
+            image = instance != null
+                    ? computeIconImage(instance)
+                    : GameInstanceIconType.DEFAULT.getIcon();
+            cache = new WeakReference<>(image);
+            return image;
+        }
+
+        /// Clears the weak cache and notifies listeners.
+        void invalidate() {
+            cache = null;
+            fireValueChangedEvent();
+        }
     }
 
     /// Creates the marker indicating that the most recent launch ended abnormally.

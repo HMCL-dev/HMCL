@@ -23,8 +23,6 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -65,9 +63,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// The selected instance resolved from the current repository snapshot.
     private final ReadOnlyObjectWrapper<@Nullable HMCLGameInstance> selectedInstance;
-
-    /// Publishes notifications after an instance icon changes.
-    public final EventManager<Event> onInstanceIconChanged = new EventManager<>();
 
     /// Creates a repository backed by the given game directory.
     ///

@@ -17,10 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Pos;
-import org.jackhuang.hmcl.event.Event;
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -29,19 +31,21 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Consumer;
-
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
     private final ImageContainer imageContainer;
     private final WeakListenerHolder holder = new WeakListenerHolder();
-    private @Nullable HMCLGameRepository repository;
-    @SuppressWarnings("unused")
-    private @Nullable Consumer<Event> onInstanceIconChangedListener;
+
+    /// Strongly held so [WeakChangeListener] keeps delivering icon updates.
+    private final ChangeListener<Image> iconListener;
+
+    private @Nullable WeakChangeListener<Image> weakIconListener;
+    private @Nullable ReadOnlyObjectProperty<Image> observedIcon;
 
     public GameAdvancedListItem() {
         this.imageContainer = new ImageContainer(LEFT_GRAPHIC_SIZE);
+        this.iconListener = (observable, oldImage, newImage) -> imageContainer.setImage(newImage);
         imageContainer.setMouseTransparent(true);
         AdvancedListItem.setAlignment(imageContainer, Pos.CENTER);
         setLeftGraphic(imageContainer);
@@ -50,14 +54,13 @@ public class GameAdvancedListItem extends AdvancedListItem {
     }
 
     private void loadInstance(@Nullable HMCLGameInstance instance) {
-        if (GameDirectoryManager.getSelectedRepository() != repository) {
-            repository = GameDirectoryManager.getSelectedRepository();
-            onInstanceIconChangedListener = repository.onInstanceIconChanged.registerWeak(event ->
-                    FXUtils.runInFX(() -> loadInstance(repository.getSelectedInstance())));
-        }
+        unbindIcon();
         if (instance != null) {
             setTitle(i18n("instance.manage.manage"));
             setSubtitle(instance.getId().toString());
+            observedIcon = instance.iconImageProperty();
+            weakIconListener = new WeakChangeListener<>(iconListener);
+            observedIcon.addListener(weakIconListener);
             imageContainer.setImage(instance.getIconImage());
             return;
         }
@@ -65,5 +68,13 @@ public class GameAdvancedListItem extends AdvancedListItem {
         setTitle(i18n("instance.empty"));
         setSubtitle(i18n("instance.empty.add"));
         imageContainer.setImage(GameInstanceIconType.DEFAULT.getIcon());
+    }
+
+    private void unbindIcon() {
+        if (observedIcon != null && weakIconListener != null) {
+            observedIcon.removeListener(weakIconListener);
+        }
+        observedIcon = null;
+        weakIconListener = null;
     }
 }

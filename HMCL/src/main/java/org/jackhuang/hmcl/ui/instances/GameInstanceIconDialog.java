@@ -21,7 +21,6 @@ import javafx.scene.Node;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -117,7 +116,7 @@ public class GameInstanceIconDialog extends DialogPane {
 
     @Override
     protected void onAccept() {
-        gameInstance.getRepository().onInstanceIconChanged.fireEvent(new Event(this));
+        // Icon file / settings.iconProperty updates already invalidate iconImageProperty.
         onFinish.run();
         super.onAccept();
     }
