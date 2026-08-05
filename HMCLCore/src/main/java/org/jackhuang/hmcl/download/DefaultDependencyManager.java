@@ -182,18 +182,18 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     @Override
     public Task<GameInstanceManifest> installLibraryAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion) {
-        AtomicReference<GameInstanceManifest> removedLibraryVersion = new AtomicReference<>();
+        AtomicReference<GameInstanceManifest> removedLibraryManifest = new AtomicReference<>();
 
         return removeLibraryAsync(baseVersion, libraryVersion.getLibraryId())
-                .thenComposeAsync(version -> {
-                    removedLibraryVersion.set(version);
-                    return libraryVersion.getInstallTask(this, version);
+                .thenComposeAsync(manifest -> {
+                    removedLibraryManifest.set(manifest);
+                    return libraryVersion.getInstallTask(this, manifest);
                 })
                 .thenApplyAsync(patch -> {
                     if (patch == null) {
-                        return removedLibraryVersion.get();
+                        return removedLibraryManifest.get();
                     } else {
-                        return removedLibraryVersion.get().addPatch(patch);
+                        return removedLibraryManifest.get().addPatch(patch);
                     }
                 })
                 .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
