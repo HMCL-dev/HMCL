@@ -245,7 +245,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 var cause = t.getCause();
                 return cause == null
                         || cause instanceof FileNotFoundException
-                        || cause instanceof ResponseCodeException ex && (ex.getResponseCode() == 404 || ex.getResponseCode() == 502);
+                        || cause instanceof ResponseCodeException rce && rce.getResponseCode() == 404;
             })) { // Which means the file does not exist
                 return RemoteAddon.BROKEN;
             }

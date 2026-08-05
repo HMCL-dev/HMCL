@@ -240,7 +240,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         } catch (IOException e) {
             if (e instanceof NoCandidatesException) throw e;
             if (e instanceof FileNotFoundException
-                    || e instanceof ResponseCodeException ex && (ex.getResponseCode() == 404 || ex.getResponseCode() == 502))
+                    || e instanceof ResponseCodeException rce && rce.getResponseCode() == 404)
                 return RemoteAddon.BROKEN;
             throw e;
         }
