@@ -18,13 +18,7 @@
 package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -54,6 +48,8 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
+import static org.jackhuang.hmcl.ui.ButtonSizeEffects.applyHoverScale;
+import static org.jackhuang.hmcl.ui.ButtonSizeEffects.applyHoverScaleToVBox;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -138,6 +134,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                             Controllers.dialog(new MicrosoftAccountLoginPane());
                         }
                     });
+                    applyHoverScale(microsoftItem);
 
                     AdvancedListItem offlineItem = new AdvancedListItem();
                     offlineItem.getStyleClass().add("navigation-drawer-item");
@@ -150,6 +147,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                             Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE));
                         }
                     });
+                    applyHoverScale(offlineItem);
 
                     VBox boxAuthServers = new VBox();
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
@@ -187,6 +185,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         return item;
                     });
                     Bindings.bindContent(boxAuthServers.getChildren(), authServerItems);
+                    applyHoverScaleToVBox(boxAuthServers);
 
                     ClassTitle title = new ClassTitle(i18n("account.create").toUpperCase(Locale.ROOT));
                     if (RESTRICTED.get()) {
@@ -228,6 +227,8 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     });
                     VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
                 }
+
+                applyHoverScale(addAuthServerItem);
 
                 ScrollPane scrollPane = new ScrollPane(boxMethods);
                 VBox.setVgrow(scrollPane, Priority.ALWAYS);

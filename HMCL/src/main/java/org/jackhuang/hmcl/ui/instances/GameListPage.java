@@ -70,6 +70,8 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static org.jackhuang.hmcl.ui.ButtonSizeEffects.applyHoverScale;
+import static org.jackhuang.hmcl.ui.ButtonSizeEffects.applyHoverScaleToVBox;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -84,6 +86,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         gameDirectoryListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
             GameDirectoryListItem item = new GameDirectoryListItem(gameDirectory);
             FXUtils.setLimitWidth(item, 200);
+            applyHoverScale(item);
             return item;
         });
 
@@ -96,6 +99,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 addGameDirectoryItem.setTitle(i18n("game_directory.new"));
                 addGameDirectoryItem.setLeftIcon(SVG.ADD_CIRCLE);
                 addGameDirectoryItem.setOnAction(e -> Controllers.navigate(new GameDirectoryPage(null)));
+                applyHoverScale(addGameDirectoryItem);
 
                 pane.setFitToWidth(true);
                 VBox wrapper = new VBox();
@@ -112,6 +116,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings);
             FXUtils.setLimitHeight(bottomLeftCornerList, 40 + 12 * 2);
             setLeft(pane, bottomLeftCornerList);
+            applyHoverScaleToVBox((VBox) bottomLeftCornerList.getContent());
         }
 
         setCenter(new GameList());
