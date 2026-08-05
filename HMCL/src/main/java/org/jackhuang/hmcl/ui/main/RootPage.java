@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
@@ -67,6 +68,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.ButtonSizeEffects.applyHoverScale;
+import static org.jackhuang.hmcl.ui.ButtonSizeEffects.applyHoverScaleToVBox;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -151,6 +154,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
             FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0));
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
+            applyHoverScale(accountListItem);
 
             // second item in left sidebar
             GameAdvancedListItem gameListItem = new GameAdvancedListItem();
@@ -170,6 +174,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareGameInstancePage);
             }
             FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
+            applyHoverScale(gameListItem);
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
@@ -177,6 +182,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             gameItem.setTitle(i18n("instance.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
             FXUtils.onSecondaryButtonClicked(gameItem, () -> showGameListPopupMenu(gameItem));
+            applyHoverScale(gameItem);
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
@@ -189,6 +195,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
             }
+            applyHoverScale(downloadItem);
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
@@ -201,6 +208,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
             }
+            applyHoverScale(launcherSettingsItem);
 
             // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
@@ -224,6 +232,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     Controllers.dialog(message, null, MessageDialogPane.MessageType.WARNING);
                 }
             });
+            applyHoverScale(terracottaItem);
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
@@ -240,6 +249,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         Controllers.getSettingsPage().showFeedback();
                         Controllers.navigate(Controllers.getSettingsPage());
                     });
+
+            applyHoverScaleToVBox((VBox) sideBar.getContent());
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);
