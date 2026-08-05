@@ -468,34 +468,5 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return suggested;
     }
 
-    public static ProxyOption getProxyOption() {
-        return switch (settings().proxyTypeProperty().get()) {
-            case SYSTEM -> ProxyOption.Default.INSTANCE;
-            case DIRECT -> ProxyOption.Direct.INSTANCE;
-            case HTTP, SOCKS -> {
-                String proxyHost = settings().proxyHostProperty().get();
-                int proxyPort = settings().proxyPortProperty().get();
 
-                if (StringUtils.isBlank(proxyHost) || proxyPort < 0 || proxyPort > 0xFFFF) {
-                    yield ProxyOption.Default.INSTANCE;
-                }
-
-                String proxyUser = settings().proxyUserProperty().get();
-                String proxyPass = settings().proxyPasswordProperty().get();
-
-                if (StringUtils.isBlank(proxyUser)) {
-                    proxyUser = null;
-                    proxyPass = null;
-                } else if (proxyPass == null) {
-                    proxyPass = "";
-                }
-
-                if (settings().proxyTypeProperty().get() == ProxyType.HTTP) {
-                    yield new ProxyOption.Http(proxyHost, proxyPort, proxyUser, proxyPass);
-                } else {
-                    yield new ProxyOption.Socks(proxyHost, proxyPort, proxyUser, proxyPass);
-                }
-            }
-        };
-    }
 }

@@ -49,6 +49,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -641,7 +642,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 .setHeight(vs.getHeight())
                 .setFullscreen(vs.getInheritable(GameSettings::windowTypeProperty) == GameWindowType.FULLSCREEN)
                 .setWrapper(vs.getInheritable(GameSettings::commandWrapperProperty))
-                .setProxyOption(HMCLGameRepository.getProxyOption())
+                .setProxyOption(getProxyOption())
                 .setPreLaunchCommand(vs.getInheritable(GameSettings::preLaunchCommandProperty))
                 .setPostExitCommand(vs.getInheritable(GameSettings::postExitCommandProperty))
                 .setNoGeneratedJVMArgs(noJVMOptions)
@@ -681,6 +682,37 @@ public class HMCLGameInstance extends DefaultGameInstance {
             builder.setMaxMemory(null);
 
         return builder;
+    }
+
+    private static ProxyOption getProxyOption() {
+        return switch (settings().proxyTypeProperty().get()) {
+            case SYSTEM -> ProxyOption.Default.INSTANCE;
+            case DIRECT -> ProxyOption.Direct.INSTANCE;
+            case HTTP, SOCKS -> {
+                String proxyHost = settings().proxyHostProperty().get();
+                int proxyPort = settings().proxyPortProperty().get();
+
+                if (StringUtils.isBlank(proxyHost) || proxyPort < 0 || proxyPort > 0xFFFF) {
+                    yield ProxyOption.Default.INSTANCE;
+                }
+
+                String proxyUser = settings().proxyUserProperty().get();
+                String proxyPass = settings().proxyPasswordProperty().get();
+
+                if (StringUtils.isBlank(proxyUser)) {
+                    proxyUser = null;
+                    proxyPass = null;
+                } else if (proxyPass == null) {
+                    proxyPass = "";
+                }
+
+                if (settings().proxyTypeProperty().get() == ProxyType.HTTP) {
+                    yield new ProxyOption.Http(proxyHost, proxyPort, proxyUser, proxyPass);
+                } else {
+                    yield new ProxyOption.Socks(proxyHost, proxyPort, proxyUser, proxyPass);
+                }
+            }
+        };
     }
 
     /// Loads a new-format instance game settings file.
