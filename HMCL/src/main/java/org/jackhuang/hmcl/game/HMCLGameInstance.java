@@ -69,12 +69,6 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// Cached instance-local game settings, or `null` when none exist after loading.
     private GameSettings.@Nullable Instance gameSettings;
 
-    /// Soft-cached icon image for this instance id.
-    ///
-    /// Shared across COW snapshot wrappers. The computed [Image] is retained only via a
-    /// [SoftReference], so it can be reclaimed under memory pressure when nothing else holds it.
-    private final WeakCachedIconImageProperty iconImage;
-
     /// Creates a registered instance bound to the given repository snapshot.
     ///
     /// @param snapshot the repository snapshot that owns this instance
@@ -96,7 +90,6 @@ public class HMCLGameInstance extends DefaultGameInstance {
             GameInstanceManifest manifest,
             @Nullable Path manifestFile) {
         super(snapshot, id, manifest, manifestFile);
-        this.iconImage = new WeakCachedIconImageProperty(getRepository(), id);
     }
 
     /// Creates an instance that shares mutable instance-local state with another instance.
@@ -112,7 +105,6 @@ public class HMCLGameInstance extends DefaultGameInstance {
         this.gameSettingsLoaded = shareState.gameSettingsLoaded;
         this.gameSettingsReadOnly = shareState.gameSettingsReadOnly;
         this.gameSettings = shareState.gameSettings;
-        this.iconImage = shareState.iconImage;
     }
 
     @Override
@@ -391,6 +383,12 @@ public class HMCLGameInstance extends DefaultGameInstance {
         }
     }
 
+    /// Soft-cached icon image for this instance id.
+    ///
+    /// Shared across COW snapshot wrappers. The computed [Image] is retained only via a
+    /// [SoftReference], so it can be reclaimed under memory pressure when nothing else holds it.
+    private @Nullable WeakCachedIconImageProperty iconImage;
+
     /// Returns the observable icon image for this instance.
     ///
     /// The image is stored in a [SoftReference] cache: when nothing else strongly references it
@@ -399,6 +397,9 @@ public class HMCLGameInstance extends DefaultGameInstance {
     ///
     /// @return the icon image property
     public ReadOnlyObjectProperty<Image> iconImageProperty() {
+        if (iconImage == null) {
+            iconImage = new WeakCachedIconImageProperty();
+        }
         return iconImage;
     }
 
@@ -408,91 +409,21 @@ public class HMCLGameInstance extends DefaultGameInstance {
     ///
     /// @return the selected or derived icon image
     public Image getIconImage() {
-        return iconImage.get();
+        return iconImageProperty().get();
     }
 
     /// Drops the soft-cached icon image and notifies observers.
     public void invalidateIconImage() {
-        iconImage.invalidate();
-    }
-
-    /// Computes the icon image from settings, custom files, and the launch manifest.
-    ///
-    /// @param instance the instance to inspect; must be a current snapshot member when possible
-    /// @return the selected or derived icon image
-    private static Image computeIconImage(HMCLGameInstance instance) {
-        if (!instance.getRepository().isLoaded()) {
-            return GameInstanceIconType.DEFAULT.getIcon();
-        }
-
-        @Nullable GameSettings.Instance setting = instance.getSettings();
-        GameInstanceIconType iconType = setting != null
-                ? Lang.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT)
-                : GameInstanceIconType.DEFAULT;
-        if (iconType != GameInstanceIconType.DEFAULT) {
-            return iconType.getIcon();
-        }
-
-        @Nullable Path iconFile = instance.getIconFile();
-        if (iconFile != null) {
-            try {
-                return FXUtils.loadImage(iconFile, 64, 64, true, true);
-            } catch (Exception e) {
-                LOG.warning("Failed to load instance icon for " + instance.getId(), e);
-            }
-        }
-
-        GameInstanceManifest.Resolved resolvedManifest = instance.getResolvedManifest();
-        if (LibraryAnalyzer.isModded(resolvedManifest)) {
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolvedManifest, null);
-            if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                return GameInstanceIconType.FABRIC.getIcon();
-            else if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                return GameInstanceIconType.QUILT.getIcon();
-            else if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
-                return GameInstanceIconType.LEGACY_FABRIC.getIcon();
-            else if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                return GameInstanceIconType.NEO_FORGE.getIcon();
-            else if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                return GameInstanceIconType.FORGE.getIcon();
-            else if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
-                return GameInstanceIconType.CLEANROOM.getIcon();
-            else if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                return GameInstanceIconType.CHICKEN.getIcon();
-            else if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                return GameInstanceIconType.OPTIFINE.getIcon();
-        }
-
-        @Nullable String gameVersion = instance.getRepository().getGameVersion(instance.getLaunchManifest()).orElse(null);
-        if (gameVersion != null) {
-            GameVersionNumber version = GameVersionNumber.asGameVersion(gameVersion);
-            if (version.isAprilFools()) {
-                return GameInstanceIconType.APRIL_FOOLS.getIcon();
-            } else if (version instanceof GameVersionNumber.LegacySnapshot) {
-                return GameInstanceIconType.COMMAND.getIcon();
-            } else if (version instanceof GameVersionNumber.Old) {
-                return GameInstanceIconType.CRAFT_TABLE.getIcon();
-            }
-        }
-        return GameInstanceIconType.GRASS.getIcon();
+        ((WeakCachedIconImageProperty) iconImageProperty()).invalidate();
     }
 
     /// Soft-cached read-only icon property compatible with JavaFX versions before 19.
-    private static final class WeakCachedIconImageProperty extends ReadOnlyObjectPropertyBase<Image> {
-        private final HMCLGameRepository repository;
-        private final GameInstanceID instanceId;
+    private final class WeakCachedIconImageProperty extends ReadOnlyObjectPropertyBase<Image> {
         private @Nullable WeakReference<Image> cache;
-
-        /// @param repository the repository that owns the instance
-        /// @param instanceId the instance id
-        WeakCachedIconImageProperty(HMCLGameRepository repository, GameInstanceID instanceId) {
-            this.repository = repository;
-            this.instanceId = instanceId;
-        }
 
         @Override
         public Object getBean() {
-            return repository;
+            return HMCLGameInstance.this;
         }
 
         @Override
@@ -508,12 +439,64 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 return image;
             }
 
-            HMCLGameInstance instance = repository.findInstance(instanceId);
-            image = instance != null
-                    ? computeIconImage(instance)
-                    : GameInstanceIconType.DEFAULT.getIcon();
+            image = computeIconImage();
             cache = new WeakReference<>(image);
             return image;
+        }
+
+        /// Computes the icon image from settings, custom files, and the launch manifest.
+        ///
+        /// @return the selected or derived icon image
+        private Image computeIconImage() {
+            @Nullable GameSettings.Instance setting = getSettings();
+            GameInstanceIconType iconType = setting != null
+                    ? Lang.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT)
+                    : GameInstanceIconType.DEFAULT;
+            if (iconType != GameInstanceIconType.DEFAULT) {
+                return iconType.getIcon();
+            }
+
+            @Nullable Path iconFile = getIconFile();
+            if (iconFile != null) {
+                try {
+                    return FXUtils.loadImage(iconFile, 64, 64, true, true);
+                } catch (Exception e) {
+                    LOG.warning("Failed to load instance icon for " + getId(), e);
+                }
+            }
+
+            GameInstanceManifest.Resolved resolvedManifest = getResolvedManifest();
+            if (LibraryAnalyzer.isModded(resolvedManifest)) {
+                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolvedManifest, null);
+                if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
+                    return GameInstanceIconType.FABRIC.getIcon();
+                else if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                    return GameInstanceIconType.QUILT.getIcon();
+                else if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
+                    return GameInstanceIconType.LEGACY_FABRIC.getIcon();
+                else if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
+                    return GameInstanceIconType.NEO_FORGE.getIcon();
+                else if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE))
+                    return GameInstanceIconType.FORGE.getIcon();
+                else if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
+                    return GameInstanceIconType.CLEANROOM.getIcon();
+                else if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
+                    return GameInstanceIconType.CHICKEN.getIcon();
+                else if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
+                    return GameInstanceIconType.OPTIFINE.getIcon();
+            }
+
+            GameVersionNumber version = getVersion();
+            if (!version.equals(GameVersionNumber.unknown())) {
+                if (version.isAprilFools()) {
+                    return GameInstanceIconType.APRIL_FOOLS.getIcon();
+                } else if (version instanceof GameVersionNumber.LegacySnapshot) {
+                    return GameInstanceIconType.COMMAND.getIcon();
+                } else if (version instanceof GameVersionNumber.Old) {
+                    return GameInstanceIconType.CRAFT_TABLE.getIcon();
+                }
+            }
+            return GameInstanceIconType.GRASS.getIcon();
         }
 
         /// Clears the weak cache and notifies listeners.
