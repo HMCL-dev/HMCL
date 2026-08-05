@@ -160,7 +160,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
 
     @Override
     public Path getRunDirectory() {
-        return getRepository().resolveRunDirectory(getId(), isModpack(), getSettings());
+        return getRepository().computeRunDirectory(getId(), isModpack(), getSettings());
     }
 
     /// Returns the loaded instance-local game settings, loading them on first access.

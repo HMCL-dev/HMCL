@@ -199,23 +199,27 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return new DefaultDependencyManager(this, downloadProvider, HMCLCacheRepository.REPOSITORY);
     }
 
+    /// {@inheritDoc}
+    ///
+    /// When the instance is not yet registered, isolation is resolved from on-disk settings and
+    /// `modpack.cfg` so install tasks can target the correct directory before `save`/`refresh`.
     @Override
-    public Path getRunDirectory(GameInstanceID instanceId) {
+    public Path resolveRunDirectory(GameInstanceID instanceId) {
         HMCLGameInstance instance = findInstance(instanceId);
         if (instance != null) {
             return instance.getRunDirectory();
         }
         boolean modpack = Files.exists(getLayout().getModpackConfigurationFile(instanceId));
-        return resolveRunDirectory(instanceId, modpack, peekInstanceGameSettings(instanceId));
+        return computeRunDirectory(instanceId, modpack, peekInstanceGameSettings(instanceId));
     }
 
-    /// Resolves the run directory for an instance id from modpack state and local settings.
+    /// Resolves the run directory from modpack state and local settings.
     ///
-    /// @param instanceId  the instance id
-    /// @param modpack     whether the instance is an HMCL modpack (`modpack.cfg` present)
+    /// @param instanceId   the instance id
+    /// @param modpack      whether the instance is an HMCL modpack (`modpack.cfg` present)
     /// @param localSetting the instance-local settings, or `null` when absent
     /// @return the run directory
-    Path resolveRunDirectory(
+    Path computeRunDirectory(
             GameInstanceID instanceId,
             boolean modpack,
             GameSettings.@Nullable Instance localSetting) {
@@ -292,7 +296,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     ///
     /// When the instance is already registered, settings are updated through
     /// [HMCLGameInstance]. Otherwise the isolation flag is written to the instance settings file
-    /// so install tasks that call [#getRunDirectory(GameInstanceID)] see the isolated path.
+    /// so install tasks that call [#resolveRunDirectory(GameInstanceID)] see the isolated path.
     ///
     /// @param instanceId the instance id
     public void ensureIsolatedRunningDirectory(GameInstanceID instanceId) {
@@ -342,7 +346,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public void clean(GameInstanceID instanceId) throws IOException {
         clean(getBaseDirectory());
-        clean(getRunDirectory(instanceId));
+        clean(resolveRunDirectory(instanceId));
     }
 
     public void duplicateInstance(GameInstanceID srcId, GameInstanceID dstId, boolean copySaves) throws IOException {
@@ -376,19 +380,19 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         boolean copyOriginalGameDir;
         try {
-            copyOriginalGameDir = !Files.isSameFile(getRunDirectory(srcId), getLayout().getInstanceRoot(srcId));
+            copyOriginalGameDir = !Files.isSameFile(resolveRunDirectory(srcId), getLayout().getInstanceRoot(srcId));
         } catch (IOException e) {
             copyOriginalGameDir = true;
         }
 
-        Path srcGameDir = getRunDirectory(srcId);
+        Path srcGameDir = resolveRunDirectory(srcId);
 
         GameSettings.Instance newGameSettings = getInstance(srcId).copySettings();
         newGameSettings.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
         newGameSettings.runningDirectoryProperty().setValue("");
         writeInstanceGameSettings(dstId, newGameSettings);
 
-        Path dstGameDir = getRunDirectory(dstId);
+        Path dstGameDir = resolveRunDirectory(dstId);
 
         if (copyOriginalGameDir)
             FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
@@ -460,7 +464,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Applies default isolation to a new instance before its manifest is saved.
     ///
     /// Writes the isolation flag to the instance settings file so
-    /// [#getRunDirectory(GameInstanceID)] returns the instance root without requiring a snapshot
+    /// [#resolveRunDirectory(GameInstanceID)] returns the instance root without requiring a snapshot
     /// member.
     public void applyDefaultIsolationSettingForNewInstance(GameInstanceID instanceId, boolean modded) {
         if (!shouldIsolateNewInstance(modded)) {

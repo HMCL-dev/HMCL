@@ -405,8 +405,21 @@ public abstract class DefaultGameRepository implements GameRepository {
         return getSnapshot().get(id);
     }
 
-    @Override
-    public Path getRunDirectory(GameInstanceID instanceId) {
+    /// Resolves the run directory for an instance id.
+    ///
+    /// When the id is present in the current snapshot, this returns
+    /// [DefaultGameInstance#getRunDirectory]. Otherwise this returns the repository base directory
+    /// (shared run directory of the official layout). Install tasks and other id-based callers that
+    /// do not yet hold a [GameInstance] should use this method instead of a repository-level
+    /// `getRunDirectory` API.
+    ///
+    /// @param instanceId the instance id
+    /// @return the run directory
+    public Path resolveRunDirectory(GameInstanceID instanceId) {
+        DefaultGameInstance instance = findSnapshotInstance(instanceId);
+        if (instance != null) {
+            return instance.getRunDirectory();
+        }
         return getBaseDirectory();
     }
 

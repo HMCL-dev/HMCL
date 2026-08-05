@@ -135,20 +135,6 @@ public interface GameRepository {
         return getLayout().getInstanceRoot(instanceId);
     }
 
-    /// Returns the working directory used when launching an instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the run directory
-    Path getRunDirectory(GameInstanceID instanceId);
-
-    /// Returns the mods directory for an instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the mods directory below the run directory
-    default Path getModsDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("mods");
-    }
-
     /// Returns the primary client jar path for a manifest.
     ///
     /// @param manifest the manifest whose jar should be located

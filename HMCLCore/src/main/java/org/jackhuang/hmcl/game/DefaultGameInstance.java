@@ -274,7 +274,8 @@ public abstract class DefaultGameInstance implements GameInstance {
 
     @Override
     public Path getRunDirectory() {
-        return getRepository().getRunDirectory(id);
+        // Official layout: shared working directory is the repository base directory.
+        return getRepository().getBaseDirectory();
     }
 
     /// {@inheritDoc}

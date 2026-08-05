@@ -109,7 +109,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     public void preExecute() throws Exception {
         // Stage #0: General Setup
         {
-            Path run = repository.getRunDirectory(instanceId);
+            Path run = repository.resolveRunDirectory(instanceId);
             Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
 
             ModpackConfiguration<MultiMCInstanceConfiguration> config = null;

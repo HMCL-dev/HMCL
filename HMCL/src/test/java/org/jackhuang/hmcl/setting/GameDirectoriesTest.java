@@ -464,15 +464,16 @@ public final class GameDirectoriesTest {
             GameInstanceID id = new GameInstanceID("1.21.11-fabric");
 
             assertFalse(repository.hasInstance(id));
-            assertEquals(repository.getBaseDirectory(), repository.getRunDirectory(id));
+            assertEquals(repository.getBaseDirectory(), repository.resolveRunDirectory(id));
 
             repository.applyDefaultIsolationSettingForNewInstance(id, true);
 
-            assertEquals(repository.getLayout().getInstanceRoot(id), repository.getRunDirectory(id));
-            assertEquals(repository.getLayout().getInstanceRoot(id).resolve("mods"), repository.getModsDirectory(id));
+            assertEquals(repository.getLayout().getInstanceRoot(id), repository.resolveRunDirectory(id));
+            assertEquals(repository.getLayout().getInstanceRoot(id).resolve("mods"),
+                    repository.resolveRunDirectory(id).resolve("mods"));
 
             assertTrue(repository.removeInstanceFromDisk(id));
-            assertEquals(repository.getBaseDirectory(), repository.getRunDirectory(id));
+            assertEquals(repository.getBaseDirectory(), repository.resolveRunDirectory(id));
         }
     }
 
