@@ -146,17 +146,6 @@ public abstract class DefaultGameInstance implements GameInstance {
         return id;
     }
 
-    /// Returns whether this instance is only a provisional placeholder.
-    ///
-    /// Provisional instances may appear in the current [DefaultGameRepositorySnapshot] so that
-    /// instance-local state (for example install-time settings) can be tracked before a real
-    /// manifest is saved. They must not be treated as indexed repository members.
-    ///
-    /// @return `false` by default
-    public boolean isProvisional() {
-        return false;
-    }
-
     @Override
     public GameInstanceManifest getManifest() {
         return manifest;

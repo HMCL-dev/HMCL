@@ -698,9 +698,9 @@ public final class GameDirectoriesTest {
             Path sourceIcon = tempDirectory.resolve("source.png");
             Files.write(sourceIcon, new byte[]{1, 2, 3});
             instance.setIconFile(sourceIcon);
-            assertEquals(instance.getInstanceRoot().resolve("icon.png"), instance.getIconFile().orElseThrow());
+            assertEquals(instance.getInstanceRoot().resolve("icon.png"), instance.getIconFile());
             instance.deleteIconFile();
-            assertTrue(instance.getIconFile().isEmpty());
+            assertNull(instance.getIconFile());
         }
     }
 

@@ -157,15 +157,11 @@ public final class ModpackHelper {
     }
 
     public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, Modpack modpack) {
-        repository.markInstanceAsModpack(instanceId);
+        repository.ensureIsolatedRunningDirectory(instanceId);
 
         ExceptionalRunnable<?> success = () -> {
             repository.refresh();
-            GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(instanceId);
-            repository.undoMark(instanceId);
-            if (setting != null) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-            }
+            repository.ensureIsolatedRunningDirectory(instanceId);
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -201,15 +197,11 @@ public final class ModpackHelper {
     }
 
     public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, Modpack modpack, String iconUrl) {
-        repository.markInstanceAsModpack(instanceId);
+        repository.ensureIsolatedRunningDirectory(instanceId);
 
         ExceptionalRunnable<?> success = () -> {
             repository.refresh();
-            GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(instanceId);
-            repository.undoMark(instanceId);
-            if (setting != null) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-            }
+            repository.ensureIsolatedRunningDirectory(instanceId);
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {

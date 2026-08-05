@@ -33,8 +33,7 @@ import java.util.Collection;
 /// publishes a newer snapshot, previously obtained instances may be stale; request them again from
 /// the current snapshot or repository when up-to-date state is required.
 ///
-/// Snapshot queries describe **registered** instances only. Implementation-specific provisional
-/// placeholders used during installation are not part of this view.
+/// Snapshot queries describe the instances indexed at publish time.
 @NotNullByDefault
 public interface GameRepositorySnapshot {
     /// Returns the repository that published this snapshot.

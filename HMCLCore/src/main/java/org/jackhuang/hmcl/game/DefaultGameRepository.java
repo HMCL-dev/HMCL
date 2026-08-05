@@ -397,8 +397,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         return getSnapshot().getRegistered(id);
     }
 
-    /// Returns the instance recorded in the current snapshot for the given id, including provisional
-    /// placeholders.
+    /// Returns the instance recorded in the current snapshot for the given id.
     ///
     /// @param id the instance id
     /// @return the instance, or `null` when absent from the current snapshot
@@ -427,7 +426,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         try {
             DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
             DefaultGameInstance fromHolder = newSnapshot.get(from);
-            if (fromHolder == null || fromHolder.isProvisional()) {
+            if (fromHolder == null) {
                 throw new NoSuchGameInstanceException(from);
             }
 
@@ -528,7 +527,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     @Override
     public Optional<String> getGameVersion(GameInstanceManifest manifest) {
         DefaultGameInstance instance = findSnapshotInstance(manifest.id());
-        if (instance != null && !instance.isProvisional() && manifest.equals(instance.getManifest())) {
+        if (instance != null && manifest.equals(instance.getManifest())) {
             GameVersionNumber version = instance.getVersion();
             if (version == GameVersionNumber.unknown()) {
                 return Optional.empty();

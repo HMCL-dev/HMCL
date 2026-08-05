@@ -17,36 +17,29 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonParseException;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
-import org.jackhuang.hmcl.modpack.ModpackConfiguration;
-import org.jackhuang.hmcl.modpack.ModpackProvider;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DefaultIsolationType;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.GameWindowType;
 import org.jackhuang.hmcl.setting.GameDirectory;
-import org.jackhuang.hmcl.setting.ProxyType;
+import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.SystemInfo;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -56,11 +49,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// HMCL game repository implementation backed by a GameDirectory and per-instance game settings.
@@ -135,34 +126,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Returns the indexed instance for the given id, or `null` when it is not loaded.
     ///
-    /// Provisional placeholders are excluded.
-    ///
     /// @param id the instance id
     /// @return the instance, or `null` when absent
     public @Nullable HMCLGameInstance findInstance(GameInstanceID id) {
         return (HMCLGameInstance) getSnapshot().findInstance(id);
-    }
-
-    /// Returns the instance that owns local state for the given id.
-    ///
-    /// When the id is already present in the current snapshot (including provisional placeholders),
-    /// that instance is returned. Otherwise a provisional [HMCLGameInstance] is created and published
-    /// in a new snapshot until it is promoted by a real manifest or the snapshot is replaced by
-    /// refresh.
-    ///
-    /// @param instanceId the instance id
-    /// @return the instance used to manage settings and install-time state for the id
-    private HMCLGameInstance resolveInstance(GameInstanceID instanceId) {
-        DefaultGameInstance existing = findSnapshotInstance(instanceId);
-        if (existing != null) {
-            return (HMCLGameInstance) existing;
-        }
-
-        HMCLGameRepositorySnapshot newSnapshot = getSnapshot().clone();
-        HMCLGameInstance provisional = HMCLGameInstance.provisional(newSnapshot, instanceId);
-        newSnapshot.put(provisional);
-        publishSnapshot(newSnapshot);
-        return provisional;
     }
 
     /// Returns the persistent game directory for this repository.
@@ -239,7 +206,125 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public Path getRunDirectory(GameInstanceID instanceId) {
-        return resolveInstance(instanceId).getRunDirectory();
+        HMCLGameInstance instance = findInstance(instanceId);
+        if (instance != null) {
+            return instance.getRunDirectory();
+        }
+        boolean modpack = Files.exists(getLayout().getModpackConfigurationFile(instanceId));
+        return resolveRunDirectory(instanceId, modpack, peekInstanceGameSettings(instanceId));
+    }
+
+    /// Resolves the run directory for an instance id from modpack state and local settings.
+    ///
+    /// @param instanceId  the instance id
+    /// @param modpack     whether the instance is an HMCL modpack (`modpack.cfg` present)
+    /// @param localSetting the instance-local settings, or `null` when absent
+    /// @return the run directory
+    Path resolveRunDirectory(
+            GameInstanceID instanceId,
+            boolean modpack,
+            GameSettings.@Nullable Instance localSetting) {
+        Path instanceRoot = getLayout().getInstanceRoot(instanceId);
+        if (modpack) {
+            return instanceRoot;
+        }
+
+        boolean useInstanceRunningDirectory =
+                localSetting != null
+                        && localSetting.getOverrideProperties().contains(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+
+        String runningDirectory = selectedRunningDirectory(localSetting, useInstanceRunningDirectory);
+        if (StringUtils.isBlank(runningDirectory)) {
+            return useInstanceRunningDirectory ? instanceRoot : getBaseDirectory();
+        }
+
+        try {
+            return Path.of(runningDirectory);
+        } catch (Exception ignored) {
+            return instanceRoot;
+        }
+    }
+
+    private String selectedRunningDirectory(
+            GameSettings.@Nullable Instance localSetting,
+            boolean useInstanceRunningDirectory) {
+        if (useInstanceRunningDirectory) {
+            if (localSetting == null) {
+                return "";
+            }
+            return Objects.requireNonNullElse(localSetting.runningDirectoryProperty().getValue(), "");
+        }
+
+        GameSettings.Preset parent = getParentGameSettings(localSetting);
+        return Objects.requireNonNullElse(parent.runningDirectoryProperty().getValue(), "");
+    }
+
+    /// Reads instance-local settings from disk without requiring a registered snapshot member.
+    ///
+    /// Used for install-time path resolution and migration before the instance is indexed. Does not
+    /// publish a snapshot entry.
+    ///
+    /// @param instanceId the instance id
+    /// @return the loaded settings, or `null` when none can be loaded
+    private GameSettings.@Nullable Instance peekInstanceGameSettings(GameInstanceID instanceId) {
+        Path file = getLayout().getInstanceGameSettingsFile(instanceId);
+        if (!Files.isRegularFile(file)) {
+            return null;
+        }
+        try {
+            return LauncherSettings.SETTINGS_GSON
+                    .fromJson(Files.readString(file), GameSettings.Instance.class);
+        } catch (Exception e) {
+            LOG.warning("Failed to peek instance game settings: " + file, e);
+            return null;
+        }
+    }
+
+    /// Writes instance-local settings to disk for an id that may not yet be registered.
+    ///
+    /// @param instanceId the instance id
+    /// @param setting    the settings to write
+    /// @throws IOException if the file cannot be written
+    private void writeInstanceGameSettings(GameInstanceID instanceId, GameSettings.Instance setting)
+            throws IOException {
+        Path file = getLayout().getInstanceGameSettingsFile(instanceId).toAbsolutePath().normalize();
+        Files.createDirectories(file.getParent());
+        setting.setSchema(GameSettings.Instance.CURRENT_SCHEMA);
+        FileUtils.saveSafely(file, LauncherSettings.SETTINGS_GSON.toJson(setting));
+    }
+
+    /// Ensures the instance uses an isolated running directory under its instance root.
+    ///
+    /// When the instance is already registered, settings are updated through
+    /// [HMCLGameInstance]. Otherwise the isolation flag is written to the instance settings file
+    /// so install tasks that call [#getRunDirectory(GameInstanceID)] see the isolated path.
+    ///
+    /// @param instanceId the instance id
+    public void ensureIsolatedRunningDirectory(GameInstanceID instanceId) {
+        HMCLGameInstance instance = findInstance(instanceId);
+        if (instance != null) {
+            if (instance.isSettingsReadOnly()) {
+                return;
+            }
+            GameSettings.Instance setting = instance.getSettingsOrCreate();
+            if (setting != null
+                    && setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
+                instance.saveSettings();
+            }
+            return;
+        }
+
+        GameSettings.Instance setting = peekInstanceGameSettings(instanceId);
+        if (setting == null) {
+            setting = new GameSettings.Instance();
+        }
+        if (setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
+            try {
+                writeInstanceGameSettings(instanceId, setting);
+            } catch (IOException e) {
+                LOG.warning("Failed to write isolated running directory for " + instanceId, e);
+            }
+        }
     }
 
     public Stream<HMCLGameInstance> getDisplayInstances() {
@@ -303,47 +388,49 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         Path srcGameDir = getRunDirectory(srcId);
 
-        GameSettings.Instance newGameSettings = resolveInstance(srcId).copySettings();
+        GameSettings.Instance newGameSettings = getInstance(srcId).copySettings();
         newGameSettings.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
         newGameSettings.runningDirectoryProperty().setValue("");
-        HMCLGameInstance dstInstance = resolveInstance(dstId);
-        dstInstance.initSettings(newGameSettings, true);
-        dstInstance.saveSettingsSync();
+        writeInstanceGameSettings(dstId, newGameSettings);
 
         Path dstGameDir = getRunDirectory(dstId);
 
         if (copyOriginalGameDir)
             FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
+
+        refresh();
     }
 
-    /// Returns instance-local settings for an instance ID, creating empty settings when the instance
-    /// is registered and its settings file is absent and writable.
+    /// Returns instance-local settings for a registered instance ID, creating empty settings when
+    /// the settings file is absent and writable.
     ///
-    /// This ID-based entry point is retained for installation before an instance has entered the
-    /// registered snapshot. Code that already has an [HMCLGameInstance] should use
+    /// Code that already has an [HMCLGameInstance] should use
     /// [HMCLGameInstance#getSettingsOrCreate()] instead.
     ///
-    /// @param instanceId the indexed or pending instance ID
-    /// @return the settings, or `null` when no settings exist and none can be created
+    /// @param instanceId the registered instance ID
+    /// @return the settings, or `null` when the instance is not registered or settings are unavailable
     public @Nullable GameSettings.Instance getInstanceGameSettingsOrCreate(GameInstanceID instanceId) {
-        HMCLGameInstance instance = resolveInstance(instanceId);
-        @Nullable GameSettings.Instance setting = instance.getSettings();
-        if (setting == null && hasInstance(instanceId)) {
-            setting = instance.createSettings();
+        HMCLGameInstance instance = findInstance(instanceId);
+        if (instance == null) {
+            return null;
         }
-        return setting;
+        return instance.getSettingsOrCreate();
     }
 
-    /// Returns instance-local settings for an indexed or provisional instance ID.
+    /// Returns instance-local settings for a registered instance ID.
     ///
-    /// This ID-based entry point is retained for installation and legacy migration before an
-    /// instance has entered the registered snapshot. Code that already has an [HMCLGameInstance]
-    /// should use [HMCLGameInstance#getSettings()] instead.
+    /// When the instance is not yet indexed, settings are loaded from disk (including lazy legacy
+    /// migration) without publishing a snapshot entry. Callers that already have an
+    /// [HMCLGameInstance] should use [HMCLGameInstance#getSettings()] instead.
     ///
-    /// @param instanceId the indexed or pending instance ID
+    /// @param instanceId the instance ID
     /// @return the settings, or `null` when no local settings exist
     public @Nullable GameSettings.Instance getInstanceGameSettings(GameInstanceID instanceId) {
-        return resolveInstance(instanceId).getSettings();
+        HMCLGameInstance instance = findInstance(instanceId);
+        if (instance != null) {
+            return instance.getSettings();
+        }
+        return loadOrMigrateInstanceGameSettings(instanceId);
     }
 
     /// Returns the explicit parent preset of the instance, falling back to the default preset.
@@ -353,16 +440,15 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return parentSetting != null ? parentSetting : SettingsManager.getDefaultGameSettingsPresetOrCreate();
     }
 
-    /// Resolves effective settings for an indexed or provisional instance ID.
+    /// Resolves effective settings for a registered instance ID.
     ///
-    /// This ID-based entry point is retained for launch construction and installation code that has
-    /// not yet obtained an [HMCLGameInstance]. Instance-oriented callers should use
-    /// [HMCLGameInstance#getEffectiveSettings()] instead.
+    /// Instance-oriented callers should use [HMCLGameInstance#getEffectiveSettings()] instead.
     ///
-    /// @param instanceId the indexed or pending instance ID
+    /// @param instanceId the registered instance ID
     /// @return the effective settings
+    /// @throws NoSuchGameInstanceException if the instance is not registered
     public GameSettings.Effective getEffectiveGameSettings(GameInstanceID instanceId) {
-        return resolveInstance(instanceId).getEffectiveSettings();
+        return getInstance(instanceId).getEffectiveSettings();
     }
 
     /// Returns whether a new instance should use an isolated running directory under the default isolation settings.
@@ -377,36 +463,42 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     /// Applies default isolation to a new instance before its manifest is saved.
+    ///
+    /// Writes the isolation flag to the instance settings file so
+    /// [#getRunDirectory(GameInstanceID)] returns the instance root without requiring a snapshot
+    /// member.
     public void applyDefaultIsolationSettingForNewInstance(GameInstanceID instanceId, boolean modded) {
-        HMCLGameInstance instance = resolveInstance(instanceId);
-        if (!shouldIsolateNewInstance(modded) || instance.isSettingsReadOnly()) {
+        if (!shouldIsolateNewInstance(modded)) {
             return;
         }
-
-        GameSettings.Instance setting = instance.getSettings();
-        if (setting == null) {
-            setting = instance.initSettings(new GameSettings.Instance(), true);
-        }
-        if (setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
-            instance.saveSettings();
-        }
+        ensureIsolatedRunningDirectory(instanceId);
     }
 
-    /// Marks the instance as a modpack for run-directory resolution during installation.
-    ///
-    /// @param instanceId the instance id
-    public void markInstanceAsModpack(GameInstanceID instanceId) {
-        resolveInstance(instanceId).markAsModpack();
-    }
-
-    /// Clears the install-time modpack mark for the instance.
-    ///
-    /// @param instanceId the instance id
-    public void undoMark(GameInstanceID instanceId) {
-        DefaultGameInstance existing = findSnapshotInstance(instanceId);
-        if (existing != null) {
-            ((HMCLGameInstance) existing).unmarkAsModpack();
+    /// Loads settings from disk for an unregistered id, running legacy migration when needed.
+    private GameSettings.@Nullable Instance loadOrMigrateInstanceGameSettings(GameInstanceID instanceId) {
+        Path file = getLayout().getInstanceGameSettingsFile(instanceId);
+        if (Files.isRegularFile(file)) {
+            return peekInstanceGameSettings(instanceId);
         }
+
+        @Nullable GameSettingsPresetID legacyParent = getGameDirectory().getLegacyGameSettings();
+        if (SettingsManager.getGameSettings(legacyParent) == null) {
+            legacyParent = null;
+        }
+
+        LegacyGameSettingsMigrator.InstanceMigrationResult migrationResult =
+                LegacyGameSettingsMigrator.migrateInstanceGameSettings(this, instanceId, legacyParent);
+        if (migrationResult == null) {
+            return null;
+        }
+
+        try {
+            writeInstanceGameSettings(instanceId, migrationResult.setting());
+            migrationResult.saveReceipt();
+        } catch (IOException e) {
+            LOG.warning("Failed to save migrated instance game settings for " + instanceId, e);
+        }
+        return migrationResult.setting();
     }
 
     // These instance ids are forbidden because they may conflict with modpack configuration filenames

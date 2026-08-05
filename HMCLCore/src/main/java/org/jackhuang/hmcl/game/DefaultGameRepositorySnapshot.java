@@ -39,8 +39,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// published snapshot, edit the copy, and publish it with
 /// [DefaultGameRepository#publishSnapshot(DefaultGameRepositorySnapshot)].
 ///
-/// Once sealed, this object is exposed as a [GameRepositorySnapshot]. Provisional placeholders
-/// remain reachable through [#get(GameInstanceID)] but are excluded from the public snapshot view.
+/// Once sealed, this object is exposed as a [GameRepositorySnapshot].
 ///
 /// Mutation methods are package-private: only code in `org.jackhuang.hmcl.game` may assemble a
 /// snapshot. Subclasses such as HMCL-specific snapshots may override [#newEmpty()] to preserve
@@ -104,7 +103,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         return layout;
     }
 
-    /// Returns the instance with the given id, including provisional placeholders.
+    /// Returns the instance with the given id.
     ///
     /// @param id the instance id
     /// @return the instance, or `null` when absent
@@ -116,10 +115,10 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     ///
     /// @param id the instance id
     /// @return the registered instance
-    /// @throws NoSuchGameInstanceException if the instance is absent or provisional
+    /// @throws NoSuchGameInstanceException if the instance is absent
     public DefaultGameInstance getRegistered(GameInstanceID id) throws NoSuchGameInstanceException {
         DefaultGameInstance instance = instances.get(id);
-        if (instance != null && !instance.isProvisional()) {
+        if (instance != null) {
             return instance;
         }
         throw new NoSuchGameInstanceException(id);
@@ -128,8 +127,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     /// {@inheritDoc}
     @Override
     public boolean hasInstance(GameInstanceID instanceId) {
-        DefaultGameInstance instance = instances.get(instanceId);
-        return instance != null && !instance.isProvisional();
+        return instances.containsKey(instanceId);
     }
 
     /// {@inheritDoc}
@@ -141,43 +139,30 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     /// {@inheritDoc}
     @Override
     public @Nullable DefaultGameInstance findInstance(GameInstanceID instanceId) {
-        DefaultGameInstance instance = instances.get(instanceId);
-        if (instance != null && !instance.isProvisional()) {
-            return instance;
-        }
-        return null;
+        return instances.get(instanceId);
     }
 
     /// {@inheritDoc}
     @Override
     public int getInstanceCount() {
-        int count = 0;
-        for (DefaultGameInstance instance : instances.values()) {
-            if (!instance.isProvisional()) {
-                count++;
-            }
-        }
-        return count;
+        return instances.size();
     }
 
     /// {@inheritDoc}
     @Override
     public Collection<? extends DefaultGameInstance> getInstances() {
-        return instances.values().stream()
-                .filter(instance -> !instance.isProvisional())
-                .toList();
+        return List.copyOf(instances.values());
     }
 
     /// {@inheritDoc}
     @Override
     public Collection<GameInstanceManifest> getInstanceManifests() {
         return instances.values().stream()
-                .filter(instance -> !instance.isProvisional())
                 .map(instance -> instance.manifest)
                 .toList();
     }
 
-    /// Returns a view of all instances in this snapshot, including provisional placeholders.
+    /// Returns a view of all instances in this snapshot.
     ///
     /// @return the instances; unmodifiable after [#seal()]
     public Collection<DefaultGameInstance> values() {
