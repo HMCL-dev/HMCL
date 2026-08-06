@@ -247,16 +247,22 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = repository.getGameVersion(instanceId);
-                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, mods)).orElse(null);
+                            if (gameVersion.isPresent()) {
+                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), gameVersion.get(), mods);
+                            } else {
+                                LOG.warning("Failed to check for updates, due to unable to get instance game version");
+                                return null;
+                            }
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                            } else if (result.isEmpty()) {
+                                if (exception != null) LOG.warning("Failed to check for updates", exception);
+                            } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage<>(modManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(modManager.getDirectory(), result));
                             }
                         })
                         .withStagesHints("update.checking"),
