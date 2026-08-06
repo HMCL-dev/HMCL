@@ -23,7 +23,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -493,7 +492,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
-        private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         private final ResourcePackListPage page;
 
@@ -510,8 +508,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
             super(listView);
             this.page = page;
-
-            getStyleClass().add("resource-pack-list-cell");
 
             HBox root = new HBox(8);
             root.setPickOnBounds(false);

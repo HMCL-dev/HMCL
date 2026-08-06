@@ -1096,20 +1096,16 @@
     -fx-spacing: 10;
 }
 
-.md-list-cell {
+.md-list-cell .root-container {
     -fx-border-color: -monet-outline-variant;
     -fx-border-width: 0 0 1 0;
 }
 
-.md-list-cell:selected {
+.md-list-cell:selected .root-container {
     -fx-background-color: -monet-secondary-container;
 }
 
-.mod-info-list-cell:warning {
-    -fx-background-color: -monet-error-container;
-}
-
-.resource-pack-list-cell:warning {
+.md-list-cell:warning .root-container {
     -fx-background-color: -monet-error-container;
 }
 
