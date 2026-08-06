@@ -33,11 +33,12 @@ public abstract class MDListCell<T> extends ListCell<T> {
     private final StackPane root = new StackPane();
 
     public MDListCell(JFXListView<T> listView) {
+        getStyleClass().add("md-list-cell");
 
         setText(null);
         setGraphic(null);
 
-        root.getStyleClass().add("md-list-cell");
+        root.getStyleClass().add("root-container");
         RipplerContainer ripplerContainer = new RipplerContainer(container);
         root.getChildren().setAll(ripplerContainer);
 
@@ -74,9 +75,7 @@ public abstract class MDListCell<T> extends ListCell<T> {
     }
 
     protected void setSelectable() {
-        FXUtils.onChangeAndOperate(selectedProperty(), selected -> {
-            root.pseudoClassStateChanged(SELECTED, selected);
-        });
+        FXUtils.onChangeAndOperate(selectedProperty(), selected -> pseudoClassStateChanged(SELECTED, selected));
     }
 
     protected abstract void updateControl(T item, boolean empty);
