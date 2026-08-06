@@ -56,7 +56,18 @@ public final class LauncherStateTest {
         assertFalse(state.shouldSaveImmediately(state.heightProperty()));
         assertTrue(state.shouldSaveImmediately(state.schemaProperty()));
         assertTrue(state.shouldSaveImmediately(state.promptedVersionProperty()));
+        assertTrue(state.shouldSaveImmediately(state.bundledModpackInstalledProperty()));
         assertTrue(state.shouldSaveImmediately(state.getShownTips()));
+    }
+
+    /// Tests that the bundled-modpack-installed flag round-trips through the state store fields.
+    @Test
+    public void storesBundledModpackInstalled() {
+        LauncherState state = new LauncherState();
+        assertFalse(state.isBundledModpackInstalled());
+
+        state.setBundledModpackInstalled(true);
+        assertTrue(state.isBundledModpackInstalled());
     }
 
     /// Tests extracting runtime state fields from a legacy config object.

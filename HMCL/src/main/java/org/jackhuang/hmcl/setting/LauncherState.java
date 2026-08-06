@@ -20,8 +20,10 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.Observable;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -206,6 +208,25 @@ public final class LauncherState extends ObservableSetting implements JsonSchema
     /// Sets the latest prompted update version.
     public void setPromptedVersion(@Nullable String promptedVersion) {
         this.promptedVersion.set(promptedVersion);
+    }
+
+    /// Whether the launcher has already offered automatic install of a cwd-bundled modpack.
+    @SerializedName("bundledModpackInstalled")
+    private final BooleanProperty bundledModpackInstalled = new SimpleBooleanProperty();
+
+    /// Returns whether a bundled modpack has already been offered for automatic install.
+    public boolean isBundledModpackInstalled() {
+        return bundledModpackInstalled.get();
+    }
+
+    /// Returns the bundled-modpack-installed property.
+    public BooleanProperty bundledModpackInstalledProperty() {
+        return bundledModpackInstalled;
+    }
+
+    /// Sets whether a bundled modpack has already been offered for automatic install.
+    public void setBundledModpackInstalled(boolean bundledModpackInstalled) {
+        this.bundledModpackInstalled.set(bundledModpackInstalled);
     }
 
     /// Tip markers that prevent repeated prompts.

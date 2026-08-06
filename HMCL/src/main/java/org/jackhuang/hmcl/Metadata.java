@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
@@ -133,4 +134,22 @@ public final class Metadata {
                 return null;
         }
     }
+
+    /// Returns the bundled modpack file under the process working directory, if present.
+    ///
+    /// Prefers `modpack.zip` over `modpack.mrpack` when both exist.
+    ///
+    /// @return the modpack path, or `null` when neither file exists
+    public static @Nullable Path findBundledModpackFile() {
+        Path zipModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
+        if (Files.isRegularFile(zipModpack)) {
+            return zipModpack;
+        }
+        Path mrpackModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.mrpack");
+        if (Files.isRegularFile(mrpackModpack)) {
+            return mrpackModpack;
+        }
+        return null;
+    }
+
 }

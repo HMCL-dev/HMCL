@@ -24,6 +24,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
@@ -33,11 +34,14 @@ import javafx.stage.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.game.BundledModpackBootstrap;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
@@ -57,6 +61,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -69,6 +74,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
@@ -372,10 +378,71 @@ public final class Controllers {
                     }, updateShowTips);
         }
 
-        BundledModpackBootstrap.scheduleAfterSelectedRepositoryLoaded(executor -> {
-            Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
-            executor.start();
-        });
+        scheduleBundledModpackInstall();
+    }
+
+    /// Guards against concurrent schedule attempts within one process.
+    private static final AtomicBoolean bundledModpackAttempted = new AtomicBoolean();
+
+    /// Refresh listener attached to the currently observed selected repository.
+    private static @Nullable ChangeListener<Number> bundledModpackRefreshListener;
+
+    /// Offers automatic install of a cwd-bundled modpack at most once per launcher state.
+    ///
+    /// Listens to the selected repository's [HMCLGameRepository#refreshCountProperty] (and runs
+    /// immediately when that repository is already loaded). Whether to install is decided by
+    /// [LauncherState#isBundledModpackInstalled], not by whether the repository is empty.
+    private static void scheduleBundledModpackInstall() {
+        ChangeListener<HMCLGameRepository> onSelectedRepository = (observable, oldRepository, newRepository) -> {
+            if (oldRepository != null && bundledModpackRefreshListener != null) {
+                oldRepository.refreshCountProperty().removeListener(bundledModpackRefreshListener);
+                bundledModpackRefreshListener = null;
+            }
+            if (newRepository == null) {
+                return;
+            }
+            bundledModpackRefreshListener = (obs, oldCount, newCount) ->
+                    tryInstallBundledModpack(newRepository);
+            newRepository.refreshCountProperty().addListener(bundledModpackRefreshListener);
+            if (newRepository.isLoaded()) {
+                tryInstallBundledModpack(newRepository);
+            }
+        };
+
+        GameDirectoryManager.selectedRepositoryProperty().addListener(onSelectedRepository);
+        onSelectedRepository.changed(
+                GameDirectoryManager.selectedRepositoryProperty(),
+                null,
+                GameDirectoryManager.getSelectedRepository());
+    }
+
+    private static void tryInstallBundledModpack(HMCLGameRepository repository) {
+        if (!bundledModpackAttempted.compareAndSet(false, true)) {
+            return;
+        }
+        if (state().isBundledModpackInstalled()) {
+            return;
+        }
+
+        @Nullable Path modpackFile = Metadata.findBundledModpackFile();
+        if (modpackFile == null) {
+            return;
+        }
+
+        LOG.info("Found bundled modpack at " + modpackFile + "; starting automatic install");
+
+        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
+                .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
+                .thenApplyAsync(modpack -> ModpackHelper
+                        .getInstallTask(repository, modpackFile, new GameInstanceID(modpack.getName()), modpack, null)
+                        .executor())
+                .thenAcceptAsync(Schedulers.javafx(), executor -> {
+                    // Record before presentation so a cancelled dialog does not re-prompt every launch.
+                    state().setBundledModpackInstalled(true);
+                    Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
+                    executor.start();
+                })
+                .start();
     }
 
     public static void dialog(Region content) {
