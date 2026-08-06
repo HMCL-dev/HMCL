@@ -175,7 +175,7 @@ public class InstallerItem extends Control {
             }
         }
 
-        public InstallerItemGroup(String gameVersion, Style style) {
+        public InstallerItemGroup(GameVersionNumber gameVersion, Style style) {
             game = new InstallerItem(MINECRAFT, style);
             InstallerItem fabric = new InstallerItem(FABRIC, style);
             InstallerItem fabricApi = new InstallerItem(FABRIC_API, style);
@@ -226,7 +226,7 @@ public class InstallerItem extends Control {
             }
 
             if (gameVersion != null) {
-                game.versionProperty.set(new InstalledState(gameVersion, false, false));
+                game.versionProperty.set(new InstalledState(gameVersion.toString(), false, false));
             }
 
             InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi, legacyfabric, legacyfabricApi, cleanroom};
@@ -245,9 +245,9 @@ public class InstallerItem extends Control {
 
             if (gameVersion == null) {
                 this.libraries = all;
-            } else if (gameVersion.equals("1.12.2")) {
+            } else if (gameVersion.compareTo("1.12.2") == 0) {
                 this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, optiFine};
-            } else if (GameVersionNumber.compare(gameVersion, "1.13.2") <= 0) {
+            } else if (gameVersion.compareTo("1.13.2") <= 0) {
                 this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi};
             } else {
                 this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};

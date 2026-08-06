@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
@@ -46,22 +46,18 @@ import java.util.zip.ZipException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class UpdateInstallerWizardProvider implements WizardProvider {
-    private final HMCLGameRepository repository;
+    private final HMCLGameInstance gameInstance;
     private final DefaultDependencyManager dependencyManager;
-    private final String gameVersion;
-    private final GameInstanceManifest manifest;
     private final String libraryId;
     private final String oldLibraryVersion;
     private final DownloadProvider downloadProvider;
 
-    public UpdateInstallerWizardProvider(@NotNull HMCLGameRepository repository, @NotNull String gameVersion, @NotNull GameInstanceManifest manifest, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
-        this.repository = repository;
-        this.gameVersion = gameVersion;
-        this.manifest = manifest;
+    public UpdateInstallerWizardProvider(@NotNull HMCLGameInstance gameInstance, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
+        this.gameInstance = gameInstance;
         this.libraryId = libraryId;
         this.oldLibraryVersion = oldLibraryVersion;
         this.downloadProvider = DownloadProviders.getDownloadProvider();
-        this.dependencyManager = repository.getDependency(downloadProvider);
+        this.dependencyManager = gameInstance.getRepository().getDependency(downloadProvider);
     }
 
     @Override
@@ -76,7 +72,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
         // We remove library but not save it,
         // so if installation failed will not break down current version.
-        Task<GameInstanceManifest> ret = Task.supplyAsync(() -> manifest);
+        Task<GameInstanceManifest> ret = Task.supplyAsync(gameInstance::getManifest);
         var hints = new ArrayList<Task.StagesHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof RemoteVersion remoteVersion) {
@@ -91,7 +87,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             }
         }
 
-        return ret.thenComposeAsync(repository::saveAsync).thenComposeAsync(repository.refreshAsync()).withStagesHints(hints);
+        return ret.thenComposeAsync(gameInstance.getRepository()::saveAsync).thenComposeAsync(gameInstance.getRepository()::refreshAsync).withStagesHints(hints);
     }
 
     @Override
@@ -103,7 +99,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                         controller.onFinish();
                     } else if ("game".equals(libraryId)) {
                         String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
-                        controller.onNext(new AdditionalInstallersPage(newGameVersion, manifest, controller, repository, downloadProvider));
+                        controller.onNext(new AdditionalInstallersPage(newGameVersion, gameInstance.getManifest(), controller, repository, downloadProvider));
                     } else {
                         Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);

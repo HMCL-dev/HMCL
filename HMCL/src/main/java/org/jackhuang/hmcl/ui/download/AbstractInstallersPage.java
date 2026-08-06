@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -58,7 +59,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
     public AbstractInstallersPage(WizardController controller, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
-        this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
+        this.group = new InstallerItem.InstallerItemGroup(GameVersionNumber.asGameVersion(gameVersion), getInstallerItemStyle());
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
