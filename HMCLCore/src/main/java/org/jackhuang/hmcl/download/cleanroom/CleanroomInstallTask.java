@@ -39,6 +39,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.jackhuang.hmcl.download.UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE;
+
 public final class CleanroomInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
@@ -119,9 +121,17 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
         }
     }
 
-    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, Path installer) throws IOException, VersionMismatchException {
+    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, Path installer) throws IOException, VersionMismatchException, UnsupportedInstallationException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(manifest);
         if (gameVersion.isEmpty()) throw new IOException();
+
+        GameInstanceManifest.Resolved resolved = dependencyManager.getGameRepository().resolve(manifest);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion.get());
+
+        if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
+            throw new UnsupportedInstallationException(CLEANROOM_NOT_COMPATIBLE_WITH_FORGE);
+        }
+
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
