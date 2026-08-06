@@ -107,7 +107,7 @@ public class ModrinthInstallTask extends Task<Void> {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ModrinthManifest.class));
 
-                if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (config.getType() != null && !ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a Modrinth modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {

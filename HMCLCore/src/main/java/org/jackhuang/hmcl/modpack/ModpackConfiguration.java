@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Immutable
 public final class ModpackConfiguration<T> implements Validation {
@@ -36,7 +37,7 @@ public final class ModpackConfiguration<T> implements Validation {
     }
 
     private final T manifest;
-    private final String type;
+    private final @Nullable String type;
     private final String name;
     private final String version;
     private final List<FileInformation> overrides;
@@ -45,7 +46,7 @@ public final class ModpackConfiguration<T> implements Validation {
         this(null, null, "", null, Collections.emptyList());
     }
 
-    public ModpackConfiguration(T manifest, String type, String name, String version, List<FileInformation> overrides) {
+    public ModpackConfiguration(T manifest, @Nullable String type, String name, String version, List<FileInformation> overrides) {
         this.manifest = manifest;
         this.type = type;
         this.name = name;
@@ -57,8 +58,35 @@ public final class ModpackConfiguration<T> implements Validation {
         return manifest;
     }
 
+    @Nullable
     public String getType() {
-        return type;
+        if (type != null) {
+            return type;
+        }
+        if (manifest instanceof ModpackManifest modpackManifest) {
+            return modpackManifest.getProvider().getName();
+        }
+        if (manifest instanceof Modpack modpack && modpack.getManifest() != null) {
+            return modpack.getManifest().getProvider().getName();
+        }
+        if (manifest instanceof Map<?, ?> map) {
+            if (map.containsKey("instanceType") || map.containsKey("components") || map.containsKey("mmcPack")) {
+                return "MultiMC";
+            }
+            if (map.containsKey("formatVersion") && map.containsKey("game")) {
+                return "Modrinth";
+            }
+            if (map.containsKey("files") && map.containsKey("minecraft")) {
+                return "Curse";
+            }
+            if (map.containsKey("fileApi") && !map.containsKey("manifestType")) {
+                return "Server";
+            }
+            if (map.containsKey("addons") || map.containsKey("manifestType")) {
+                return "Mcbbs";
+            }
+        }
+        return null;
     }
 
     public String getName() {
@@ -90,8 +118,6 @@ public final class ModpackConfiguration<T> implements Validation {
     public void validate() throws JsonParseException {
         if (manifest == null)
             throw new JsonParseException("MinecraftInstanceConfiguration missing `manifest`");
-        if (type == null)
-            throw new JsonParseException("MinecraftInstanceConfiguration missing `type`");
     }
 
     @Immutable
