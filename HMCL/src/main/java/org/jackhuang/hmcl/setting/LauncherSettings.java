@@ -542,12 +542,12 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
     }
 
     /// Whether to update addons to preview versions
-    @SerializedName("updateAddonsToPreview")
-    private final BooleanProperty updateAddonsToPreview = new SimpleBooleanProperty(true);
+    @SerializedName("defaultUpdateAddonsToPreview")
+    private final BooleanProperty defaultUpdateAddonsToPreview = new SimpleBooleanProperty(true);
 
-    /// Returns whether to update addons to preview versions property.
-    public BooleanProperty updateAddonsToPreviewProperty() {
-        return updateAddonsToPreview;
+    /// Returns whether to update addons to preview versions property by default.
+    public BooleanProperty defaultUpdateAddonsToPreviewProperty() {
+        return defaultUpdateAddonsToPreview;
     }
 
     /// Whether proxy authentication is enabled.

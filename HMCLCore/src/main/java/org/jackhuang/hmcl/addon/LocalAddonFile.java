@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /// Sub-classes should implement `Comparable`
@@ -52,12 +52,13 @@ public abstract class LocalAddonFile {
     public abstract void delete() throws IOException;
 
     @Nullable
-    protected UpdateConditions getUpdateConditions() {
+    protected AddonUpdate.UpdateConditions getUpdateConditions() {
         return null;
     }
 
+    /// @return A pair of addon update info, the first for all versions and the second for release versions only (might be null).
     @Nullable
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source, boolean updateToPreview) throws IOException {
+    public Pair<AddonUpdate, @Nullable AddonUpdate> checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
         var conditions = getUpdateConditions();
         if (conditions == null) return null;
 
@@ -65,34 +66,29 @@ public abstract class LocalAddonFile {
         if (repository == null) return null;
         Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(getFile());
         if (currentVersion.isEmpty()) return null;
+        var current = currentVersion.orElseThrow();
 
         var stream = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().projectId())
                 .filter(version -> version.gameVersions().contains(gameVersion));
-        if (!updateToPreview)
-            stream = stream.filter(version -> version.versionType() == RemoteAddon.VersionType.Release);
+        if (current.gameVersions().contains(gameVersion)) // Otherwise it means we are upgrading from another game version
+            stream = stream.filter(version -> version.datePublished().isAfter(current.datePublished()));
         if (conditions.predicates() != null)
-            for (var p : conditions.predicates()) {
+            for (var p : conditions.predicates())
                 stream = stream.filter(p);
-            }
+
         List<RemoteAddon.Version> remoteVersions = stream.sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed()).toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0));
+        var release = remoteVersions.stream()
+                .filter(v -> v.versionType() == RemoteAddon.VersionType.Release)
+                .findFirst().orElse(null);
+
+        return Pair.pair(
+                new AddonUpdate(this, current, remoteVersions.get(0)), // All channels
+                release != null ? new AddonUpdate(this, current, release) : null // Release channel
+        );
     }
 
     public void onUpdated(String newFileNameWithExt) {
-    }
-
-    @SuppressWarnings("RedundantRecordConstructor")
-    protected record UpdateConditions(RemoteAddon.Type type, @Nullable List<Predicate<RemoteAddon.Version>> predicates) {
-        public UpdateConditions {
-        }
-    }
-
-    public record AddonUpdate(
-            LocalAddonFile localAddonFile,
-            RemoteAddon.Version currentVersion,
-            RemoteAddon.Version targetVersion
-    ) {
     }
 
     public static class Description {

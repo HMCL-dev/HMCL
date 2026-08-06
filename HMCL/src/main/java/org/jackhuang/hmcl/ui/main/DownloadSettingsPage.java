@@ -103,8 +103,8 @@ public class DownloadSettingsPage extends StackPane {
                 defaultAddonSourcePane.valueProperty().bindBidirectional(settings().defaultAddonSourceProperty());
 
                 var updateAddonsToPreviewButton = new LineToggleButton();
-                updateAddonsToPreviewButton.setTitle(i18n("settings.launcher.update_addons_to_preview"));
-                updateAddonsToPreviewButton.selectedProperty().bindBidirectional(settings().updateAddonsToPreviewProperty());
+                updateAddonsToPreviewButton.setTitle(i18n("settings.launcher.default_update_addons_to_preview"));
+                updateAddonsToPreviewButton.selectedProperty().bindBidirectional(settings().defaultUpdateAddonsToPreviewProperty());
 
                 gameContent.getContent().setAll(versionListSourcePane, downloadSourcePane, defaultAddonSourcePane, updateAddonsToPreviewButton);
             }

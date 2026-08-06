@@ -259,10 +259,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                                 if (exception != null) LOG.warning("Failed to check for updates", exception);
-                            } else if (result.isEmpty()) {
+                            } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage<>(modManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(modManager.getDirectory(), result));
                             }
                         })
                         .withStagesHints("update.checking"),

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon.resourcepack;
 
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.addon.AddonUpdate;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -32,7 +33,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
 
-    private static final UpdateConditions UPDATE_CONDITIONS = new UpdateConditions(RemoteAddon.Type.RESOURCE_PACK, null);
+    private static final AddonUpdate.UpdateConditions UPDATE_CONDITIONS = new AddonUpdate.UpdateConditions(RemoteAddon.Type.RESOURCE_PACK, null);
 
     private final PackMcMeta meta;
     private final @Nullable Image icon;
@@ -88,7 +89,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    protected UpdateConditions getUpdateConditions() {
+    protected AddonUpdate.UpdateConditions getUpdateConditions() {
         return UPDATE_CONDITIONS;
     }
 
