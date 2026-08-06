@@ -21,7 +21,6 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Control;
-import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
