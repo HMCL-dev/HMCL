@@ -190,7 +190,7 @@ public class DefaultGameRepository implements GameRepository {
                     if (!id.equals(manifest.id())) {
                         try {
                             moveInstanceFiles(newStatus.baseDirectory, id, manifest.id());
-                        } catch (IOException e) {
+                        } catch (IOException | InvalidPathException e) {
                             LOG.warning("Ignoring instance " + manifest.id()
                                     + " because instance id does not match folder name " + id
                                     + ", and we cannot correct it.", e);
