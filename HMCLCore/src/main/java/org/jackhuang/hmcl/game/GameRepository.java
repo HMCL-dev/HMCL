@@ -147,15 +147,6 @@ public interface GameRepository {
     /// @return the detected Minecraft game version, or empty if it cannot be determined
     Optional<String> getGameVersion(GameInstanceManifest manifest);
 
-    /// Detects the Minecraft game version associated with an instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the detected Minecraft game version, or empty if it cannot be determined
-    /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
-    default Optional<String> getGameVersion(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getGameVersion(getInstanceManifest(instanceId));
-    }
-
     /// Renames an instance and updates repository-managed references.
     ///
     /// @param from the current instance id

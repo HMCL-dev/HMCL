@@ -169,7 +169,7 @@ public final class LauncherHelper {
 
         AtomicReference<JavaRuntime> javaVersionRef = new AtomicReference<>();
 
-        TaskExecutor executor = checkGameState(repository, setting, version.get())
+        TaskExecutor executor = checkGameState(gameInstance, setting, version.get())
                 .thenComposeAsync(java -> {
                     javaVersionRef.set(Objects.requireNonNull(java));
                     version.set(NativePatcher.patchNative(gameInstance, version.get(), gameVersion, java, setting, javaArguments));
@@ -437,8 +437,8 @@ public final class LauncherHelper {
         executor.start();
     }
 
-    private static Task<JavaRuntime> checkGameState(HMCLGameRepository repository, GameSettings.Effective setting, GameInstanceManifest manifest) {
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, repository.getGameVersion(manifest).orElse(null));
+    private static Task<JavaRuntime> checkGameState(HMCLGameInstance gameInstance, GameSettings.Effective setting, GameInstanceManifest manifest) {
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, gameInstance.getVersion().toString());
         GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT));
 
         Task<JavaRuntime> getJavaTask = Task.supplyAsync(() -> {
@@ -505,7 +505,7 @@ public final class LauncherHelper {
                 }
 
                 if (targetJavaVersion != null && supportedVersions.contains(targetJavaVersion)) {
-                    downloadJava(targetJavaVersion, repository)
+                    downloadJava(targetJavaVersion, gameInstance.getRepository())
                             .whenCompleteAsync((downloadedJava, exception) -> {
                                 if (exception == null) {
                                     future.complete(downloadedJava);
@@ -582,7 +582,7 @@ public final class LauncherHelper {
                             gameJavaVersion = null;
 
                         if (gameJavaVersion != null) {
-                            FXUtils.runInFX(() -> downloadJava(gameJavaVersion, repository).whenCompleteAsync((downloadedJava, throwable) -> {
+                            FXUtils.runInFX(() -> downloadJava(gameJavaVersion, gameInstance.getRepository()).whenCompleteAsync((downloadedJava, throwable) -> {
                                 if (throwable == null) {
                                     setting.setJavaAutoSelected();
                                     future.complete(downloadedJava);
@@ -1052,7 +1052,7 @@ public final class LauncherHelper {
 
             if (exitType != ExitType.NORMAL) {
                 gameInstance.markLaunchedAbnormally();
-                runLater(() -> new GameCrashWindow(process, exitType, repository, manifest, launchOptions, logs).show());
+                runLater(() -> new GameCrashWindow(process, exitType, gameInstance, launchOptions, logs).show());
             }
 
             checkExit();

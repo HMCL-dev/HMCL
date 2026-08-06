@@ -484,15 +484,6 @@ public abstract class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public Optional<String> getGameVersion(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        GameVersionNumber version = getInstance(instanceId).getVersion();
-        if (version == GameVersionNumber.unknown()) {
-            return Optional.empty();
-        }
-        return Optional.of(version.toString());
-    }
-
-    @Override
     public Optional<String> getGameVersion(GameInstanceManifest manifest) {
         DefaultGameInstance instance = findSnapshotInstance(manifest.id());
         if (instance != null && manifest.equals(instance.getManifest())) {
