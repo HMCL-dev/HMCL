@@ -24,6 +24,7 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -43,11 +44,14 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
+    private static final PseudoClass ACTIVE = PseudoClass.getPseudoClass("active");
+    private static final double ITEM_HEIGHT = 52;
 
     /// Shows an instance selection popup relative to its owner.
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
@@ -80,10 +84,10 @@ public final class GameListPopupMenu extends StackPane {
 
         listView.setCellFactory(Cell::new);
 
-        listView.setFixedCellSize(50);
+        listView.setFixedCellSize(ITEM_HEIGHT);
         listView.setPrefWidth(300);
 
-        listView.prefHeightProperty().bind(Bindings.size(getItems()).multiply(50).add(2));
+        listView.prefHeightProperty().bind(Bindings.size(getItems()).multiply(ITEM_HEIGHT).add(2));
 
         Label placeholder = new Label(i18n("instance.empty"));
         placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
@@ -103,6 +107,7 @@ public final class GameListPopupMenu extends StackPane {
 
         private final ImageContainer imageView;
         private final TwoLineListItem content;
+        private final StackPane rootPane;
 
         private final StringProperty tag = new SimpleStringProperty();
 
@@ -130,7 +135,8 @@ public final class GameListPopupMenu extends StackPane {
 
             RipplerContainer ripplerContainer = new RipplerContainer(container);
 
-            StackPane rootPane = new StackPane();
+            rootPane = new StackPane();
+            rootPane.getStyleClass().add("popup-item");
             rootPane.getStyleClass().add("advanced-list-item");
             rootPane.getChildren().setAll(ripplerContainer);
             rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(5));
@@ -165,6 +171,8 @@ public final class GameListPopupMenu extends StackPane {
                 this.content.titleProperty().bind(item.titleProperty());
                 this.content.subtitleProperty().bind(item.subtitleProperty());
                 this.tag.bind(item.tagProperty());
+                if (item.getRepository().getSelectedInstance() != null)
+                    rootPane.pseudoClassStateChanged(ACTIVE, Objects.equals(item.getId(), item.getRepository().getSelectedInstance().id()));
             }
         }
     }
