@@ -70,10 +70,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
-import static org.jackhuang.hmcl.setting.SettingsManager.state;
-import static org.jackhuang.hmcl.setting.SettingsManager.userState;
+import static org.jackhuang.hmcl.setting.SettingsManager.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -227,11 +224,6 @@ public final class Controllers {
         decorator = new Decorator(getRootPage());
         Scene mainScene = decorator.attachStage(stage);
         getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
-        getRootPage().getMainPage().showUpdateDialogProperty().bind(
-                decorator.backableProperty().not()
-                        .and(getRootPage().getMainPage().showUpdateProperty())
-                        .and(settings().disableAutoShowUpdateDialogProperty().not())
-        );
 
         if (settings().commonDirectoryTypeProperty().get() == EnumCommonDirectory.CUSTOM &&
                 !FileUtils.canCreateDirectory(settings().getResolvedCommonDirectory())) {

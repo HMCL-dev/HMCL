@@ -31,22 +31,21 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.EnumUpdateMode;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.upgrade.RemoteVersion;
-import org.jackhuang.hmcl.upgrade.UpdateChannel;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.upgrade.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.Nullable;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.IOException;
@@ -58,6 +57,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
@@ -70,7 +70,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class SettingsPage extends ScrollPane {
     @SuppressWarnings("FieldCanBeLocal")
-    private final InvalidationListener updateListener;
+    @Nullable
+    private InvalidationListener updateListener;
 
     public SettingsPage() {
         this.setFitToWidth(true);
@@ -82,7 +83,7 @@ public final class SettingsPage extends ScrollPane {
 
         {
             ComponentList updatePaneList = new ComponentList();
-            {
+            if (UpdateChecker.SHOULD_CHECK_UPDATE) {
                 ObjectProperty<UpdateChannel> updateChannel;
                 {
 
@@ -139,6 +140,16 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
+                    LineSelectButton<EnumUpdateMode> updateModePane = new LineSelectButton<>();
+                    updateModePane.setTitle(i18n("update.mode"));
+                    updateModePane.setSubtitle(i18n("settings.take_effect_after_restart"));
+                    updateModePane.valueProperty().bindBidirectional(settings().updateModeProperty());
+                    updateModePane.setConverter(mode -> i18n("update.mode." + mode.name().toLowerCase(Locale.ROOT)));
+                    updateModePane.setItems(EnumUpdateMode.values());
+                    updatePaneList.getContent().add(updateModePane);
+                }
+
+                {
                     LineToggleButton previewPane = new LineToggleButton();
                     previewPane.setTitle(i18n("update.preview"));
                     previewPane.setSubtitle(i18n("update.preview.subtitle"));
@@ -152,17 +163,30 @@ public final class SettingsPage extends ScrollPane {
 
                     updatePaneList.getContent().add(previewPane);
                 }
+            } else {
+                var alertLineButton = new LineButton();
+                alertLineButton.setLargeTitle(true);
+                alertLineButton.setLeading(SVG.INFO, 32);
 
-                {
-                    LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
-                    disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
-                    disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
-                    disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(settings().disableAutoShowUpdateDialogProperty());
-                    updatePaneList.getContent().add(disableAutoShowUpdateDialogPane);
+                if (UpdateChecker.DISABLE_UPDATE_PROPERTY.equalsIgnoreCase("true")) {
+                    alertLineButton.setTitle(i18n("update.disabled.title"));
+                    alertLineButton.setSubtitle(i18n("update.disabled.subtitle"));
+                } else if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
+                    alertLineButton.setLeading(SVG.WARNING, 32);
+
+                    alertLineButton.setTitle(i18n("update.unofficial.title"));
+                    alertLineButton.setSubtitle(i18n("update.unofficial.subtitle"));
+
+                    alertLineButton.setTrailingIcon(SVG.OPEN_IN_NEW);
+                    alertLineButton.setOnAction(event -> FXUtils.openLink(Metadata.DOWNLOAD_URL));
+                } else {
+                    // should not happen
                 }
 
-                rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);
+                updatePaneList.getContent().add(alertLineButton);
             }
+
+            rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);
 
             {
                 ComponentList languagePaneList = new ComponentList();
