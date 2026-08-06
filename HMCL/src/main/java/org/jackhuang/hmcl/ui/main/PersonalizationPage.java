@@ -713,6 +713,17 @@ public class PersonalizationPage extends StackPane {
                 }
                 updatingBackground.value = true;
                 try {
+                    builtinBackgroundComboBox.setValue(Objects.requireNonNullElse(
+                            settings().builtinBackgroundIdProperty().get(),
+                            BuiltinBackground.FALLBACK.id()));
+                    customBackgroundOption.setPath(Objects.toString(
+                            settings().customBackgroundImagePathProperty().get(),
+                            ""));
+                    networkBackgroundOption.setText(Objects.toString(
+                            settings().networkBackgroundImageUrlProperty().get(),
+                            ""));
+                    paintBackgroundOption.setPaint(settings().customBackgroundPaintProperty().get());
+
                     boolean overridden = settings().getThemeAppearanceOverrides().contains(
                             LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                     ThemePackManager.ResolvedBackground background;
