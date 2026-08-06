@@ -558,6 +558,7 @@ public final class HTMLRenderer {
                 InvalidationListener listener = __ -> img.setFitWidth(Math.min(textFlow.getWidth() * 0.9, img.getImage() == null ? 0D : img.getImage().getWidth()));
                 textFlow.widthProperty().addListener(listener);
                 img.imageProperty().addListener(listener);
+                listener.invalidated(null);
             } else if (node instanceof TableView<?> table) {
                 table.prefWidthProperty().bind(textFlow.widthProperty().multiply(0.8));
             } else if (node instanceof CodeFlow codeFlow) {
