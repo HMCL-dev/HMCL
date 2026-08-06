@@ -29,6 +29,12 @@ dependencies {
     api(libs.hello.nbt)
     api(libs.weburl)
     api(libs.uuid.tools)
+    api(libs.commonmark)
+    api(libs.commonmark.autolink)
+    api(libs.commonmark.underline)
+    api(libs.commonmark.strikethrough)
+    api(libs.commonmark.table)
+
     compileOnlyApi(libs.jetbrains.annotations)
 
     testImplementation(libs.jna.platform)
