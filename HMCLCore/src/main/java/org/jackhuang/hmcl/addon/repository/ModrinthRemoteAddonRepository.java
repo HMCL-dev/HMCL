@@ -107,6 +107,8 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     private static final String PREFIX = "https://api.modrinth.com";
 
+    private static final String BASE = "https://modrinth.com";
+
     private final @Nullable String projectType;
 
     private final @Nullable RemoteAddon.Type type;
@@ -126,6 +128,16 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     public RemoteAddon.Type getType() {
         if (type == null) throw new UnsupportedOperationException();
         return this.type;
+    }
+
+    @Override
+    public String getApiBaseUrl() {
+        return PREFIX;
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return BASE;
     }
 
     private static String convertSortType(SortType sortType) {
@@ -302,6 +314,41 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
+    public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/version/" + versionId);
+            IOException exception = null;
+
+            for (URI uri : candidates) {
+                try {
+                    ProjectVersion version = HttpRequest.GET(uri.toString()).getJson(ProjectVersion.class);
+                    return version.changelog();
+                } catch (IOException e) {
+                    IOException wrapper = new IOException("Failed to get addon changelog: " + uri, e);
+                    if (candidates.size() == 1) {
+                        exception = wrapper;
+                    } else {
+                        if (exception == null) {
+                            exception = new IOException("Failed to get addon changelog");
+                        }
+                        exception.addSuppressed(wrapper);
+                    }
+                }
+            }
+
+            throw exception != null ? exception : new IOException("No candidates found");
+        } finally {
+            SEMAPHORE.release();
+        }
+    }
+
+    @Override
+    public @NotNull String getVersionPageUrl(RemoteAddon.Version version) {
+        return "%s/project/%s/version/%s".formatted(BASE, version.projectId(), version.versionId()); // Modrinth will help us redirect
+    }
+
+    @Override
     public Stream<RemoteAddonRepository.Category> getCategories() throws IOException {
         if (projectType == null) throw new UnsupportedOperationException();
         SEMAPHORE.acquireUninterruptibly();
@@ -405,6 +452,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
             return Optional.of(new RemoteAddon.Version(
                     RemoteAddon.Source.MODRINTH,
+                    id,
                     projectId,
                     name,
                     versionNumber,

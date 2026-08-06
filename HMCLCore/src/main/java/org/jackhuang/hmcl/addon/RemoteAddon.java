@@ -218,7 +218,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
         Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
     }
 
-    public record Version(RemoteAddon.Source source, String projectId, String name, String version,
+    public record Version(RemoteAddon.Source source, String versionId, String projectId, String name, String version,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
                           List<String> gameVersions, List<ModLoaderType> loaders) {
     }
