@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyLongProperty;
-import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.task.Task;
@@ -96,9 +94,6 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// Published snapshot, always updated on the JavaFX application thread when the toolkit is live.
     private final ObjectProperty<DefaultGameRepositorySnapshot> snapshot;
 
-    /// Number of completed full refreshes.
-    private final ReadOnlyLongWrapper refreshCount;
-
     /// Whether at least one full refresh has completed since the base directory was set.
     private volatile boolean loaded;
 
@@ -109,7 +104,6 @@ public abstract class DefaultGameRepository implements GameRepository {
         DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
         initial.seal();
         this.snapshot = new SimpleObjectProperty<>(initial);
-        this.refreshCount = new ReadOnlyLongWrapper(this, "refreshCount");
     }
 
     /// Creates the repository layout rooted at the given directory.
@@ -119,9 +113,10 @@ public abstract class DefaultGameRepository implements GameRepository {
     protected abstract DefaultGameRepositoryLayout createLayout(Path baseDirectory);
 
     public void setBaseDirectory(Path baseDirectory) {
+        // Mark unloaded before publishing so snapshot listeners do not treat the empty snapshot as ready.
+        this.loaded = false;
         DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
         publishSnapshot(initial);
-        this.loaded = false;
     }
 
     /// {@inheritDoc}
@@ -143,25 +138,6 @@ public abstract class DefaultGameRepository implements GameRepository {
         return snapshot;
     }
 
-    /// Returns the number of completed full repository refreshes.
-    ///
-    /// The property is incremented after a refreshed snapshot is published and [#isLoaded()] becomes
-    /// `true`. When the JavaFX toolkit is running, listeners are notified on its application thread.
-    /// Snapshot publications caused by operations such as saving or renaming an instance do not
-    /// increment this property.
-    ///
-    /// @return the read-only refresh-count property
-    public final ReadOnlyLongProperty refreshCountProperty() {
-        return refreshCount.getReadOnlyProperty();
-    }
-
-    /// Returns the number of completed full repository refreshes.
-    ///
-    /// @return the completed refresh count
-    public final long getRefreshCount() {
-        return refreshCount.get();
-    }
-
     /// Seals `newSnapshot` if needed and publishes it as the current repository snapshot.
     ///
     /// When the JavaFX toolkit is running, the property is updated on the JavaFX application thread
@@ -172,12 +148,10 @@ public abstract class DefaultGameRepository implements GameRepository {
     ///                    unless it is a freshly built replacement
     protected void publishSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
         newSnapshot.seal();
-        setSnapshotOnFxThread(newSnapshot);
-    }
+        runOnFxThreadAndWait(() -> {
 
-    /// Sets [#snapshot] on the JavaFX application thread when possible.
-    private void setSnapshotOnFxThread(DefaultGameRepositorySnapshot newSnapshot) {
-        runOnFxThreadAndWait(() -> snapshot.set(newSnapshot));
+            snapshot.set(newSnapshot);
+        });
     }
 
     /// Runs an action on the JavaFX application thread and waits for its completion.
@@ -279,10 +253,9 @@ public abstract class DefaultGameRepository implements GameRepository {
 
         newSnapshot.clear();
         newSnapshot.putAll(loadedInstances);
-        publishSnapshot(newSnapshot);
-
+        // Mark loaded before publishing so snapshot listeners observe a ready repository.
         loaded = true;
-        runOnFxThreadAndWait(() -> refreshCount.set(refreshCount.get() + 1));
+        publishSnapshot(newSnapshot);
     }
 
     /// Loads one instance directory without renaming on-disk JSON or jar files.

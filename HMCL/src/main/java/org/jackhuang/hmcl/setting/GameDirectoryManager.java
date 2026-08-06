@@ -24,6 +24,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepositorySnapshot;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -146,9 +147,9 @@ public final class GameDirectoryManager {
     private static final ChangeListener<@Nullable HMCLGameInstance> selectedRepositoryInstanceListener =
             (observable, oldValue, newValue) -> selectedInstance.set(newValue);
 
-    /// Handles completion of a full refresh by the selected repository.
-    private static final ChangeListener<Number> selectedRepositoryRefreshListener =
-            (observable, oldValue, newValue) -> onSelectedRepositoryRefreshed();
+    /// Reacts when the selected repository publishes a new snapshot.
+    private static final ChangeListener<? super HMCLGameRepositorySnapshot> selectedRepositorySnapshotListener =
+            (observable, oldValue, newValue) -> onSelectedRepositorySnapshotChanged();
 
     /// Initializes game directory state from the stores loaded by [SettingsManager].
     ///
@@ -204,22 +205,25 @@ public final class GameDirectoryManager {
             @Nullable HMCLGameRepository oldRepository = selectedRepository.get();
             if (oldRepository != null) {
                 oldRepository.selectedInstanceProperty().removeListener(selectedRepositoryInstanceListener);
-                oldRepository.refreshCountProperty().removeListener(selectedRepositoryRefreshListener);
+                oldRepository.snapshotProperty().removeListener(selectedRepositorySnapshotListener);
             }
             HMCLGameRepository repository = getOrCreateRepository(newValue);
             selectedRepository.set(repository);
             selectedInstance.set(repository.getSelectedInstance());
             repository.selectedInstanceProperty().addListener(selectedRepositoryInstanceListener);
-            repository.refreshCountProperty().addListener(selectedRepositoryRefreshListener);
+            repository.snapshotProperty().addListener(selectedRepositorySnapshotListener);
+            if (repository.isLoaded()) {
+                onSelectedRepositorySnapshotChanged();
+            }
             repository.refreshAsync().start();
         });
         selectedGameDirectory.set(currentGameDirectory != null ? currentGameDirectory : mergedGameDirectories.get(0));
     }
 
-    /// Restores selection and notifies consumers after the selected repository finishes refreshing.
-    private static void onSelectedRepositoryRefreshed() {
+    /// Restores selection and notifies consumers after the selected repository publishes a loaded snapshot.
+    private static void onSelectedRepositorySnapshotChanged() {
         @Nullable HMCLGameRepository repository = selectedRepository.get();
-        if (repository == null) {
+        if (repository == null || !repository.isLoaded()) {
             return;
         }
 

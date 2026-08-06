@@ -29,6 +29,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepositorySnapshot;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -65,11 +66,11 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             new SimpleObjectProperty<>(this, "instance");
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
-    /// Refreshes the page context when its repository finishes a full refresh.
-    private final ChangeListener<Number> repositoryRefreshListener =
+    /// Re-resolves the page context when its repository publishes a new snapshot.
+    private final ChangeListener<? super HMCLGameRepositorySnapshot> repositorySnapshotListener =
             (observable, oldValue, newValue) -> checkSelectedInstance();
 
-    /// Repository currently observed for full-refresh completion.
+    /// Repository currently observed for snapshot publications.
     private @Nullable HMCLGameRepository observedRepository;
 
     /// Last concrete instance displayed by this page.
@@ -119,7 +120,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         }));
     }
 
-    /// Observes refresh completion for the repository associated with the current page context.
+    /// Observes snapshot publications for the repository associated with the current page context.
     ///
     /// @param current the current page context, or `null` when the page has no context
     private void observeRepository(HMCLGameInstance.@Nullable Optional current) {
@@ -129,11 +130,11 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         }
 
         if (observedRepository != null) {
-            observedRepository.refreshCountProperty().removeListener(repositoryRefreshListener);
+            observedRepository.snapshotProperty().removeListener(repositorySnapshotListener);
         }
         observedRepository = repository;
         if (repository != null) {
-            repository.refreshCountProperty().addListener(repositoryRefreshListener);
+            repository.snapshotProperty().addListener(repositorySnapshotListener);
         }
     }
 
