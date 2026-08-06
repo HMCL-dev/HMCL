@@ -44,14 +44,10 @@ import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Pattern;
 
-import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-import static org.jackhuang.hmcl.setting.SettingsManager.getAccountMetadataRecords;
-import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
-import static org.jackhuang.hmcl.setting.SettingsManager.getUserAccountMetadataRecords;
-import static org.jackhuang.hmcl.setting.SettingsManager.userSettings;
+import static org.jackhuang.hmcl.setting.SettingsManager.*;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.immutableListOf;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -63,6 +59,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class Accounts {
+    public static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
+
     private Accounts() {
     }
 
@@ -492,7 +490,7 @@ public final class Accounts {
                 .map(AuthlibInjectorAccount.class::cast)
                 .filter(it -> !getAuthlibInjectorServers().contains(it.getServer()))
                 .filter(Accounts::canRemoveAccount)
-                .collect(toList())
+                .toList()
                 .forEach(accounts::remove);
     }
     // ====
