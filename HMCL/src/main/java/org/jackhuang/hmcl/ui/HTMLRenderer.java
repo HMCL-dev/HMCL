@@ -516,18 +516,15 @@ public final class HTMLRenderer {
         {
             // Remove empty lines at the beginning
             int size = children.size();
-            int lastAutoLineBreak = -1;
             for (int i = 0; i < size; i++) {
                 var child = children.get(i);
-                if (child instanceof AutoLineBreak) {
-                    lastAutoLineBreak = i;
-                } else if (child instanceof Text txt && isSpacing(txt.getText())) {
+                if (child instanceof AutoLineBreak || child instanceof Text txt && isSpacing(txt.getText())) {
                     // NO-OP
-                } else break;
-                if (i == size - 1) lastAutoLineBreak = i;
+                } else {
+                    this.children.subList(0, i).clear();
+                    break;
+                }
             }
-            if (lastAutoLineBreak >= 0)
-                this.children.subList(0, lastAutoLineBreak + 1).clear();
         }
         {
             // Remove empty lines and spaces at the end
