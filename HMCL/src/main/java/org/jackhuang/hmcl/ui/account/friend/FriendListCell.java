@@ -127,6 +127,10 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
                 var texture = YggdrasilService.getTextures(profile).map(it -> it.get(TextureType.SKIN)).orElseThrow();
                 return TexturesLoader.loadTexture(texture);
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (getItem() == null || !getItem().profileId().equals(uuid)) {
+                    return;
+                }
+
                 if (exception == null) {
                     cache.put(uuid, result.image());
                     TexturesLoader.drawAvatar(avatar, result.image());

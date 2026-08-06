@@ -66,16 +66,16 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     setLoading(false);
 
-                    var friends = result.key();
-                    var presence = result.value();
-
-                    LOG.info("Received friend list" + friends);
-                    LOG.info("Received presences" + presence);
-
                     if (exception != null) {
                         LOG.warning("Failed to get friend list" + exception);
                         setFailedReason(i18n("account.friend.failed"));
                     } else {
+                        var friends = result.key();
+                        var presence = result.value();
+
+                        LOG.info("Received friend list" + friends);
+                        LOG.info("Received presences" + presence);
+
                         setData(friends, presence);
                     }
                 }).start();
