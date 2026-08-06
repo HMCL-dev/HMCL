@@ -187,7 +187,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return removeLibraryAsync(baseVersion, libraryVersion.getLibraryId())
                 .thenComposeAsync(manifest -> {
                     removedLibraryManifest.set(manifest);
-                    return libraryVersion.getInstallTask(this, manifest);
+                    return libraryVersion.getInstallTask(this, manifest, modsDirectoryFor(manifest));
                 })
                 .thenApplyAsync(patch -> {
                     if (patch == null) {
@@ -197,6 +197,23 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     }
                 })
                 .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
+    }
+
+    /// Resolves the mods directory for the instance identified by `manifest`.
+    ///
+    /// Prefer the registered [GameInstance] when present so isolation/run-directory policy is
+    /// honored. Falls back to the shared repository base directory when the instance is not yet
+    /// indexed (should be rare after [org.jackhuang.hmcl.download.DefaultGameBuilder] registers a
+    /// placeholder instance).
+    ///
+    /// @param manifest the install target manifest
+    /// @return the mods directory path
+    private Path modsDirectoryFor(GameInstanceManifest manifest) {
+        DefaultGameInstance instance = repository.getSnapshot().findInstance(manifest.id());
+        if (instance != null) {
+            return instance.getModsDirectory();
+        }
+        return repository.getBaseDirectory().resolve("mods");
     }
 
     /// Creates a task that detects and runs a supported local library installer.

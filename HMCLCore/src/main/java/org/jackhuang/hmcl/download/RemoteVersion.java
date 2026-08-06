@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -98,6 +99,23 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
 
     public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
         throw new UnsupportedOperationException(this + " cannot be installed yet");
+    }
+
+    /// Creates an install task with an explicit mods directory for libraries that download into the
+    /// instance run tree (for example Fabric/Quilt API).
+    ///
+    /// The default implementation ignores `modsDirectory` and delegates to
+    /// [#getInstallTask(DefaultDependencyManager, GameInstanceManifest)].
+    ///
+    /// @param dependencyManager the dependency manager
+    /// @param baseVersion       the manifest being installed into
+    /// @param modsDirectory     the mods directory of the target instance run directory
+    /// @return the install task
+    public Task<GameInstancePatch> getInstallTask(
+            DefaultDependencyManager dependencyManager,
+            GameInstanceManifest baseVersion,
+            Path modsDirectory) {
+        return getInstallTask(dependencyManager, baseVersion);
     }
 
     @Override
