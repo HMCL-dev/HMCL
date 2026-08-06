@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -53,6 +54,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class CurseForgeRemoteAddonRepository implements RemoteAddonRepository {
 
     private static final String PREFIX = "https://api.curseforge.com";
+    private static final String BASE = "https://www.curseforge.com";
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     public static final String API_KEY = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
@@ -88,6 +90,16 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     public RemoteAddon.Type getType() {
         if (type == null) throw new UnsupportedOperationException();
         return type;
+    }
+
+    @Override
+    public String getApiBaseUrl() {
+        return PREFIX;
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return BASE;
     }
 
     private static int toModsSearchSortField(SortType sort) {
@@ -268,6 +280,44 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     }
 
     @Override
+    public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<String> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s/changelog", PREFIX, addonId, versionId)))
+                    .getJson(Response.typeOf(String.class));
+            return response.data();
+        } finally {
+            SEMAPHORE.release();
+        }
+    }
+
+    @Override
+    public @NotNull String getVersionPageUrl(RemoteAddon.Version version) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + version.projectId()))
+                    .getJson(Response.typeOf(CurseAddon.class));
+            var addon = response.data();
+            var classId = addon.classId();
+            var clazz = switch (classId) {
+                case SECTION_MOD -> "mc-mods";
+                case SECTION_RESOURCE_PACK -> "texture-packs";
+                case SECTION_WORLD -> "worlds";
+                case SECTION_MODPACK -> "modpacks";
+                case SECTION_DATAPACK -> "data-packs";
+                case SECTION_BUKKIT_PLUGIN -> "bukkit-plugins";
+                case SECTION_ADDONS -> "mc-addons";
+                case SECTION_CUSTOMIZATION -> "customization";
+                case SECTION_SHADER -> "shaders";
+                default -> throw new IllegalArgumentException("Unsupported CurseForge class id [%d]".formatted(classId));
+            };
+            return "%s/minecraft/%s/%s/files/%s".formatted(BASE, clazz, addon.slug(), version.versionId());
+        } finally {
+            SEMAPHORE.release();
+        }
+    }
+
+    @Override
     public Stream<RemoteAddonRepository.Category> getCategories() throws IOException {
         if (type == null) throw new UnsupportedOperationException();
         SEMAPHORE.acquireUninterruptibly();
@@ -305,6 +355,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     public static final int SECTION_BUKKIT_PLUGIN = 5;
     public static final int SECTION_MOD = 6;
     public static final int SECTION_RESOURCE_PACK = 12;
+    public static final int SECTION_DATAPACK = 6945;
     public static final int SECTION_WORLD = 17;
     public static final int SECTION_MODPACK = 4471;
     public static final int SECTION_SHADER = 6552;
@@ -494,10 +545,10 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
                 return new RemoteAddon.Version(
                         this,
-                        Integer.toString(modId),
+                        Integer.toString(id()),
+                        Integer.toString(modId()),
                         displayName(),
                         fileName(),
-                        null,
                         fileDate(),
                         versionType,
                         new RemoteAddon.File(Collections.emptyMap(), downloadUrl(), fileName()),
