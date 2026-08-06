@@ -57,8 +57,10 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends Control implements DecoratorPage {
+
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
@@ -275,18 +277,18 @@ public class DownloadPage extends Control implements DecoratorPage {
                         String gameVersion = repository.getGameVersion(resolvedManifest.unresolved()).orElse(null);
 
                         if (gameVersion != null && control.versions.containsKey(gameVersion)) {
-                            List<RemoteAddon.Version> modVersions = control.versions.get(gameVersion);
-                            if (modVersions != null && !modVersions.isEmpty()) {
+                            List<RemoteAddon.Version> addonVersions = control.versions.get(gameVersion);
+                            if (addonVersions != null && !addonVersions.isEmpty()) {
                                 Set<ModLoaderType> targetLoaders = LibraryAnalyzer.analyze(resolvedManifest, gameVersion).getModLoaders();
 
                                 resolve:
-                                for (RemoteAddon.Version modVersion : modVersions) {
+                                for (RemoteAddon.Version addonVersion : addonVersions) {
                                     if (getSkinnable().type == RemoteAddon.Type.MOD) {
-                                        for (ModLoaderType loader : modVersion.loaders()) {
+                                        for (ModLoaderType loader : addonVersion.loaders()) {
                                             if (targetLoaders.contains(loader)) {
                                                 list.getContent().addAll(
                                                         ComponentList.createComponentListTitle(i18n("addon.download.recommend", gameVersion)),
-                                                        new AddonItem(control.addon, modVersion, control)
+                                                        new AddonItem(control.addon, addonVersion, control)
                                                 );
                                                 break resolve;
                                             }
@@ -294,7 +296,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     } else {
                                         list.getContent().addAll(
                                                 ComponentList.createComponentListTitle(i18n("addon.download.recommend", gameVersion)),
-                                                new AddonItem(control.addon, modVersion, control)
+                                                new AddonItem(control.addon, addonVersion, control)
                                         );
                                         break;
                                     }
@@ -517,9 +519,20 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            AddonItem addonItem = new AddonItem(mod, version, selfPage);
+            var addonItem = new AddonItem(mod, version, selfPage);
             addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(addonItem);
+
+            JFXHyperlink changelogButton = new JFXHyperlink(i18n("addon.changelog"));
+            changelogButton.setOnAction(__ -> Controllers.dialog(new AddonChangelog(version, selfPage.repository, selfPage.page.getDownloadProvider())));
+
+            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
+            versionPageBtn.setDisable(true);
+            loadVersionPageUrl(version, selfPage.repository, versionPageBtn);
+
+            HBox additionalBox = new HBox(changelogButton, versionPageBtn);
+            box.getChildren().add(additionalBox);
+
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList();
@@ -571,7 +584,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
-            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.8));
 
             onEscPressed(this, cancelButton::fire);
         }
@@ -616,7 +629,6 @@ public class DownloadPage extends Control implements DecoratorPage {
                         }).toList()
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                spinnerPane.setLoading(false);
                 if (exception == null) {
                     dependenciesList.getContent().setAll(result);
                     spinnerPane.setFailedReason(null);
@@ -624,6 +636,76 @@ public class DownloadPage extends Control implements DecoratorPage {
                     dependenciesList.getContent().setAll();
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
                 }
+                spinnerPane.setLoading(false);
+            }).start();
+        }
+
+        private void loadVersionPageUrl(RemoteAddon.Version version, RemoteAddonRepository repo, JFXHyperlink button) {
+            Task.supplyAsync(() -> repo.getVersionPageUrl(version))
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception == null && StringUtils.isNotBlank(result)) {
+                            button.setOnAction(__ -> Controllers.openUriInBrowser(result));
+                            button.setDisable(false);
+                        } else {
+                            LOG.warning("Failed to load addon version page url", exception);
+                        }
+                    })
+                    .start();
+        }
+    }
+
+    private static final class AddonChangelog extends JFXDialogLayout {
+
+        public AddonChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider) {
+            setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + version.name())));
+
+            VBox box = new VBox(8);
+            box.setPadding(new Insets(8));
+
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setFitToWidth(true);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            FXUtils.setOverflowHidden(scrollPane, 8);
+
+            loadChangelog(version, repo, provider, spinnerPane, scrollPane);
+            spinnerPane.setOnFailedAction(e -> loadChangelog(version, repo, provider, spinnerPane, scrollPane));
+
+            spinnerPane.setContent(scrollPane);
+            box.getChildren().add(spinnerPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
+
+            this.setBody(box);
+
+            JFXButton closeButton = new JFXButton(i18n("button.ok"));
+            closeButton.getStyleClass().add("dialog-accept");
+            closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            setActions(closeButton);
+
+            this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
+            this.prefHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.8));
+
+            onEscPressed(this, closeButton::fire);
+        }
+
+        private void loadChangelog(RemoteAddon.Version version, RemoteAddonRepository repo, DownloadProvider provider, SpinnerPane spinnerPane, ScrollPane scrollPane) {
+            spinnerPane.setLoading(true);
+            Task.supplyAsync(() ->
+                    StringUtils.convertToHtml(
+                            repo.getAddonChangelog(provider, version.projectId(), version.versionId()),
+                            "238222".equals(version.projectId()) // https://github.com/HMCL-dev/HMCL/pull/4828#issuecomment-3791068569 FUCK YOU JEI, FUCK YOU CURSEFORGE
+                    )
+            ).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null) {
+                    String changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
+                    FXUtils.smoothScrolling(scrollPane);
+                    spinnerPane.setFailedReason(null);
+                } else {
+                    spinnerPane.setFailedReason(i18n("download.failed.refresh"));
+                }
+                spinnerPane.setLoading(false);
             }).start();
         }
     }

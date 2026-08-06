@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.ui.instances.ModTranslations;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -39,6 +40,16 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     protected abstract RemoteAddonRepository getBackedRemoteModRepository();
 
     protected abstract SortType getBackedRemoteModRepositorySortOrder();
+
+    @Override
+    public String getApiBaseUrl() {
+        return getBackedRemoteModRepository().getApiBaseUrl();
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return getBackedRemoteModRepository().getBaseUrl();
+    }
 
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
@@ -140,5 +151,15 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     @Override
     public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
         return getBackedRemoteModRepository().getRemoteVersionsById(downloadProvider, id);
+    }
+
+    @Override
+    public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
+        return getBackedRemoteModRepository().getAddonChangelog(downloadProvider, addonId, versionId);
+    }
+
+    @Override
+    public @NotNull String getVersionPageUrl(RemoteAddon.Version version) throws IOException {
+        return getBackedRemoteModRepository().getVersionPageUrl(version);
     }
 }
