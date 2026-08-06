@@ -454,7 +454,7 @@ public final class HTMLRenderer {
                     appendAutoLineBreak("\n\n");
             }
             case "hr" -> {
-                appendAutoLineBreak("\n");
+                appendAutoLineBreak("\n\n");
                 this.children.add(new Separator());
             }
         }
@@ -512,16 +512,37 @@ public final class HTMLRenderer {
                 }
             }
         }
-        int size = children.size();
-        for (int i = 0; i < size; i++) {
-            var child = children.get(i);
-            if (child instanceof AutoLineBreak || (child instanceof Text txt && isSpacing(txt.getText()))) {
-                // do nothing
-            } else {
-                children.subList(0, i).clear();
-                break;
+
+        {
+            // Remove empty lines at the beginning
+            int size = children.size();
+            int lastAutoLineBreak = -1;
+            for (int i = 0; i < size; i++) {
+                var child = children.get(i);
+                if (child instanceof AutoLineBreak) {
+                    lastAutoLineBreak = i;
+                } else if (child instanceof Text txt && isSpacing(txt.getText())) {
+                    // NO-OP
+                } else break;
+                if (i == size - 1) lastAutoLineBreak = i;
+            }
+            if (lastAutoLineBreak > 0)
+                this.children.subList(0, lastAutoLineBreak + 1).clear();
+        }
+        {
+            // Remove empty lines and spaces at the end
+            int size = children.size();
+            for (int i = size - 1; i > -1; i--) {
+                var child = children.get(i);
+                if (child instanceof AutoLineBreak || child instanceof Text txt && isSpacing(txt.getText())) {
+                    // NO-OP
+                } else {
+                    this.children.subList(i + 1, size).clear();
+                    break;
+                }
             }
         }
+
         return this;
     }
 
