@@ -18,8 +18,9 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import static javafx.collections.FXCollections.emptyObservableList;
-import static javafx.collections.FXCollections.observableList;
 import static javafx.collections.FXCollections.singletonObservableList;
+
+import java.util.List;
 
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -27,10 +28,13 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListCell;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
 import javafx.scene.text.Font;
 
 public final class FontComboBox extends JFXComboBox<String> {
+    private Thread loadingThread = null;
 
     private boolean loaded = false;
 
@@ -54,12 +58,56 @@ public final class FontComboBox extends JFXComboBox<String> {
         itemsProperty().bind(BindingMapping.of(valueProperty())
                         .map(value -> value == null ? emptyObservableList() : singletonObservableList(value)));
 
-        FXUtils.onClicked(this, () -> {
-            if (loaded)
-                return;
-            itemsProperty().unbind();
-            setItems(observableList(Font.getFamilies()));
-            loaded = true;
+        setOnHiding(event -> {
+            if (loadingThread != null && loadingThread.isAlive()) {
+                loadingThread.interrupt();
+                loadingThread = null;
+                loaded = false;
+            }
         });
+
+        FXUtils.onClicked(this, () -> {
+            if (loaded || (loadingThread != null && loadingThread.isAlive())) return;
+
+            itemsProperty().unbind();
+
+            List<String> allFonts = List.copyOf(Font.getFamilies());
+            int limit = Math.min(10, allFonts.size());
+            List<String> headFonts = allFonts.subList(0, limit);
+            List<String> remainingFonts = List.copyOf(allFonts.subList(limit, allFonts.size()));
+
+            var currentItems = FXCollections.observableArrayList(headFonts);
+            setItems(currentItems);
+            show(); 
+
+            loadingThread = new Thread(() -> {
+                int batchSize = 30;
+                for (int i = 0; i < remainingFonts.size(); i += batchSize) {
+                    
+                    if (Thread.currentThread().isInterrupted()) return;
+
+                    int start = i;
+                    int end = Math.min(start + batchSize, remainingFonts.size());
+                    List<String> batch = remainingFonts.subList(start, end);
+
+                    Platform.runLater(() -> currentItems.addAll(batch));
+
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                }
+
+                Platform.runLater(() -> {
+                    loaded = true;
+                    loadingThread = null;
+                });
+            });
+
+            loadingThread.setDaemon(true);
+            loadingThread.start();
+        });   
     }
 }
