@@ -7,6 +7,7 @@
 ## 啟動器相容性
 
 <!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=BADGES -->
 <!-- #PROPERTY NAME=LAUNCHER_COMPATIBILITY -->
 <!-- #PROPERTY REPLACE="Fully supported" "完整支援" -->
 <!-- #PROPERTY REPLACE="Limited support" "有限支援" -->
@@ -120,6 +121,7 @@
 ## 遊戲相容性
 
 <!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=BADGES -->
 <!-- #PROPERTY NAME=GAME_COMPATIBILITY -->
 <!-- #PROPERTY REPLACE="New World" "新世界" -->
 <!-- #PROPERTY REPLACE="Old World" "舊世界" -->
@@ -163,6 +165,7 @@
 ## 陶瓦聯機相容性
 
 <!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=BADGES -->
 <!-- #PROPERTY NAME=TERRACOTTA_COMPATIBILITY -->
 <!-- #PROPERTY REPLACE="New World" "新世界" -->
 <!-- #PROPERTY REPLACE="Old World" "舊世界" -->
