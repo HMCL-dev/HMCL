@@ -345,7 +345,7 @@ public final class DefaultGameInstanceTest {
                 tempDirectory.resolve("versions/instance/current.json"));
         writeSignedJar(current.getInstanceJarFile());
 
-        new GameVerificationFixTask(captured, "1.5.2", manifest).execute();
+        new GameVerificationFixTask(captured, GameVersionNumber.asGameVersion("1.5.2"), manifest).execute();
 
         assertFalse(hasZipEntry(captured.getInstanceJarFile(), "META-INF/MOJANG_C.DSA"));
         assertFalse(hasZipEntry(captured.getInstanceJarFile(), "META-INF/MOJANG_C.SF"));

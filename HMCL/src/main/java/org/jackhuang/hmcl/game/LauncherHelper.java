@@ -161,7 +161,7 @@ public final class LauncherHelper {
         AtomicReference<GameInstanceManifest> version = new AtomicReference<>(
                 LaunchManifestPreparation.prepare(
                         repository, gameInstance.getResolvedManifest().launchManifest()));
-        Optional<String> gameVersion = repository.getGameVersion(version.get());
+        GameVersionNumber gameVersion = gameInstance.getVersion();
         boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
@@ -172,7 +172,7 @@ public final class LauncherHelper {
         TaskExecutor executor = checkGameState(repository, setting, version.get())
                 .thenComposeAsync(java -> {
                     javaVersionRef.set(Objects.requireNonNull(java));
-                    version.set(NativePatcher.patchNative(gameInstance, version.get(), gameVersion.orElse(null), java, setting, javaArguments));
+                    version.set(NativePatcher.patchNative(gameInstance, version.get(), gameVersion, java, setting, javaArguments));
                     if (setting.getInheritable(GameSettings::notCheckGameProperty))
                         return null;
                     return Task.allOf(
@@ -194,7 +194,7 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
-                                        || !(setting.getRenderer(GameVersionNumber.asGameVersion(gameVersion)) instanceof Renderer.Driver renderer)
+                                        || !(setting.getRenderer(gameVersion) instanceof Renderer.Driver renderer)
                                         || renderer.mesaDriverName() == null)
                                     return null;
 
@@ -222,10 +222,7 @@ public final class LauncherHelper {
                     );
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> {
-                    if (gameVersion.isEmpty()) {
-                        return null;
-                    }
-                    return new GameVerificationFixTask(gameInstance, gameVersion.get(), version.get());
+                    return new GameVerificationFixTask(gameInstance, gameVersion, version.get());
                 })
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
@@ -301,7 +298,7 @@ public final class LauncherHelper {
                             launchOptions,
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                                    : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.compareTo(GameVersionNumber.unknown()) != 0)
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {

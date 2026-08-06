@@ -39,7 +39,7 @@ public final class GameVerificationFixTask extends Task<Void> {
     private final GameInstance instance;
 
     /// The detected Minecraft version.
-    private final String gameVersion;
+    private final GameVersionNumber gameVersion;
 
     /// The effective launch manifest used to detect Forge.
     private final GameInstanceManifest manifest;
@@ -49,7 +49,7 @@ public final class GameVerificationFixTask extends Task<Void> {
     /// @param instance    the instance whose client jar may be modified
     /// @param gameVersion the detected Minecraft version
     /// @param manifest    the effective launch manifest used to detect Forge
-    public GameVerificationFixTask(GameInstance instance, String gameVersion, GameInstanceManifest manifest) {
+    public GameVerificationFixTask(GameInstance instance, GameVersionNumber gameVersion, GameInstanceManifest manifest) {
         this.instance = instance;
         this.gameVersion = gameVersion;
         this.manifest = manifest;
@@ -63,9 +63,9 @@ public final class GameVerificationFixTask extends Task<Void> {
     @Override
     public void execute() throws IOException {
         Path jar = instance.getInstanceJarFile();
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, gameVersion);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, gameVersion.toString());
 
-        if (Files.exists(jar) && GameVersionNumber.compare(gameVersion, "1.6") < 0 && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
+        if (Files.exists(jar) && gameVersion.compareTo("1.6") < 0 && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             try (FileSystem fs = CompressingUtils.createWritableZipFileSystem(jar, StandardCharsets.UTF_8)) {
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.DSA"));
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.SF"));

@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -74,12 +75,13 @@ public final class NativePatcher {
     }
 
     public static GameInstanceManifest patchNative(DefaultGameInstance instance,
-                                                   GameInstanceManifest manifest, String gameVersion,
+                                                   GameInstanceManifest manifest,
+                                                   @NotNull GameVersionNumber gameVersion,
                                                    JavaRuntime javaVersion,
                                                    GameSettings.Effective settings,
                                                    List<String> javaArguments) {
         if (settings.getInheritable(GameSettings::useCustomNativesProperty)) {
-            if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
+            if (gameVersion.compareTo("1.19") < 0)
                 return manifest;
 
             ArrayList<Library> newLibraries = new ArrayList<>();
@@ -99,8 +101,8 @@ public final class NativePatcher {
         final boolean useNativeGLFW = settings.getInheritable(GameSettings::useNativeGLFWProperty);
         final boolean useNativeOpenAL = settings.getInheritable(GameSettings::useNativeOpenALProperty);
 
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && (useNativeGLFW || useNativeOpenAL)
-                && gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") >= 0) {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
+                && (useNativeGLFW || useNativeOpenAL) && gameVersion.compareTo("1.19") >= 0) {
 
             manifest = manifest.withLibraries(manifest.getLibraries().stream()
                     .filter(library -> {
@@ -122,7 +124,6 @@ public final class NativePatcher {
 
         OperatingSystem os = javaVersion.getPlatform().getOperatingSystem();
         Architecture arch = javaVersion.getArchitecture();
-        GameVersionNumber gameVersionNumber = gameVersion != null ? GameVersionNumber.asGameVersion(gameVersion) : null;
 
         if (settings.getInheritable(GameSettings::notPatchNativesProperty))
             return manifest;
@@ -131,8 +132,7 @@ public final class NativePatcher {
             return manifest;
 
         if (arch == Architecture.ARM64 && (os == OperatingSystem.MACOS || os == OperatingSystem.WINDOWS)
-                && gameVersionNumber != null
-                && gameVersionNumber.compareTo("1.19") >= 0)
+                && gameVersion.compareTo("1.19") >= 0)
             return manifest;
 
         Map<String, Library> replacements = getNatives(javaVersion.getPlatform());
