@@ -174,7 +174,7 @@ public final class UpdateHandler {
 
         Path self = getCurrentLocation();
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-            throw new IOException("Self verification failed");
+            throw new SelfVerificationException();
         }
         ExecutableHeaderHelper.copyWithHeader(self, target);
 
