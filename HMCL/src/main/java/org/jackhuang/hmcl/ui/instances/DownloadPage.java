@@ -71,8 +71,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             (downloadProvider, repository, version, shader, file) ->
                     org.jackhuang.hmcl.ui.download.DownloadPage.download(downloadProvider, repository, version, file, "shaderpacks");
 
-    public static @Nullable DownloadCallback getDownloadCallbackFor(RemoteAddonRepository.Type repoType) {
-        return switch (repoType) {
+    public static @Nullable DownloadCallback getDownloadCallbackFor(@Nullable RemoteAddon.Type addonType) {
+        if (addonType == null) return null;
+        return switch (addonType) {
             case MOD -> FOR_MOD;
             case RESOURCE_PACK -> FOR_RESOURCE_PACK;
             case SHADER_PACK -> FOR_SHADER;
@@ -178,8 +179,8 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     public @Nullable DownloadCallback getCallbackFor(RemoteAddon addon) {
-        if (addon.repoType() == RemoteAddonRepository.Type.MODPACK) return this.callback;
-        return getDownloadCallbackFor(addon.repoType());
+        if (addon.type() == RemoteAddon.Type.MODPACK) return this.callback;
+        return getDownloadCallbackFor(addon.type());
     }
 
     public void download(RemoteAddon addon, RemoteAddon.Version file) {
