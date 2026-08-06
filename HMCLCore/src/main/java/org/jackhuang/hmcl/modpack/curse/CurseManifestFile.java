@@ -31,7 +31,12 @@ public record CurseManifestFile(@SerializedName("projectID") int projectID,
                                 @SerializedName("fileID") int fileID,
                                 @SerializedName("fileName") String fileName,
                                 @SerializedName("url") String url,
-                                @SerializedName("required") boolean required) implements Validation {
+                                @SerializedName("required") boolean required,
+                                @SerializedName("hashes") java.util.Map<String, String> hashes) implements Validation {
+
+    public CurseManifestFile(int projectID, int fileID, String fileName, String url, boolean required) {
+        this(projectID, fileID, fileName, url, required, null);
+    }
 
     @Override
     public void validate() throws JsonParseException {
@@ -51,12 +56,31 @@ public record CurseManifestFile(@SerializedName("projectID") int projectID,
         }
     }
 
+    @Nullable
+    public org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck getIntegrityCheck() {
+        if (hashes == null || hashes.isEmpty()) return null;
+        if (hashes.containsKey("sha1")) {
+            return new org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck("SHA-1", hashes.get("sha1"));
+        } else if (hashes.containsKey("md5")) {
+            return new org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck("MD5", hashes.get("md5"));
+        } else if (hashes.containsKey("sha256")) {
+            return new org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck("SHA-256", hashes.get("sha256"));
+        } else if (hashes.containsKey("sha512")) {
+            return new org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck("SHA-512", hashes.get("sha512"));
+        }
+        return null;
+    }
+
     public CurseManifestFile withFileName(String fileName) {
-        return new CurseManifestFile(projectID, fileID, fileName, url, required);
+        return new CurseManifestFile(projectID, fileID, fileName, url, required, hashes);
     }
 
     public CurseManifestFile withURL(String url) {
-        return new CurseManifestFile(projectID, fileID, fileName, url, required);
+        return new CurseManifestFile(projectID, fileID, fileName, url, required, hashes);
+    }
+
+    public CurseManifestFile withHashes(java.util.Map<String, String> hashes) {
+        return new CurseManifestFile(projectID, fileID, fileName, url, required, hashes);
     }
 
     @Override
