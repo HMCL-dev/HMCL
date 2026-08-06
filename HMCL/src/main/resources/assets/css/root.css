@@ -392,10 +392,6 @@
     -fx-fill: -monet-inverse-on-surface;
 }
 
-.sponsor-pane {
-    -fx-cursor: hand;
-}
-
 .installer-item-status:incompatible {
     -fx-opacity: 0.6;
 }
@@ -448,7 +444,6 @@
     -fx-min-height: 55px;
     -fx-background-color: -monet-primary-container;
     -fx-opacity: 1; /* Override the opacity of disabled button */
-    -fx-cursor: hand;
 }
 
 .launch-pane > .jfx-button.launch-button {
@@ -456,12 +451,12 @@
     -fx-min-width: 200px;
     -fx-border-width: 0 3px 0 0;
     -fx-border-color: linear-gradient(
-        to bottom, 
-        transparent 0%, 
-        transparent 20%, 
+        to bottom,
+        transparent 0%,
+        transparent 20%,
         -monet-on-surface-variant 20%,
         -monet-on-surface-variant 80%,
-        transparent 80%, 
+        transparent 80%,
         transparent 100%
     );
     -fx-background-radius: 4px 0 0 4px;
@@ -670,7 +665,6 @@
 .icon {
     -fx-fill: #FE774D;
     -fx-padding: 10.0;
-    -fx-cursor: hand;
 }
 
 /*******************************************************************************
@@ -707,7 +701,6 @@
     -fx-min-height: 40px;
     -fx-max-height: 40px;
     -fx-pref-height: 40px;
-    -fx-cursor: hand;
 }
 
 .jfx-tool-bar .jfx-decorator-button .svg {
@@ -841,23 +834,12 @@
 
 /*******************************************************************************
 *                                                                              *
-* JFX Rippler                                                                  *
-*                                                                              *
-*******************************************************************************/
-
-.jfx-rippler:hover {
-    -fx-cursor: hand;
-}
-
-/*******************************************************************************
-*                                                                              *
 * JFX Button                                                                   *
 *                                                                              *
 *******************************************************************************/
 
 .jfx-button {
     -jfx-disable-visual-focus: true;
-    -fx-cursor: hand;
 }
 
 .jfx-button .jfx-rippler {
@@ -1553,7 +1535,6 @@
 .combo-box-popup .list-view .jfx-list-cell {
     -fx-background-color: -monet-surface-container;
     -fx-text-fill: -monet-on-surface;
-    -fx-cursor: hand;
     -fx-background-insets: 0.0;
 }
 
