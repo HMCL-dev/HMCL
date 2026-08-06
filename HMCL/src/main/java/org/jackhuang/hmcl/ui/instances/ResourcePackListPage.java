@@ -41,8 +41,8 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
-import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -56,6 +56,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -77,6 +78,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements GameInstancePage.GameInstanceLoadable {
+
+    public static final Lazy<Image> UNKNOWN_PACK_IMAGE = new Lazy<>(() ->
+            FXUtils.newBuiltinImage("/assets/img/unknown_pack.png", 64, 64, false, false));
 
     private static final String TIP_KEY = "resourcePackWarning";
     private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
@@ -157,7 +161,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 try {
                     resourcePackManager.importResourcePack(file);
                 } catch (Exception e) {
-                    LOG.warning("Failed to add resource pack", e);
+                    LOG.warning("Failed to add resource pack " + file, e);
                     failures.add(file);
                 }
             }
@@ -174,10 +178,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     }
 
-    public void onAddFiles() {
+    private void onAddFiles() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("resourcepack.add"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.resourcepack"), "*.zip"));
         List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
         if (files != null && !files.isEmpty()) {
             addFiles(files);
@@ -235,7 +239,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = repository.getGameVersion(instanceId);
-                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, resourcePacks)).orElse(null);
+                            return gameVersion.map(g -> new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), g, resourcePacks)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {
@@ -243,7 +247,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage<>(resourcePackManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(resourcePackDirectory, result));
                             }
                         })
                         .withStagesHints("update.checking"),
@@ -454,7 +458,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     LocalAddonFile.Description description = resourcePack.getDescription();
                     Stream<String> descriptionParts = description == null
                             ? Stream.empty()
-                            : description.getParts().stream().map(LocalAddonFile.Description.Part::getText);
+                            : description.parts().stream().map(LocalAddonFile.Description.Part::text);
                     if (predicate.test(resourcePack.getFileNameWithExtension())
                             || predicate.test(resourcePack.getFileName())
                             || descriptionParts.anyMatch(predicate)) {
@@ -486,7 +490,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             Image image = file.getIcon();
             if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
                     (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
-                image = FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+                image = UNKNOWN_PACK_IMAGE.get();
             }
             return image;
         }
@@ -634,7 +638,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 RemoteAddonRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                 Task.runAsync(() -> {
-                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
+                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(pack.getFile());
                     if (versionOptional.isPresent()) {
                         RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                         FXUtils.runInFX(() -> {
@@ -642,11 +646,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                 fireEvent(new DialogCloseEvent());
                                 Controllers.navigate(new DownloadPage(
                                         repository instanceof CurseForgeRemoteAddonRepository
-                                                ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
-                                                : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
+                                                ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(false)
+                                                : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(false),
                                         remoteAddon,
                                         new HMCLGameRepository.InstanceReference(page.repository, page.instanceId),
-                                        org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
+                                        null
                                 ));
                             });
                             button.setDisable(false);

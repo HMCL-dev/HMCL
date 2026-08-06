@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.resourcepack;
+package org.jackhuang.hmcl.addon.pack.resourcepack;
 
 import com.google.gson.annotations.SerializedName;
 import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
-import org.jackhuang.hmcl.addon.meta.PackMcMeta;
+import org.jackhuang.hmcl.addon.pack.PackMcMeta;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -362,11 +362,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                 Files.createDirectories(resourcePackDirectory);
 
                 Path newFile = resourcePackDirectory.resolve(file.getFileName());
-                if (Files.isDirectory(file)) {
-                    FileUtils.copyDirectory(file, newFile);
-                } else {
-                    FileUtils.copyFile(file, newFile);
-                }
+                FileUtils.copyTo(file, resourcePackDirectory);
 
                 addResourcePackInfo(newFile);
             } else {
@@ -519,8 +515,39 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         }
     }
 
+    public boolean rename(String oldName, String newName) {
+        String oldNameNewFormat = "file/" + oldName;
+        String newNameNewFormat = "file/" + newName;
+        boolean modified = false;
+
+        lock.lock();
+        try {
+            Map<String, String> options = loadOptions();
+            List<String> optPacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
+            List<String> optIncompatiblePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
+            for (var l : List.of(optPacks, optIncompatiblePacks)) {
+                var it = l.listIterator();
+                while (it.hasNext()) {
+                    var next = it.next();
+                    if (oldName.equals(next) || oldNameNewFormat.equals(next)) {
+                        it.set(supportsNewOptionsFormat ? newNameNewFormat : newName);
+                        modified = true;
+                    }
+                }
+            }
+            if (modified) {
+                options.put("resourcePacks", serializePackList(optPacks));
+                options.put("incompatibleResourcePacks", serializePackList(optIncompatiblePacks));
+                saveOptions(options);
+            }
+            return modified;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
-        if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null)
+        if (resourcePack.getMeta().pack() == null)
             return ResourcePackFile.Compatibility.MISSING_PACK_META;
         if (this.getRequiredVersion().isUnspecified())
             return ResourcePackFile.Compatibility.MISSING_GAME_META;

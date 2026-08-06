@@ -79,7 +79,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
     private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final ObservableList<GameInstanceID> instances = FXCollections.observableArrayList();
     private final ObjectProperty<GameInstanceID> selectedInstance = new SimpleObjectProperty<>();
-    private final DownloadPage.DownloadCallback callback;
+    private final DownloadPage.DownloadCallback callback; // ONLY FOR MODPACKS
     private boolean searchInitialized = false;
     protected final BooleanProperty supportChinese = new SimpleBooleanProperty();
     private final ObservableList<Node> actions = FXCollections.observableArrayList();
