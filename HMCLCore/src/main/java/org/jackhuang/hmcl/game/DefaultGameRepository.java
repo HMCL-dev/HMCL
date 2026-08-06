@@ -23,8 +23,10 @@ import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
+import org.jackhuang.hmcl.schematic.LitematicaConfig;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -618,7 +620,25 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Path getSchematicsDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("schematics");
+        var runDir = getRunDirectory(instanceId);
+        var config = runDir.resolve("config").resolve("litematica.json");
+        Path dir = runDir.resolve("schematics");
+        if (Files.isRegularFile(config)) {
+            try {
+                var conf = JsonUtils.fromJsonFile(config, LitematicaConfig.class);
+                if (conf != null
+                        && conf.generic() != null
+                        && conf.generic().customSchematicBaseDirectoryEnabled()
+                        && StringUtils.isNotBlank(conf.generic().customSchematicBaseDirectory())
+                ) {
+                    var p = Path.of(conf.generic().customSchematicBaseDirectory());
+                    dir = p.isAbsolute() ? p : runDir.resolve(p);
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to load custom schematics directory from litematica config at '%s'".formatted(config), e);
+            }
+        }
+        return dir;
     }
 
     public ModManager getModManager(GameInstanceID instanceId) {
