@@ -35,18 +35,7 @@ import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
-import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.setting.DefaultIsolationType;
-import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.GameWindowType;
-import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
-import org.jackhuang.hmcl.setting.GameDirectory;
-import org.jackhuang.hmcl.setting.ProxyType;
-import org.jackhuang.hmcl.setting.SettingFileUtils;
-import org.jackhuang.hmcl.setting.GameSettingsPresetID;
-import org.jackhuang.hmcl.setting.GameInstanceIconType;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
@@ -607,9 +596,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             throw new IllegalArgumentException("Unsupported icon file: " + ext);
         }
 
+        var dest = getInstanceRoot(instanceId).resolve("icon." + ext);
+        if (dest.equals(iconFile)) return;
+
         deleteIconFile(instanceId);
 
-        FileUtils.copyFile(iconFile, getInstanceRoot(instanceId).resolve("icon." + ext));
+        FileUtils.copyFile(iconFile, dest);
     }
 
     public void deleteIconFile(GameInstanceID instanceId) {

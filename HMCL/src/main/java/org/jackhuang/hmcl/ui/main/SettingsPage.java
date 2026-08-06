@@ -31,6 +31,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.TriPreference;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -200,6 +201,20 @@ public final class SettingsPage extends ScrollPane {
                     disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
                     disableAprilFools.selectedProperty().bindBidirectional(settings().disableAprilFoolsProperty());
                     miscPaneList.getContent().add(disableAprilFools);
+                }
+
+                {
+                    LineSelectButton<TriPreference> saveCustomGameIconsPane = new LineSelectButton<>();
+                    saveCustomGameIconsPane.setTitle(i18n("settings.launcher.save_custom_game_icons"));
+                    saveCustomGameIconsPane.valueProperty().bindBidirectional(settings().saveCustomGameIconsProperty());
+                    saveCustomGameIconsPane.setConverter(a -> switch (a) {
+                        case CONFIRM_EACH_TIME -> i18n("message.tri_pref.confirm_each_time");
+                        case ALWAYS -> i18n("message.tri_pref.always");
+                        case NEVER -> i18n("message.tri_pref.never");
+                    });
+                    saveCustomGameIconsPane.setItems(TriPreference.values());
+
+                    miscPaneList.getContent().add(saveCustomGameIconsPane);
                 }
 
                 {
