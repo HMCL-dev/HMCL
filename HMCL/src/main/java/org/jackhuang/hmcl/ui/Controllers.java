@@ -396,7 +396,7 @@ public final class Controllers {
         LOG.info("Found bundled modpack at " + modpackFile + "; starting automatic install");
 
         Controllers.taskDialog(
-                Task.composeAsync(() -> {
+                Task.composeAsync(Schedulers.io(), () -> {
                             Charset encoding = CompressingUtils.findSuitableEncoding(modpackFile);
                             Modpack modpack = ModpackHelper.readModpackManifest(modpackFile, encoding);
                             return ModpackHelper.getInstallTask(
