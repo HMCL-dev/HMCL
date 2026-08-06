@@ -18,8 +18,14 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.game.WorldLockedException;
+import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -28,18 +34,94 @@ import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class WorldManageUIUtils {
     private WorldManageUIUtils() {
+    }
+
+    public static void downloadWorld(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file) {
+        if (instanceId == null) instanceId = repository.getSelectedInstance();
+
+        Path runDirectory = instanceId != null && repository.hasInstance(instanceId) ? repository.getRunDirectory(instanceId) : repository.getBaseDirectory();
+        Path savesDirectory = runDirectory.resolve("saves");
+
+        Path worldZip;
+        List<URI> downloadURLs;
+        try {
+            downloadURLs = downloadProvider.injectURLWithCandidates(file.file().url());
+            worldZip = Files.createTempFile("world", ".zip");
+        } catch (IOException | IllegalArgumentException e) {
+            Controllers.dialog(
+                    i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
+                    i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
+            return;
+        }
+        worldZip.toFile().deleteOnExit();
+
+        Controllers.taskDialog(
+                new FileDownloadTask(downloadURLs, worldZip)
+                        .setName(file.name())
+                        .whenComplete(Schedulers.javafx(), exception -> {
+                            if (exception != null) {
+                                if (exception instanceof CancellationException) {
+                                    Controllers.showToast(i18n("message.cancelled"));
+                                } else {
+                                    Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                                }
+                            } else {
+                                installWorld(worldZip, savesDirectory, () -> Controllers.showToast(i18n("install.success")));
+                            }
+                        }),
+                i18n("message.downloading"),
+                TaskCancellationAction.NORMAL
+        );
+    }
+
+    public static void installWorld(Path zipFile, Path savesDir, @Nullable Runnable runnable) {
+        // Only accept one world file because user is required to confirm the new world name
+        // Or too many input dialogs are popped.
+        Task.supplyAsync(Schedulers.io(), () -> new World(zipFile))
+                .whenComplete(Schedulers.javafx(), world -> {
+                    Controllers.prompt(
+                            i18n("world.name.enter"),
+                            (name, handler) -> {
+                                Task.runAsync(Schedulers.io(), () -> world.install(savesDir, name))
+                                        .whenComplete(Schedulers.javafx(), () -> {
+                                            handler.resolve();
+                                            if (runnable != null) runnable.run();
+                                        }, e -> {
+                                            if (e instanceof FileAlreadyExistsException)
+                                                handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
+                                            else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
+                                                handler.reject(i18n("world.add.failed", i18n("install.new_game.malformed")));
+                                            else
+                                                handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
+                                        }).start();
+                            }, world.getWorldName(),
+                            new RequiredValidator(),
+                            new Validator(i18n("world.add.already_exists"), name -> !Files.exists(savesDir.resolve(name))),
+                            new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid)
+                    );
+                }, e -> {
+                    LOG.warning("Unable to parse world file " + zipFile, e);
+                    Controllers.dialog(i18n("world.add.invalid"));
+                }).start();
     }
 
     public static void delete(World world, Runnable runnable) {
