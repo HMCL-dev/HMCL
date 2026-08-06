@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 
 public abstract class MDListCell<T> extends ListCell<T> {
     private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+    protected static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
     private final StackPane container = new StackPane();
     private final StackPane root = new StackPane();
