@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -63,7 +64,10 @@ public abstract class LocalAddonFile {
     public void onUpdated(String newFileNameWithExt) {
     }
 
+    @NotNullByDefault
     public record AddonUpdate(
+            RemoteAddon.Source source,
+            RemoteAddon.Type repoType,
             LocalAddonFile localAddonFile,
             RemoteAddon.Version currentVersion,
             RemoteAddon.Version targetVersion
