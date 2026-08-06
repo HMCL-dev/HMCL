@@ -146,7 +146,7 @@ public final class Metadata {
     /// Returns the bundled modpack package under [getBundledModpackDirectory], if present.
     ///
     /// Prefers `modpack.zip` over `modpack.mrpack` when both exist. Presence of the package is the
-    /// signal to offer automatic install; the file is removed when install starts.
+    /// signal to offer automatic install; the file is removed after a successful install.
     ///
     /// @return the modpack path, or `null` when no package is present
     public static @Nullable Path findBundledModpackFile() {
