@@ -23,6 +23,7 @@ import javafx.animation.Timeline;
 import javafx.scene.Parent;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 
 /// A lightweight wrapper for displaying [SVG] icons.
@@ -108,7 +109,7 @@ public final class SVGContainer extends Parent {
         SVG oldIcon = this.icon;
         this.icon = newIcon;
 
-        if (animationDuration.equals(Duration.ZERO)) {
+        if (animationDuration.equals(Duration.ZERO) || !AnimationUtils.isAnimationEnabled()) {
             path.setContent(newIcon.getPath());
             path.setOpacity(1);
             if (getChildren().size() != 1)
