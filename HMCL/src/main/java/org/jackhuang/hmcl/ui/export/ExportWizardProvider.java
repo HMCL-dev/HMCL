@@ -134,9 +134,12 @@ public final class ExportWizardProvider implements WizardProvider {
                     zip.putTextFile(
                             JsonUtils.GSON.toJson(exportedServers, AuthlibInjectorServerList.class),
                             ".hmcl/config/authlib-injector-servers.json");
-                    zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
+
+                    // Bundled package under .hmcl/modpack/ (not the process workdir).
+                    String packageName = ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
                             ? "modpack.mrpack"
-                            : "modpack.zip");
+                            : "modpack.zip";
+                    zip.putFile(tempModpack, ".hmcl/" + Metadata.BUNDLED_MODPACK_DIRECTORY_NAME + "/" + packageName);
 
                     for (String extension : FontManager.FONT_EXTENSIONS) {
                         String fileName = "font." + extension;
@@ -148,6 +151,13 @@ public final class ExportWizardProvider implements WizardProvider {
                     }
 
                     zip.putFile(launcherJar, launcherJar.getFileName().toString());
+                } finally {
+                    if (tempModpack != null) {
+                        try {
+                            Files.deleteIfExists(tempModpack);
+                        } catch (Exception ignored) {
+                        }
+                    }
                 }
             }
         };

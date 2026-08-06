@@ -135,17 +135,27 @@ public final class Metadata {
         }
     }
 
-    /// Returns the bundled modpack file under the process working directory, if present.
+    /// Directory under [HMCL_LOCAL_HOME] that holds a launcher-bundled modpack for automatic install.
+    public static final String BUNDLED_MODPACK_DIRECTORY_NAME = "modpack";
+
+    /// Returns the directory for a launcher-bundled modpack (`[HMCL_LOCAL_HOME]/modpack`).
+    public static Path getBundledModpackDirectory() {
+        return HMCL_LOCAL_HOME.resolve(BUNDLED_MODPACK_DIRECTORY_NAME);
+    }
+
+    /// Returns the bundled modpack package under [getBundledModpackDirectory], if present.
     ///
-    /// Prefers `modpack.zip` over `modpack.mrpack` when both exist.
+    /// Prefers `modpack.zip` over `modpack.mrpack` when both exist. Presence of the package is the
+    /// signal to offer automatic install; the file is removed when install starts.
     ///
-    /// @return the modpack path, or `null` when neither file exists
+    /// @return the modpack path, or `null` when no package is present
     public static @Nullable Path findBundledModpackFile() {
-        Path zipModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
+        Path directory = getBundledModpackDirectory();
+        Path zipModpack = directory.resolve("modpack.zip");
         if (Files.isRegularFile(zipModpack)) {
             return zipModpack;
         }
-        Path mrpackModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.mrpack");
+        Path mrpackModpack = directory.resolve("modpack.mrpack");
         if (Files.isRegularFile(mrpackModpack)) {
             return mrpackModpack;
         }

@@ -69,12 +69,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
@@ -381,17 +381,14 @@ public final class Controllers {
         scheduleBundledModpackInstall();
     }
 
-    /// Guards against concurrent schedule attempts within one process.
-    private static final AtomicBoolean bundledModpackAttempted = new AtomicBoolean();
-
     /// Refresh listener attached to the currently observed selected repository.
     private static @Nullable ChangeListener<Number> bundledModpackRefreshListener;
 
-    /// Offers automatic install of a cwd-bundled modpack at most once per launcher state.
+    /// Offers automatic install when a package exists under `.hmcl/modpack/`.
     ///
     /// Listens to the selected repository's [HMCLGameRepository#refreshCountProperty] (and runs
-    /// immediately when that repository is already loaded). Whether to install is decided by
-    /// [LauncherState#isBundledModpackInstalled], not by whether the repository is empty.
+    /// immediately when that repository is already loaded). The package file itself is the install
+    /// signal; it is deleted when install starts so later refreshes do not re-prompt.
     private static void scheduleBundledModpackInstall() {
         ChangeListener<HMCLGameRepository> onSelectedRepository = (observable, oldRepository, newRepository) -> {
             if (oldRepository != null && bundledModpackRefreshListener != null) {
@@ -417,32 +414,51 @@ public final class Controllers {
     }
 
     private static void tryInstallBundledModpack(HMCLGameRepository repository) {
-        if (!bundledModpackAttempted.compareAndSet(false, true)) {
-            return;
-        }
-        if (state().isBundledModpackInstalled()) {
-            return;
-        }
-
         @Nullable Path modpackFile = Metadata.findBundledModpackFile();
         if (modpackFile == null) {
             return;
         }
 
+        // Move the package out of .hmcl/modpack/ so presence of modpack.zip|mrpack is no longer a signal.
+        final Path installSource;
+        try {
+            String suffix = modpackFile.getFileName().toString().endsWith(".mrpack") ? ".mrpack" : ".zip";
+            installSource = Files.createTempFile("hmcl-bundled-modpack", suffix);
+            Files.move(modpackFile, installSource, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            LOG.warning("Failed to claim bundled modpack package: " + modpackFile, e);
+            return;
+        }
+
         LOG.info("Found bundled modpack at " + modpackFile + "; starting automatic install");
 
-        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
-                .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
-                .thenApplyAsync(modpack -> ModpackHelper
-                        .getInstallTask(repository, modpackFile, new GameInstanceID(modpack.getName()), modpack, null)
-                        .executor())
-                .thenAcceptAsync(Schedulers.javafx(), executor -> {
-                    // Record before presentation so a cancelled dialog does not re-prompt every launch.
-                    state().setBundledModpackInstalled(true);
-                    Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
-                    executor.start();
-                })
-                .start();
+        Controllers.taskDialog(
+                Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(installSource))
+                        .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(installSource, encoding))
+                        .thenComposeAsync(modpack -> {
+                            Task<?> installTask = ModpackHelper.getInstallTask(
+                                    repository, installSource, new GameInstanceID(modpack.getName()), modpack, null);
+                            // Keep installSource until the install task finishes reading the package.
+                            installTask.whenComplete(exception -> {
+                                try {
+                                    Files.deleteIfExists(installSource);
+                                } catch (IOException e) {
+                                    LOG.warning("Failed to delete temporary bundled modpack: " + installSource, e);
+                                }
+                            });
+                            return installTask;
+                        })
+                        .whenComplete(Schedulers.javafx(), (ignored, exception) -> {
+                            if (exception != null) {
+                                LOG.warning("Failed to prepare bundled modpack install", exception);
+                                try {
+                                    Files.deleteIfExists(installSource);
+                                } catch (IOException e) {
+                                    LOG.warning("Failed to delete temporary bundled modpack: " + installSource, e);
+                                }
+                            }
+                        }), i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL
+        );
     }
 
     public static void dialog(Region content) {
