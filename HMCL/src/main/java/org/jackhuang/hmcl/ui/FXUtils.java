@@ -1814,7 +1814,6 @@ public final class FXUtils {
 
     }
 
-
     public static void chooseDateRange(Consumer<@NotNull Pair<@Nullable LocalDate, @Nullable LocalDate>> onConfirm) {
         Controllers.dialog(new DateRangeDialog(onConfirm));
     }
