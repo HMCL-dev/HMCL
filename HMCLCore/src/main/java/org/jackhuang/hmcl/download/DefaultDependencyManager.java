@@ -24,12 +24,10 @@ import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,21 +38,37 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Note: This class has no state.
- *
- * @author huangyuhui
- */
+/// Provides downloads and game-component installation for one game repository.
 public class DefaultDependencyManager extends AbstractDependencyManager {
 
+    /// The repository whose layout and registered instances are managed.
     private final DefaultGameRepository repository;
+
+    /// The provider used to resolve remote download URLs and version lists.
     private final DownloadProvider downloadProvider;
+
+    /// The cache used to source and retain downloaded artifacts.
     private final DefaultCacheRepository cacheRepository;
 
+    /// Creates a dependency manager for a repository and download context.
+    ///
+    /// @param repository       the associated game repository
+    /// @param downloadProvider the remote download provider
+    /// @param cacheRepository  the artifact cache
     public DefaultDependencyManager(DefaultGameRepository repository, DownloadProvider downloadProvider, DefaultCacheRepository cacheRepository) {
         this.repository = repository;
         this.downloadProvider = downloadProvider;
         this.cacheRepository = cacheRepository;
+    }
+
+    /// Ensures that an instance belongs to this manager's repository.
+    ///
+    /// @param instance the instance to validate
+    /// @throws IllegalArgumentException if the instance belongs to another repository
+    public void validateGameInstance(GameInstance instance) {
+        if (instance.getRepository() != repository) {
+            throw new IllegalArgumentException("Game instance and dependency manager belong to different repositories");
+        }
     }
 
     @Override
@@ -78,15 +92,20 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task<?> checkGameCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck) {
+    public Task<?> checkGameCompletionAsync(
+            GameInstance instance,
+            GameInstanceManifest manifest,
+            boolean integrityCheck) {
+        validateGameInstance(instance);
+
         return Task.allOf(
                 Task.composeAsync(() -> {
-                    Path versionJar = repository.getInstanceJar(manifest);
+                    Path versionJar = instance.getInstanceJarFile();
 
                     return Files.notExists(versionJar) || FileUtils.size(versionJar) == 0L
-                            ? new GameDownloadTask(this, null, manifest)
+                            ? new GameDownloadTask(this, null, manifest, versionJar)
                             : null;
-                }).thenComposeAsync(checkPatchCompletionAsync(manifest, integrityCheck)),
+                }).thenComposeAsync(checkPatchCompletionAsync(instance, manifest, integrityCheck)),
                 new GameAssetDownloadTask(this, manifest, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
                         .setSignificance(Task.TaskSignificance.MODERATE),
                 new GameLibrariesTask(this, manifest, integrityCheck)
@@ -99,15 +118,21 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task<?> checkPatchCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck) {
+    public Task<?> checkPatchCompletionAsync(
+            GameInstance instance,
+            GameInstanceManifest manifest,
+            boolean integrityCheck) {
+        validateGameInstance(instance);
+
         return Task.composeAsync(() -> {
             List<Task<?>> tasks = new ArrayList<>(0);
 
-            String gameVersion = repository.getGameVersion(manifest).orElse(null);
-            if (gameVersion == null) return null;
+            GameVersionNumber detectedVersion = instance.getVersion();
+            if (detectedVersion == GameVersionNumber.unknown()) return null;
+            String gameVersion = detectedVersion.toString();
 
-            GameInstanceManifest original = repository.getInstanceManifest(manifest.id());
-            GameInstanceManifest.Resolved resolvedInstanceManifest = repository.getResolvedInstanceManifest(manifest.id());
+            GameInstanceManifest original = instance.getManifest();
+            GameInstanceManifest.Resolved resolvedInstanceManifest = instance.getResolvedManifest();
 
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolvedInstanceManifest, gameVersion);
             for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
@@ -136,7 +161,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         if (GameLibrariesTask.shouldDownloadLibrary(repository, manifest, installer, integrityCheck)) {
                             tasks.add(installLibraryAsync(gameVersion, original, "optifine", optifinePatchVersion));
                         } else {
-                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(manifest, installer)));
+                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLayout().getLibraryFile(manifest.id(), installer)));
                         }
                     }
                 }
@@ -174,6 +199,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
     }
 
+    /// Creates a task that detects and runs a supported local library installer.
+    ///
+    /// @param oldVersion the manifest to which the installed patch will be added
+    /// @param installer  the local installer jar
+    /// @return the task producing the updated manifest
     public Task<GameInstanceManifest> installLibraryAsync(GameInstanceManifest oldVersion, Path installer) {
         return Task
                 .composeAsync(() -> {
@@ -202,17 +232,19 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .thenApplyAsync(patch -> patch == null ? oldVersion : oldVersion.addPatch(patch));
     }
 
+    /// Indicates that a local library installer is not recognized by any supported installer.
     public static class UnsupportedLibraryInstallerException extends Exception {
+
+        /// Creates an unsupported-installer exception.
+        public UnsupportedLibraryInstallerException() {
+        }
     }
 
-    /**
-     * Remove installed library.
-     * Will try to remove libraries and patches.
-     *
-     * @param manifest not resolved instance manifest
-     * @param libraryId forge/liteloader/optifine/fabric
-     * @return task to remove the specified library
-     */
+    /// Creates a task that removes a loader's libraries and patch from a manifest.
+    ///
+    /// @param manifest  the unresolved instance manifest
+    /// @param libraryId the patch identifier, such as `forge`, `optifine`, or `fabric`
+    /// @return the task producing the updated independent manifest
     public Task<GameInstanceManifest> removeLibraryAsync(GameInstanceManifest manifest, String libraryId) {
         // MaintainTask requires version that does not inherits from any version.
         // If we want to remove a library in dependent version, we should keep the dependents not changed

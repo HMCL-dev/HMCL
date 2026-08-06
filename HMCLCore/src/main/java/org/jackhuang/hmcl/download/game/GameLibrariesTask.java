@@ -92,7 +92,7 @@ public final class GameLibrariesTask extends Task<Void> {
     }
 
     public static boolean shouldDownloadLibrary(GameRepository gameRepository, GameInstanceManifest manifest, Library library, boolean integrityCheck) {
-        Path file = gameRepository.getLibraryFile(manifest, library);
+        Path file = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
         if (!Files.isRegularFile(file)) return true;
 
         if (!integrityCheck) {
@@ -165,7 +165,7 @@ public final class GameLibrariesTask extends Task<Void> {
                 }
             }
 
-            Path file = gameRepository.getLibraryFile(manifest, library);
+            Path file = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
             if ("optifine".equals(library.groupId()) && Files.exists(file) && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(manifest).orElse(null)).compareTo("1.20.4") == 0) {
                 String forgeVersion = LibraryAnalyzer.analyze(manifest, "1.20.4")
                         .getVersion(LibraryAnalyzer.LibraryType.FORGE)

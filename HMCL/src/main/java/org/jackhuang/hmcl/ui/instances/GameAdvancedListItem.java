@@ -19,9 +19,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import javafx.geometry.Pos;
 import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
-import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -29,6 +27,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -37,12 +36,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class GameAdvancedListItem extends AdvancedListItem {
     private final ImageContainer imageContainer;
     private final WeakListenerHolder holder = new WeakListenerHolder();
-    private HMCLGameRepository repository;
+    private @Nullable HMCLGameRepository repository;
     @SuppressWarnings("unused")
-    private Consumer<Event> onInstanceIconChangedListener;
-
-    @SuppressWarnings({"unused", "FieldCanBeLocal"})
-    private Consumer<RefreshedGameInstancesEvent> onRefreshedInstancesListener;
+    private @Nullable Consumer<Event> onInstanceIconChangedListener;
 
     public GameAdvancedListItem() {
         this.imageContainer = new ImageContainer(LEFT_GRAPHIC_SIZE);
@@ -53,27 +49,17 @@ public class GameAdvancedListItem extends AdvancedListItem {
         holder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), this::loadInstance));
     }
 
-    private void loadInstance(GameInstanceID instanceId) {
+    private void loadInstance(@Nullable HMCLGameInstance instance) {
         if (GameDirectoryManager.getSelectedRepository() != repository) {
             repository = GameDirectoryManager.getSelectedRepository();
-            if (repository != null) {
-                onInstanceIconChangedListener = repository.onInstanceIconChanged.registerWeak(event -> {
-                    FXUtils.runInFX(() -> loadInstance(repository.getSelectedInstance()));
-                });
-                if (!repository.isLoaded()) {
-                    onRefreshedInstancesListener = EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class)
-                            .registerWeak(event -> FXUtils.runInFX(() -> loadInstance(repository.getSelectedInstance())));
-                    return;
-                }
-            }
+            onInstanceIconChangedListener = repository.onInstanceIconChanged.registerWeak(event ->
+                    FXUtils.runInFX(() -> loadInstance(repository.getSelectedInstance())));
         }
-        if (instanceId != null && repository != null) {
-            if (repository.hasInstance(instanceId)) {
-                setTitle(i18n("instance.manage.manage"));
-                setSubtitle(instanceId.toString());
-                imageContainer.setImage(repository.getInstanceIconImage(instanceId));
-                return;
-            }
+        if (instance != null) {
+            setTitle(i18n("instance.manage.manage"));
+            setSubtitle(instance.getId().toString());
+            imageContainer.setImage(instance.getRepository().getInstanceIconImage(instance.getId()));
+            return;
         }
 
         setTitle(i18n("instance.empty"));

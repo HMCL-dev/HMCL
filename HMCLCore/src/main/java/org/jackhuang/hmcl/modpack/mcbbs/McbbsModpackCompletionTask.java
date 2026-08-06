@@ -19,9 +19,8 @@ package org.jackhuang.hmcl.modpack.mcbbs;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.addon.mod.ModManager;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.curse.CurseMetaMod;
@@ -31,6 +30,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
@@ -49,31 +49,50 @@ import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.Lang.wrapConsumer;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Completes and updates files for an installed MCBBS modpack.
+@NotNullByDefault
 public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
 
+    /// The dependency manager used to resolve and download remote files.
     private final DefaultDependencyManager dependency;
-    private final DefaultGameRepository repository;
+
+    /// The fixed registered instance completed by this task.
+    private final DefaultGameInstance instance;
+
+    /// The mod manager associated with [#instance].
     private final ModManager modManager;
-    private final GameInstanceID instanceId;
+
+    /// The fixed configuration-file path for [#instance].
     private final Path configurationFile;
-    private ModpackConfiguration<McbbsModpackManifest> configuration;
-    private McbbsModpackManifest manifest;
-    private final List<Task<?>> dependencies = new ArrayList<>();
 
-    private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
-    private final AtomicInteger finished = new AtomicInteger(0);
-    private final AtomicBoolean notFound = new AtomicBoolean(false);
+    /// The configuration supplied by the caller or loaded from disk.
+    private @Nullable ModpackConfiguration<McbbsModpackManifest> configuration;
 
-    public McbbsModpackCompletionTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId) {
-        this(dependencyManager, instanceId, null);
+    /// The local or downloaded manifest currently being processed.
+    private @Nullable McbbsModpackManifest manifest;
+
+    /// Creates a task that loads the modpack configuration from disk.
+    ///
+    /// @param dependencyManager the dependency manager
+    /// @param instance          the registered instance to complete
+    public McbbsModpackCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
+        this(dependencyManager, instance, null);
     }
 
-    public McbbsModpackCompletionTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId, ModpackConfiguration<McbbsModpackManifest> configuration) {
+    /// Creates a task using an optional preloaded modpack configuration.
+    ///
+    /// @param dependencyManager the dependency manager
+    /// @param instance          the registered instance to complete
+    /// @param configuration     the configuration, or `null` to read it from disk
+    public McbbsModpackCompletionTask(
+            DefaultDependencyManager dependencyManager,
+            DefaultGameInstance instance,
+            @Nullable ModpackConfiguration<McbbsModpackManifest> configuration) {
+        dependencyManager.validateGameInstance(instance);
         this.dependency = dependencyManager;
-        this.repository = dependencyManager.getGameRepository();
-        this.modManager = repository.getModManager(instanceId);
-        this.instanceId = instanceId;
-        this.configurationFile = repository.getModpackConfiguration(instanceId);
+        this.instance = instance;
+        this.modManager = instance.getModManager();
+        this.configurationFile = instance.getRepository().getModpackConfiguration(instance.getId());
         this.configuration = configuration;
 
         setStage("hmcl.modpack.download");
@@ -110,7 +129,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                     throw new IOException("Unable to parse server manifest.json from " + manifest.getFileApi(), e);
                 }
 
-                Path rootPath = repository.getInstanceRoot(instanceId);
+                Path rootPath = instance.getInstanceRoot();
                 Files.createDirectories(rootPath);
 
                 Map<McbbsModpackManifest.File, McbbsModpackManifest.File> localFiles = manifest.getFiles().stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
@@ -172,8 +191,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 manifest = remoteManifest.setFiles(newFiles);
                 return executor.all(tasks.stream().filter(Objects::nonNull).collect(Collectors.toList()));
             })).thenAcceptAsync(wrapConsumer(unused1 -> {
-                Path manifestFile = repository.getModpackConfiguration(instanceId);
-                JsonUtils.writeToJsonFile(manifestFile,
+                JsonUtils.writeToJsonFile(configurationFile,
                         new ModpackConfiguration<>(manifest, this.configuration.getType(), this.manifest.getName(), this.manifest.getVersion(),
                                 this.manifest.getFiles().stream()
                                         .flatMap(file -> file instanceof McbbsModpackManifest.AddonFile
@@ -271,10 +289,9 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         }));
     }
 
-    @Nullable
-    private Path getFilePath(McbbsModpackManifest.File file) {
+    private @Nullable Path getFilePath(McbbsModpackManifest.File file) {
         if (file instanceof McbbsModpackManifest.AddonFile) {
-            return modManager.getRepository().getRunDirectory(modManager.getInstanceId()).resolve(((McbbsModpackManifest.AddonFile) file).getPath());
+            return instance.getRunDirectory().resolve(((McbbsModpackManifest.AddonFile) file).getPath());
         } else if (file instanceof McbbsModpackManifest.CurseFile) {
             String fileName = ((McbbsModpackManifest.CurseFile) file).getFileName();
             if (fileName == null) return null;
@@ -284,7 +301,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         }
     }
 
-    private String getFileHash(McbbsModpackManifest.File file) {
+    private @Nullable String getFileHash(McbbsModpackManifest.File file) {
         if (file instanceof McbbsModpackManifest.AddonFile) {
             return ((McbbsModpackManifest.AddonFile) file).getHash();
         } else {
@@ -292,7 +309,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         }
     }
 
-    private Task<?> downloadFile(McbbsModpackManifest remoteManifest, McbbsModpackManifest.File file) throws IOException {
+    private @Nullable Task<?> downloadFile(McbbsModpackManifest remoteManifest, McbbsModpackManifest.File file) throws IOException {
         if (file instanceof McbbsModpackManifest.AddonFile) {
             McbbsModpackManifest.AddonFile addonFile = (McbbsModpackManifest.AddonFile) file;
             return new FileDownloadTask(

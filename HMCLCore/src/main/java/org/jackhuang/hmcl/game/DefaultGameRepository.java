@@ -18,16 +18,18 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.addon.mod.ModManager;
-import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyLongProperty;
+import javafx.beans.property.ReadOnlyLongWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.download.MaintainTask;
-import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -38,13 +40,18 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
-public class DefaultGameRepository implements GameRepository {
+public abstract class DefaultGameRepository implements GameRepository {
+
+    private static final ExecutorService POOL = Lang.threadPool("DefaultGameRepository", true, 4, 10, TimeUnit.SECONDS);
 
     private static final GameInstanceManifest CLASSIC_MANIFEST = new GameInstanceManifest(
             new GameInstanceID("Classic"),
@@ -80,7 +87,7 @@ public class DefaultGameRepository implements GameRepository {
                 null, null, null, null, null, null);
     }
 
-    private static boolean hasClassicVersion(Path baseDirectory) {
+    private static boolean hasClassicInstance(Path baseDirectory) {
         Path bin = baseDirectory.resolve("bin");
         return Files.isDirectory(bin)
                 && Files.exists(bin.resolve("lwjgl.jar"))
@@ -88,22 +95,137 @@ public class DefaultGameRepository implements GameRepository {
                 && Files.exists(bin.resolve("lwjgl_util.jar"));
     }
 
-    private volatile Status status;
+    /// Published snapshot, always updated on the JavaFX application thread when the toolkit is live.
+    private final ObjectProperty<DefaultGameRepositorySnapshot> snapshot;
+
+    /// Number of completed full refreshes.
+    private final ReadOnlyLongWrapper refreshCount;
+
+    /// Whether at least one full refresh has completed since the base directory was set.
     private volatile boolean loaded;
-    private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
+    /// Creates a repository rooted at the given directory with an empty initial snapshot.
+    ///
+    /// @param baseDirectory the initial repository base directory
     public DefaultGameRepository(Path baseDirectory) {
-        this.status = new Status(baseDirectory);
+        DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
+        initial.seal();
+        this.snapshot = new SimpleObjectProperty<>(initial);
+        this.refreshCount = new ReadOnlyLongWrapper(this, "refreshCount");
     }
 
-    public Path getBaseDirectory() {
-        return status.baseDirectory;
-    }
+    /// Creates the repository layout rooted at the given directory.
+    ///
+    /// @param baseDirectory the repository base directory
+    /// @return the layout used by this repository
+    protected abstract DefaultGameRepositoryLayout createLayout(Path baseDirectory);
 
     public void setBaseDirectory(Path baseDirectory) {
-        this.status = new Status(baseDirectory);
+        DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
+        publishSnapshot(initial);
         this.loaded = false;
-        this.gameVersions.clear();
+    }
+
+    /// {@inheritDoc}
+    ///
+    /// The returned snapshot is sealed and must not be modified. Writers must [#clone()] it, edit the
+    /// copy, and publish the result with [#publishSnapshot(DefaultGameRepositorySnapshot)].
+    @Override
+    public DefaultGameRepositorySnapshot getSnapshot() {
+        return snapshot.get();
+    }
+
+    /// Returns a read-only view of the current published snapshot for JavaFX bindings.
+    ///
+    /// The property is the sole holder of the published snapshot. Updates are applied on the JavaFX
+    /// application thread so listeners may safely touch the scene graph.
+    ///
+    /// @return the observable snapshot property
+    public ReadOnlyObjectProperty<? extends DefaultGameRepositorySnapshot> snapshotProperty() {
+        return snapshot;
+    }
+
+    /// Returns the number of completed full repository refreshes.
+    ///
+    /// The property is incremented after a refreshed snapshot is published and [#isLoaded()] becomes
+    /// `true`. When the JavaFX toolkit is running, listeners are notified on its application thread.
+    /// Snapshot publications caused by operations such as saving or renaming an instance do not
+    /// increment this property.
+    ///
+    /// @return the read-only refresh-count property
+    public final ReadOnlyLongProperty refreshCountProperty() {
+        return refreshCount.getReadOnlyProperty();
+    }
+
+    /// Returns the number of completed full repository refreshes.
+    ///
+    /// @return the completed refresh count
+    public final long getRefreshCount() {
+        return refreshCount.get();
+    }
+
+    /// Seals `newSnapshot` if needed and publishes it as the current repository snapshot.
+    ///
+    /// When the JavaFX toolkit is running, the property is updated on the JavaFX application thread
+    /// (blocking the caller if publish happens off the FX thread) so that listeners run on FX and
+    /// [#getSnapshot()] observes the new value before this method returns.
+    ///
+    /// @param newSnapshot the snapshot to publish; must not already be visible as [#getSnapshot()]
+    ///                    unless it is a freshly built replacement
+    protected void publishSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
+        newSnapshot.seal();
+        setSnapshotOnFxThread(newSnapshot);
+    }
+
+    /// Sets [#snapshot] on the JavaFX application thread when possible.
+    private void setSnapshotOnFxThread(DefaultGameRepositorySnapshot newSnapshot) {
+        runOnFxThreadAndWait(() -> snapshot.set(newSnapshot));
+    }
+
+    /// Runs an action on the JavaFX application thread and waits for its completion.
+    ///
+    /// The action runs on the calling thread when the JavaFX toolkit has not been initialized.
+    /// Interruptions are restored after a queued JavaFX action completes.
+    ///
+    /// @param action the action to run
+    private static void runOnFxThreadAndWait(Runnable action) {
+        if (Platform.isFxApplicationThread()) {
+            action.run();
+            return;
+        }
+
+        CountDownLatch completed = new CountDownLatch(1);
+        try {
+            Platform.runLater(() -> {
+                try {
+                    action.run();
+                } finally {
+                    completed.countDown();
+                }
+            });
+        } catch (IllegalStateException ignored) {
+            // JavaFX toolkit is not initialized (for example in headless unit tests).
+            action.run();
+            return;
+        }
+
+        boolean interrupted = false;
+        while (true) {
+            try {
+                completed.await();
+                break;
+            } catch (InterruptedException e) {
+                interrupted = true;
+            }
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    @Override
+    public DefaultGameRepositoryLayout getLayout() {
+        return getSnapshot().getLayout();
     }
 
     public boolean isLoaded() {
@@ -112,117 +234,114 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public void refresh() {
-        if (EventBus.EVENT_BUS.fireEvent(new RefreshingInstancesEvent(this)) == Event.Result.DENY) {
-            return;
-        }
+        DefaultGameRepositorySnapshot newSnapshot = createSnapshot(getSnapshot().getLayout());
+        DefaultGameRepositoryLayout layout = newSnapshot.getLayout();
 
-        refreshImpl();
-        loaded = true;
-        EventBus.EVENT_BUS.fireEvent(new RefreshedGameInstancesEvent(this));
-    }
-
-    protected void refreshImpl() {
-        Status newStatus = new Status(status.baseDirectory);
-
-        if (hasClassicVersion(newStatus.baseDirectory)) {
+        if (hasClassicInstance(layout.getBaseDirectory())) {
             GameInstanceID id = CLASSIC_MANIFEST.id();
-            newStatus.instances.put(id, new InstanceHolder(newStatus, id, CLASSIC_MANIFEST));
+            newSnapshot.put(createInstance(newSnapshot, id, CLASSIC_MANIFEST));
         }
 
-        Path versionsDir = newStatus.baseDirectory.resolve("versions");
-        if (Files.isDirectory(versionsDir)) {
-            try (Stream<Path> stream = Files.list(versionsDir)) {
-                stream.parallel().filter(Files::isDirectory).flatMap(dir -> {
-                    GameInstanceID id;
+        Path instancesDir = layout.getBaseDirectory().resolve("versions");
+        if (Files.isDirectory(instancesDir)) {
+            try (Stream<Path> stream = Files.list(instancesDir)) {
+                List<CompletableFuture<@Nullable DefaultGameInstance>> futures = stream
+                        .filter(Files::isDirectory)
+                        .map(dir -> CompletableFuture.supplyAsync(
+                                Lang.wrap(() -> loadInstanceDirectory(newSnapshot, dir)),
+                                POOL))
+                        .toList();
+
+                for (CompletableFuture<@Nullable DefaultGameInstance> future : futures) {
                     try {
-                        id = new GameInstanceID(FileUtils.getName(dir));
-                    } catch (IllegalArgumentException e) {
-                        LOG.warning("Ignoring version folder with invalid id " + dir, e);
-                        return Stream.empty();
-                    }
-
-                    Path json = dir.resolve(id + ".json");
-
-                    if (Files.notExists(json)) {
-                        List<Path> jsons = FileUtils.listFilesByExtension(dir, "json");
-                        if (jsons.size() == 1) {
-                            LOG.info("Renaming json file " + jsons.get(0) + " to " + json);
-
-                            try {
-                                Files.move(jsons.get(0), json);
-                            } catch (IOException e) {
-                                LOG.warning("Cannot rename json file, ignoring version " + id, e);
-                                return Stream.empty();
-                            }
-
-                            Path jar = dir.resolve(FileUtils.getNameWithoutExtension(jsons.get(0)) + ".jar");
-                            if (Files.exists(jar)) {
-                                try {
-                                    Files.move(jar, dir.resolve(id + ".jar"));
-                                } catch (IOException e) {
-                                    LOG.warning("Cannot rename jar file, ignoring version " + id, e);
-                                    return Stream.empty();
-                                }
-                            }
-                        } else {
-                            LOG.info("No available json file found, ignoring version " + id);
-                            return Stream.empty();
+                        DefaultGameInstance instance = future.join();
+                        if (instance != null) {
+                            newSnapshot.put(instance);
                         }
-                    }
-
-                    GameInstanceManifest manifest;
-                    try {
-                        manifest = readInstanceManifest(json);
                     } catch (Exception e) {
-                        LOG.warning("Malformed version json " + id, e);
-                        if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id.id())) != Event.Result.ALLOW) {
-                            return Stream.empty();
-                        }
-
-                        try {
-                            manifest = readInstanceManifest(json);
-                        } catch (Exception e2) {
-                            LOG.error("User corrected version json is still malformed", e2);
-                            return Stream.empty();
-                        }
+                        LOG.warning("Failed to load instance", e);
                     }
-
-                    if (!id.equals(manifest.id())) {
-                        try {
-                            moveInstanceFiles(newStatus.baseDirectory, id, manifest.id());
-                        } catch (IOException e) {
-                            LOG.warning("Ignoring instance " + manifest.id()
-                                    + " because instance id does not match folder name " + id
-                                    + ", and we cannot correct it.", e);
-                            return Stream.empty();
-                        }
-                    }
-
-                    return Stream.of(manifest);
-                }).forEachOrdered(it -> newStatus.instances.put(
-                        it.id(),
-                        new InstanceHolder(newStatus, it.id(), it)));
+                }
             } catch (IOException e) {
-                LOG.warning("Failed to load versions from " + versionsDir, e);
+                LOG.warning("Failed to load instance from " + instancesDir, e);
             }
         }
 
-        Map<GameInstanceID, InstanceHolder> loadedInstances = new TreeMap<>();
-        for (InstanceHolder holder : newStatus.instances.values()) {
+        Map<GameInstanceID, DefaultGameInstance> loadedInstances = new TreeMap<>();
+        for (DefaultGameInstance instance : newSnapshot.values()) {
             try {
-                GameInstanceManifest resolved = newStatus.resolve(holder.manifest, new HashSet<>()).launchManifest();
+                GameInstanceManifest resolved = instance.getResolvedManifest().launchManifest();
                 if (CompatibilityRule.appliesToCurrentEnvironment(resolved.compatibilityRules())) {
-                    loadedInstances.put(holder.id, holder);
+                    loadedInstances.put(instance.getId(), instance);
                 }
             } catch (NoSuchGameInstanceException e) {
-                LOG.warning("Ignoring version " + holder.id + " because it inherits from a nonexistent version.");
+                LOG.warning("Ignoring instance " + instance.getId() + " because it inherits from a nonexistent instance.");
             }
         }
 
-        newStatus.instances.clear();
-        newStatus.instances.putAll(loadedInstances);
-        gameVersions.clear();
-        this.status = newStatus;
+        newSnapshot.clear();
+        newSnapshot.putAll(loadedInstances);
+        publishSnapshot(newSnapshot);
+
+        loaded = true;
+        runOnFxThreadAndWait(() -> refreshCount.set(refreshCount.get() + 1));
+    }
+
+    /// Loads one instance directory without renaming on-disk JSON or jar files.
+    ///
+    /// When the conventional `versions/<id>/<id>.json` is missing but the directory contains exactly
+    /// one JSON file, that manifest path is recorded on the instance. The primary jar is derived as
+    /// the sibling path with the same base name.
+    ///
+    /// @param snapshot the unsealed snapshot that will own the instance
+    /// @param dir      the instance directory under `versions/`
+    /// @return the loaded instance, or `null` when the directory should be ignored
+    private @Nullable DefaultGameInstance loadInstanceDirectory(DefaultGameRepositorySnapshot snapshot, Path dir) {
+        GameInstanceID id;
+        try {
+            id = new GameInstanceID(FileUtils.getName(dir));
+        } catch (IllegalArgumentException e) {
+            LOG.warning("Ignoring instance directory with invalid id " + dir, e);
+            return null;
+        }
+
+        DefaultGameRepositoryLayout layout = snapshot.getLayout();
+        Path conventionalJson = layout.getInstanceJson(id);
+
+        Path json;
+        @Nullable Path manifestFileOverride = null;
+
+        if (Files.isRegularFile(conventionalJson)) {
+            json = conventionalJson;
+        } else {
+            List<Path> jsons = FileUtils.listFilesByExtension(dir, "json");
+            if (jsons.size() != 1) {
+                LOG.info("No available json file found, ignoring instance " + id);
+                return null;
+            }
+
+            json = jsons.get(0);
+            if (!json.equals(conventionalJson)) {
+                manifestFileOverride = json;
+            }
+
+            LOG.info("Using non-conventional instance manifest for " + id + ": " + json);
+        }
+
+        GameInstanceManifest manifest;
+        try {
+            manifest = readInstanceManifest(json);
+        } catch (Exception e) {
+            LOG.warning("Malformed instance json " + id + " (" + json + ")", e);
+            return null;
+        }
+
+        // Directory name is the repository identity; keep the on-disk files untouched.
+        if (!id.equals(manifest.id())) {
+            manifest = manifest.withId(id);
+        }
+
+        return createInstance(snapshot, id, manifest, manifestFileOverride);
     }
 
     private static GameInstanceManifest readInstanceManifest(Path json) throws IOException, JsonParseException {
@@ -234,9 +353,9 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     private static void moveInstanceFiles(Path baseDirectory, GameInstanceID from, GameInstanceID to) throws IOException {
-        Path versionsDir = baseDirectory.resolve("versions");
-        Path fromDir = versionsDir.resolve(from.id());
-        Path toDir = versionsDir.resolve(to.id());
+        Path instancesDir = baseDirectory.resolve("versions");
+        Path fromDir = instancesDir.resolve(from.id());
+        Path toDir = instancesDir.resolve(to.id());
         Files.move(fromDir, toDir);
 
         Path fromJson = toDir.resolve(from + ".json");
@@ -252,81 +371,41 @@ public class DefaultGameRepository implements GameRepository {
                 Files.move(fromJar, toJar);
             }
         } catch (IOException e) {
-            Lang.ignoringException(() -> Files.move(toJson, fromJson));
-            if (hasJarFile) {
-                Lang.ignoringException(() -> Files.move(toJar, fromJar));
+            try {
+                Files.move(toJson, fromJson);
+            } catch (Throwable e2) {
+                e.addSuppressed(e2);
             }
-            Lang.ignoringException(() -> Files.move(toDir, fromDir));
+
+            if (hasJarFile) {
+                try {
+                    Files.move(toJar, fromJar);
+                } catch (Throwable e2) {
+                    e.addSuppressed(e2);
+                }
+            }
+
+            try {
+                Files.move(toDir, fromDir);
+            } catch (Exception e2) {
+                e.addSuppressed(e2);
+            }
             throw e;
         }
     }
 
     @Override
-    public boolean hasInstance(GameInstanceID instanceId) {
-        return status.instances.containsKey(instanceId);
+    public DefaultGameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException {
+        return getSnapshot().getRegistered(id);
     }
 
-    @Override
-    public GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        InstanceHolder instanceHolder = status.instances.get(instanceId);
-        if (instanceHolder == null) {
-            throw new NoSuchGameInstanceException(instanceId);
-        }
-        return instanceHolder.manifest;
-    }
-
-    @Override
-    public GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        Status currentStatus = status;
-
-        InstanceHolder instanceHolder = currentStatus.instances.get(instanceId);
-        if (instanceHolder == null) {
-            throw new NoSuchGameInstanceException(instanceId);
-        }
-
-        GameInstanceManifest.Resolved resolvedManifest = instanceHolder.resolvedManifest;
-        if (resolvedManifest == null) {
-            resolvedManifest = currentStatus.resolve(instanceHolder.manifest, new HashSet<>());
-            instanceHolder.resolvedManifest = resolvedManifest;
-        }
-        return resolvedManifest;
-    }
-
-    @Override
-    public int getInstanceCount() {
-        return status.instances.size();
-    }
-
-    @Override
-    public Path getInstanceRoot(GameInstanceID instanceId) {
-        return getBaseDirectory().resolve("versions").resolve(instanceId.id());
-    }
-
-    @Override
-    public Collection<GameInstanceManifest> getInstanceManifests() {
-        return status.instances.values().stream().map(i -> i.manifest).toList();
-    }
-
-    @Override
-    public Path getLibrariesDirectory(GameInstanceManifest manifest) {
-        return getBaseDirectory().resolve("libraries");
-    }
-
-    @Override
-    public Path getLibraryFile(GameInstanceManifest manifest, Library lib) {
-        if ("local".equals(lib.hint())) {
-            if (lib.filename() != null) {
-                return getInstanceRoot(manifest.id()).resolve("libraries/" + lib.filename());
-            }
-
-            return getInstanceRoot(manifest.id()).resolve("libraries/" + lib.artifact().getFileName());
-        }
-
-        return getLibrariesDirectory(manifest).resolve(lib.getPath());
-    }
-
-    public Path getArtifactFile(GameInstanceManifest manifest, Artifact artifact) {
-        return artifact.getPath(getBaseDirectory().resolve("libraries"));
+    /// Returns the instance recorded in the current snapshot for the given id, including provisional
+    /// placeholders.
+    ///
+    /// @param id the instance id
+    /// @return the instance, or `null` when absent from the current snapshot
+    protected @Nullable DefaultGameInstance findSnapshotInstance(GameInstanceID id) {
+        return getSnapshot().get(id);
     }
 
     @Override
@@ -335,31 +414,26 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getInstanceJar(getResolvedInstanceManifest(instanceId).launchManifest());
-    }
-
-    @Override
     public Path getInstanceJar(GameInstanceManifest manifest) {
         GameInstanceManifest resolved = this.resolve(manifest).launchManifest();
         GameInstanceID id = Optional.ofNullable(resolved.jar()).orElse(resolved.id());
-        return getInstanceRoot(id).resolve(id + ".jar");
+        DefaultGameInstance instance = findSnapshotInstance(id);
+        if (instance != null) {
+            return instance.getOwnJarFile();
+        }
+        return getLayout().getInstanceJarFile(id);
     }
 
     @Override
     public boolean renameInstance(GameInstanceID from, GameInstanceID to) {
-        if (EventBus.EVENT_BUS.fireEvent(new RenameInstanceEvent(this, from, to)) == Event.Result.DENY) {
-            return false;
-        }
-
         try {
-            Status currentStatus = status;
-            InstanceHolder fromHolder = currentStatus.instances.get(from);
-            if (fromHolder == null) {
+            DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
+            DefaultGameInstance fromHolder = newSnapshot.get(from);
+            if (fromHolder == null || fromHolder.isProvisional()) {
                 throw new NoSuchGameInstanceException(from);
             }
 
-            moveInstanceFiles(currentStatus.baseDirectory, from, to);
+            moveInstanceFiles(newSnapshot.getLayout().getBaseDirectory(), from, to);
 
             GameInstanceManifest renamedManifest = fromHolder.manifest;
             if (from.equals(renamedManifest.jar())) {
@@ -368,53 +442,59 @@ public class DefaultGameRepository implements GameRepository {
             renamedManifest = renamedManifest.withId(to);
             JsonUtils.writeToJsonFile(getInstanceJson(to), renamedManifest);
 
-            Map<GameInstanceID, InstanceHolder> updatedInstances = new TreeMap<>(currentStatus.instances);
-            updatedInstances.remove(from);
-            updatedInstances.put(to, new InstanceHolder(currentStatus, to, renamedManifest));
+            newSnapshot.remove(from);
+            newSnapshot.put(fromHolder.withManifest(newSnapshot, renamedManifest));
 
-            for (InstanceHolder holder : currentStatus.instances.values()) {
-                GameInstanceManifest manifest = holder.manifest;
+            for (DefaultGameInstance instance : List.copyOf(newSnapshot.values())) {
+                GameInstanceManifest manifest = instance.manifest;
                 if (from.equals(manifest.inheritsFrom())) {
                     GameInstanceManifest updatedManifest = manifest.withInheritsFrom(to);
                     Path targetPath = getInstanceJson(updatedManifest.id());
                     Files.createDirectories(targetPath.getParent());
                     JsonUtils.writeToJsonFile(targetPath, updatedManifest);
-                    updatedInstances.put(updatedManifest.id(), new InstanceHolder(currentStatus, updatedManifest.id(), updatedManifest));
+                    newSnapshot.put(instance.withManifest(newSnapshot, updatedManifest));
                 }
             }
 
-            currentStatus.instances.clear();
-            currentStatus.instances.putAll(updatedInstances);
-            gameVersions.clear();
+            publishSnapshot(newSnapshot);
             return true;
         } catch (IOException | JsonParseException | NoSuchGameInstanceException | InvalidPathException e) {
-            LOG.warning("Unable to rename version " + from + " to " + to, e);
+            LOG.warning("Unable to rename instance " + from + " to " + to, e);
             return false;
         }
     }
 
+    /// Removes an instance from the published index and attempts to remove its backing directory.
+    ///
+    /// The repository is refreshed before this method returns, including when filesystem removal
+    /// fails after the instance has been removed from the published snapshot. After the instance
+    /// directory is staged under its `_removed` sibling, failure to trash or fully delete that
+    /// staging directory is logged but does not change the return value.
+    ///
+    /// @param id the instance id
+    /// @return `false` if removal is denied or the instance directory cannot be staged; `true` if
+    ///         the directory is absent or staging succeeds
     public boolean removeInstanceFromDisk(GameInstanceID id) {
-        if (EventBus.EVENT_BUS.fireEvent(new RemoveInstanceEvent(this, id)) == Event.Result.DENY) {
-            return false;
-        }
-
-        Status currentStatus = status;
-        currentStatus.instances.remove(id);
-
-        Path file = getInstanceRoot(id);
-        if (Files.notExists(file)) {
-            return true;
-        }
-
-        Path removedFile = file.toAbsolutePath().resolveSibling(FileUtils.getName(file) + "_removed");
-        try {
-            Files.move(file, removedFile, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            LOG.warning("Unable to remove version folder: " + file, e);
-            return false;
+        if (getSnapshot().get(id) != null) {
+            DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
+            newSnapshot.remove(id);
+            publishSnapshot(newSnapshot);
         }
 
         try {
+            Path file = getLayout().getInstanceRoot(id);
+            if (Files.notExists(file)) {
+                return true;
+            }
+
+            Path removedFile = file.toAbsolutePath().resolveSibling(FileUtils.getName(file) + "_removed");
+            try {
+                Files.move(file, removedFile, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                LOG.warning("Unable to remove instance directory: " + file, e);
+                return false;
+            }
+
             if (FileUtils.moveToTrash(removedFile)) {
                 return true;
             }
@@ -430,56 +510,68 @@ public class DefaultGameRepository implements GameRepository {
             try {
                 FileUtils.deleteDirectory(removedFile);
             } catch (IOException e) {
-                LOG.warning("Unable to remove version folder: " + file, e);
+                LOG.warning("Unable to remove instance directory: " + removedFile, e);
             }
             return true;
         } finally {
-            refreshAsync().start();
+            refresh();
         }
     }
 
     @Override
+    public Optional<String> getGameVersion(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        GameVersionNumber version = getInstance(instanceId).getVersion();
+        if (version == GameVersionNumber.unknown()) {
+            return Optional.empty();
+        }
+        return Optional.of(version.toString());
+    }
+
+    @Override
     public Optional<String> getGameVersion(GameInstanceManifest manifest) {
+        DefaultGameInstance instance = findSnapshotInstance(manifest.id());
+        if (instance != null && !instance.isProvisional() && manifest.equals(instance.getManifest())) {
+            GameVersionNumber version = instance.getVersion();
+            if (version == GameVersionNumber.unknown()) {
+                return Optional.empty();
+            }
+            return Optional.of(version.toString());
+        }
+
         try {
             GameInstanceManifest resolved = resolve(manifest).launchManifest();
             Path instanceJar = getInstanceJar(resolved);
-            return gameVersions.computeIfAbsent(instanceJar, jar -> {
-                Optional<String> gameVersion = GameVersion.minecraftVersion(jar);
-                if (gameVersion.isEmpty()) {
-                    LOG.warning("Cannot find out game version of " + manifest.id()
-                            + ", primary jar: " + jar
-                            + ", jar exists: " + Files.exists(jar));
-                }
-                return gameVersion;
-            });
+            Optional<String> gameVersion = GameVersion.minecraftVersion(instanceJar);
+            if (gameVersion.isEmpty()) {
+                LOG.warning("Cannot find out game version of " + manifest.id()
+                        + ", primary jar: " + instanceJar
+                        + ", jar exists: " + Files.exists(instanceJar));
+            }
+            return gameVersion;
         } catch (NoSuchGameInstanceException e) {
             return Optional.empty();
         }
     }
 
-    @Override
-    public Path getNativeDirectory(GameInstanceID instanceId, Platform platform) {
-        return getInstanceRoot(instanceId).resolve("natives-" + platform);
-    }
-
-    @Override
-    public Path getModsDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("mods");
-    }
-
-    @Override
-    public Path getResourcePackDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("resourcepacks");
-    }
-
+    /// Returns the stored instance manifest file for an instance.
+    ///
+    /// When the instance is loaded with a non-conventional path, that path is returned; otherwise
+    /// the layout default `versions/<id>/<id>.json` is used.
+    ///
+    /// @param instanceId the instance id
+    /// @return the manifest JSON path
     public Path getInstanceJson(GameInstanceID instanceId) {
-        return getInstanceRoot(instanceId).resolve(instanceId.id() + ".json");
+        DefaultGameInstance instance = findSnapshotInstance(instanceId);
+        if (instance != null) {
+            return instance.getManifestFile();
+        }
+        return getLayout().getInstanceJson(instanceId);
     }
 
     @Override
     public AssetIndex getAssetIndex(GameInstanceID instanceId, String assetId) throws IOException {
         try {
-            return Objects.requireNonNull(JsonUtils.fromJsonFile(getIndexFile(instanceId, assetId), AssetIndex.class));
+            return Objects.requireNonNull(JsonUtils.fromJsonFile(getLayout().getAssetIndexFile(assetId), AssetIndex.class));
         } catch (JsonParseException | NullPointerException e) {
             throw new IOException("Asset index file malformed", e);
         }
@@ -491,13 +583,8 @@ public class DefaultGameRepository implements GameRepository {
             return reconstructAssets(instanceId, assetId);
         } catch (IOException | JsonParseException e) {
             LOG.error("Unable to reconstruct asset directory", e);
-            return getAssetDirectory(instanceId, assetId);
+            return getLayout().getAssetDirectory();
         }
-    }
-
-    @Override
-    public Path getAssetDirectory(GameInstanceID instanceId, String assetId) {
-        return getBaseDirectory().resolve("assets");
     }
 
     @Override
@@ -505,7 +592,7 @@ public class DefaultGameRepository implements GameRepository {
         try {
             AssetObject assetObject = getAssetIndex(instanceId, assetId).getObjects().get(name);
             if (assetObject == null) return Optional.empty();
-            return Optional.of(getAssetObject(instanceId, assetId, assetObject));
+            return Optional.of(getLayout().getAssetObject(assetObject));
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
@@ -513,28 +600,13 @@ public class DefaultGameRepository implements GameRepository {
         }
     }
 
-    @Override
-    public Path getAssetObject(GameInstanceID instanceId, String assetId, AssetObject obj) {
-        return getAssetObject(instanceId, getAssetDirectory(instanceId, assetId), obj);
-    }
-
     public Path getAssetObject(GameInstanceID instanceId, Path assetDir, AssetObject obj) {
         return assetDir.resolve("objects").resolve(obj.getLocation());
     }
 
-    @Override
-    public Path getIndexFile(GameInstanceID instanceId, String assetId) {
-        return getAssetDirectory(instanceId, assetId).resolve("indexes").resolve(assetId + ".json");
-    }
-
-    @Override
-    public Path getLoggingObject(GameInstanceID instanceId, String assetId, LoggingInfo loggingInfo) {
-        return getAssetDirectory(instanceId, assetId).resolve("log_configs").resolve(loggingInfo.file().getId());
-    }
-
     protected Path reconstructAssets(GameInstanceID instanceId, String assetId) throws IOException, JsonParseException {
-        Path assetsDir = getAssetDirectory(instanceId, assetId);
-        Path indexFile = getIndexFile(instanceId, assetId);
+        Path assetsDir = getLayout().getAssetDirectory();
+        Path indexFile = getLayout().getAssetIndexFile(assetId);
         Path virtualRoot = assetsDir.resolve("virtual").resolve(assetId);
 
         if (!Files.isRegularFile(indexFile))
@@ -586,9 +658,14 @@ public class DefaultGameRepository implements GameRepository {
             Files.createDirectories(json.getParent());
             JsonUtils.writeToJsonFile(json, savedManifest);
 
-            Status currentStatus = status;
-            currentStatus.instances.put(savedManifest.id(), new InstanceHolder(currentStatus, savedManifest.id(), savedManifest));
-            gameVersions.clear();
+            DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
+            DefaultGameInstance existing = newSnapshot.get(savedManifest.id());
+            if (existing != null) {
+                newSnapshot.put(existing.withManifest(newSnapshot, savedManifest));
+            } else {
+                newSnapshot.put(createInstance(newSnapshot, savedManifest.id(), savedManifest));
+            }
+            publishSnapshot(newSnapshot);
             return savedManifest;
         });
     }
@@ -609,133 +686,43 @@ public class DefaultGameRepository implements GameRepository {
         return Files.exists(getModpackConfiguration(instanceId));
     }
 
-    public Path getSavesDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("saves");
-    }
-
-    public Path getBackupsDirectory(GameInstanceID instanceID) {
-        return getRunDirectory(instanceID).resolve("backups");
-    }
-
-    public Path getSchematicsDirectory(GameInstanceID instanceId) {
-        return getRunDirectory(instanceId).resolve("schematics");
-    }
-
-    public ModManager getModManager(GameInstanceID instanceId) {
-        return new ModManager(this, instanceId);
-    }
-
-    public ResourcePackManager getResourcePackManager(GameInstanceID instanceId) {
-        return new ResourcePackManager(this, instanceId);
-    }
-
     @Override
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        return status.resolve(manifest, new HashSet<>());
+        return getSnapshot().resolve(manifest);
     }
 
-    protected static class Status {
-        private final Path baseDirectory;
-        private final Map<GameInstanceID, InstanceHolder> instances = new TreeMap<>();
-
-        protected Status(Path baseDirectory) {
-            this.baseDirectory = baseDirectory;
-        }
-
-        private GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest,
-                                                      Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
-            GameInstanceManifest launchManifest;
-            GameInstanceManifest standaloneManifest = manifest.isRoot()
-                    ? manifest
-                    : addPatches(
-                    addPatches(new GameInstanceManifest(manifest.id()), List.of(manifest.toPatch())),
-                    manifest.patches());
-
-            if (manifest.inheritsFrom() == null) {
-                if (manifest.isRoot()) {
-                    // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
-                    launchManifest = manifest.patches() != null ? new GameInstanceManifest(manifest.id()).withPatches(manifest.patches()) : manifest;
-                } else {
-                    launchManifest = manifest;
-                }
-                launchManifest = launchManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar());
-            } else {
-                // To maximize the compatibility.
-                if (!resolvedSoFar.add(manifest.id())) {
-                    LOG.warning("Found circular dependency versions: " + resolvedSoFar);
-                    launchManifest = (manifest.jar() == null ? manifest.withJar(manifest.id()) : manifest)
-                            .withInheritsFrom(null);
-                } else {
-                    InstanceHolder parentInstance = instances.get(manifest.inheritsFrom());
-                    if (parentInstance == null) {
-                        throw new NoSuchGameInstanceException(manifest.inheritsFrom());
-                    }
-
-                    // It is supposed to auto-install a version in getVersion.
-                    GameInstanceManifest.Resolved parentResolved = resolve(parentInstance.manifest, resolvedSoFar);
-                    launchManifest = manifest.merge(parentResolved.launchManifest());
-                    standaloneManifest = addPatches(
-                            addPatches(parentResolved.standaloneManifest(), Collections.singleton(manifest.toPatch())),
-                            manifest.patches());
-                }
-            }
-
-            if (manifest.patches() != null && !manifest.patches().isEmpty()) {
-                // Assume patches themselves do not have patches recursively.
-                List<GameInstancePatch> sortedPatches = manifest.patches().stream()
-                        .sorted(Comparator.comparing(GameInstancePatch::getPriority))
-                        .toList();
-                for (GameInstancePatch patch : sortedPatches) {
-                    launchManifest = patch.merge(launchManifest);
-                }
-            }
-
-            launchManifest = launchManifest.withId(manifest.id()).withPatches(null);
-            standaloneManifest = standaloneManifest.withId(manifest.id());
-            if (launchManifest.jar() != null) {
-                standaloneManifest = standaloneManifest.withJar(launchManifest.jar());
-            }
-
-            return new GameInstanceManifest.Resolved(manifest, launchManifest, standaloneManifest);
-        }
-
-        private static GameInstanceManifest addPatches(GameInstanceManifest manifest, @Nullable Collection<GameInstancePatch> additional) {
-            if (additional == null || additional.isEmpty()) {
-                return manifest;
-            }
-
-            Set<String> patchIds = new HashSet<>();
-            for (GameInstancePatch patch : additional) {
-                if (patch.id() != null) {
-                    patchIds.add(patch.id());
-                }
-            }
-
-            List<GameInstancePatch> patches = new ArrayList<>();
-            if (manifest.patches() != null) {
-                for (GameInstancePatch patch : manifest.patches()) {
-                    if (patch.id() == null || !patchIds.contains(patch.id())) {
-                        patches.add(patch);
-                    }
-                }
-            }
-            patches.addAll(additional);
-            return manifest.withPatches(patches);
-        }
-
+    /// Creates an empty unsealed snapshot for the given layout.
+    ///
+    /// @param layout the layout for the new snapshot
+    /// @return a new unsealed snapshot
+    protected DefaultGameRepositorySnapshot createSnapshot(DefaultGameRepositoryLayout layout) {
+        return new DefaultGameRepositorySnapshot(this, layout);
     }
 
-    protected static class InstanceHolder {
-        protected final Status status;
-        protected final GameInstanceID id;
-        protected final GameInstanceManifest manifest;
-        protected @Nullable GameInstanceManifest.Resolved resolvedManifest;
-        protected @Nullable GameVersionNumber version;
-
-        protected InstanceHolder(Status status, GameInstanceID id, GameInstanceManifest manifest) {
-            this.status = status;
-            this.id = id;
-            this.manifest = manifest;
-        }
+    /// Creates a conventional instance with layout-default storage paths.
+    ///
+    /// @param snapshot the snapshot that will own the instance
+    /// @param id       the instance id
+    /// @param manifest the stored instance manifest
+    /// @return the new instance
+    protected final DefaultGameInstance createInstance(
+            DefaultGameRepositorySnapshot snapshot,
+            GameInstanceID id,
+            GameInstanceManifest manifest) {
+        return createInstance(snapshot, id, manifest, null);
     }
+
+    /// Creates an instance, optionally recording a non-conventional manifest path.
+    ///
+    /// @param snapshot     the snapshot that will own the instance
+    /// @param id           the instance id
+    /// @param manifest     the stored instance manifest
+    /// @param manifestFile the actual manifest JSON path, or `null` for the layout default
+    /// @return the new instance
+    protected abstract DefaultGameInstance createInstance(
+            DefaultGameRepositorySnapshot snapshot,
+            GameInstanceID id,
+            GameInstanceManifest manifest,
+            @Nullable Path manifestFile);
+
 }

@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
+import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -73,7 +74,8 @@ public class ForgeOldInstallTask extends Task<GameInstancePatch> {
 
             // unpack the universal jar in the installer file.
             Library forgeLibrary = new Library(installProfile.getInstall().getPath());
-            Path forgeFile = dependencyManager.getGameRepository().getLibraryFile(manifest, forgeLibrary);
+            GameRepository gameRepository = dependencyManager.getGameRepository();
+            Path forgeFile = gameRepository.getLayout().getLibraryFile(manifest.id(), forgeLibrary);
             Files.createDirectories(forgeFile.getParent());
 
             ZipEntry forgeEntry = zipFile.getEntry(installProfile.getInstall().getFilePath());

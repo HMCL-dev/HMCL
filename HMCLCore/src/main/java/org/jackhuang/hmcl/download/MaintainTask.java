@@ -160,7 +160,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
             optiFine.ifPresent(library -> {
                 builder.addJvmArgument("-Dhmcl.transformer.candidates=${library_directory}/" + library.getPath());
                 if (!libraryExisting) builder.addLibrary(hmclTransformerDiscoveryService);
-                Path libraryPath = repository.getLibraryFile(manifest, hmclTransformerDiscoveryService);
+                Path libraryPath = repository.getLayout().getLibraryFile(manifest.id(), hmclTransformerDiscoveryService);
                 try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLTransformerDiscoveryService-1.0.jar")) {
                     Files.createDirectories(libraryPath.getParent());
                     Files.copy(Objects.requireNonNull(input, "Bundled HMCLTransformerDiscoveryService is missing."), libraryPath, StandardCopyOption.REPLACE_EXISTING);
@@ -181,7 +181,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
         // we need to manually ignore ${primary_jar}.
         newIgnoreList.add("${primary_jar}");
 
-        Path libraryDirectory = repository.getLibrariesDirectory(manifest).toAbsolutePath().normalize();
+        Path libraryDirectory = repository.getLayout().getLibrariesDirectory().toAbsolutePath().normalize();
 
         // The default ignoreList is too loose and may cause some problems, we replace them with the absolute version.
         // For example, if "client-extra" is in ignoreList, and game directory contains "client-extra" component, all
@@ -260,7 +260,7 @@ public class MaintainTask extends Task<GameInstanceManifest> {
                         Library library = libraries.get(i);
                         if (library.is("optifine", "OptiFine")) {
                             Library newLibrary = new Library(new Artifact("optifine", "OptiFine", library.version(), "installer"));
-                            if (Files.exists(repository.getLibraryFile(manifest, newLibrary))) {
+                            if (Files.exists(repository.getLayout().getLibraryFile(manifest.id(), newLibrary))) {
                                 libraries.set(i, null);
                                 // OptiFine should be loaded after Forge in classpath.
                                 // Although we have altered priority of OptiFine higher than Forge,

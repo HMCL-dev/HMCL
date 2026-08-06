@@ -59,7 +59,9 @@ public final class GameAssetDownloadTask extends Task<Void> {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest.resolve(dependencyManager.getGameRepository());
         this.assetIndexInfo = this.manifest.getAssetIndex();
-        this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(manifest.id(), assetIndexInfo.getId());
+        GameRepository gameRepository = dependencyManager.getGameRepository();
+        String assetId = assetIndexInfo.getId();
+        this.assetIndexFile = gameRepository.getLayout().getAssetIndexFile(assetId);
         this.integrityCheck = integrityCheck;
 
         setStage("hmcl.install.assets");
@@ -90,7 +92,8 @@ public final class GameAssetDownloadTask extends Task<Void> {
             if (isCancelled())
                 throw new InterruptedException();
 
-            Path file = dependencyManager.getGameRepository().getAssetObject(manifest.id(), assetIndexInfo.getId(), assetObject);
+            GameRepository gameRepository = dependencyManager.getGameRepository();
+            Path file = gameRepository.getLayout().getAssetObject(assetObject);
             boolean download = !Files.isRegularFile(file);
             try {
                 if (!download && integrityCheck && !assetObject.validateChecksum(file, true))

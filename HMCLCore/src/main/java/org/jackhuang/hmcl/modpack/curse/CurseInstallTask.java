@@ -126,7 +126,6 @@ public final class CurseInstallTask extends Task<Void> {
                 dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
             }
         }
-        dependencies.add(new CurseCompletionTask(dependencyManager, instanceId, manifest));
     }
 
     @Override
@@ -173,7 +172,7 @@ public final class CurseInstallTask extends Task<Void> {
             // CurseForge manifest where fileName is missing. CurseCompletionTask
             // resolves those file names and writes the enriched manifest to
             // manifest.json, so read from there when available.
-            Path oldManifestFile = repository.getInstanceRoot(instanceId).resolve("manifest.json");
+            Path oldManifestFile = repository.getLayout().getInstanceRoot(instanceId).resolve("manifest.json");
             List<CurseManifestFile> oldFiles = config.getManifest().files();
             if (Files.exists(oldManifestFile)) {
                 try {
@@ -197,7 +196,7 @@ public final class CurseInstallTask extends Task<Void> {
             }
         }
 
-        Path root = repository.getInstanceRoot(instanceId);
+        Path root = repository.getLayout().getInstanceRoot(instanceId);
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), manifest);
 
@@ -208,5 +207,8 @@ public final class CurseInstallTask extends Task<Void> {
                 LOG.warning("Failed to copy modpack icon", e);
             }
         }
+
+        // The game builder runs as a dependent and registers the instance before this phase.
+        dependencies.add(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest));
     }
 }

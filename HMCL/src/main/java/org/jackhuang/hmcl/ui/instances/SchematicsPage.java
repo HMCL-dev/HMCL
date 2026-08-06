@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -34,8 +35,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -54,6 +54,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -63,7 +64,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements GameInstancePage.GameInstanceLoadable {
+public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
@@ -72,14 +73,25 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         return author;
     }
 
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private Path schematicsDirectory;
     private DirItem currentDirectory;
 
-    public SchematicsPage() {
+    /// Creates a schematics list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public SchematicsPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this,
                 file -> currentDirectory != null && Files.isRegularFile(file) && FileUtils.getName(file).endsWith(".litematic"),
                 this::addFiles
         );
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -87,9 +99,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         return new SchematicsPageSkin();
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        this.schematicsDirectory = repository.getSchematicsDirectory(instanceId);
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        HMCLGameInstance gameInstance = instance.instance();
+        this.schematicsDirectory = gameInstance != null ? gameInstance.getSchematicsDirectory() : null;
 
         refresh();
     }

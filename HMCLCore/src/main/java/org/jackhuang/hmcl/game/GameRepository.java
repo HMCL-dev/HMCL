@@ -32,10 +32,38 @@ import java.util.Set;
 
 /// Provides indexed access to local game instances and the filesystem layout used by those instances.
 ///
+/// The registered instance index is published as immutable [GameRepositorySnapshot] values. Readers
+/// that need a consistent view across multiple lookups should retain [#getSnapshot()] rather than
+/// interleaving queries with repository writes such as [#refresh()].
+///
 /// Implementations are responsible for loading instance manifests, resolving inheritance and patches,
 /// locating instance-owned files, and exposing helper paths used by launch, download, and maintenance code.
+///
+/// Path helpers that only forward to [GameRepositoryLayout] describe concepts shared by multiple
+/// repository layouts (official and MultiMC-family layouts alike). Layout-specific storage details
+/// remain on concrete layout types such as [DefaultGameRepositoryLayout].
 @NotNullByDefault
 public interface GameRepository {
+    /// Returns the filesystem layout used by this repository.
+    ///
+    /// @return the repository layout
+    GameRepositoryLayout getLayout();
+
+    /// Returns the repository base directory.
+    ///
+    /// @return the base directory from [#getLayout()]
+    default Path getBaseDirectory() {
+        return getLayout().getBaseDirectory();
+    }
+
+    /// Returns the current published snapshot of the registered instance index.
+    ///
+    /// The snapshot is immutable. Subsequent repository writes publish a replacement snapshot and
+    /// do not mutate the returned object.
+    ///
+    /// @return the current repository snapshot
+    GameRepositorySnapshot getSnapshot();
+
     /// Resolves inheritance into launch and standalone manifest views.
     ///
     /// @param manifest the manifest to resolve
@@ -46,30 +74,50 @@ public interface GameRepository {
     ///
     /// @param instanceId the instance id
     /// @return whether the instance exists
-    boolean hasInstance(GameInstanceID instanceId);
+    default boolean hasInstance(GameInstanceID instanceId) {
+        return getSnapshot().hasInstance(instanceId);
+    }
 
     /// Returns the stored manifest for an instance without resolving inheritance or patches.
     ///
     /// @param instanceId the instance id
     /// @return the stored instance manifest
     /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
-    GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+    default GameInstanceManifest getInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        return getSnapshot().getInstance(instanceId).getManifest();
+    }
 
     /// Returns a cached launch-ready manifest view for the instance.
     ///
     /// @param instanceId the instance id
     /// @return the resolved manifest view
-    GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+    default GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId)
+            throws NoSuchGameInstanceException {
+        return getSnapshot().getInstance(instanceId).getResolvedManifest();
+    }
 
     /// Returns the number of loaded instances.
     ///
     /// @return the loaded instance count
-    int getInstanceCount();
+    default int getInstanceCount() {
+        return getSnapshot().getInstanceCount();
+    }
 
     /// Returns the stored manifests for all loaded instances.
     ///
     /// @return the loaded instance manifests
-    Collection<GameInstanceManifest> getInstanceManifests();
+    default Collection<GameInstanceManifest> getInstanceManifests() {
+        return getSnapshot().getInstanceManifests();
+    }
+
+    /// Returns the indexed game instance for the given id.
+    ///
+    /// @param id the instance id
+    /// @return the game instance
+    /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
+    default GameInstance getInstance(GameInstanceID id) throws NoSuchGameInstanceException {
+        return getSnapshot().getInstance(id);
+    }
 
     /// Reloads repository state from the backing storage.
     void refresh();
@@ -81,11 +129,13 @@ public interface GameRepository {
         return Task.runAsync(this::refresh);
     }
 
-    /// Returns the directory that stores files belonging to an instance.
+    /// Returns the directory containing the files owned by an instance.
     ///
     /// @param instanceId the instance id
     /// @return the instance root directory
-    Path getInstanceRoot(GameInstanceID instanceId);
+    default Path getInstanceRoot(GameInstanceID instanceId) {
+        return getLayout().getInstanceRoot(instanceId);
+    }
 
     /// Returns the working directory used when launching an instance.
     ///
@@ -93,37 +143,30 @@ public interface GameRepository {
     /// @return the run directory
     Path getRunDirectory(GameInstanceID instanceId);
 
-    /// Returns the base directory used to store shared libraries for a manifest.
-    ///
-    /// @param manifest the manifest whose libraries are being resolved
-    /// @return the libraries directory
-    Path getLibrariesDirectory(GameInstanceManifest manifest);
-
-    /// Returns the expected filesystem path for a library.
-    ///
-    /// @param manifest the manifest that owns or references the library
-    /// @param lib      the library descriptor
-    /// @return the library file path
-    Path getLibraryFile(GameInstanceManifest manifest, Library lib);
-
     /// Returns the directory used for extracted native libraries of an instance and platform.
     ///
     /// @param instanceId the instance id
     /// @param platform   the target platform
     /// @return the native library directory
-    Path getNativeDirectory(GameInstanceID instanceId, Platform platform);
+    default Path getNativeDirectory(GameInstanceID instanceId, Platform platform) {
+        return getInstanceRoot(instanceId).resolve("natives-" + platform);
+    }
 
     /// Returns the mods directory for an instance.
     ///
     /// @param instanceId the instance id
-    /// @return the mods directory
-    Path getModsDirectory(GameInstanceID instanceId);
+    /// @return the mods directory below the run directory
+    default Path getModsDirectory(GameInstanceID instanceId) {
+        return getRunDirectory(instanceId).resolve("mods");
+    }
 
     /// Returns the resource pack directory for an instance.
     ///
     /// @param instanceId the instance id
-    /// @return the resource pack directory
-    Path getResourcePackDirectory(GameInstanceID instanceId);
+    /// @return the resource pack directory below the run directory
+    default Path getResourcePackDirectory(GameInstanceID instanceId) {
+        return getRunDirectory(instanceId).resolve("resourcepacks");
+    }
 
     /// Returns the primary client jar path for a manifest.
     ///
@@ -146,15 +189,6 @@ public interface GameRepository {
         return getGameVersion(getInstanceManifest(instanceId));
     }
 
-    /// Returns the primary client jar path for an instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the primary client jar path
-    /// @throws NoSuchGameInstanceException if the instance is not loaded in this repository
-    default Path getInstanceJar(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getInstanceJar(getResolvedInstanceManifest(instanceId).launchManifest());
-    }
-
     /// Renames an instance and updates repository-managed references.
     ///
     /// @param from the current instance id
@@ -169,13 +203,6 @@ public interface GameRepository {
     /// @return the actual asset directory
     Path getActualAssetDirectory(GameInstanceID instanceId, String assetId);
 
-    /// Returns the base asset storage directory for an instance.
-    ///
-    /// @param instanceId the instance id
-    /// @param assetId    the asset index id
-    /// @return the asset storage directory
-    Path getAssetDirectory(GameInstanceID instanceId, String assetId);
-
     /// Returns an existing asset object path by logical asset name.
     ///
     /// @param instanceId the instance id
@@ -185,14 +212,6 @@ public interface GameRepository {
     /// @throws IOException if the asset index cannot be read
     Optional<Path> getAssetObject(GameInstanceID instanceId, String assetId, String name) throws IOException;
 
-    /// Returns the expected path for an asset object descriptor.
-    ///
-    /// @param instanceId the instance id
-    /// @param assetId    the asset index id
-    /// @param obj        the asset object descriptor
-    /// @return the asset object path
-    Path getAssetObject(GameInstanceID instanceId, String assetId, AssetObject obj);
-
     /// Reads an asset index.
     ///
     /// @param instanceId the instance id
@@ -200,21 +219,6 @@ public interface GameRepository {
     /// @return the asset index
     /// @throws IOException if the asset index cannot be read
     AssetIndex getAssetIndex(GameInstanceID instanceId, String assetId) throws IOException;
-
-    /// Returns the path of an asset index file.
-    ///
-    /// @param instanceId the instance id
-    /// @param assetId    the asset index id
-    /// @return the asset index file path
-    Path getIndexFile(GameInstanceID instanceId, String assetId);
-
-    /// Returns the path of a logging configuration object.
-    ///
-    /// @param instanceId  the instance id
-    /// @param assetId     the asset index id used as the logging object namespace
-    /// @param loggingInfo the logging configuration descriptor
-    /// @return the logging object path
-    Path getLoggingObject(GameInstanceID instanceId, String assetId, LoggingInfo loggingInfo);
 
     /// Returns the classpath entries whose library files are present on disk.
     ///
@@ -225,7 +229,7 @@ public interface GameRepository {
         if (manifest.libraries() != null) {
             for (Library library : manifest.libraries())
                 if (library.appliesToCurrentEnvironment() && !library.isNative()) {
-                    Path f = getLibraryFile(manifest, library);
+                    Path f = getLayout().getLibraryFile(manifest.id(), library);
                     if (Files.isRegularFile(f))
                         classpath.add(FileUtils.getAbsolutePath(f));
                 }
@@ -233,5 +237,4 @@ public interface GameRepository {
 
         return classpath;
     }
-
 }

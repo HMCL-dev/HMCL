@@ -36,7 +36,9 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import java.util.Objects;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -65,9 +67,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackInfoPage extends Control implements WizardPage {
     private final WizardController controller;
-    private final HMCLGameRepository repository;
+    private final HMCLGameInstance gameInstance;
     private final ModpackExportInfo.Options options;
-    private final GameInstanceID instanceId;
     private final boolean canIncludeLauncher;
 
     private final ModpackExportInfo exportInfo = new ModpackExportInfo();
@@ -88,19 +89,18 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private final SimpleBooleanProperty noCreateRemoteFiles = new SimpleBooleanProperty();
     private final SimpleBooleanProperty skipCurseForgeRemoteFiles = new SimpleBooleanProperty();
 
-    public ModpackInfoPage(WizardController controller, HMCLGameRepository repository, GameInstanceID instanceId) {
+    public ModpackInfoPage(WizardController controller, HMCLGameInstance gameInstance) {
         this.controller = controller;
-        this.repository = repository;
+        this.gameInstance = gameInstance;
         this.options = controller.getSettings().get(MODPACK_INFO_OPTION);
-        this.instanceId = instanceId;
 
         if (this.options == null)
             throw new IllegalArgumentException("Settings.MODPACK_INFO_OPTION is required");
 
-        name.set(instanceId.toString());
+        name.set(gameInstance.getId().toString());
         author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getProfileName).orElse(""));
 
-        GameSettings.Effective versionSetting = repository.getEffectiveGameSettings(this.instanceId);
+        GameSettings.Effective versionSetting = gameInstance.getRepository().getEffectiveGameSettings(gameInstance.getId());
         minMemory.set(Optional.ofNullable(versionSetting.getInheritable(GameSettings::minMemoryProperty)).orElse(0));
         launchArguments.set(versionSetting.getInheritable(GameSettings::gameArgumentsProperty));
         javaArguments.set(versionSetting.getInheritable(GameSettings::jvmOptionsProperty));
@@ -213,7 +213,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     var instanceNamePane = new LineTextPane();
                     {
                         instanceNamePane.setTitle(i18n("modpack.wizard.step.initialization.exported_version"));
-                        instanceNamePane.setText(skinnable.instanceId.toString());
+                        instanceNamePane.setText(skinnable.gameInstance.getId().toString());
 
                         list.getContent().add(instanceNamePane);
                     }

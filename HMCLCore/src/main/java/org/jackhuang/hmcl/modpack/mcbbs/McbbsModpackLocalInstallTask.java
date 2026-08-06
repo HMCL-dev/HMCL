@@ -119,7 +119,10 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
             // TODO: maintain libraries.
         }
 
-        dependencies.add(new McbbsModpackCompletionTask(dependencyManager, instanceId, instanceTask.getResult()));
+        dependencies.add(new McbbsModpackCompletionTask(
+                dependencyManager,
+                repository.getInstance(instanceId),
+                instanceTask.getResult()));
     }
 
     private static final String PATCH_NAME = "mcbbs";

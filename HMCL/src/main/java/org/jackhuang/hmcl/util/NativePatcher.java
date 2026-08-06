@@ -73,7 +73,7 @@ public final class NativePatcher {
         );
     }
 
-    public static GameInstanceManifest patchNative(DefaultGameRepository repository,
+    public static GameInstanceManifest patchNative(DefaultGameInstance instance,
                                                    GameInstanceManifest manifest, String gameVersion,
                                                    JavaRuntime javaVersion,
                                                    GameSettings.Effective settings,
@@ -172,7 +172,7 @@ public final class NativePatcher {
         }
 
         if (lwjglVersionChanged) {
-            ModManager modManager = repository.getModManager(manifest.id());
+            ModManager modManager = instance.getModManager();
             try {
                 for (LocalModFile mod : modManager.getLocalFiles()) {
                     if ("sodium".equals(mod.getId())) {

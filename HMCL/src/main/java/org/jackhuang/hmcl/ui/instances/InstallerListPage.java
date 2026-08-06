@@ -18,12 +18,13 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -39,22 +40,33 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class InstallerListPage extends ListPageBase<InstallerItem> implements GameInstancePage.GameInstanceLoadable {
-    private HMCLGameRepository repository;
-    private GameInstanceID instanceId;
+public class InstallerListPage extends ListPageBase<InstallerItem> {
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+    private @Nullable HMCLGameInstance gameInstance;
     private GameInstanceManifest manifest;
     private String gameVersion;
 
-    {
+    /// Creates an installer list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public InstallerListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
             if (!mods.isEmpty())
                 doInstallOffline(mods.get(0));
         });
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -62,17 +74,23 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
         return new InstallerListPageSkin();
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        this.repository = repository;
-        this.instanceId = instanceId;
-        this.manifest = repository.getInstanceManifest(instanceId);
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        this.gameInstance = instance.instance();
+        if (gameInstance == null) {
+            itemsProperty().clear();
+            this.manifest = null;
+            this.gameVersion = null;
+            return;
+        }
+
+        HMCLGameRepository repository = gameInstance.getRepository();
+        this.manifest = gameInstance.getManifest();
         this.gameVersion = null;
 
         CompletableFuture.supplyAsync(() -> {
             gameVersion = repository.getGameVersion(manifest).orElse(null);
 
-            return LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId), gameVersion);
+            return LibraryAnalyzer.analyze(gameInstance.getResolvedManifest(), gameVersion);
         }).thenAcceptAsync(analyzer -> {
             itemsProperty().clear();
 
@@ -106,7 +124,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
                 item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(manifest, libraryId)
                         .thenComposeAsync(repository::saveAsync)
                         .withComposeAsync(repository.refreshAsync())
-                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.instanceId))
+                        .withRunAsync(Schedulers.javafx(), () -> reloadCurrentInstance())
                         .start());
 
                 itemsProperty().add(item);
@@ -128,12 +146,18 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
                 installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(manifest, libraryId)
                         .thenComposeAsync(repository::saveAsync)
                         .withComposeAsync(repository.refreshAsync())
-                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.instanceId))
+                        .withRunAsync(Schedulers.javafx(), () -> reloadCurrentInstance())
                         .start());
 
                 itemsProperty().add(installerItem);
             }
         }, Platform::runLater);
+    }
+
+    private void reloadCurrentInstance() {
+        if (gameInstance != null) {
+            loadInstance(HMCLGameInstance.Optional.of(gameInstance.getRepository(), gameInstance.getId()));
+        }
     }
 
     public void installOffline() {
@@ -144,6 +168,11 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
     }
 
     private void doInstallOffline(Path file) {
+        if (gameInstance == null || manifest == null) {
+            return;
+        }
+
+        HMCLGameRepository repository = gameInstance.getRepository();
         Task<?> task = repository.getDependency().installLibraryAsync(manifest, file)
                 .thenComposeAsync(repository::saveAsync)
                 .thenComposeAsync(repository.refreshAsync());
@@ -153,7 +182,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
             public void onStop(boolean success, TaskExecutor executor) {
                 runInFX(() -> {
                     if (success) {
-                        loadInstance(repository, instanceId);
+                        reloadCurrentInstance();
                         Controllers.dialog(i18n("install.success"));
                     } else {
                         if (executor.getException() == null)
