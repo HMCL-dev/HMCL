@@ -558,8 +558,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ModInfoListCell(JFXListView<ModInfoObject> listView) {
             super(listView);
 
-            this.getStyleClass().add("mod-info-list-cell");
-
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);

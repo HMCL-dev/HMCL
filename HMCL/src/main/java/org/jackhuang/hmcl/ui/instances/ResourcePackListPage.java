@@ -511,8 +511,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             super(listView);
             this.page = page;
 
-            getStyleClass().add("resource-pack-list-cell");
-
             HBox root = new HBox(8);
             root.setPickOnBounds(false);
             root.setAlignment(Pos.CENTER_LEFT);

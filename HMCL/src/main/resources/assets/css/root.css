@@ -1105,11 +1105,7 @@
     -fx-background-color: -monet-secondary-container;
 }
 
-.mod-info-list-cell:warning {
-    -fx-background-color: -monet-error-container;
-}
-
-.resource-pack-list-cell:warning {
+.md-list-cell:warning {
     -fx-background-color: -monet-error-container;
 }
 
