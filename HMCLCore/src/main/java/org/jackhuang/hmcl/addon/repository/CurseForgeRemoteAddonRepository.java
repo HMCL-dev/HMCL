@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -53,6 +54,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class CurseForgeRemoteAddonRepository implements RemoteAddonRepository {
 
     private static final String PREFIX = "https://api.curseforge.com";
+    private static final String BASE = "https://www.curseforge.com";
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     public static final String API_KEY = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
@@ -70,17 +72,34 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         return !API_KEY.isEmpty();
     }
 
-    private final Type type;
+    private final @Nullable RemoteAddon.Type type;
     private final int section;
 
-    public CurseForgeRemoteAddonRepository(Type type, int section) {
-        this.type = type;
+    public CurseForgeRemoteAddonRepository() {
+        this.type = null;
+        this.section = -1;
+    }
+
+    public CurseForgeRemoteAddonRepository(int section) {
+        this.type = toAddonType(section);
+        if (type == null) throw new IllegalArgumentException("Unsupported CurseForge section id: " + section);
         this.section = section;
     }
 
     @Override
-    public Type getType() {
+    public RemoteAddon.Type getType() {
+        if (type == null) throw new UnsupportedOperationException();
         return type;
+    }
+
+    @Override
+    public String getApiBaseUrl() {
+        return PREFIX;
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return BASE;
     }
 
     private static int toModsSearchSortField(SortType sort) {
@@ -110,6 +129,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
+        if (type == null) throw new UnsupportedOperationException();
         SEMAPHORE.acquireUninterruptibly();
         try {
             int categoryId = 0;
@@ -139,7 +159,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     response = withApiKey(HttpRequest.GET(candidate.toString()))
                             .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
                     if (searchFilter.isEmpty()) {
-                        return new SearchResult(response.data().stream().map(addon -> addon.toAddon(type)), calculateTotalPages(response, pageSize));
+                        return new SearchResult(response.data().stream().map(CurseAddon::toAddon), calculateTotalPages(response, pageSize));
                     }
                     break;
                 } catch (IOException e) {
@@ -168,7 +188,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
             StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
-            return new SearchResult(response.data().stream().map(addon -> addon.toAddon(type)).map(remoteAddon -> {
+            return new SearchResult(response.data().stream().map(CurseAddon::toAddon).map(remoteAddon -> {
                 String lowerCaseResult = remoteAddon.title().toLowerCase(Locale.ROOT);
                 int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
@@ -179,7 +199,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 }
 
                 return pair(remoteAddon, diff);
-            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.data().stream().map(addon -> addon.toAddon(type)), calculateTotalPages(response, pageSize));
+            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.data().stream().map(CurseAddon::toAddon), calculateTotalPages(response, pageSize));
         } finally {
             SEMAPHORE.release();
         }
@@ -228,7 +248,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
                     .getJson(Response.typeOf(CurseAddon.class));
-            return response.data.toAddon(type);
+            return response.data.toAddon();
         } finally {
             SEMAPHORE.release();
         }
@@ -260,7 +280,46 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     }
 
     @Override
+    public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<String> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s/changelog", PREFIX, addonId, versionId)))
+                    .getJson(Response.typeOf(String.class));
+            return response.data();
+        } finally {
+            SEMAPHORE.release();
+        }
+    }
+
+    @Override
+    public @NotNull String getVersionPageUrl(RemoteAddon.Version version) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + version.projectId()))
+                    .getJson(Response.typeOf(CurseAddon.class));
+            var addon = response.data();
+            var classId = addon.classId();
+            var clazz = switch (classId) {
+                case SECTION_MOD -> "mc-mods";
+                case SECTION_RESOURCE_PACK -> "texture-packs";
+                case SECTION_WORLD -> "worlds";
+                case SECTION_MODPACK -> "modpacks";
+                case SECTION_DATAPACK -> "data-packs";
+                case SECTION_BUKKIT_PLUGIN -> "bukkit-plugins";
+                case SECTION_ADDONS -> "mc-addons";
+                case SECTION_CUSTOMIZATION -> "customization";
+                case SECTION_SHADER -> "shaders";
+                default -> throw new IllegalArgumentException("Unsupported CurseForge class id [%d]".formatted(classId));
+            };
+            return "%s/minecraft/%s/%s/files/%s".formatted(BASE, clazz, addon.slug(), version.versionId());
+        } finally {
+            SEMAPHORE.release();
+        }
+    }
+
+    @Override
     public Stream<RemoteAddonRepository.Category> getCategories() throws IOException {
+        if (type == null) throw new UnsupportedOperationException();
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<List<Category>> categories = withApiKey(HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432")))
@@ -296,6 +355,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     public static final int SECTION_BUKKIT_PLUGIN = 5;
     public static final int SECTION_MOD = 6;
     public static final int SECTION_RESOURCE_PACK = 12;
+    public static final int SECTION_DATAPACK = 6945;
     public static final int SECTION_WORLD = 17;
     public static final int SECTION_MODPACK = 4471;
     public static final int SECTION_SHADER = 6552;
@@ -305,12 +365,26 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     public static final int SECTION_UNKNOWN2 = 4979;
     public static final int SECTION_UNKNOWN3 = 4984;
 
-    public static final CurseForgeRemoteAddonRepository MODS = new CurseForgeRemoteAddonRepository(RemoteAddonRepository.Type.MOD, SECTION_MOD);
-    public static final CurseForgeRemoteAddonRepository MODPACKS = new CurseForgeRemoteAddonRepository(RemoteAddonRepository.Type.MODPACK, SECTION_MODPACK);
-    public static final CurseForgeRemoteAddonRepository RESOURCE_PACKS = new CurseForgeRemoteAddonRepository(RemoteAddonRepository.Type.RESOURCE_PACK, SECTION_RESOURCE_PACK);
-    public static final CurseForgeRemoteAddonRepository WORLDS = new CurseForgeRemoteAddonRepository(RemoteAddonRepository.Type.WORLD, SECTION_WORLD);
-    public static final CurseForgeRemoteAddonRepository CUSTOMIZATIONS = new CurseForgeRemoteAddonRepository(RemoteAddonRepository.Type.CUSTOMIZATION, SECTION_CUSTOMIZATION);
-    public static final CurseForgeRemoteAddonRepository SHADERS = new CurseForgeRemoteAddonRepository(RemoteAddonRepository.Type.SHADER_PACK, SECTION_SHADER);
+    public static final CurseForgeRemoteAddonRepository COMMON = new CurseForgeRemoteAddonRepository();
+    public static final CurseForgeRemoteAddonRepository MODS = new CurseForgeRemoteAddonRepository(SECTION_MOD);
+    public static final CurseForgeRemoteAddonRepository MODPACKS = new CurseForgeRemoteAddonRepository(SECTION_MODPACK);
+    public static final CurseForgeRemoteAddonRepository RESOURCE_PACKS = new CurseForgeRemoteAddonRepository(SECTION_RESOURCE_PACK);
+    public static final CurseForgeRemoteAddonRepository WORLDS = new CurseForgeRemoteAddonRepository(SECTION_WORLD);
+    public static final CurseForgeRemoteAddonRepository CUSTOMIZATIONS = new CurseForgeRemoteAddonRepository(SECTION_CUSTOMIZATION);
+    public static final CurseForgeRemoteAddonRepository SHADERS = new CurseForgeRemoteAddonRepository(SECTION_SHADER);
+
+    @Nullable
+    private static RemoteAddon.Type toAddonType(int classId) {
+        return switch (classId) {
+            case SECTION_MODPACK -> RemoteAddon.Type.MODPACK;
+            case SECTION_RESOURCE_PACK -> RemoteAddon.Type.RESOURCE_PACK;
+            case SECTION_WORLD -> RemoteAddon.Type.WORLD;
+            case SECTION_CUSTOMIZATION -> RemoteAddon.Type.CUSTOMIZATION;
+            case SECTION_SHADER -> RemoteAddon.Type.SHADER_PACK;
+            case SECTION_MOD -> RemoteAddon.Type.MOD;
+            default -> null;
+        };
+    }
 
     public record Pagination(int index, int pageSize, int resultCount, int totalCount) {
     }
@@ -380,7 +454,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             return repo.getRemoteVersionsById(downloadProvider, Integer.toString(id));
         }
 
-        public RemoteAddon toAddon(Type type) {
+        public RemoteAddon toAddon() {
             String iconUrl = "";
             if (logo != null) {
                 if (StringUtils.isNotBlank(logo.thumbnailUrl()))
@@ -398,7 +472,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     links.websiteUrl,
                     iconUrl,
                     this,
-                    type
+                    toAddonType(classId)
             );
         }
 
@@ -469,10 +543,10 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
                 return new RemoteAddon.Version(
                         this,
-                        Integer.toString(modId),
+                        Integer.toString(id()),
+                        Integer.toString(modId()),
                         displayName(),
                         fileName(),
-                        null,
                         fileDate(),
                         versionType,
                         new RemoteAddon.File(Collections.emptyMap(), downloadUrl(), fileName()),
@@ -480,7 +554,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                             if (!RELATION_TYPE.containsKey(dependency.relationType())) {
                                 throw new IllegalStateException("Broken datas.");
                             }
-                            return RemoteAddon.Dependency.ofGeneral(RELATION_TYPE.get(dependency.relationType()), MODS, Integer.toString(dependency.modId()));
+                            return RemoteAddon.Dependency.ofGeneral(RELATION_TYPE.get(dependency.relationType()), RemoteAddon.Source.CURSEFORGE, Integer.toString(dependency.modId()));
                         }).distinct().filter(Objects::nonNull).collect(Collectors.toList()),
                         gameVersions.stream().filter(GameVersionNumber::isKnown).toList(),
                         gameVersions.stream().flatMap(version -> {
