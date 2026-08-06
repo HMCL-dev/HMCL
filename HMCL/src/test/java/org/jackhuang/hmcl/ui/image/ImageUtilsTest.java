@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Verifies image-format detection from bounded input prefixes.
@@ -100,6 +101,12 @@ public final class ImageUtilsTest {
         assertTrue(ImageUtils.isSVG(asciiBytes(
                 "<!--" + "x".repeat(ImageUtils.HEADER_BUFFER_SIZE - 13) + "--><svg/>"
         )));
+        assertTrue(ImageUtils.isSVG(asciiBytes(
+                "<svg:svg xmlns:svg='http://www.w3.org/2000/svg'/>"
+        )));
+        assertTrue(ImageUtils.isSVG(asciiBytes(
+                "<image:svg xmlns:image='http://www.w3.org/2000/svg'/>"
+        )));
     }
 
     /// Verifies SVG detection rejects incomplete, embedded, and non-SVG roots.
@@ -108,6 +115,8 @@ public final class ImageUtilsTest {
         assertFalse(ImageUtils.isSVG(new byte[0]));
         assertFalse(ImageUtils.isSVG(asciiBytes("<svg")));
         assertFalse(ImageUtils.isSVG(asciiBytes("<svg-image/>")));
+        assertFalse(ImageUtils.isSVG(asciiBytes("<svg:circle/>")));
+        assertFalse(ImageUtils.isSVG(asciiBytes("<image:svg-icon/>")));
         assertFalse(ImageUtils.isSVG(asciiBytes("<SVG/>")));
         assertFalse(ImageUtils.isSVG(asciiBytes("plain text <svg/>")));
         assertFalse(ImageUtils.isSVG(asciiBytes("<!-- <svg/> -->")));
@@ -119,6 +128,14 @@ public final class ImageUtilsTest {
         )));
         assertFalse(ImageUtils.isSVG(asciiBytes(
                 "<!--" + "x".repeat(ImageUtils.HEADER_BUFFER_SIZE) + "--><svg/>"
+        )));
+    }
+
+    /// Verifies sniffing routes a prefixed SVG document to the SVG loader.
+    @Test
+    public void testGuessLoaderDetectsPrefixedSVG() {
+        assertSame(ImageUtils.SVG, ImageUtils.guessLoader(asciiBytes(
+                "<svg:svg xmlns:svg='http://www.w3.org/2000/svg'/>"
         )));
     }
 }

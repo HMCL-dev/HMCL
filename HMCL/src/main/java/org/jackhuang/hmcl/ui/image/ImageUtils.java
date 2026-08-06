@@ -213,8 +213,8 @@ public final class ImageUtils {
                 && Arrays.equals(headerBuffer, 8, 12, WEBP_HEADER, 0, 4);
     }
 
-    /// ASCII prefix of an SVG document element.
-    private static final String SVG_ELEMENT_START = "<svg";
+    /// ASCII local name of an SVG document element.
+    private static final String SVG_ELEMENT_NAME = "svg";
 
     /// ASCII prefix of an XML comment.
     private static final String XML_COMMENT_START = "<!--";
@@ -304,24 +304,66 @@ public final class ImageUtils {
         return start;
     }
 
-    /// Returns whether an SVG document-element name begins at an array offset.
+    /// Returns whether an SVG document-element qualified name begins at an array offset.
     ///
     /// @param data  source bytes
-    /// @param start offset of a possible `<svg` sequence
-    /// @return whether the sequence is followed by a valid element-name boundary
+    /// @param start offset of a possible element opening delimiter
+    /// @return whether the unprefixed or prefixed element has the local name `svg`
     private static boolean isSvgElementStart(byte[] data, int start) {
-        if (!matchesAscii(data, start, SVG_ELEMENT_START))
-            return false;
-
         int limit = svgScanLimit(data);
-        int end = start + SVG_ELEMENT_START.length();
-        if (end >= limit)
+        if (start < 0 || start >= limit || data[start] != '<')
             return false;
 
-        byte next = data[end];
-        return next == '>'
-                || isXmlWhitespace(next)
-                || next == '/' && end + 1 < limit && data[end + 1] == '>';
+        int nameStart = start + 1;
+        int localNameStart = nameStart;
+        boolean hasPrefix = false;
+
+        for (int index = nameStart; index < limit; index++) {
+            byte value = data[index];
+            if (value == '>' || isXmlWhitespace(value)
+                    || value == '/' && index + 1 < limit && data[index + 1] == '>') {
+                return index - localNameStart == SVG_ELEMENT_NAME.length()
+                        && matchesAscii(data, localNameStart, SVG_ELEMENT_NAME);
+            }
+
+            if (value == ':') {
+                if (hasPrefix || index == nameStart)
+                    return false;
+                hasPrefix = true;
+                localNameStart = index + 1;
+                continue;
+            }
+
+            boolean nameStartCharacter = index == nameStart || index == localNameStart;
+            if (nameStartCharacter
+                    ? !isAsciiXmlNameStart(value)
+                    : !isAsciiXmlNamePart(value)) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /// Returns whether a byte can begin an ASCII XML name component.
+    ///
+    /// @param value byte to inspect
+    /// @return whether the byte is an ASCII letter or underscore
+    private static boolean isAsciiXmlNameStart(byte value) {
+        return value >= 'A' && value <= 'Z'
+                || value >= 'a' && value <= 'z'
+                || value == '_';
+    }
+
+    /// Returns whether a byte can continue an ASCII XML name component.
+    ///
+    /// @param value byte to inspect
+    /// @return whether the byte is accepted after the first name character
+    private static boolean isAsciiXmlNamePart(byte value) {
+        return isAsciiXmlNameStart(value)
+                || value >= '0' && value <= '9'
+                || value == '-'
+                || value == '.';
     }
 
     /// Returns whether an XML document type declaration begins at an offset.
