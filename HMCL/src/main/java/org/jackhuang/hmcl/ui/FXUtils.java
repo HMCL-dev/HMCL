@@ -1121,6 +1121,7 @@ public final class FXUtils {
                 }
             }
         }
+
         return new AllListener(childSelectedCount).subscriptions;
     }
 
