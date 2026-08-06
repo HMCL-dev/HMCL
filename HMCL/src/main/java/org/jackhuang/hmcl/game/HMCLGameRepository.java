@@ -67,6 +67,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -109,6 +110,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private final Set<GameInstanceID> loadedInstanceGameSettings = new HashSet<>();
     private final Set<GameInstanceID> readOnlyInstanceGameSettings = new HashSet<>();
     private final Set<GameInstanceID> beingModpackInstances = new HashSet<>();
+    /// Instance IDs whose instance game settings must not be written back to disk
+    private final Set<GameInstanceID> beingRemovedInstances = ConcurrentHashMap.newKeySet();
 
     public final EventManager<Event> onInstanceIconChanged = new EventManager<>();
 
@@ -243,17 +246,43 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         clean(getRunDirectory(instanceId));
     }
 
+    /// Marks the instance as being removed so that instance game settings changes
+    /// are not written back to disk
+    public void markInstanceBeingRemoved(GameInstanceID instanceId) {
+        beingRemovedInstances.add(instanceId);
+    }
+
+    /// Unmarks the instance so that instance game settings can be saved again,
+    /// e.g. when the removal failed.
+    public void unmarkInstanceBeingRemoved(GameInstanceID instanceId) {
+        beingRemovedInstances.remove(instanceId);
+    }
+
     /// Removes an instance from disk and clears its cached HMCL settings state.
     @Override
     public boolean removeInstanceFromDisk(GameInstanceID instanceId) {
-        boolean removed = super.removeInstanceFromDisk(instanceId);
-        if (removed) {
-            instanceGameSettings.remove(instanceId);
-            loadedInstanceGameSettings.remove(instanceId);
-            readOnlyInstanceGameSettings.remove(instanceId);
-            beingModpackInstances.remove(instanceId);
+        beingRemovedInstances.add(instanceId);
+        try {
+            // Flush settings saves that were enqueued before the removal started, so that they
+            // cannot recreate the instance directory after it has been moved
+            try {
+                FileSaver.waitForAllSaves();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOG.warning("Interrupted while waiting for pending file saves", e);
+            }
+
+            boolean removed = super.removeInstanceFromDisk(instanceId);
+            if (removed) {
+                instanceGameSettings.remove(instanceId);
+                loadedInstanceGameSettings.remove(instanceId);
+                readOnlyInstanceGameSettings.remove(instanceId);
+                beingModpackInstances.remove(instanceId);
+            }
+            return removed;
+        } finally {
+            beingRemovedInstances.remove(instanceId);
         }
-        return removed;
     }
 
     public void duplicateInstance(GameInstanceID srcId, GameInstanceID dstId, boolean copySaves) throws IOException {
@@ -680,7 +709,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public void saveGameSettings(GameInstanceID instanceId) {
-        if (!instanceGameSettings.containsKey(instanceId) || readOnlyInstanceGameSettings.contains(instanceId))
+        if (beingRemovedInstances.contains(instanceId)
+                || !instanceGameSettings.containsKey(instanceId)
+                || readOnlyInstanceGameSettings.contains(instanceId))
             return;
         GameSettings.Instance setting = instanceGameSettings.get(instanceId);
         if (setting == null) {
@@ -705,7 +736,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// @param instanceId the instance ID
     /// @throws IOException if saving the file fails
     private void saveGameSettingsSync(GameInstanceID instanceId) throws IOException {
-        if (!instanceGameSettings.containsKey(instanceId) || readOnlyInstanceGameSettings.contains(instanceId)) {
+        if (beingRemovedInstances.contains(instanceId)
+                || !instanceGameSettings.containsKey(instanceId)
+                || readOnlyInstanceGameSettings.contains(instanceId)) {
             return;
         }
 
