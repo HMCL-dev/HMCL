@@ -526,7 +526,7 @@ public final class HTMLRenderer {
                 } else break;
                 if (i == size - 1) lastAutoLineBreak = i;
             }
-            if (lastAutoLineBreak > 0)
+            if (lastAutoLineBreak >= 0)
                 this.children.subList(0, lastAutoLineBreak + 1).clear();
         }
         {
