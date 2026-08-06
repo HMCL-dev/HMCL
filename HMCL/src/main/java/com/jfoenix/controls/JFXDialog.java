@@ -174,7 +174,7 @@ public class JFXDialog extends StackPane {
         this.getChildren().add(contentHolder);
         StackPane.setAlignment(contentHolder, Pos.CENTER);
 
-        this.setPickOnBounds(false);
+        FXUtils.onChangeAndOperate(overlayPane, t -> setPickOnBounds(t == this || t == null));
 
         getOverlayPane().setVisible(false);
         getOverlayPane().getStyleClass().add("jfx-dialog-overlay-pane");
