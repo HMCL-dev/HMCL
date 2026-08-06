@@ -539,7 +539,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 return new RemoteAddon.Version(
                         RemoteAddon.Source.CURSEFORGE,
                         Integer.toString(id()),
-                        Integer.toString(modId),
+                        Integer.toString(modId()),
                         displayName(),
                         fileName(),
                         fileDate(),

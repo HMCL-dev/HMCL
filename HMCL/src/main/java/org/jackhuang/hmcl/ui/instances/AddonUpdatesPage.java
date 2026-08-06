@@ -329,13 +329,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
         private void loadChangelog(AddonUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
-            RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
+            RemoteAddonRepository repo = object.data.targetVersion().source().getCommonRepo();
             Task.supplyAsync(() -> {
-                if (object.changelog != null) {
-                    return object.changelog;
-                }
+                if (object.changelog != null) return object.changelog;
                 RemoteAddon.Version version = object.data.targetVersion();
-                if (repo == null) return null;
                 return StringUtils.convertToHtml(
                         repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.projectId(), version.versionId()),
                         "238222".equals(object.data.targetVersion().projectId())
@@ -343,7 +340,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
-                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo == null ? "" : repo.getBaseUrl()));
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo.getBaseUrl()));
                     FXUtils.smoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
@@ -354,10 +351,9 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         }
 
         private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
-            Task.supplyAsync(() -> {
-                RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
-                return repo == null ? null : repo.getVersionPageUrl(object.data.targetVersion());
-            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            Task.supplyAsync(() ->
+                    object.data.targetVersion().source().getCommonRepo().getVersionPageUrl(object.data.targetVersion())
+            ).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null && StringUtils.isNotBlank(result)) {
                     button.setOnAction(__ -> Controllers.openUriInBrowser(result));
                     button.setDisable(false);
