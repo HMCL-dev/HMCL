@@ -22,6 +22,7 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -67,9 +68,12 @@ public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
         FXUtils.onClicked(getSkinnable(), () -> GameDirectoryManager.setSelectedGameDirectory(skinnable.getGameDirectory()));
 
         TwoLineListItem item = new TwoLineListItem();
+        item.setMouseTransparent(false);
         item.setPickOnBounds(false);
         BorderPane.setAlignment(item, Pos.CENTER);
         root.setCenter(item);
+
+        container.installRippleTrigger(item);
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
@@ -81,7 +85,9 @@ public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
         root.setRight(right);
 
         item.titleProperty().set(GameDirectoryManager.getGameDirectoryDisplayName(skinnable.getGameDirectory()));
-        item.subtitleProperty().set(skinnable.getGameDirectory().getPath().toString());
+        String gameDirectoryPath = skinnable.getGameDirectory().getPath().toString();
+        item.subtitleProperty().set(gameDirectoryPath);
+        FXUtils.installSlowTooltip(item.getSubtitleLabel(), new Tooltip(gameDirectoryPath));
 
         getChildren().setAll(container);
     }

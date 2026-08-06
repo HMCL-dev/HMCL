@@ -23,7 +23,9 @@ import javafx.css.*;
 import javafx.css.converter.PaintConverter;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -47,8 +49,14 @@ public class RipplerContainer extends StackPane {
     private final Node container;
 
     private final StackPane buttonContainer = new StackPane();
-    private final JFXRippler buttonRippler = new JFXRippler(new StackPane()) {
+    private final ButtonRippler buttonRippler = new ButtonRippler();
+
+    private final class ButtonRippler extends JFXRippler {
         private static final Background DEFAULT_MASK_BACKGROUND = new Background(new BackgroundFill(Color.WHITE, DEFAULT_RADII, Insets.EMPTY));
+
+        private ButtonRippler() {
+            super(new StackPane());
+        }
 
         @Override
         protected Node getMask() {
@@ -61,7 +69,18 @@ public class RipplerContainer extends StackPane {
             );
             return mask;
         }
-    };
+
+        private void createRippleAtScene(double sceneX, double sceneY) {
+            Point2D localPoint = getControl().sceneToLocal(sceneX, sceneY);
+            if (localPoint != null) {
+                super.createRipple(localPoint.getX(), localPoint.getY());
+            }
+        }
+
+        private void releaseCurrentRipple() {
+            super.releaseRipple();
+        }
+    }
 
     private Transition coverAnimation;
 
@@ -165,6 +184,23 @@ public class RipplerContainer extends StackPane {
 
     public JFXRippler getRippler() {
         return buttonRippler;
+    }
+
+    /// Installs ripple event handlers on an interactive descendant of [#getContainer()].
+    ///
+    /// This preserves the ripple effect when the node participates in mouse picking and therefore
+    /// prevents events from reaching the rippler control behind the container.
+    public void installRippleTrigger(Node node) {
+        node.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
+            if (event.getButton() == MouseButton.PRIMARY) {
+                buttonRippler.createRippleAtScene(event.getSceneX(), event.getSceneY());
+            }
+        });
+        node.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+            if (event.getButton() == MouseButton.PRIMARY) {
+                buttonRippler.releaseCurrentRipple();
+            }
+        });
     }
 
     public Node getContainer() {
