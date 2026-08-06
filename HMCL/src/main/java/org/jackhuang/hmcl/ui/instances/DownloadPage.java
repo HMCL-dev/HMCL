@@ -401,21 +401,15 @@ public class DownloadPage extends Control implements DecoratorPage {
             });
             setNode(IDX_LEADING, pane);
 
-            if (addon != RemoteAddon.BROKEN) {
-                ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(addon.slug());
-                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
-                content.setSubtitle(addon.description());
-                for (String category : addon.categories()) {
-                    if (page.shouldDisplayCategory(category))
-                        content.addTag(page.getLocalizedCategory(category, null));
-                }
-                if (StringUtils.isNotBlank(addon.iconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.iconUrl(), 80, 80, true, true));
-                }
-            } else {
-                content.setTitle(i18n("addon.broken_dependency.title"));
-                content.setSubtitle(i18n("addon.broken_dependency.desc"));
-                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@4x.png"));
+            ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(addon.slug());
+            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
+            content.setSubtitle(addon.description());
+            for (String category : addon.categories()) {
+                if (page.shouldDisplayCategory(category))
+                    content.addTag(page.getLocalizedCategory(category, null));
+            }
+            if (StringUtils.isNotBlank(addon.iconUrl())) {
+                imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.iconUrl(), 80, 80, true, true));
             }
         }
     }
@@ -549,6 +543,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             scrollPane.setContent(dependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
+            FXUtils.onChangeAndOperate(scrollPane.widthProperty(), d -> FXUtils.setLimitWidth(dependenciesList, d.doubleValue()));
             FXUtils.smoothScrolling(scrollPane);
             FXUtils.setOverflowHidden(scrollPane, 8);
             spinnerPane.setContent(scrollPane);
@@ -619,17 +614,19 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     return;
                                 }
                                 DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.instanceReference);
+                                FXUtils.onChangeAndOperate(dependenciesList.widthProperty(), d -> FXUtils.setLimitWidth(dependencyAddonItem, d.doubleValue()));
                                 dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
                 return Task.allOf(queue).thenSupplyAsync(() ->
-                        dependencies.values().stream().flatMap(types ->
-                                Stream.concat(
-                                        Stream.of(types.key()),
-                                        types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)))
-                        ).toList()
+                        dependencies.values().stream().flatMap(types -> {
+                            if (types.value().isEmpty()) return Stream.of();
+                            return Stream.concat(
+                                    Stream.of(types.key()),
+                                    types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));
+                        }).toList()
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
