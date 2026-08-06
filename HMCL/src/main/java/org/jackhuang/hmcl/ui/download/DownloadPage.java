@@ -37,16 +37,10 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
-import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.instances.DownloadListPage;
-import org.jackhuang.hmcl.ui.instances.HMCLLocalizedDownloadListPage;
-import org.jackhuang.hmcl.ui.instances.GameInstancePage;
-import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.ui.instances.*;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -84,6 +78,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
     private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
+    private final TabHeader.Tab<AddonFavoritesPage> favoritesPageTab = new TabHeader.Tab<>("favoritesTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
@@ -111,7 +106,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteAddonRepository.WORLDS)));
-        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
+        favoritesPageTab.setNodeSupplier(loadVersionFor(AddonFavoritesPage::new));
+        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab, favoritesPageTab);
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
@@ -125,7 +121,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
-                .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
+                .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC)
+                .addNavigationDrawerTab(tab, favoritesPageTab, i18n("addon.favorites"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
 
@@ -204,6 +201,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     }
                     if (worldTab.isInitialized()) {
                         worldTab.getNode().loadInstance(repository, null);
+                    }
+                    if (favoritesPageTab.isInitialized()) {
+                        favoritesPageTab.getNode().loadInstance(repository, null);
                     }
                 }));
             }
