@@ -176,7 +176,8 @@ public class TwoLineListItem extends VBox {
 
             FXUtils.setOverflowHidden(tagsBox);
 
-            lblTitle.setMinWidth(Label.USE_PREF_SIZE);
+            HBox.setHgrow(lblTitle, Priority.ALWAYS);
+            lblTitle.setMinWidth(0);
             firstLine.getChildren().setAll(lblTitle, tagsBox);
         }
         return tags;
