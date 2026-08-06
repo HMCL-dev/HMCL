@@ -20,15 +20,11 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.layout.Region;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -50,17 +46,13 @@ import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -68,8 +60,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage mainPage = null;
 
     public RootPage() {
-        GameDirectoryManager.registerVersionsListener(this::onRefreshedVersions);
-
         getStyleClass().remove("gray-background");
         getLeft().getStyleClass().add("gray-background");
     }
@@ -231,39 +221,4 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         }
     }
 
-    private boolean checkedModpack = false;
-
-    private void onRefreshedVersions(HMCLGameRepository repository) {
-        runInFX(() -> {
-            if (!checkedModpack) {
-                checkedModpack = true;
-
-                if (repository.getInstanceCount() == 0) {
-                    Path zipModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
-                    Path mrpackModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.mrpack");
-
-                    Path modpackFile;
-                    if (Files.exists(zipModpack)) {
-                        modpackFile = zipModpack;
-                    } else if (Files.exists(mrpackModpack)) {
-                        modpackFile = mrpackModpack;
-                    } else {
-                        modpackFile = null;
-                    }
-
-                    if (modpackFile != null) {
-                        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
-                                .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
-                                .thenApplyAsync(modpack -> ModpackHelper
-                                        .getInstallTask(repository, modpackFile, new GameInstanceID(modpack.getName()), modpack, null)
-                                        .executor())
-                                .thenAcceptAsync(Schedulers.javafx(), executor -> {
-                                    Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
-                                    executor.start();
-                                }).start();
-                    }
-                }
-            }
-        });
-    }
 }

@@ -33,6 +33,7 @@ import javafx.stage.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.BundledModpackBootstrap;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -370,6 +371,11 @@ public final class Controllers {
                         }, updateShowTips);
                     }, updateShowTips);
         }
+
+        BundledModpackBootstrap.scheduleAfterSelectedRepositoryLoaded(executor -> {
+            Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
+            executor.start();
+        });
     }
 
     public static void dialog(Region content) {

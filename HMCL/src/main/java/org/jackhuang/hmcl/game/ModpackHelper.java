@@ -196,7 +196,7 @@ public final class ModpackHelper {
                 });
     }
 
-    public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, Modpack modpack, String iconUrl) {
+    public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, Modpack modpack, @Nullable String iconUrl) {
         repository.ensureIsolatedRunningDirectory(instanceId);
 
         ExceptionalRunnable<?> success = () -> {
