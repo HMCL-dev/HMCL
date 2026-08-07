@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.launch;
 
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ServerAddress;
@@ -50,13 +49,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public class DefaultLauncher extends Launcher {
 
-    private final LibraryAnalyzer analyzer;
+    private final GameComponentAnalyzer analyzer;
 
     public DefaultLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         super(instance, manifest, authInfo, options, listener, daemon);
 
         GameVersionNumber version = instance.getVersion();
-        this.analyzer = LibraryAnalyzer.analyze(manifest,
+        this.analyzer = GameComponentAnalyzer.analyze(manifest,
                 version == GameVersionNumber.unknown() ? null : version.toString());
     }
 
@@ -277,7 +276,7 @@ public class DefaultLauncher extends Launcher {
 
         Set<String> classpath = LaunchClasspathResolver.resolve(instance.getRepository(), manifest);
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
+        if (analyzer.has(GameComponentType.CLEANROOM)) {
             classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
         }
 
@@ -686,28 +685,28 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
+        if (analyzer.has(GameComponentType.FORGE)) {
             env.put("INST_FORGE", "1");
         }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
+        if (analyzer.has(GameComponentType.CLEANROOM)) {
             env.put("INST_CLEANROOM", "1");
         }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
+        if (analyzer.has(GameComponentType.NEO_FORGE)) {
             env.put("INST_NEOFORGE", "1");
         }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER)) {
+        if (analyzer.has(GameComponentType.LITELOADER)) {
             env.put("INST_LITELOADER", "1");
         }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC)) {
+        if (analyzer.has(GameComponentType.FABRIC)) {
             env.put("INST_FABRIC", "1");
         }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE)) {
+        if (analyzer.has(GameComponentType.OPTIFINE)) {
             env.put("INST_OPTIFINE", "1");
         }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
+        if (analyzer.has(GameComponentType.QUILT)) {
             env.put("INST_QUILT", "1");
         }
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
+        if (analyzer.has(GameComponentType.LEGACY_FABRIC)) {
             env.put("INST_LEGACYFABRIC", "1");
         }
 

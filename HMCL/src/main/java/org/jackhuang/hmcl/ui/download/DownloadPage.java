@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -304,7 +305,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public void start(SettingsMap settings) {
             settings.put(ModpackPage.GAME_DIRECTORY, repository.getGameDirectory());
             settings.put(ModpackPage.REPOSITORY, repository);
-            settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion);
+            settings.put(GameComponentType.GAME.getPatchId(), gameVersion);
         }
 
         private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
@@ -312,10 +313,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
             builder.name(instanceId);
-            builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
+            builder.gameVersion(((RemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion());
 
             settings.asStringMap().forEach((key, value) -> {
-                if (!LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(key)
+                if (!GameComponentType.GAME.getPatchId().equals(key)
                         && value instanceof RemoteVersion remoteVersion)
                     builder.version(remoteVersion);
             });
