@@ -56,8 +56,8 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
                     LOG.warning("Failed to load jar manifest for jar: " + modFile, e);
                 }
                 if (attr != null) {
-                    String fmlCorePlg = Objects.toString(attr.get("FMLCorePlugin"), null);
-                    String tweakClass = Objects.toString(attr.get("TweakClass"), null);
+                    String fmlCorePlg = attr.getValue("FMLCorePlugin");
+                    String tweakClass = attr.getValue("TweakClass");
                     if (StringUtils.isNotBlank(fmlCorePlg) || StringUtils.isNotBlank(tweakClass)) {
                         forgeMin = asGameVersion("1.6.1");
                         forgeMax = asGameVersion("1.12.2");
