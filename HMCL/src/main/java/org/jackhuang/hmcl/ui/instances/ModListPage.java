@@ -57,7 +57,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private ModManager modManager;
     private HMCLGameRepository repository;
     private GameInstanceID instanceId;
-    private String gameVersion;
+    String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 

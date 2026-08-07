@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  *
@@ -110,7 +111,7 @@ public final class LiteModMetadata {
         return updateURI;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, List<CoreMod> coreMods) throws IOException, JsonParseException {
         ZipArchiveEntry entry = tree.getEntry("litemod.json");
         if (entry == null)
             throw new IOException("File " + modFile + " is not a LiteLoader mod.");
@@ -118,7 +119,7 @@ public final class LiteModMetadata {
         if (metadata == null)
             throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
         return new LocalModFile(modManager, modManager.getLocalMod(metadata.getName(), ModLoaderType.LITE_LOADER), modFile, metadata.getName(), new LocalAddonFile.Description(metadata.getDescription()), metadata.getAuthor(),
-                metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "");
+                metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "", coreMods);
     }
 
 }

@@ -44,7 +44,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     @FunctionalInterface
     private interface ModMetadataReader {
-        LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException;
+        LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, List<CoreMod> coreMods) throws IOException, JsonParseException;
     }
 
     private static final Map<String, List<Pair<ModMetadataReader, ModLoaderType>>> READERS;
@@ -126,12 +126,15 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
 
         LocalModFile modInfo = null;
+        List<CoreMod> coreMods = List.of();
 
         List<Exception> exceptions = new ArrayList<>();
         try (ZipFileTree tree = CompressingUtils.openZipTree(file)) {
+            coreMods = CoreMod.fromFile(file, tree);
+
             for (ModMetadataReader reader : supportedReaders) {
                 try {
-                    modInfo = reader.fromFile(this, file, tree);
+                    modInfo = reader.fromFile(this, file, tree, coreMods);
                     break;
                 } catch (Exception e) {
                     exceptions.add(e);
@@ -141,7 +144,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             if (modInfo == null) {
                 for (ModMetadataReader reader : unsupportedReaders) {
                     try {
-                        modInfo = reader.fromFile(this, file, tree);
+                        modInfo = reader.fromFile(this, file, tree, coreMods);
                         break;
                     } catch (Exception ignored) {
                     }
@@ -164,7 +167,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     getLocalMod(fileNameWithoutExtension, ModLoaderType.UNKNOWN),
                     file,
                     fileNameWithoutExtension,
-                    new LocalAddonFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : "")
+                    new LocalAddonFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : ""),
+                    coreMods
             );
         }
 

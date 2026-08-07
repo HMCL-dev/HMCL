@@ -23,8 +23,11 @@ import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.meta.CoreMod;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,13 +53,15 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String url;
     private final String fileName;
     private final String logoPath;
+    private final @Unmodifiable List<CoreMod> coreMods;
+
     private final BooleanProperty activeProperty;
 
-    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
-        this(modManager, mod, file, name, description, "", "", "", "", "");
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, List<CoreMod> coreMods) {
+        this(modManager, mod, file, name, description, "", "", "", "", "", coreMods);
     }
 
-    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath, List<CoreMod> coreMods) {
         super();
         this.modManager = modManager;
         this.mod = mod;
@@ -68,6 +73,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         this.gameVersion = gameVersion;
         this.url = url;
         this.logoPath = logoPath;
+        this.coreMods = List.copyOf(coreMods);
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
@@ -143,6 +149,12 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     public String getLogoPath() {
         return logoPath;
+    }
+
+    @NotNull
+    @Unmodifiable
+    public List<CoreMod> getCoreMods() {
+        return coreMods;
     }
 
     public BooleanProperty activeProperty() {
