@@ -18,11 +18,11 @@
 package org.jackhuang.hmcl.download.cleanroom;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -113,9 +113,11 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
         if (selfVersion == null) {
-            task = new ForgeNewInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer).thenApplyAsync((version) -> version.withId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
+            task = new ForgeNewInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer)
+                    .thenApplyAsync((version) -> version.withId(GameComponentType.CLEANROOM));
         } else {
-            task = new ForgeNewInstallTask(dependencyManager, manifest, selfVersion, installer).thenApplyAsync((version) -> version.withId(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId()));
+            task = new ForgeNewInstallTask(dependencyManager, manifest, selfVersion, installer)
+                    .thenApplyAsync((version) -> version.withId(GameComponentType.CLEANROOM));
         }
     }
 
@@ -125,7 +127,7 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
-            if (LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId().equals(installProfile.get("profile"))) {
+            if (GameComponentType.CLEANROOM.getPatchId().equals(installProfile.get("profile"))) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());

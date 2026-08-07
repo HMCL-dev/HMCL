@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -41,7 +41,7 @@ public class FabricAPIRemoteVersion extends RemoteVersion {
      * @param urls        the installer or universal jar original URL.
      */
     FabricAPIRemoteVersion(String gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
-        super(LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId(), gameVersion, selfVersion, datePublished, urls);
+        super(GameComponentType.FABRIC_API.getPatchId(), gameVersion, selfVersion, datePublished, urls);
 
         this.fullVersion = fullVersion;
         this.version = version;
