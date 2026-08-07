@@ -17,10 +17,14 @@
  */
 package org.jackhuang.hmcl.addon.meta;
 
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -30,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.Attributes;
@@ -50,8 +55,8 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
             ZipArchiveEntry mf = tree.getEntry("META-INF/MANIFEST.MF");
             if (mf != null) {
                 Attributes attr = null;
-                try {
-                    attr = new Manifest(tree.getInputStream(mf)).getMainAttributes();
+                try (var in = tree.getInputStream(mf)) {
+                    attr = new Manifest(in).getMainAttributes();
                 } catch (IOException e) {
                     LOG.warning("Failed to load jar manifest for jar: " + modFile, e);
                 }
@@ -68,11 +73,21 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
         {
             // coremods.json in Forge 1.13-1.21.10 & NeoForge 1.21.4-
             // TODO Find a sample
-            if (tree.getEntry("META-INF/coremods.json") != null) {
-                forgeMin = Lang.minNullable(forgeMin, asGameVersion("1.13"));
-                forgeMax = asGameVersion("1.21.10"); // Removed in https://github.com/MinecraftForge/MinecraftForge/pull/10746
-                neoMin = asGameVersion("1.20.1");
-                neoMax = asGameVersion("1.21.4"); // Removed in https://github.com/neoforged/NeoForge/pull/2072
+            ZipArchiveEntry coreModsJson = tree.getEntry("META-INF/coremods.json");
+            if (coreModsJson != null) {
+                try (var in = new InputStreamReader(tree.getInputStream(coreModsJson))) {
+                    var map = JsonUtils.fromJson(in, new TypeToken<Map<String, String>>() {
+                    });
+                    if (map != null && !map.isEmpty()) {
+                        forgeMin = Lang.minNullable(forgeMin, asGameVersion("1.13"));
+                        forgeMax = asGameVersion("1.21.10"); // Removed in https://github.com/MinecraftForge/MinecraftForge/pull/10746
+                        neoMin = asGameVersion("1.20.1");
+                        neoMax = asGameVersion("1.21.4"); // Removed in https://github.com/neoforged/NeoForge/pull/2072
+                    }
+                } catch (IOException | JsonIOException e) {
+                    LOG.warning("Failed to read coremods.json for jar: " + modFile, e);
+                } catch (JsonSyntaxException ignored) {
+                }
             }
         }
         {
