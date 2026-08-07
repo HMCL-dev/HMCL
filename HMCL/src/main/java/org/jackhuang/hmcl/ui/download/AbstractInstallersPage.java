@@ -30,7 +30,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -62,15 +62,15 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
         this.group = new InstallerItem.InstallerItemGroup(GameVersionNumber.asGameVersion(gameVersion), getInstallerItemStyle());
 
         for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getLibraryId();
-            if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
+            GameComponentType type = library.getComponentType();
+            if (type == GameComponentType.GAME) continue;
             library.setOnInstall(() -> {
                 if (!Boolean.TRUE.equals(state().getShownTips().get(FABRIC_QUILT_API_TIP))
-                        && (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)
-                        || LibraryAnalyzer.LibraryType.QUILT_API.getPatchId().equals(libraryId)
-                        || LibraryAnalyzer.LibraryType.LEGACY_FABRIC_API.getPatchId().equals(libraryId))) {
+                        && (type == GameComponentType.FABRIC_API
+                        || type == GameComponentType.QUILT_API
+                        || type == GameComponentType.LEGACY_FABRIC_API)) {
                     Controllers.dialog(new MessageDialogPane.Builder(
-                            i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer." + libraryId)),
+                            i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer." + type.getPatchId())),
                             i18n("message.warning"),
                             MessageDialogPane.MessageType.WARNING
                     ).ok(null).addCancel(i18n("button.do_not_show_again"), () -> state().getShownTips().put(FABRIC_QUILT_API_TIP, true)).build());
@@ -80,16 +80,16 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                     controller.onNext(
                             new VersionsPage(
                                     controller,
-                                    i18n("install.installer.choose", i18n("install.installer." + libraryId)),
+                                    i18n("install.installer.choose", i18n("install.installer." + type.getPatchId())),
                                     gameVersion,
                                     downloadProvider,
-                                    libraryId,
+                                    type.getPatchId(),
                                     () -> controller.onPrev(false, Navigation.NavigationDirection.PREVIOUS)
                             ), Navigation.NavigationDirection.NEXT
                     );
             });
             library.setOnRemove(() -> {
-                controller.getSettings().remove(libraryId);
+                controller.getSettings().remove(type.getPatchId());
                 reload();
             });
         }

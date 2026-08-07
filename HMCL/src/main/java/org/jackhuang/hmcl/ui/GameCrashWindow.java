@@ -35,7 +35,6 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.StyleSheets;
@@ -77,7 +76,7 @@ public class GameCrashWindow extends Stage {
     private final String memory;
     private final String total_memory;
     private final String java;
-    private final LibraryAnalyzer analyzer;
+    private final GameComponentAnalyzer analyzer;
     private final TextFlow reasonTextFlow = new TextFlow(new Text(i18n("game.crash.reason.unknown")));
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TextFlow feedbackTextFlow = new TextFlow();
@@ -98,7 +97,7 @@ public class GameCrashWindow extends Stage {
         this.gameInstance = gameInstance;
         this.launchOptions = launchOptions;
         this.logs = logs;
-        this.analyzer = LibraryAnalyzer.analyze(gameInstance.getResolvedManifest(), gameInstance.getVersion().toString());
+        this.analyzer = GameComponentAnalyzer.analyze(gameInstance.getResolvedManifest(), gameInstance.getVersion().toString());
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " " + i18n("settings.memory.unit.mib")).orElse("-");
 
@@ -379,15 +378,13 @@ public class GameCrashWindow extends Stage {
                 moddedPane.setPadding(new Insets(8));
                 moddedPane.setAlignment(Pos.CENTER_LEFT);
 
-                for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
-                    if (!type.getPatchId().isEmpty()) {
-                        analyzer.getVersion(type).ifPresent(ver -> {
-                            TwoLineListItem item = new TwoLineListItem();
-                            item.getStyleClass().setAll("two-line-item-second-large");
-                            item.setTitle(i18n("install.installer." + type.getPatchId()));
-                            item.setSubtitle(ver);
-                            moddedPane.getChildren().add(item);
-                        });
+                for (GameComponentAnalyzer.Mark mark : analyzer) {
+                    if (mark.version() != null) {
+                        TwoLineListItem item = new TwoLineListItem();
+                        item.getStyleClass().setAll("two-line-item-second-large");
+                        item.setTitle(i18n("install.installer." + mark.componentType().getPatchId()));
+                        item.setSubtitle(mark.version());
+                        moddedPane.getChildren().add(item);
                     }
                 }
             }

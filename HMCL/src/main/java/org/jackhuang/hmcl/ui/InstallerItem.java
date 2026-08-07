@@ -34,7 +34,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -46,13 +46,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * @author huangyuhui
  */
 public class InstallerItem extends Control {
+    private final GameComponentType type;
     private final String id;
     private final GameInstanceIconType iconType;
     private final Style style;
@@ -83,26 +83,16 @@ public class InstallerItem extends Control {
         CARD,
     }
 
-    public InstallerItem(LibraryAnalyzer.LibraryType id, Style style) {
-        this(id.getPatchId(), style);
+
+    public InstallerItem(GameComponentType type, Style style) {
+        this.type = type;
+        this.id = type.getPatchId();
+        this.style = style;
+        this.iconType = GameInstanceIconType.getIconType(type);
     }
 
-    public InstallerItem(String id, Style style) {
-        this.id = id;
-        this.style = style;
-
-        iconType = switch (id) {
-            case "game" -> GameInstanceIconType.GRASS;
-            case "fabric", "fabric-api" -> GameInstanceIconType.FABRIC;
-            case "legacyfabric", "legacyfabric-api" -> GameInstanceIconType.LEGACY_FABRIC;
-            case "forge" -> GameInstanceIconType.FORGE;
-            case "cleanroom" -> GameInstanceIconType.CLEANROOM;
-            case "liteloader" -> GameInstanceIconType.CHICKEN;
-            case "optifine" -> GameInstanceIconType.OPTIFINE;
-            case "quilt", "quilt-api" -> GameInstanceIconType.QUILT;
-            case "neoforge" -> GameInstanceIconType.NEO_FORGE;
-            default -> null;
-        };
+    public GameComponentType getComponentType() {
+        return type;
     }
 
     public String getLibraryId() {
@@ -176,18 +166,18 @@ public class InstallerItem extends Control {
         }
 
         public InstallerItemGroup(GameVersionNumber gameVersion, Style style) {
-            game = new InstallerItem(MINECRAFT, style);
-            InstallerItem fabric = new InstallerItem(FABRIC, style);
-            InstallerItem fabricApi = new InstallerItem(FABRIC_API, style);
-            InstallerItem forge = new InstallerItem(FORGE, style);
-            InstallerItem cleanroom = new InstallerItem(CLEANROOM, style);
-            InstallerItem legacyfabric = new InstallerItem(LEGACY_FABRIC, style);
-            InstallerItem legacyfabricApi = new InstallerItem(LEGACY_FABRIC_API, style);
-            InstallerItem neoForge = new InstallerItem(NEO_FORGE, style);
-            InstallerItem liteLoader = new InstallerItem(LITELOADER, style);
-            InstallerItem optiFine = new InstallerItem(OPTIFINE, style);
-            InstallerItem quilt = new InstallerItem(QUILT, style);
-            InstallerItem quiltApi = new InstallerItem(QUILT_API, style);
+            game = new InstallerItem(GameComponentType.GAME, style);
+            InstallerItem fabric = new InstallerItem(GameComponentType.FABRIC, style);
+            InstallerItem fabricApi = new InstallerItem(GameComponentType.FABRIC_API, style);
+            InstallerItem forge = new InstallerItem(GameComponentType.FORGE, style);
+            InstallerItem cleanroom = new InstallerItem(GameComponentType.CLEANROOM, style);
+            InstallerItem legacyfabric = new InstallerItem(GameComponentType.LEGACY_FABRIC, style);
+            InstallerItem legacyfabricApi = new InstallerItem(GameComponentType.LEGACY_FABRIC_API, style);
+            InstallerItem neoForge = new InstallerItem(GameComponentType.NEO_FORGE, style);
+            InstallerItem liteLoader = new InstallerItem(GameComponentType.LITELOADER, style);
+            InstallerItem optiFine = new InstallerItem(GameComponentType.OPTIFINE, style);
+            InstallerItem quilt = new InstallerItem(GameComponentType.QUILT, style);
+            InstallerItem quiltApi = new InstallerItem(GameComponentType.QUILT_API, style);
 
             Map<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
             mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric);
@@ -217,7 +207,7 @@ public class InstallerItem extends Control {
                     for (InstallerItem other : incompatibleItems) {
                         InstalledState otherVersion = other.versionProperty.get();
                         if (otherVersion != null) {
-                            return new IncompatibleState(other.id, otherVersion.version);
+                            return new IncompatibleState(other.type.getPatchId(), otherVersion.version);
                         }
                     }
 
@@ -309,7 +299,7 @@ public class InstallerItem extends Control {
             nameLabel.getStyleClass().add("installer-item-name");
             nameLabel.setMouseTransparent(true);
             pane.getChildren().add(nameLabel);
-            nameLabel.textProperty().set(I18n.hasKey("install.installer." + control.id) ? i18n("install.installer." + control.id) : control.id);
+            nameLabel.textProperty().set(I18n.hasKey("install.installer." + control.type.getPatchId()) ? i18n("install.installer." + control.type.getPatchId()) : control.type.getPatchId());
             HBox.setMargin(nameLabel, new Insets(0, 4, 0, 4));
 
             Label statusLabel = new Label();
@@ -355,7 +345,7 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton removeButton = FXUtils.newToggleButton4(SVG.CLOSE);
-            if (control.id.equals(MINECRAFT.getPatchId())) {
+            if (control.type == GameComponentType.GAME) {
                 removeButton.setVisible(false);
             } else {
                 removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {

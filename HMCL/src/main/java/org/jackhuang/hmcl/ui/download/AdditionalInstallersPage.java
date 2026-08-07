@@ -21,8 +21,9 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.InstallerItem;
@@ -32,7 +33,6 @@ import org.jackhuang.hmcl.util.SettingsMap;
 
 import java.util.Optional;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends AbstractInstallersPage {
@@ -81,15 +81,15 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
     @Override
     protected void reload() {
         GameInstanceManifest.Resolved resolvedManifest = repository.resolve(manifest);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolvedManifest, repository.getGameVersion(manifest).orElse(null));
-        String game = analyzer.getVersion(MINECRAFT).orElse(null);
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(resolvedManifest, repository.getGameVersion(manifest).orElse(null));
+        String game = analyzer.getVersion(GameComponentType.GAME);
         String currentGameVersion = Lang.nonNull(getVersion("game"), game);
 
         boolean compatible = true;
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
-            String version = analyzer.getVersion(libraryId).orElse(null);
+            String version = analyzer.getVersion(library.getComponentType());
             String libraryVersion = Lang.requireNonNullElse(getVersion(libraryId), version);
             boolean alreadyInstalled = version != null && !(controller.getSettings().get(libraryId) instanceof UpdateInstallerWizardProvider.RemoveVersionAction);
             if (!"game".equals(libraryId) && currentGameVersion != null && !currentGameVersion.equals(game) && getVersion(libraryId) == null && alreadyInstalled) {
