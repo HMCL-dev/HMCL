@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -90,14 +89,14 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     public void execute() throws Exception {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
         GameInstanceManifest originalManifest = JsonUtils.GSON.fromJson(json, GameInstanceManifest.class).withId(instanceId).withJar(null);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(originalManifest, null);
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
         Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> originalManifest);
         // reinstall libraries
         // libraries of Forge and OptiFine should be obtained by installation.
-        for (LibraryAnalyzer.LibraryMark mark : analyzer) {
-            if (LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(mark.getLibraryId()))
+        for (GameComponentAnalyzer.Mark mark : analyzer) {
+            if (mark.componentType() == GameComponentType.GAME)
                 continue;
-            libraryTask = libraryTask.thenComposeAsync(version -> dependency.installLibraryAsync(modpack.getGameVersion(), version, mark.getLibraryId(), mark.getLibraryVersion()));
+            libraryTask = libraryTask.thenComposeAsync(version -> dependency.installLibraryAsync(modpack.getGameVersion(), version, mark.componentType().getPatchId(), mark.version()));
         }
 
         dependencies.add(libraryTask.thenComposeAsync(repository::saveAsync));

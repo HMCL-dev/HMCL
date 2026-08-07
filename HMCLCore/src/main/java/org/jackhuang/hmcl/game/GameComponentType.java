@@ -223,6 +223,9 @@ public enum GameComponentType {
     };
 
     public static final List<GameComponentType> ALL = List.of(GameComponentType.values());
+    public static final List<GameComponentType> MOD_LOADERS = ALL.stream()
+            .filter(GameComponentType::isModLoader)
+            .toList();
 
     private final String patchId;
     private final @Nullable ModLoaderType modLoaderType;
