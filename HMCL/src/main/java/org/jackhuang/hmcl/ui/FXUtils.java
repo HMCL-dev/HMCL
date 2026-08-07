@@ -1718,7 +1718,7 @@ public final class FXUtils {
     }
 
     public static TextFlow renderAddonChangelog(String changelogHtml, String baseUri) {
-        var textFlow = new HTMLRenderer(Controllers::openUriInBrowser).appendNode(Jsoup.parse(changelogHtml, baseUri)).mergeLineBreaks().render();
+        var textFlow = new HTMLRenderer(Controllers::openUriOrCopy).appendNode(Jsoup.parse(changelogHtml, baseUri)).mergeLineBreaks().render();
         textFlow.getStyleClass().add("addon-changelog");
         return textFlow;
     }
