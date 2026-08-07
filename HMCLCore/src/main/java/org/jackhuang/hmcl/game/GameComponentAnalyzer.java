@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
@@ -83,6 +84,10 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         this.components = components;
     }
 
+    public boolean has(GameComponentType type) {
+        return components.containsKey(type);
+    }
+
     public @Nullable String getVersion(GameComponentType type) {
         Mark mark = components.get(type);
         return mark != null ? mark.version() : null;
@@ -93,6 +98,16 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
     /// Maybe a guessing implementation will be provided in the future. But by now, we simply set it to JUST\_EXISTED.
     public boolean isClear(GameComponentType type) {
         return manifest.hasPatch(type.getPatchId());
+    }
+
+    public @Unmodifiable Set<ModLoaderType> getModLoaders() {
+        Set<ModLoaderType> res = EnumSet.noneOf(ModLoaderType.class);
+        for (GameComponentType type : components.keySet()) {
+            if (type.getModLoaderType() != null) {
+                res.add(type.getModLoaderType());
+            }
+        }
+        return res;
     }
 
     @Override

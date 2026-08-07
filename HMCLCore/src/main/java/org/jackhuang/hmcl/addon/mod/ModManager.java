@@ -21,8 +21,9 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.meta.*;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -64,7 +65,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
-    private LibraryAnalyzer analyzer;
+    private GameComponentAnalyzer analyzer;
 
     private boolean loaded = false;
 
@@ -80,7 +81,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         return instance.getModsDirectory();
     }
 
-    public LibraryAnalyzer getLibraryAnalyzer() {
+    public GameComponentAnalyzer getComponentAnalyzer() {
         return analyzer;
     }
 
@@ -181,10 +182,10 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             localFiles.clear();
             localMods.clear();
 
-            analyzer = LibraryAnalyzer.analyze(instance.getResolvedManifest(), null);
+            analyzer = GameComponentAnalyzer.analyze(instance.getResolvedManifest(), null);
 
-            boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
-                    || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
+            boolean supportSubfolders = analyzer.has(GameComponentType.FORGE)
+                    || analyzer.has(GameComponentType.QUILT);
 
             if (Files.isDirectory(getDirectory())) {
                 try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
