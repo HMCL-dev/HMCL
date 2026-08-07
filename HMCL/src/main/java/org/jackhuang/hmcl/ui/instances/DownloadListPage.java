@@ -370,7 +370,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
                 sortStackPane.getChildren().setAll(sortComboBox);
                 sortComboBox.prefWidthProperty().bind(sortStackPane.widthProperty());
                 sortComboBox.getStyleClass().add("fit-width");
-                sortComboBox.setConverter(stringConverter(sortType -> i18n("curse.sort." + sortType.name().toLowerCase(Locale.ROOT))));
+                sortComboBox.setConverter(stringConverter(sortType -> i18n("addon.sort." + sortType.name().toLowerCase(Locale.ROOT))));
                 sortComboBox.getItems().setAll(RemoteAddonRepository.SortType.values());
                 sortComboBox.getSelectionModel().select(0);
                 searchPane.addRow(rowIndex++, new Label(i18n("addon.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
