@@ -82,12 +82,12 @@ public enum GameComponentType {
         private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
         @Override
-        protected @Nullable String patchVersion(GameInstanceManifest manifest, String libraryVersion) {
+        protected @Nullable String getComponentVersion(GameInstanceManifest manifest, String libraryVersion) {
             Matcher matcher = FORGE_VERSION_MATCHER.matcher(libraryVersion);
             if (matcher.find()) {
                 return matcher.group("forge");
             }
-            return super.patchVersion(manifest, libraryVersion);
+            return super.getComponentVersion(manifest, libraryVersion);
         }
 
         @Override
@@ -116,7 +116,7 @@ public enum GameComponentType {
         }
 
         @Override
-        protected @Nullable String patchVersion(GameInstanceManifest manifest, String libraryVersion) {
+        protected @Nullable String getComponentVersion(GameInstanceManifest manifest, String libraryVersion) {
             String res = scanVersion(manifest);
             if (res != null) {
                 return res;
@@ -256,7 +256,7 @@ public enum GameComponentType {
 
     protected abstract boolean matchLibrary(Library library, List<Library> libraries);
 
-    protected @Nullable String patchVersion(GameInstanceManifest manifest, String libraryVersion) {
+    protected @Nullable String getComponentVersion(GameInstanceManifest manifest, String libraryVersion) {
         return libraryVersion;
     }
 
