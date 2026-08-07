@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import javafx.beans.property.*;
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -36,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -108,15 +104,14 @@ public class GameItem {
                 }
 
                 StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
-                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(gameInstance.getResolvedManifest(), result.gameVersion);
-                for (LibraryAnalyzer.LibraryMark mark : analyzer) {
-                    String libraryId = mark.getLibraryId();
-                    String libraryVersion = mark.getLibraryVersion();
-                    if (libraryId.equals(MINECRAFT.getPatchId())) continue;
-                    if (I18n.hasKey("install.installer." + libraryId)) {
-                        libraries.append(", ").append(i18n("install.installer." + libraryId));
-                        if (libraryVersion != null)
-                            libraries.append(": ").append(libraryVersion.replaceAll("(?i)" + libraryId, ""));
+                GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(gameInstance.getResolvedManifest(), result.gameVersion);
+                for (GameComponentAnalyzer.Mark mark : analyzer) {
+                    if (mark.componentType() == GameComponentType.GAME) continue;
+
+                    if (I18n.hasKey("install.installer." + mark.componentType().getPatchId())) {
+                        libraries.append(", ").append(i18n("install.installer." + mark.componentType().getPatchId()));
+                        if (mark.version() != null)
+                            libraries.append(": ").append(mark.version().replaceAll("(?i)" + mark.componentType().getPatchId(), ""));
                     }
                 }
 

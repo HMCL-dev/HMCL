@@ -26,8 +26,9 @@ import java.util.*;
 
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
@@ -41,7 +42,6 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Exports one registered game instance as a Modrinth modpack archive.
@@ -198,18 +198,18 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 throw new IOException("Cannot parse the version of " + instanceId);
             }
             String gameVersion = version.toString();
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(instance.getResolvedManifest(), gameVersion);
+            GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(instance.getResolvedManifest(), gameVersion);
 
             Map<String, String> dependencies = new HashMap<>();
             dependencies.put("minecraft", gameVersion);
 
-            analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
+            Optional.ofNullable(analyzer.getVersion(GameComponentType.FORGE)).ifPresent(forgeVersion ->
                     dependencies.put("forge", forgeVersion));
-            analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
+            Optional.ofNullable(analyzer.getVersion(GameComponentType.NEO_FORGE)).ifPresent(neoForgeVersion ->
                     dependencies.put("neoforge", neoForgeVersion));
-            analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
+            Optional.ofNullable(analyzer.getVersion(GameComponentType.FABRIC)).ifPresent(fabricVersion ->
                     dependencies.put("fabric-loader", fabricVersion));
-            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
+            Optional.ofNullable(analyzer.getVersion(GameComponentType.QUILT)).ifPresent(quiltVersion ->
                     dependencies.put("quilt-loader", quiltVersion));
 
             ModrinthManifest manifest = new ModrinthManifest(

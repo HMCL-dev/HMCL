@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 /// Normalizes a structurally resolved manifest into the stable view consumed by launch-time code.
 ///
@@ -179,12 +180,12 @@ public final class LaunchManifestNormalizer {
     /// @param manifest the resolved manifest
     /// @return the repaired manifest
     private static GameInstanceManifest normalizeBootstrapLauncher(GameInstanceManifest manifest) {
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, null);
-        if (!analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && !analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
+        if (!analyzer.has(GameComponentType.FORGE) && !analyzer.has(GameComponentType.NEO_FORGE)) {
             return manifest;
         }
 
-        if (analyzer.getVersion(LibraryAnalyzer.LibraryType.BOOTSTRAP_LAUNCHER)
+        if (Optional.ofNullable(analyzer.getVersion(GameComponentType.BOOTSTRAP_LAUNCHER))
                 .filter(version -> VersionNumber.compare(version, "0.1.17") >= 0)
                 .isEmpty()) {
             return manifest;

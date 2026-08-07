@@ -21,7 +21,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -78,7 +78,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
         HMCLGameRepository repository = gameInstance.getRepository();
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(gameInstance.getResolvedManifest(), gameInstance.getVersion().toString());
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(gameInstance.getResolvedManifest(), gameInstance.getVersion().toString());
 
         itemsProperty().clear();
 
@@ -86,19 +86,18 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
         // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
         for (InstallerItem item : group.getLibraries()) {
-            String libraryId = item.getLibraryId();
 
             // Skip fabric-api and quilt-api and legacyfabric-api
-            if (libraryId.endsWith("-api")) {
+            if (item.getComponentType().getPatchId().endsWith("-api")) {
                 continue;
             }
 
-            String libraryVersion = analyzer.getVersion(libraryId).orElse(null);
+            String libraryVersion = analyzer.getVersion(item.getComponentType());
 
             if (libraryVersion != null) {
                 item.versionProperty().set(new InstallerItem.InstalledState(
                         libraryVersion,
-                        analyzer.getLibraryStatus(libraryId) != LibraryAnalyzer.LibraryMark.LibraryStatus.CLEAR,
+                        !analyzer.isClear(item.getComponentType()),
                         false
                 ));
             } else {
@@ -106,10 +105,10 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             }
 
             item.setOnInstall(() -> {
-                Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, libraryId, libraryVersion));
+                Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, item.getComponentType().getPatchId(), libraryVersion));
             });
 
-            item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), libraryId)
+            item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), item.getComponentType().getPatchId())
                     .thenComposeAsync(repository::saveAsync)
                     .withComposeAsync(repository.refreshAsync())
                     .withRunAsync(Schedulers.javafx(), () -> reloadCurrentInstance())
@@ -119,22 +118,15 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         }
 
         // other third-party libraries which are unable to manage.
-        for (LibraryAnalyzer.LibraryMark mark : analyzer) {
-            String libraryId = mark.getLibraryId();
-            String libraryVersion = mark.getLibraryVersion();
-            if ("mcbbs".equals(libraryId))
-                continue;
-
+        for (GameComponentAnalyzer.Mark mark : analyzer) {
             // we have done this library above.
-            if (LibraryAnalyzer.LibraryType.fromPatchId(libraryId) != null)
-                continue;
 
-            InstallerItem installerItem = new InstallerItem(libraryId, InstallerItem.Style.LIST_ITEM);
-            installerItem.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
-            installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), libraryId)
+            InstallerItem installerItem = new InstallerItem(mark.componentType(), InstallerItem.Style.LIST_ITEM);
+            installerItem.versionProperty().set(new InstallerItem.InstalledState(mark.version(), false, false));
+            installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), mark.componentType().getPatchId())
                     .thenComposeAsync(repository::saveAsync)
                     .withComposeAsync(repository.refreshAsync())
-                    .withRunAsync(Schedulers.javafx(), () -> reloadCurrentInstance())
+                    .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
                     .start());
 
             itemsProperty().add(installerItem);
