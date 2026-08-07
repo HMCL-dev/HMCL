@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.ui.download;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -116,29 +116,24 @@ public class InstallersPage extends AbstractInstallersPage {
         StringBuilder nameBuilder = new StringBuilder(getTitle());
 
         for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getLibraryId().replace(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), "");
-            if (!controller.getSettings().containsKey(libraryId)) {
+            if (library.getComponentType() == GameComponentType.GAME
+                    || !controller.getSettings().containsKey(library.getComponentType().getPatchId()))
                 continue;
-            }
 
-            LibraryAnalyzer.LibraryType libraryType = LibraryAnalyzer.LibraryType.fromPatchId(libraryId);
+            String loaderName = switch (library.getComponentType()) {
+                case FORGE -> "Forge";
+                case NEO_FORGE -> "NeoForge";
+                case CLEANROOM -> "Cleanroom";
+                case LEGACY_FABRIC -> "LegacyFabric";
+                case FABRIC -> "Fabric";
+                case LITELOADER -> "LiteLoader";
+                case QUILT -> "Quilt";
+                case OPTIFINE -> "OptiFine";
+                default -> null;
+            };
 
-            if (libraryType != null) {
-                String loaderName = switch (libraryType) {
-                    case FORGE -> "Forge";
-                    case NEO_FORGE -> "NeoForge";
-                    case CLEANROOM -> "Cleanroom";
-                    case LEGACY_FABRIC -> "LegacyFabric";
-                    case FABRIC -> "Fabric";
-                    case LITELOADER -> "LiteLoader";
-                    case QUILT -> "Quilt";
-                    case OPTIFINE -> "OptiFine";
-                    default -> null;
-                };
-
-                if (loaderName != null)
-                    nameBuilder.append('-').append(loaderName);
-            }
+            if (loaderName != null)
+                nameBuilder.append('-').append(loaderName);
         }
 
         txtName.setText(nameBuilder.toString());

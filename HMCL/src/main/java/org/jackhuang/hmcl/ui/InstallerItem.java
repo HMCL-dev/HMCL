@@ -94,7 +94,7 @@ public class InstallerItem extends Control {
     public GameComponentType getComponentType() {
         return type;
     }
-
+    
     public String getLibraryId() {
         return id;
     }
