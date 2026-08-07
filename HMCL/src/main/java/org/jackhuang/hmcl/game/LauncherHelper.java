@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.LaunchManifestPreparation;
 import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
@@ -438,8 +437,8 @@ public final class LauncherHelper {
     }
 
     private static Task<JavaRuntime> checkGameState(HMCLGameInstance gameInstance, GameSettings.Effective setting, GameInstanceManifest manifest) {
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, gameInstance.getVersion().toString());
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT));
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, gameInstance.getVersion().toString());
+        GameVersionNumber gameVersion = gameInstance.getVersion();
 
         Task<JavaRuntime> getJavaTask = Task.supplyAsync(() -> {
             try {
@@ -470,9 +469,9 @@ public final class LauncherHelper {
                         int targetJavaVersionMajor = Integer.parseInt(setting.getInheritable(GameSettings::customJavaVersionProperty));
                         GameJavaVersion minimumJavaVersion = null;
                         if (gameVersion.compareTo("1.12.2") == 0) {
-                            Optional<String> cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM);
-                            if (cleanroomVersion.isPresent()) {
-                                minimumJavaVersion = GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion.get());
+                            @Nullable String cleanroomVersion = analyzer.getVersion(GameComponentType.CLEANROOM);
+                            if (cleanroomVersion != null) {
+                                minimumJavaVersion = GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion);
                             }
                         }
 
@@ -494,9 +493,9 @@ public final class LauncherHelper {
                     }
                 } else {
                     if (gameVersion.compareTo("1.12.2") == 0) {
-                        Optional<String> cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM);
-                        if (cleanroomVersion.isPresent()) {
-                            targetJavaVersion = GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion.get());
+                        @Nullable String cleanroomVersion = analyzer.getVersion(GameComponentType.CLEANROOM);
+                        if (cleanroomVersion != null) {
+                            targetJavaVersion = GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion);
                         }
                     }
 
@@ -568,10 +567,9 @@ public final class LauncherHelper {
                     } else {
                         GameJavaVersion gameJavaVersion;
                         if (violatedMandatoryConstraints.contains(JavaVersionConstraint.CLEANROOM)) {
-                            String cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM)
-                                    .orElse("");
+                            @Nullable String cleanroomVersion = analyzer.getVersion(GameComponentType.CLEANROOM);
 
-                            gameJavaVersion = !cleanroomVersion.isEmpty()
+                            gameJavaVersion = cleanroomVersion != null
                                     ? GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion)
                                     : GameJavaVersion.JAVA_21;
                         } else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
@@ -652,7 +650,7 @@ public final class LauncherHelper {
                             break;
                         case MODDED_JAVA_16:
                             // Minecraft<=1.17.1+Forge[37.0.0,37.0.60) not compatible with Java 17
-                            String forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE).orElse(null);
+                            @Nullable String forgePatchVersion = analyzer.getVersion(GameComponentType.FORGE);
                             if (forgePatchVersion != null && VersionNumber.compare(forgePatchVersion, "37.0.60") < 0)
                                 suggestions.add(i18n("launch.advice.forge37_0_60"));
                             else
@@ -665,8 +663,8 @@ public final class LauncherHelper {
                             suggestions.add(i18n("launch.advice.modded_java", 21, gameVersion));
                             break;
                         case CLEANROOM: {
-                            String cleanroomVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.CLEANROOM).orElse("");
-                            if (!cleanroomVersion.isEmpty())
+                            @Nullable String cleanroomVersion = analyzer.getVersion(GameComponentType.CLEANROOM);
+                            if (cleanroomVersion != null)
                                 suggestions.add(i18n("launch.advice.cleanroom", GameJavaVersion.getCleanroomJavaVersion(cleanroomVersion).majorVersion(), cleanroomVersion));
                             else
                                 suggestions.add(i18n("launch.advice.cleanroom", 21, ""));
@@ -695,7 +693,7 @@ public final class LauncherHelper {
                     suggestions.add(i18n("launch.advice.not_enough_space", totalMemorySizeMB));
                 }
 
-                VersionNumber forgeVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
+                VersionNumber forgeVersion = Optional.ofNullable(analyzer.getVersion(GameComponentType.FORGE))
                         .map(VersionNumber::asVersion)
                         .orElse(null);
 
