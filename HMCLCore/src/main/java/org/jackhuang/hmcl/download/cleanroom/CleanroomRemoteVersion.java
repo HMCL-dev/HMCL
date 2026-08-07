@@ -29,7 +29,7 @@ import java.util.List;
 
 public class CleanroomRemoteVersion extends RemoteVersion {
     public CleanroomRemoteVersion(String gameVersion, String selfVersion, Instant releaseDate, List<String> url) {
-        super(GameComponentType.CLEANROOM.getPatchId(), gameVersion, selfVersion, releaseDate, url);
+        super(GameComponentType.CLEANROOM, gameVersion, selfVersion, releaseDate, url);
     }
 
     @Override

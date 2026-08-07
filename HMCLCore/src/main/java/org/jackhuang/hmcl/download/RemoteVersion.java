@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
@@ -35,6 +36,7 @@ import java.util.Objects;
  */
 public class RemoteVersion implements Comparable<RemoteVersion> {
 
+    private final GameComponentType componentType;
     private final String libraryId;
     private final String gameVersion;
     private final String selfVersion;
@@ -49,8 +51,8 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar original URL.
      */
-    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, Instant releaseDate, List<String> urls) {
-        this(libraryId, gameVersion, selfVersion, releaseDate, Type.UNCATEGORIZED, urls);
+    public RemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, List<String> urls) {
+        this(componentType, gameVersion, selfVersion, releaseDate, Type.UNCATEGORIZED, urls);
     }
 
     /**
@@ -60,8 +62,9 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar URL.
      */
-    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, Instant releaseDate, Type type, List<String> urls) {
-        this.libraryId = Objects.requireNonNull(libraryId);
+    public RemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, Type type, List<String> urls) {
+        this.componentType = Objects.requireNonNull(componentType);
+        this.libraryId = componentType.getPatchId();
         this.gameVersion = Objects.requireNonNull(gameVersion);
         this.selfVersion = Objects.requireNonNull(selfVersion);
         this.releaseDate = releaseDate;
@@ -69,8 +72,12 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
         this.type = Objects.requireNonNull(type);
     }
 
+    public GameComponentType getComponentType() {
+        return componentType;
+    }
+
     public String getLibraryId() {
-        return libraryId;
+        return getComponentType().getPatchId();
     }
 
     public String getGameVersion() {

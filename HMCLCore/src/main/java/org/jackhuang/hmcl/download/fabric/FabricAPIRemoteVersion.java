@@ -41,7 +41,7 @@ public class FabricAPIRemoteVersion extends RemoteVersion {
      * @param urls        the installer or universal jar original URL.
      */
     FabricAPIRemoteVersion(String gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
-        super(GameComponentType.FABRIC_API.getPatchId(), gameVersion, selfVersion, datePublished, urls);
+        super(GameComponentType.FABRIC_API, gameVersion, selfVersion, datePublished, urls);
 
         this.fullVersion = fullVersion;
         this.version = version;
