@@ -60,14 +60,14 @@ public final class LaunchManifestNormalizer {
         GameInstanceManifest normalized = uniqueLibraries(manifest);
         @Nullable String mainClass = normalized.mainClass();
 
-        if (LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
+        if (GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
             normalized = normalizeLaunchWrapper(normalized, true);
-            if (LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(normalized.mainClass())) {
+            if (GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(normalized.mainClass())) {
                 normalized = normalizeModLauncher(normalized);
             }
-        } else if (LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(mainClass)) {
+        } else if (GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(mainClass)) {
             normalized = normalizeModLauncher(normalized);
-        } else if (LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(mainClass)) {
+        } else if (GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(mainClass)) {
             normalized = normalizeBootstrapLauncher(normalized);
         }
 
@@ -108,7 +108,7 @@ public final class LaunchManifestNormalizer {
                             reorderTweakClass);
                 }
             } else if (analyzer.hasModLauncher()) {
-                mainClass = LibraryAnalyzer.MOD_LAUNCHER_MAIN;
+                mainClass = GameComponentAnalyzer.MOD_LAUNCHER_MAIN;
                 for (String optiFineTweaker : LibraryAnalyzer.OPTIFINE_TWEAKERS) {
                     builder.removeTweakClass(optiFineTweaker);
                 }

@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LAUNCH_WRAPPER_MAIN;
-
 public enum JavaVersionConstraint {
     VANILLA(true, VersionRange.all(), VersionRange.all()) {
         @Override
@@ -135,7 +133,7 @@ public enum JavaVersionConstraint {
         protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             if (version == null) return false;
-            return super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer) && LAUNCH_WRAPPER_MAIN.equals(version.mainClass()) &&
+            return super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer) && GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(version.mainClass()) &&
                     version.getLibraries().stream()
                             .filter(library -> "launchwrapper".equals(library.artifactId()))
                             .anyMatch(library -> VersionNumber.asVersion(library.version()).compareTo(VersionNumber.asVersion("1.13")) < 0);

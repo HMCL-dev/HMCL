@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.*;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -102,7 +103,7 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
         String originalMainClass = manifest.resolve(dependencyManager.getGameRepository()).mainClass();
         if (GameVersionNumber.compare("1.13", remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with fabric.
-            if (!LibraryAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
+            if (!GameComponentAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
                 throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
         }
 

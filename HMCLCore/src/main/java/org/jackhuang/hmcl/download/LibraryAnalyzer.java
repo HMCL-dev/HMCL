@@ -93,8 +93,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public boolean hasModLauncher() {
-        return LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass()) || manifest.getPatches().stream().anyMatch(
-                patch -> LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.mainClass())
+        return GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass()) || manifest.getPatches().stream().anyMatch(
+                patch -> GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.mainClass())
         );
     }
 
@@ -435,20 +435,13 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         }
     }
 
-    public static final String VANILLA_MAIN = "net.minecraft.client.main.Main";
-    public static final String LAUNCH_WRAPPER_MAIN = "net.minecraft.launchwrapper.Launch";
-    public static final String MOD_LAUNCHER_MAIN = "cpw.mods.modlauncher.Launcher";
-    public static final String BOOTSTRAP_LAUNCHER_MAIN = "cpw.mods.bootstraplauncher.BootstrapLauncher";
-    public static final String FORGE_BOOTSTRAP_MAIN = "net.minecraftforge.bootstrap.ForgeBootstrap";
-    public static final String NEO_FORGE_BOOTSTRAP_MAIN = "net.neoforged.fml.startup.Client";
-
     public static final Set<String> FORGE_OPTIFINE_MAIN = Set.of(
-            LibraryAnalyzer.VANILLA_MAIN,
-            LibraryAnalyzer.LAUNCH_WRAPPER_MAIN,
-            LibraryAnalyzer.MOD_LAUNCHER_MAIN,
-            LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN,
-            LibraryAnalyzer.FORGE_BOOTSTRAP_MAIN,
-            LibraryAnalyzer.NEO_FORGE_BOOTSTRAP_MAIN
+            GameComponentAnalyzer.VANILLA_MAIN,
+            GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN,
+            GameComponentAnalyzer.MOD_LAUNCHER_MAIN,
+            GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN,
+            GameComponentAnalyzer.FORGE_BOOTSTRAP_MAIN,
+            GameComponentAnalyzer.NEO_FORGE_BOOTSTRAP_MAIN
     );
 
     public static final VersionRange<VersionNumber> FORGE_OPTIFINE_BROKEN_RANGE = VersionNumber.between("48.0.0", "49.0.50");

@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LaunchManifestPreparation;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
@@ -90,7 +89,7 @@ public final class DefaultGameInstanceTest {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
         GameInstanceID instanceId = new GameInstanceID("instance");
         GameInstanceManifest manifest = new GameInstanceManifest(instanceId)
-                .withMainClass(LibraryAnalyzer.MOD_LAUNCHER_MAIN)
+                .withMainClass(GameComponentAnalyzer.MOD_LAUNCHER_MAIN)
                 .withLibraries(List.of(
                         new Library(new Artifact("net.minecraftforge", "forge", "1.0")),
                         new Library(new Artifact("optifine", "OptiFine", "1.0"))));
@@ -118,7 +117,7 @@ public final class DefaultGameInstanceTest {
         Library optiFineLaunchWrapper = new Library(
                 new Artifact("optifine", "launchwrapper-of", "2.0"));
         GameInstanceManifest manifest = new GameInstanceManifest(instanceId)
-                .withMainClass(LibraryAnalyzer.LAUNCH_WRAPPER_MAIN)
+                .withMainClass(GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN)
                 .withLibraries(List.of(forge, optiFine, optiFineLaunchWrapper));
         GameInstanceManifest launchManifest = repository.publish(instanceId, manifest)
                 .getResolvedManifest()
@@ -160,7 +159,7 @@ public final class DefaultGameInstanceTest {
         Library forge = new Library(new Artifact("net.minecraftforge", "forge", "1.0"));
         Library optiFine = new Library(new Artifact("optifine", "OptiFine", "1.0"));
         GameInstanceManifest manifest = new GameInstanceManifest(instanceId)
-                .withMainClass(LibraryAnalyzer.MOD_LAUNCHER_MAIN)
+                .withMainClass(GameComponentAnalyzer.MOD_LAUNCHER_MAIN)
                 .withLibraries(List.of(forge, optiFine));
         GameInstanceManifest launchManifest = repository.publish(instanceId, manifest)
                 .getResolvedManifest()

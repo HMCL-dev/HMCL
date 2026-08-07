@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -167,10 +164,9 @@ public final class GameLibrariesTask extends Task<Void> {
 
             Path file = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
             if ("optifine".equals(library.groupId()) && Files.exists(file) && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(manifest).orElse(null)).compareTo("1.20.4") == 0) {
-                String forgeVersion = LibraryAnalyzer.analyze(manifest, "1.20.4")
-                        .getVersion(LibraryAnalyzer.LibraryType.FORGE)
-                        .orElse(null);
-                if (forgeVersion != null && LibraryAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
+                @Nullable String forgeVersion = GameComponentAnalyzer.analyze(manifest, "1.20.4")
+                        .getVersion(GameComponentType.FORGE);
+                if (forgeVersion != null && GameComponentAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
                     try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(file)) {
                         Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
                     } catch (IOException e) {

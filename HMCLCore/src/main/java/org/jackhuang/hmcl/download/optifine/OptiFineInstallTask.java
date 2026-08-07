@@ -124,7 +124,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
     @Override
     public void execute() throws Exception {
         String originalMainClass = manifest.resolve(dependencyManager.getGameRepository()).mainClass();
-        if (!LibraryAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
+        if (!GameComponentAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
             throw new UnsupportedInstallationException(UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER);
 
         List<Library> libraries = new ArrayList<>(4);
@@ -194,7 +194,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
                 String buildof = Files.readString(buildofText).trim();
                 VersionNumber buildofVer = VersionNumber.asVersion(buildof);
 
-                if (LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass)) {
+                if (GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass)) {
                     // OptiFine H1 Pre2+ is compatible with Forge 1.17
                     if (buildofVer.compareTo("20210924-190833") < 0) {
                         throw new UnsupportedInstallationException(UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2);
@@ -212,7 +212,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
                 remote.getSelfVersion(),
                 10000,
                 new Arguments().addGameArguments("--tweakClass", "optifine.OptiFineTweaker"),
-                LibraryAnalyzer.LAUNCH_WRAPPER_MAIN,
+                GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN,
                 libraries
         ));
 

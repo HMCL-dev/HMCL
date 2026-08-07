@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.Task;
@@ -63,9 +64,9 @@ public final class GameVerificationFixTask extends Task<Void> {
     @Override
     public void execute() throws IOException {
         Path jar = instance.getInstanceJarFile();
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, gameVersion.toString());
+        var analyzer = GameComponentAnalyzer.analyze(manifest, gameVersion.toString());
 
-        if (Files.exists(jar) && gameVersion.compareTo("1.6") < 0 && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
+        if (Files.exists(jar) && gameVersion.compareTo("1.6") < 0 && analyzer.has(GameComponentAnalyzer.LibraryType.FORGE)) {
             try (FileSystem fs = CompressingUtils.createWritableZipFileSystem(jar, StandardCharsets.UTF_8)) {
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.DSA"));
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.SF"));

@@ -17,11 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.game.Argument;
-import org.jackhuang.hmcl.game.GameInstanceLibraryBuilder;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.StringArgument;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -71,7 +67,7 @@ public final class LaunchManifestPreparation {
     private static GameInstanceManifest prepareBootstrapLauncher(
             GameRepository repository,
             GameInstanceManifest manifest) {
-        if (!LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(manifest.mainClass())) {
+        if (!GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(manifest.mainClass())) {
             return manifest;
         }
 

@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +58,7 @@ public final class LaunchClasspathResolver {
             return classpath;
         }
 
-        boolean removeFromClasspath = LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass());
+        boolean removeFromClasspath = GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass());
         @Nullable Path selectedInstallerFile = null;
 
         for (Library library : manifest.getLibraries()) {

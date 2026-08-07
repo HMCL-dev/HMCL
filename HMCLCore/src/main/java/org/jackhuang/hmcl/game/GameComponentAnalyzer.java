@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -146,12 +145,12 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
     );
 
     public static final Set<String> FORGE_OPTIFINE_MAIN = Set.of(
-            LibraryAnalyzer.VANILLA_MAIN,
-            LibraryAnalyzer.LAUNCH_WRAPPER_MAIN,
-            LibraryAnalyzer.MOD_LAUNCHER_MAIN,
-            LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN,
-            LibraryAnalyzer.FORGE_BOOTSTRAP_MAIN,
-            LibraryAnalyzer.NEO_FORGE_BOOTSTRAP_MAIN
+            VANILLA_MAIN,
+            LAUNCH_WRAPPER_MAIN,
+            MOD_LAUNCHER_MAIN,
+            BOOTSTRAP_LAUNCHER_MAIN,
+            FORGE_BOOTSTRAP_MAIN,
+            NEO_FORGE_BOOTSTRAP_MAIN
     );
 
     public static final VersionRange<VersionNumber> FORGE_OPTIFINE_BROKEN_RANGE = VersionNumber.between("48.0.0", "49.0.50");
