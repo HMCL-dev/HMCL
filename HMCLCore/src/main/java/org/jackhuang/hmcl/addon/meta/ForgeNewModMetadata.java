@@ -36,10 +36,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
-import org.tomlj.Toml;
-import org.tomlj.TomlArray;
-import org.tomlj.TomlParseResult;
-import org.tomlj.TomlTable;
+import org.tomlj.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -319,7 +316,7 @@ public final class ForgeNewModMetadata {
             if (tomlArray != null) {
                 dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
             }
-        } catch (ClassCastException ignored) { // https://github.com/HMCL-dev/HMCL/issues/5068
+        } catch (ClassCastException | TomlInvalidTypeException ignored) { // https://github.com/HMCL-dev/HMCL/issues/5068
         }
 
         if (dependencies == null) {
@@ -328,7 +325,7 @@ public final class ForgeNewModMetadata {
                 if (tomlArray != null) {
                     dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
                 }
-            } catch (ClassCastException e) {
+            } catch (ClassCastException | TomlInvalidTypeException e) {
                 try {
                     TomlTable table = toml.getTable("dependencies");
                     if (table == null)
