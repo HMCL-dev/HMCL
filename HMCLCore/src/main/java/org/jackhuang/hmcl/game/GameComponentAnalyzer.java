@@ -102,6 +102,45 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         );
     }
 
+    private static GameInstanceManifest removingMatchedLibrary(GameInstanceManifest manifest, GameComponentType type) {
+        List<Library> libraries = new ArrayList<>();
+        List<Library> rawLibraries = manifest.getLibraries();
+        for (Library library : rawLibraries) {
+            if (type.matchLibrary(library, rawLibraries)) {
+                // skip
+            } else {
+                libraries.add(library);
+            }
+        }
+        return manifest.withLibraries(libraries);
+    }
+
+    private GameInstancePatch removingMatchedLibrary(GameInstancePatch patch, GameComponentType type) {
+        List<Library> libraries = new ArrayList<>();
+        List<Library> rawLibraries = patch.getLibraries();
+        for (Library library : rawLibraries) {
+            if (type.matchLibrary(library, rawLibraries)) {
+                // skip
+            } else {
+                libraries.add(library);
+            }
+        }
+        return patch.withLibraries(libraries);
+    }
+
+    /// Remove library by library id
+    ///
+    /// @param componentType the patch identifier, such as `forge`, `optifine`, or `fabric`
+    /// @return this
+    public GameInstanceManifest removeLibrary(GameComponentType componentType) {
+        if (!has(componentType)) return manifest;
+        GameInstanceManifest manifest = removingMatchedLibrary(this.manifest, componentType);
+        return manifest.withPatches(this.manifest.getPatches().stream()
+                .filter(patch -> !componentType.getPatchId().equals(patch.id()))
+                .map(patch -> removingMatchedLibrary(patch, componentType))
+                .toList());
+    }
+
     public @Nullable String getVersion(GameComponentType type) {
         Mark mark = components.get(type);
         return mark != null ? mark.version() : null;

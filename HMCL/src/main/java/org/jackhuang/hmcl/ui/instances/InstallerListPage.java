@@ -108,7 +108,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, item.getComponentType().getPatchId(), libraryVersion));
             });
 
-            item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), item.getComponentType().getPatchId())
+            item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), item.getComponentType())
                     .thenComposeAsync(repository::saveAsync)
                     .withComposeAsync(repository.refreshAsync())
                     .withRunAsync(Schedulers.javafx(), () -> reloadCurrentInstance())
@@ -123,7 +123,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
             InstallerItem installerItem = new InstallerItem(mark.componentType(), InstallerItem.Style.LIST_ITEM);
             installerItem.versionProperty().set(new InstallerItem.InstalledState(mark.version(), false, false));
-            installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), mark.componentType().getPatchId())
+            installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), mark.componentType())
                     .thenComposeAsync(repository::saveAsync)
                     .withComposeAsync(repository.refreshAsync())
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)

@@ -21,6 +21,7 @@ import javafx.scene.Node;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -83,7 +84,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                     hints.add(new Task.StagesHint("hmcl.install.assets"));
                 }
             } else if (value instanceof RemoveVersionAction removeVersionAction) {
-                ret = ret.thenComposeAsync(version -> dependencyManager.removeLibraryAsync(version, removeVersionAction.libraryId));
+                ret = ret.thenComposeAsync(version -> dependencyManager.removeLibraryAsync(version, removeVersionAction.componentType));
             }
         }
 
@@ -177,10 +178,10 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     }
 
     public static class RemoveVersionAction {
-        private final String libraryId;
+        private final GameComponentType componentType;
 
-        public RemoveVersionAction(String libraryId) {
-            this.libraryId = libraryId;
+        public RemoveVersionAction(GameComponentType componentType) {
+            this.componentType = componentType;
         }
     }
 }

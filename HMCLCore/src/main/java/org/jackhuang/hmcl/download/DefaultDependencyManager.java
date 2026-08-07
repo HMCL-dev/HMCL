@@ -184,7 +184,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<GameInstanceManifest> installLibraryAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion) {
         AtomicReference<GameInstanceManifest> removedLibraryManifest = new AtomicReference<>();
 
-        return removeLibraryAsync(baseVersion, libraryVersion.getLibraryId())
+        return removeLibraryAsync(baseVersion, libraryVersion.getComponentType())
                 .thenComposeAsync(manifest -> {
                     removedLibraryManifest.set(manifest);
                     return libraryVersion.getInstallTask(this, manifest, modsDirectoryFor(manifest));
@@ -260,14 +260,14 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// Creates a task that removes a loader's libraries and patch from a manifest.
     ///
     /// @param manifest  the unresolved instance manifest
-    /// @param libraryId the patch identifier, such as `forge`, `optifine`, or `fabric`
+    /// @param componentType the patch identifier, such as `forge`, `optifine`, or `fabric`
     /// @return the task producing the updated independent manifest
-    public Task<GameInstanceManifest> removeLibraryAsync(GameInstanceManifest manifest, String libraryId) {
+    public Task<GameInstanceManifest> removeLibraryAsync(GameInstanceManifest manifest, GameComponentType componentType) {
         // Library removal operates on a standalone manifest so inherited launch metadata is retained.
         return Task.supplyAsync(() -> {
             GameInstanceManifest independentVersion = repository.resolve(manifest).standaloneManifest();
             String gameVersion = repository.getGameVersion(independentVersion).orElse(null);
-            return LibraryAnalyzer.analyze(independentVersion, gameVersion).removeLibrary(libraryId).build();
+            return GameComponentAnalyzer.analyze(independentVersion, gameVersion).removeLibrary(componentType);
         });
     }
 

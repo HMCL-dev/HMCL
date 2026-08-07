@@ -30,11 +30,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
@@ -278,7 +274,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         if (gameVersion != null && control.versions.containsKey(gameVersion)) {
                             List<RemoteAddon.Version> modVersions = control.versions.get(gameVersion);
                             if (modVersions != null && !modVersions.isEmpty()) {
-                                Set<ModLoaderType> targetLoaders = LibraryAnalyzer.analyze(resolvedManifest, gameVersion).getModLoaders();
+                                Set<ModLoaderType> targetLoaders = GameComponentAnalyzer.analyze(resolvedManifest, gameVersion).getModLoaders();
 
                                 resolve:
                                 for (RemoteAddon.Version modVersion : modVersions) {

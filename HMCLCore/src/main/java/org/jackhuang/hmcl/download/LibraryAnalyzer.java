@@ -98,54 +98,6 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         );
     }
 
-    private GameInstanceManifest removingMatchedLibrary(GameInstanceManifest manifest, String libraryId) {
-        LibraryType type = LibraryType.fromPatchId(libraryId);
-        if (type == null) return manifest;
-
-        List<Library> libraries = new ArrayList<>();
-        List<Library> rawLibraries = manifest.getLibraries();
-        for (Library library : rawLibraries) {
-            if (type.matchLibrary(library, rawLibraries)) {
-                // skip
-            } else {
-                libraries.add(library);
-            }
-        }
-        return manifest.withLibraries(libraries);
-    }
-
-    private GameInstancePatch removingMatchedLibrary(GameInstancePatch patch, String libraryId) {
-        LibraryType type = LibraryType.fromPatchId(libraryId);
-        if (type == null) return patch;
-
-        List<Library> libraries = new ArrayList<>();
-        List<Library> rawLibraries = patch.getLibraries();
-        for (Library library : rawLibraries) {
-            if (type.matchLibrary(library, rawLibraries)) {
-                // skip
-            } else {
-                libraries.add(library);
-            }
-        }
-        return patch.withLibraries(libraries);
-    }
-
-    /**
-     * Remove library by library id
-     *
-     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"/"neoforge"/"cleanroom"
-     * @return this
-     */
-    public LibraryAnalyzer removeLibrary(String libraryId) {
-        if (!has(libraryId)) return this;
-        GameInstanceManifest manifest = removingMatchedLibrary(this.manifest, libraryId);
-        this.manifest = manifest.withPatches(this.manifest.getPatches().stream()
-                .filter(patch -> !libraryId.equals(patch.id()))
-                .map(patch -> removingMatchedLibrary(patch, libraryId))
-                .collect(Collectors.toList()));
-        return this;
-    }
-
     public GameInstanceManifest build() {
         return manifest;
     }
