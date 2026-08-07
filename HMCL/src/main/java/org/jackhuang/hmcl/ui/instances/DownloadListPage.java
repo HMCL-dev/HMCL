@@ -181,8 +181,8 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
 
             setLoading(false);
             if (exception == null) {
-                items.setAll(result.getResults().collect(Collectors.toList()));
-                pageCount.set(result.getTotalPages());
+                items.setAll(result.results().collect(Collectors.toList()));
+                pageCount.set(result.totalPages());
                 failed.set(false);
             } else {
                 failed.set(true);
