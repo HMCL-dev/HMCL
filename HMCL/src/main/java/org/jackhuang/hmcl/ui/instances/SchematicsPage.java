@@ -598,7 +598,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         protected void updateItem(Item item, boolean empty) {
-            graphics.clearRippleImmediately();
+            graphics.releaseRippleImmediately();
             super.updateItem(item, empty);
 
             iconImageView.setImage(null);

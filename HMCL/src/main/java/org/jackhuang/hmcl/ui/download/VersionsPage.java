@@ -215,7 +215,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         public void updateItem(RemoteVersion remoteVersion, boolean empty) {
             RemoteVersion oldRemoteVersion = getItem();
 
-            ripplerContainer.clearRippleImmediately();
+            ripplerContainer.releaseRippleImmediately();
             super.updateItem(remoteVersion, empty);
 
             if (empty) {

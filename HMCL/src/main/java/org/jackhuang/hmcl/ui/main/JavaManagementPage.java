@@ -299,7 +299,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         protected void updateItem(JavaRuntime item, boolean empty) {
             JavaRuntime oldItem = getItem();
 
-            this.graphic.clearRippleImmediately();
+            this.graphic.releaseRippleImmediately();
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setGraphic(null);

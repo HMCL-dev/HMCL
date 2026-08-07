@@ -205,7 +205,7 @@ public class RipplerContainer extends StackPane {
         ripplerFillProperty().set(ripplerFill);
     }
 
-    public void clearRippleImmediately() {
+    public void releaseRippleImmediately() {
         buttonRippler.releaseRippleImmediately();
     }
 

@@ -45,7 +45,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.setting.SettingsManager;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,11 +65,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @DefaultProperty(value = "control")
 public class JFXRippler extends StackPane {
-
-    public static boolean isAnimationEnabled() {
-        return !SettingsManager.settings().isAnimationDisabled();
-    }
-
     public enum RipplerPos {
         FRONT, BACK
     }
@@ -276,16 +270,16 @@ public class JFXRippler extends StackPane {
         if (!isRipplerDisabled()) {
             rippler.setGeneratorCenterX(x);
             rippler.setGeneratorCenterY(y);
-            rippler.createRipple(isAnimationEnabled());
+            rippler.createRipple();
         }
     }
 
     protected void releaseRipple() {
-        rippler.releaseRipple(isAnimationEnabled());
+        rippler.releaseRipple();
     }
 
     public void releaseRippleImmediately() {
-        rippler.releaseRipple(false);
+        rippler.releaseRippleImmediately();
     }
 
     /**
@@ -297,7 +291,7 @@ public class JFXRippler extends StackPane {
         if (!isRipplerDisabled()) {
             rippler.setGeneratorCenterX(control.getLayoutBounds().getWidth() / 2);
             rippler.setGeneratorCenterY(control.getLayoutBounds().getHeight() / 2);
-            rippler.createRipple(isAnimationEnabled());
+            rippler.createRipple();
             return () -> {
                 // create fade out transition for the ripple
                 releaseRipple();
@@ -335,22 +329,16 @@ public class JFXRippler extends StackPane {
             rippler.overlayRect.outAnimation.stop();
         }
         rippler.createOverlay();
-        if (isAnimationEnabled()) {
-            rippler.overlayRect.inAnimation.play();
-        } else {
-            rippler.overlayRect.setOpacity(1D);
-        }
+        rippler.overlayRect.inAnimation.play();
     }
 
     public void hideOverlay() {
         if (!forceOverlay) {
             if (rippler.overlayRect != null) {
                 rippler.overlayRect.inAnimation.stop();
-                if (isAnimationEnabled()) {
-                    rippler.overlayRect.outAnimation.play();
-                } else {
-                    rippler.overlayRect.setOpacity(0D);
-                }
+            }
+            if (rippler.overlayRect != null) {
+                rippler.overlayRect.outAnimation.play();
             }
         } else {
             System.err.println("Ripple Overlay is forced!");
@@ -380,7 +368,7 @@ public class JFXRippler extends StackPane {
             this.setCacheHint(CacheHint.SPEED);
         }
 
-        private void createRipple(boolean animation) {
+        void createRipple() {
             if (!generating.getAndSet(true)) {
                 // create overlay once then change its color later
                 createOverlay();
@@ -396,46 +384,41 @@ public class JFXRippler extends StackPane {
 
                 // animate the ripple
                 overlayRect.outAnimation.stop();
-                if (animation) {
-                    overlayRect.inAnimation.play();
-                    ripple.inAnimation.play();
-                } else {
-                    overlayRect.setOpacity(1D);
-                    ripple.setScaleX(0D);
-                    ripple.setScaleY(0D);
-                    ripple.setTranslateX(0D);
-                    ripple.setTranslateY(0D);
-                    ripple.setOpacity(1D);
+                overlayRect.inAnimation.play();
+                ripple.inAnimation.play();
+            }
+        }
+
+        private void releaseRipple() {
+            Ripple ripple = ripplesQueue.poll();
+            if (ripple != null) {
+                ripple.inAnimation.stop();
+                ripple.outAnimation = new Timeline(
+                        new KeyFrame(Duration.millis(Math.min(800, (0.9 * 500) / ripple.getScaleX()))
+                                , ripple.outKeyValues));
+                ripple.outAnimation.setOnFinished((event) -> getChildren().remove(ripple));
+                ripple.outAnimation.play();
+                if (generating.getAndSet(false)) {
+                    if (overlayRect != null) {
+                        overlayRect.inAnimation.stop();
+                        if (!forceOverlay) {
+                            overlayRect.outAnimation.play();
+                        }
+                    }
                 }
             }
         }
 
-        private void releaseRipple(boolean animation) {
+        private void releaseRippleImmediately() {
             Ripple ripple = ripplesQueue.poll();
             if (ripple != null) {
-                if (animation) {
-                    ripple.inAnimation.stop();
-                    ripple.outAnimation = new Timeline(
-                            new KeyFrame(Duration.millis(Math.min(800, (0.9 * 500) / ripple.getScaleX()))
-                                    , ripple.outKeyValues));
-                    ripple.outAnimation.setOnFinished((event) -> getChildren().remove(ripple));
-                    ripple.outAnimation.play();
-                    if (generating.getAndSet(false)) {
-                        if (overlayRect != null) {
-                            overlayRect.inAnimation.stop();
-                            if (!forceOverlay) {
-                                overlayRect.outAnimation.play();
-                            }
-                        }
-                    }
-                } else {
-                    getChildren().remove(ripple);
-                    if (generating.getAndSet(false)) {
-                        if (overlayRect != null) {
-                            overlayRect.inAnimation.stop();
-                            if (!forceOverlay) {
-                                overlayRect.setOpacity(0D);
-                            }
+                getChildren().remove(ripple);
+                if (generating.getAndSet(false)) {
+                    if (overlayRect != null) {
+                        overlayRect.inAnimation.stop();
+                        if (!forceOverlay) {
+                            overlayRect.outAnimation.stop();
+                            overlayRect.setOpacity(0D);
                         }
                     }
                 }
@@ -585,13 +568,8 @@ public class JFXRippler extends StackPane {
         if (rippler.overlayRect != null) {
             rippler.overlayRect.inAnimation.stop();
             final RippleGenerator.OverLayRipple oldOverlay = rippler.overlayRect;
-            if (isAnimationEnabled()) {
-                rippler.overlayRect.outAnimation.setOnFinished((finish) -> rippler.getChildren().remove(oldOverlay));
-                rippler.overlayRect.outAnimation.play();
-            } else {
-                rippler.overlayRect.setOpacity(0D);
-                rippler.getChildren().remove(oldOverlay);
-            }
+            rippler.overlayRect.outAnimation.setOnFinished((finish) -> rippler.getChildren().remove(oldOverlay));
+            rippler.overlayRect.outAnimation.play();
             rippler.overlayRect = null;
         }
     }

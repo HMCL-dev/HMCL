@@ -715,7 +715,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
             var currentItem = getItem();
 
-            this.graphic.clearRippleImmediately();
+            this.graphic.releaseRippleImmediately();
             super.updateItem(themePack, empty);
 
             if (Objects.equals(getItem(), currentItem)) return;

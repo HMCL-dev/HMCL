@@ -162,7 +162,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     @Override
     public void updateItem(GameListItem item, boolean empty) {
-        this.graphic.clearRippleImmediately();
+        this.graphic.releaseRippleImmediately();
         super.updateItem(item, empty);
 
         this.imageView.imageProperty().unbind();
