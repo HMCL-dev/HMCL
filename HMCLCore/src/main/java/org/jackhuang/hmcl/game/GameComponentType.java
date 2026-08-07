@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -252,6 +253,7 @@ public enum GameComponentType {
         return modLoaderType != null;
     }
 
+    @Contract(pure = true)
     public String getPatchId() {
         return patchId;
     }

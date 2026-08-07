@@ -61,7 +61,7 @@ public class InstallersPage extends AbstractInstallersPage {
 
     protected void reload() {
         for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getLibraryId();
+            String libraryId = library.getComponentType().getPatchId();
             if (controller.getSettings().containsKey(libraryId)) {
                 library.versionProperty().set(new InstallerItem.InstalledState(getVersion(libraryId), false, false));
             } else {

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
@@ -28,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 
 public class GameInstallTask extends Task<GameInstancePatch> {
 
@@ -67,7 +66,7 @@ public class GameInstallTask extends Task<GameInstancePatch> {
     public void execute() throws Exception {
         GameInstancePatch patch = GameInstancePatch.fromManifest(
                 JsonUtils.fromNonNullJson(downloadTask.getResult(), GameInstanceManifest.class),
-                MINECRAFT.getPatchId(),
+                GameComponentType.GAME.getPatchId(),
                 remote.getGameVersion(),
                 GameInstancePatch.PRIORITY_MC).withJar(null);
         setResult(patch);

@@ -41,10 +41,7 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -53,7 +50,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  */
 public class InstallerItem extends Control {
     private final GameComponentType type;
-    private final String id;
     private final GameInstanceIconType iconType;
     private final Style style;
     private final ObjectProperty<InstalledState> versionProperty = new SimpleObjectProperty<>(this, "version", null);
@@ -83,20 +79,14 @@ public class InstallerItem extends Control {
         CARD,
     }
 
-
     public InstallerItem(GameComponentType type, Style style) {
         this.type = type;
-        this.id = type.getPatchId();
         this.style = style;
         this.iconType = GameInstanceIconType.getIconType(type);
     }
 
     public GameComponentType getComponentType() {
         return type;
-    }
-    
-    public String getLibraryId() {
-        return id;
     }
 
     public ObjectProperty<InstalledState> versionProperty() {
@@ -225,10 +215,7 @@ public class InstallerItem extends Control {
                 if (!item.resolvedStateProperty.isBound()) {
                     item.resolvedStateProperty.bind(Bindings.createObjectBinding(() -> {
                         InstalledState itemVersion = item.versionProperty.get();
-                        if (itemVersion != null) {
-                            return itemVersion;
-                        }
-                        return InstallableState.INSTANCE;
+                        return Objects.requireNonNullElse(itemVersion, InstallableState.INSTANCE);
                     }, item.versionProperty));
                 }
             }

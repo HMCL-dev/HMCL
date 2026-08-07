@@ -51,10 +51,11 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
         txtName.setEditable(false);
 
         for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getLibraryId();
-            if (libraryId.equals("game")) continue;
+            if (library.getComponentType() == GameComponentType.GAME) continue;
             library.setOnRemove(() -> {
-                controller.getSettings().put(libraryId, new UpdateInstallerWizardProvider.RemoveVersionAction(libraryId));
+                controller.getSettings().put(
+                        library.getComponentType().getPatchId(),
+                        new UpdateInstallerWizardProvider.RemoveVersionAction(library.getComponentType()));
                 reload();
             });
         }
@@ -88,11 +89,11 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
         boolean compatible = true;
 
         for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getLibraryId();
+            String libraryId = library.getComponentType().getPatchId();
             String version = analyzer.getVersion(library.getComponentType());
             String libraryVersion = Lang.requireNonNullElse(getVersion(libraryId), version);
             boolean alreadyInstalled = version != null && !(controller.getSettings().get(libraryId) instanceof UpdateInstallerWizardProvider.RemoveVersionAction);
-            if (!"game".equals(libraryId) && currentGameVersion != null && !currentGameVersion.equals(game) && getVersion(libraryId) == null && alreadyInstalled) {
+            if (library.getComponentType() != GameComponentType.GAME && currentGameVersion != null && !currentGameVersion.equals(game) && getVersion(libraryId) == null && alreadyInstalled) {
                 // For third-party libraries, if game version is being changed, and the library is not being reinstalled,
                 // warns the user that we should update the library.
                 library.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, true));
