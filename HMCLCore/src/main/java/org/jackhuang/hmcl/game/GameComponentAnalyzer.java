@@ -18,10 +18,8 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -38,17 +36,7 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         var components = new EnumMap<GameComponentType, Mark>(GameComponentType.class);
 
         if (gameVersion != null) {
-            components.put(GameComponentType.GAME, new Mark(GameComponentType.GAME, gameVersion, Status.CLEAR));
-        }
-
-        List<Library> rawLibraries = launchManifest.getLibraries();
-        for (Library library : rawLibraries) {
-            for (GameComponentType type : GameComponentType.ALL) {
-                if (type.matchLibrary(library, rawLibraries)) {
-                    components.put(type, new Mark(type, type.getComponentVersion(standaloneManifest, library.version()), Status.CLEAR));
-                    break;
-                }
-            }
+            components.put(GameComponentType.GAME, new Mark(GameComponentType.GAME, gameVersion, true));
         }
 
         for (GameInstancePatch patch : standaloneManifest.getPatches()) {
@@ -56,7 +44,19 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
 
             @Nullable GameComponentType type = GameComponentType.fromPatchId(patch.id());
             if (type != null) {
-                components.put(type, new Mark(type, patch.version(), Status.CLEAR));
+                components.put(type, new Mark(type, patch.version(), true));
+            }
+        }
+
+        List<Library> rawLibraries = launchManifest.getLibraries();
+        for (Library library : rawLibraries) {
+            for (GameComponentType type : GameComponentType.ALL) {
+                if (components.containsKey(type)) continue;
+
+                if (type.matchLibrary(library, rawLibraries)) {
+                    components.put(type, new Mark(type, type.getComponentVersion(standaloneManifest, library.version()), false));
+                    break;
+                }
             }
         }
 
@@ -91,12 +91,12 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
     /// If a library is provided in `$.patches`, it's structure is so clear that we can do any operation.
     /// Otherwise, we must guess how are these libraries mixed.
     /// Maybe a guessing implementation will be provided in the future. But by now, we simply set it to JUST\_EXISTED.
-    public Status getLibraryStatus(GameComponentType type) {
-        return Status.JUST_EXISTED; // TODO
+    public boolean isClear(GameComponentType type) {
+        return manifest.hasPatch(type.getPatchId());
     }
 
     @Override
-    public @NotNull Iterator<Mark> iterator() {
+    public Iterator<Mark> iterator() {
         return components.values().iterator();
     }
 
@@ -110,7 +110,7 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
     public record Mark(
             GameComponentType componentType,
             @Nullable String version,
-            Status status
+            boolean clear
     ) {
     }
 
