@@ -19,11 +19,7 @@ package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameInstancePatch;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -86,7 +82,7 @@ public class ForgeOldInstallTask extends Task<GameInstancePatch> {
 
             setResult(GameInstancePatch.fromManifest(
                     installProfile.getVersionInfo(),
-                    LibraryAnalyzer.LibraryType.FORGE.getPatchId(),
+                    GameComponentType.FORGE.getPatchId(),
                     selfVersion,
                     GameInstancePatch.PRIORITY_LOADER));
             dependencies.add(dependencyManager.checkLibraryCompletionAsync(installProfile.getVersionInfo(), true));

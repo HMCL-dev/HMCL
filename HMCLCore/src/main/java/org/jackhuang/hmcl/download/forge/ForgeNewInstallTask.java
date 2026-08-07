@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.game.GameInstanceJsonDownloadTask;
@@ -422,7 +421,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
 
         setResult(GameInstancePatch.fromManifest(
                 forgeVersion,
-                LibraryAnalyzer.LibraryType.FORGE.getPatchId(),
+                GameComponentType.FORGE.getPatchId(),
                 selfVersion,
                 GameInstancePatch.PRIORITY_LOADER));
     }

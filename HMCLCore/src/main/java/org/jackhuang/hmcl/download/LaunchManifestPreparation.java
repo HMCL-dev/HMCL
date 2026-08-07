@@ -27,11 +27,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
-
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.BOOTSTRAP_LAUNCHER;
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.FORGE;
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.NEO_FORGE;
 
 /// Applies launch-manifest argument adjustments that depend on the installed filesystem.
 @NotNullByDefault
@@ -71,12 +68,12 @@ public final class LaunchManifestPreparation {
             return manifest;
         }
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, null);
-        if (!analyzer.has(FORGE) && !analyzer.has(NEO_FORGE)) {
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
+        if (!analyzer.has(GameComponentType.FORGE) && !analyzer.has(GameComponentType.NEO_FORGE)) {
             return manifest;
         }
 
-        if (analyzer.getVersion(BOOTSTRAP_LAUNCHER)
+        if (Optional.ofNullable(analyzer.getVersion(GameComponentType.BOOTSTRAP_LAUNCHER))
                 .filter(version -> VersionNumber.compare(version, "0.1.17") < 0)
                 .isEmpty()) {
             return manifest;
