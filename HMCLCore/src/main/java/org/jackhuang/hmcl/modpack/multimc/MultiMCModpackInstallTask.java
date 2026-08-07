@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.modpack.multimc;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -145,7 +144,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             String mcVersion = null;
             for (MultiMCManifest.MultiMCManifestComponent component : components) {
-                if (MultiMCComponents.getComponent(component.getUid()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
+                if (MultiMCComponents.getComponent(component.getUid()) == GameComponentType.GAME) {
                     mcVersion = component.getVersion();
                     break;
                 }

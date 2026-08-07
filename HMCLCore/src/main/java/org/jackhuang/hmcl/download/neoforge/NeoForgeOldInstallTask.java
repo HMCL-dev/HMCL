@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -406,7 +405,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
         setResult(GameInstancePatch.fromManifest(
                 neoForgeVersion,
-                LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId(),
+                GameComponentType.NEO_FORGE.getPatchId(),
                 selfVersion,
                 GameInstancePatch.PRIORITY_LOADER));
     }

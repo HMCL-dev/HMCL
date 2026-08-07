@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.modpack.multimc;
 
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
@@ -36,7 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Exports one registered game instance as a MultiMC modpack archive.
@@ -93,15 +93,16 @@ public class MultiMCModpackExportTask extends Task<Void> {
                 throw new IOException("Cannot parse the version of " + instanceId);
             }
             String gameVersion = version.toString();
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(instance.getResolvedManifest(), gameVersion);
+            GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(instance.getResolvedManifest(), gameVersion);
             List<MultiMCManifest.MultiMCManifestComponent> components = new ArrayList<>();
-            components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, MultiMCComponents.getComponent(MINECRAFT), gameVersion));
+            components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, MultiMCComponents.getComponent(GameComponentType.GAME), gameVersion));
 
-            for (Map.Entry<String, LibraryAnalyzer.LibraryType> pair : MultiMCComponents.getPairs()) {
+            for (Map.Entry<String, GameComponentType> pair : MultiMCComponents.getPairs()) {
                 if (pair.getValue().isModLoader()) {
-                    analyzer.getVersion(pair.getValue()).ifPresent(
-                            v -> components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, pair.getKey(), v))
-                    );
+                    String componentVersion = analyzer.getVersion(pair.getValue());
+                    if (componentVersion != null) {
+                        components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, pair.getKey(), componentVersion));
+                    }
                 }
             }
 

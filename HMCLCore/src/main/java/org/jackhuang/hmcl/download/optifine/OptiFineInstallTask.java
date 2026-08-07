@@ -208,7 +208,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
         }
 
         setResult(new GameInstancePatch(
-                LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(),
+                GameComponentType.OPTIFINE.getPatchId(),
                 remote.getSelfVersion(),
                 10000,
                 new Arguments().addGameArguments("--tweakClass", "optifine.OptiFineTweaker"),
