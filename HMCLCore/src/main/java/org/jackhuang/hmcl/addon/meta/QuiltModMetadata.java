@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -71,7 +72,7 @@ public final class QuiltModMetadata {
         this.quilt_loader = quiltLoader;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, List<CoreMod> coreMods) throws IOException, JsonParseException {
         ZipArchiveEntry path = tree.getEntry("quilt.mod.json");
         if (path == null) {
             throw new IOException("File " + modFile + " is not a Quilt mod.");
@@ -92,7 +93,7 @@ public final class QuiltModMetadata {
                 root.quilt_loader.version,
                 "",
                 Optional.ofNullable(root.quilt_loader.metadata.contact.get("homepage")).map(jsonElement -> jsonElement.getAsJsonPrimitive().getAsString()).orElse(""),
-                root.quilt_loader.metadata.icon
+                root.quilt_loader.metadata.icon, coreMods
         );
     }
 }

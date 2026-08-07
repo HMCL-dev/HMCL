@@ -391,6 +391,18 @@ public final class Lang {
         return result;
     }
 
+    public static <T extends Comparable<T>> T minNullable(T a, T b) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return a.compareTo(b) <= 0 ? a : b;
+    }
+
+    public static <T extends Comparable<T>> T maxNullable(T a, T b) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return a.compareTo(b) >= 0 ? a : b;
+    }
+
     public static Throwable resolveException(Throwable e) {
         if (e instanceof ExecutionException || e instanceof CompletionException)
             return resolveException(e.getCause());

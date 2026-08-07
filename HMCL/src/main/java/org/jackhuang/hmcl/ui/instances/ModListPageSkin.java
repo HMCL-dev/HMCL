@@ -40,6 +40,7 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.meta.CoreMod;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -628,18 +629,30 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             content.setSubtitle(joiner.toString());
 
-            if (modLoaderType == ModLoaderType.UNKNOWN) {
-                content.addTagWarning(i18n("mods.unknown"));
-            } else if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
-                warning.add(i18n("mods.warning.loader_mismatch"));
-                switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
-                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
-                    case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
-                    case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
-                    case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
-                    case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
-                    case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
+            {
+                Set<ModLoaderType> modFileLoaders = EnumSet.noneOf(ModLoaderType.class);
+                if (modLoaderType != ModLoaderType.UNKNOWN) modFileLoaders.add(modLoaderType);
+                modFileLoaders.addAll(CoreMod.getSupportedLoaders(modInfo.getCoreMods(), getSkinnable().gameVersion));
+                if (modFileLoaders.stream().anyMatch(loader -> getSkinnable().supportedLoaders.contains(loader))) {
+                    if (!modInfo.getCoreMods().isEmpty())
+                        content.addTag("CoreMod");
+                } else {
+                    if (modLoaderType == ModLoaderType.UNKNOWN) {
+                        content.addTagWarning(i18n("mods.unknown"));
+                    } else {
+                        warning.add(i18n("mods.warning.loader_mismatch"));
+                        switch (modLoaderType) {
+                            case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
+                            case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
+                            case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
+                            case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
+                            case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
+                            case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
+                            case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
+                        }
+                    }
+                    if (!modInfo.getCoreMods().isEmpty())
+                        content.addTagWarning("CoreMod");
                 }
             }
 
