@@ -1394,7 +1394,7 @@ public final class FXUtils {
     }
 
     public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
-        return view -> new JFXListCell<T>() {
+        return view -> new JFXListCell<>() {
             @Override
             public void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
