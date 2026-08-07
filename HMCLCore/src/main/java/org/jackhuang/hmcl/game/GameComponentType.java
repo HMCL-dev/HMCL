@@ -222,6 +222,8 @@ public enum GameComponentType {
         }
     };
 
+    public static final List<GameComponentType> ALL = List.of(GameComponentType.values());
+
     private final String patchId;
     private final @Nullable ModLoaderType modLoaderType;
 

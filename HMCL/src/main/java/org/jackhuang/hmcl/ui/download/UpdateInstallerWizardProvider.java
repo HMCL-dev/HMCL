@@ -94,12 +94,12 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {
+                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameInstance.getVersion().toString(), downloadProvider, libraryId, () -> {
                     if (oldLibraryVersion == null) {
                         controller.onFinish();
                     } else if ("game".equals(libraryId)) {
                         String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
-                        controller.onNext(new AdditionalInstallersPage(newGameVersion, gameInstance.getManifest(), controller, repository, downloadProvider));
+                        controller.onNext(new AdditionalInstallersPage(newGameVersion, gameInstance.getManifest(), controller, gameInstance.getRepository(), downloadProvider));
                     } else {
                         Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);

@@ -50,10 +50,6 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return Optional.ofNullable(libraries.get(type)).map(Pair::getValue);
     }
 
-    public Optional<Library> getLibrary(LibraryType type) {
-        return Optional.ofNullable(libraries.get(type.getPatchId())).map(Pair::getKey);
-    }
-
     /**
      * If a library is provided in $.patches, it's structure is so clear that we can do any operation.
      * Otherwise, we must guess how are these libraries mixed.
@@ -205,17 +201,6 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         }
 
         return new LibraryAnalyzer(manifest, libraries);
-    }
-
-    public static boolean isModded(GameInstanceManifest.Resolved resolved) {
-        String mainClass = resolved.launchManifest().mainClass();
-        return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
-                || mainClass.startsWith("net.minecraftforge")
-                || mainClass.startsWith("net.neoforged")
-                || mainClass.startsWith("top.outlands") //Cleanroom
-                || mainClass.startsWith("net.fabricmc")
-                || mainClass.startsWith("org.quiltmc")
-                || mainClass.startsWith("cpw.mods"));
     }
 
     public Set<ModLoaderType> getModLoaders() {

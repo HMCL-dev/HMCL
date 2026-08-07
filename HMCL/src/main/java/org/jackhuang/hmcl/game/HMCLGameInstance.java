@@ -199,7 +199,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
         boolean isolated = switch (type) {
             case NEVER -> false;
             case ALWAYS -> true;
-            case MODDED -> LibraryAnalyzer.isModded(getResolvedManifest());
+            case MODDED -> getResolvedManifest().isModded();
         };
 
         if (isolated) {
@@ -466,7 +466,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
             }
 
             GameInstanceManifest.Resolved resolvedManifest = getResolvedManifest();
-            if (LibraryAnalyzer.isModded(resolvedManifest)) {
+            if (resolvedManifest.isModded()) {
                 LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolvedManifest, null);
                 if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
                     return GameInstanceIconType.FABRIC.getIcon();

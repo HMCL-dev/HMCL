@@ -92,6 +92,20 @@ public record GameInstanceManifest(
                 throw new IllegalArgumentException("Standalone manifest cannot inherit from another manifest");
             }
         }
+
+        public boolean isModded() {
+            String mainClass = launchManifest().mainClass();
+            if (mainClass == null || GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
+                return false;
+            }
+
+            for (String packageName : GameComponentAnalyzer.MOD_LOADER_MAIN_CLASSES_PACKAGES) {
+                if (mainClass.startsWith(packageName))
+                    return true;
+            }
+
+            return false;
+        }
     }
 
     GameInstanceManifest merge(GameInstanceManifest parent) {
