@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 /// @author Glavo
 @NotNullByDefault
 public enum GameComponentType {
-    GAME("game", null) {
+    GAME("game") {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
             return true;
@@ -50,7 +50,7 @@ public enum GameComponentType {
             return false;
         }
     },
-    LEGACY_FABRIC_API("legacyfabric-api", null) {
+    LEGACY_FABRIC_API("legacyfabric-api") {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
             return "net.legacyfabric".equals(library.groupId()) && "legacyfabric-api".equals(library.artifactId());
@@ -72,7 +72,7 @@ public enum GameComponentType {
             return false;
         }
     },
-    FABRIC_API("fabric-api", null) {
+    FABRIC_API("fabric-api") {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
             return "net.fabricmc".equals(library.groupId()) && "fabric-api".equals(library.artifactId());
@@ -195,7 +195,7 @@ public enum GameComponentType {
             return "com.mumfrey".equals(library.groupId()) && "liteloader".equals(library.artifactId());
         }
     },
-    OPTIFINE("optifine", null) {
+    OPTIFINE("optifine") {
         private static final Set<String> GROUPS = Set.of("net.optifine", "optifine");
 
         @Override
@@ -209,13 +209,13 @@ public enum GameComponentType {
             return "org.quiltmc".equals(library.groupId()) && "quilt-loader".equals(library.artifactId());
         }
     },
-    QUILT_API("quilt-api", null) {
+    QUILT_API("quilt-api") {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
             return "org.quiltmc".equals(library.groupId()) && "quilt-api".equals(library.artifactId());
         }
     },
-    BOOTSTRAP_LAUNCHER("", null) {
+    BOOTSTRAP_LAUNCHER("") {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
             return "cpw.mods".equals(library.groupId()) && "bootstraplauncher".equals(library.artifactId());
@@ -233,7 +233,12 @@ public enum GameComponentType {
         }
     }
 
-    GameComponentType(String patchId, @Nullable ModLoaderType modLoaderType) {
+    GameComponentType(String patchId) {
+        this.patchId = patchId;
+        this.modLoaderType = null;
+    }
+
+    GameComponentType(String patchId, ModLoaderType modLoaderType) {
         this.patchId = patchId;
         this.modLoaderType = modLoaderType;
     }
