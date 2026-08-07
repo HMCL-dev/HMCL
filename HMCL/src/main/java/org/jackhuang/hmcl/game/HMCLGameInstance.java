@@ -43,7 +43,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -386,12 +385,12 @@ public class HMCLGameInstance extends DefaultGameInstance {
     /// Soft-cached icon image for this instance id.
     ///
     /// Shared across COW snapshot wrappers. The computed [Image] is retained only via a
-    /// [SoftReference], so it can be reclaimed under memory pressure when nothing else holds it.
+    /// [WeakReference], so it can be reclaimed under memory pressure when nothing else holds it.
     private @Nullable WeakCachedIconImageProperty iconImage;
 
     /// Returns the observable icon image for this instance.
     ///
-    /// The image is stored in a [SoftReference] cache: when nothing else strongly references it
+    /// The image is stored in a [WeakReference] cache: when nothing else strongly references it
     /// (for example no UI node is displaying it), the JVM may reclaim the [Image] under memory
     /// pressure. The next [#getIconImage] reloads it.
     ///
@@ -696,15 +695,10 @@ public class HMCLGameInstance extends DefaultGameInstance {
                     JsonSchema.check(jsonObject, GameSettings.Instance.CURRENT_SCHEMA);
             switch (schemaResult.status()) {
                 case MISSING -> LOG.warning("Missing schema in instance game settings: " + file);
-                case INVALID -> LOG.warning("Invalid schema in instance game settings: "
-                        + file + ", Actual: " + schemaResult.invalidValue());
-                case UNPARSEABLE -> LOG.warning("Unparseable schema in instance game settings: "
-                        + file + ", Actual: " + schemaResult.actual());
-                case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: "
-                        + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
-                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA ->
-                        LOG.warning("Unsupported instance game settings schema. Expected: "
-                                + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
+                case INVALID -> LOG.warning("Invalid schema in instance game settings: %s, Actual: %s".formatted(file, schemaResult.invalidValue()));
+                case UNPARSEABLE -> LOG.warning("Unparseable schema in instance game settings: %s, Actual: %s".formatted(file, schemaResult.actual()));
+                case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: %s, Actual: %s".formatted(GameSettings.Instance.CURRENT_SCHEMA, schemaResult.actual()));
+                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA -> LOG.warning("Unsupported instance game settings schema. Expected: %s, Actual: %s".formatted(GameSettings.Instance.CURRENT_SCHEMA, schemaResult.actual()));
                 case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
                 }
             }

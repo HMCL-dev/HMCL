@@ -542,6 +542,4 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                     16L * 1024 * 1024 * 1024);
         return suggested;
     }
-
-
 }

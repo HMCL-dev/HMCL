@@ -63,7 +63,6 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         return new GameComponentAnalyzer(standaloneManifest, components);
     }
 
-
     public static GameComponentAnalyzer analyze(GameInstanceManifest.Resolved resolved, @Nullable String gameVersion) {
         return analyze(resolved.standaloneManifest(), resolved.launchManifest(), gameVersion);
     }

@@ -166,7 +166,7 @@ public final class GameInstanceManifestTest {
 
         GameInstancePatch patch = originalPatch
                 .withMainClass("new.Main")
-                .withId(null);
+                .withId((String) null);
 
         JsonObject updatedJson = patch.toJsonObject();
         assertEquals("value", updatedJson.get("unknownField").getAsString());
