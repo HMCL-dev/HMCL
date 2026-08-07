@@ -66,13 +66,13 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
             }
         }
         {
-            // coremods.json in Forge 1.13-1.20.1 & NeoForge 1.21.4-
+            // coremods.json in Forge 1.13-1.21.10 & NeoForge 1.21.4-
             // TODO Find a sample
             if (tree.getEntry("META-INF/coremods.json") != null) {
                 forgeMin = Lang.minNullable(forgeMin, asGameVersion("1.13"));
-                forgeMax = asGameVersion("1.21.10");
+                forgeMax = asGameVersion("1.21.10"); // Removed in https://github.com/MinecraftForge/MinecraftForge/pull/10746
                 neoMin = asGameVersion("1.20.1");
-                neoMax = asGameVersion("1.21.4");
+                neoMax = asGameVersion("1.21.4"); // Removed in https://github.com/neoforged/NeoForge/pull/2072
             }
         }
         {
@@ -81,14 +81,25 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
                 forgeMin = Lang.minNullable(forgeMin, asGameVersion("1.13"));
                 forgeMax = GameVersionNumber.unknown();
                 neoMin = asGameVersion("1.20.1");
-                neoMax = asGameVersion("1.21.8");
+                neoMax = asGameVersion("1.21.8"); // Replaced by ClassProcessorProvider
             }
         }
         {
             // ICoreMod for NeoForge
+            // https://github.com/neoforged/FancyModLoader/pull/79
+            // https://neoforged.net/news/2024-retrospection/#the-changes
             // TODO Find a sample
             if (tree.getEntry("META-INF/services/net.neoforged.neoforgespi.coremod.ICoreMod") != null) {
                 neoMin = Lang.minNullable(neoMin, asGameVersion("1.20.5"));
+                neoMax = asGameVersion("1.21.8"); // Replaced by ClassProcessorProvider
+            }
+        }
+        {
+            // ClassProcessorProvider for NeoForge, replaces ITransformationService & ICoreMod
+            // https://github.com/neoforged/NeoForge/pull/2655
+            // https://github.com/neoforged/FancyModLoader/pull/358
+            if (tree.getEntry("META-INF/services/net.neoforged.neoforgespi.transformation.ClassProcessorProvider") != null) {
+                neoMin = Lang.minNullable(neoMin, asGameVersion("1.21.9"));
                 neoMax = GameVersionNumber.unknown();
             }
         }
