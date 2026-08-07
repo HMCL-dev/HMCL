@@ -87,6 +87,21 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         return components.containsKey(type);
     }
 
+    public boolean has(ModLoaderType type) {
+        for (GameComponentType componentType : components.keySet()) {
+            if (componentType.getModLoaderType() == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasModLauncher() {
+        return GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass()) || manifest.getPatches().stream().anyMatch(
+                patch -> GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.mainClass())
+        );
+    }
+
     public @Nullable String getVersion(GameComponentType type) {
         Mark mark = components.get(type);
         return mark != null ? mark.version() : null;

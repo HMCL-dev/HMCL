@@ -24,7 +24,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectPropertyBase;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
@@ -467,22 +467,14 @@ public class HMCLGameInstance extends DefaultGameInstance {
 
             GameInstanceManifest.Resolved resolvedManifest = getResolvedManifest();
             if (resolvedManifest.isModded()) {
-                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolvedManifest, null);
-                if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return GameInstanceIconType.FABRIC.getIcon();
-                else if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return GameInstanceIconType.QUILT.getIcon();
-                else if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
-                    return GameInstanceIconType.LEGACY_FABRIC.getIcon();
-                else if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return GameInstanceIconType.NEO_FORGE.getIcon();
-                else if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return GameInstanceIconType.FORGE.getIcon();
-                else if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
-                    return GameInstanceIconType.CLEANROOM.getIcon();
-                else if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return GameInstanceIconType.CHICKEN.getIcon();
-                else if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
+                GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(resolvedManifest, null);
+                for (ModLoaderType type : ModLoaderType.values()) {
+                    if (analyzer.has(type)) {
+                        return GameInstanceIconType.getIconType(type).getIcon();
+                    }
+                }
+
+                if (analyzer.has(GameComponentType.OPTIFINE))
                     return GameInstanceIconType.OPTIFINE.getIcon();
             }
 
@@ -711,8 +703,8 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: "
                         + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA ->
-                    LOG.warning("Unsupported instance game settings schema. Expected: "
-                            + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
+                        LOG.warning("Unsupported instance game settings schema. Expected: "
+                                + GameSettings.Instance.CURRENT_SCHEMA + ", Actual: " + schemaResult.actual());
                 case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
                 }
             }

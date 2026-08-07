@@ -28,12 +28,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.BOOTSTRAP_LAUNCHER;
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.FORGE;
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.LITELOADER;
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.NEO_FORGE;
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.OPTIFINE;
-
 /// Normalizes a structurally resolved manifest into the stable view consumed by launch-time code.
 ///
 /// Normalization depends only on manifest content. Filesystem-dependent compatibility adjustments
@@ -82,13 +76,13 @@ public final class LaunchManifestNormalizer {
     private static GameInstanceManifest normalizeLaunchWrapper(
             GameInstanceManifest manifest,
             boolean reorderTweakClass) {
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, null);
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
         GameInstanceLibraryBuilder builder = new GameInstanceLibraryBuilder(manifest);
         @Nullable String mainClass = null;
 
         // Forge installers may replace the complete argument list, so compatible tweakers must be
         // restored in deterministic order.
-        if (analyzer.has(LITELOADER) && !analyzer.hasModLauncher()) {
+        if (analyzer.has(GameComponentType.LITELOADER) && !analyzer.hasModLauncher()) {
             builder.replaceTweakClass(
                     LibraryAnalyzer.LITELOADER_TWEAKER,
                     LibraryAnalyzer.LITELOADER_TWEAKER,
@@ -98,8 +92,8 @@ public final class LaunchManifestNormalizer {
             builder.removeTweakClass(LibraryAnalyzer.LITELOADER_TWEAKER);
         }
 
-        if (analyzer.has(OPTIFINE)) {
-            if (!analyzer.has(LITELOADER) && !analyzer.has(FORGE)) {
+        if (analyzer.has(GameComponentType.OPTIFINE)) {
+            if (!analyzer.has(GameComponentType.LITELOADER) && !analyzer.has(GameComponentType.FORGE)) {
                 if (builder.hasTweakClass(LibraryAnalyzer.OPTIFINE_TWEAKERS[1])) {
                     builder.replaceTweakClass(
                             LibraryAnalyzer.OPTIFINE_TWEAKERS[1],
@@ -125,7 +119,7 @@ public final class LaunchManifestNormalizer {
             }
         }
 
-        boolean hasForge = analyzer.has(FORGE);
+        boolean hasForge = analyzer.has(GameComponentType.FORGE);
         boolean hasModLauncher = analyzer.hasModLauncher();
         for (String forgeTweaker : LibraryAnalyzer.FORGE_TWEAKERS) {
             if (!hasForge) {
@@ -148,8 +142,8 @@ public final class LaunchManifestNormalizer {
     /// @param manifest the resolved manifest
     /// @return the repaired manifest
     private static GameInstanceManifest normalizeModLauncher(GameInstanceManifest manifest) {
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, null);
-        if (!analyzer.has(FORGE) || !analyzer.has(OPTIFINE)) {
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
+        if (!analyzer.has(GameComponentType.FORGE) || !analyzer.has(GameComponentType.OPTIFINE)) {
             return manifest;
         }
 
@@ -186,11 +180,11 @@ public final class LaunchManifestNormalizer {
     /// @return the repaired manifest
     private static GameInstanceManifest normalizeBootstrapLauncher(GameInstanceManifest manifest) {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, null);
-        if (!analyzer.has(FORGE) && !analyzer.has(NEO_FORGE)) {
+        if (!analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && !analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
             return manifest;
         }
 
-        if (analyzer.getVersion(BOOTSTRAP_LAUNCHER)
+        if (analyzer.getVersion(LibraryAnalyzer.LibraryType.BOOTSTRAP_LAUNCHER)
                 .filter(version -> VersionNumber.compare(version, "0.1.17") >= 0)
                 .isEmpty()) {
             return manifest;

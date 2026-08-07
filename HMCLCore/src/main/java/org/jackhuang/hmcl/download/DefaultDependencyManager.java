@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -134,21 +135,20 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             GameInstanceManifest original = instance.getManifest();
             GameInstanceManifest.Resolved resolvedInstanceManifest = instance.getResolvedManifest();
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolvedInstanceManifest, gameVersion);
-            for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+            GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(resolvedInstanceManifest, gameVersion);
+            for (GameComponentType type : GameComponentType.values()) {
                 if (!analyzer.has(type))
                     continue;
 
-                if (type == LibraryAnalyzer.LibraryType.OPTIFINE) {
-                    String optifinePatchVersion = analyzer.getVersion(type)
-                            .map(optifineVersion -> {
+                if (type == GameComponentType.OPTIFINE) {
+                    String optifinePatchVersion = Optional.ofNullable(analyzer.getVersion(type))                            .map(optifineVersion -> {
                                 Matcher matcher = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$").matcher(optifineVersion);
                                 return matcher.find() ? matcher.group("optifine") : optifineVersion;
                             })
                             .orElseGet(() -> resolvedInstanceManifest.standaloneManifest().getPatches().stream()
                                     .filter(patch -> "optifine".equals(patch.id()))
                                     .findAny()
-                                    .map(gameInstancePatch -> gameInstancePatch.version())
+                                    .map(GameInstancePatch::version)
                                     .orElse(null));
 
                     boolean needsReInstallation = manifest.getLibraries().stream()
