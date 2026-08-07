@@ -26,7 +26,6 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.game.JavaVersionConstraint;

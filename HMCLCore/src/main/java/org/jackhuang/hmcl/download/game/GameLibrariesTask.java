@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;

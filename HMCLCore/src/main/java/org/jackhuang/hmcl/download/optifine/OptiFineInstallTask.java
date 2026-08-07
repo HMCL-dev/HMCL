@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.optifine;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.game.*;
