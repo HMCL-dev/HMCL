@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -85,44 +84,44 @@ public final class LaunchManifestNormalizer {
         // restored in deterministic order.
         if (analyzer.has(GameComponentType.LITELOADER) && !analyzer.hasModLauncher()) {
             builder.replaceTweakClass(
-                    LibraryAnalyzer.LITELOADER_TWEAKER,
-                    LibraryAnalyzer.LITELOADER_TWEAKER,
+                    GameComponentAnalyzer.LITELOADER_TWEAKER,
+                    GameComponentAnalyzer.LITELOADER_TWEAKER,
                     !reorderTweakClass,
                     reorderTweakClass);
         } else {
-            builder.removeTweakClass(LibraryAnalyzer.LITELOADER_TWEAKER);
+            builder.removeTweakClass(GameComponentAnalyzer.LITELOADER_TWEAKER);
         }
 
         if (analyzer.has(GameComponentType.OPTIFINE)) {
             if (!analyzer.has(GameComponentType.LITELOADER) && !analyzer.has(GameComponentType.FORGE)) {
-                if (builder.hasTweakClass(LibraryAnalyzer.OPTIFINE_TWEAKERS[1])) {
+                if (builder.hasTweakClass(GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(1))) {
                     builder.replaceTweakClass(
-                            LibraryAnalyzer.OPTIFINE_TWEAKERS[1],
-                            LibraryAnalyzer.OPTIFINE_TWEAKERS[0],
+                            GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(1),
+                            GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(0),
                             !reorderTweakClass,
                             reorderTweakClass);
                 }
             } else if (analyzer.hasModLauncher()) {
                 mainClass = GameComponentAnalyzer.MOD_LAUNCHER_MAIN;
-                for (String optiFineTweaker : LibraryAnalyzer.OPTIFINE_TWEAKERS) {
+                for (String optiFineTweaker : GameComponentAnalyzer.OPTIFINE_TWEAKERS) {
                     builder.removeTweakClass(optiFineTweaker);
                 }
-            } else if (builder.hasTweakClass(LibraryAnalyzer.OPTIFINE_TWEAKERS[0])) {
+            } else if (builder.hasTweakClass(GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(0))) {
                 builder.replaceTweakClass(
-                        LibraryAnalyzer.OPTIFINE_TWEAKERS[0],
-                        LibraryAnalyzer.OPTIFINE_TWEAKERS[1],
+                        GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(0),
+                        GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(1),
                         !reorderTweakClass,
                         reorderTweakClass);
             }
         } else {
-            for (String optiFineTweaker : LibraryAnalyzer.OPTIFINE_TWEAKERS) {
+            for (String optiFineTweaker : GameComponentAnalyzer.OPTIFINE_TWEAKERS) {
                 builder.removeTweakClass(optiFineTweaker);
             }
         }
 
         boolean hasForge = analyzer.has(GameComponentType.FORGE);
         boolean hasModLauncher = analyzer.hasModLauncher();
-        for (String forgeTweaker : LibraryAnalyzer.FORGE_TWEAKERS) {
+        for (String forgeTweaker : GameComponentAnalyzer.FORGE_TWEAKERS) {
             if (!hasForge) {
                 builder.removeTweakClass(forgeTweaker);
             } else if (!hasModLauncher && builder.hasTweakClass(forgeTweaker)) {

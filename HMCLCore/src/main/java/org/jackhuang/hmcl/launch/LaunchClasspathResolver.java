@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.launch;
 
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -28,9 +27,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.FORGE;
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.LITELOADER;
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.OPTIFINE;
+import static org.jackhuang.hmcl.game.GameComponentType.*;
 
 /// Resolves the library classpath used for one launch attempt.
 @NotNullByDefault
@@ -53,7 +50,7 @@ public final class LaunchClasspathResolver {
             GameRepository repository,
             GameInstanceManifest manifest) {
         Set<String> classpath = new LinkedHashSet<>(repository.getClasspath(manifest));
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(manifest, null);
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
         if (!analyzer.has(OPTIFINE) || (!analyzer.has(LITELOADER) && !analyzer.has(FORGE))) {
             return classpath;
         }
