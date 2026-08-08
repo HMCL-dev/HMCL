@@ -59,6 +59,8 @@ public abstract class DefaultGameInstance implements GameInstance {
 
     protected GameInstanceManifest.@Nullable Resolved resolvedManifest;
 
+    private @Nullable GameComponentAnalyzer analyzer;
+
     /// Cached Minecraft game version detected from this instance's primary jar.
     ///
     /// `null` means detection has not been attempted yet. After detection, unknown results are
@@ -161,7 +163,10 @@ public abstract class DefaultGameInstance implements GameInstance {
 
     @Override
     public GameComponentAnalyzer getAnalyzer() {
-        return null;
+        if (analyzer == null) {
+            analyzer = GameComponentAnalyzer.analyze(getResolvedManifest(), getVersion());
+        }
+        return analyzer;
     }
 
     /// {@inheritDoc}
