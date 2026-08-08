@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Optional;
 
@@ -82,7 +83,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
     @Override
     protected void reload() {
         GameInstanceManifest.Resolved resolvedManifest = repository.resolve(manifest);
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(resolvedManifest, repository.getGameVersion(manifest).orElse(null));
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(resolvedManifest, repository.getGameVersion(manifest).map(GameVersionNumber::asGameVersion).orElse(null));
         String game = analyzer.getVersion(GameComponentType.GAME);
         String currentGameVersion = Lang.nonNull(getVersion("game"), game);
 

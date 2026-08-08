@@ -97,7 +97,7 @@ public class GameCrashWindow extends Stage {
         this.gameInstance = gameInstance;
         this.launchOptions = launchOptions;
         this.logs = logs;
-        this.analyzer = GameComponentAnalyzer.analyze(gameInstance.getResolvedManifest(), gameInstance.getVersion().toString());
+        this.analyzer = gameInstance.getAnalyzer();
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " " + i18n("settings.memory.unit.mib")).orElse("-");
 

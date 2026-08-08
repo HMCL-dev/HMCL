@@ -104,7 +104,7 @@ public class GameItem {
                 }
 
                 StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
-                GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(gameInstance.getResolvedManifest(), result.gameVersion);
+                GameComponentAnalyzer analyzer = gameInstance.getAnalyzer();
                 for (GameComponentAnalyzer.Mark mark : analyzer) {
                     if (mark.componentType() == GameComponentType.GAME) continue;
 

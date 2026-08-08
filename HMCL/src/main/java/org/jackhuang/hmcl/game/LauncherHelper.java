@@ -437,7 +437,7 @@ public final class LauncherHelper {
     }
 
     private static Task<JavaRuntime> checkGameState(HMCLGameInstance gameInstance, GameSettings.Effective setting, GameInstanceManifest manifest) {
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, gameInstance.getVersion().toString());
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, gameInstance.getVersion());
         GameVersionNumber gameVersion = gameInstance.getVersion();
 
         Task<JavaRuntime> getJavaTask = Task.supplyAsync(() -> {

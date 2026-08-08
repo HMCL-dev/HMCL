@@ -78,7 +78,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
         HMCLGameRepository repository = gameInstance.getRepository();
 
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(gameInstance.getResolvedManifest(), gameInstance.getVersion().toString());
+        GameComponentAnalyzer analyzer = gameInstance.getAnalyzer();
 
         itemsProperty().clear();
 
