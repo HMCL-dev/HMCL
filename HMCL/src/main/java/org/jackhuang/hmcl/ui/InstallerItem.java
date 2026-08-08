@@ -129,7 +129,7 @@ public class InstallerItem extends Control {
     public final static class InstallerItemGroup {
         private final InstallerItem game;
 
-        private final InstallerItem[] libraries;
+        private final InstallerItem[] components;
 
         private Set<InstallerItem> getIncompatibles(Map<InstallerItem, Set<InstallerItem>> incompatibleMap, InstallerItem item) {
             return incompatibleMap.computeIfAbsent(item, it -> new HashSet<>());
@@ -221,13 +221,13 @@ public class InstallerItem extends Control {
             }
 
             if (gameVersion == null) {
-                this.libraries = all;
+                this.components = all;
             } else if (gameVersion.compareTo("1.12.2") == 0) {
-                this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, optiFine};
+                this.components = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, optiFine};
             } else if (gameVersion.compareTo("1.13.2") <= 0) {
-                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi};
+                this.components = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi};
             } else {
-                this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
+                this.components = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
             }
         }
 
@@ -235,8 +235,8 @@ public class InstallerItem extends Control {
             return game;
         }
 
-        public InstallerItem[] getLibraries() {
-            return libraries;
+        public InstallerItem[] getComponents() {
+            return components;
         }
     }
 

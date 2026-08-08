@@ -61,10 +61,10 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
         this.controller = controller;
         this.group = new InstallerItem.InstallerItemGroup(GameVersionNumber.asGameVersion(gameVersion), getInstallerItemStyle());
 
-        for (InstallerItem library : group.getLibraries()) {
-            GameComponentType type = library.getComponentType();
+        for (InstallerItem component : group.getComponents()) {
+            GameComponentType type = component.getComponentType();
             if (type == GameComponentType.GAME) continue;
-            library.setOnInstall(() -> {
+            component.setOnInstall(() -> {
                 if (!Boolean.TRUE.equals(state().getShownTips().get(FABRIC_QUILT_API_TIP))
                         && (type == GameComponentType.FABRIC_API
                         || type == GameComponentType.QUILT_API
@@ -76,7 +76,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                     ).ok(null).addCancel(i18n("button.do_not_show_again"), () -> state().getShownTips().put(FABRIC_QUILT_API_TIP, true)).build());
                 }
 
-                if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
+                if (!(component.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
                     controller.onNext(
                             new VersionsPage(
                                     controller,
@@ -88,7 +88,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                             ), Navigation.NavigationDirection.NEXT
                     );
             });
-            library.setOnRemove(() -> {
+            component.setOnRemove(() -> {
                 controller.getSettings().remove(type.getPatchId());
                 reload();
             });
@@ -167,16 +167,16 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             }
 
             {
-                InstallerItem[] libraries = control.group.getLibraries();
+                InstallerItem[] components = control.group.getComponents();
 
-                FlowPane libraryPane = new FlowPane(16, 16, libraries);
+                FlowPane libraryPane = new FlowPane(16, 16, components);
                 ScrollPane scrollPane = new ScrollPane(libraryPane);
                 scrollPane.setFitToWidth(true);
                 scrollPane.setFitToHeight(true);
                 BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
                 root.setCenter(scrollPane);
 
-                if (libraries.length <= 8)
+                if (components.length <= 8)
                     scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             }
 

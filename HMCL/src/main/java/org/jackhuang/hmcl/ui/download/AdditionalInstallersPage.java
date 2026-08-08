@@ -47,12 +47,12 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
         txtName.setText(instance.getId().id());
         txtName.setEditable(false);
 
-        for (InstallerItem library : group.getLibraries()) {
-            if (library.getComponentType() == GameComponentType.GAME) continue;
-            library.setOnRemove(() -> {
+        for (InstallerItem component : group.getComponents()) {
+            if (component.getComponentType() == GameComponentType.GAME) continue;
+            component.setOnRemove(() -> {
                 controller.getSettings().put(
-                        library.getComponentType().getPatchId(),
-                        new UpdateInstallerWizardProvider.RemoveVersionAction(library.getComponentType()));
+                        component.getComponentType().getPatchId(),
+                        new UpdateInstallerWizardProvider.RemoveVersionAction(component.getComponentType()));
                 reload();
             });
         }
@@ -81,20 +81,20 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
         boolean gameVersionChanged = !instance.getVersion().toString().equals(getVersion(GameComponentType.GAME));
         boolean compatible = true;
 
-        for (InstallerItem library : group.getLibraries()) {
-            GameComponentType componentType = library.getComponentType();
-            String version = instance.getComponentVersion(library.getComponentType());
+        for (InstallerItem component : group.getComponents()) {
+            GameComponentType componentType = component.getComponentType();
+            String version = instance.getComponentVersion(component.getComponentType());
             String libraryVersion = Lang.requireNonNullElse(getVersion(componentType), version);
             boolean alreadyInstalled = version != null && !(controller.getSettings().get(componentType.getPatchId()) instanceof UpdateInstallerWizardProvider.RemoveVersionAction);
-            if (library.getComponentType() != GameComponentType.GAME && gameVersionChanged && getVersion(componentType) == null && alreadyInstalled) {
+            if (component.getComponentType() != GameComponentType.GAME && gameVersionChanged && getVersion(componentType) == null && alreadyInstalled) {
                 // For third-party libraries, if game version is being changed, and the library is not being reinstalled,
                 // warns the user that we should update the library.
-                library.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, true));
+                component.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, true));
                 compatible = false;
             } else if (alreadyInstalled || getVersion(componentType) != null) {
-                library.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
+                component.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
             } else {
-                library.versionProperty().set(null);
+                component.versionProperty().set(null);
             }
         }
 

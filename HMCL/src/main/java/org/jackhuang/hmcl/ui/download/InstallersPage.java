@@ -60,12 +60,12 @@ public class InstallersPage extends AbstractInstallersPage {
     }
 
     protected void reload() {
-        for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getComponentType().getPatchId();
+        for (InstallerItem component : group.getComponents()) {
+            String libraryId = component.getComponentType().getPatchId();
             if (controller.getSettings().containsKey(libraryId)) {
-                library.versionProperty().set(new InstallerItem.InstalledState(getVersion(libraryId), false, false));
+                component.versionProperty().set(new InstallerItem.InstalledState(getVersion(libraryId), false, false));
             } else {
-                library.versionProperty().set(null);
+                component.versionProperty().set(null);
             }
         }
         if (!isNameModifiedByUser) {
@@ -115,12 +115,12 @@ public class InstallersPage extends AbstractInstallersPage {
     private void setTxtNameWithLoaders() {
         StringBuilder nameBuilder = new StringBuilder(getTitle());
 
-        for (InstallerItem library : group.getLibraries()) {
-            if (library.getComponentType() == GameComponentType.GAME
-                    || !controller.getSettings().containsKey(library.getComponentType().getPatchId()))
+        for (InstallerItem component : group.getComponents()) {
+            if (component.getComponentType() == GameComponentType.GAME
+                    || !controller.getSettings().containsKey(component.getComponentType().getPatchId()))
                 continue;
 
-            String loaderName = switch (library.getComponentType()) {
+            String loaderName = switch (component.getComponentType()) {
                 case FORGE -> "Forge";
                 case NEO_FORGE -> "NeoForge";
                 case CLEANROOM -> "Cleanroom";

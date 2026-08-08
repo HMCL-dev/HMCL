@@ -85,36 +85,36 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameInstance.getVersion(), InstallerItem.Style.LIST_ITEM);
 
         // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
-        for (InstallerItem item : group.getLibraries()) {
+        for (InstallerItem component : group.getComponents()) {
 
             // Skip fabric-api and quilt-api and legacyfabric-api
-            if (item.getComponentType().getPatchId().endsWith("-api")) {
+            if (component.getComponentType().getPatchId().endsWith("-api")) {
                 continue;
             }
 
-            String libraryVersion = analyzer.getVersion(item.getComponentType());
+            String libraryVersion = analyzer.getVersion(component.getComponentType());
 
             if (libraryVersion != null) {
-                item.versionProperty().set(new InstallerItem.InstalledState(
+                component.versionProperty().set(new InstallerItem.InstalledState(
                         libraryVersion,
-                        !analyzer.isClear(item.getComponentType()),
+                        !analyzer.isClear(component.getComponentType()),
                         false
                 ));
             } else {
-                item.versionProperty().set(null);
+                component.versionProperty().set(null);
             }
 
-            item.setOnInstall(() -> {
-                Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, item.getComponentType().getPatchId(), libraryVersion));
+            component.setOnInstall(() -> {
+                Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, component.getComponentType().getPatchId(), libraryVersion));
             });
 
-            item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), item.getComponentType())
+            component.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), component.getComponentType())
                     .thenComposeAsync(repository::saveAsync)
                     .withComposeAsync(repository.refreshAsync())
                     .withRunAsync(Schedulers.javafx(), () -> reloadCurrentInstance())
                     .start());
 
-            itemsProperty().add(item);
+            itemsProperty().add(component);
         }
 
         // other third-party libraries which are unable to manage.
