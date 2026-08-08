@@ -78,10 +78,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
         HMCLGameRepository repository = gameInstance.getRepository();
 
-        GameComponentAnalyzer analyzer = gameInstance.getAnalyzer();
-
         itemsProperty().clear();
-
         InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameInstance.getVersion(), InstallerItem.Style.LIST_ITEM);
 
         // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
@@ -92,12 +89,12 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 continue;
             }
 
-            String libraryVersion = analyzer.getVersion(component.getComponentType());
+            @Nullable String libraryVersion = gameInstance.getComponentVersion(component.getComponentType());
 
             if (libraryVersion != null) {
                 component.versionProperty().set(new InstallerItem.InstalledState(
                         libraryVersion,
-                        !analyzer.isClear(component.getComponentType()),
+                        !gameInstance.getAnalyzer().isClear(component.getComponentType()),
                         false
                 ));
             } else {
@@ -111,14 +108,14 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             component.setOnRemove(() -> repository.getDependency().removeLibraryAsync(gameInstance.getManifest(), component.getComponentType())
                     .thenComposeAsync(repository::saveAsync)
                     .withComposeAsync(repository.refreshAsync())
-                    .withRunAsync(Schedulers.javafx(), () -> reloadCurrentInstance())
+                    .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
                     .start());
 
             itemsProperty().add(component);
         }
 
         // other third-party libraries which are unable to manage.
-        for (GameComponentAnalyzer.Mark mark : analyzer) {
+        for (GameComponentAnalyzer.Mark mark : gameInstance.getAnalyzer()) {
             // we have done this library above.
 
             InstallerItem installerItem = new InstallerItem(mark.componentType(), InstallerItem.Style.LIST_ITEM);
