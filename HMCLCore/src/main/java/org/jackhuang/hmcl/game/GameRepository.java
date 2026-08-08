@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -85,27 +84,11 @@ public interface GameRepository {
         return getSnapshot().getInstance(instanceId).getManifest();
     }
 
-    /// Returns a cached launch-ready manifest view for the instance.
-    ///
-    /// @param instanceId the instance id
-    /// @return the resolved manifest view
-    default GameInstanceManifest.Resolved getResolvedInstanceManifest(GameInstanceID instanceId)
-            throws NoSuchGameInstanceException {
-        return getSnapshot().getInstance(instanceId).getResolvedManifest();
-    }
-
     /// Returns the number of loaded instances.
     ///
     /// @return the loaded instance count
     default int getInstanceCount() {
         return getSnapshot().getInstanceCount();
-    }
-
-    /// Returns the stored manifests for all loaded instances.
-    ///
-    /// @return the loaded instance manifests
-    default Collection<GameInstanceManifest> getInstanceManifests() {
-        return getSnapshot().getInstanceManifests();
     }
 
     /// Returns the indexed game instance for the given id.
