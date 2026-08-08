@@ -255,7 +255,6 @@ public final class LaunchManifestNormalizer {
         for (Library library : manifest.getLibraries()) {
             String id = library.groupId() + ":" + library.artifactId();
             VersionNumber version = VersionNumber.asVersion(library.version());
-            String serialized = JsonUtils.GSON.toJson(library);
 
             if (!indexes.containsKey(id)) {
                 indexes.put(id, libraries.size());
@@ -275,6 +274,7 @@ public final class LaunchManifestNormalizer {
                     libraries.set(otherIndex, library);
                 } else if (comparison == 0 && library.equals(other)) {
                     String otherSerialized = JsonUtils.GSON.toJson(other);
+                    String serialized = JsonUtils.GSON.toJson(library);
                     if (serialized.length() > otherSerialized.length()) {
                         libraries.set(otherIndex, library);
                     }

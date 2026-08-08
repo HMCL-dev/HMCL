@@ -260,7 +260,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(manifest.id())) {
-                LOG.warning("Found circular dependency versions: " + resolvedSoFar);
+                LOG.warning("Found circular dependency instances: " + resolvedSoFar);
                 launchManifest = (manifest.jar() == null ? manifest.withJar(manifest.id()) : manifest)
                         .withInheritsFrom(null);
             } else {
