@@ -75,9 +75,9 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
     }
 
     private final GameInstanceManifest manifest;
-    private final Map<GameComponentType, Mark> components;
+    private final @Unmodifiable Map<GameComponentType, Mark> components;
 
-    private GameComponentAnalyzer(GameInstanceManifest manifest, Map<GameComponentType, Mark> components) {
+    private GameComponentAnalyzer(GameInstanceManifest manifest, @Unmodifiable Map<GameComponentType, Mark> components) {
         this.manifest = manifest;
         this.components = components;
     }
