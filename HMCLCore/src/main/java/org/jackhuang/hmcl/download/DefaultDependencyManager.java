@@ -129,22 +129,20 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             List<Task<?>> tasks = new ArrayList<>(0);
 
             GameVersionNumber detectedVersion = instance.getVersion();
-            if (detectedVersion == GameVersionNumber.unknown()) return null;
+            if (detectedVersion.equals(GameVersionNumber.unknown())) return null;
             String gameVersion = detectedVersion.toString();
 
             GameInstanceManifest original = instance.getManifest();
-            GameInstanceManifest.Resolved resolvedInstanceManifest = instance.getResolvedManifest();
-            GameComponentAnalyzer analyzer = instance.getAnalyzer();
             for (GameComponentType type : GameComponentType.values()) {
-                if (!analyzer.has(type))
+                if (!instance.hasComponent(type))
                     continue;
 
                 if (type == GameComponentType.OPTIFINE) {
-                    String optifinePatchVersion = Optional.ofNullable(analyzer.getVersion(type))                            .map(optifineVersion -> {
+                    String optifinePatchVersion = Optional.ofNullable(instance.getComponentVersion(type))                            .map(optifineVersion -> {
                                 Matcher matcher = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$").matcher(optifineVersion);
                                 return matcher.find() ? matcher.group("optifine") : optifineVersion;
                             })
-                            .orElseGet(() -> resolvedInstanceManifest.standaloneManifest().getPatches().stream()
+                            .orElseGet(() -> instance.getResolvedManifest().standaloneManifest().getPatches().stream()
                                     .filter(patch -> "optifine".equals(patch.id()))
                                     .findAny()
                                     .map(GameInstancePatch::version)

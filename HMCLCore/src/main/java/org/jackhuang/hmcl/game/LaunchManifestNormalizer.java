@@ -70,8 +70,6 @@ public final class LaunchManifestNormalizer {
             // DefaultLauncher when building the process command).
             normalized = normalizeBootstrapLauncher(normalized);
         }
-        // Vanilla and Fabric/Quilt need no loader-specific argument repair here; nothing currently
-        // coexists with Fabric the way OptiFine does with Forge/LiteLoader.
 
         return removeLegacyLog4jPatch(normalized);
     }
