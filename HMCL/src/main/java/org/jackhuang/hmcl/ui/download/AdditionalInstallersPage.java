@@ -44,7 +44,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
         this.gameVersion = gameVersion;
         this.manifest = instance.getManifest();
 
-        txtName.setText(instance.getId().toString());
+        txtName.setText(instance.getId().id());
         txtName.setEditable(false);
 
         for (InstallerItem library : group.getLibraries()) {
