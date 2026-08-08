@@ -156,8 +156,7 @@ public final class LauncherHelper {
 
         HMCLGameRepository repository = repository();
         DefaultDependencyManager dependencyManager = repository.getDependency();
-        AtomicReference<GameInstanceManifest> version = new AtomicReference<>(
-                gameInstance.getResolvedManifest().launchManifest());
+        var launchManifest = new AtomicReference<>(gameInstance.getResolvedManifest().launchManifest());
         GameVersionNumber gameVersion = gameInstance.getVersion();
         boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);
@@ -166,14 +165,14 @@ public final class LauncherHelper {
 
         AtomicReference<JavaRuntime> javaVersionRef = new AtomicReference<>();
 
-        TaskExecutor executor = checkGameState(gameInstance, setting, version.get())
+        TaskExecutor executor = checkGameState(gameInstance, setting, launchManifest.get())
                 .thenComposeAsync(java -> {
                     javaVersionRef.set(Objects.requireNonNull(java));
-                    version.set(NativePatcher.patchNative(gameInstance, version.get(), gameVersion, java, setting, javaArguments));
+                    launchManifest.set(NativePatcher.patchNative(gameInstance, launchManifest.get(), java, setting, javaArguments));
                     if (setting.getInheritable(GameSettings::notCheckGameProperty))
                         return null;
                     return Task.allOf(
-                            dependencyManager.checkGameCompletionAsync(gameInstance, version.get(), integrityCheck),
+                            dependencyManager.checkGameCompletionAsync(gameInstance, launchManifest.get(), integrityCheck),
                             Task.composeAsync(() -> {
                                 try {
                                     @Nullable ModpackConfiguration<?> configuration =
@@ -199,7 +198,7 @@ public final class LauncherHelper {
                                 if (lib == null)
                                     return null;
                                 GameRepository gameRepository = dependencyManager.getGameRepository();
-                                GameInstanceManifest manifest = version.get();
+                                GameInstanceManifest manifest = launchManifest.get();
                                 Path file = gameRepository.getLayout().getLibraryFile(manifest.id(), lib);
                                 if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
                                     LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
@@ -208,7 +207,7 @@ public final class LauncherHelper {
 
                                 String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.mesaDriverName();
 
-                                if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
+                                if (GameLibrariesTask.shouldDownloadLibrary(repository, launchManifest.get(), lib, integrityCheck)) {
                                     return new LibraryDownloadTask(dependencyManager, file, lib)
                                             .thenRunAsync(() -> javaAgents.add(agent));
                                 } else {
@@ -219,14 +218,14 @@ public final class LauncherHelper {
                     );
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> {
-                    return new GameVerificationFixTask(gameInstance, gameVersion, version.get());
+                    return new GameVerificationFixTask(gameInstance, gameVersion, launchManifest.get());
                 })
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
                             || setting.getInheritable(GameSettings::noJVMOptionsProperty)
                             || setting.getInheritable(GameSettings::noOptimizingJVMOptionsProperty)
                             || Boolean.TRUE.equals(state().getShownTips().get(LWJGL_3_4_1_TIP))
-                            || !NativePatcher.needPatchMemoryUtil(version.get(), javaVersionRef.get().getParsedVersion())) {
+                            || !NativePatcher.needPatchMemoryUtil(launchManifest.get(), javaVersionRef.get().getParsedVersion())) {
                         return Task.completed(null);
                     } else {
                         CompletableFuture<Void> future = new CompletableFuture<>();
@@ -290,12 +289,12 @@ public final class LauncherHelper {
 
                     return new HMCLGameLauncher(
                             gameInstance,
-                            version.get(),
+                            launchManifest.get(),
                             authInfo,
                             launchOptions,
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.compareTo(GameVersionNumber.unknown()) != 0)
+                                    : new HMCLProcessListener(repository, launchManifest.get(), authInfo, launchOptions, launchingLatch, gameVersion.compareTo(GameVersionNumber.unknown()) != 0)
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {

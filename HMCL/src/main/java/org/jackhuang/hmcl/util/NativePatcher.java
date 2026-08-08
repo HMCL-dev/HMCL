@@ -75,10 +75,10 @@ public final class NativePatcher {
 
     public static GameInstanceManifest patchNative(DefaultGameInstance instance,
                                                    GameInstanceManifest manifest,
-                                                   @NotNull GameVersionNumber gameVersion,
                                                    JavaRuntime javaVersion,
                                                    GameSettings.Effective settings,
                                                    List<String> javaArguments) {
+        GameVersionNumber gameVersion = instance.getVersion();
         if (settings.getInheritable(GameSettings::useCustomNativesProperty)) {
             if (gameVersion.compareTo("1.19") < 0)
                 return manifest;
