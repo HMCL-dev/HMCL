@@ -22,15 +22,11 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.GameComponentAnalyzer;
-import org.jackhuang.hmcl.game.GameComponentType;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Optional;
 
@@ -41,14 +37,16 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
     protected final HMCLGameRepository repository;
     protected final String gameVersion;
     protected final GameInstanceManifest manifest;
+    protected final HMCLGameInstance instance;
 
-    public AdditionalInstallersPage(String gameVersion, GameInstanceManifest manifest, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
+    public AdditionalInstallersPage(HMCLGameInstance instance, String gameVersion, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
+        this.instance = instance;
         this.gameVersion = gameVersion;
-        this.manifest = manifest;
+        this.manifest = instance.getManifest();
         this.repository = repository;
 
-        txtName.setText(manifest.id().toString());
+        txtName.setText(instance.getId().toString());
         txtName.setEditable(false);
 
         for (InstallerItem library : group.getLibraries()) {
@@ -74,32 +72,31 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
         return i18n("settings.tabs.installers");
     }
 
-    private String getVersion(String id) {
-        return Optional.ofNullable(controller.getSettings().get(id))
+    private String getVersion(GameComponentType type) {
+        return Optional.ofNullable(controller.getSettings().get(type.getPatchId()))
                 .flatMap(it -> Lang.tryCast(it, RemoteVersion.class))
                 .map(RemoteVersion::getSelfVersion).orElse(null);
     }
 
     @Override
     protected void reload() {
-        GameInstanceManifest.Resolved resolvedManifest = repository.resolve(manifest);
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(resolvedManifest, repository.getGameVersion(manifest).map(GameVersionNumber::asGameVersion).orElse(null));
+        GameComponentAnalyzer analyzer = instance.getAnalyzer();
         String game = analyzer.getVersion(GameComponentType.GAME);
-        String currentGameVersion = Lang.nonNull(getVersion("game"), game);
+        String currentGameVersion = Lang.nonNull(getVersion(GameComponentType.GAME), game);
 
         boolean compatible = true;
 
         for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getComponentType().getPatchId();
+            GameComponentType componentType = library.getComponentType();
             String version = analyzer.getVersion(library.getComponentType());
-            String libraryVersion = Lang.requireNonNullElse(getVersion(libraryId), version);
-            boolean alreadyInstalled = version != null && !(controller.getSettings().get(libraryId) instanceof UpdateInstallerWizardProvider.RemoveVersionAction);
-            if (library.getComponentType() != GameComponentType.GAME && currentGameVersion != null && !currentGameVersion.equals(game) && getVersion(libraryId) == null && alreadyInstalled) {
+            String libraryVersion = Lang.requireNonNullElse(getVersion(componentType), version);
+            boolean alreadyInstalled = version != null && !(controller.getSettings().get(componentType.getPatchId()) instanceof UpdateInstallerWizardProvider.RemoveVersionAction);
+            if (library.getComponentType() != GameComponentType.GAME && currentGameVersion != null && !currentGameVersion.equals(game) && getVersion(componentType) == null && alreadyInstalled) {
                 // For third-party libraries, if game version is being changed, and the library is not being reinstalled,
                 // warns the user that we should update the library.
                 library.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, true));
                 compatible = false;
-            } else if (alreadyInstalled || getVersion(libraryId) != null) {
+            } else if (alreadyInstalled || getVersion(componentType) != null) {
                 library.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
             } else {
                 library.versionProperty().set(null);
