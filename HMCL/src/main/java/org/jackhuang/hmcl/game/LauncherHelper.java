@@ -157,7 +157,6 @@ public final class LauncherHelper {
         HMCLGameRepository repository = repository();
         DefaultDependencyManager dependencyManager = repository.getDependency();
         var launchManifest = new AtomicReference<>(gameInstance.getResolvedManifest().launchManifest());
-        GameVersionNumber gameVersion = gameInstance.getVersion();
         boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
@@ -190,7 +189,7 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
-                                        || !(setting.getRenderer(gameVersion) instanceof Renderer.Driver renderer)
+                                        || !(setting.getRenderer(gameInstance.getVersion()) instanceof Renderer.Driver renderer)
                                         || renderer.mesaDriverName() == null)
                                     return null;
 
@@ -217,7 +216,7 @@ public final class LauncherHelper {
                             })
                     );
                 }).withStage("launch.state.dependencies")
-                .thenComposeAsync(() -> new GameVerificationFixTask(gameInstance, gameVersion, launchManifest.get()))
+                .thenComposeAsync(() -> new GameVerificationFixTask(gameInstance, gameInstance.getVersion(), launchManifest.get()))
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
                             || setting.getInheritable(GameSettings::noJVMOptionsProperty)
@@ -292,7 +291,7 @@ public final class LauncherHelper {
                             launchOptions,
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, launchManifest.get(), authInfo, launchOptions, launchingLatch, gameVersion.compareTo(GameVersionNumber.unknown()) != 0)
+                                    : new HMCLProcessListener(repository, launchManifest.get(), authInfo, launchOptions, launchingLatch, gameInstance.getVersion().compareTo(GameVersionNumber.unknown()) != 0)
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
@@ -356,8 +355,7 @@ public final class LauncherHelper {
                                     message = i18n("launch.failed.decompressing_natives") + "\n" + ex.getLocalizedMessage();
                                 } else if (ex instanceof LibraryDownloadException) {
                                     message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().name()) + "\n";
-                                    if (ex.getCause() instanceof ResponseCodeException) {
-                                        ResponseCodeException rce = (ResponseCodeException) ex.getCause();
+                                    if (ex.getCause() instanceof ResponseCodeException rce) {
                                         int responseCode = rce.getResponseCode();
                                         String uri = rce.getUri();
                                         if (responseCode == 404)
@@ -371,8 +369,7 @@ public final class LauncherHelper {
                                     URI uri = ((DownloadException) ex).getUri();
                                     if (ex.getCause() instanceof SocketTimeoutException) {
                                         message = i18n("install.failed.downloading.timeout", uri);
-                                    } else if (ex.getCause() instanceof ResponseCodeException) {
-                                        ResponseCodeException responseCodeException = (ResponseCodeException) ex.getCause();
+                                    } else if (ex.getCause() instanceof ResponseCodeException responseCodeException) {
                                         if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
                                             message = i18n("download.code." + responseCodeException.getResponseCode(), uri);
                                         } else {
@@ -387,8 +384,7 @@ public final class LauncherHelper {
                                     message = i18n("account.failed.injector_download_failure");
                                 } else if (ex instanceof CharacterDeletedException) {
                                     message = i18n("account.failed.character_deleted");
-                                } else if (ex instanceof ResponseCodeException) {
-                                    ResponseCodeException rce = (ResponseCodeException) ex;
+                                } else if (ex instanceof ResponseCodeException rce) {
                                     int responseCode = rce.getResponseCode();
                                     String uri = rce.getUri();
                                     if (responseCode == 404)
