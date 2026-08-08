@@ -321,6 +321,8 @@ public final class LaunchManifestNormalizer {
             }
         }
 
-        return manifest.withLibraries(libraries);
+        return libraries.size() == manifest.getLibraries().size()
+                ? manifest
+                : manifest.withLibraries(libraries);
     }
 }
