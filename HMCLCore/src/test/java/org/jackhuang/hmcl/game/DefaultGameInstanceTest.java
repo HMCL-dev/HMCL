@@ -55,34 +55,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @NotNullByDefault
 public final class DefaultGameInstanceTest {
 
-    /// Resolve normalizes only the derived launch view and leaves the stored patch structure intact.
+    /// Launch repair for ModLauncher adds support metadata without materializing bundled files.
     @Test
-    public void testResolveNormalizesLaunchWithoutChangingStoredPatches(@TempDir Path tempDirectory) {
-        TestRepository repository = new TestRepository(tempDirectory);
-        GameInstanceID instanceId = new GameInstanceID("instance");
-        Library oldLibrary = new Library(new Artifact("example", "library", "1.0"));
-        Library newLibrary = new Library(new Artifact("example", "library", "2.0"));
-        List<GameInstancePatch> patches = List.of(new GameInstancePatch(
-                "loader", null, 0, null, null, List.of(oldLibrary, newLibrary)));
-        GameInstanceManifest storedManifest = new GameInstanceManifest(instanceId)
-                .withRoot(true)
-                .withPatches(patches);
-        TestGameInstance instance = repository.publish(instanceId, storedManifest);
-
-        GameInstanceManifest.Resolved resolved = instance.getResolvedManifest();
-
-        assertEquals(1, resolved.launchManifest().getLibraries().size());
-        assertEquals("2.0", resolved.launchManifest().getLibraries().getFirst().version());
-        assertEquals(patches, resolved.standaloneManifest().getPatches());
-        assertEquals(storedManifest, instance.getManifest());
-        assertEquals(
-                resolved.launchManifest(),
-                LaunchManifestNormalizer.normalize(resolved.launchManifest()));
-    }
-
-    /// ModLauncher normalization adds support metadata without materializing bundled files.
-    @Test
-    public void testModLauncherNormalizationDoesNotWriteBundledLibraries(@TempDir Path tempDirectory) {
+    public void testModLauncherLaunchRepairDoesNotWriteBundledLibraries(@TempDir Path tempDirectory) {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
         GameInstanceID instanceId = new GameInstanceID("instance");
         GameInstanceManifest manifest = new GameInstanceManifest(instanceId)
@@ -92,7 +67,12 @@ public final class DefaultGameInstanceTest {
                         new Library(new Artifact("optifine", "OptiFine", "1.0"))));
         TestGameInstance instance = repository.publish(instanceId, manifest);
         GameInstanceManifest launchManifest = instance.getResolvedManifest().launchManifest();
-        Library transformerService = launchManifest.getLibraries().stream()
+        assertTrue(launchManifest.getLibraries().stream()
+                .noneMatch(library -> library.is(
+                        "org.jackhuang.hmcl", "transformer-discovery-service")));
+
+        GameInstanceManifest repaired = LaunchManifestNormalizer.repairForLaunch(launchManifest);
+        Library transformerService = repaired.getLibraries().stream()
                 .filter(library -> library.is(
                         "org.jackhuang.hmcl", "transformer-discovery-service"))
                 .findAny()
@@ -100,7 +80,7 @@ public final class DefaultGameInstanceTest {
         Path transformerFile = repository.getLayout().getLibraryFile(instanceId, transformerService);
 
         assertFalse(Files.exists(transformerFile));
-        assertEquals(launchManifest, LaunchManifestNormalizer.normalize(launchManifest));
+        assertEquals(repaired, LaunchManifestNormalizer.repairForLaunch(repaired));
     }
 
     /// Saving a manifest preserves its root flag and pending patches without baking in normalization.

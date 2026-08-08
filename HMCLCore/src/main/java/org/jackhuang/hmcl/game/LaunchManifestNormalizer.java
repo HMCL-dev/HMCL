@@ -17,21 +17,16 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.SimpleMultimap;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
 /// Launch-manifest library and argument adjustments used at resolve time and launch time.
 ///
-/// [#deduplicateLibraries(GameInstanceManifest)] runs when a repository resolves a launch view so
-/// consumers share a stable library list. Loader-specific argument repairs run later via
+/// Loader-specific argument repairs run later via
 /// [#repairForLaunch(GameInstanceManifest)] (for example from `LauncherHelper`) and do not depend on
 /// the installed filesystem. Path-sensitive BootstrapLauncher ignore-list fixes remain in
 /// `DefaultLauncher`.
@@ -41,29 +36,18 @@ public final class LaunchManifestNormalizer {
     private LaunchManifestNormalizer() {
     }
 
-    /// Removes redundant libraries from a structurally resolved launch manifest.
-    ///
-    /// The input must not contain inheritance or pending patches. The input is unchanged.
-    ///
-    /// @param manifest the structurally resolved launch manifest
-    /// @return the manifest with duplicate libraries collapsed
-    /// @throws IllegalArgumentException if the manifest still contains inheritance or pending patches
-    public static GameInstanceManifest deduplicateLibraries(GameInstanceManifest manifest) {
-        requireStructurallyResolved(manifest);
-        return uniqueLibraries(manifest);
-    }
-
     /// Applies loader-specific argument and library repairs for one launch attempt.
     ///
-    /// Expects a structurally resolved launch manifest, typically after
-    /// [#deduplicateLibraries(GameInstanceManifest)]. Builds a single [GameComponentAnalyzer] for
+    /// Expects a structurally resolved launch manifest. Builds a single [GameComponentAnalyzer] for
     /// the whole repair. The input is unchanged.
     ///
     /// @param manifest the launch manifest to repair
     /// @return the repaired launch manifest
     /// @throws IllegalArgumentException if the manifest still contains inheritance or pending patches
     public static GameInstanceManifest repairForLaunch(GameInstanceManifest manifest) {
-        requireStructurallyResolved(manifest);
+        if (manifest.inheritsFrom() != null || !manifest.getPatches().isEmpty()) {
+            throw new IllegalArgumentException("Launch manifest must be structurally resolved");
+        }
 
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
         GameInstanceManifest repaired = manifest;
@@ -88,13 +72,6 @@ public final class LaunchManifestNormalizer {
         // Vanilla and Fabric/Quilt need no loader-specific argument repair here.
 
         return removeLegacyLog4jPatch(repaired);
-    }
-
-    /// Requires a fully folded launch manifest without inheritance or pending patches.
-    private static void requireStructurallyResolved(GameInstanceManifest manifest) {
-        if (manifest.inheritsFrom() != null || !manifest.getPatches().isEmpty()) {
-            throw new IllegalArgumentException("Launch manifest must be structurally resolved");
-        }
     }
 
     /// Repairs LaunchWrapper tweak-class configuration.
@@ -266,67 +243,5 @@ public final class LaunchManifestNormalizer {
             return manifest.withLibraries(libraries.subList(1, libraries.size()));
         }
         return manifest;
-    }
-
-    /// Removes redundant library declarations while retaining rule-distinct variants.
-    ///
-    /// When two libraries share the same `groupId:artifactId` and equal compatibility rules, the
-    /// newer version wins. When versions are equal and the coordinate objects compare equal, the
-    /// declaration with the longer serialized JSON is kept (more metadata is treated as richer).
-    /// Equal id and version with unequal coordinate payloads (for example distinct `text2speech`
-    /// library vs native entries) are both retained.
-    private static GameInstanceManifest uniqueLibraries(GameInstanceManifest manifest) {
-        List<Library> libraries = new ArrayList<>();
-        SimpleMultimap<String, Integer, List<Integer>> indexes =
-                new SimpleMultimap<>(HashMap::new, ArrayList::new);
-
-        for (Library library : manifest.getLibraries()) {
-            String id = library.groupId() + ":" + library.artifactId();
-
-            if (!indexes.containsKey(id)) {
-                indexes.put(id, libraries.size());
-                libraries.add(library);
-                continue;
-            }
-
-            boolean duplicate = false;
-            for (int otherIndex : indexes.get(id)) {
-                Library other = libraries.get(otherIndex);
-                // Rules differ: keep both (platform-specific variants).
-                if (!CompatibilityRule.equals(library.rules(), other.rules())) {
-                    continue;
-                }
-
-                // Rules equal: drop the older version.
-                int comparison = VersionNumber.compare(library.version(), other.version());
-                if (comparison > 0) {
-                    libraries.set(otherIndex, library);
-                } else if (comparison == 0) {
-                    // Same library id and version: collapse true duplicates.
-                    if (library.equals(other)) {
-                        String otherSerialized = JsonUtils.GSON.toJson(other);
-                        String serialized = JsonUtils.GSON.toJson(library);
-                        // Prefer the entry with more serialized metadata when coordinates equal.
-                        if (serialized.length() > otherSerialized.length()) {
-                            libraries.set(otherIndex, library);
-                        }
-                    } else {
-                        // Same id/version but not equal (e.g. text2speech jar vs natives): keep both.
-                        continue;
-                    }
-                }
-                duplicate = true;
-                break;
-            }
-
-            if (!duplicate) {
-                indexes.put(id, libraries.size());
-                libraries.add(library);
-            }
-        }
-
-        return libraries.size() == manifest.getLibraries().size()
-                ? manifest
-                : manifest.withLibraries(libraries);
     }
 }

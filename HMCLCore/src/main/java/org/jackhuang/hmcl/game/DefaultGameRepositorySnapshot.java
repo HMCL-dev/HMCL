@@ -17,18 +17,13 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.SimpleMultimap;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -220,11 +215,15 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     /// @return the resolved manifest views
     /// @throws NoSuchGameInstanceException if an inherited parent is missing from this snapshot
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        GameInstanceManifest.Resolved resolved = resolveStructure(manifest, new HashSet<>());
-        GameInstanceManifest launchManifest =
-                LaunchManifestNormalizer.deduplicateLibraries(resolved.launchManifest());
-        return new GameInstanceManifest.Resolved(
-                resolved.unresolved(), launchManifest, resolved.standaloneManifest());
+        GameInstanceManifest.Resolved resolved = resolve(manifest, new HashSet<>());
+        GameInstanceManifest launchManifest = uniqueLibraries(resolved.launchManifest());
+        if (launchManifest != resolved.launchManifest()) {
+            resolved = new GameInstanceManifest.Resolved(
+                    resolved.unresolved(),
+                    launchManifest,
+                    resolved.standaloneManifest());
+        }
+        return resolved;
     }
 
     /// Resolves official-layout inheritance and patches without launch-library deduplication.
@@ -233,7 +232,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     /// @param resolvedSoFar instance ids already visited in the inheritance chain
     /// @return the resolved manifest views
     /// @throws NoSuchGameInstanceException if an inherited parent is missing from this snapshot
-    private GameInstanceManifest.Resolved resolveStructure(
+    private GameInstanceManifest.Resolved resolve(
             GameInstanceManifest manifest,
             Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
         GameInstanceManifest launchManifest;
@@ -267,7 +266,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
 
                 // It is supposed to auto-install a version in getVersion.
                 GameInstanceManifest.Resolved parentResolved =
-                        resolveStructure(parentInstance.getManifest(), resolvedSoFar);
+                        resolve(parentInstance.getManifest(), resolvedSoFar);
                 launchManifest = manifest.merge(parentResolved.launchManifest());
                 standaloneManifest = addPatches(
                         addPatches(parentResolved.standaloneManifest(), Collections.singleton(manifest.toPatch())),
@@ -292,6 +291,68 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         }
 
         return new GameInstanceManifest.Resolved(manifest, launchManifest, standaloneManifest);
+    }
+
+    /// Removes redundant library declarations while retaining rule-distinct variants.
+    ///
+    /// When two libraries share the same `groupId:artifactId` and equal compatibility rules, the
+    /// newer version wins. When versions are equal and the coordinate objects compare equal, the
+    /// declaration with the longer serialized JSON is kept (more metadata is treated as richer).
+    /// Equal id and version with unequal coordinate payloads (for example distinct `text2speech`
+    /// library vs native entries) are both retained.
+    private static GameInstanceManifest uniqueLibraries(GameInstanceManifest manifest) {
+        List<Library> libraries = new ArrayList<>();
+        SimpleMultimap<String, Integer, List<Integer>> indexes =
+                new SimpleMultimap<>(HashMap::new, ArrayList::new);
+
+        for (Library library : manifest.getLibraries()) {
+            String id = library.groupId() + ":" + library.artifactId();
+
+            if (!indexes.containsKey(id)) {
+                indexes.put(id, libraries.size());
+                libraries.add(library);
+                continue;
+            }
+
+            boolean duplicate = false;
+            for (int otherIndex : indexes.get(id)) {
+                Library other = libraries.get(otherIndex);
+                // Rules differ: keep both (platform-specific variants).
+                if (Objects.hashCode(library.rules()) != Objects.hashCode(other.rules())) {
+                    continue;
+                }
+
+                // Rules equal: drop the older version.
+                int comparison = VersionNumber.compare(library.version(), other.version());
+                if (comparison > 0) {
+                    libraries.set(otherIndex, library);
+                } else if (comparison == 0) {
+                    // Same library id and version: collapse true duplicates.
+                    if (library.equals(other)) {
+                        String otherSerialized = JsonUtils.GSON.toJson(other);
+                        String serialized = JsonUtils.GSON.toJson(library);
+                        // Prefer the entry with more serialized metadata when coordinates equal.
+                        if (serialized.length() > otherSerialized.length()) {
+                            libraries.set(otherIndex, library);
+                        }
+                    } else {
+                        // Same id/version but not equal (e.g. text2speech jar vs natives): keep both.
+                        continue;
+                    }
+                }
+                duplicate = true;
+                break;
+            }
+
+            if (!duplicate) {
+                indexes.put(id, libraries.size());
+                libraries.add(library);
+            }
+        }
+
+        return libraries.size() == manifest.getLibraries().size()
+                ? manifest
+                : manifest.withLibraries(libraries);
     }
 
     private static GameInstanceManifest addPatches(GameInstanceManifest manifest, @Nullable Collection<GameInstancePatch> additional) {

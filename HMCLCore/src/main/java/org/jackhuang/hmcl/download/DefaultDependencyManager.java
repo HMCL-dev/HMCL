@@ -262,11 +262,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<GameInstanceManifest> removeLibraryAsync(GameInstanceManifest manifest, GameComponentType componentType) {
         // Library removal operates on a standalone manifest so inherited launch metadata is retained.
         return Task.supplyAsync(() -> {
-            GameInstanceManifest independentVersion = repository.resolve(manifest).standaloneManifest();
-            GameVersionNumber gameVersion = repository.getGameVersion(independentVersion)
+            GameInstanceManifest standaloneManifest = repository.resolve(manifest).standaloneManifest();
+            GameVersionNumber gameVersion = repository.getGameVersion(standaloneManifest)
                     .map(GameVersionNumber::asGameVersion)
                     .orElse(null);
-            return GameComponentAnalyzer.analyze(independentVersion, gameVersion).removeLibrary(componentType);
+            return GameComponentAnalyzer.analyze(standaloneManifest, gameVersion).removeLibrary(componentType);
         });
     }
 

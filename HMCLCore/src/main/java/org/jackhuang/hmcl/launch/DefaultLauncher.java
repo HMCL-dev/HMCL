@@ -531,8 +531,8 @@ public class DefaultLauncher extends Launcher {
     /// for this launch, loose tokens are replaced with exact installed paths (or portable
     /// `${library_directory}` placeholders). `${primary_jar}` is always retained for Jigsaw.
     ///
-    /// BootstrapLauncher 0.1.17+ only matches file names; those manifests are repaired at resolve
-    /// time by [LaunchManifestNormalizer].
+    /// BootstrapLauncher 0.1.17+ only matches file names; those manifests are repaired for launch by
+    /// [LaunchManifestNormalizer#repairForLaunch(GameInstanceManifest)].
     ///
     /// @param jvmArguments     JVM arguments from the launch manifest
     /// @param libraryClasspath absolute library classpath entries for this launch (without primary jar)
