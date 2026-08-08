@@ -78,18 +78,15 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     @Override
     protected void reload() {
-        GameComponentAnalyzer analyzer = instance.getAnalyzer();
-        String game = analyzer.getVersion(GameComponentType.GAME);
-        String currentGameVersion = Lang.nonNull(getVersion(GameComponentType.GAME), game);
-
+        boolean gameVersionChanged = !instance.getVersion().toString().equals(getVersion(GameComponentType.GAME));
         boolean compatible = true;
 
         for (InstallerItem library : group.getLibraries()) {
             GameComponentType componentType = library.getComponentType();
-            String version = analyzer.getVersion(library.getComponentType());
+            String version = instance.getComponentVersion(library.getComponentType());
             String libraryVersion = Lang.requireNonNullElse(getVersion(componentType), version);
             boolean alreadyInstalled = version != null && !(controller.getSettings().get(componentType.getPatchId()) instanceof UpdateInstallerWizardProvider.RemoveVersionAction);
-            if (library.getComponentType() != GameComponentType.GAME && currentGameVersion != null && !currentGameVersion.equals(game) && getVersion(componentType) == null && alreadyInstalled) {
+            if (library.getComponentType() != GameComponentType.GAME && gameVersionChanged && getVersion(componentType) == null && alreadyInstalled) {
                 // For third-party libraries, if game version is being changed, and the library is not being reinstalled,
                 // warns the user that we should update the library.
                 library.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, true));

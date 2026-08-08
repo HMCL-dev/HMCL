@@ -76,7 +76,6 @@ public class GameCrashWindow extends Stage {
     private final String memory;
     private final String total_memory;
     private final String java;
-    private final GameComponentAnalyzer analyzer;
     private final TextFlow reasonTextFlow = new TextFlow(new Text(i18n("game.crash.reason.unknown")));
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TextFlow feedbackTextFlow = new TextFlow();
@@ -97,7 +96,6 @@ public class GameCrashWindow extends Stage {
         this.gameInstance = gameInstance;
         this.launchOptions = launchOptions;
         this.logs = logs;
-        this.analyzer = gameInstance.getAnalyzer();
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " " + i18n("settings.memory.unit.mib")).orElse("-");
 
@@ -378,7 +376,7 @@ public class GameCrashWindow extends Stage {
                 moddedPane.setPadding(new Insets(8));
                 moddedPane.setAlignment(Pos.CENTER_LEFT);
 
-                for (GameComponentAnalyzer.Mark mark : analyzer) {
+                for (GameComponentAnalyzer.Mark mark : gameInstance.getAnalyzer()) {
                     if (mark.version() != null) {
                         TwoLineListItem item = new TwoLineListItem();
                         item.getStyleClass().setAll("two-line-item-second-large");

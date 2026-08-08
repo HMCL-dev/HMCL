@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -65,6 +66,10 @@ public interface GameInstance {
 
     default boolean hasComponent(GameComponentType type) {
         return getAnalyzer().has(type);
+    }
+
+    default @Nullable String getComponentVersion(GameComponentType type) {
+        return getAnalyzer().getVersion(type);
     }
 
     GameVersionNumber getVersion();
