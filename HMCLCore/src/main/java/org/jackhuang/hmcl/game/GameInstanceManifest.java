@@ -426,13 +426,6 @@ public record GameInstanceManifest(
         }
     }
 
-    /// Returns whether this manifest applies to the current environment.
-    ///
-    /// @return whether this manifest applies to the current environment
-    public boolean appliesToCurrentEnvironment() {
-        return CompatibilityRule.appliesToCurrentEnvironment(compatibilityRules);
-    }
-
     /// Resolves this manifest through the repository.
     ///
     /// @param repository the repository that provides parent manifests

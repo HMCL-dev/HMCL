@@ -78,13 +78,6 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         }
     }
 
-    /// Returns whether this snapshot has been sealed.
-    ///
-    /// @return whether mutation is forbidden
-    public boolean isSealed() {
-        return sealed;
-    }
-
     private void checkMutable() {
         if (sealed) {
             throw new IllegalStateException("Snapshot has been published and cannot be modified");
