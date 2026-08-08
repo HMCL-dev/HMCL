@@ -211,20 +211,23 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         return newSnapshot;
     }
 
-    /// Resolves official-layout inheritance and patches, then normalizes the final launch view.
+    /// Resolves official-layout inheritance and patches, then deduplicates launch libraries.
+    ///
+    /// Loader-specific argument repairs are applied later for a concrete launch attempt (for example
+    /// by [LaunchManifestNormalizer#repairForLaunch(GameInstanceManifest)]).
     ///
     /// @param manifest the manifest to resolve
     /// @return the resolved manifest views
     /// @throws NoSuchGameInstanceException if an inherited parent is missing from this snapshot
     public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
         GameInstanceManifest.Resolved resolved = resolveStructure(manifest, new HashSet<>());
-        GameInstanceManifest normalizedLaunchManifest =
-                LaunchManifestNormalizer.normalize(resolved.launchManifest());
+        GameInstanceManifest launchManifest =
+                LaunchManifestNormalizer.deduplicateLibraries(resolved.launchManifest());
         return new GameInstanceManifest.Resolved(
-                resolved.unresolved(), normalizedLaunchManifest, resolved.standaloneManifest());
+                resolved.unresolved(), launchManifest, resolved.standaloneManifest());
     }
 
-    /// Resolves official-layout inheritance and patches without launch compatibility normalization.
+    /// Resolves official-layout inheritance and patches without launch-library deduplication.
     ///
     /// @param manifest      the manifest to resolve
     /// @param resolvedSoFar instance ids already visited in the inheritance chain

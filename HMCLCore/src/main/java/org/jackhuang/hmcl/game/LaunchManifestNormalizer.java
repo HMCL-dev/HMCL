@@ -28,50 +28,73 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-/// Normalizes a structurally resolved manifest into the stable view consumed by launch-time code.
+/// Launch-manifest library and argument adjustments used at resolve time and launch time.
 ///
-/// Normalization depends only on manifest content. Filesystem-dependent compatibility adjustments
-/// are performed separately immediately before launch.
+/// [#deduplicateLibraries(GameInstanceManifest)] runs when a repository resolves a launch view so
+/// consumers share a stable library list. Loader-specific argument repairs run later via
+/// [#repairForLaunch(GameInstanceManifest)] (for example from `LauncherHelper`) and do not depend on
+/// the installed filesystem. Path-sensitive BootstrapLauncher ignore-list fixes remain in
+/// `DefaultLauncher`.
 @NotNullByDefault
 public final class LaunchManifestNormalizer {
     /// Prevents construction of this utility class.
     private LaunchManifestNormalizer() {
     }
 
-    /// Normalizes a resolved launch manifest.
+    /// Removes redundant libraries from a structurally resolved launch manifest.
     ///
-    /// The input must not contain inheritance or pending patches. The returned manifest has duplicate
-    /// libraries removed and loader-specific arguments and libraries repaired. The input is unchanged.
+    /// The input must not contain inheritance or pending patches. The input is unchanged.
     ///
     /// @param manifest the structurally resolved launch manifest
-    /// @return the normalized launch manifest
+    /// @return the manifest with duplicate libraries collapsed
     /// @throws IllegalArgumentException if the manifest still contains inheritance or pending patches
-    public static GameInstanceManifest normalize(GameInstanceManifest manifest) {
-        if (manifest.inheritsFrom() != null || !manifest.getPatches().isEmpty()) {
-            throw new IllegalArgumentException("Launch manifest must be structurally resolved");
-        }
+    public static GameInstanceManifest deduplicateLibraries(GameInstanceManifest manifest) {
+        requireStructurallyResolved(manifest);
+        return uniqueLibraries(manifest);
+    }
 
-        GameInstanceManifest normalized = uniqueLibraries(manifest);
-        @Nullable String mainClass = normalized.mainClass();
+    /// Applies loader-specific argument and library repairs for one launch attempt.
+    ///
+    /// Expects a structurally resolved launch manifest, typically after
+    /// [#deduplicateLibraries(GameInstanceManifest)]. Builds a single [GameComponentAnalyzer] for
+    /// the whole repair. The input is unchanged.
+    ///
+    /// @param manifest the launch manifest to repair
+    /// @return the repaired launch manifest
+    /// @throws IllegalArgumentException if the manifest still contains inheritance or pending patches
+    public static GameInstanceManifest repairForLaunch(GameInstanceManifest manifest) {
+        requireStructurallyResolved(manifest);
+
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
+        GameInstanceManifest repaired = manifest;
+        @Nullable String mainClass = repaired.mainClass();
 
         if (GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
             // LaunchWrapper era (Forge/LiteLoader/OptiFine on 1.12 and earlier, and mixed stacks).
-            normalized = normalizeLaunchWrapper(normalized, true);
-            if (GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(normalized.mainClass())) {
+            repaired = repairLaunchWrapper(repaired, analyzer, true);
+            if (GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(repaired.mainClass())) {
                 // OptiFine + ModLauncher may promote mainClass off LaunchWrapper.
-                normalized = normalizeModLauncher(normalized);
+                repaired = repairModLauncher(repaired, analyzer);
             }
         } else if (GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(mainClass)) {
             // Forge 1.13+ with OptiFine on ModLauncher.
-            normalized = normalizeModLauncher(normalized);
+            repaired = repairModLauncher(repaired, analyzer);
         } else if (GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(mainClass)) {
             // Forge / NeoForge 1.17+ BootstrapLauncher ignore-list form that does not need the
             // installed filesystem (path-sensitive fixes for older BootstrapLauncher run in
             // DefaultLauncher when building the process command).
-            normalized = normalizeBootstrapLauncher(normalized);
+            repaired = repairBootstrapLauncher(repaired, analyzer);
         }
+        // Vanilla and Fabric/Quilt need no loader-specific argument repair here.
 
-        return removeLegacyLog4jPatch(normalized);
+        return removeLegacyLog4jPatch(repaired);
+    }
+
+    /// Requires a fully folded launch manifest without inheritance or pending patches.
+    private static void requireStructurallyResolved(GameInstanceManifest manifest) {
+        if (manifest.inheritsFrom() != null || !manifest.getPatches().isEmpty()) {
+            throw new IllegalArgumentException("Launch manifest must be structurally resolved");
+        }
     }
 
     /// Repairs LaunchWrapper tweak-class configuration.
@@ -79,14 +102,10 @@ public final class LaunchManifestNormalizer {
     /// Installing Forge can replace the full game argument list in the version JSON, which drops
     /// LiteLoader and OptiFine tweakers. Compatible tweak classes are re-inserted in deterministic
     /// order when still required.
-    ///
-    /// @param manifest          the resolved manifest
-    /// @param reorderTweakClass whether retained tweak classes are moved to their required positions
-    /// @return the repaired manifest
-    private static GameInstanceManifest normalizeLaunchWrapper(
+    private static GameInstanceManifest repairLaunchWrapper(
             GameInstanceManifest manifest,
+            GameComponentAnalyzer analyzer,
             boolean reorderTweakClass) {
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
         GameInstanceLibraryBuilder builder = new GameInstanceLibraryBuilder(manifest);
         @Nullable String mainClass = null;
 
@@ -145,16 +164,14 @@ public final class LaunchManifestNormalizer {
             }
         }
 
-        GameInstanceManifest normalized = builder.build();
-        return mainClass == null ? normalized : normalized.withMainClass(mainClass);
+        GameInstanceManifest repaired = builder.build();
+        return mainClass == null ? repaired : repaired.withMainClass(mainClass);
     }
 
     /// Adds the transformer discovery service required by Forge and OptiFine on ModLauncher.
-    ///
-    /// @param manifest the resolved manifest
-    /// @return the repaired manifest
-    private static GameInstanceManifest normalizeModLauncher(GameInstanceManifest manifest) {
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
+    private static GameInstanceManifest repairModLauncher(
+            GameInstanceManifest manifest,
+            GameComponentAnalyzer analyzer) {
         if (!analyzer.has(GameComponentType.FORGE) || !analyzer.has(GameComponentType.OPTIFINE)) {
             return manifest;
         }
@@ -189,12 +206,10 @@ public final class LaunchManifestNormalizer {
     /// entry, so it is enough to ensure the primary jar name is listed. Older versions match
     /// substrings against full paths and are repaired in `DefaultLauncher` using the launch-time
     /// library classpath.
-    ///
-    /// @param manifest the resolved manifest
-    /// @return the repaired manifest
-    private static GameInstanceManifest normalizeBootstrapLauncher(GameInstanceManifest manifest) {
+    private static GameInstanceManifest repairBootstrapLauncher(
+            GameInstanceManifest manifest,
+            GameComponentAnalyzer analyzer) {
         // Fix wrong configurations when launching 1.17+ with Forge / NeoForge.
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
         if (!analyzer.has(GameComponentType.FORGE) && !analyzer.has(GameComponentType.NEO_FORGE)) {
             return manifest;
         }
@@ -224,10 +239,6 @@ public final class LaunchManifestNormalizer {
     }
 
     /// Returns whether a comma-separated list contains the exact requested value.
-    ///
-    /// @param values the comma-separated values
-    /// @param target the value to find
-    /// @return whether `target` is present
     private static boolean containsCommaSeparatedValue(String values, String target) {
         for (String value : values.split(",")) {
             if (target.equals(value)) {
@@ -241,9 +252,6 @@ public final class LaunchManifestNormalizer {
     ///
     /// HMCL once injected `log4j-patch` to mitigate the Log4j vulnerability. The launcher now
     /// rewrites `log4j2.xml` instead, so the leftover library entry is dropped.
-    ///
-    /// @param manifest the normalized manifest
-    /// @return the manifest without the obsolete first library, when present
     private static GameInstanceManifest removeLegacyLog4jPatch(GameInstanceManifest manifest) {
         List<Library> libraries = manifest.getLibraries();
         if (libraries.isEmpty()) {
@@ -267,9 +275,6 @@ public final class LaunchManifestNormalizer {
     /// declaration with the longer serialized JSON is kept (more metadata is treated as richer).
     /// Equal id and version with unequal coordinate payloads (for example distinct `text2speech`
     /// library vs native entries) are both retained.
-    ///
-    /// @param manifest the resolved manifest
-    /// @return the manifest with redundant libraries removed
     private static GameInstanceManifest uniqueLibraries(GameInstanceManifest manifest) {
         List<Library> libraries = new ArrayList<>();
         SimpleMultimap<String, Integer, List<Integer>> indexes =
