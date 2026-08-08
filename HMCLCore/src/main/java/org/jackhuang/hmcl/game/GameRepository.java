@@ -18,14 +18,10 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashSet;
 import java.util.Optional;
-import java.util.Set;
 
 /// Provides indexed access to local game instances and the filesystem layout used by those instances.
 ///
@@ -137,21 +133,4 @@ public interface GameRepository {
     /// @return whether the instance was renamed
     boolean renameInstance(GameInstanceID from, GameInstanceID to);
 
-    /// Returns the classpath entries whose library files are present on disk.
-    ///
-    /// @param manifest the manifest whose libraries should be mapped to classpath entries
-    /// @return absolute classpath entries for existing non-native libraries
-    default Set<String> getClasspath(GameInstanceManifest manifest) {
-        Set<String> classpath = new LinkedHashSet<>();
-        if (manifest.libraries() != null) {
-            for (Library library : manifest.libraries())
-                if (library.appliesToCurrentEnvironment() && !library.isNative()) {
-                    Path f = getLayout().getLibraryFile(manifest.id(), library);
-                    if (Files.isRegularFile(f))
-                        classpath.add(FileUtils.getAbsolutePath(f));
-                }
-        }
-
-        return classpath;
-    }
 }

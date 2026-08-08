@@ -42,6 +42,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.game.GameComponentType.*;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -269,7 +270,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         // Library classpath used both for -cp and for rewriting old BootstrapLauncher ignore lists.
-        Set<String> libraryClasspath = LaunchClasspathResolver.resolve(instance.getRepository(), manifest);
+        Set<String> libraryClasspath = getClasspath();
 
         if (instance.hasComponent(GameComponentType.CLEANROOM)) {
             libraryClasspath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
@@ -797,6 +798,47 @@ public class DefaultLauncher extends Launcher {
         env.putAll(options.getEnvironmentVariables());
 
         return env;
+    }
+
+    private Set<String> getClasspath() {
+        GameInstanceID instanceId = instance.getId();
+        GameRepositoryLayout layout = instance.getLayout();
+
+        boolean processOptiFine = instance.hasComponent(OPTIFINE) && (instance.hasComponent(LITELOADER) || instance.hasComponent(FORGE));
+        @Nullable Path selectedOptiFineInstallerFile = null;
+
+        Set<String> classpath = new LinkedHashSet<>();
+        for (Library library : manifest.getLibraries()) {
+            if (library.appliesToCurrentEnvironment() && !library.isNative()) {
+                if (processOptiFine) {
+                    if (library.is("optifine", "OptiFine")) {
+                        // Prefer the installer jar over the patch jar when both are present.
+                        Library installer = new Library(
+                                new Artifact("optifine", "OptiFine", library.version(), "installer"));
+                        Path installerFile = layout.getLibraryFile(instanceId, installer);
+                        if (Files.isRegularFile(installerFile)) {
+                            selectedOptiFineInstallerFile = installerFile;
+                            continue;
+                        }
+                    } else if (library.is("optifine", "launchwrapper-of")) {
+                        // Drop OptiFine's private launchwrapper; Forge/LiteLoader supply their own.
+                        continue;
+                    }
+                }
+
+                Path libraryFile = layout.getLibraryFile(instanceId, library);
+                if (Files.isRegularFile(libraryFile))
+                    classpath.add(FileUtils.getAbsolutePath(libraryFile));
+            }
+        }
+
+        // Re-append the installer last so OptiFine follows Forge when Forge has no patch entry.
+        if (selectedOptiFineInstallerFile != null &&
+                // With ModLauncher, OptiFine is discovered via HMCLTransformerDiscoveryService, not classpath.
+                !GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass())) {
+            classpath.add(FileUtils.getAbsolutePath(selectedOptiFineInstallerFile));
+        }
+        return classpath;
     }
 
     @Override
