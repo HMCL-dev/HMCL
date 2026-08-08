@@ -63,6 +63,10 @@ public interface GameInstance {
 
     GameComponentAnalyzer getAnalyzer();
 
+    default boolean hasComponent(GameComponentType type) {
+        return getAnalyzer().has(type);
+    }
+
     GameVersionNumber getVersion();
 
     /// Returns the directory containing files owned by this instance.

@@ -46,18 +46,11 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author huangyuhui
- */
+/// @author huangyuhui
 public class DefaultLauncher extends Launcher {
-
-    private final GameComponentAnalyzer analyzer;
 
     public DefaultLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         super(instance, manifest, authInfo, options, listener, daemon);
-
-        GameVersionNumber version = instance.getVersion();
-        this.analyzer = GameComponentAnalyzer.analyze(manifest, version);
     }
 
     private Command generateCommandLine(Path nativeFolder) throws IOException {
@@ -278,7 +271,7 @@ public class DefaultLauncher extends Launcher {
         // Library classpath used both for -cp and for rewriting old BootstrapLauncher ignore lists.
         Set<String> libraryClasspath = LaunchClasspathResolver.resolve(instance.getRepository(), manifest);
 
-        if (analyzer.has(GameComponentType.CLEANROOM)) {
+        if (instance.hasComponent(GameComponentType.CLEANROOM)) {
             libraryClasspath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
         }
 
@@ -551,10 +544,10 @@ public class DefaultLauncher extends Launcher {
         if (!GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(manifest.mainClass())) {
             return jvmArguments;
         }
-        if (!analyzer.has(GameComponentType.FORGE) && !analyzer.has(GameComponentType.NEO_FORGE)) {
+        if (!instance.hasComponent(GameComponentType.FORGE) && !instance.hasComponent(GameComponentType.NEO_FORGE)) {
             return jvmArguments;
         }
-        @Nullable String bootstrapVersion = analyzer.getVersion(GameComponentType.BOOTSTRAP_LAUNCHER);
+        @Nullable String bootstrapVersion = instance.getAnalyzer().getVersion(GameComponentType.BOOTSTRAP_LAUNCHER);
         if (bootstrapVersion == null || VersionNumber.compare(bootstrapVersion, "0.1.17") >= 0) {
             return jvmArguments;
         }
@@ -776,28 +769,28 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (analyzer.has(GameComponentType.FORGE)) {
+        if (instance.hasComponent(GameComponentType.FORGE)) {
             env.put("INST_FORGE", "1");
         }
-        if (analyzer.has(GameComponentType.CLEANROOM)) {
+        if (instance.hasComponent(GameComponentType.CLEANROOM)) {
             env.put("INST_CLEANROOM", "1");
         }
-        if (analyzer.has(GameComponentType.NEO_FORGE)) {
+        if (instance.hasComponent(GameComponentType.NEO_FORGE)) {
             env.put("INST_NEOFORGE", "1");
         }
-        if (analyzer.has(GameComponentType.LITELOADER)) {
+        if (instance.hasComponent(GameComponentType.LITELOADER)) {
             env.put("INST_LITELOADER", "1");
         }
-        if (analyzer.has(GameComponentType.FABRIC)) {
+        if (instance.hasComponent(GameComponentType.FABRIC)) {
             env.put("INST_FABRIC", "1");
         }
-        if (analyzer.has(GameComponentType.OPTIFINE)) {
+        if (instance.hasComponent(GameComponentType.OPTIFINE)) {
             env.put("INST_OPTIFINE", "1");
         }
-        if (analyzer.has(GameComponentType.QUILT)) {
+        if (instance.hasComponent(GameComponentType.QUILT)) {
             env.put("INST_QUILT", "1");
         }
-        if (analyzer.has(GameComponentType.LEGACY_FABRIC)) {
+        if (instance.hasComponent(GameComponentType.LEGACY_FABRIC)) {
             env.put("INST_LEGACYFABRIC", "1");
         }
 
