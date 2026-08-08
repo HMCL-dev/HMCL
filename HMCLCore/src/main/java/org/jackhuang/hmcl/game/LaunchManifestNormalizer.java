@@ -198,7 +198,7 @@ public final class LaunchManifestNormalizer {
                 String value = argument.toString();
                 if (value.startsWith("-DignoreList=")
                         && !containsCommaSeparatedValue(
-                                value.substring("-DignoreList=".length()), "${primary_jar_name}")) {
+                        value.substring("-DignoreList=".length()), "${primary_jar_name}")) {
                     jvmArguments.set(i, new StringArgument(value + ",${primary_jar_name}"));
                 }
             }
@@ -272,14 +272,16 @@ public final class LaunchManifestNormalizer {
                 int comparison = version.compareTo(VersionNumber.asVersion(other.version()));
                 if (comparison > 0) {
                     libraries.set(otherIndex, library);
-                } else if (comparison == 0 && library.equals(other)) {
-                    String otherSerialized = JsonUtils.GSON.toJson(other);
-                    String serialized = JsonUtils.GSON.toJson(library);
-                    if (serialized.length() > otherSerialized.length()) {
-                        libraries.set(otherIndex, library);
-                    }
                 } else if (comparison == 0) {
-                    continue;
+                    if (library.equals(other)) {
+                        String otherSerialized = JsonUtils.GSON.toJson(other);
+                        String serialized = JsonUtils.GSON.toJson(library);
+                        if (serialized.length() > otherSerialized.length()) {
+                            libraries.set(otherIndex, library);
+                        }
+                    } else {
+                        continue;
+                    }
                 }
                 duplicate = true;
                 break;
