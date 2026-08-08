@@ -55,20 +55,31 @@ public final class LaunchManifestNormalizer {
         @Nullable String mainClass = normalized.mainClass();
 
         if (GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
+            // LaunchWrapper era (Forge/LiteLoader/OptiFine on 1.12 and earlier, and mixed stacks).
             normalized = normalizeLaunchWrapper(normalized, true);
             if (GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(normalized.mainClass())) {
+                // OptiFine + ModLauncher may promote mainClass off LaunchWrapper.
                 normalized = normalizeModLauncher(normalized);
             }
         } else if (GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(mainClass)) {
+            // Forge 1.13+ with OptiFine on ModLauncher.
             normalized = normalizeModLauncher(normalized);
         } else if (GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(mainClass)) {
+            // Forge / NeoForge 1.17+ BootstrapLauncher ignore-list form that does not need the
+            // installed filesystem (path-sensitive fixes run in LaunchManifestPreparation).
             normalized = normalizeBootstrapLauncher(normalized);
         }
+        // Vanilla and Fabric/Quilt need no loader-specific argument repair here; nothing currently
+        // coexists with Fabric the way OptiFine does with Forge/LiteLoader.
 
         return removeLegacyLog4jPatch(normalized);
     }
 
     /// Repairs LaunchWrapper tweak-class configuration.
+    ///
+    /// Installing Forge can replace the full game argument list in the version JSON, which drops
+    /// LiteLoader and OptiFine tweakers. Compatible tweak classes are re-inserted in deterministic
+    /// order when still required.
     ///
     /// @param manifest          the resolved manifest
     /// @param reorderTweakClass whether retained tweak classes are moved to their required positions
@@ -80,8 +91,7 @@ public final class LaunchManifestNormalizer {
         GameInstanceLibraryBuilder builder = new GameInstanceLibraryBuilder(manifest);
         @Nullable String mainClass = null;
 
-        // Forge installers may replace the complete argument list, so compatible tweakers must be
-        // restored in deterministic order.
+        // Re-add LiteLoader tweaker when Forge overwrote the argument list (unless ModLauncher is in use).
         if (analyzer.has(GameComponentType.LITELOADER) && !analyzer.hasModLauncher()) {
             builder.replaceTweakClass(
                     GameComponentAnalyzer.LITELOADER_TWEAKER,
@@ -94,6 +104,7 @@ public final class LaunchManifestNormalizer {
 
         if (analyzer.has(GameComponentType.OPTIFINE)) {
             if (!analyzer.has(GameComponentType.LITELOADER) && !analyzer.has(GameComponentType.FORGE)) {
+                // Standalone OptiFine uses the plain OptiFine tweaker.
                 if (builder.hasTweakClass(GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(1))) {
                     builder.replaceTweakClass(
                             GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(1),
@@ -102,11 +113,13 @@ public final class LaunchManifestNormalizer {
                             reorderTweakClass);
                 }
             } else if (analyzer.hasModLauncher()) {
+                // Prefer ModLauncher over LaunchWrapper when both are present.
                 mainClass = GameComponentAnalyzer.MOD_LAUNCHER_MAIN;
                 for (String optiFineTweaker : GameComponentAnalyzer.OPTIFINE_TWEAKERS) {
                     builder.removeTweakClass(optiFineTweaker);
                 }
             } else if (builder.hasTweakClass(GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(0))) {
+                // With Forge or LiteLoader, OptiFine's Forge tweaker is required.
                 builder.replaceTweakClass(
                         GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(0),
                         GameComponentAnalyzer.OPTIFINE_TWEAKERS.get(1),
@@ -173,12 +186,15 @@ public final class LaunchManifestNormalizer {
 
     /// Repairs the filesystem-independent BootstrapLauncher ignore-list form.
     ///
-    /// BootstrapLauncher 0.1.17 and newer compare ignore-list entries only with file names, so the
-    /// primary jar placeholder can be added without inspecting the installed classpath.
+    /// BootstrapLauncher 0.1.17 and newer apply `ignoreList` only to the file name of each classpath
+    /// entry, so it is enough to ensure the primary jar name is listed. Older versions match
+    /// substrings against full paths and are repaired in `LaunchManifestPreparation` with the
+    /// installed classpath.
     ///
     /// @param manifest the resolved manifest
     /// @return the repaired manifest
     private static GameInstanceManifest normalizeBootstrapLauncher(GameInstanceManifest manifest) {
+        // Fix wrong configurations when launching 1.17+ with Forge / NeoForge.
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
         if (!analyzer.has(GameComponentType.FORGE) && !analyzer.has(GameComponentType.NEO_FORGE)) {
             return manifest;
@@ -190,6 +206,8 @@ public final class LaunchManifestNormalizer {
             return manifest;
         }
 
+        // bootstraplauncher 0.1.17+ only applies ignoreList to classpath file names, so only the
+        // primary jar name needs to be fixed here.
         GameInstanceLibraryBuilder builder = new GameInstanceLibraryBuilder(manifest);
         List<Argument> jvmArguments = builder.getMutableJvmArguments();
         for (int i = 0; i < jvmArguments.size(); i++) {
@@ -222,6 +240,9 @@ public final class LaunchManifestNormalizer {
 
     /// Removes the obsolete HMCL Log4j patch formerly prepended to affected manifests.
     ///
+    /// HMCL once injected `log4j-patch` to mitigate the Log4j vulnerability. The launcher now
+    /// rewrites `log4j2.xml` instead, so the leftover library entry is dropped.
+    ///
     /// @param manifest the normalized manifest
     /// @return the manifest without the obsolete first library, when present
     private static GameInstanceManifest removeLegacyLog4jPatch(GameInstanceManifest manifest) {
@@ -242,8 +263,11 @@ public final class LaunchManifestNormalizer {
 
     /// Removes redundant library declarations while retaining rule-distinct variants.
     ///
-    /// For equal compatibility rules, the newer version wins. Identical coordinates retain the
-    /// declaration with the richer serialized metadata.
+    /// When two libraries share the same `groupId:artifactId` and equal compatibility rules, the
+    /// newer version wins. When versions are equal and the coordinate objects compare equal, the
+    /// declaration with the longer serialized JSON is kept (more metadata is treated as richer).
+    /// Equal id and version with unequal coordinate payloads (for example distinct `text2speech`
+    /// library vs native entries) are both retained.
     ///
     /// @param manifest the resolved manifest
     /// @return the manifest with redundant libraries removed
@@ -254,7 +278,6 @@ public final class LaunchManifestNormalizer {
 
         for (Library library : manifest.getLibraries()) {
             String id = library.groupId() + ":" + library.artifactId();
-            VersionNumber version = VersionNumber.asVersion(library.version());
 
             if (!indexes.containsKey(id)) {
                 indexes.put(id, libraries.size());
@@ -265,21 +288,26 @@ public final class LaunchManifestNormalizer {
             boolean duplicate = false;
             for (int otherIndex : indexes.get(id)) {
                 Library other = libraries.get(otherIndex);
+                // Rules differ: keep both (platform-specific variants).
                 if (!CompatibilityRule.equals(library.rules(), other.rules())) {
                     continue;
                 }
 
-                int comparison = version.compareTo(VersionNumber.asVersion(other.version()));
+                // Rules equal: drop the older version.
+                int comparison = VersionNumber.compare(library.version(), other.version());
                 if (comparison > 0) {
                     libraries.set(otherIndex, library);
                 } else if (comparison == 0) {
+                    // Same library id and version: collapse true duplicates.
                     if (library.equals(other)) {
                         String otherSerialized = JsonUtils.GSON.toJson(other);
                         String serialized = JsonUtils.GSON.toJson(library);
+                        // Prefer the entry with more serialized metadata when coordinates equal.
                         if (serialized.length() > otherSerialized.length()) {
                             libraries.set(otherIndex, library);
                         }
                     } else {
+                        // Same id/version but not equal (e.g. text2speech jar vs natives): keep both.
                         continue;
                     }
                 }

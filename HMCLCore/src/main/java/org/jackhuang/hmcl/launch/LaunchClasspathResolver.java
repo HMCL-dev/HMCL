@@ -38,10 +38,15 @@ public final class LaunchClasspathResolver {
 
     /// Returns a mutable classpath containing installed libraries selected for this launch.
     ///
-    /// For Forge or LiteLoader installations containing OptiFine, an installed OptiFine installer
-    /// artifact replaces the ordinary artifact. With ModLauncher, the installer is omitted from the
-    /// ordinary classpath because transformer discovery loads it separately. The incompatible
-    /// `launchwrapper-of` artifact is also omitted.
+    /// When Forge or LiteLoader is present with OptiFine, the OptiFine *installer* jar is preferred
+    /// over the ordinary patch jar (the installer is what the Forge/LiteLoader tweaker stack expects).
+    /// OptiFine should load after Forge on the classpath: even when OptiFine is given higher install
+    /// priority, Forge may still appear without a patch entry, so the installer is re-appended at the
+    /// end. With ModLauncher the installer is omitted from this list because transformer discovery
+    /// loads it separately.
+    ///
+    /// OptiFine's custom `launchwrapper-of` artifact conflicts with the launchwrapper provided by
+    /// MinecraftForge, LiteLoader, or ModLoader and is therefore dropped.
     ///
     /// @param repository the repository that owns the installed libraries
     /// @param manifest   the effective launch manifest
@@ -55,12 +60,14 @@ public final class LaunchClasspathResolver {
             return classpath;
         }
 
+        // With ModLauncher, OptiFine is discovered via HMCLTransformerDiscoveryService, not classpath.
         boolean removeFromClasspath = GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass());
         @Nullable Path selectedInstallerFile = null;
 
         for (Library library : manifest.getLibraries()) {
             Path libraryFile = repository.getLayout().getLibraryFile(manifest.id(), library);
             if (library.is("optifine", "OptiFine")) {
+                // Prefer the installer jar over the patch jar when both are present.
                 Library installer = new Library(
                         new Artifact("optifine", "OptiFine", library.version(), "installer"));
                 Path installerFile = repository.getLayout().getLibraryFile(manifest.id(), installer);
@@ -69,10 +76,12 @@ public final class LaunchClasspathResolver {
                     selectedInstallerFile = installerFile;
                 }
             } else if (library.is("optifine", "launchwrapper-of")) {
+                // Drop OptiFine's private launchwrapper; Forge/LiteLoader supply their own.
                 classpath.remove(FileUtils.getAbsolutePath(libraryFile));
             }
         }
 
+        // Re-append the installer last so OptiFine follows Forge when Forge has no patch entry.
         if (!removeFromClasspath
                 && selectedInstallerFile != null
                 && Files.isRegularFile(selectedInstallerFile)) {

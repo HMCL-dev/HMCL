@@ -58,6 +58,12 @@ public final class LaunchManifestPreparation {
 
     /// Replaces unsafe substring-based ignore-list entries used by old BootstrapLauncher versions.
     ///
+    /// Fixes wrong configurations when launching 1.17+ with Forge / NeoForge under BootstrapLauncher
+    /// older than 0.1.17. Those versions apply each ignore-list token as a substring against every
+    /// classpath component. A game directory such as `/Users/asm` therefore causes every library
+    /// whose path contains `asm` to be ignored. The installed classpath is rewritten to exact paths
+    /// before launch.
+    ///
     /// @param repository the repository that resolves installed classpath entries
     /// @param manifest   the normalized launch manifest
     /// @return the adjusted manifest
@@ -99,6 +105,11 @@ public final class LaunchManifestPreparation {
 
     /// Converts an old BootstrapLauncher ignore list to exact installed classpath entries.
     ///
+    /// The default ignore list is too loose for substring matching. For example, if `client-extra`
+    /// is listed and a path component contains `client-extra`, every matching library is ignored.
+    /// `${primary_jar}` is always included so the primary jar name cannot collide with Jigsaw module
+    /// naming conventions.
+    ///
     /// @param repository the repository that resolves installed classpath entries
     /// @param manifest   the launch manifest
     /// @param ignoreList the original comma-separated substring list
@@ -109,6 +120,8 @@ public final class LaunchManifestPreparation {
             String ignoreList) {
         String[] ignoredSubstrings = ignoreList.split(",");
         List<String> exactEntries = new ArrayList<>();
+        // Primary jar must be ignored for Forge Jigsaw module discovery when its file name conflicts
+        // with module naming rules.
         exactEntries.add("${primary_jar}");
 
         Path libraryDirectory = repository.getLayout().getLibrariesDirectory().toAbsolutePath().normalize();
@@ -116,8 +129,10 @@ public final class LaunchManifestPreparation {
             Path classpathFile = Paths.get(classpathName).toAbsolutePath();
             String fileName = classpathFile.getFileName().toString();
             if (Stream.of(ignoredSubstrings).anyMatch(fileName::contains)) {
+                // Rewrite loose substrings to concrete paths so only the intended jars are ignored.
                 String absolutePath;
                 if (classpathFile.startsWith(libraryDirectory)) {
+                    // Keep separators portable via placeholders (not the host File.separator alone).
                     absolutePath = "${library_directory}${file_separator}"
                             + libraryDirectory.relativize(classpathFile).toString()
                             .replace(File.separator, "${file_separator}");
