@@ -248,7 +248,7 @@ public final class Instances {
     public static void updateGameAssets(HMCLGameInstance gameInstance) {
         TaskExecutor executor = new GameAssetDownloadTask(
                 gameInstance.getRepository().getDependency(),
-                gameInstance.getManifest(),
+                gameInstance.getResolvedManifest().launchManifest(),
                 GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
                 true).executor();
         Controllers.taskDialog(executor, i18n("instance.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);

@@ -60,7 +60,7 @@ public final class GameDownloadTask extends Task<Void> {
             GameInstanceManifest manifest) {
         this.dependencyManager = dependencyManager;
         this.gameVersion = gameVersion;
-        this.manifest = manifest.resolve(dependencyManager.getGameRepository());
+        this.manifest = dependencyManager.getGameRepository().resolve(manifest).launchManifest();
         this.jar = null;
 
         setSignificance(TaskSignificance.MODERATE);
@@ -79,7 +79,7 @@ public final class GameDownloadTask extends Task<Void> {
             Path jar) {
         this.dependencyManager = dependencyManager;
         this.gameVersion = gameVersion;
-        this.manifest = manifest.resolve(dependencyManager.getGameRepository());
+        this.manifest = dependencyManager.getGameRepository().resolve(manifest).launchManifest();
         this.jar = jar;
 
         setSignificance(TaskSignificance.MODERATE);

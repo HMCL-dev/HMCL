@@ -426,14 +426,6 @@ public record GameInstanceManifest(
         }
     }
 
-    /// Resolves this manifest through the repository.
-    ///
-    /// @param repository the repository that provides parent manifests
-    /// @return the resolved manifest
-    public GameInstanceManifest resolve(GameRepository repository) throws NoSuchGameInstanceException {
-        return repository.resolve(this).launchManifest();
-    }
-
     public GameInstanceManifest withId(GameInstanceID id) {
         Objects.requireNonNull(id);
 

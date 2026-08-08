@@ -71,16 +71,16 @@ public class GameInstallTask extends Task<GameInstancePatch> {
                 GameInstancePatch.PRIORITY_MC).withJar(null);
         setResult(patch);
 
-        GameInstanceManifest version = new GameInstanceManifest(this.manifest.id()).addPatch(patch);
+        GameInstanceManifest newManifest = new GameInstanceManifest(this.manifest.id()).addPatch(patch);
         dependencies.add(Task.allOf(
-                new GameDownloadTask(dependencyManager, remote.getGameVersion(), version),
+                new GameDownloadTask(dependencyManager, remote.getGameVersion(), newManifest),
                 Task.allOf(
-                        new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
-                        new GameLibrariesTask(dependencyManager, version, true)
+                        new GameAssetDownloadTask(dependencyManager, newManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
+                        new GameLibrariesTask(dependencyManager, newManifest, true)
                 ).withRunAsync(() -> {
                     // ignore failure
                 })
-        ).thenComposeAsync(gameRepository.saveAsync(version)));
+        ).thenComposeAsync(gameRepository.saveAsync(newManifest)));
     }
 
 }

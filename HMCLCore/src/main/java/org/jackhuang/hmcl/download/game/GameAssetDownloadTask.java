@@ -49,15 +49,14 @@ public final class GameAssetDownloadTask extends Task<Void> {
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>();
 
-    /**
-     * Constructor.
-     *
-     * @param dependencyManager the dependency manager that can provides {@link GameRepository}
-     * @param manifest the game version
-     */
+
+    /// Constructor.
+    ///
+    /// @param dependencyManager the dependency manager that can provides [GameRepository]
+    /// @param manifest the game version
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean forceDownloadingIndex, boolean integrityCheck) {
         this.dependencyManager = dependencyManager;
-        this.manifest = manifest.resolve(dependencyManager.getGameRepository());
+        this.manifest = dependencyManager.getGameRepository().resolve(manifest).launchManifest();
         this.assetIndexInfo = this.manifest.getAssetIndex();
         GameRepository gameRepository = dependencyManager.getGameRepository();
         String assetId = assetIndexInfo.getId();

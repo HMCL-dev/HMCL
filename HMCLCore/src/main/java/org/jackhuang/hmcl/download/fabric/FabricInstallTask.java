@@ -62,7 +62,7 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void preExecute() throws Exception {
-        if (!Objects.equals("net.minecraft.client.main.Main", manifest.resolve(dependencyManager.getGameRepository()).mainClass()))
+        if (!Objects.equals("net.minecraft.client.main.Main", dependencyManager.getGameRepository().resolve(manifest).launchManifest().mainClass()))
             throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
     }
 
