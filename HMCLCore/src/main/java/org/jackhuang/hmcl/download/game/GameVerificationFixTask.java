@@ -64,7 +64,7 @@ public final class GameVerificationFixTask extends Task<Void> {
     @Override
     public void execute() throws IOException {
         Path jar = instance.getInstanceJarFile();
-        var analyzer = GameComponentAnalyzer.analyze(manifest, gameVersion.toString());
+        var analyzer = instance.getAnalyzer();
 
         if (Files.exists(jar) && gameVersion.compareTo("1.6") < 0 && analyzer.has(GameComponentType.FORGE)) {
             try (FileSystem fs = CompressingUtils.createWritableZipFileSystem(jar, StandardCharsets.UTF_8)) {

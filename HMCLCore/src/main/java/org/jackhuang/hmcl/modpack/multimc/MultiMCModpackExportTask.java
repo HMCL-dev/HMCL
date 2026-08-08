@@ -93,7 +93,7 @@ public class MultiMCModpackExportTask extends Task<Void> {
                 throw new IOException("Cannot parse the version of " + instanceId);
             }
             String gameVersion = version.toString();
-            GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(instance.getResolvedManifest(), gameVersion);
+            GameComponentAnalyzer analyzer = instance.getAnalyzer();
             List<MultiMCManifest.MultiMCManifestComponent> components = new ArrayList<>();
             components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, MultiMCComponents.getComponent(GameComponentType.GAME), gameVersion));
 

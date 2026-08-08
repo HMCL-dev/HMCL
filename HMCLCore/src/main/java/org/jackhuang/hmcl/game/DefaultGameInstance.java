@@ -159,6 +159,11 @@ public abstract class DefaultGameInstance implements GameInstance {
         return resolvedManifest;
     }
 
+    @Override
+    public GameComponentAnalyzer getAnalyzer() {
+        return null;
+    }
+
     /// {@inheritDoc}
     ///
     /// The detected version is cached on this instance. When the primary jar cannot be resolved or

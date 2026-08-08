@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -32,11 +33,11 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
     private static GameComponentAnalyzer analyze(
             GameInstanceManifest standaloneManifest,
             GameInstanceManifest launchManifest,
-            @Nullable String gameVersion) {
+            @Nullable GameVersionNumber gameVersion) {
         var components = new EnumMap<GameComponentType, Mark>(GameComponentType.class);
 
-        if (gameVersion != null) {
-            components.put(GameComponentType.GAME, new Mark(GameComponentType.GAME, gameVersion, true));
+        if (gameVersion != null && !gameVersion.equals(GameVersionNumber.unknown())) {
+            components.put(GameComponentType.GAME, new Mark(GameComponentType.GAME, gameVersion.toString(), true));
         }
 
         for (GameInstancePatch patch : standaloneManifest.getPatches()) {
@@ -63,11 +64,11 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         return new GameComponentAnalyzer(standaloneManifest, components);
     }
 
-    public static GameComponentAnalyzer analyze(GameInstanceManifest.Resolved resolved, @Nullable String gameVersion) {
+    public static GameComponentAnalyzer analyze(GameInstanceManifest.Resolved resolved, @Nullable GameVersionNumber gameVersion) {
         return analyze(resolved.standaloneManifest(), resolved.launchManifest(), gameVersion);
     }
 
-    public static GameComponentAnalyzer analyze(GameInstanceManifest manifest, @Nullable String gameVersion) {
+    public static GameComponentAnalyzer analyze(GameInstanceManifest manifest, @Nullable GameVersionNumber gameVersion) {
         if (manifest.inheritsFrom() != null)
             throw new IllegalArgumentException("LibraryAnalyzer can only analyze independent game version");
 

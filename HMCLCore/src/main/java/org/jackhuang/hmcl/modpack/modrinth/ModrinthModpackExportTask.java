@@ -198,7 +198,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 throw new IOException("Cannot parse the version of " + instanceId);
             }
             String gameVersion = version.toString();
-            GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(instance.getResolvedManifest(), gameVersion);
+            GameComponentAnalyzer analyzer = instance.getAnalyzer();
 
             Map<String, String> dependencies = new HashMap<>();
             dependencies.put("minecraft", gameVersion);

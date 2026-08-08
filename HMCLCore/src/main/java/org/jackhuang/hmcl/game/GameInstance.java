@@ -61,6 +61,8 @@ public interface GameInstance {
         return getResolvedManifest().launchManifest();
     }
 
+    GameComponentAnalyzer getAnalyzer();
+
     GameVersionNumber getVersion();
 
     /// Returns the directory containing files owned by this instance.

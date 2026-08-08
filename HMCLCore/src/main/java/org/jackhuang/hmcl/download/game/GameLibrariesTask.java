@@ -163,7 +163,7 @@ public final class GameLibrariesTask extends Task<Void> {
 
             Path file = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
             if ("optifine".equals(library.groupId()) && Files.exists(file) && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(manifest).orElse(null)).compareTo("1.20.4") == 0) {
-                @Nullable String forgeVersion = GameComponentAnalyzer.analyze(manifest, "1.20.4")
+                @Nullable String forgeVersion = GameComponentAnalyzer.analyze(manifest, GameVersionNumber.asGameVersion("1.20.4"))
                         .getVersion(GameComponentType.FORGE);
                 if (forgeVersion != null && GameComponentAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
                     try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(file)) {

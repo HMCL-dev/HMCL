@@ -55,8 +55,7 @@ public class DefaultLauncher extends Launcher {
         super(instance, manifest, authInfo, options, listener, daemon);
 
         GameVersionNumber version = instance.getVersion();
-        this.analyzer = GameComponentAnalyzer.analyze(manifest,
-                version == GameVersionNumber.unknown() ? null : version.toString());
+        this.analyzer = GameComponentAnalyzer.analyze(manifest, version);
     }
 
     private Command generateCommandLine(Path nativeFolder) throws IOException {
