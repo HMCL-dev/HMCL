@@ -439,13 +439,11 @@ public class DefaultLauncher extends Launcher {
         return Arguments.DEFAULT_GAME_ARGUMENTS;
     }
 
-    /**
-     * Do something here.
-     * i.e.
-     * -Dminecraft.launcher.version=&lt;Your launcher name&gt;
-     * -Dminecraft.launcher.brand=&lt;Your launcher version&gt;
-     * -Dlog4j.configurationFile=&lt;Your custom log4j configuration&gt;
-     */
+    /// Do something here.
+    /// i.e.
+    /// -Dminecraft.launcher.version=<Your launcher name>
+    /// -Dminecraft.launcher.brand=<Your launcher version>
+    /// -Dlog4j.configurationFile=<Your custom log4j configuration>
     protected void appendJvmArgs(CommandBuilder result) {
     }
 
