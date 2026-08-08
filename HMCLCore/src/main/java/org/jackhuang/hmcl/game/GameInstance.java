@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -24,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 
 /// Provides a view of a game instance and its instance-specific paths within a
 /// [GameRepositorySnapshot].
@@ -70,6 +73,16 @@ public interface GameInstance {
 
     default @Nullable String getComponentVersion(GameComponentType type) {
         return getAnalyzer().getVersion(type);
+    }
+
+    default Set<ModLoaderType> getModLoaders() {
+        Set<ModLoaderType> res = EnumSet.noneOf(ModLoaderType.class);
+        for (GameComponentAnalyzer.Mark mark : getAnalyzer()) {
+            if (mark.componentType().getModLoaderType() != null) {
+                res.add(mark.componentType().getModLoaderType());
+            }
+        }
+        return res;
     }
 
     GameVersionNumber getVersion();

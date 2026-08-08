@@ -272,7 +272,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         if (GameVersionNumber.unknown().equals(instance.getVersion()) && control.versions.containsKey(gameVersion)) {
                             List<RemoteAddon.Version> modVersions = control.versions.get(gameVersion);
                             if (modVersions != null && !modVersions.isEmpty()) {
-                                Set<ModLoaderType> targetLoaders = instance.getAnalyzer().getModLoaders();
+                                Set<ModLoaderType> targetLoaders = instance.getModLoaders();
 
                                 resolve:
                                 for (RemoteAddon.Version modVersion : modVersions) {

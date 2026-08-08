@@ -114,7 +114,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             return;
         }
 
-        Set<ModLoaderType> modLoaderTypes = analyzer.getModLoaders();
+        Set<ModLoaderType> modLoaderTypes = instance.getModLoaders();
 
         var supportedReaders = new ArrayList<ModMetadataReader>();
         var unsupportedReaders = new ArrayList<ModMetadataReader>();

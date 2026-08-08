@@ -153,16 +153,6 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         return manifest.hasPatch(type.getPatchId());
     }
 
-    public @Unmodifiable Set<ModLoaderType> getModLoaders() {
-        Set<ModLoaderType> res = EnumSet.noneOf(ModLoaderType.class);
-        for (GameComponentType type : components.keySet()) {
-            if (type.getModLoaderType() != null) {
-                res.add(type.getModLoaderType());
-            }
-        }
-        return res;
-    }
-
     @Override
     public Iterator<Mark> iterator() {
         return components.values().iterator();

@@ -103,11 +103,10 @@ public class ServerModpackExportTask extends Task<Void> {
                 throw new IOException("Cannot parse the version of " + instanceId);
             }
             String gameVersion = version.toString();
-            GameComponentAnalyzer analyzer = instance.getAnalyzer();
             List<ServerModpackManifest.Addon> addons = new ArrayList<>();
             addons.add(new ServerModpackManifest.Addon(GameComponentType.GAME.getPatchId(), gameVersion));
 
-            for (GameComponentAnalyzer.Mark mark : analyzer) {
+            for (GameComponentAnalyzer.Mark mark : instance.getAnalyzer()) {
                 if ((mark.componentType().isModLoader() || mark.componentType() == GameComponentType.OPTIFINE)
                         && mark.version() != null) {
                     addons.add(new ServerModpackManifest.Addon(mark.componentType().getPatchId(), mark.version()));
