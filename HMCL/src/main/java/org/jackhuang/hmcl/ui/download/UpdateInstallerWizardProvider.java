@@ -100,7 +100,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                         controller.onFinish();
                     } else if ("game".equals(libraryId)) {
                         String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
-                        controller.onNext(new AdditionalInstallersPage(gameInstance, newGameVersion, controller, gameInstance.getRepository(), downloadProvider));
+                        controller.onNext(new AdditionalInstallersPage(gameInstance, newGameVersion, controller, downloadProvider));
                     } else {
                         Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);

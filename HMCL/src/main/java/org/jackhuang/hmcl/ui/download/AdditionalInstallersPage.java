@@ -34,17 +34,15 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends AbstractInstallersPage {
     protected final BooleanProperty compatible = new SimpleBooleanProperty();
-    protected final HMCLGameRepository repository;
     protected final String gameVersion;
     protected final GameInstanceManifest manifest;
     protected final HMCLGameInstance instance;
 
-    public AdditionalInstallersPage(HMCLGameInstance instance, String gameVersion, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
+    public AdditionalInstallersPage(HMCLGameInstance instance, String gameVersion, WizardController controller, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
         this.instance = instance;
         this.gameVersion = gameVersion;
         this.manifest = instance.getManifest();
-        this.repository = repository;
 
         txtName.setText(instance.getId().toString());
         txtName.setEditable(false);
