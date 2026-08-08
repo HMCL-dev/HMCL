@@ -239,20 +239,6 @@ public abstract class DefaultGameRepository implements GameRepository {
             }
         }
 
-        Map<GameInstanceID, DefaultGameInstance> loadedInstances = new TreeMap<>();
-        for (DefaultGameInstance instance : newSnapshot.values()) {
-            try {
-                GameInstanceManifest resolved = instance.getResolvedManifest().launchManifest();
-                if (CompatibilityRule.appliesToCurrentEnvironment(resolved.compatibilityRules())) {
-                    loadedInstances.put(instance.getId(), instance);
-                }
-            } catch (NoSuchGameInstanceException e) {
-                LOG.warning("Ignoring instance " + instance.getId() + " because it inherits from a nonexistent instance.");
-            }
-        }
-
-        newSnapshot.clear();
-        newSnapshot.putAll(loadedInstances);
         // Mark loaded before publishing so snapshot listeners observe a ready repository.
         loaded = true;
         publishSnapshot(newSnapshot);
