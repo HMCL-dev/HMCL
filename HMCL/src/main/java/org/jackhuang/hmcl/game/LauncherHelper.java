@@ -291,7 +291,7 @@ public final class LauncherHelper {
                             launchOptions,
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, launchManifest.get(), authInfo, launchOptions, launchingLatch, gameInstance.getVersion().compareTo(GameVersionNumber.unknown()) != 0)
+                                    : new HMCLProcessListener(authInfo, launchOptions, launchingLatch, gameInstance.getVersion().compareTo(GameVersionNumber.unknown()) != 0)
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
@@ -832,16 +832,12 @@ public final class LauncherHelper {
         }
     }
 
-    /**
-     * The managed process listener.
-     * Guarantee that one [JavaProcess], one [HMCLProcessListener].
-     * Because every time we launched a game, we generates a new [HMCLProcessListener]
-     */
+    /// The managed process listener.
+    /// Guarantee that one Java [Process], one [HMCLProcessListener].
+    /// Because every time we launched a game, we generates a new [HMCLProcessListener]
     private final class HMCLProcessListener implements ProcessListener {
 
         private final ReentrantLock lock = new ReentrantLock();
-        private final HMCLGameRepository repository;
-        private final GameInstanceManifest manifest;
         private final LaunchOptions launchOptions;
         private ManagedProcess process;
         private volatile boolean lwjgl;
@@ -853,9 +849,7 @@ public final class LauncherHelper {
         private Thread submitLogThread;
         private LinkedBlockingQueue<Log> logBuffer;
 
-        public HMCLProcessListener(HMCLGameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
-            this.repository = repository;
-            this.manifest = manifest;
+        public HMCLProcessListener(AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
             this.launchOptions = launchOptions;
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
