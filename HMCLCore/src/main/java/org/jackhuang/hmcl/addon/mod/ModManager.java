@@ -182,7 +182,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             localFiles.clear();
             localMods.clear();
 
-            analyzer = GameComponentAnalyzer.analyze(instance.getResolvedManifest(), null);
+            analyzer = instance.getAnalyzer();
 
             boolean supportSubfolders = analyzer.has(GameComponentType.FORGE)
                     || analyzer.has(GameComponentType.QUILT);
