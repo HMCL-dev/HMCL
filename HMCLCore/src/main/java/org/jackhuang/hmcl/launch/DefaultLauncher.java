@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -39,6 +40,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -273,15 +275,17 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        Set<String> classpath = LaunchClasspathResolver.resolve(instance.getRepository(), manifest);
+        // Library classpath used both for -cp and for rewriting old BootstrapLauncher ignore lists.
+        Set<String> libraryClasspath = LaunchClasspathResolver.resolve(instance.getRepository(), manifest);
 
         if (analyzer.has(GameComponentType.CLEANROOM)) {
-            classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
+            libraryClasspath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
         }
 
         Path jar = instance.getRepository().getInstanceJar(manifest);
         if (!Files.isRegularFile(jar))
             throw new IOException("Minecraft jar does not exist");
+        Set<String> classpath = new LinkedHashSet<>(libraryClasspath);
         classpath.add(FileUtils.getAbsolutePath(jar.toAbsolutePath()));
 
         // Provided Minecraft arguments
@@ -307,6 +311,9 @@ public class DefaultLauncher extends Launcher {
 
         Path javaNativeFolder = FileUtils.toAbsolute(nativeFolder);
         @Nullable List<Argument> jvmArguments = Optional.ofNullable(manifest.arguments()).map(Arguments::jvm).orElse(null);
+        if (jvmArguments != null) {
+            jvmArguments = rewriteUnsafeBootstrapLauncherIgnoreList(jvmArguments, libraryClasspath);
+        }
 
         if (jvmArguments != null) {
             for (Argument jvmArgument : jvmArguments) {
@@ -522,6 +529,91 @@ public class DefaultLauncher extends Launcher {
         try (InputStream input = DefaultLauncher.class.getResourceAsStream(sourcePath)) {
             Files.copy(input, targetFile, StandardCopyOption.REPLACE_EXISTING);
         }
+    }
+
+    /// Rewrites `-DignoreList=` for old BootstrapLauncher when launching Forge / NeoForge.
+    ///
+    /// BootstrapLauncher older than 0.1.17 matches each ignore-list token as a substring against
+    /// every classpath component. A game directory such as `/Users/asm` therefore causes every
+    /// library whose path contains `asm` to be ignored. Using the library classpath already built
+    /// for this launch, loose tokens are replaced with exact installed paths (or portable
+    /// `${library_directory}` placeholders). `${primary_jar}` is always retained for Jigsaw.
+    ///
+    /// BootstrapLauncher 0.1.17+ only matches file names; those manifests are repaired at resolve
+    /// time by [LaunchManifestNormalizer].
+    ///
+    /// @param jvmArguments     JVM arguments from the launch manifest
+    /// @param libraryClasspath absolute library classpath entries for this launch (without primary jar)
+    /// @return a possibly rewritten argument list; the input list is not modified
+    private List<Argument> rewriteUnsafeBootstrapLauncherIgnoreList(
+            List<Argument> jvmArguments,
+            Set<String> libraryClasspath) {
+        if (!GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(manifest.mainClass())) {
+            return jvmArguments;
+        }
+        if (!analyzer.has(GameComponentType.FORGE) && !analyzer.has(GameComponentType.NEO_FORGE)) {
+            return jvmArguments;
+        }
+        @Nullable String bootstrapVersion = analyzer.getVersion(GameComponentType.BOOTSTRAP_LAUNCHER);
+        if (bootstrapVersion == null || VersionNumber.compare(bootstrapVersion, "0.1.17") >= 0) {
+            return jvmArguments;
+        }
+
+        Path libraryDirectory = instance.getLayout().getLibrariesDirectory().toAbsolutePath().normalize();
+        List<Argument> rewritten = new ArrayList<>(jvmArguments.size());
+        boolean changed = false;
+        for (Argument argument : jvmArguments) {
+            if (argument instanceof StringArgument stringArgument) {
+                String value = stringArgument.argument();
+                if (value.startsWith("-DignoreList=")) {
+                    rewritten.add(new StringArgument(
+                            "-DignoreList=" + rewriteIgnoreList(
+                                    value.substring("-DignoreList=".length()),
+                                    libraryClasspath,
+                                    libraryDirectory)));
+                    changed = true;
+                    continue;
+                }
+            }
+            rewritten.add(argument);
+        }
+        return changed ? rewritten : jvmArguments;
+    }
+
+    /// Converts a substring-based BootstrapLauncher ignore list to exact classpath entries.
+    ///
+    /// For example, if `client-extra` is listed and a path component contains `client-extra`,
+    /// every matching library would be ignored under substring matching. Matching is performed
+    /// against library file names only; matched jars are rewritten to concrete paths.
+    ///
+    /// @param ignoreList       the original comma-separated substring list
+    /// @param libraryClasspath absolute library classpath entries for this launch
+    /// @param libraryDirectory absolute `.minecraft/libraries` directory
+    /// @return the exact comma-separated ignore list
+    private static String rewriteIgnoreList(
+            String ignoreList,
+            Set<String> libraryClasspath,
+            Path libraryDirectory) {
+        String[] ignoredSubstrings = ignoreList.split(",");
+        List<String> exactEntries = new ArrayList<>();
+        exactEntries.add("${primary_jar}");
+
+        for (String classpathName : libraryClasspath) {
+            Path classpathFile = Paths.get(classpathName).toAbsolutePath();
+            String fileName = classpathFile.getFileName().toString();
+            if (Stream.of(ignoredSubstrings).anyMatch(fileName::contains)) {
+                String absolutePath;
+                if (classpathFile.startsWith(libraryDirectory)) {
+                    absolutePath = "${library_directory}${file_separator}"
+                            + libraryDirectory.relativize(classpathFile).toString()
+                            .replace(File.separator, "${file_separator}");
+                } else {
+                    absolutePath = classpathFile.toString();
+                }
+                exactEntries.add(StringUtils.substringBefore(absolutePath, ","));
+            }
+        }
+        return String.join(",", exactEntries);
     }
 
     protected Map<String, String> getConfigurations() {

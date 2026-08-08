@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LaunchManifestPreparation;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
@@ -136,17 +135,15 @@ public final class DefaultGameInstanceTest {
         Files.write(optiFineLaunchWrapperFile, new byte[]{1});
         Files.write(installerFile, new byte[]{1});
 
-        GameInstanceManifest prepared = LaunchManifestPreparation.prepare(repository, launchManifest);
-        Set<String> classpath = LaunchClasspathResolver.resolve(repository, prepared);
+        Set<String> classpath = LaunchClasspathResolver.resolve(repository, launchManifest);
 
-        assertSame(launchManifest, prepared);
         assertEquals(Set.of(
                 forgeFile.toAbsolutePath().toString(),
                 installerFile.toAbsolutePath().toString()), classpath);
-        assertTrue(prepared.getLibraries().stream()
+        assertTrue(launchManifest.getLibraries().stream()
                 .anyMatch(library -> library.is("optifine", "OptiFine")
                         && library.classifier() == null));
-        assertTrue(prepared.getLibraries().stream()
+        assertTrue(launchManifest.getLibraries().stream()
                 .anyMatch(library -> library.is("optifine", "launchwrapper-of")));
     }
 

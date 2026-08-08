@@ -66,7 +66,8 @@ public final class LaunchManifestNormalizer {
             normalized = normalizeModLauncher(normalized);
         } else if (GameComponentAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(mainClass)) {
             // Forge / NeoForge 1.17+ BootstrapLauncher ignore-list form that does not need the
-            // installed filesystem (path-sensitive fixes run in LaunchManifestPreparation).
+            // installed filesystem (path-sensitive fixes for older BootstrapLauncher run in
+            // DefaultLauncher when building the process command).
             normalized = normalizeBootstrapLauncher(normalized);
         }
         // Vanilla and Fabric/Quilt need no loader-specific argument repair here; nothing currently
@@ -188,8 +189,8 @@ public final class LaunchManifestNormalizer {
     ///
     /// BootstrapLauncher 0.1.17 and newer apply `ignoreList` only to the file name of each classpath
     /// entry, so it is enough to ensure the primary jar name is listed. Older versions match
-    /// substrings against full paths and are repaired in `LaunchManifestPreparation` with the
-    /// installed classpath.
+    /// substrings against full paths and are repaired in `DefaultLauncher` using the launch-time
+    /// library classpath.
     ///
     /// @param manifest the resolved manifest
     /// @return the repaired manifest

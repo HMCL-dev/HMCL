@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LaunchManifestPreparation;
 import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -158,8 +157,7 @@ public final class LauncherHelper {
         HMCLGameRepository repository = repository();
         DefaultDependencyManager dependencyManager = repository.getDependency();
         AtomicReference<GameInstanceManifest> version = new AtomicReference<>(
-                LaunchManifestPreparation.prepare(
-                        repository, gameInstance.getResolvedManifest().launchManifest()));
+                gameInstance.getResolvedManifest().launchManifest());
         GameVersionNumber gameVersion = gameInstance.getVersion();
         boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);

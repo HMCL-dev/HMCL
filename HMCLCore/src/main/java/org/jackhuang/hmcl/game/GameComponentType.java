@@ -32,10 +32,12 @@ import java.util.regex.Pattern;
 /// @author Glavo
 @NotNullByDefault
 public enum GameComponentType {
+    /// Minecraft itself is never identified from a library coordinate; the game version is supplied
+    /// separately to [GameComponentAnalyzer].
     GAME("game") {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            return true;
+            return false;
         }
     },
     LEGACY_FABRIC("legacyfabric", ModLoaderType.LEGACY_FABRIC) {
