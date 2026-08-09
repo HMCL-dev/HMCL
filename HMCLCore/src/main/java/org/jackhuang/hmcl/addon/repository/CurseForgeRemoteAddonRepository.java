@@ -207,21 +207,26 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     @Override
     public Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        var murmur = new MurmurHash2(1);
         try (InputStream stream = Files.newInputStream(file)) {
-            byte[] buf = new byte[1024];
+            byte[] input = new byte[1024];
+            byte[] hashBuffer = new byte[1024];
             int len;
-            while ((len = stream.read(buf, 0, buf.length)) != -1) {
+            while ((len = stream.read(input, 0, input.length)) > 0) {
+                int hashBufferLen = 0;
+
                 for (int i = 0; i < len; i++) {
-                    byte b = buf[i];
+                    byte b = input[i];
                     if (b != 0x9 && b != 0xa && b != 0xd && b != 0x20) {
-                        baos.write(b);
+                        hashBuffer[hashBufferLen++] = b;
                     }
                 }
+
+                murmur.update(hashBuffer, 0, hashBufferLen);
             }
         }
 
-        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
+        long hash = murmur.getValue();
         if (hash == 811513880) { // Workaround for https://github.com/HMCL-dev/HMCL/issues/4597
             return Optional.empty();
         }

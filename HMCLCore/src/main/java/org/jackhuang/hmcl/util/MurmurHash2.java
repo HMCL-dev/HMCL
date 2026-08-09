@@ -17,192 +17,32 @@
  */
 package org.jackhuang.hmcl.util;
 
-/**
- * Implementation of the MurmurHash2 32-bit and 64-bit hash functions.
- *
- * <p>MurmurHash is a non-cryptographic hash function suitable for general
- * hash-based lookup. The name comes from two basic operations, multiply (MU)
- * and rotate (R), used in its inner loop. Unlike cryptographic hash functions,
- * it is not specifically designed to be difficult to reverse by an adversary,
- * making it unsuitable for cryptographic purposes.</p>
- *
- * <p>This contains a Java port of the 32-bit hash function {@code MurmurHash2}
- * and the 64-bit hash function {@code MurmurHash64A} from Austin Applyby's
- * original {@code c++} code in SMHasher.</p>
- *
- * <p>This is a re-implementation of the original C code plus some additional
- * features.</p>
- *
- * <p>This is public domain code with no copyrights. From home page of
- * <a href="https://github.com/aappleby/smhasher">SMHasher</a>:</p>
- *
- * <blockquote>
- * "All MurmurHash versions are public domain software, and the author
- * disclaims all copyright to their code."
- * </blockquote>
- *
- * @see <a href="https://en.wikipedia.org/wiki/MurmurHash">MurmurHash</a>
- * @see <a href="https://github.com/aappleby/smhasher/blob/master/src/MurmurHash2.cpp">
- *   Original MurmurHash2 c++ code</a>
- * @since 1.13
- */
-public final class MurmurHash2 {
+import java.util.zip.Checksum;
 
-    // Constants for 32-bit variant
-    private static final int M32 = 0x5bd1e995;
-    private static final int R32 = 24;
+public final class MurmurHash2 implements Checksum {
+    private final int seed;
 
-    // Constants for 64-bit variant
-    private static final long M64 = 0xc6a4a7935bd1e995L;
-    private static final int R64 = 47;
-
-    /**
-     * No instance methods.
-     */
-    private MurmurHash2() {
+    public MurmurHash2(int seed) {
+        this.seed = seed;
     }
 
-    /**
-     * Generates a 32-bit hash from byte array with the given length and seed.
-     *
-     * @param data   The input byte array
-     * @param length The length of the array
-     * @param seed   The initial seed value
-     * @return The 32-bit hash
-     */
-    public static int hash32(final byte[] data, final int length, final int seed) {
-        // Initialize the hash to a random value
-        int h = seed ^ length;
-
-        // Mix 4 bytes at a time into the hash
-        final int nblocks = length >> 2;
-
-        // body
-        for (int i = 0; i < nblocks; i++) {
-            final int index = (i << 2);
-            int k = ByteArray.getIntLE(data, index);
-            k *= M32;
-            k ^= k >>> R32;
-            k *= M32;
-            h *= M32;
-            h ^= k;
-        }
-
-        // Handle the last few bytes of the input array
-        final int index = (nblocks << 2);
-        switch (length - index) {
-            case 3:
-                h ^= (data[index + 2] & 0xff) << 16;
-                // fallthrough
-            case 2:
-                h ^= (data[index + 1] & 0xff) << 8;
-                // fallthrough
-            case 1:
-                h ^= (data[index] & 0xff);
-                h *= M32;
-        }
-
-        // Do a few final mixes of the hash to ensure the last few
-        // bytes are well-incorporated.
-        h ^= h >>> 13;
-        h *= M32;
-        h ^= h >>> 15;
-
-        return h;
+    @Override
+    public void update(int b) {
+        // TODO
     }
 
-    /**
-     * Generates a 32-bit hash from byte array with the given length and a default seed value.
-     * This is a helper method that will produce the same result as:
-     *
-     * <pre>
-     * int seed = 0x9747b28c;
-     * int hash = MurmurHash2.hash32(data, length, seed);
-     * </pre>
-     *
-     * @param data   The input byte array
-     * @param length The length of the array
-     * @return The 32-bit hash
-     * @see #hash32(byte[], int, int)
-     */
-    public static int hash32(final byte[] data, final int length) {
-        return hash32(data, length, 0x9747b28c);
+    @Override
+    public void update(byte[] b, int off, int len) {
+        // TODO
     }
 
-    /**
-     * Generates a 64-bit hash from byte array of the given length and seed.
-     *
-     * @param data   The input byte array
-     * @param length The length of the array
-     * @param seed   The initial seed value
-     * @return The 64-bit hash of the given array
-     */
-    public static long hash64(final byte[] data, final int length, final int seed) {
-        long h = (seed & 0xffffffffL) ^ (length * M64);
-
-        final int nblocks = length >> 3;
-
-        // body
-        for (int i = 0; i < nblocks; i++) {
-            final int index = (i << 3);
-            long k = ByteArray.getLongLE(data, index);
-
-            k *= M64;
-            k ^= k >>> R64;
-            k *= M64;
-
-            h ^= k;
-            h *= M64;
-        }
-
-        final int index = (nblocks << 3);
-        switch (length - index) {
-            case 7:
-                h ^= ((long) data[index + 6] & 0xff) << 48;
-                // fallthrough
-            case 6:
-                h ^= ((long) data[index + 5] & 0xff) << 40;
-                // fallthrough
-            case 5:
-                h ^= ((long) data[index + 4] & 0xff) << 32;
-                // fallthrough
-            case 4:
-                h ^= ((long) data[index + 3] & 0xff) << 24;
-                // fallthrough
-            case 3:
-                h ^= ((long) data[index + 2] & 0xff) << 16;
-                // fallthrough
-            case 2:
-                h ^= ((long) data[index + 1] & 0xff) << 8;
-                // fallthrough
-            case 1:
-                h ^= ((long) data[index] & 0xff);
-                h *= M64;
-        }
-
-        h ^= h >>> R64;
-        h *= M64;
-        h ^= h >>> R64;
-
-        return h;
+    @Override
+    public long getValue() {
+        return 0; // TODO
     }
 
-    /**
-     * Generates a 64-bit hash from byte array with given length and a default seed value.
-     * This is a helper method that will produce the same result as:
-     *
-     * <pre>
-     * int seed = 0xe17a1465;
-     * int hash = MurmurHash2.hash64(data, length, seed);
-     * </pre>
-     *
-     * @param data   The input byte array
-     * @param length The length of the array
-     * @return The 64-bit hash
-     * @see #hash64(byte[], int, int)
-     */
-    public static long hash64(final byte[] data, final int length) {
-        return hash64(data, length, 0xe17a1465);
+    @Override
+    public void reset() {
+        // TODO
     }
-
 }
