@@ -85,7 +85,7 @@ public class ForgeOldInstallTask extends Task<GameInstancePatch> {
                     GameComponentType.FORGE.getPatchId(),
                     selfVersion,
                     GameInstancePatch.PRIORITY_LOADER));
-            dependencies.add(dependencyManager.checkLibraryCompletionAsync(installProfile.getVersionInfo(), true));
+            dependencies.add(dependencyManager.checkComponentCompletionAsync(installProfile.getVersionInfo(), true));
         } catch (ZipException ex) {
             throw new ArtifactMalformedException("Malformed forge installer file", ex);
         }

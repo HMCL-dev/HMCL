@@ -401,7 +401,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
         dependencies.add(
                 processorsTask.thenComposeAsync(
-                        dependencyManager.checkLibraryCompletionAsync(neoForgeVersion, true)));
+                        dependencyManager.checkComponentCompletionAsync(neoForgeVersion, true)));
 
         setResult(GameInstancePatch.fromManifest(
                 neoForgeVersion,

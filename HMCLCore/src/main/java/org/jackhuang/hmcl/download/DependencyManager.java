@@ -54,7 +54,7 @@ public interface DependencyManager {
     /// @param manifest       the manifest whose libraries are checked
     /// @param integrityCheck whether existing libraries must be verified
     /// @return the library-completion task
-    Task<?> checkLibraryCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck);
+    Task<?> checkComponentCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck);
 
     /// Creates a task that repairs installable patches required by an instance.
     ///
@@ -81,14 +81,14 @@ public interface DependencyManager {
     /// @param libraryId      the registered library type, such as `forge` or `optifine`
     /// @param libraryVersion the library version to install
     /// @return the installation task
-    Task<?> installLibraryAsync(String gameVersion, GameInstanceManifest baseVersion, String libraryId, String libraryVersion);
+    Task<?> installComponentAsync(String gameVersion, GameInstanceManifest baseVersion, String libraryId, String libraryVersion);
 
     /// Creates a task that installs a remote loader or patch into a base manifest.
     ///
     /// @param baseVersion    the base manifest
     /// @param libraryVersion the remote library version to install
     /// @return the installation task
-    Task<?> installLibraryAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion);
+    Task<?> installComponentAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion);
 
     /// Returns a registered remote-version list.
     ///

@@ -59,7 +59,7 @@ public class DefaultGameBuilder extends GameBuilder {
         }
 
         for (RemoteVersion remoteVersion : remoteVersions) {
-            libraryTask = libraryTask.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
+            libraryTask = libraryTask.thenComposeAsync(version -> dependencyManager.installComponentAsync(version, remoteVersion));
             hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
         }
 
@@ -70,6 +70,6 @@ public class DefaultGameBuilder extends GameBuilder {
     }
 
     private ExceptionalFunction<GameInstanceManifest, Task<GameInstanceManifest>, ?> libraryTaskHelper(String gameVersion, String libraryId, String libraryVersion) {
-        return version -> dependencyManager.installLibraryAsync(gameVersion, version, libraryId, libraryVersion);
+        return version -> dependencyManager.installComponentAsync(gameVersion, version, libraryId, libraryVersion);
     }
 }

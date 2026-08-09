@@ -417,7 +417,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
 
         dependencies.add(
                 processorsTask.thenComposeAsync(
-                        dependencyManager.checkLibraryCompletionAsync(forgeVersion, true)));
+                        dependencyManager.checkComponentCompletionAsync(forgeVersion, true)));
 
         setResult(GameInstancePatch.fromManifest(
                 forgeVersion,

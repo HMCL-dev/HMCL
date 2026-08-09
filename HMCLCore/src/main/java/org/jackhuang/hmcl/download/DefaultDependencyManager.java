@@ -114,7 +114,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task<?> checkLibraryCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck) {
+    public Task<?> checkComponentCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck) {
         return new GameLibrariesTask(this, manifest, integrityCheck, manifest.getLibraries());
     }
 
@@ -156,7 +156,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     if (needsReInstallation) {
                         Library installer = new Library(new Artifact("optifine", "OptiFine", gameVersion + "_" + optifinePatchVersion, "installer"));
                         if (GameLibrariesTask.shouldDownloadLibrary(repository, manifest, installer, integrityCheck)) {
-                            tasks.add(installLibraryAsync(gameVersion, original, "optifine", optifinePatchVersion));
+                            tasks.add(installComponentAsync(gameVersion, original, "optifine", optifinePatchVersion));
                         } else {
                             tasks.add(OptiFineInstallTask.install(this, original, repository.getLayout().getLibraryFile(manifest.id(), installer)));
                         }
@@ -169,19 +169,19 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task<GameInstanceManifest> installLibraryAsync(String gameVersion, GameInstanceManifest baseVersion, String libraryId, String libraryVersion) {
+    public Task<GameInstanceManifest> installComponentAsync(String gameVersion, GameInstanceManifest baseVersion, String libraryId, String libraryVersion) {
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion)
-                .thenComposeAsync(() -> installLibraryAsync(baseVersion, versionList.getVersion(gameVersion, libraryVersion)
+                .thenComposeAsync(() -> installComponentAsync(baseVersion, versionList.getVersion(gameVersion, libraryVersion)
                         .orElseThrow(() -> new IOException("Remote library " + libraryId + " has no version " + libraryVersion))))
                 .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));
     }
 
     @Override
-    public Task<GameInstanceManifest> installLibraryAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion) {
+    public Task<GameInstanceManifest> installComponentAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion) {
         AtomicReference<GameInstanceManifest> removedLibraryManifest = new AtomicReference<>();
 
-        return removeLibraryAsync(baseVersion, libraryVersion.getComponentType())
+        return removeComponentAsync(baseVersion, libraryVersion.getComponentType())
                 .thenComposeAsync(manifest -> {
                     removedLibraryManifest.set(manifest);
                     return libraryVersion.getInstallTask(this, manifest, modsDirectoryFor(manifest));
@@ -218,7 +218,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// @param oldVersion the manifest to which the installed patch will be added
     /// @param installer  the local installer jar
     /// @return the task producing the updated manifest
-    public Task<GameInstanceManifest> installLibraryAsync(GameInstanceManifest oldVersion, Path installer) {
+    public Task<GameInstanceManifest> installComponentAsync(GameInstanceManifest oldVersion, Path installer) {
         return Task
                 .composeAsync(() -> {
                     try {
@@ -259,7 +259,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// @param manifest      the unresolved instance manifest
     /// @param componentType the patch identifier, such as `forge`, `optifine`, or `fabric`
     /// @return the task producing the updated independent manifest
-    public Task<GameInstanceManifest> removeLibraryAsync(GameInstanceManifest manifest, GameComponentType componentType) {
+    public Task<GameInstanceManifest> removeComponentAsync(GameInstanceManifest manifest, GameComponentType componentType) {
         // Library removal operates on a standalone manifest so inherited launch metadata is retained.
         return Task.supplyAsync(() -> {
             GameInstanceManifest standaloneManifest = repository.resolve(manifest).standaloneManifest();

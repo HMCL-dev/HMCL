@@ -96,7 +96,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         for (GameComponentAnalyzer.Mark mark : analyzer) {
             if (mark.componentType() == GameComponentType.GAME)
                 continue;
-            libraryTask = libraryTask.thenComposeAsync(version -> dependency.installLibraryAsync(modpack.getGameVersion(), version, mark.componentType().getPatchId(), mark.version()));
+            libraryTask = libraryTask.thenComposeAsync(version -> dependency.installComponentAsync(modpack.getGameVersion(), version, mark.componentType().getPatchId(), mark.version()));
         }
 
         dependencies.add(libraryTask.thenComposeAsync(repository::saveAsync));
