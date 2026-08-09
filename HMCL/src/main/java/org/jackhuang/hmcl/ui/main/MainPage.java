@@ -259,10 +259,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
             menuButton.setOnAction(e -> {
-                String key = MainPage.class.getName() + "menuButton.popup";
-                @Nullable JFXPopup prevPopup = (JFXPopup) menuButton.getProperties().get(key);
-                if (prevPopup != null && prevPopup.isShowing()) {
-                    prevPopup.hide();
+                if (GameListPopupMenu.hideShowing(menuButton)) {
                     return;
                 }
 
@@ -274,7 +271,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         -menuButton.getHeight(),
                         repository, versions
                 );
-                menuButton.getProperties().put(key, popup);
 
                 Node graphic = menuButton.getGraphic();
                 if (graphic != null) {
@@ -285,17 +281,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         FXUtils.playAnimation(graphic, "arrow-rotation", rotateOpen);
 
                         popup.setOnHidden(windowEvent -> {
-                            menuButton.getProperties().remove(key, popup);
                             RotateTransition rotateClose = new RotateTransition(duration, graphic);
                             rotateClose.setToAngle(0);
                             FXUtils.playAnimation(graphic, "arrow-rotation", rotateClose);
                         });
                     } else {
                         graphic.setRotate(-180);
-                        popup.setOnHidden(windowEvent -> {
-                            menuButton.getProperties().remove(key, popup);
-                            graphic.setRotate(0);
-                        });
+                        popup.setOnHidden(windowEvent -> graphic.setRotate(0));
                     }
                 }
             });
