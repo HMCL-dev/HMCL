@@ -100,8 +100,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             return;
         }
 
-        GameInstanceManifest resolved = gameInstance.getResolvedManifest().standaloneManifest();
-        this.gameVersion = gameInstance.getRepository().getGameVersion(resolved).orElse(null);
+        this.gameVersion = gameInstance.getVersion().toString();
 
         loadMods(gameInstance.getModManager());
     }
