@@ -364,26 +364,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 standalone = repository.resolve(workingManifest).standaloneManifest();
             }
 
-            GameVersionNumber gameVersion = instance.getVersion();
-            if (gameVersion.equals(GameVersionNumber.unknown())) {
-                gameVersion = null;
-            }
-            return GameComponentAnalyzer.analyze(standalone, gameVersion).removeLibrary(componentType);
+            return GameComponentAnalyzer.analyze(standalone, instance.getVersion()).removeLibrary(componentType);
         });
-    }
-
-    /// Removes a component using only a manifest id (looks up the instance in the snapshot).
-    ///
-    /// Prefer [#removeComponentAsync(GameInstance, GameComponentType)] when the instance is already
-    /// available.
-    ///
-    /// @param manifest      the working or stored manifest
-    /// @param componentType the component to remove
-    /// @return the task producing the updated standalone manifest (not yet saved)
-    public Task<GameInstanceManifest> removeComponentAsync(
-            GameInstanceManifest manifest,
-            GameComponentType componentType) {
-        return removeComponentAsync(repository.getInstance(manifest.id()), manifest, componentType);
     }
 
 }
