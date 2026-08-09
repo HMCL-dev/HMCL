@@ -259,6 +259,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
             menuButton.setOnAction(e -> {
+                if (GameListPopupMenu.hideShowing(menuButton)) {
+                    return;
+                }
+
                 JFXPopup popup = GameListPopupMenu.showAndGetPopup(
                         menuButton,
                         JFXPopup.PopupVPosition.BOTTOM,
