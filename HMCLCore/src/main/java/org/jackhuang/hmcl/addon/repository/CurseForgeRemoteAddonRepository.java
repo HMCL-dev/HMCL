@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.MurmurHash2;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -33,7 +32,6 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -205,23 +203,70 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         }
     }
 
-    @Override
-    public Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    /// Calculates the CurseForge fingerprint without retaining the filtered file in memory.
+    static long calculateFingerprint(Path file) throws IOException {
+        byte[] buffer = new byte[8192];
+        long filteredLength = 0;
+
         try (InputStream stream = Files.newInputStream(file)) {
-            byte[] buf = new byte[1024];
             int len;
-            while ((len = stream.read(buf, 0, buf.length)) != -1) {
+            while ((len = stream.read(buffer)) != -1) {
                 for (int i = 0; i < len; i++) {
-                    byte b = buf[i];
+                    byte b = buffer[i];
                     if (b != 0x9 && b != 0xa && b != 0xd && b != 0x20) {
-                        baos.write(b);
+                        filteredLength++;
                     }
                 }
             }
         }
 
-        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
+        final int multiplier = 0x5bd1e995;
+        int hash = 1 ^ (int) filteredLength;
+        int block = 0;
+        int blockSize = 0;
+
+        try (InputStream stream = Files.newInputStream(file)) {
+            int len;
+            while ((len = stream.read(buffer)) != -1) {
+                for (int i = 0; i < len; i++) {
+                    byte b = buffer[i];
+                    if (b == 0x9 || b == 0xa || b == 0xd || b == 0x20) {
+                        continue;
+                    }
+
+                    block |= (b & 0xff) << (blockSize * 8);
+                    blockSize++;
+                    if (blockSize == 4) {
+                        int mixed = block;
+                        mixed *= multiplier;
+                        mixed ^= mixed >>> 24;
+                        mixed *= multiplier;
+                        hash *= multiplier;
+                        hash ^= mixed;
+
+                        block = 0;
+                        blockSize = 0;
+                    }
+                }
+            }
+        }
+
+        if (blockSize > 0) {
+            hash ^= block;
+            hash *= multiplier;
+        }
+
+        hash ^= hash >>> 13;
+        hash *= multiplier;
+        hash ^= hash >>> 15;
+
+        return Integer.toUnsignedLong(hash);
+    }
+
+    /// Finds the remote CurseForge version matching a local file.
+    @Override
+    public Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
+        long hash = calculateFingerprint(file);
         if (hash == 811513880) { // Workaround for https://github.com/HMCL-dev/HMCL/issues/4597
             return Optional.empty();
         }
