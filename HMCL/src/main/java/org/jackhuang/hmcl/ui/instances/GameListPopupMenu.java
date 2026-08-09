@@ -19,25 +19,35 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.animation.KeyValue;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.transform.Scale;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -46,20 +56,69 @@ import org.jackhuang.hmcl.util.StringUtils;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
+import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
 
     private static final String KEY = GameListPopupMenu.class.getName() + ".popup";
+    private static final String HIDING_KEY = GameListPopupMenu.class.getName() + ".hiding";
+
+    public static void hideAnimated(JFXPopup popup) {
+        if (popup == null || !popup.isShowing()) {
+            return;
+        }
+
+        if (!AnimationUtils.isAnimationEnabled()) {
+            popup.hide();
+            return;
+        }
+
+        Node content = popup.getPopupContent();
+        if (content == null) {
+            popup.hide();
+            return;
+        }
+
+        Node container = content.getParent() != null ? content.getParent() : content;
+        Bounds bounds = container.getLayoutBounds();
+
+        Scale scaleTransform = new Scale(1.0, 1.0, bounds.getWidth(), bounds.getHeight());
+        container.getTransforms().setAll(scaleTransform);
+
+        Timeline closeAnimation = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(container.opacityProperty(), 1.0, SINE),
+                        new KeyValue(scaleTransform.xProperty(), 1.0, SINE),
+                        new KeyValue(scaleTransform.yProperty(), 1.0, SINE)
+                ),
+                new KeyFrame(Duration.millis(160),
+                        new KeyValue(container.opacityProperty(), 0.0, SINE),
+                        new KeyValue(scaleTransform.xProperty(), 0.0, SINE),
+                        new KeyValue(scaleTransform.yProperty(), 0.0, SINE)
+                )
+        );
+
+        closeAnimation.setOnFinished(event -> {
+            popup.hide();
+            container.getTransforms().clear();
+            container.setOpacity(1.0);
+        });
+
+        FXUtils.playAnimation(container, "popup-close", closeAnimation);
+    }
 
     public static boolean hideShowing(Node owner) {
-        JFXPopup popup = (JFXPopup) owner.getProperties().get(KEY);
-        if (popup != null && popup.isShowing()) {
-            popup.hide();
-            return true;
-        } else {
+        if (!(owner.getProperties().get(KEY) instanceof JFXPopup popup && popup.isShowing())) {
             return false;
         }
+
+        if (Boolean.TRUE.equals(popup.getProperties().get(HIDING_KEY))) {
+            return true;
+        }
+
+        popup.getProperties().put(HIDING_KEY, true);
+        hideAnimated(popup);
+        return true;
     }
 
     /// Shows an instance selection popup relative to its owner.
@@ -80,9 +139,42 @@ public final class GameListPopupMenu extends StackPane {
                 .toList());
         JFXPopup popup = new JFXPopup(menu);
         owner.getProperties().put(KEY, popup);
-        popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, event -> owner.getProperties().remove(KEY, popup));
-        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY, true);
+        popup.setAutoHide(false);
+        Scene scene = owner.getScene();
+        EventHandler<MouseEvent> outsideClickHandler = event -> {
+            if (popup.isShowing()) {
+                Bounds popupBounds = menu.localToScreen(menu.getBoundsInLocal());
+                if (popupBounds != null && !popupBounds.contains(event.getScreenX(), event.getScreenY())) {
+                    hideAnimated(popup);
+                }
+            }
+        };
 
+        javafx.beans.value.ChangeListener<Boolean> focusListener = (obs, wasFocused, isFocused) -> {
+            if (!isFocused && popup.isShowing()) {
+                hideAnimated(popup);
+            }
+        };
+
+        if (scene != null) {
+            scene.addEventFilter(MouseEvent.MOUSE_PRESSED, outsideClickHandler);
+            if (scene.getWindow() != null) {
+                scene.getWindow().focusedProperty().addListener(focusListener);
+            }
+        }
+        popup.focusedProperty().addListener(focusListener);
+
+        popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, event -> {
+            owner.getProperties().remove(KEY, popup);
+            if (scene != null) {
+                scene.removeEventFilter(MouseEvent.MOUSE_PRESSED, outsideClickHandler);
+                if (scene.getWindow() != null) {
+                    scene.getWindow().focusedProperty().removeListener(focusListener);
+                }
+            }
+            popup.focusedProperty().removeListener(focusListener);
+        });
+        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY, false);
         return popup;
     }
 
@@ -155,7 +247,7 @@ public final class GameListPopupMenu extends StackPane {
                 if (item != null) {
                     item.getRepository().setSelectedInstance(new GameInstanceID(item.getId()));
                     if (getScene().getWindow() instanceof JFXPopup popup)
-                        popup.hide();
+                        hideAnimated(popup);
                 }
             });
 
