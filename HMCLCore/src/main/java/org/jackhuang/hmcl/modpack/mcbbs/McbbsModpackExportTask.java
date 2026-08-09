@@ -35,6 +35,9 @@ import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -67,6 +70,9 @@ public class McbbsModpackExportTask extends Task<Void> {
         });
     }
 
+    /// Exports the selected game files and manifests to the target archive.
+    ///
+    /// @throws Exception if the instance cannot be analyzed or the archive cannot be written
     @Override
     public void execute() throws Exception {
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
@@ -123,7 +129,9 @@ public class McbbsModpackExportTask extends Task<Void> {
             McbbsModpackManifest.LaunchInfo launchInfo = new McbbsModpackManifest.LaunchInfo(info.getMinMemory(), info.getSupportedJavaVersions(), StringUtils.tokenize(info.getLaunchArguments()), StringUtils.tokenize(info.getJavaArguments()));
 
             McbbsModpackManifest mcbbsManifest = new McbbsModpackManifest(McbbsModpackManifest.MANIFEST_TYPE, 2, info.getName(), info.getVersion(), info.getAuthor(), info.getDescription(), info.getFileApi() == null ? null : StringUtils.removeSuffix(info.getFileApi(), "/"), info.getUrl(), info.isForceUpdate(), origins, addons, libraries, files, settings, launchInfo);
-            zip.putTextFile(JsonUtils.GSON.toJson(mcbbsManifest), "mcbbs.packmeta");
+            try (Writer writer = new OutputStreamWriter(zip.putStream("mcbbs.packmeta"), StandardCharsets.UTF_8)) {
+                JsonUtils.GSON.toJson(mcbbsManifest, writer);
+            }
 
             // CurseForge manifest
             List<CurseManifestModLoader> modLoaders = new ArrayList<>();
