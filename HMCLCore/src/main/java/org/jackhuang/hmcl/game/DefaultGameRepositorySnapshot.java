@@ -269,7 +269,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
                         resolve(parentInstance.getManifest(), resolvedSoFar);
                 launchManifest = manifest.merge(parentResolved.launchManifest());
                 standaloneManifest = addPatches(
-                        addPatches(parentResolved.standaloneManifest(), Collections.singleton(manifest.toPatch())),
+                        addPatches(parentResolved.standaloneManifest(), List.of(manifest.toPatch())),
                         manifest.patches());
             }
         }
@@ -355,7 +355,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
                 : manifest.withLibraries(libraries);
     }
 
-    private static GameInstanceManifest addPatches(GameInstanceManifest manifest, @Nullable Collection<GameInstancePatch> additional) {
+    private static GameInstanceManifest addPatches(GameInstanceManifest manifest, @Nullable List<GameInstancePatch> additional) {
         if (additional == null || additional.isEmpty()) {
             return manifest;
         }
