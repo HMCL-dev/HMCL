@@ -104,6 +104,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private TransitionPane announcementPane;
     private final StackPane updatePane;
     private final JFXButton menuButton;
+    private long lastHideTime = 0;
 
     private RemoteVersion lastShownVersion;
 
@@ -259,6 +260,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
             menuButton.setOnAction(e -> {
+                if(System.currentTimeMillis() - lastHideTime < 200) {
+                    return;
+                }
+
                 JFXPopup popup = GameListPopupMenu.showAndGetPopup(
                         menuButton,
                         JFXPopup.PopupVPosition.BOTTOM,
@@ -277,13 +282,19 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         FXUtils.playAnimation(graphic, "arrow-rotation", rotateOpen);
 
                         popup.setOnHidden(windowEvent -> {
+                            lastHideTime = System.currentTimeMillis();
+                            System.out.println(lastHideTime);
                             RotateTransition rotateClose = new RotateTransition(duration, graphic);
                             rotateClose.setToAngle(0);
                             FXUtils.playAnimation(graphic, "arrow-rotation", rotateClose);
                         });
                     } else {
                         graphic.setRotate(-180);
-                        popup.setOnHidden(windowEvent -> graphic.setRotate(0));
+                        popup.setOnHidden(windowEvent -> {
+                            lastHideTime = System.currentTimeMillis();
+                            System.out.println(lastHideTime);
+                            graphic.setRotate(0);
+                        });
                     }
                 }
             });
