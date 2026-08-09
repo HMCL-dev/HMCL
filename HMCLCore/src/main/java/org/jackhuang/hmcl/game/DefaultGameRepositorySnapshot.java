@@ -188,12 +188,6 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         instances.remove(id);
     }
 
-    /// Removes all instances from this unsealed snapshot.
-    void clear() {
-        checkMutable();
-        instances.clear();
-    }
-
     /// Creates an unsealed copy of this snapshot with instances rebound to the copy.
     ///
     /// @return a mutable snapshot ready for further edits before publish
