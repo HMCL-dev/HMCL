@@ -76,6 +76,15 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                                 return;
                             }
 
+                            if (executor.getException().getCause() instanceof OutOfMemoryError outOfMemoryError) {
+                                try {
+                                    Controllers.dialog(StringUtils.getStackTrace(outOfMemoryError), null, MessageType.ERROR, () -> onEnd());
+                                } catch (OutOfMemoryError ignored) {
+                                    onEnd();
+                                }
+                                return;
+                            }
+
                             String appendix = StringUtils.getStackTrace(executor.getException());
                             if (settings.get(WizardProvider.FailureCallback.KEY) != null)
                                 settings.get(WizardProvider.FailureCallback.KEY).onFail(settings, executor.getException(), () -> onEnd());
