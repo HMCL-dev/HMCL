@@ -66,7 +66,7 @@ public final class GameListPopupMenu extends StackPane {
                 .map(it -> new GameItem(repository, it.id()))
                 .toList());
         JFXPopup popup = new JFXPopup(menu);
-        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
+        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY, true);
 
         return popup;
     }
