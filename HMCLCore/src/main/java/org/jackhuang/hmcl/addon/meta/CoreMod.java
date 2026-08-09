@@ -29,21 +29,30 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.atLeast;
-import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.between;
 
+/// @see <a href="https://github.com/xfl03/CoreModTutor">CoreModTutor by xfl03 and contributors</a>
 public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumber> mcVersionRange) {
+
+    private CoreMod(ModLoaderType modLoaderType, String min) {
+        this(modLoaderType, GameVersionNumber.atLeast(min));
+    }
+
+    private CoreMod(ModLoaderType modLoaderType, String min, String max) {
+        this(modLoaderType, GameVersionNumber.between(min, max));
+    }
 
     @NotNull
     @Unmodifiable
@@ -63,9 +72,13 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
                 if (attr != null) {
                     String fmlCorePlg = attr.getValue("FMLCorePlugin");
                     String tweakClass = attr.getValue("TweakClass");
-                    if (StringUtils.isNotBlank(fmlCorePlg) || StringUtils.isNotBlank(tweakClass)) {
-                        coreMods.add(new CoreMod(ModLoaderType.FORGE, between("1.6.1", "1.12.2")));
-                    }
+                    if (StringUtils.isNotBlank(fmlCorePlg))
+                        coreMods.add(new CoreMod(ModLoaderType.FORGE, "1.3.2", "1.12.2"));
+                    if (StringUtils.isNotBlank(tweakClass))
+                        coreMods.addAll(List.of(
+                                new CoreMod(ModLoaderType.FORGE, "1.6.1", "1.12.2"),
+                                new CoreMod(ModLoaderType.LITE_LOADER, "1.6.1", "1.12.2")
+                        ));
                 }
             }
         }
@@ -80,9 +93,9 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
                     if (map != null && !map.isEmpty())
                         coreMods.addAll(List.of(
                                 // Removed in https://github.com/MinecraftForge/MinecraftForge/pull/10746
-                                new CoreMod(ModLoaderType.FORGE, between("1.13", "1.21.10")),
+                                new CoreMod(ModLoaderType.FORGE, "1.13", "1.21.10"),
                                 // Removed in https://github.com/neoforged/NeoForge/pull/2072
-                                new CoreMod(ModLoaderType.NEO_FORGE, between("1.20.1", "1.21.4"))
+                                new CoreMod(ModLoaderType.NEO_FORGE, "1.20.1", "1.21.4")
                         ));
                 } catch (IOException | JsonIOException e) {
                     LOG.warning("Failed to read coremods.json for jar: " + modFile, e);
@@ -94,8 +107,8 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
             // ITransformationService
             if (tree.getEntry("META-INF/services/cpw.mods.modlauncher.api.ITransformationService") != null)
                 coreMods.addAll(List.of(
-                        new CoreMod(ModLoaderType.FORGE, atLeast("1.13.2")),
-                        new CoreMod(ModLoaderType.NEO_FORGE, between("1.20.1", "1.21.8")) // Replaced by ClassProcessorProvider
+                        new CoreMod(ModLoaderType.FORGE, "1.13.2"),
+                        new CoreMod(ModLoaderType.NEO_FORGE, "1.20.1", "1.21.8") // Replaced by ClassProcessorProvider
                 ));
         }
         {
@@ -104,28 +117,26 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
             // https://neoforged.net/news/2024-retrospection/#the-changes
             // TODO Find a sample
             if (tree.getEntry("META-INF/services/net.neoforged.neoforgespi.coremod.ICoreMod") != null)
-                coreMods.add(new CoreMod(ModLoaderType.NEO_FORGE, between("1.20.5", "1.21.8"))); // Replaced by ClassProcessorProvider
+                coreMods.add(new CoreMod(ModLoaderType.NEO_FORGE, "1.20.5", "1.21.8")); // Replaced by ClassProcessorProvider
         }
         {
             // ClassProcessorProvider for NeoForge, replaces ITransformationService & ICoreMod
             // https://github.com/neoforged/NeoForge/pull/2655
             // https://github.com/neoforged/FancyModLoader/pull/358
             if (tree.getEntry("META-INF/services/net.neoforged.neoforgespi.transformation.ClassProcessorProvider") != null)
-                coreMods.add(new CoreMod(ModLoaderType.NEO_FORGE, atLeast("1.21.9")));
+                coreMods.add(new CoreMod(ModLoaderType.NEO_FORGE, "1.21.9"));
         }
         return List.copyOf(coreMods);
     }
 
     @NotNull
-    @Unmodifiable
-    public static Set<ModLoaderType> getSupportedLoaders(List<CoreMod> coreMods, @Nullable String gameVersion) {
-        Set<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
-        var version = GameVersionNumber.asGameVersion(Optional.ofNullable(gameVersion));
-        if (version == GameVersionNumber.unknown()) return Set.of();
+    public static EnumSet<ModLoaderType> getSupportedLoaders(List<CoreMod> coreMods, GameVersionNumber gameVersion) {
+        EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
+        if (gameVersion == GameVersionNumber.unknown()) return supportedLoaders;
         for (var coreMod : coreMods)
-            if (coreMod.mcVersionRange().contains(version))
+            if (coreMod.mcVersionRange().contains(gameVersion))
                 supportedLoaders.add(coreMod.modLoaderType());
-        return Set.copyOf(supportedLoaders);
+        return supportedLoaders;
     }
 
 }

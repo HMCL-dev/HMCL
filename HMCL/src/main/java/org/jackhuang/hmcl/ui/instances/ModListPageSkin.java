@@ -64,6 +64,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -631,11 +632,22 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             {
                 Set<ModLoaderType> modFileLoaders = EnumSet.noneOf(ModLoaderType.class);
+                GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(Optional.ofNullable(getSkinnable().gameVersion));
+                // Uses 1.7 snapshot as there's no snapshots for 1.6 after its first release
+                boolean checkCoreModsDir = !gameVersionNumber.isAtLeast("1.6.1", "13w36a");
+
                 if (modLoaderType != ModLoaderType.UNKNOWN) modFileLoaders.add(modLoaderType);
-                modFileLoaders.addAll(CoreMod.getSupportedLoaders(modInfo.getCoreMods(), getSkinnable().gameVersion));
+                modFileLoaders.addAll(CoreMod.getSupportedLoaders(modInfo.getCoreMods(), gameVersionNumber));
+
                 if (modFileLoaders.stream().anyMatch(loader -> getSkinnable().supportedLoaders.contains(loader))) {
-                    if (!modInfo.getCoreMods().isEmpty())
-                        content.addTag("CoreMod");
+                    if (modInfo.isCoreMod()) {
+                        if (checkCoreModsDir) {
+                            content.addTagWarning("CoreMod");
+                            warning.add(i18n("mods.coremods.check_dir"));
+                        } else {
+                            content.addTag("CoreMod");
+                        }
+                    }
                 } else {
                     if (modLoaderType == ModLoaderType.UNKNOWN) {
                         content.addTagWarning(i18n("mods.unknown"));
@@ -651,8 +663,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
                         }
                     }
-                    if (!modInfo.getCoreMods().isEmpty())
+                    if (modInfo.isCoreMod()) {
                         content.addTagWarning("CoreMod");
+                        if (checkCoreModsDir)
+                            warning.add(i18n("mods.coremods.check_dir"));
+                    }
                 }
             }
 

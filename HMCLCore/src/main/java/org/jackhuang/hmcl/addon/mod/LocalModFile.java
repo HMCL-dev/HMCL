@@ -151,6 +151,10 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         return logoPath;
     }
 
+    public boolean isCoreMod() {
+        return !coreMods.isEmpty();
+    }
+
     @NotNull
     @Unmodifiable
     public List<CoreMod> getCoreMods() {
