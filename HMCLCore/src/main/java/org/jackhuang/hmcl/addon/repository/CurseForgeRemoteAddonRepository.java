@@ -102,7 +102,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     private static int toModsSearchSortField(SortType sort) {
         // https://docs.curseforge.com/rest-api/#tocS_ModsSearchSortField
         return switch (sort) {
-            case RELEVANCY -> 1;
+            case RELEVANCY -> 1; // This represents Featured, however test shows that they are quite similar
             case POPULARITY -> 2;
             case DATE_CREATED -> 11;
             case LAST_UPDATED -> 3;
