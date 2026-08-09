@@ -120,7 +120,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
 
         if (!searchInitialized) {
             searchInitialized = true;
-            search("", null, 0, "", RemoteAddonRepository.SortType.POPULARITY);
+            search("", null, 0, "", RemoteAddonRepository.SortType.RELEVANCY);
         }
 
         if (instanceSelection) {
