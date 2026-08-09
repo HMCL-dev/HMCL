@@ -17,14 +17,19 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 
 /**
+ * Builds a new game instance by first saving a placeholder instance, then installing components
+ * against that registered instance.
  *
  * @author huangyuhui
  */
@@ -42,34 +47,62 @@ public class DefaultGameBuilder extends GameBuilder {
 
     @Override
     public Task<?> buildAsync() {
+        Objects.requireNonNull(name, "GameBuilder.name must be set");
         var hints = new ArrayList<Task.StagesHint>();
 
-        // Register a placeholder instance first so install tasks can resolve run/mods directories
-        // through GameInstance instead of repository-level path helpers.
-        Task<GameInstanceManifest> libraryTask = dependencyManager.getGameRepository()
-                .saveAsync(new GameInstanceManifest(name));
-        libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "game", gameVersion));
         hints.add(new Task.StagesHint("hmcl.install.game:" + gameVersion));
         hints.add(new Task.StagesHint("hmcl.install.libraries"));
         hints.add(new Task.StagesHint("hmcl.install.assets"));
-
         for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
-            libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, entry.getKey(), entry.getValue()));
-            hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", entry.getKey(), entry.getValue())));
+            hints.add(new Task.StagesHint(
+                    String.format("hmcl.install.%s:%s", entry.getKey(), entry.getValue())));
         }
-
         for (RemoteVersion remoteVersion : remoteVersions) {
-            libraryTask = libraryTask.thenComposeAsync(version -> dependencyManager.installComponentAsync(version, remoteVersion));
-            hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
+            hints.add(new Task.StagesHint(String.format(
+                    "hmcl.install.%s:%s",
+                    remoteVersion.getLibraryId(),
+                    remoteVersion.getSelfVersion())));
         }
 
-        return libraryTask.thenComposeAsync(dependencyManager.getGameRepository()::saveAsync).whenComplete(exception -> {
-            if (exception != null)
-                dependencyManager.getGameRepository().removeInstanceFromDisk(name);
-        }).withStagesHints(hints);
+        // Register a placeholder instance first so every install step has a real GameInstance
+        // (paths, snapshot identity). On failure the whole instance directory is removed.
+        return dependencyManager.getGameRepository()
+                .saveAsync(new GameInstanceManifest(name))
+                .thenComposeAsync(placeholder -> {
+                    DefaultGameInstance instance = Objects.requireNonNull(
+                            dependencyManager.getGameRepository().getSnapshot().findInstance(name),
+                            "placeholder instance missing after save: " + name);
+
+                    Task<GameInstanceManifest> libraryTask = Task.completed(placeholder);
+                    libraryTask = libraryTask.thenComposeAsync(
+                            libraryTaskHelper(instance, gameVersion, "game", gameVersion));
+
+                    for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
+                        libraryTask = libraryTask.thenComposeAsync(
+                                libraryTaskHelper(instance, gameVersion, entry.getKey(), entry.getValue()));
+                    }
+
+                    for (RemoteVersion remoteVersion : remoteVersions) {
+                        libraryTask = libraryTask.thenComposeAsync(
+                                working -> dependencyManager.installComponentAsync(instance, working, remoteVersion));
+                    }
+
+                    return libraryTask.thenComposeAsync(dependencyManager.getGameRepository()::saveAsync);
+                })
+                .whenComplete(exception -> {
+                    if (exception != null) {
+                        dependencyManager.getGameRepository().removeInstanceFromDisk(name);
+                    }
+                })
+                .withStagesHints(hints);
     }
 
-    private ExceptionalFunction<GameInstanceManifest, Task<GameInstanceManifest>, ?> libraryTaskHelper(String gameVersion, String libraryId, String libraryVersion) {
-        return version -> dependencyManager.installComponentAsync(gameVersion, version, libraryId, libraryVersion);
+    private ExceptionalFunction<GameInstanceManifest, Task<GameInstanceManifest>, ?> libraryTaskHelper(
+            GameInstance instance,
+            String gameVersion,
+            String libraryId,
+            String libraryVersion) {
+        return working -> dependencyManager.installComponentAsync(
+                instance, working, gameVersion, libraryId, libraryVersion);
     }
 }

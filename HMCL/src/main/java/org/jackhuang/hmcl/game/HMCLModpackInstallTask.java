@@ -90,14 +90,27 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
         GameInstanceManifest originalManifest = JsonUtils.GSON.fromJson(json, GameInstanceManifest.class).withId(instanceId).withJar(null);
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
-        Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> originalManifest);
+        DefaultGameInstance instance = repository.getSnapshot().findInstance(instanceId);
+        if (instance == null) {
+            throw new IllegalStateException("Instance " + instanceId + " was not registered by the game builder");
+        }
+
+        Task<GameInstanceManifest> libraryTask = Task.completed(originalManifest);
         // reinstall libraries
         // libraries of Forge and OptiFine should be obtained by installation.
         for (GameComponentAnalyzer.Mark mark : analyzer) {
             if (mark.componentType() == GameComponentType.GAME)
                 continue;
-            libraryTask = libraryTask
-                    .thenComposeAsync(manifest -> dependency.installComponentAsync(modpack.getGameVersion(), manifest, mark.componentType().getPatchId(), mark.version()));
+            String componentVersion = mark.version();
+            if (componentVersion == null) {
+                continue;
+            }
+            libraryTask = libraryTask.thenComposeAsync(manifest -> dependency.installComponentAsync(
+                    instance,
+                    manifest,
+                    modpack.getGameVersion(),
+                    mark.componentType().getPatchId(),
+                    componentVersion));
         }
 
         dependencies.add(libraryTask.thenComposeAsync(repository::saveAsync));

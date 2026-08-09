@@ -105,7 +105,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, component.getComponentType().getPatchId(), libraryVersion));
             });
 
-            component.setOnRemove(() -> repository.getDependency().removeComponentAsync(gameInstance.getManifest(), component.getComponentType())
+            component.setOnRemove(() -> repository.getDependency().removeComponentAsync(gameInstance, component.getComponentType())
                     .thenComposeAsync(repository::saveAsync)
                     .withComposeAsync(repository.refreshAsync())
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
@@ -120,7 +120,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
             InstallerItem installerItem = new InstallerItem(mark.componentType(), InstallerItem.Style.LIST_ITEM);
             installerItem.versionProperty().set(new InstallerItem.InstalledState(mark.version(), false, false));
-            installerItem.setOnRemove(() -> repository.getDependency().removeComponentAsync(gameInstance.getManifest(), mark.componentType())
+            installerItem.setOnRemove(() -> repository.getDependency().removeComponentAsync(gameInstance, mark.componentType())
                     .thenComposeAsync(repository::saveAsync)
                     .withComposeAsync(repository.refreshAsync())
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
@@ -149,7 +149,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         }
 
         HMCLGameRepository repository = gameInstance.getRepository();
-        Task<?> task = repository.getDependency().installComponentAsync(gameInstance.getManifest(), file)
+        Task<?> task = repository.getDependency().installComponentAsync(gameInstance, file)
                 .thenComposeAsync(repository::saveAsync)
                 .thenComposeAsync(repository.refreshAsync());
         task.setName(i18n("install.installer.install_offline"));

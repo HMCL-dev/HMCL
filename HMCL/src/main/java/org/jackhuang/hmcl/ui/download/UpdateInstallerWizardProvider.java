@@ -71,20 +71,22 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (settings1, exception, next) -> alertFailureMessage(exception, next));
 
-        // We remove library but not save it,
-        // so if installation failed will not break down current version.
+        // Edit a working manifest in memory against the registered instance; save only on success
+        // so a failed install does not leave a half-written instance json.
         Task<GameInstanceManifest> ret = Task.supplyAsync(gameInstance::getManifest);
         var hints = new ArrayList<Task.StagesHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof RemoteVersion remoteVersion) {
-                ret = ret.thenComposeAsync(manifest -> dependencyManager.installComponentAsync(manifest, remoteVersion));
+                ret = ret.thenComposeAsync(manifest ->
+                        dependencyManager.installComponentAsync(gameInstance, manifest, remoteVersion));
                 hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
                 if ("game".equals(remoteVersion.getLibraryId())) {
                     hints.add(new Task.StagesHint("hmcl.install.libraries"));
                     hints.add(new Task.StagesHint("hmcl.install.assets"));
                 }
             } else if (value instanceof RemoveVersionAction removeVersionAction) {
-                ret = ret.thenComposeAsync(manifest -> dependencyManager.removeComponentAsync(manifest, removeVersionAction.componentType));
+                ret = ret.thenComposeAsync(manifest ->
+                        dependencyManager.removeComponentAsync(gameInstance, manifest, removeVersionAction.componentType));
             }
         }
 
