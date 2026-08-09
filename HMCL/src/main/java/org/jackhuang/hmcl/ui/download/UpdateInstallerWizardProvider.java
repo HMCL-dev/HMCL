@@ -77,7 +77,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         var hints = new ArrayList<Task.StagesHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof RemoteVersion remoteVersion) {
-                ret = ret.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
+                ret = ret.thenComposeAsync(manifest -> dependencyManager.installLibraryAsync(manifest, remoteVersion));
                 hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
                 if ("game".equals(remoteVersion.getLibraryId())) {
                     hints.add(new Task.StagesHint("hmcl.install.libraries"));

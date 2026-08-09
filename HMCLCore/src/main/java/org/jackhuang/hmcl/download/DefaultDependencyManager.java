@@ -138,7 +138,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     continue;
 
                 if (type == GameComponentType.OPTIFINE) {
-                    String optifinePatchVersion = Optional.ofNullable(instance.getComponentVersion(type))                            .map(optifineVersion -> {
+                    String optifinePatchVersion = Optional.ofNullable(instance.getComponentVersion(type)).map(optifineVersion -> {
                                 Matcher matcher = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$").matcher(optifineVersion);
                                 return matcher.find() ? matcher.group("optifine") : optifineVersion;
                             })
@@ -256,17 +256,14 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     /// Creates a task that removes a loader's libraries and patch from a manifest.
     ///
-    /// @param manifest  the unresolved instance manifest
+    /// @param manifest      the unresolved instance manifest
     /// @param componentType the patch identifier, such as `forge`, `optifine`, or `fabric`
     /// @return the task producing the updated independent manifest
     public Task<GameInstanceManifest> removeLibraryAsync(GameInstanceManifest manifest, GameComponentType componentType) {
         // Library removal operates on a standalone manifest so inherited launch metadata is retained.
         return Task.supplyAsync(() -> {
             GameInstanceManifest standaloneManifest = repository.resolve(manifest).standaloneManifest();
-            GameVersionNumber gameVersion = repository.getGameVersion(standaloneManifest)
-                    .map(GameVersionNumber::asGameVersion)
-                    .orElse(null);
-            return GameComponentAnalyzer.analyze(standaloneManifest, gameVersion).removeLibrary(componentType);
+            return GameComponentAnalyzer.analyze(standaloneManifest, null).removeLibrary(componentType);
         });
     }
 
