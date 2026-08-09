@@ -70,9 +70,8 @@ public class McbbsModpackExportTask extends Task<Void> {
         });
     }
 
-    /// Exports the selected game files and manifests to the target archive.
-    ///
-    /// @throws Exception if the instance cannot be analyzed or the archive cannot be written
+/// Exports the selected game files and manifests to the target archive.
+    
     @Override
     public void execute() throws Exception {
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
