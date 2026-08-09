@@ -69,9 +69,7 @@ public class DefaultGameBuilder extends GameBuilder {
         return dependencyManager.getGameRepository()
                 .saveAsync(new GameInstanceManifest(name))
                 .thenComposeAsync(placeholder -> {
-                    DefaultGameInstance instance = Objects.requireNonNull(
-                            dependencyManager.getGameRepository().getSnapshot().findInstance(name),
-                            "placeholder instance missing after save: " + name);
+                    DefaultGameInstance instance = dependencyManager.getGameRepository().getInstance(name);
 
                     Task<GameInstanceManifest> libraryTask = Task.completed(placeholder);
                     libraryTask = libraryTask.thenComposeAsync(

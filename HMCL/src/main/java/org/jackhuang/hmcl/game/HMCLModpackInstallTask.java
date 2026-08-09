@@ -90,10 +90,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
         GameInstanceManifest originalManifest = JsonUtils.GSON.fromJson(json, GameInstanceManifest.class).withId(instanceId).withJar(null);
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
-        DefaultGameInstance instance = repository.getSnapshot().findInstance(instanceId);
-        if (instance == null) {
-            throw new IllegalStateException("Instance " + instanceId + " was not registered by the game builder");
-        }
+        DefaultGameInstance instance = repository.getInstance(instanceId);
 
         Task<GameInstanceManifest> libraryTask = Task.completed(originalManifest);
         // reinstall libraries

@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -194,7 +193,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             GameInstanceManifest baseManifest,
             RemoteVersion libraryVersion) {
         validateGameInstance(instance);
-        requireSameInstance(instance, baseManifest);
+        if (!instance.getId().equals(baseManifest.id())) {
+            throw new IllegalArgumentException("baseManifest id does not match instance");
+        }
 
         AtomicReference<GameInstanceManifest> removedComponentManifest = new AtomicReference<>();
         Path modsDirectory = instance.getModsDirectory();
@@ -229,7 +230,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             String libraryId,
             String libraryVersion) {
         validateGameInstance(instance);
-        requireSameInstance(instance, baseManifest);
+        if (!instance.getId().equals(baseManifest.id())) {
+            throw new IllegalArgumentException("baseManifest id does not match instance");
+        }
 
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion)
@@ -248,16 +251,19 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             GameInstanceManifest baseManifest,
             String libraryId,
             String libraryVersion) {
-        DefaultGameInstance instance = requireRegisteredInstance(baseManifest.id());
-        return installComponentAsync(instance, baseManifest, gameVersion, libraryId, libraryVersion);
+        return installComponentAsync(
+                repository.getInstance(baseManifest.id()),
+                baseManifest,
+                gameVersion,
+                libraryId,
+                libraryVersion);
     }
 
     @Override
     public Task<GameInstanceManifest> installComponentAsync(
             GameInstanceManifest baseVersion,
             RemoteVersion libraryVersion) {
-        DefaultGameInstance instance = requireRegisteredInstance(baseVersion.id());
-        return installComponentAsync(instance, baseVersion, libraryVersion);
+        return installComponentAsync(repository.getInstance(baseVersion.id()), baseVersion, libraryVersion);
     }
 
     /// Installs a component from a local installer jar into a registered instance.
@@ -281,7 +287,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             GameInstanceManifest baseManifest,
             Path installer) {
         validateGameInstance(instance);
-        requireSameInstance(instance, baseManifest);
+        if (!instance.getId().equals(baseManifest.id())) {
+            throw new IllegalArgumentException("baseManifest id does not match instance");
+        }
 
         return Task
                 .composeAsync(() -> {
@@ -330,11 +338,10 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     /// Removes a component from a working manifest bound to a registered instance.
     ///
-    /// Edits a standalone view so inherited launch metadata is retained. When `workingManifest`
-    /// matches the instance's stored manifest, the instance's resolved standalone view is used;
-    /// otherwise an independent working draft is used as-is (or resolved if it still inherits).
+    /// When `workingManifest` is the instance's stored manifest, edits its resolved standalone view;
+    /// otherwise edits the independent draft (resolving inheritance if still present).
     ///
-    /// @param instance        the registered instance (version + identity)
+    /// @param instance        the registered instance
     /// @param workingManifest the draft being edited
     /// @param componentType   the component to remove
     /// @return the task producing the updated standalone manifest (not yet saved)
@@ -343,18 +350,32 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             GameInstanceManifest workingManifest,
             GameComponentType componentType) {
         validateGameInstance(instance);
-        requireSameInstance(instance, workingManifest);
+        if (!instance.getId().equals(workingManifest.id())) {
+            throw new IllegalArgumentException("workingManifest id does not match instance");
+        }
 
         return Task.supplyAsync(() -> {
-            GameInstanceManifest standalone = standaloneEditBase(instance, workingManifest);
-            return GameComponentAnalyzer.analyze(standalone, gameVersionOf(instance)).removeLibrary(componentType);
+            GameInstanceManifest standalone;
+            if (workingManifest.equals(instance.getManifest())) {
+                standalone = instance.getResolvedManifest().standaloneManifest();
+            } else if (workingManifest.inheritsFrom() == null) {
+                standalone = workingManifest;
+            } else {
+                standalone = repository.resolve(workingManifest).standaloneManifest();
+            }
+
+            GameVersionNumber gameVersion = instance.getVersion();
+            if (gameVersion.equals(GameVersionNumber.unknown())) {
+                gameVersion = null;
+            }
+            return GameComponentAnalyzer.analyze(standalone, gameVersion).removeLibrary(componentType);
         });
     }
 
-    /// Removes a component from a manifest of a registered instance.
+    /// Removes a component using only a manifest id (looks up the instance in the snapshot).
     ///
-    /// Prefer [#removeComponentAsync(GameInstance, GameComponentType)] when the caller already holds
-    /// the instance.
+    /// Prefer [#removeComponentAsync(GameInstance, GameComponentType)] when the instance is already
+    /// available.
     ///
     /// @param manifest      the working or stored manifest
     /// @param componentType the component to remove
@@ -362,43 +383,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<GameInstanceManifest> removeComponentAsync(
             GameInstanceManifest manifest,
             GameComponentType componentType) {
-        DefaultGameInstance instance = requireRegisteredInstance(manifest.id());
-        return removeComponentAsync(instance, manifest, componentType);
-    }
-
-    /// Returns the standalone manifest to edit for component remove/install.
-    private GameInstanceManifest standaloneEditBase(GameInstance instance, GameInstanceManifest workingManifest) {
-        if (workingManifest.equals(instance.getManifest())) {
-            return instance.getResolvedManifest().standaloneManifest();
-        }
-        if (workingManifest.inheritsFrom() == null) {
-            return workingManifest;
-        }
-        return repository.resolve(workingManifest).standaloneManifest();
-    }
-
-    /// Returns the detected Minecraft version for analyze, or `null` when unknown.
-    private static @Nullable GameVersionNumber gameVersionOf(GameInstance instance) {
-        GameVersionNumber version = instance.getVersion();
-        return version.equals(GameVersionNumber.unknown()) ? null : version;
-    }
-
-    /// Requires a registered instance with the given id in this repository.
-    private DefaultGameInstance requireRegisteredInstance(GameInstanceID instanceId) {
-        DefaultGameInstance instance = repository.getSnapshot().findInstance(instanceId);
-        if (instance == null) {
-            throw new IllegalStateException("No registered instance for " + instanceId
-                    + "; save a placeholder instance before installing components");
-        }
-        return instance;
-    }
-
-    /// Ensures the working manifest refers to the same instance id.
-    private static void requireSameInstance(GameInstance instance, GameInstanceManifest manifest) {
-        if (!instance.getId().equals(manifest.id())) {
-            throw new IllegalArgumentException("Working manifest id " + manifest.id()
-                    + " does not match instance " + instance.getId());
-        }
+        return removeComponentAsync(repository.getInstance(manifest.id()), manifest, componentType);
     }
 
 }
