@@ -283,7 +283,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
                         popup.setOnHidden(windowEvent -> {
                             lastHideTime = System.currentTimeMillis();
-                            System.out.println(lastHideTime);
                             RotateTransition rotateClose = new RotateTransition(duration, graphic);
                             rotateClose.setToAngle(0);
                             FXUtils.playAnimation(graphic, "arrow-rotation", rotateClose);
@@ -292,7 +291,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         graphic.setRotate(-180);
                         popup.setOnHidden(windowEvent -> {
                             lastHideTime = System.currentTimeMillis();
-                            System.out.println(lastHideTime);
                             graphic.setRotate(0);
                         });
                     }
