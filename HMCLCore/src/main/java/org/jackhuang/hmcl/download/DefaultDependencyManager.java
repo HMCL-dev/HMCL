@@ -169,28 +169,28 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task<GameInstanceManifest> installComponentAsync(String gameVersion, GameInstanceManifest baseVersion, String libraryId, String libraryVersion) {
+    public Task<GameInstanceManifest> installComponentAsync(String gameVersion, GameInstanceManifest baseManifest, String libraryId, String libraryVersion) {
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion)
-                .thenComposeAsync(() -> installComponentAsync(baseVersion, versionList.getVersion(gameVersion, libraryVersion)
+                .thenComposeAsync(() -> installComponentAsync(baseManifest, versionList.getVersion(gameVersion, libraryVersion)
                         .orElseThrow(() -> new IOException("Remote library " + libraryId + " has no version " + libraryVersion))))
                 .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));
     }
 
     @Override
     public Task<GameInstanceManifest> installComponentAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion) {
-        AtomicReference<GameInstanceManifest> removedLibraryManifest = new AtomicReference<>();
+        AtomicReference<GameInstanceManifest> removedComponentManifest = new AtomicReference<>();
 
         return removeComponentAsync(baseVersion, libraryVersion.getComponentType())
                 .thenComposeAsync(manifest -> {
-                    removedLibraryManifest.set(manifest);
+                    removedComponentManifest.set(manifest);
                     return libraryVersion.getInstallTask(this, manifest, modsDirectoryFor(manifest));
                 })
                 .thenApplyAsync(patch -> {
                     if (patch == null) {
-                        return removedLibraryManifest.get();
+                        return removedComponentManifest.get();
                     } else {
-                        return removedLibraryManifest.get().addPatch(patch);
+                        return removedComponentManifest.get().addPatch(patch);
                     }
                 })
                 .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
