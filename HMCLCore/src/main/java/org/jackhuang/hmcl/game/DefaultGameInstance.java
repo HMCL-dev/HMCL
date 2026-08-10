@@ -138,6 +138,10 @@ public abstract class DefaultGameInstance implements GameInstance {
         return repository;
     }
 
+    public DefaultGameRepositorySnapshot getSnapshot() {
+        return snapshot;
+    }
+
     @Override
     public DefaultGameRepositoryLayout getLayout() {
         return layout;

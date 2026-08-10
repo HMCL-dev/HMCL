@@ -287,7 +287,7 @@ public class GameCrashWindow extends Stage {
                                 }
                             });
 
-                    return LogExporter.exportLogs(logFile, gameInstance.getRepository(), launchOptions.getInstanceId(), logs,
+                    return LogExporter.exportLogs(logFile, gameInstance, launchOptions, logs,
                             new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
                             path -> {
                                 try {

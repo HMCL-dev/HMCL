@@ -18,13 +18,17 @@
 package org.jackhuang.hmcl.game;
 
 import kala.encdet.EncodingDetector;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,22 +45,24 @@ public final class LogExporter {
     }
 
     public static CompletableFuture<Void> exportLogs(
-            Path zipFile, DefaultGameRepository repository, GameInstanceID instanceId, String logs, String launchScript,
+            Path zipFile, DefaultGameInstance instance, LaunchOptions options, String logs, String launchScript,
             PathMatcher logMatcher) {
-        DefaultGameInstance instance = repository.getSnapshot().findInstance(instanceId);
-        Path runDirectory = instance != null ? instance.getRunDirectory() : repository.getBaseDirectory();
+        DefaultGameRepositorySnapshot repositorySnapshot = instance.getSnapshot();
+        Path runDirectory = options.getGameDir();
         List<GameInstanceID> instances = new ArrayList<>();
 
-        GameInstanceID currentInstanceId = instanceId;
+        GameInstanceID currentInstanceId = instance.id;
         HashSet<GameInstanceID> resolvedSoFar = new HashSet<>();
         while (true) {
             if (resolvedSoFar.contains(currentInstanceId)) break;
             resolvedSoFar.add(currentInstanceId);
-            GameInstanceManifest currentVersion = repository.getInstanceManifest(currentInstanceId);
+            @Nullable DefaultGameInstance currentInstance = repositorySnapshot.get(currentInstanceId);
+            if (currentInstance == null)
+                break;
             instances.add(currentInstanceId);
 
-            if (currentVersion.inheritsFrom() != null) {
-                currentInstanceId = currentVersion.inheritsFrom();
+            if (currentInstance.getManifest().inheritsFrom() != null) {
+                currentInstanceId = currentInstance.getManifest().inheritsFrom();
             } else {
                 break;
             }
@@ -74,9 +80,11 @@ public final class LogExporter {
                 zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
 
                 for (GameInstanceID id : instances) {
-                    Path instanceJson = repository.getInstanceJson(id);
-                    if (Files.exists(instanceJson)) {
-                        zipper.putFile(instanceJson, id + ".json");
+                    @Nullable DefaultGameInstance currentInstance = repositorySnapshot.get(id);
+                    if (currentInstance != null) {
+                        try (var writer = new OutputStreamWriter(zipper.putStream(id + ".json"), StandardCharsets.UTF_8)) {
+                            JsonUtils.GSON.toJson(currentInstance.getManifest(), writer);
+                        }
                     }
                 }
             } catch (IOException e) {
