@@ -114,10 +114,10 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
         if (selfVersion == null) {
             task = new ForgeNewInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer)
-                    .thenApplyAsync((version) -> version.withId(GameComponentType.CLEANROOM));
+                    .thenApplyAsync((patch) -> patch.withId(GameComponentType.CLEANROOM));
         } else {
             task = new ForgeNewInstallTask(dependencyManager, manifest, selfVersion, installer)
-                    .thenApplyAsync((version) -> version.withId(GameComponentType.CLEANROOM));
+                    .thenApplyAsync((patch) -> patch.withId(GameComponentType.CLEANROOM));
         }
     }
 

@@ -125,7 +125,7 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
      */
     public static boolean detectForgeInstallerType(DependencyManager dependencyManager, GameInstanceManifest manifest, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(manifest);
-        if (!gameVersion.isPresent()) throw new IOException();
+        if (gameVersion.isEmpty()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
