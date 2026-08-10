@@ -58,7 +58,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
         OfflineSkinConfig config = account.getSkin();
         if (config == null) {
             skinTypeItem.setSelectedData(OfflineSkinConfig.Type.DEFAULT);
-            toggleGroup.selectToggle(toggleGroup.getToggles().getLast());
+            toggleGroup.selectToggle(toggleGroup.getToggles().get(toggleGroup.getToggles().size() - 1));
         } else {
             skinTypeItem.setSelectedData(config.type());
             toggleGroup.selectToggle(config.textureModel() == SkinModel.WIDE ? toggleGroup.getToggles().get(0) : toggleGroup.getToggles().get(1));
