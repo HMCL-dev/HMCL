@@ -787,6 +787,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             graphicsSettings.getContent().add(vulkanRendererPane);
             vulkanRendererPane.setTitle(i18n("settings.advanced.renderer.vulkan"));
 
+            var highPerformancePane = createInheritableBooleanButton(GameSettings::highPerformanceProperty);
+            graphicsSettings.getContent().add(highPerformancePane);
+            highPerformancePane.setTitle(i18n("settings.advanced.renderer.gpu_preferences"));
+            highPerformancePane.setSubtitle(i18n("settings.advanced.windows_only"));
+
             this.currentGameVersionNumber.addListener((o, oldValue, newValue) -> {
                 boolean showBackendChoose = isPresetSetting || newValue.compareTo("26.2-snapshot-2") >= 0;
                 graphicsBackendPane.setVisible(showBackendChoose);
