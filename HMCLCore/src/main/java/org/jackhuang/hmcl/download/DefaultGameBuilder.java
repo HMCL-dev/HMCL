@@ -17,19 +17,21 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameRepositoryDraft;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * Builds a new game instance by first saving a placeholder instance, then installing components
- * against that registered instance.
+ * Builds a new game instance by registering a placeholder via [GameRepositoryDraft], installing
+ * components against that instance, then saving the final manifest.
  *
  * @author huangyuhui
  */
@@ -64,14 +66,26 @@ public class DefaultGameBuilder extends GameBuilder {
                     remoteVersion.getSelfVersion())));
         }
 
-        // Register a placeholder instance first so every install step has a real GameInstance
-        // (paths, snapshot identity). On failure the whole instance directory is removed.
-        return dependencyManager.getGameRepository()
-                .saveAsync(new GameInstanceManifest(name))
-                .thenComposeAsync(placeholder -> {
-                    DefaultGameInstance instance = dependencyManager.getGameRepository().getInstance(name);
+        DefaultGameRepository repository = dependencyManager.getGameRepository();
 
-                    Task<GameInstanceManifest> libraryTask = Task.completed(placeholder);
+        // Register the placeholder instance through a draft (single index publish), then install
+        // components. A final saveAsync publishes the completed manifest.
+        return Task.supplyAsync(() -> {
+                    GameRepositoryDraft draft = repository.openDraft();
+                    try {
+                        GameInstance instance = draft.put(new GameInstanceManifest(name));
+                        draft.commit();
+                        return instance;
+                    } catch (IOException e) {
+                        draft.abort();
+                        throw e;
+                    } catch (RuntimeException e) {
+                        draft.abort();
+                        throw e;
+                    }
+                })
+                .thenComposeAsync(instance -> {
+                    Task<GameInstanceManifest> libraryTask = Task.completed(instance.getManifest());
                     libraryTask = libraryTask.thenComposeAsync(
                             libraryTaskHelper(instance, gameVersion, "game", gameVersion));
 
@@ -81,11 +95,11 @@ public class DefaultGameBuilder extends GameBuilder {
                     }
 
                     for (RemoteVersion remoteVersion : remoteVersions) {
-                        libraryTask = libraryTask.thenComposeAsync(
-                                working -> dependencyManager.installComponentAsync(instance, working, remoteVersion));
+                        libraryTask = libraryTask.thenComposeAsync(working ->
+                                dependencyManager.installComponentAsync(instance, working, remoteVersion));
                     }
 
-                    return libraryTask.thenComposeAsync(dependencyManager.getGameRepository()::saveAsync);
+                    return libraryTask.thenComposeAsync(repository::saveAsync);
                 })
                 .whenComplete(exception -> {
                     if (exception != null) {

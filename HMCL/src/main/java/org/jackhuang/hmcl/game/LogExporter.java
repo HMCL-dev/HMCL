@@ -45,7 +45,6 @@ public final class LogExporter {
             PathMatcher logMatcher) {
         DefaultGameInstance instance = repository.getSnapshot().findInstance(instanceId);
         Path runDirectory = instance != null ? instance.getRunDirectory() : repository.getBaseDirectory();
-        Path baseDirectory = repository.getBaseDirectory();
         List<GameInstanceID> instances = new ArrayList<>();
 
         GameInstanceID currentInstanceId = instanceId;

@@ -57,6 +57,12 @@ public interface GameRepository {
     /// @return the current repository snapshot
     GameRepositorySnapshot getSnapshot();
 
+    /// Opens a draft for staging instance creates and manifest updates before a single publish.
+    ///
+    /// @return a new open draft cloned from [#getSnapshot()]
+    /// @see GameRepositoryDraft
+    GameRepositoryDraft openDraft();
+
     /// Resolves inheritance into a normalized launch view and a patch-preserving standalone view.
     ///
     /// @param manifest the manifest to resolve

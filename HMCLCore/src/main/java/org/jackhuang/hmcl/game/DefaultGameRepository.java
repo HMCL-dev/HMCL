@@ -510,19 +510,24 @@ public abstract class DefaultGameRepository implements GameRepository {
         return getLayout().getInstanceJson(instanceId);
     }
 
-    public GameInstanceManifest save(GameInstanceManifest instanceManifest) throws IOException {
-        Path json = getInstanceJson(instanceManifest.id()).toAbsolutePath();
-        Files.createDirectories(json.getParent());
-        JsonUtils.writeToJsonFile(json, instanceManifest);
+    /// Opens a draft for staging instance index changes and committing them once.
+    ///
+    /// @return a new open draft
+    @Override
+    public DefaultGameRepositoryDraft openDraft() {
+        return new DefaultGameRepositoryDraft(this);
+    }
 
-        DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
-        DefaultGameInstance existing = newSnapshot.get(instanceManifest.id());
-        if (existing != null) {
-            newSnapshot.put(existing.withManifest(newSnapshot, instanceManifest));
-        } else {
-            newSnapshot.put(createInstance(newSnapshot, instanceManifest.id(), instanceManifest));
+    /// Writes a stored manifest and publishes a new snapshot in a single draft commit.
+    ///
+    /// @param instanceManifest the persistent manifest to save
+    /// @return the saved manifest
+    /// @throws IOException if the manifest cannot be written
+    public GameInstanceManifest save(GameInstanceManifest instanceManifest) throws IOException {
+        try (DefaultGameRepositoryDraft draft = openDraft()) {
+            draft.put(instanceManifest);
+            draft.commit();
         }
-        publishSnapshot(newSnapshot);
         return instanceManifest;
     }
 
