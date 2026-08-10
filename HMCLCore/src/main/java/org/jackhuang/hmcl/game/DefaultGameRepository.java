@@ -510,6 +510,22 @@ public abstract class DefaultGameRepository implements GameRepository {
         return getLayout().getInstanceJson(instanceId);
     }
 
+    public GameInstanceManifest save(GameInstanceManifest instanceManifest) throws IOException {
+        Path json = getInstanceJson(instanceManifest.id()).toAbsolutePath();
+        Files.createDirectories(json.getParent());
+        JsonUtils.writeToJsonFile(json, instanceManifest);
+
+        DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
+        DefaultGameInstance existing = newSnapshot.get(instanceManifest.id());
+        if (existing != null) {
+            newSnapshot.put(existing.withManifest(newSnapshot, instanceManifest));
+        } else {
+            newSnapshot.put(createInstance(newSnapshot, instanceManifest.id(), instanceManifest));
+        }
+        publishSnapshot(newSnapshot);
+        return instanceManifest;
+    }
+
     /// Saves a stored manifest without applying derived launch-view normalization.
     ///
     /// The returned task writes the manifest and publishes a snapshot containing exactly that
@@ -518,21 +534,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @param instanceManifest the persistent manifest to save
     /// @return the task that saves and publishes the manifest
     public Task<GameInstanceManifest> saveAsync(GameInstanceManifest instanceManifest) {
-        return Task.supplyAsync(() -> {
-            Path json = getInstanceJson(instanceManifest.id()).toAbsolutePath();
-            Files.createDirectories(json.getParent());
-            JsonUtils.writeToJsonFile(json, instanceManifest);
-
-            DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
-            DefaultGameInstance existing = newSnapshot.get(instanceManifest.id());
-            if (existing != null) {
-                newSnapshot.put(existing.withManifest(newSnapshot, instanceManifest));
-            } else {
-                newSnapshot.put(createInstance(newSnapshot, instanceManifest.id(), instanceManifest));
-            }
-            publishSnapshot(newSnapshot);
-            return instanceManifest;
-        });
+        return Task.supplyAsync(() -> save(instanceManifest));
     }
 
     @Override
