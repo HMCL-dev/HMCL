@@ -622,7 +622,7 @@ final class IndependentSettingBinder {
 
         long memoryAllocated;
         if (Boolean.TRUE.equals(autoMemory)) {
-            memoryAllocated = HMCLGameRepository.getAutoAllocatedMemory(memoryStatus.available(), Platform.SYSTEM_PLATFORM.getBits());
+            memoryAllocated = HMCLGameRepository.getAutoAllocatedMemory(memoryStatus.available(), Platform.SYSTEM_PLATFORM);
         } else if (maxMemory != null && maxMemory > 0) {
             memoryAllocated = maxMemory * 1024L * 1024L;
         } else {

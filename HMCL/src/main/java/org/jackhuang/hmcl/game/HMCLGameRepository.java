@@ -56,6 +56,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -745,7 +746,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                     ? null
                     : Math.toIntExact(getAutoAllocatedMemory(
                     SystemInfo.getPhysicalMemoryStatus().available(),
-                    java.getBits()
+                    java.getPlatform()
             ) / 1024L / 1024L);
         } else {
             maxMemory = vs.getMaxMemory();
@@ -896,7 +897,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public static long getAutoAllocatedMemory(long available, Bits bits) {
+    public static long getAutoAllocatedMemory(long available, Platform platform) {
         long usable = available - 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
         if (usable <= 0) {
             return available;
@@ -910,7 +911,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             suggested = Math.min(
                     (long) (threshold * 0.8 + (usable - threshold) * 0.2),
                     16L * 1024 * 1024 * 1024);
-        return bits == Bits.BIT_32
+        return platform.getBits() == Bits.BIT_32
                 ? Math.min(suggested, 768 * 1024 * 1024) // https://github.com/HMCL-dev/HMCL/issues/6638
                 : suggested;
     }
