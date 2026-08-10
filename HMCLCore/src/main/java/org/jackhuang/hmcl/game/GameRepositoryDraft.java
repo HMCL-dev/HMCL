@@ -21,23 +21,22 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
 
-/// A mutable draft of repository instance-index state, held as a working [GameRepositorySnapshot].
+/// A write session over a [GameRepository] that stages instance-index changes without mutating
+/// snapshots before publish.
 ///
-/// A draft is opened from a repository's published snapshot (typically by cloning it). Mutations
-/// such as [#put(GameInstanceManifest)] update that working snapshot. [#commit()] publishes it as
-/// the repository's current index; [#abort()] discards it and restores on-disk JSON for instances
-/// modified in the draft.
+/// The draft holds the repository's published [GameRepositorySnapshot] at open time as an immutable
+/// base. [#put(GameInstanceManifest)] records staged manifests and writes instance JSON; it does
+/// not modify that base snapshot. [#commit()] builds a new snapshot from the base plus staged
+/// changes and publishes it once. [#abort()] discards staged changes, restores JSON for edited
+/// instances, and removes directories created only in this draft.
 ///
-/// While the draft is open, [#getSnapshot()] is the draft's working snapshot and may still be
-/// mutable. After [#commit()], the same snapshot object is sealed and becomes the repository's
-/// published index. After [#abort()] or [#close()] without commit, the working snapshot must not be
-/// used.
+/// [#getSnapshot()] returns the immutable base while the draft is open. Staged state is visible
+/// through [#getInstance(GameInstanceID)] and [#hasInstance(GameInstanceID)], which overlay the
+/// base. After a successful [#commit()], [#getSnapshot()] returns the newly published snapshot.
 ///
-/// Drafts do not roll back global library or asset downloads that install tasks may have written
-/// outside instance roots.
+/// Drafts do not roll back global library or asset downloads outside instance roots.
 ///
 /// @see GameRepository#openDraft()
-/// @see #getSnapshot()
 @NotNullByDefault
 public interface GameRepositoryDraft extends AutoCloseable {
 
@@ -46,13 +45,14 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// @return the repository
     GameRepository getRepository();
 
-    /// Returns the working snapshot held by this draft.
+    /// Returns the immutable base snapshot captured when this draft was opened, or the published
+    /// snapshot after a successful [#commit()].
     ///
-    /// This is the sole instance index mutated by the draft. Instances obtained from it belong to
-    /// this snapshot in the same way as for a published [GameRepositorySnapshot].
+    /// While the draft is open, this is not a mutable working copy: staged [#put] results are not
+    /// reflected here. Use [#getInstance(GameInstanceID)] for the draft's effective instance view.
     ///
-    /// @return the working snapshot
-    /// @throws IllegalStateException if the draft is closed without having been committed
+    /// @return the base snapshot, or the committed published snapshot
+    /// @throws IllegalStateException if the draft was aborted or closed without commit
     GameRepositorySnapshot getSnapshot();
 
     /// Returns whether this draft still accepts mutations.
@@ -65,47 +65,43 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// @return whether [#commit()] has completed successfully
     boolean isCommitted();
 
-    /// Returns whether the working snapshot contains an instance with the given id.
+    /// Returns whether the draft's effective index contains an instance with the given id.
+    ///
+    /// An id is present if it is staged by [#put] or present in the base snapshot and not removed
+    /// by this draft.
     ///
     /// @param instanceId the instance id
-    /// @return whether the instance exists in [#getSnapshot()]
-    default boolean hasInstance(GameInstanceID instanceId) {
-        return getSnapshot().hasInstance(instanceId);
-    }
+    /// @return whether the instance exists in the draft view
+    boolean hasInstance(GameInstanceID instanceId);
 
-    /// Returns the instance as seen in [#getSnapshot()].
+    /// Returns the instance as seen by this draft (staged manifest over the base snapshot).
     ///
     /// @param instanceId the instance id
-    /// @return the working instance
-    /// @throws NoSuchGameInstanceException if the instance is absent from this draft
-    default GameInstance getInstance(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        return getSnapshot().getInstance(instanceId);
-    }
+    /// @return the effective instance for this draft
+    /// @throws NoSuchGameInstanceException if the instance is absent from the draft view
+    GameInstance getInstance(GameInstanceID instanceId) throws NoSuchGameInstanceException;
 
-    /// Stages a stored instance manifest into this draft's snapshot.
+    /// Stages a stored instance manifest without modifying the base snapshot.
     ///
-    /// Writes the manifest JSON under the repository layout and updates [#getSnapshot()] so
-    /// subsequent lookups observe the new state. The repository's published index is unchanged
-    /// until [#commit()].
+    /// Writes the manifest JSON under the repository layout and records the change for
+    /// [#commit()]. The repository's published index is unchanged until commit.
     ///
     /// @param manifest the persistent instance manifest
-    /// @return the working instance after the update (from [#getSnapshot()])
-    /// @throws IOException           if the manifest cannot be written
-    /// @throws IllegalStateException if the draft is closed
+    /// @return an instance view reflecting `manifest` in this draft
+    /// @throws IOException            if the manifest cannot be written
+    /// @throws IllegalStateException  if the draft is closed
     GameInstance put(GameInstanceManifest manifest) throws IOException;
 
-    /// Publishes [#getSnapshot()] as the repository's current index.
-    ///
-    /// Instance JSON files are expected to already match the working state from prior [#put] calls.
+    /// Builds a new snapshot from the base plus staged changes and publishes it.
     ///
     /// @throws IllegalStateException if the draft is closed or already committed
     void commit();
 
-    /// Discards this draft without publishing.
+    /// Discards staged changes without publishing a new snapshot.
     ///
-    /// Restores JSON for instances that existed before the draft and were modified, and removes
+    /// Restores JSON for instances that existed in the base and were modified, and removes
     /// instance directories that were created only in this draft. Global caches (libraries, assets)
-    /// are not reverted.
+    /// are not reverted. Idempotent when already aborted.
     ///
     /// @throws IllegalStateException if the draft was already committed
     void abort();
