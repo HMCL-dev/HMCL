@@ -553,9 +553,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
-        BooleanProperty booleanProperty;
+        @Nullable BooleanProperty booleanProperty;
 
-        Tooltip warningTooltip;
+        @Nullable Tooltip warningTooltip;
 
         ModInfoListCell(JFXListView<ModInfoObject> listView) {
             super(listView);
@@ -663,11 +663,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
                         }
                     }
-                    if (modInfo.isCoreMod()) {
+                    if (modInfo.isCoreMod())
                         content.addTagWarning("CoreMod");
-                        if (checkCoreModsDir)
-                            warning.add(i18n("mods.coremods.check_dir"));
-                    }
                 }
             }
 
