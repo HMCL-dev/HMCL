@@ -32,12 +32,13 @@ import java.util.Set;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Default [GameRepositoryDraft] that keeps the published snapshot immutable and stages changes
-/// separately until [#commit()].
+/// Default [GameRepositoryDraft] that keeps the published snapshot immutable and stages stored
+/// manifests until [#commit()].
 ///
-/// The draft holds [#base] (the repository snapshot at open time) and a map of staged manifests.
+/// The draft holds [#base] (the repository snapshot at open time) and [#staged] manifests.
 /// [#put(GameInstanceManifest)] only updates that map and instance JSON. [#commit()] clones
-/// [#base] once, applies staged manifests, and publishes the result.
+/// [#base] once, applies staged manifests, and publishes the result. No [GameInstance] is produced
+/// by the draft itself.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
@@ -113,30 +114,17 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     @Override
     public boolean hasInstance(GameInstanceID instanceId) {
         checkOpen();
-        if (staged.containsKey(instanceId)) {
-            return true;
-        }
-        return base.hasInstance(instanceId);
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public DefaultGameInstance getInstance(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        checkOpen();
-        GameInstanceManifest stagedManifest = staged.get(instanceId);
-        if (stagedManifest != null) {
-            return instanceView(instanceId, stagedManifest);
-        }
-        return base.getRegistered(instanceId);
+        return staged.containsKey(instanceId) || base.hasInstance(instanceId);
     }
 
     /// {@inheritDoc}
     ///
-    /// Writes `manifest` to disk and records it in the staged map. Does not modify [#base].
+    /// Writes `manifest` to disk and records it in [#staged]. Does not modify [#base] and does not
+    /// create a [GameInstance].
     ///
     /// @throws IllegalStateException if the draft is closed
     @Override
-    public DefaultGameInstance put(GameInstanceManifest manifest) throws IOException {
+    public void put(GameInstanceManifest manifest) throws IOException {
         checkOpen();
 
         GameInstanceID id = manifest.id();
@@ -152,7 +140,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         JsonUtils.writeToJsonFile(json, manifest);
 
         staged.put(id, manifest);
-        return instanceView(id, manifest);
     }
 
     /// {@inheritDoc}
@@ -230,19 +217,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         if (!closed && !committed) {
             abort();
         }
-    }
-
-    /// Returns an instance bound to [#base] that exposes the staged stored manifest.
-    ///
-    /// @param id       the instance id
-    /// @param manifest the staged stored manifest
-    /// @return an instance view for this draft
-    private DefaultGameInstance instanceView(GameInstanceID id, GameInstanceManifest manifest) {
-        DefaultGameInstance existingInBase = base.get(id);
-        if (existingInBase != null) {
-            return existingInBase.withManifest(base, manifest);
-        }
-        return repository.createInstance(base, id, manifest);
     }
 
     /// Deletes a draft-created instance directory without modifying the published snapshot.

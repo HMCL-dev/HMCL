@@ -21,18 +21,14 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
 
-/// A write session over a [GameRepository] that stages instance-index changes without mutating
-/// snapshots before publish.
+/// A write session that stages stored instance manifests against an immutable base snapshot.
 ///
-/// The draft holds the repository's published [GameRepositorySnapshot] at open time as an immutable
-/// base. [#put(GameInstanceManifest)] records staged manifests and writes instance JSON; it does
-/// not modify that base snapshot. [#commit()] builds a new snapshot from the base plus staged
-/// changes and publishes it once. [#abort()] discards staged changes, restores JSON for edited
-/// instances, and removes directories created only in this draft.
-///
-/// [#getSnapshot()] returns the immutable base while the draft is open. Staged state is visible
-/// through [#getInstance(GameInstanceID)] and [#hasInstance(GameInstanceID)], which overlay the
-/// base. After a successful [#commit()], [#getSnapshot()] returns the newly published snapshot.
+/// The draft holds the repository's published [GameRepositorySnapshot] at open time. That snapshot
+/// is never modified. [#put(GameInstanceManifest)] only records a staged stored manifest and writes
+/// its JSON. [#commit()] builds a new snapshot from the base plus staged manifests and publishes it
+/// once; only then does the repository index contain the corresponding [GameInstance] values.
+/// [#abort()] discards staged changes, restores JSON for edited base instances, and removes
+/// directories created only in this draft.
 ///
 /// Drafts do not roll back global library or asset downloads outside instance roots.
 ///
@@ -45,11 +41,11 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// @return the repository
     GameRepository getRepository();
 
-    /// Returns the immutable base snapshot captured when this draft was opened, or the published
-    /// snapshot after a successful [#commit()].
+    /// Returns the immutable base snapshot captured when this draft was opened, or the snapshot
+    /// published by a successful [#commit()].
     ///
-    /// While the draft is open, this is not a mutable working copy: staged [#put] results are not
-    /// reflected here. Use [#getInstance(GameInstanceID)] for the draft's effective instance view.
+    /// While the draft is open, staged [#put] results are not part of this snapshot. After commit,
+    /// this method returns the newly published index.
     ///
     /// @return the base snapshot, or the committed published snapshot
     /// @throws IllegalStateException if the draft was aborted or closed without commit
@@ -65,43 +61,40 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// @return whether [#commit()] has completed successfully
     boolean isCommitted();
 
-    /// Returns whether the draft's effective index contains an instance with the given id.
+    /// Returns whether a stored manifest for `instanceId` is staged or already present in the base
+    /// snapshot.
     ///
-    /// An id is present if it is staged by [#put] or present in the base snapshot and not removed
-    /// by this draft.
+    /// This does not imply a [GameInstance] is available from the published repository until
+    /// [#commit()].
     ///
     /// @param instanceId the instance id
-    /// @return whether the instance exists in the draft view
+    /// @return whether the id is staged or present in the base snapshot
     boolean hasInstance(GameInstanceID instanceId);
 
-    /// Returns the instance as seen by this draft (staged manifest over the base snapshot).
-    ///
-    /// @param instanceId the instance id
-    /// @return the effective instance for this draft
-    /// @throws NoSuchGameInstanceException if the instance is absent from the draft view
-    GameInstance getInstance(GameInstanceID instanceId) throws NoSuchGameInstanceException;
-
-    /// Stages a stored instance manifest without modifying the base snapshot.
+    /// Stages a stored instance manifest without creating a repository [GameInstance].
     ///
     /// Writes the manifest JSON under the repository layout and records the change for
-    /// [#commit()]. The repository's published index is unchanged until commit.
+    /// [#commit()]. No instance index entry exists for a newly staged id until commit. Callers that
+    /// need a [GameInstance] must [#commit()] and then use [GameRepository#getInstance(GameInstanceID)].
     ///
     /// @param manifest the persistent instance manifest
-    /// @return an instance view reflecting `manifest` in this draft
-    /// @throws IOException            if the manifest cannot be written
-    /// @throws IllegalStateException  if the draft is closed
-    GameInstance put(GameInstanceManifest manifest) throws IOException;
+    /// @throws IOException           if the manifest cannot be written
+    /// @throws IllegalStateException if the draft is closed
+    void put(GameInstanceManifest manifest) throws IOException;
 
-    /// Builds a new snapshot from the base plus staged changes and publishes it.
+    /// Builds a new snapshot from the base plus staged manifests and publishes it.
+    ///
+    /// After this method returns, [GameRepository#getInstance(GameInstanceID)] will resolve staged
+    /// ids from the published index.
     ///
     /// @throws IllegalStateException if the draft is closed or already committed
     void commit();
 
     /// Discards staged changes without publishing a new snapshot.
     ///
-    /// Restores JSON for instances that existed in the base and were modified, and removes
-    /// instance directories that were created only in this draft. Global caches (libraries, assets)
-    /// are not reverted. Idempotent when already aborted.
+    /// Restores JSON for instances that existed in the base and were modified, and removes instance
+    /// directories that were created only in this draft. Global caches (libraries, assets) are not
+    /// reverted. Idempotent when already aborted.
     ///
     /// @throws IllegalStateException if the draft was already committed
     void abort();

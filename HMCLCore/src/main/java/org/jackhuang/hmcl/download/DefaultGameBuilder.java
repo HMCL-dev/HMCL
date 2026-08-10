@@ -87,9 +87,9 @@ public class DefaultGameBuilder extends GameBuilder {
         return Task.supplyAsync(() -> {
                     GameRepositoryDraft draft = repository.openDraft();
                     try {
-                        GameInstance instance = draft.put(new GameInstanceManifest(name));
+                        draft.put(new GameInstanceManifest(name));
                         draft.commit();
-                        return instance;
+                        return repository.getInstance(name);
                     } catch (IOException e) {
                         draft.abort();
                         throw e;
