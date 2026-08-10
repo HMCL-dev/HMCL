@@ -68,11 +68,22 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                             else if (!settings.containsKey("forbid_success_message"))
                                 Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, () -> onEnd());
                         } else {
-                            if (executor.getException() == null)
+                            if (executor.getException() == null) {
+                                onEnd();
                                 return;
+                            }
 
                             if (executor.getException() instanceof CancellationException) {
                                 onEnd();
+                                return;
+                            }
+
+                            if (executor.getException().getCause() instanceof OutOfMemoryError outOfMemoryError) {
+                                try {
+                                    Controllers.dialog(StringUtils.getStackTrace(outOfMemoryError), null, MessageType.ERROR, () -> onEnd());
+                                } catch (OutOfMemoryError ignored) {
+                                    onEnd();
+                                }
                                 return;
                             }
 
