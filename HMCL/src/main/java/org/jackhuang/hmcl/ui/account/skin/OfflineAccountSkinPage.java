@@ -61,7 +61,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
             toggleGroup.selectToggle(toggleGroup.getToggles().getLast());
         } else {
             skinTypeItem.setSelectedData(config.type());
-            toggleGroup.selectToggle(config.textureModel() == SkinModel.WIDE ? toggleGroup.getToggles().getLast() : toggleGroup.getToggles().getFirst());
+            toggleGroup.selectToggle(config.textureModel() == SkinModel.WIDE ? toggleGroup.getToggles().get(0) : toggleGroup.getToggles().get(1));
             skinSelector.setValue(config.localSkinPath());
             capeSelector.setValue(config.localCapePath());
         }

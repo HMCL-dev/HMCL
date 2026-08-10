@@ -63,7 +63,6 @@ import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-
 public final class TexturesLoader {
 
     private TexturesLoader() {

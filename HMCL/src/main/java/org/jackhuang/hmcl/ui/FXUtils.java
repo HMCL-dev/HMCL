@@ -1777,7 +1777,6 @@ public final class FXUtils {
 
     }
 
-
     public static InputStream getInputStreamFromImage(Image image, String format) throws IOException {
         BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

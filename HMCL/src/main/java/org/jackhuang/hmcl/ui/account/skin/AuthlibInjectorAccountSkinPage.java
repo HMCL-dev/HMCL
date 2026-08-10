@@ -76,7 +76,7 @@ public class AuthlibInjectorAccountSkinPage extends SkinPageBase<AuthlibInjector
         }).whenComplete(Schedulers.javafx(), (r, e) -> {
             if (e != null) Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
             skinObjectProperty.set(r);
-            toggleGroup.selectToggle(r.model() == SkinModel.WIDE ? toggleGroup.getToggles().getLast() : toggleGroup.getToggles().getFirst());
+            toggleGroup.selectToggle(r.model() == SkinModel.WIDE ? toggleGroup.getToggles().get(0) : toggleGroup.getToggles().get(1));
         }).start();
 
         var uploadableTextures = getUploadableTextures();
