@@ -31,55 +31,85 @@ import java.util.Set;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Default [GameRepositoryDraft] backed by a COW clone of the published snapshot.
+/// Default [GameRepositoryDraft] that holds a COW clone of the published snapshot as its working
+/// index.
+///
+/// [#put(GameInstanceManifest)] writes instance JSON immediately and updates [#getSnapshot()].
+/// [#commit()] seals and publishes that snapshot. [#abort()] restores JSON for instances modified
+/// in this draft and deletes directories created only here; it does not revert library or asset
+/// downloads outside instance roots.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
+    /// Repository whose published index will be replaced on [#commit()].
     private final DefaultGameRepository repository;
-    private final DefaultGameRepositorySnapshot working;
+
+    /// Working snapshot for this draft; published on [#commit()].
+    private final DefaultGameRepositorySnapshot snapshot;
+
+    /// Instance ids that did not exist in the working snapshot when first staged by [#put].
     private final Set<GameInstanceID> createdIds = new HashSet<>();
+
+    /// First observed stored manifest for each id that already existed when staged by [#put].
+    ///
+    /// Used by [#abort()] to restore on-disk JSON for edited instances.
     private final Map<GameInstanceID, GameInstanceManifest> originalManifests = new HashMap<>();
+
+    /// Whether [#commit()] has completed successfully.
     private boolean committed;
+
+    /// Whether this draft no longer accepts mutations.
     private boolean closed;
 
+    /// Creates a draft whose working snapshot is a clone of `repository`'s published snapshot.
+    ///
+    /// @param repository the repository that owns this draft
     DefaultGameRepositoryDraft(DefaultGameRepository repository) {
         this.repository = repository;
-        this.working = repository.getSnapshot().clone();
+        this.snapshot = repository.getSnapshot().clone();
     }
 
+    /// {@inheritDoc}
     @Override
     public DefaultGameRepository getRepository() {
         return repository;
     }
 
+    /// {@inheritDoc}
+    ///
+    /// @throws IllegalStateException if the draft was aborted or closed without commit
+    @Override
+    public DefaultGameRepositorySnapshot getSnapshot() {
+        if (closed && !committed) {
+            throw new IllegalStateException("Draft is closed");
+        }
+        return snapshot;
+    }
+
+    /// {@inheritDoc}
     @Override
     public boolean isOpen() {
         return !closed;
     }
 
+    /// {@inheritDoc}
     @Override
     public boolean isCommitted() {
         return committed;
     }
 
-    @Override
-    public boolean hasInstance(GameInstanceID instanceId) {
-        checkOpen();
-        return working.hasInstance(instanceId);
-    }
-
-    @Override
-    public DefaultGameInstance getInstance(GameInstanceID instanceId) throws NoSuchGameInstanceException {
-        checkOpen();
-        return working.getRegistered(instanceId);
-    }
-
+    /// {@inheritDoc}
+    ///
+    /// Writes `manifest` to the instance JSON path, records abort metadata, and replaces or creates
+    /// the instance entry in [#getSnapshot()].
+    ///
+    /// @throws IllegalStateException if the draft is closed
     @Override
     public DefaultGameInstance put(GameInstanceManifest manifest) throws IOException {
         checkOpen();
 
         GameInstanceID id = manifest.id();
-        DefaultGameInstance existing = working.get(id);
+        DefaultGameInstance existing = snapshot.get(id);
         if (existing != null) {
             originalManifests.putIfAbsent(id, existing.getManifest());
         } else {
@@ -91,24 +121,35 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         JsonUtils.writeToJsonFile(json, manifest);
 
         if (existing != null) {
-            working.put(existing.withManifest(working, manifest));
+            snapshot.put(existing.withManifest(snapshot, manifest));
         } else {
-            working.put(repository.createInstance(working, id, manifest));
+            snapshot.put(repository.createInstance(snapshot, id, manifest));
         }
-        return working.getRegistered(id);
+        return snapshot.getRegistered(id);
     }
 
+    /// {@inheritDoc}
+    ///
+    /// Seals [#getSnapshot()] and installs it as the repository's published index. After this method
+    /// returns, the draft is closed and only [#isCommitted()] / [#getSnapshot()] remain meaningful.
+    ///
+    /// @throws IllegalStateException if the draft is closed or already committed
     @Override
     public void commit() {
         checkOpen();
         if (committed) {
             throw new IllegalStateException("Draft already committed");
         }
-        repository.publishSnapshot(working);
+        repository.publishSnapshot(snapshot);
         committed = true;
         closed = true;
     }
 
+    /// {@inheritDoc}
+    ///
+    /// Idempotent when already aborted. Does not publish the working snapshot.
+    ///
+    /// @throws IllegalStateException if the draft was already committed
     @Override
     public void abort() {
         if (committed) {
@@ -141,7 +182,10 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         }
     }
 
-    /// Deletes a draft-created instance directory without touching the published snapshot.
+    /// Deletes a draft-created instance directory without modifying the published snapshot.
+    ///
+    /// @param id the instance id whose root directory will be removed
+    /// @throws IOException if deletion fails
     private void deleteInstanceDirectory(GameInstanceID id) throws IOException {
         Path root = repository.getLayout().getInstanceRoot(id);
         if (Files.notExists(root)) {
@@ -150,6 +194,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         FileUtils.deleteDirectory(root);
     }
 
+    /// {@inheritDoc}
+    ///
+    /// Calls [#abort()] when the draft is still open and not committed.
     @Override
     public void close() {
         if (!closed && !committed) {
@@ -157,6 +204,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         }
     }
 
+    /// Ensures the draft still accepts mutations.
+    ///
+    /// @throws IllegalStateException if the draft is closed
     private void checkOpen() {
         if (closed) {
             throw new IllegalStateException("Draft is closed");

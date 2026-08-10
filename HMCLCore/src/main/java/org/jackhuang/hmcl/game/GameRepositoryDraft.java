@@ -21,17 +21,23 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
 
-/// A mutable draft of [GameRepository] instance-index state.
+/// A mutable draft of repository instance-index state, held as a working [GameRepositorySnapshot].
 ///
-/// A draft is opened from a repository's published snapshot, accumulates instance creates and
-/// manifest updates, then either [#commit()]s once (write-through JSON is already on disk; the
-/// index is published) or [#abort()]s (restores previous JSON for edited instances and removes
-/// directories created only in this draft).
+/// A draft is opened from a repository's published snapshot (typically by cloning it). Mutations
+/// such as [#put(GameInstanceManifest)] update that working snapshot. [#commit()] publishes it as
+/// the repository's current index; [#abort()] discards it and restores on-disk JSON for instances
+/// modified in the draft.
+///
+/// While the draft is open, [#getSnapshot()] is the draft's working snapshot and may still be
+/// mutable. After [#commit()], the same snapshot object is sealed and becomes the repository's
+/// published index. After [#abort()] or [#close()] without commit, the working snapshot must not be
+/// used.
 ///
 /// Drafts do not roll back global library or asset downloads that install tasks may have written
 /// outside instance roots.
 ///
 /// @see GameRepository#openDraft()
+/// @see #getSnapshot()
 @NotNullByDefault
 public interface GameRepositoryDraft extends AutoCloseable {
 
@@ -39,6 +45,15 @@ public interface GameRepositoryDraft extends AutoCloseable {
     ///
     /// @return the repository
     GameRepository getRepository();
+
+    /// Returns the working snapshot held by this draft.
+    ///
+    /// This is the sole instance index mutated by the draft. Instances obtained from it belong to
+    /// this snapshot in the same way as for a published [GameRepositorySnapshot].
+    ///
+    /// @return the working snapshot
+    /// @throws IllegalStateException if the draft is closed without having been committed
+    GameRepositorySnapshot getSnapshot();
 
     /// Returns whether this draft still accepts mutations.
     ///
@@ -50,32 +65,36 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// @return whether [#commit()] has completed successfully
     boolean isCommitted();
 
-    /// Returns whether the working index contains an instance with the given id.
+    /// Returns whether the working snapshot contains an instance with the given id.
     ///
     /// @param instanceId the instance id
-    /// @return whether the instance exists in this draft
-    boolean hasInstance(GameInstanceID instanceId);
+    /// @return whether the instance exists in [#getSnapshot()]
+    default boolean hasInstance(GameInstanceID instanceId) {
+        return getSnapshot().hasInstance(instanceId);
+    }
 
-    /// Returns the instance as seen in this draft's working snapshot.
+    /// Returns the instance as seen in [#getSnapshot()].
     ///
     /// @param instanceId the instance id
     /// @return the working instance
     /// @throws NoSuchGameInstanceException if the instance is absent from this draft
-    GameInstance getInstance(GameInstanceID instanceId) throws NoSuchGameInstanceException;
+    default GameInstance getInstance(GameInstanceID instanceId) throws NoSuchGameInstanceException {
+        return getSnapshot().getInstance(instanceId);
+    }
 
-    /// Stages a stored instance manifest into this draft.
+    /// Stages a stored instance manifest into this draft's snapshot.
     ///
-    /// Writes the manifest JSON under the repository layout and updates the working snapshot so
-    /// subsequent [#getInstance(GameInstanceID)] calls observe the new state. The published
-    /// repository index is unchanged until [#commit()].
+    /// Writes the manifest JSON under the repository layout and updates [#getSnapshot()] so
+    /// subsequent lookups observe the new state. The repository's published index is unchanged
+    /// until [#commit()].
     ///
     /// @param manifest the persistent instance manifest
-    /// @return the working instance after the update
-    /// @throws IOException          if the manifest cannot be written
+    /// @return the working instance after the update (from [#getSnapshot()])
+    /// @throws IOException           if the manifest cannot be written
     /// @throws IllegalStateException if the draft is closed
     GameInstance put(GameInstanceManifest manifest) throws IOException;
 
-    /// Publishes this draft's working snapshot as the repository's current index.
+    /// Publishes [#getSnapshot()] as the repository's current index.
     ///
     /// Instance JSON files are expected to already match the working state from prior [#put] calls.
     ///
