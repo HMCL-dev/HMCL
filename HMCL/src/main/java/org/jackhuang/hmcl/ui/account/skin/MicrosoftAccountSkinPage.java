@@ -17,10 +17,15 @@
  */
 package org.jackhuang.hmcl.ui.account.skin;
 
-import javafx.scene.control.ToggleGroup;
+import com.jfoenix.controls.JFXRadioButton;
+import com.jfoenix.controls.JFXRippler;
+import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
@@ -34,11 +39,14 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -46,84 +54,162 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MicrosoftAccountSkinPage extends SkinPageBase<MicrosoftAccount> {
+    private static final double CAPE_SCALE = 6;
+    private static final double CAPE_PREVIEW_WIDTH = 10 * CAPE_SCALE;
+    private static final double CAPE_PREVIEW_HEIGHT = 17 * CAPE_SCALE;
+    private static final MicrosoftService.MinecraftProfileResponseCape NONE_CAPE = new MicrosoftService.MinecraftProfileResponseCape("none", null, null, "none");
+
     private final ToggleGroup modelToggleGroup;
     private final ToggleGroup capeToggleGroup = new ToggleGroup();
-    private List<MicrosoftService.MinecraftProfileResponseCape> capes;
+    private MicrosoftService.MinecraftProfileResponseCape currentCape;
 
     public MicrosoftAccountSkinPage(MicrosoftAccount account) {
         super(account);
+
+        getStyleClass().add("microsoft-skin-manage");
 
         var pair = createModelSelectBox();
         modelToggleGroup = pair.getValue();
 
         Task.supplyAsync(() -> {
-            var textures = YggdrasilService.getTextures(account.getService().getCompleteGameProfile(account.getProfileID()).orElseThrow()).orElseThrow();
-            var skin = textures.get(TextureType.SKIN);
+            var profile = account.getService().getCompleteGameProfile(account.getProfileID()).orElseThrow();
+            var textures = YggdrasilService.getTextures(profile).orElseThrow();
 
-            Image skinImg;
-            if (skin == null || StringUtils.isBlank(skin.url()))
-                skinImg = TexturesLoader.getDefaultSkin(account.getProfileID()).image();
-            else skinImg = TexturesLoader.loadTexture(skin).image();
+            var skinTex = textures.get(TextureType.SKIN);
+            Image skinImg = (skinTex != null && StringUtils.isNotBlank(skinTex.url()))
+                    ? TexturesLoader.loadTexture(skinTex).image()
+                    : TexturesLoader.getDefaultSkin(account.getProfileID()).image();
 
-            boolean isSlim;
-            if (skin != null && skin.metadata() != null) {
-                isSlim = skin.metadata().get("model").equals(SkinModel.SLIM.modelName);
-            } else isSlim = TexturesLoader.getDefaultModel(account.getProfileID()).isSlim();
+            boolean isSlim = (skinTex != null && skinTex.metadata() != null)
+                    ? SkinModel.SLIM.modelName.equals(skinTex.metadata().get("model"))
+                    : TexturesLoader.getDefaultModel(account.getProfileID()).isSlim();
 
-            Image capeImg = null;
-            if (textures.get(TextureType.CAPE) != null && !StringUtils.isBlank(textures.get(TextureType.CAPE).url())) {
-                capeImg = TexturesLoader.loadTexture(textures.get(TextureType.CAPE)).image();
-            }
+            var capeTex = textures.get(TextureType.CAPE);
+            Image capeImg = (capeTex != null && StringUtils.isNotBlank(capeTex.url()))
+                    ? TexturesLoader.loadTexture(capeTex).image()
+                    : null;
 
             return new Skin(isSlim ? SkinModel.SLIM : SkinModel.WIDE, skinImg, capeImg);
-        }).whenComplete(Schedulers.javafx(), (r, e) -> {
-            if (e != null) Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
-            skinObjectProperty.set(r);
-            modelToggleGroup.selectToggle(r.model() == SkinModel.WIDE ? modelToggleGroup.getToggles().get(1) : modelToggleGroup.getToggles().get(0));
+        }).whenComplete(Schedulers.javafx(), (skin, e) -> {
+            if (e != null) {
+                Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
+                return;
+            }
+            skinObjectProperty.set(skin);
+            if (skin != null) {
+                modelToggleGroup.selectToggle(skin.model() == SkinModel.WIDE ? modelToggleGroup.getToggles().get(1) : modelToggleGroup.getToggles().get(0));
+            }
         }).start();
 
-        var capeList = new HBox(5);
+        HBox capeList = new HBox(0);
+        capeList.setAlignment(Pos.CENTER);
+
+        capeToggleGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null) return;
+            Skin currentSkin = skinObjectProperty.get();
+            if (currentSkin == null) return;
+
+            if (newVal.getUserData() instanceof MicrosoftService.MinecraftProfileResponseCape cape && !"none".equals(cape.id())) {
+                getCapeImageTask(cape)
+                    .thenAcceptAsync(Schedulers.javafx(), img -> skinObjectProperty.set(new Skin(currentSkin.model(), currentSkin.skin(), img)))
+                    .start();
+            } else {
+                skinObjectProperty.set(new Skin(currentSkin.model(), currentSkin.skin(), null));
+            }
+        });
+
+        ScrollPane capeScrollPane = new ScrollPane(capeList);
+        capeScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        capeScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        capeScrollPane.setFitToHeight(true);
+        capeScrollPane.setPannable(true);
+        FXUtils.smoothScrolling(capeScrollPane);
+
+        StackPane scrollWrapper = new StackPane(capeScrollPane);
+        scrollWrapper.getStyleClass().add("scroll-wrapper");
+        scrollWrapper.setMaxWidth(264);
+
+        SpinnerPane capeListSpinnerPane = new SpinnerPane();
+        capeListSpinnerPane.setPrefWidth(264);
+        capeListSpinnerPane.setMaxWidth(264);
+        capeListSpinnerPane.setPrefHeight(145);
+        capeListSpinnerPane.setContent(scrollWrapper);
+        capeListSpinnerPane.showSpinner();
 
 
-        Task.supplyAsync(() -> {
-                    var response = account.getMinecraftProfileResponse();
-                    capes = response.orElseThrow().getCapes();
-                    return capes;
-                }).whenComplete(Schedulers.javafx(), (r, e) -> {
-                    if (e != null) Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
-                    var items = r.stream().map(it -> new CapeItem(it, capeToggleGroup))
-                            .toList();
-                    capeList.getChildren().setAll(items);
+        Task.supplyAsync(() -> account.getMinecraftProfileResponse().orElseThrow().getCapes())
+                .whenComplete(Schedulers.javafx(), (capes, e) -> {
+                    capeListSpinnerPane.hideSpinner();
+                    if (e != null) {
+                        Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
+                        return;
+                    }
+                    populateCapeList(capes, capeList);
+                }).start();
 
-                    skinManagePane.leftRegion.getChildren().add(capeList);
-                })
-                .start();
-
-        var skinButton = FXUtils.newRaisedButton(i18n("account.skin.manage.select.skin"));
+        Button skinButton = FXUtils.newRaisedButton(i18n("account.skin.manage.select.skin"));
         skinButton.setOnAction(event -> {
             FileChooser chooser = new FileChooser();
             chooser.setTitle(i18n("account.skin.manage.select.skin"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("account.skin.file"), "*.png"));
             Path selectedFile = Controllers.showOpenDialog(chooser);
-            if (selectedFile == null) return;
-            try {
-                setSkinTexture(FXUtils.loadImage(selectedFile));
-            } catch (Exception e) {
-                LOG.warning("Failed to parse cape image", e);
-                Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
+            if (selectedFile != null) {
+                try {
+                    setSkinTexture(FXUtils.loadImage(selectedFile));
+                } catch (Exception e) {
+                    LOG.warning("Failed to parse skin image", e);
+                    Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
+                }
             }
         });
 
-        skinManagePane.leftRegion.getChildren().addAll(skinButton, pair.getKey());
+        skinManagePane.leftRegion.getChildren().addAll(skinButton, pair.getKey(), capeListSpinnerPane);
+    }
+
+    private void populateCapeList(List<MicrosoftService.MinecraftProfileResponseCape> capes, HBox capeList) {
+        capes.add(0, NONE_CAPE);
+
+        currentCape = capes.stream().filter(c -> "ACTIVE".equals(c.state())).findFirst().orElse(null);
+
+        if (currentCape == null) currentCape = NONE_CAPE;
+
+        List<RipplerContainer> items = new ArrayList<>();
+        for (int i = 0; i < capes.size(); i++) {
+            MicrosoftService.MinecraftProfileResponseCape cape = capes.get(i);
+            CapeItem item = new CapeItem(cape, capeToggleGroup, i == capes.size() - 1);
+
+            if (cape == currentCape) {
+                capeToggleGroup.selectToggle(item.getRadioButton());
+            }
+
+            var ripplerContainor = new RipplerContainer(item);
+            ripplerContainor.setPosition(JFXRippler.RipplerPos.FRONT);
+            FXUtils.onClicked(ripplerContainor, () -> capeToggleGroup.selectToggle(item.getRadioButton()));
+            items.add(ripplerContainor);
+        }
+        capeList.getChildren().addAll(items);
     }
 
     @Override
     protected void onSaveChanges() {
         super.onSaveChanges();
-
         try {
-            var current = skinObjectProperty.get();
-            account.uploadSkin(current.model().isSlim(), FXUtils.getInputStreamFromImage(current.skin(), "png"));
+            Skin current = skinObjectProperty.get();
+            if (current != null) {
+                account.uploadSkin(current.model().isSlim(), FXUtils.getInputStreamFromImage(current.skin(), "png"));
+            }
+
+            Toggle selectedToggle = capeToggleGroup.getSelectedToggle();
+            if (selectedToggle != null) {
+                Object data = selectedToggle.getUserData();
+                if (data instanceof MicrosoftService.MinecraftProfileResponseCape cape && !"none".equals(cape.id())) {
+                    if (currentCape == null || !cape.id().equals(currentCape.id())) {
+                        account.updateCape(cape.id());
+                    }
+                } else {
+                    account.updateCape(null);
+                }
+            }
         } catch (Exception e) {
             LOG.warning("Failed to upload skin", e);
             Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
@@ -131,33 +217,66 @@ public class MicrosoftAccountSkinPage extends SkinPageBase<MicrosoftAccount> {
     }
 
     private static class CapeItem extends VBox {
-        public CapeItem(MicrosoftService.MinecraftProfileResponseCape cape, ToggleGroup toggleGroup) {
-            super(5);
+        private final JFXRadioButton radioButton;
+
+        public CapeItem(MicrosoftService.MinecraftProfileResponseCape cape, ToggleGroup toggleGroup, boolean isLast) {
+            super(4);
+
+            getStyleClass().add("cape-item");
+            setAlignment(Pos.CENTER);
+            setMaxHeight(Double.MAX_VALUE);
 
             SpinnerPane spinnerPane = new SpinnerPane();
-            FXUtils.setLimitHeight(spinnerPane, 64);
-            FXUtils.setLimitWidth(spinnerPane, 32);
-            ImageView imageView = new ImageView();
-            spinnerPane.setContent(imageView);
+            spinnerPane.setPrefSize(CAPE_PREVIEW_WIDTH, CAPE_PREVIEW_HEIGHT);
+            spinnerPane.setMaxSize(CAPE_PREVIEW_WIDTH, CAPE_PREVIEW_HEIGHT);
 
-            String imagePath = "/assets/img/cape/" + getCapeId(cape.alias()) + ".png";
-            URL imageURL = MicrosoftAccountSkinPage.class.getResource(imagePath);
-
-            if (imageURL != null) {
-                imageView.setImage(FXUtils.newBuiltinImage(imagePath));
-            } else {
-                spinnerPane.showSpinner();
-                FXUtils.getRemoteImageTask(cape.url(), 0, 0, false, false).thenAcceptAsync(Schedulers.javafx(), result -> {
-                    spinnerPane.hideSpinner();
-                    imageView.setImage(result);
-                }).start();
+            ImageView capePreview = new ImageView();
+            if (!"none".equals(cape.id())) {
+                capePreview.setViewport(new Rectangle2D(CAPE_SCALE, 0, 10 * CAPE_SCALE, 17 * CAPE_SCALE));
             }
+            capePreview.setFitWidth(CAPE_PREVIEW_WIDTH);
+            capePreview.setFitHeight(CAPE_PREVIEW_HEIGHT);
+
+            spinnerPane.setContent(capePreview);
+            spinnerPane.showSpinner();
+
+            getCapeImageTask(cape).thenAcceptAsync(Schedulers.javafx(), result -> {
+                capePreview.setImage(FXUtils.scaleImageNearestNeighbor(result, CAPE_SCALE, CAPE_SCALE));
+                spinnerPane.hideSpinner();
+            }).start();
 
             getChildren().add(spinnerPane);
+
+            String key = "account.cape.name." + toCapeId(cape.alias());
+            String displayName = I18n.hasKey(key) ? i18n(key) : cape.alias();
+
+            radioButton = new JFXRadioButton(displayName);
+            radioButton.setToggleGroup(toggleGroup);
+            radioButton.setUserData(cape);
+            radioButton.setAlignment(Pos.CENTER);
+            radioButton.setMaxWidth(Double.MAX_VALUE);
+            radioButton.setMaxHeight(Double.MAX_VALUE);
+
+            getChildren().add(radioButton);
+        }
+
+        public RadioButton getRadioButton() {
+            return radioButton;
         }
     }
 
-    private static String getCapeId(String alias) {
+    private static String toCapeId(String alias) {
         return alias.toLowerCase(Locale.ROOT).replace(" ", "_").replace("'", "_").replace("-", "_");
+    }
+
+    private static Task<Image> getCapeImageTask(MicrosoftService.MinecraftProfileResponseCape cape) {
+        String builtinImagePath = "/assets/img/capes/" + toCapeId(cape.alias()) + ".png";
+        URL builtinImageURL = MicrosoftAccountSkinPage.class.getResource(builtinImagePath);
+
+        if (builtinImageURL != null) {
+            return Task.completed(FXUtils.newBuiltinImage(builtinImagePath));
+        } else {
+            return FXUtils.getRemoteImageTask(cape.url(), 0, 0, false, false);
+        }
     }
 }

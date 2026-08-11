@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -134,7 +135,7 @@ public final class MicrosoftAccount extends OAuthAccount {
         service.uploadSkin(session.accessToken(), isSlim, file);
     }
 
-    public void updateCape(String id) throws UnsupportedOperationException, IOException {
+    public void updateCape(@Nullable String id) throws UnsupportedOperationException, IOException {
         service.updateCape(session.accessToken(), id);
     }
 
