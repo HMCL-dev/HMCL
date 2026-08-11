@@ -306,7 +306,8 @@ public final class Controllers {
         }
 
         if (HotSpotCrashDetector.hasPreviousCrash()) {
-            Controllers.dialog(i18n("launcher.crash.previous_run"), null, MessageType.WARNING);
+            Controllers.dialogLater(new MessageDialogPane.Builder(
+                    i18n("launcher.crash.previous_run"), null, MessageType.WARNING).build());
         }
 
         if (SettingsManager.userState().agreementVersionProperty().get() < 1) {
