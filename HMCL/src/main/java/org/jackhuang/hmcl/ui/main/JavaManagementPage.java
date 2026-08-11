@@ -37,8 +37,8 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -50,17 +50,19 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
-import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
-import org.jetbrains.annotations.Nullable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -348,7 +350,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 Controllers.confirm(
                         i18n("java.uninstall.confirm"),
                         i18n("message.warning"),
-                        () -> Controllers.taskDialog(JavaManager.getUninstallJavaTask(java), i18n("java.uninstall"), TaskCancellationAction.NORMAL),
+                        () -> Controllers.taskLoadingDialog(JavaManager.getUninstallJavaTask(java), i18n("java.uninstall"), TaskCancellationAction.NORMAL),
                         null
                 );
             } else {

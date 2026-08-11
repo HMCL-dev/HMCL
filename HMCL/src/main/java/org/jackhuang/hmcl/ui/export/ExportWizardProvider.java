@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final HMCLGameRepository repository;
@@ -57,6 +58,8 @@ public final class ExportWizardProvider implements WizardProvider {
 
     @Override
     public void start(SettingsMap settings) {
+        settings.put("use_loading_dialog", "true");
+        settings.put("title", i18n("modpack.exporting"));
     }
 
     @Override

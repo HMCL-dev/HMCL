@@ -177,7 +177,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
     private void exportList() {
         Path path = Paths.get("hmcl-mod-update-list-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".csv").toAbsolutePath();
 
-        Controllers.taskDialog(Task.runAsync(() -> {
+        Controllers.taskLoadingDialog(Task.runAsync(() -> {
             CSVTable csvTable = new CSVTable();
 
             csvTable.set(0, 0, "Source File Name");

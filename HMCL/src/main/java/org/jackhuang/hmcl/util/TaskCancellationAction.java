@@ -17,26 +17,26 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import javafx.scene.Node;
 
 import java.util.function.Consumer;
 
 public final class TaskCancellationAction {
-    public static TaskCancellationAction NO_CANCEL = new TaskCancellationAction((Consumer<TaskExecutorDialogPane>) null);
+    public static TaskCancellationAction NO_CANCEL = new TaskCancellationAction((Consumer<Node>) null);
     public static TaskCancellationAction NORMAL = new TaskCancellationAction(() -> {
     });
 
-    private final Consumer<TaskExecutorDialogPane> cancellationAction;
+    private final Consumer<Node> cancellationAction;
 
     public TaskCancellationAction(Runnable cancellationAction) {
         this.cancellationAction = it -> cancellationAction.run();
     }
 
-    public TaskCancellationAction(Consumer<TaskExecutorDialogPane> cancellationAction) {
+    public TaskCancellationAction(Consumer<Node> cancellationAction) {
         this.cancellationAction = cancellationAction;
     }
 
-    public Consumer<TaskExecutorDialogPane> getCancellationAction() {
+    public Consumer<Node> getCancellationAction() {
         return cancellationAction;
     }
 }

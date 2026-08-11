@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskLoadingDialog;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -43,65 +44,82 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
 
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(new TaskCancellationAction(it -> {
-            it.fireEvent(new DialogCloseEvent());
-            onEnd();
-        }));
-
-        pane.setTitle(i18n("message.doing"));
-        if (settings.containsKey("title")) {
-            Object title = settings.get("title");
-            if (title instanceof StringProperty titleProperty)
-                pane.titleProperty().bind(titleProperty);
-            else if (title instanceof String titleMessage)
-                pane.setTitle(titleMessage);
-        }
-
-        runInFX(() -> {
-            TaskExecutor executor = task.executor(new TaskListener() {
-                @Override
-                public void onStop(boolean success, TaskExecutor executor) {
-                    runInFX(() -> {
-                        if (success) {
-                            if (settings.get("success_message") instanceof String successMessage)
-                                Controllers.dialog(successMessage, null, MessageType.SUCCESS, () -> onEnd());
-                            else if (!settings.containsKey("forbid_success_message"))
-                                Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, () -> onEnd());
-                        } else {
-                            if (executor.getException() == null) {
-                                onEnd();
-                                return;
-                            }
-
-                            if (executor.getException() instanceof CancellationException) {
-                                onEnd();
-                                return;
-                            }
-
-                            if (executor.getException().getCause() instanceof OutOfMemoryError outOfMemoryError) {
-                                try {
-                                    Controllers.dialog(StringUtils.getStackTrace(outOfMemoryError), null, MessageType.ERROR, () -> onEnd());
-                                } catch (OutOfMemoryError ignored) {
-                                    onEnd();
-                                }
-                                return;
-                            }
-
-                            String appendix = StringUtils.getStackTrace(executor.getException());
-                            if (settings.get(WizardProvider.FailureCallback.KEY) != null)
-                                settings.get(WizardProvider.FailureCallback.KEY).onFail(settings, executor.getException(), () -> onEnd());
-                            else if (settings.get("failure_message") instanceof String failureMessage)
-                                Controllers.dialog(appendix, failureMessage, MessageType.ERROR, () -> onEnd());
-                            else if (!settings.containsKey("forbid_failure_message"))
-                                Controllers.dialog(appendix, i18n("wizard.failed"), MessageType.ERROR, () -> onEnd());
+        TaskExecutor executor = task.executor(new TaskListener() {
+            @Override
+            public void onStop(boolean success, TaskExecutor executor) {
+                runInFX(() -> {
+                    if (success) {
+                        if (settings.get("success_message") instanceof String successMessage)
+                            Controllers.dialog(successMessage, null, MessageType.SUCCESS, () -> onEnd());
+                        else if (!settings.containsKey("forbid_success_message"))
+                            Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, () -> onEnd());
+                    } else {
+                        if (executor.getException() == null) {
+                            onEnd();
+                            return;
                         }
 
-                    });
-                }
-            });
+                        if (executor.getException() instanceof CancellationException) {
+                            onEnd();
+                            return;
+                        }
+
+                        if (executor.getException().getCause() instanceof OutOfMemoryError outOfMemoryError) {
+                            try {
+                                Controllers.dialog(StringUtils.getStackTrace(outOfMemoryError), null, MessageType.ERROR, () -> onEnd());
+                            } catch (OutOfMemoryError ignored) {
+                                onEnd();
+                            }
+                            return;
+                        }
+
+                        String appendix = StringUtils.getStackTrace(executor.getException());
+                        if (settings.get(WizardProvider.FailureCallback.KEY) != null)
+                            settings.get(WizardProvider.FailureCallback.KEY).onFail(settings, executor.getException(), () -> onEnd());
+                        else if (settings.get("failure_message") instanceof String failureMessage)
+                            Controllers.dialog(appendix, failureMessage, MessageType.ERROR, () -> onEnd());
+                        else if (!settings.containsKey("forbid_failure_message"))
+                            Controllers.dialog(appendix, i18n("wizard.failed"), MessageType.ERROR, () -> onEnd());
+                    }
+
+                });
+            }
+        });
+
+
+        var cancel = new TaskCancellationAction(it -> {
+            it.fireEvent(new DialogCloseEvent());
+            onEnd();
+        });
+
+        if (settings.containsKey("use_loading_dialog")) {
+            TaskLoadingDialog taskLoadingDialog = new TaskLoadingDialog(i18n("message.doing"), cancel, executor);
+
+            if (settings.containsKey("title")) {
+                Object title = settings.get("title");
+                if (title instanceof StringProperty titleProperty)
+                    taskLoadingDialog.titleProperty().bind(titleProperty);
+                else if (title instanceof String titleMessage)
+                    taskLoadingDialog.setTitle(titleMessage);
+            }
+            
+            Controllers.dialog(taskLoadingDialog);
+            executor.start();
+        } else {
+            TaskExecutorDialogPane pane = new TaskExecutorDialogPane(cancel);
+
+            pane.setTitle(i18n("message.doing"));
+            if (settings.containsKey("title")) {
+                Object title = settings.get("title");
+                if (title instanceof StringProperty titleProperty)
+                    pane.titleProperty().bind(titleProperty);
+                else if (title instanceof String titleMessage)
+                    pane.setTitle(titleMessage);
+            }
+
             pane.setExecutor(executor);
             Controllers.dialog(pane);
             executor.start();
-        });
+        }
     }
 }
