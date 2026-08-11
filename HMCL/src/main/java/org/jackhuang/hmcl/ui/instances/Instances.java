@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -52,6 +53,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -261,34 +263,41 @@ public final class Instances {
     public static void generateLaunchScript(HMCLGameRepository repository, GameInstanceID instanceId, Consumer<LauncherHelper>... injecters) {
         if (!checkVersionForLaunching(repository, instanceId))
             return;
-        ensureSelectedAccount(account -> {
-            FileChooser chooser = new FileChooser();
-            if (Files.isDirectory(repository.getRunDirectory(instanceId)))
-                chooser.setInitialDirectory(repository.getRunDirectory(instanceId).toFile());
-            chooser.setTitle(i18n("instance.launch_script.save"));
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                chooser.getExtensionFilters().add(
-                        new FileChooser.ExtensionFilter(i18n("extension.command"), "*.command")
-                );
-            }
-            chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                    ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
-                    : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
-            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
-            Path file = Controllers.showSaveDialog(chooser);
-            if (file != null) {
-                if (!isValidScriptExtension(FileUtils.getExtension(file))) {
-                    String defaultExt = getDefaultScriptExtension();
-                    file = file.resolveSibling(file.getFileName().toString() + "." + defaultExt);
-                }
+        Account account = resolveAccountForLaunch(repository, instanceId);
+        if (account != null) {
+            generateLaunchScript0(repository, instanceId, account, injecters);
+        } else {
+            ensureSelectedAccount(selected -> generateLaunchScript0(repository, instanceId, selected, injecters));
+        }
+    }
 
-                LauncherHelper launcherHelper = new LauncherHelper(repository, account, instanceId);
-                for (Consumer<LauncherHelper> injecter : injecters) {
-                    injecter.accept(launcherHelper);
-                }
-                launcherHelper.makeLaunchScript(file);
+    private static void generateLaunchScript0(HMCLGameRepository repository, GameInstanceID instanceId, Account account, Consumer<LauncherHelper>... injecters) {
+        FileChooser chooser = new FileChooser();
+        if (Files.isDirectory(repository.getRunDirectory(instanceId)))
+            chooser.setInitialDirectory(repository.getRunDirectory(instanceId).toFile());
+        chooser.setTitle(i18n("instance.launch_script.save"));
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            chooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter(i18n("extension.command"), "*.command")
+            );
+        }
+        chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
+                : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
+        Path file = Controllers.showSaveDialog(chooser);
+        if (file != null) {
+            if (!isValidScriptExtension(FileUtils.getExtension(file))) {
+                String defaultExt = getDefaultScriptExtension();
+                file = file.resolveSibling(file.getFileName().toString() + "." + defaultExt);
             }
-        });
+
+            LauncherHelper launcherHelper = new LauncherHelper(repository, account, instanceId);
+            for (Consumer<LauncherHelper> injecter : injecters) {
+                injecter.accept(launcherHelper);
+            }
+            launcherHelper.makeLaunchScript(file);
+        }
     }
 
     private static boolean isValidScriptExtension(String ext) {
@@ -310,13 +319,39 @@ public final class Instances {
     public static void launch(HMCLGameRepository repository, GameInstanceID instanceId, Consumer<LauncherHelper>... injecters) {
         if (!checkVersionForLaunching(repository, instanceId))
             return;
-        ensureSelectedAccount(account -> {
-            LauncherHelper launcherHelper = new LauncherHelper(repository, account, instanceId);
-            for (Consumer<LauncherHelper> injecter : injecters) {
-                injecter.accept(launcherHelper);
+        Account account = resolveAccountForLaunch(repository, instanceId);
+        if (account != null) {
+            launch0(repository, instanceId, account, injecters);
+        } else {
+            ensureSelectedAccount(selected -> launch0(repository, instanceId, selected, injecters));
+        }
+    }
+
+    private static void launch0(HMCLGameRepository repository, GameInstanceID instanceId, Account account, Consumer<LauncherHelper>... injecters) {
+        LauncherHelper launcherHelper = new LauncherHelper(repository, account, instanceId);
+        for (Consumer<LauncherHelper> injecter : injecters) {
+            injecter.accept(launcherHelper);
+        }
+        launcherHelper.launch();
+    }
+
+    /// Resolves the account used to launch the instance from its effective game settings.
+    ///
+    /// When the instance specifies a specific account, that account is returned if it still exists;
+    /// otherwise the account currently selected in the account list is returned.
+    private static @Nullable Account resolveAccountForLaunch(HMCLGameRepository repository, GameInstanceID instanceId) {
+        GameSettings.Effective effective = repository.getEffectiveGameSettings(instanceId);
+        if (effective.getInheritable(GameSettings::accountTypeProperty) == AccountSelectionType.SPECIFIC) {
+            @Nullable AccountID accountID = effective.getInheritable(GameSettings::specificAccountIDProperty);
+            if (accountID != null) {
+                for (Account account : Accounts.getAccounts()) {
+                    if (accountID.equals(account.getAccountID())) {
+                        return account;
+                    }
+                }
             }
-            launcherHelper.launch();
-        });
+        }
+        return Accounts.getSelectedAccount();
     }
 
     public static void testGame(HMCLGameRepository repository, GameInstanceID instanceId) {

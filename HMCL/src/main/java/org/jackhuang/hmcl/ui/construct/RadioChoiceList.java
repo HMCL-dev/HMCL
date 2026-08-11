@@ -214,6 +214,9 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         /// The optional subtitle shown on the right side.
         protected @Nullable String subtitle;
 
+        /// The label rendering the current subtitle, kept for dynamic subtitle updates.
+        private @Nullable javafx.scene.control.Label subtitleLabel;
+
         /// The optional tooltip installed on the radio button.
         protected @Nullable String tooltip;
 
@@ -251,6 +254,9 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
         /// Sets the optional subtitle.
         public Choice<T> setSubtitle(@Nullable String subtitle) {
             this.subtitle = subtitle;
+            if (subtitleLabel != null) {
+                subtitleLabel.setText(subtitle);
+            }
             return this;
         }
 
@@ -332,6 +338,7 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
             label.getStyleClass().add("subtitle-label");
             label.setStyle("-fx-font-size: 10;");
             label.setPadding(new Insets(0, 0, 0, 15));
+            subtitleLabel = label;
             return label;
         }
     }

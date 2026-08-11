@@ -26,6 +26,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
+import org.jackhuang.hmcl.auth.AccountID;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -702,6 +703,32 @@ public sealed abstract class GameSettings extends ObservableSetting {
     /// Returns the post-exit command property.
     public InheritableProperty<String> postExitCommandProperty() {
         return postExitCommand;
+    }
+
+    /// Property name for the account selection mode.
+    public static final String PROPERTY_ACCOUNT_TYPE = "accountType";
+
+    /// The account selection mode.
+    @SerializedName(PROPERTY_ACCOUNT_TYPE)
+    private final InheritableProperty<AccountSelectionType> accountType =
+            newInheritableProperty(PROPERTY_ACCOUNT_TYPE, AccountSelectionType.GLOBAL);
+
+    /// Returns the account selection mode property.
+    public InheritableProperty<AccountSelectionType> accountTypeProperty() {
+        return accountType;
+    }
+
+    /// Property name for the account used by `SPECIFIC` account selection mode.
+    public static final String PROPERTY_SPECIFIC_ACCOUNT_ID = "specificAccountID";
+
+    /// Account used by `SPECIFIC` account selection mode.
+    @SerializedName(PROPERTY_SPECIFIC_ACCOUNT_ID)
+    private final InheritableProperty<@Nullable AccountID> specificAccountID =
+            newInheritableProperty(PROPERTY_SPECIFIC_ACCOUNT_ID);
+
+    /// Returns the account used by `SPECIFIC` account selection mode property.
+    public InheritableProperty<@Nullable AccountID> specificAccountIDProperty() {
+        return specificAccountID;
     }
 
     /// Property name for the quick play target type.
