@@ -47,6 +47,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
@@ -64,11 +65,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// The selected instance resolved from the current repository snapshot.
     private final ReadOnlyObjectWrapper<@Nullable HMCLGameInstance> selectedInstance;
 
-    /// Monitor guarding settings prepared before a new instance draft is opened.
-    private final Object preparedInstanceMonitor = new Object();
-
     /// Settings reservations transferred to the next draft that creates the corresponding id.
-    private final Map<GameInstanceID, PreparedInstanceSettings> preparedInstanceSettings = new HashMap<>();
+    private final Map<GameInstanceID, PreparedInstanceSettings> preparedInstanceSettings = new ConcurrentHashMap<>();
 
     /// Creates a repository backed by the given game directory.
     ///
@@ -101,9 +99,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     @Override
     public void setBaseDirectory(Path baseDirectory) {
         super.setBaseDirectory(baseDirectory);
-        synchronized (preparedInstanceMonitor) {
-            preparedInstanceSettings.clear();
-        }
+        preparedInstanceSettings.clear();
     }
 
     /// {@inheritDoc}
@@ -111,11 +107,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Accepts an existing root only when this repository reserved the id while the root was absent.
     @Override
     protected boolean mayClaimDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) {
-        synchronized (preparedInstanceMonitor) {
-            PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
-            if (prepared != null) {
-                return prepared.instanceRoot().equals(instanceRoot) && prepared.rootWasAbsent();
-            }
+        PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
+        if (prepared != null) {
+            return prepared.instanceRoot().equals(instanceRoot) && prepared.rootWasAbsent();
         }
         return super.mayClaimDraftInstanceRoot(instanceId, instanceRoot);
     }
@@ -126,18 +120,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// draft owns the instance root.
     @Override
     protected void initializeDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) throws IOException {
-        synchronized (preparedInstanceMonitor) {
-            PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
-            if (prepared == null) {
-                return;
-            }
-            if (!prepared.instanceRoot().equals(instanceRoot) || !prepared.rootWasAbsent()) {
-                throw new IOException("Prepared instance root cannot be claimed: " + instanceRoot);
-            }
-
-            writeInstanceGameSettings(instanceId, prepared.settings());
-            preparedInstanceSettings.remove(instanceId);
+        PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
+        if (prepared == null) {
+            return;
         }
+        if (!prepared.instanceRoot().equals(instanceRoot) || !prepared.rootWasAbsent()) {
+            throw new IOException("Prepared instance root cannot be claimed: " + instanceRoot);
+        }
+
+        writeInstanceGameSettings(instanceId, prepared.settings());
+        preparedInstanceSettings.remove(instanceId, prepared);
     }
 
     @Override
@@ -351,22 +343,20 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
 
         Path instanceRoot = getLayout().getInstanceRoot(instanceId).toAbsolutePath().normalize();
-        synchronized (preparedInstanceMonitor) {
-            PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
-            GameSettings.Instance setting = prepared != null
-                    ? prepared.settings()
-                    : peekInstanceGameSettings(instanceId);
-            if (setting == null) {
-                setting = new GameSettings.Instance();
-            }
-            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-            preparedInstanceSettings.put(
-                    instanceId,
-                    new PreparedInstanceSettings(
-                            setting,
-                            instanceRoot,
-                            prepared != null ? prepared.rootWasAbsent() : Files.notExists(instanceRoot)));
+        PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
+        GameSettings.Instance setting = prepared != null
+                ? prepared.settings()
+                : peekInstanceGameSettings(instanceId);
+        if (setting == null) {
+            setting = new GameSettings.Instance();
         }
+        setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+        preparedInstanceSettings.put(
+                instanceId,
+                new PreparedInstanceSettings(
+                        setting,
+                        instanceRoot,
+                        prepared != null ? prepared.rootWasAbsent() : Files.notExists(instanceRoot)));
     }
 
     public Stream<HMCLGameInstance> getDisplayInstances() {

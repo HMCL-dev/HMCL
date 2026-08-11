@@ -43,7 +43,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// draft-private directory. Instance installers may use the returned working [GameInstance] and
 /// write instance-owned files before commit. A successful commit moves all staged manifests into
 /// place and publishes the working snapshot once. Shared library and asset cache writes are outside
-/// the rollback boundary.
+/// the rollback boundary. Instances of this class are not thread-safe.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
@@ -97,7 +97,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// {@inheritDoc}
     @Override
-    public synchronized GameRepositorySnapshot getSnapshot() {
+    public GameRepositorySnapshot getSnapshot() {
         if (state == GameRepositoryDraftState.ABORTED || state == GameRepositoryDraftState.FAILED) {
             throw new IllegalStateException("Draft is " + state.name().toLowerCase());
         }
@@ -106,39 +106,39 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// {@inheritDoc}
     @Override
-    public synchronized GameRepositoryDraftState getState() {
+    public GameRepositoryDraftState getState() {
         return state;
     }
 
     /// {@inheritDoc}
     @Override
-    public synchronized boolean isOpen() {
+    public boolean isOpen() {
         return state == GameRepositoryDraftState.OPEN;
     }
 
     /// {@inheritDoc}
     @Override
-    public synchronized boolean isCommitted() {
+    public boolean isCommitted() {
         return state == GameRepositoryDraftState.COMMITTED;
     }
 
     /// {@inheritDoc}
     @Override
-    public synchronized boolean hasInstance(GameInstanceID instanceId) {
+    public boolean hasInstance(GameInstanceID instanceId) {
         checkOpen();
         return workingSnapshot.hasInstance(instanceId);
     }
 
     /// {@inheritDoc}
     @Override
-    public synchronized DefaultGameInstance put(GameInstanceManifest manifest) throws IOException {
+    public DefaultGameInstance put(GameInstanceManifest manifest) throws IOException {
         checkOpen();
         return stageManifest(manifest, true);
     }
 
     /// {@inheritDoc}
     @Override
-    public synchronized void remove(GameInstanceID instanceId) {
+    public void remove(GameInstanceID instanceId) {
         checkOpen();
         if (workingSnapshot.get(instanceId) == null) {
             throw new NoSuchGameInstanceException(instanceId);
@@ -151,7 +151,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// {@inheritDoc}
     @Override
-    public synchronized void rename(GameInstanceID from, GameInstanceID to) throws IOException {
+    public void rename(GameInstanceID from, GameInstanceID to) throws IOException {
         checkOpen();
         DefaultGameInstance source = workingSnapshot.get(from);
         if (source == null) {
@@ -231,7 +231,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// {@inheritDoc}
     @Override
-    public synchronized DefaultGameRepositorySnapshot commit() throws IOException {
+    public DefaultGameRepositorySnapshot commit() throws IOException {
         checkOpen();
         repository.checkActiveDraft(this);
         state = GameRepositoryDraftState.COMMITTING;
@@ -274,7 +274,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// {@inheritDoc}
     @Override
-    public synchronized void abort() throws IOException {
+    public void abort() throws IOException {
         if (state == GameRepositoryDraftState.ABORTED) {
             return;
         }
@@ -298,7 +298,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// {@inheritDoc}
     @Override
-    public synchronized void close() throws IOException {
+    public void close() throws IOException {
         if (state == GameRepositoryDraftState.OPEN) {
             abort();
         }

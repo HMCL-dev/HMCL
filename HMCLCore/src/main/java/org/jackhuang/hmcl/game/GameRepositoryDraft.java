@@ -31,6 +31,7 @@ import java.io.IOException;
 /// A repository permits at most one open draft. Repository refreshes, layout changes, and other
 /// writes are rejected while the draft is open. Aborting a draft removes instance directories that
 /// were first created by that draft. Shared library, asset, and download caches are not reverted.
+/// Drafts are not thread-safe; callers must serialize all operations on a draft.
 ///
 /// @see GameRepository#openDraft()
 @NotNullByDefault

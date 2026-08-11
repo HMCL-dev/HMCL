@@ -95,14 +95,8 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// Published snapshot, always updated on the JavaFX application thread when the toolkit is live.
     private final ObjectProperty<DefaultGameRepositorySnapshot> snapshot;
 
-    /// Monitor guarding the exclusive draft and direct repository write state.
-    private final Object writeSessionMonitor = new Object();
-
-    /// The repository's sole open draft, or `null` when no draft is active.
-    private @Nullable DefaultGameRepositoryDraft activeDraft;
-
-    /// Number of refresh, layout-replacement, or orphan-cleanup writes currently in progress.
-    private int activeDirectWrites;
+    /// Atomically holds the repository's sole open draft, or `null` when no draft is active.
+    private final AtomicReference<@Nullable DefaultGameRepositoryDraft> activeDraft = new AtomicReference<>();
 
     /// Whether at least one full refresh has completed since the base directory was set.
     private volatile boolean loaded;
@@ -151,15 +145,11 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @param baseDirectory the new repository base directory
     /// @throws IllegalStateException if a draft is active
     public void setBaseDirectory(Path baseDirectory) {
-        beginDirectWrite("set base directory");
-        try {
-            // Mark unloaded before publishing so snapshot listeners do not treat the empty snapshot as ready.
-            this.loaded = false;
-            DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
-            publishSnapshot(initial);
-        } finally {
-            endDirectWrite("set base directory");
-        }
+        checkNoActiveDraft("set base directory");
+        // Mark unloaded before publishing so snapshot listeners do not treat the empty snapshot as ready.
+        this.loaded = false;
+        DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
+        publishSnapshot(initial);
     }
 
     /// {@inheritDoc}
@@ -217,10 +207,8 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @param draft the draft to verify
     /// @throws IllegalStateException if `draft` is not active
     void checkActiveDraft(DefaultGameRepositoryDraft draft) {
-        synchronized (writeSessionMonitor) {
-            if (activeDraft != draft) {
-                throw new IllegalStateException("Draft is not the active repository draft");
-            }
+        if (activeDraft.get() != draft) {
+            throw new IllegalStateException("Draft is not the active repository draft");
         }
     }
 
@@ -229,11 +217,8 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @param draft the draft that completed, aborted, or failed
     /// @throws IllegalStateException if `draft` is not active
     void releaseDraft(DefaultGameRepositoryDraft draft) {
-        synchronized (writeSessionMonitor) {
-            if (activeDraft != draft) {
-                throw new IllegalStateException("Draft is not the active repository draft");
-            }
-            activeDraft = null;
+        if (!activeDraft.compareAndSet(draft, null)) {
+            throw new IllegalStateException("Draft is not the active repository draft");
         }
     }
 
@@ -292,12 +277,8 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @throws IllegalStateException if a draft is active
     @Override
     public void refresh() {
-        beginDirectWrite("refresh");
-        try {
-            refreshRepository();
-        } finally {
-            endDirectWrite("refresh");
-        }
+        checkNoActiveDraft("refresh");
+        refreshRepository();
     }
 
     /// Reloads and publishes repository state while the caller owns the direct-write session.
@@ -505,7 +486,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             }
         }
 
-        beginDirectWrite("remove instance");
+        checkNoActiveDraft("remove instance");
         try {
             Path file = getLayout().getInstanceRoot(id);
             if (Files.notExists(file)) {
@@ -539,11 +520,7 @@ public abstract class DefaultGameRepository implements GameRepository {
             }
             return true;
         } finally {
-            try {
-                refreshRepository();
-            } finally {
-                endDirectWrite("remove instance");
-            }
+            refreshRepository();
         }
     }
 
@@ -593,18 +570,11 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @return a new open draft
     @Override
     public DefaultGameRepositoryDraft openDraft() {
-        synchronized (writeSessionMonitor) {
-            if (activeDraft != null) {
-                throw new IllegalStateException("Another repository draft is already open");
-            }
-            if (activeDirectWrites != 0) {
-                throw new IllegalStateException("Repository is currently performing a direct write");
-            }
-
-            DefaultGameRepositoryDraft draft = new DefaultGameRepositoryDraft(this);
-            activeDraft = draft;
-            return draft;
+        DefaultGameRepositoryDraft draft = new DefaultGameRepositoryDraft(this);
+        if (!activeDraft.compareAndSet(null, draft)) {
+            throw new IllegalStateException("Another repository draft is already open");
         }
+        return draft;
     }
 
     /// Writes a stored manifest and publishes a new snapshot in a single draft commit.
@@ -644,7 +614,7 @@ public abstract class DefaultGameRepository implements GameRepository {
     public <E extends Exception> Task<Void> updateInstanceAsync(
             GameInstanceID instanceId,
             ExceptionalFunction<GameInstance, Task<GameInstanceManifest>, E> updater) {
-        AtomicReference<GameRepositoryDraft> active = new AtomicReference<>();
+        var active = new AtomicReference<@Nullable GameRepositoryDraft>();
         return Task.supplyAsync(() -> {
                     GameRepositoryDraft draft = openDraft();
                     active.set(draft);
@@ -711,29 +681,13 @@ public abstract class DefaultGameRepository implements GameRepository {
             GameInstanceManifest manifest,
             @Nullable Path manifestFile);
 
-    /// Begins a direct repository write that must not overlap a draft.
+    /// Verifies that no draft is currently active.
     ///
-    /// @param operation human-readable operation name used in diagnostics
+    /// @param operation operation rejected when a draft is active
     /// @throws IllegalStateException if a draft is active
-    private void beginDirectWrite(String operation) {
-        synchronized (writeSessionMonitor) {
-            if (activeDraft != null) {
-                throw new IllegalStateException("Repository has an open draft; cannot " + operation);
-            }
-            activeDirectWrites++;
-        }
-    }
-
-    /// Ends a direct repository write.
-    ///
-    /// @param operation the operation name passed to [#beginDirectWrite(String)]
-    /// @throws IllegalStateException if no direct write is active
-    private void endDirectWrite(String operation) {
-        synchronized (writeSessionMonitor) {
-            if (activeDirectWrites == 0) {
-                throw new IllegalStateException("Direct repository write is not active: " + operation);
-            }
-            activeDirectWrites--;
+    private void checkNoActiveDraft(String operation) {
+        if (activeDraft.get() != null) {
+            throw new IllegalStateException("Repository has an open draft; cannot " + operation);
         }
     }
 
