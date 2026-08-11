@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -271,7 +272,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
 
                         HBox lowerBoundPane = new HBox(8);
                         lowerBoundPane.setAlignment(Pos.CENTER);
-                        VBox.setMargin(lowerBoundPane, new Insets(0, 0, 0, 16));
+                        VBox.setMargin(lowerBoundPane, new Insets(0, 0, 8, 16));
 
                         {
                             Label label = new Label(i18n("settings.memory.lower_bound"));
@@ -385,10 +386,14 @@ public final class ModpackInfoPage extends Control implements WizardPage {
             FXUtils.smoothScrolling(scroll);
         }
 
-        private LinePane createTextFieldLinePane(String title, StringProperty property, ValidatorBase... validators) {
+        /// Creates a compact, fixed-width text input row and registers any supplied validators.
+        private LinePane createTextFieldLinePane(String title, StringProperty property, @Nullable ValidatorBase... validators) {
             LinePane linePane = new LinePane();
+            linePane.getStyleClass().add("modpack-info-text-field-line");
+            FXUtils.setLimitHeight(linePane, 64);
+
             JFXTextField textField = new JFXTextField();
-            textField.setMinWidth(500);
+            FXUtils.setLimitWidth(textField, 500);
 
             linePane.setTitle(title);
             linePane.setRight(textField);

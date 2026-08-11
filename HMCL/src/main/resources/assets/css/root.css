@@ -1957,6 +1957,10 @@
     -fx-padding: 10 16 10 16;
 }
 
+.modpack-info-text-field-line .line-component-container {
+    -fx-alignment: BASELINE_LEFT;
+}
+
 .line-component .subtitle-label {
     -fx-text-fill: -monet-on-surface-variant;
 }
