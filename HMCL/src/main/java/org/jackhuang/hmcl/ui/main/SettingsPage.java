@@ -41,12 +41,14 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.HotSpotCrashReportMatcher;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.Nullable;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.IOException;
@@ -56,6 +58,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -316,9 +319,16 @@ public final class SettingsPage extends ScrollPane {
         return CompletableFuture.supplyAsync(Lang.wrap(() -> {
             String nameBase = "hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             List<Path> recentLogFiles = LOG.findRecentLogFiles(5);
+            List<Path> launcherLogFiles = new ArrayList<>(recentLogFiles);
+            @Nullable Path currentLogFile = LOG.getLogFile();
+            if (currentLogFile != null)
+                launcherLogFiles.add(currentLogFile);
+
+            List<Path> filesToExport = new ArrayList<>(recentLogFiles);
+            filesToExport.addAll(HotSpotCrashReportMatcher.findMatchingReports(launcherLogFiles));
 
             Path outputFile;
-            if (recentLogFiles.isEmpty()) {
+            if (filesToExport.isEmpty()) {
                 outputFile = Metadata.CURRENT_DIRECTORY.resolve(nameBase + ".log");
 
                 LOG.info("Exporting latest logs to " + outputFile);
@@ -336,7 +346,7 @@ public final class SettingsPage extends ScrollPane {
 
                     Set<String> entryNames = new HashSet<>();
 
-                    for (Path path : recentLogFiles) {
+                    for (Path path : filesToExport) {
                         String fileName = FileUtils.getName(path);
                         String extension = StringUtils.substringAfterLast(fileName, '.');
 
