@@ -21,16 +21,16 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
 
-/// A write session that stages stored instance manifests against an immutable base snapshot.
+/// Provides the exclusive write session for a game repository.
 ///
-/// The draft holds the repository's published [GameRepositorySnapshot] at open time. That snapshot
-/// is never modified. [#put(GameInstanceManifest)] only records a staged stored manifest and writes
-/// its JSON. [#commit()] builds a new snapshot from the base plus staged manifests and publishes it
-/// once; only then does the repository index contain the corresponding [GameInstance] values.
-/// [#abort()] discards staged changes, restores JSON for edited base instances, and removes
-/// directories created only in this draft.
+/// A draft owns an unpublished working snapshot initialized from [#getBaseSnapshot()]. Changes made
+/// by [#put(GameInstanceManifest)] are immediately visible through [#getSnapshot()] but remain
+/// invisible through [GameRepository#getSnapshot()] until [#commit()] succeeds. Manifest JSON is
+/// written to draft-private temporary storage and moved into the repository during commit.
 ///
-/// Drafts do not roll back global library or asset downloads outside instance roots.
+/// A repository permits at most one open draft. Repository refreshes, layout changes, and other
+/// writes are rejected while the draft is open. Aborting a draft removes instance directories that
+/// were first created by that draft. Shared library, asset, and download caches are not reverted.
 ///
 /// @see GameRepository#openDraft()
 @NotNullByDefault
@@ -41,15 +41,22 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// @return the repository
     GameRepository getRepository();
 
-    /// Returns the immutable base snapshot captured when this draft was opened, or the snapshot
-    /// published by a successful [#commit()].
+    /// Returns the immutable published snapshot captured when this draft was opened.
     ///
-    /// While the draft is open, staged [#put] results are not part of this snapshot. After commit,
-    /// this method returns the newly published index.
+    /// @return the base snapshot
+    GameRepositorySnapshot getBaseSnapshot();
+
+    /// Returns the current unpublished working snapshot, or the snapshot published by a successful
+    /// [#commit()].
     ///
-    /// @return the base snapshot, or the committed published snapshot
-    /// @throws IllegalStateException if the draft was aborted or closed without commit
+    /// @return the working or committed snapshot
+    /// @throws IllegalStateException if the draft was aborted or failed
     GameRepositorySnapshot getSnapshot();
+
+    /// Returns this draft's lifecycle state.
+    ///
+    /// @return the current state
+    GameRepositoryDraftState getState();
 
     /// Returns whether this draft still accepts mutations.
     ///
@@ -61,47 +68,72 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// @return whether [#commit()] has completed successfully
     boolean isCommitted();
 
-    /// Returns whether a stored manifest for `instanceId` is staged or already present in the base
-    /// snapshot.
-    ///
-    /// This does not imply a [GameInstance] is available from the published repository until
-    /// [#commit()].
+    /// Returns whether the working snapshot contains `instanceId`.
     ///
     /// @param instanceId the instance id
-    /// @return whether the id is staged or present in the base snapshot
+    /// @return whether the id is present in the working snapshot
+    /// @throws IllegalStateException if the draft is not open
     boolean hasInstance(GameInstanceID instanceId);
 
-    /// Stages a stored instance manifest without creating a repository [GameInstance].
+    /// Adds or replaces a stored manifest in the unpublished working snapshot.
     ///
-    /// Writes the manifest JSON under the repository layout and records the change for
-    /// [#commit()]. No instance index entry exists for a newly staged id until commit. Callers that
-    /// need a [GameInstance] must [#commit()] and then use [GameRepository#getInstance(GameInstanceID)].
+    /// The manifest JSON is written to draft-private temporary storage. The returned [GameInstance]
+    /// belongs to the working snapshot and may be used by installation code before commit. It may
+    /// become stale after another call to this method for the same id.
     ///
     /// @param manifest the persistent instance manifest
-    /// @throws IOException           if the manifest cannot be written
-    /// @throws IllegalStateException if the draft is closed
-    void put(GameInstanceManifest manifest) throws IOException;
+    /// @return the instance in the updated working snapshot
+    /// @throws IOException           if the temporary manifest cannot be written
+    /// @throws IllegalStateException if the draft is not open
+    GameInstance put(GameInstanceManifest manifest) throws IOException;
 
-    /// Builds a new snapshot from the base plus staged manifests and publishes it.
+    /// Removes an instance from the unpublished working snapshot.
+    ///
+    /// Its instance root is retained until commit and moved out of the repository before the new
+    /// snapshot is published. Aborting leaves the published instance and its files unchanged.
+    ///
+    /// @param instanceId the instance to remove
+    /// @throws NoSuchGameInstanceException if the working snapshot does not contain the instance
+    /// @throws IllegalStateException       if the draft is not open
+    void remove(GameInstanceID instanceId);
+
+    /// Renames an instance in the unpublished working snapshot.
+    ///
+    /// Direct inheritance references managed by the repository are updated in the same draft. The
+    /// source directory remains at its published location until commit.
+    ///
+    /// @param from the current instance id
+    /// @param to   the target instance id
+    /// @throws IOException                 if the target directory already exists or a temporary
+    ///                                     manifest cannot be written
+    /// @throws NoSuchGameInstanceException if the working snapshot does not contain `from`
+    /// @throws IllegalArgumentException    if the working snapshot already contains `to`
+    /// @throws IllegalStateException       if the draft is not open
+    void rename(GameInstanceID from, GameInstanceID to) throws IOException;
+
+    /// Applies staged manifest files and publishes the working snapshot.
     ///
     /// After this method returns, [GameRepository#getInstance(GameInstanceID)] will resolve staged
     /// ids from the published index.
     ///
-    /// @throws IllegalStateException if the draft is closed or already committed
-    void commit();
+    /// @return the newly published snapshot
+    /// @throws IOException           if staged filesystem changes cannot be applied
+    /// @throws IllegalStateException if the draft is not open or is not the repository's active draft
+    GameRepositorySnapshot commit() throws IOException;
 
     /// Discards staged changes without publishing a new snapshot.
     ///
-    /// Restores JSON for instances that existed in the base and were modified, and removes instance
-    /// directories that were created only in this draft. Global caches (libraries, assets) are not
-    /// reverted. Idempotent when already aborted.
+    /// Removes temporary manifests and instance directories created only by this draft. Global
+    /// caches (libraries, assets) are not reverted. This method is idempotent after a successful
+    /// abort.
     ///
+    /// @throws IOException           if cleanup fails
     /// @throws IllegalStateException if the draft was already committed
-    void abort();
+    void abort() throws IOException;
 
-    /// Aborts this draft when it was not committed.
+    /// Aborts this draft when it is still open.
     ///
     /// @see #abort()
     @Override
-    void close();
+    void close() throws IOException;
 }

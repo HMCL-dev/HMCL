@@ -23,57 +23,64 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Default [GameRepositoryDraft] that keeps the published snapshot immutable and stages stored
-/// manifests until [#commit()].
+/// Default exclusive [GameRepositoryDraft] implementation.
 ///
-/// The draft holds [#base] (the repository snapshot at open time) and [#staged] manifests.
-/// [#put(GameInstanceManifest)] only updates that map and instance JSON. [#commit()] clones
-/// [#base] once, applies staged manifests, and publishes the result. No [GameInstance] is produced
-/// by the draft itself.
+/// Manifest changes are reflected in an unpublished working snapshot and serialized below a
+/// draft-private directory. Instance installers may use the returned working [GameInstance] and
+/// write instance-owned files before commit. A successful commit moves all staged manifests into
+/// place and publishes the working snapshot once. Shared library and asset cache writes are outside
+/// the rollback boundary.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
-    /// Repository whose published index will be replaced on [#commit()].
+    /// Repository whose published snapshot will be replaced on commit.
     private final DefaultGameRepository repository;
 
     /// Immutable published snapshot captured when this draft was opened.
-    private final DefaultGameRepositorySnapshot base;
+    private final DefaultGameRepositorySnapshot baseSnapshot;
 
-    /// Staged stored manifests keyed by instance id; applied only on [#commit()].
-    private final Map<GameInstanceID, GameInstanceManifest> staged = new HashMap<>();
+    /// Mutable snapshot containing the draft's unpublished manifest changes.
+    private final DefaultGameRepositorySnapshot workingSnapshot;
 
-    /// Instance ids that were not present in [#base] when first staged.
-    private final Set<GameInstanceID> createdIds = new HashSet<>();
+    /// Staged manifest files keyed by instance id.
+    private final Map<GameInstanceID, StagedManifest> stagedManifests = new TreeMap<>();
 
-    /// Base stored manifests for ids that existed in [#base] and were later staged.
-    ///
-    /// Used by [#abort()] to restore on-disk JSON.
-    private final Map<GameInstanceID, GameInstanceManifest> originalManifests = new HashMap<>();
+    /// Instance ids whose root directories were absent before this draft first staged them.
+    private final Set<GameInstanceID> createdIds = new TreeSet<>();
 
-    /// Snapshot published by [#commit()], or `null` before a successful commit.
-    private @Nullable DefaultGameRepositorySnapshot committedSnapshot;
+    /// Instance ids removed from the working snapshot.
+    private final Set<GameInstanceID> removedIds = new TreeSet<>();
 
-    /// Whether [#commit()] has completed successfully.
-    private boolean committed;
+    /// Ordered instance renames applied to the filesystem during commit.
+    private final List<RenameOperation> renames = new ArrayList<>();
 
-    /// Whether this draft no longer accepts mutations.
-    private boolean closed;
+    /// Draft-private directory containing staged manifests and commit backups.
+    private @Nullable Path stagingDirectory;
 
-    /// Creates a draft over `repository`'s current published snapshot as an immutable base.
+    /// Current lifecycle state.
+    private GameRepositoryDraftState state = GameRepositoryDraftState.OPEN;
+
+    /// Creates an open draft over the repository's current published snapshot.
     ///
     /// @param repository the repository that owns this draft
     DefaultGameRepositoryDraft(DefaultGameRepository repository) {
         this.repository = repository;
-        this.base = repository.getSnapshot();
+        this.baseSnapshot = repository.getSnapshot();
+        this.workingSnapshot = baseSnapshot.clone();
     }
 
     /// {@inheritDoc}
@@ -83,160 +90,547 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     }
 
     /// {@inheritDoc}
-    ///
-    /// Returns [#base] while open, or the snapshot published by [#commit()] after success.
-    ///
-    /// @throws IllegalStateException if the draft was aborted or closed without commit
     @Override
-    public DefaultGameRepositorySnapshot getSnapshot() {
-        if (committed) {
-            return committedSnapshot;
+    public GameRepositorySnapshot getBaseSnapshot() {
+        return baseSnapshot;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public synchronized GameRepositorySnapshot getSnapshot() {
+        if (state == GameRepositoryDraftState.ABORTED || state == GameRepositoryDraftState.FAILED) {
+            throw new IllegalStateException("Draft is " + state.name().toLowerCase());
         }
-        if (closed) {
-            throw new IllegalStateException("Draft is closed");
+        return workingSnapshot;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public synchronized GameRepositoryDraftState getState() {
+        return state;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public synchronized boolean isOpen() {
+        return state == GameRepositoryDraftState.OPEN;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public synchronized boolean isCommitted() {
+        return state == GameRepositoryDraftState.COMMITTED;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public synchronized boolean hasInstance(GameInstanceID instanceId) {
+        checkOpen();
+        return workingSnapshot.hasInstance(instanceId);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public synchronized DefaultGameInstance put(GameInstanceManifest manifest) throws IOException {
+        checkOpen();
+        return stageManifest(manifest, true);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public synchronized void remove(GameInstanceID instanceId) {
+        checkOpen();
+        if (workingSnapshot.get(instanceId) == null) {
+            throw new NoSuchGameInstanceException(instanceId);
         }
-        return base;
+
+        workingSnapshot.remove(instanceId);
+        stagedManifests.remove(instanceId);
+        removedIds.add(instanceId);
     }
 
     /// {@inheritDoc}
     @Override
-    public boolean isOpen() {
-        return !closed;
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public boolean isCommitted() {
-        return committed;
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public boolean hasInstance(GameInstanceID instanceId) {
+    public synchronized void rename(GameInstanceID from, GameInstanceID to) throws IOException {
         checkOpen();
-        return staged.containsKey(instanceId) || base.hasInstance(instanceId);
+        DefaultGameInstance source = workingSnapshot.get(from);
+        if (source == null) {
+            throw new NoSuchGameInstanceException(from);
+        }
+        if (createdIds.contains(from)) {
+            throw new IllegalStateException("Cannot rename an instance created by the same draft");
+        }
+        if (workingSnapshot.get(to) != null) {
+            throw new IllegalArgumentException("Target instance already exists: " + to);
+        }
+
+        Path targetRoot = getValidatedInstanceRoot(to);
+        if (Files.exists(targetRoot)) {
+            throw new FileAlreadyExistsException(targetRoot.toString());
+        }
+
+        GameInstanceManifest renamedManifest = source.getManifest();
+        if (from.equals(renamedManifest.jar())) {
+            renamedManifest = renamedManifest.withJar(null);
+        }
+        renamedManifest = renamedManifest.withId(to);
+
+        workingSnapshot.remove(from);
+        stagedManifests.remove(from);
+        removedIds.remove(from);
+        DefaultGameInstance renamed = repository.createInstance(workingSnapshot, to, renamedManifest);
+        workingSnapshot.put(renamed);
+        stageManifest(renamedManifest, false);
+
+        for (DefaultGameInstance instance : List.copyOf(workingSnapshot.values())) {
+            GameInstanceManifest manifest = instance.getManifest();
+            if (from.equals(manifest.inheritsFrom())) {
+                stageManifest(manifest.withInheritsFrom(to), false);
+            }
+        }
+        renames.add(new RenameOperation(from, to));
     }
 
-    /// {@inheritDoc}
+    /// Stages one manifest and updates the working snapshot.
     ///
-    /// Writes `manifest` to disk and records it in [#staged]. Does not modify [#base] and does not
-    /// create a [GameInstance].
-    ///
-    /// @throws IllegalStateException if the draft is closed
-    @Override
-    public void put(GameInstanceManifest manifest) throws IOException {
-        checkOpen();
+    /// @param manifest     the manifest to stage
+    /// @param claimNewRoot whether a previously absent instance root should become draft-owned
+    /// @return the updated working instance
+    /// @throws IOException if the root cannot be claimed or the temporary manifest cannot be written
+    private DefaultGameInstance stageManifest(
+            GameInstanceManifest manifest,
+            boolean claimNewRoot) throws IOException {
 
         GameInstanceID id = manifest.id();
-        DefaultGameInstance existingInBase = base.get(id);
-        if (existingInBase != null) {
-            originalManifests.putIfAbsent(id, existingInBase.getManifest());
-        } else if (!staged.containsKey(id)) {
-            createdIds.add(id);
-        }
-
-        Path json = repository.getInstanceJson(id).toAbsolutePath();
-        Files.createDirectories(json.getParent());
-        JsonUtils.writeToJsonFile(json, manifest);
-
-        staged.put(id, manifest);
-    }
-
-    /// {@inheritDoc}
-    ///
-    /// Clones [#base], applies all staged manifests onto the clone, seals it, and publishes it.
-    ///
-    /// @throws IllegalStateException if the draft is closed or already committed
-    @Override
-    public void commit() {
-        checkOpen();
-        if (committed) {
-            throw new IllegalStateException("Draft already committed");
-        }
-
-        DefaultGameRepositorySnapshot next = base.clone();
-        for (Map.Entry<GameInstanceID, GameInstanceManifest> entry : staged.entrySet()) {
-            GameInstanceID id = entry.getKey();
-            GameInstanceManifest manifest = entry.getValue();
-            DefaultGameInstance existing = next.get(id);
-            if (existing != null) {
-                next.put(existing.withManifest(next, manifest));
-            } else {
-                next.put(repository.createInstance(next, id, manifest));
+        DefaultGameInstance existing = workingSnapshot.get(id);
+        if (claimNewRoot && existing == null && !stagedManifests.containsKey(id)) {
+            Path root = getValidatedInstanceRoot(id);
+            if (!repository.mayClaimDraftInstanceRoot(id, root)) {
+                throw new FileAlreadyExistsException(root.toString(), null,
+                        "An unregistered instance directory already exists");
             }
+            createdIds.add(id);
+            repository.initializeDraftInstanceRoot(id, root);
         }
 
-        repository.publishSnapshot(next);
-        committedSnapshot = next;
-        committed = true;
-        closed = true;
+        StagedManifest previous = stagedManifests.get(id);
+        Path targetFile = previous != null ? previous.targetFile() : getManifestTarget(id);
+        Path stagedFile = previous != null ? previous.stagedFile() : createStagedManifestPath();
+        FileUtils.saveSafely(stagedFile, JsonUtils.GSON.toJson(manifest));
+        stagedManifests.put(id, new StagedManifest(stagedFile, targetFile));
+
+        DefaultGameInstance updated;
+        if (existing != null) {
+            updated = existing.withManifest(workingSnapshot, manifest);
+        } else {
+            updated = repository.createInstance(workingSnapshot, id, manifest);
+        }
+        workingSnapshot.put(updated);
+        return updated;
     }
 
     /// {@inheritDoc}
-    ///
-    /// Idempotent when already aborted. Does not publish a snapshot.
-    ///
-    /// @throws IllegalStateException if the draft was already committed
     @Override
-    public void abort() {
-        if (committed) {
-            throw new IllegalStateException("Draft already committed");
+    public synchronized DefaultGameRepositorySnapshot commit() throws IOException {
+        checkOpen();
+        repository.checkActiveDraft(this);
+        state = GameRepositoryDraftState.COMMITTING;
+
+        List<AppliedRename> appliedRenames = new ArrayList<>();
+        List<RemovedRoot> removedRoots = new ArrayList<>();
+        List<AppliedManifest> applied = new ArrayList<>();
+        try {
+            for (RenameOperation rename : renames) {
+                applyRename(rename, appliedRenames);
+            }
+            for (GameInstanceID id : removedIds) {
+                removeInstanceRoot(id, removedRoots);
+            }
+            for (Map.Entry<GameInstanceID, StagedManifest> entry : stagedManifests.entrySet()) {
+                applyManifest(entry.getKey(), entry.getValue(), applied);
+            }
+
+            repository.publishDraftSnapshot(this, workingSnapshot);
+            state = GameRepositoryDraftState.COMMITTED;
+            repository.releaseDraft(this);
+            cleanupStagingAfterCommit();
+            return workingSnapshot;
+        } catch (IOException | RuntimeException e) {
+            IOException rollbackFailure = rollbackAppliedManifests(applied);
+            rollbackFailure = accumulateNullable(rollbackFailure, rollbackRemovedRoots(removedRoots));
+            rollbackFailure = accumulateNullable(rollbackFailure, rollbackRenames(appliedRenames));
+            state = GameRepositoryDraftState.FAILED;
+            repository.releaseDraft(this);
+            IOException cleanupFailure = cleanupOwnedFiles();
+            if (rollbackFailure != null) {
+                e.addSuppressed(rollbackFailure);
+            }
+            if (cleanupFailure != null) {
+                e.addSuppressed(cleanupFailure);
+            }
+            throw e;
         }
-        if (closed) {
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public synchronized void abort() throws IOException {
+        if (state == GameRepositoryDraftState.ABORTED) {
             return;
         }
-        closed = true;
-
-        for (GameInstanceID id : createdIds) {
-            try {
-                deleteInstanceDirectory(id);
-            } catch (Exception e) {
-                LOG.warning("Failed to remove draft-created instance " + id, e);
-            }
+        if (state == GameRepositoryDraftState.COMMITTED) {
+            throw new IllegalStateException("Draft is already committed");
+        }
+        if (state == GameRepositoryDraftState.COMMITTING) {
+            throw new IllegalStateException("Draft is committing");
+        }
+        if (state == GameRepositoryDraftState.FAILED) {
+            return;
         }
 
-        for (Map.Entry<GameInstanceID, GameInstanceManifest> entry : originalManifests.entrySet()) {
-            if (createdIds.contains(entry.getKey())) {
-                continue;
-            }
-            try {
-                Path json = repository.getInstanceJson(entry.getKey()).toAbsolutePath();
-                Files.createDirectories(json.getParent());
-                JsonUtils.writeToJsonFile(json, entry.getValue());
-            } catch (IOException e) {
-                LOG.warning("Failed to restore manifest for " + entry.getKey(), e);
-            }
+        IOException failure = cleanupOwnedFiles();
+        state = failure == null ? GameRepositoryDraftState.ABORTED : GameRepositoryDraftState.FAILED;
+        repository.releaseDraft(this);
+        if (failure != null) {
+            throw failure;
         }
     }
 
     /// {@inheritDoc}
-    ///
-    /// Calls [#abort()] when the draft is still open and not committed.
     @Override
-    public void close() {
-        if (!closed && !committed) {
+    public synchronized void close() throws IOException {
+        if (state == GameRepositoryDraftState.OPEN) {
             abort();
         }
     }
 
-    /// Deletes a draft-created instance directory without modifying the published snapshot.
+    /// Returns the permanent manifest target for an instance.
     ///
-    /// @param id the instance id whose root directory will be removed
-    /// @throws IOException if deletion fails
-    private void deleteInstanceDirectory(GameInstanceID id) throws IOException {
-        Path root = repository.getLayout().getInstanceRoot(id);
+    /// Existing instances retain a non-conventional manifest path discovered by refresh. New
+    /// instances use the conventional path from the base layout.
+    ///
+    /// @param id the instance id
+    /// @return the permanent manifest path
+    private Path getManifestTarget(GameInstanceID id) {
+        DefaultGameInstance existing = baseSnapshot.get(id);
+        return (existing != null ? existing.getManifestFile() : baseSnapshot.getLayout().getInstanceJson(id))
+                .toAbsolutePath()
+                .normalize();
+    }
+
+    /// Creates a unique path for a staged manifest.
+    ///
+    /// @return the staged manifest path
+    /// @throws IOException if the staging directory cannot be created
+    private Path createStagedManifestPath() throws IOException {
+        Path manifests = getOrCreateStagingDirectory().resolve("manifests");
+        Files.createDirectories(manifests);
+        return Files.createTempFile(manifests, "manifest-", ".json");
+    }
+
+    /// Returns the draft-private staging directory, creating it when necessary.
+    ///
+    /// @return the staging directory
+    /// @throws IOException if the directory cannot be created
+    private Path getOrCreateStagingDirectory() throws IOException {
+        Path current = stagingDirectory;
+        if (current != null) {
+            return current;
+        }
+
+        Path parent = baseSnapshot.getLayout().getBaseDirectory()
+                .toAbsolutePath()
+                .normalize()
+                .resolve(".hmcl")
+                .resolve("repository-drafts");
+        Files.createDirectories(parent);
+        stagingDirectory = Files.createTempDirectory(parent, "draft-");
+        return stagingDirectory;
+    }
+
+    /// Applies one instance directory rename.
+    ///
+    /// @param rename  the requested rename
+    /// @param applied rollback records for completed renames
+    /// @throws IOException if the source files cannot be renamed
+    private void applyRename(RenameOperation rename, List<AppliedRename> applied) throws IOException {
+        Path sourceRoot = getValidatedInstanceRoot(rename.from());
+        Path targetRoot = getValidatedInstanceRoot(rename.to());
+        if (!Files.isDirectory(sourceRoot)) {
+            throw new IOException("Instance directory does not exist: " + sourceRoot);
+        }
+        if (Files.exists(targetRoot)) {
+            throw new FileAlreadyExistsException(targetRoot.toString());
+        }
+
+        DefaultGameRepository.moveInstanceFiles(
+                baseSnapshot.getLayout().getBaseDirectory(),
+                rename.from(),
+                rename.to());
+        applied.add(new AppliedRename(rename.from(), rename.to()));
+    }
+
+    /// Moves one removed instance root into the draft staging directory.
+    ///
+    /// @param id      the removed instance id
+    /// @param removed rollback records for roots moved out of the repository
+    /// @throws IOException if the root cannot be staged
+    private void removeInstanceRoot(GameInstanceID id, List<RemovedRoot> removed) throws IOException {
+        Path root = getValidatedInstanceRoot(id);
         if (Files.notExists(root)) {
             return;
         }
-        FileUtils.deleteDirectory(root);
+
+        Path removals = getOrCreateStagingDirectory().resolve("removed");
+        Files.createDirectories(removals);
+        Path stagedRoot = Files.createTempDirectory(removals, "instance-");
+        Files.delete(stagedRoot);
+        moveReplacing(root, stagedRoot);
+        removed.add(new RemovedRoot(root, stagedRoot));
     }
 
-    /// Ensures the draft still accepts mutations.
+    /// Moves one staged manifest into place while retaining a rollback copy.
     ///
-    /// @throws IllegalStateException if the draft is closed
-    private void checkOpen() {
-        if (closed) {
-            throw new IllegalStateException("Draft is closed");
+    /// @param id      the instance id
+    /// @param staged  the staged and target paths
+    /// @param applied rollback records for changes already started
+    /// @throws IOException if the target cannot be backed up or replaced
+    private void applyManifest(
+            GameInstanceID id,
+            StagedManifest staged,
+            List<AppliedManifest> applied) throws IOException {
+        Path target = staged.targetFile();
+        Path expectedRoot = getValidatedInstanceRoot(id);
+        if (target.equals(expectedRoot) || !target.startsWith(expectedRoot)) {
+            throw new IOException("Manifest path escapes instance root: " + target);
         }
+
+        Files.createDirectories(target.getParent());
+        boolean hadOriginal = Files.exists(target);
+        @Nullable Path backup = null;
+        if (hadOriginal) {
+            Path backups = getOrCreateStagingDirectory().resolve("backups");
+            Files.createDirectories(backups);
+            backup = Files.createTempFile(backups, "manifest-", ".json");
+            Files.delete(backup);
+            moveReplacing(target, backup);
+        }
+
+        applied.add(new AppliedManifest(target, backup, hadOriginal));
+        moveReplacing(staged.stagedFile(), target);
+    }
+
+    /// Restores manifests changed by an unsuccessful commit in reverse application order.
+    ///
+    /// @param applied applied manifest records
+    /// @return the aggregated rollback failure, or `null` when rollback succeeded
+    private static @Nullable IOException rollbackAppliedManifests(List<AppliedManifest> applied) {
+        @Nullable IOException failure = null;
+        List<AppliedManifest> reversed = new ArrayList<>(applied);
+        Collections.reverse(reversed);
+        for (AppliedManifest manifest : reversed) {
+            try {
+                Files.deleteIfExists(manifest.targetFile());
+                if (manifest.hadOriginal() && manifest.backupFile() != null) {
+                    moveReplacing(manifest.backupFile(), manifest.targetFile());
+                }
+            } catch (IOException e) {
+                failure = accumulate(failure, e);
+            }
+        }
+        return failure;
+    }
+
+    /// Restores roots moved out of the repository by an unsuccessful commit.
+    ///
+    /// @param removed removed-root rollback records
+    /// @return the aggregated rollback failure, or `null` when rollback succeeded
+    private static @Nullable IOException rollbackRemovedRoots(List<RemovedRoot> removed) {
+        @Nullable IOException failure = null;
+        List<RemovedRoot> reversed = new ArrayList<>(removed);
+        Collections.reverse(reversed);
+        for (RemovedRoot root : reversed) {
+            try {
+                moveReplacing(root.stagedRoot(), root.originalRoot());
+            } catch (IOException e) {
+                failure = accumulate(failure, e);
+            }
+        }
+        return failure;
+    }
+
+    /// Reverses instance renames completed by an unsuccessful commit.
+    ///
+    /// @param applied completed rename records
+    /// @return the aggregated rollback failure, or `null` when rollback succeeded
+    private @Nullable IOException rollbackRenames(List<AppliedRename> applied) {
+        @Nullable IOException failure = null;
+        List<AppliedRename> reversed = new ArrayList<>(applied);
+        Collections.reverse(reversed);
+        for (AppliedRename rename : reversed) {
+            try {
+                DefaultGameRepository.moveInstanceFiles(
+                        baseSnapshot.getLayout().getBaseDirectory(),
+                        rename.to(),
+                        rename.from());
+            } catch (IOException e) {
+                failure = accumulate(failure, e);
+            }
+        }
+        return failure;
+    }
+
+    /// Removes draft-owned instance roots and temporary files.
+    ///
+    /// @return the aggregated cleanup failure, or `null` when cleanup succeeded
+    private @Nullable IOException cleanupOwnedFiles() {
+        @Nullable IOException failure = null;
+        for (GameInstanceID id : createdIds) {
+            try {
+                Path root = getValidatedInstanceRoot(id);
+                if (Files.exists(root)) {
+                    FileUtils.deleteDirectory(root);
+                }
+            } catch (IOException | RuntimeException e) {
+                IOException cleanupException = e instanceof IOException ioException
+                        ? ioException
+                        : new IOException("Failed to remove draft-created instance " + id, e);
+                failure = accumulate(failure, cleanupException);
+            }
+        }
+
+        Path currentStagingDirectory = stagingDirectory;
+        if (currentStagingDirectory != null) {
+            try {
+                FileUtils.deleteDirectory(currentStagingDirectory);
+            } catch (IOException e) {
+                failure = accumulate(failure, e);
+            }
+        }
+        return failure;
+    }
+
+    /// Removes temporary files after a successful commit without changing its outcome.
+    private void cleanupStagingAfterCommit() {
+        Path currentStagingDirectory = stagingDirectory;
+        if (currentStagingDirectory == null) {
+            return;
+        }
+        try {
+            FileUtils.deleteDirectory(currentStagingDirectory);
+        } catch (IOException e) {
+            LOG.warning("Failed to remove committed draft staging directory " + currentStagingDirectory, e);
+        }
+    }
+
+    /// Returns a normalized instance root after verifying that it is a strict descendant of the
+    /// repository's versions directory.
+    ///
+    /// @param id the instance id
+    /// @return the validated instance root
+    /// @throws IOException if the resolved root escapes the versions directory
+    private Path getValidatedInstanceRoot(GameInstanceID id) throws IOException {
+        Path versions = baseSnapshot.getLayout().getBaseDirectory()
+                .toAbsolutePath()
+                .normalize()
+                .resolve("versions");
+        Path root = baseSnapshot.getLayout().getInstanceRoot(id).toAbsolutePath().normalize();
+        if (root.equals(versions) || !root.startsWith(versions)) {
+            throw new IOException("Instance root escapes versions directory: " + root);
+        }
+        return root;
+    }
+
+    /// Moves a file to `target`, using an atomic move when supported by the file system.
+    ///
+    /// @param source the source file
+    /// @param target the target file
+    /// @throws IOException if both atomic and regular replacement fail
+    private static void moveReplacing(Path source, Path target) throws IOException {
+        try {
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException atomicFailure) {
+            try {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException replacementFailure) {
+                replacementFailure.addSuppressed(atomicFailure);
+                throw replacementFailure;
+            }
+        }
+    }
+
+    /// Aggregates an additional cleanup failure.
+    ///
+    /// @param current    the current aggregate, or `null`
+    /// @param additional the additional failure
+    /// @return the resulting aggregate
+    private static IOException accumulate(@Nullable IOException current, IOException additional) {
+        if (current == null) {
+            return additional;
+        }
+        current.addSuppressed(additional);
+        return current;
+    }
+
+    /// Combines two optional failure aggregates.
+    ///
+    /// @param current    the current aggregate, or `null`
+    /// @param additional the additional aggregate, or `null`
+    /// @return the combined aggregate, or `null` when both arguments are `null`
+    private static @Nullable IOException accumulateNullable(
+            @Nullable IOException current,
+            @Nullable IOException additional) {
+        if (additional == null) {
+            return current;
+        }
+        return accumulate(current, additional);
+    }
+
+    /// Ensures the draft accepts changes.
+    ///
+    /// @throws IllegalStateException if the draft is not open
+    private void checkOpen() {
+        if (state != GameRepositoryDraftState.OPEN) {
+            throw new IllegalStateException("Draft is " + state.name().toLowerCase());
+        }
+    }
+
+    /// Records the temporary and permanent paths for one staged manifest.
+    ///
+    /// @param stagedFile the draft-private serialized manifest
+    /// @param targetFile the permanent repository manifest path
+    private record StagedManifest(Path stagedFile, Path targetFile) {
+    }
+
+    /// Records enough information to roll back one manifest replacement.
+    ///
+    /// @param targetFile  the permanent manifest path
+    /// @param backupFile  the prior manifest backup, or `null` when no prior file existed
+    /// @param hadOriginal whether the permanent manifest existed before commit
+    private record AppliedManifest(
+            Path targetFile,
+            @Nullable Path backupFile,
+            boolean hadOriginal) {
+    }
+
+    /// Records an instance rename requested by the draft.
+    ///
+    /// @param from the source instance id
+    /// @param to   the target instance id
+    private record RenameOperation(GameInstanceID from, GameInstanceID to) {
+    }
+
+    /// Records an instance rename completed during commit.
+    ///
+    /// @param from the original instance id
+    /// @param to   the renamed instance id
+    private record AppliedRename(GameInstanceID from, GameInstanceID to) {
+    }
+
+    /// Records an instance root moved into staging during commit.
+    ///
+    /// @param originalRoot the published instance root
+    /// @param stagedRoot   the temporary removal path
+    private record RemovedRoot(Path originalRoot, Path stagedRoot) {
     }
 }

@@ -59,7 +59,11 @@ public interface GameRepository {
 
     /// Opens a draft for staging instance creates and manifest updates before a single publish.
     ///
+    /// A repository permits at most one open draft. Repository refreshes, layout changes, and other
+    /// writes are rejected until the draft is committed, aborted, or closed.
+    ///
     /// @return a new open draft cloned from [#getSnapshot()]
+    /// @throws IllegalStateException if this repository is already being modified
     /// @see GameRepositoryDraft
     GameRepositoryDraft openDraft();
 
@@ -103,6 +107,8 @@ public interface GameRepository {
     }
 
     /// Reloads repository state from the backing storage.
+    ///
+    /// @throws IllegalStateException if this repository is already being modified
     void refresh();
 
     /// Creates a task that reloads repository state from the backing storage.

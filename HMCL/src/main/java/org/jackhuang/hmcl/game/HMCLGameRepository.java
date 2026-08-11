@@ -64,6 +64,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// The selected instance resolved from the current repository snapshot.
     private final ReadOnlyObjectWrapper<@Nullable HMCLGameInstance> selectedInstance;
 
+    /// Monitor guarding settings prepared before a new instance draft is opened.
+    private final Object preparedInstanceMonitor = new Object();
+
+    /// Settings reservations transferred to the next draft that creates the corresponding id.
+    private final Map<GameInstanceID, PreparedInstanceSettings> preparedInstanceSettings = new HashMap<>();
+
     /// Creates a repository backed by the given game directory.
     ///
     /// @param gameDirectory the persistent game directory represented by this repository
@@ -87,6 +93,51 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     @Override
     protected HMCLGameRepositorySnapshot createSnapshot(DefaultGameRepositoryLayout layout) {
         return new HMCLGameRepositorySnapshot(this, (HMCLGameRepositoryLayout) layout);
+    }
+
+    /// {@inheritDoc}
+    ///
+    /// Prepared settings belong to the old layout and are discarded after a successful replacement.
+    @Override
+    public void setBaseDirectory(Path baseDirectory) {
+        super.setBaseDirectory(baseDirectory);
+        synchronized (preparedInstanceMonitor) {
+            preparedInstanceSettings.clear();
+        }
+    }
+
+    /// {@inheritDoc}
+    ///
+    /// Accepts an existing root only when this repository reserved the id while the root was absent.
+    @Override
+    protected boolean mayClaimDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) {
+        synchronized (preparedInstanceMonitor) {
+            PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
+            if (prepared != null) {
+                return prepared.instanceRoot().equals(instanceRoot) && prepared.rootWasAbsent();
+            }
+        }
+        return super.mayClaimDraftInstanceRoot(instanceId, instanceRoot);
+    }
+
+    /// {@inheritDoc}
+    ///
+    /// Writes settings prepared by [#ensureIsolatedRunningDirectory(GameInstanceID)] only after the
+    /// draft owns the instance root.
+    @Override
+    protected void initializeDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) throws IOException {
+        synchronized (preparedInstanceMonitor) {
+            PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
+            if (prepared == null) {
+                return;
+            }
+            if (!prepared.instanceRoot().equals(instanceRoot) || !prepared.rootWasAbsent()) {
+                throw new IOException("Prepared instance root cannot be claimed: " + instanceRoot);
+            }
+
+            writeInstanceGameSettings(instanceId, prepared.settings());
+            preparedInstanceSettings.remove(instanceId);
+        }
     }
 
     @Override
@@ -281,8 +332,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Ensures the instance uses an isolated running directory under its instance root.
     ///
     /// When the instance is already registered, settings are updated through
-    /// [HMCLGameInstance]. Otherwise the isolation flag is written to the instance settings file
-    /// so a later [HMCLGameInstance#getRunDirectory] sees the isolated path.
+    /// [HMCLGameInstance]. Otherwise the settings are retained in memory and transferred to the
+    /// draft that creates the instance, so the draft owns every file created for the installation.
     ///
     /// @param instanceId the instance id
     public void ensureIsolatedRunningDirectory(GameInstanceID instanceId) {
@@ -299,16 +350,22 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return;
         }
 
-        GameSettings.Instance setting = peekInstanceGameSettings(instanceId);
-        if (setting == null) {
-            setting = new GameSettings.Instance();
-        }
-        if (setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
-            try {
-                writeInstanceGameSettings(instanceId, setting);
-            } catch (IOException e) {
-                LOG.warning("Failed to write isolated running directory for " + instanceId, e);
+        Path instanceRoot = getLayout().getInstanceRoot(instanceId).toAbsolutePath().normalize();
+        synchronized (preparedInstanceMonitor) {
+            PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
+            GameSettings.Instance setting = prepared != null
+                    ? prepared.settings()
+                    : peekInstanceGameSettings(instanceId);
+            if (setting == null) {
+                setting = new GameSettings.Instance();
             }
+            setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+            preparedInstanceSettings.put(
+                    instanceId,
+                    new PreparedInstanceSettings(
+                            setting,
+                            instanceRoot,
+                            prepared != null ? prepared.rootWasAbsent() : Files.notExists(instanceRoot)));
         }
     }
 
@@ -335,11 +392,21 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         clean(getInstance(instanceId).getRunDirectory());
     }
 
+    /// Duplicates an instance and publishes the copy through one exclusive repository draft.
+    ///
+    /// The destination remains unpublished until all selected instance and run-directory files have
+    /// been copied. Failure aborts the draft and removes the destination instance root.
+    ///
+    /// @param srcId     the source instance id
+    /// @param dstId     the destination instance id
+    /// @param copySaves whether saved worlds should be copied
+    /// @throws IOException if the destination exists or any file cannot be copied or committed
     public void duplicateInstance(GameInstanceID srcId, GameInstanceID dstId, boolean copySaves) throws IOException {
         Path srcDir = getLayout().getInstanceRoot(srcId);
         Path dstDir = getLayout().getInstanceRoot(dstId);
 
         GameInstanceManifest fromManifest = getInstanceManifest(srcId);
+        GameInstanceManifest destinationManifest = fromManifest.withId(dstId).withJar(dstId);
 
         List<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(srcId.id() + ".jar");
@@ -347,42 +414,41 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (!copySaves)
             blackList.add("saves");
 
-        if (Files.exists(dstDir)) throw new IOException("Instance exists");
+        try (DefaultGameRepositoryDraft draft = openDraft()) {
+            draft.put(destinationManifest);
 
-        Files.createDirectories(dstDir);
-        FileUtils.copyDirectory(srcDir, dstDir, path -> Modpack.acceptFile(path, blackList, null));
+            Files.createDirectories(dstDir);
+            FileUtils.copyDirectory(srcDir, dstDir, path -> Modpack.acceptFile(path, blackList, null));
 
-        Path fromJson = srcDir.resolve(srcId.id() + ".json");
-        Path fromJar = srcDir.resolve(srcId.id() + ".jar");
-        Path toJson = dstDir.resolve(dstId.id() + ".json");
-        Path toJar = dstDir.resolve(dstId.id() + ".jar");
+            Path fromJar = srcDir.resolve(srcId.id() + ".jar");
+            Path toJar = dstDir.resolve(dstId.id() + ".jar");
+            if (Files.exists(fromJar)) {
+                Files.copy(fromJar, toJar);
+            }
 
-        if (Files.exists(fromJar)) {
-            Files.copy(fromJar, toJar);
+            Path srcGameDir = getInstance(srcId).getRunDirectory();
+            boolean copyOriginalGameDir;
+            try {
+                copyOriginalGameDir = !Files.isSameFile(srcGameDir, srcDir);
+            } catch (IOException e) {
+                copyOriginalGameDir = true;
+            }
+
+            GameSettings.Instance newGameSettings = getInstance(srcId).copySettings();
+            newGameSettings.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
+            newGameSettings.runningDirectoryProperty().setValue("");
+            writeInstanceGameSettings(dstId, newGameSettings);
+
+            Path dstGameDir = computeRunDirectory(dstId, false, newGameSettings);
+            if (copyOriginalGameDir) {
+                FileUtils.copyDirectory(
+                        srcGameDir,
+                        dstGameDir,
+                        path -> Modpack.acceptFile(path, blackList, null));
+            }
+
+            draft.commit();
         }
-        Files.copy(fromJson, toJson);
-
-        JsonUtils.writeToJsonFile(toJson, fromManifest.withId(dstId).withJar(dstId));
-
-        Path srcGameDir = getInstance(srcId).getRunDirectory();
-        boolean copyOriginalGameDir;
-        try {
-            copyOriginalGameDir = !Files.isSameFile(srcGameDir, getLayout().getInstanceRoot(srcId));
-        } catch (IOException e) {
-            copyOriginalGameDir = true;
-        }
-
-        GameSettings.Instance newGameSettings = getInstance(srcId).copySettings();
-        newGameSettings.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-        newGameSettings.runningDirectoryProperty().setValue("");
-        writeInstanceGameSettings(dstId, newGameSettings);
-
-        Path dstGameDir = computeRunDirectory(dstId, false, newGameSettings);
-
-        if (copyOriginalGameDir)
-            FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
-
-        refresh();
     }
 
     /// Returns instance-local settings for a registered instance ID, creating empty settings when
@@ -541,5 +607,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                     (long) (threshold * 0.8 + (usable - threshold) * 0.2),
                     16L * 1024 * 1024 * 1024);
         return suggested;
+    }
+
+    /// Records settings prepared for an instance that has not entered a repository draft yet.
+    ///
+    /// @param settings      the settings to materialize after the draft claims the root
+    /// @param instanceRoot  the normalized root reserved for the instance
+    /// @param rootWasAbsent whether the root was absent when the reservation was made
+    private record PreparedInstanceSettings(
+            GameSettings.Instance settings,
+            Path instanceRoot,
+            boolean rootWasAbsent) {
     }
 }

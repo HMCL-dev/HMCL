@@ -105,9 +105,11 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, component.getComponentType().getPatchId(), libraryVersion));
             });
 
-            component.setOnRemove(() -> repository.getDependency().removeComponentAsync(gameInstance, component.getComponentType())
-                    .thenComposeAsync(repository::saveAsync)
-                    .withComposeAsync(repository.refreshAsync())
+            component.setOnRemove(() -> repository.updateInstanceAsync(
+                            gameInstance.getId(),
+                            draftInstance -> repository.getDependency().removeComponentAsync(
+                                    draftInstance,
+                                    component.getComponentType()))
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
                     .start());
 
@@ -120,9 +122,11 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
             InstallerItem installerItem = new InstallerItem(mark.componentType(), InstallerItem.Style.LIST_ITEM);
             installerItem.versionProperty().set(new InstallerItem.InstalledState(mark.version(), false, false));
-            installerItem.setOnRemove(() -> repository.getDependency().removeComponentAsync(gameInstance, mark.componentType())
-                    .thenComposeAsync(repository::saveAsync)
-                    .withComposeAsync(repository.refreshAsync())
+            installerItem.setOnRemove(() -> repository.updateInstanceAsync(
+                            gameInstance.getId(),
+                            draftInstance -> repository.getDependency().removeComponentAsync(
+                                    draftInstance,
+                                    mark.componentType()))
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
                     .start());
 
@@ -149,9 +153,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         }
 
         HMCLGameRepository repository = gameInstance.getRepository();
-        Task<?> task = repository.getDependency().installComponentAsync(gameInstance, file)
-                .thenComposeAsync(repository::saveAsync)
-                .thenComposeAsync(repository.refreshAsync());
+        Task<?> task = repository.updateInstanceAsync(
+                gameInstance.getId(),
+                draftInstance -> repository.getDependency().installComponentAsync(draftInstance, file));
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override

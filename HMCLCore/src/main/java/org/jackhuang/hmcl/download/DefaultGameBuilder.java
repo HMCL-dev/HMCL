@@ -25,15 +25,16 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
-/// Builds a new game instance by registering a placeholder through [GameRepositoryDraft], installing
-/// components against that instance, then saving the completed manifest.
+/// Builds a new game instance in an exclusive [GameRepositoryDraft], installs its components, and
+/// publishes the completed instance once.
 ///
-/// On failure after the placeholder is committed, [#buildAsync()] removes the instance directory.
+/// Shared libraries, assets, and download caches may remain after failure. The draft removes the
+/// instance directory that it created and never publishes a placeholder instance.
 @NotNullByDefault
 public class DefaultGameBuilder extends GameBuilder {
 
@@ -56,10 +57,8 @@ public class DefaultGameBuilder extends GameBuilder {
 
     /// {@inheritDoc}
     ///
-    /// Registers [#name] via a draft commit, installs the configured game and optional loaders into
-    /// that instance, then [DefaultGameRepository#saveAsync(GameInstanceManifest)] the final
-    /// manifest. If any step fails after the placeholder is published, the instance is removed from
-    /// disk.
+    /// Creates an unpublished working instance, installs the configured game and optional loaders,
+    /// stages the completed manifest, and commits it once. Failure or cancellation aborts the draft.
     ///
     /// @return the build task
     /// @throws NullPointerException if [#name] was not set
@@ -83,23 +82,15 @@ public class DefaultGameBuilder extends GameBuilder {
         }
 
         DefaultGameRepository repository = dependencyManager.getGameRepository();
+        AtomicReference<GameRepositoryDraft> activeDraft = new AtomicReference<>();
 
         return Task.supplyAsync(() -> {
                     GameRepositoryDraft draft = repository.openDraft();
-                    try {
-                        draft.put(new GameInstanceManifest(name));
-                        draft.commit();
-                        return repository.getInstance(name);
-                    } catch (IOException e) {
-                        draft.abort();
-                        throw e;
-                    } catch (RuntimeException e) {
-                        draft.abort();
-                        throw e;
-                    }
+                    activeDraft.set(draft);
+                    return draft.put(new GameInstanceManifest(name));
                 })
                 .thenComposeAsync(instance -> {
-                    Task<GameInstanceManifest> libraryTask = Task.completed(instance.getManifest());
+                    Task<GameInstanceManifest> libraryTask = Task.supplyAsync(instance::getManifest);
                     libraryTask = libraryTask.thenComposeAsync(
                             libraryTaskHelper(instance, gameVersion, "game", gameVersion));
 
@@ -113,11 +104,19 @@ public class DefaultGameBuilder extends GameBuilder {
                                 dependencyManager.installComponentAsync(instance, working, remoteVersion));
                     }
 
-                    return libraryTask.thenComposeAsync(repository::saveAsync);
+                    return libraryTask.thenApplyAsync(manifest -> {
+                        GameRepositoryDraft draft = activeDraft.get();
+                        if (draft == null) {
+                            throw new IllegalStateException("Game repository draft is unavailable");
+                        }
+                        draft.put(manifest);
+                        return draft.commit().getInstance(name);
+                    });
                 })
                 .whenComplete(exception -> {
-                    if (exception != null) {
-                        dependencyManager.getGameRepository().removeInstanceFromDisk(name);
+                    GameRepositoryDraft draft = activeDraft.getAndSet(null);
+                    if (draft != null && draft.isOpen()) {
+                        draft.abort();
                     }
                 })
                 .withStagesHints(hints);

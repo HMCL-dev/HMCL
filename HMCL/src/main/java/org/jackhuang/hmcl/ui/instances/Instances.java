@@ -57,6 +57,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -191,17 +192,40 @@ public final class Instances {
 
             DefaultDependencyManager dependencyManager = repository.getDependency();
             GameInstanceManifest newVersion = manifest.withId(instanceId).withJar(instanceId);
+            AtomicReference<GameRepositoryDraft> activeDraft = new AtomicReference<>();
 
             Controllers.taskDialog(
-                    Task.allOf(new GameDownloadTask(dependencyManager, null, newVersion),
+                    Task.supplyAsync(() -> {
+                                GameRepositoryDraft draft = repository.openDraft();
+                                activeDraft.set(draft);
+                                draft.put(newVersion);
+                                return draft;
+                            })
+                            .thenComposeAsync(draft -> Task.allOf(
+                                    new GameDownloadTask(dependencyManager, null, newVersion),
                                     Task.allOf(
-                                            new GameAssetDownloadTask(dependencyManager, newVersion, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
-                                            new GameLibrariesTask(dependencyManager, newVersion, true)
-                                    ).withRunAsync(() -> {
-                                        // ignore failure
-                                    }))
-                            .thenComposeAsync(repository.saveAsync(newVersion))
-                            .thenRunAsync(repository::refresh)
+                                            new GameAssetDownloadTask(
+                                                    dependencyManager,
+                                                    newVersion,
+                                                    GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
+                                                    true),
+                                            new GameLibrariesTask(dependencyManager, newVersion, true))
+                                            .withRunAsync(() -> {
+                                                // ignore failure
+                                            })))
+                            .thenAcceptAsync(ignored -> {
+                                GameRepositoryDraft draft = activeDraft.get();
+                                if (draft == null) {
+                                    throw new IllegalStateException("Game repository draft is unavailable");
+                                }
+                                draft.commit();
+                            })
+                            .whenComplete(exception -> {
+                                GameRepositoryDraft draft = activeDraft.getAndSet(null);
+                                if (draft != null && draft.isOpen()) {
+                                    draft.abort();
+                                }
+                            })
                             .whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
                                     repository.setSelectedInstance(repository.getInstance(instanceId));

@@ -71,26 +71,33 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (settings1, exception, next) -> alertFailureMessage(exception, next));
 
-        // Edit a working manifest in memory against the registered instance; save only on success
-        // so a failed install does not leave a half-written instance json.
-        Task<GameInstanceManifest> ret = Task.supplyAsync(gameInstance::getManifest);
         var hints = new ArrayList<Task.StagesHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof RemoteVersion remoteVersion) {
-                ret = ret.thenComposeAsync(manifest ->
-                        dependencyManager.installComponentAsync(gameInstance, manifest, remoteVersion));
                 hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
                 if ("game".equals(remoteVersion.getLibraryId())) {
                     hints.add(new Task.StagesHint("hmcl.install.libraries"));
                     hints.add(new Task.StagesHint("hmcl.install.assets"));
                 }
-            } else if (value instanceof RemoveVersionAction removeVersionAction) {
-                ret = ret.thenComposeAsync(manifest ->
-                        dependencyManager.removeComponentAsync(gameInstance, manifest, removeVersionAction.componentType));
             }
         }
 
-        return ret.thenComposeAsync(gameInstance.getRepository()::saveAsync).thenComposeAsync(gameInstance.getRepository()::refreshAsync).withStagesHints(hints);
+        return gameInstance.getRepository().updateInstanceAsync(gameInstance.getId(), draftInstance -> {
+            Task<GameInstanceManifest> update = Task.supplyAsync(draftInstance::getManifest);
+            for (Object value : settings.asStringMap().values()) {
+                if (value instanceof RemoteVersion remoteVersion) {
+                    update = update.thenComposeAsync(manifest ->
+                            dependencyManager.installComponentAsync(draftInstance, manifest, remoteVersion));
+                } else if (value instanceof RemoveVersionAction removeVersionAction) {
+                    update = update.thenComposeAsync(manifest ->
+                            dependencyManager.removeComponentAsync(
+                                    draftInstance,
+                                    manifest,
+                                    removeVersionAction.componentType));
+                }
+            }
+            return update;
+        }).withStagesHints(hints);
     }
 
     @Override

@@ -30,9 +30,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Default implementation of a repository index snapshot for [DefaultGameRepository].
 ///
 /// A snapshot begins unsealed so package-private writers can populate it. [#seal()] freezes the
-/// instance map; afterwards any mutating method throws. Repository write paths must [#clone()] a
-/// published snapshot, edit the copy, and publish it with
-/// [DefaultGameRepository#publishSnapshot(DefaultGameRepositorySnapshot)].
+/// instance map; afterwards any mutating method throws. Repository drafts clone published snapshots,
+/// edit the copies, and publish them through the repository's draft commit path.
 ///
 /// Once sealed, this object is exposed as a [GameRepositorySnapshot].
 ///

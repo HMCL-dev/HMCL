@@ -24,6 +24,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -40,6 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -94,6 +95,15 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// Published snapshot, always updated on the JavaFX application thread when the toolkit is live.
     private final ObjectProperty<DefaultGameRepositorySnapshot> snapshot;
 
+    /// Monitor guarding the exclusive draft and direct repository write state.
+    private final Object writeSessionMonitor = new Object();
+
+    /// The repository's sole open draft, or `null` when no draft is active.
+    private @Nullable DefaultGameRepositoryDraft activeDraft;
+
+    /// Number of refresh, layout-replacement, or orphan-cleanup writes currently in progress.
+    private int activeDirectWrites;
+
     /// Whether at least one full refresh has completed since the base directory was set.
     private volatile boolean loaded;
 
@@ -112,17 +122,50 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @return the layout used by this repository
     protected abstract DefaultGameRepositoryLayout createLayout(Path baseDirectory);
 
+    /// Returns whether a new draft may claim `instanceRoot` as draft-owned storage.
+    ///
+    /// The default implementation permits only a root that does not exist. Subclasses may recognize
+    /// an explicit pre-install reservation, but must not permit an unrelated pre-existing directory:
+    /// aborting the draft will recursively remove every claimed root.
+    ///
+    /// @param instanceId   the instance being created
+    /// @param instanceRoot the normalized instance root
+    /// @return whether the draft may own and clean up the root
+    protected boolean mayClaimDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) {
+        return Files.notExists(instanceRoot);
+    }
+
+    /// Materializes subclass-specific data for a newly claimed draft instance root.
+    ///
+    /// This method is called after the draft has recorded ownership, so failure cleanup will remove
+    /// the root. The default implementation has no additional data to materialize.
+    ///
+    /// @param instanceId   the instance being created
+    /// @param instanceRoot the normalized instance root owned by the draft
+    /// @throws IOException if prepared data cannot be written
+    protected void initializeDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) throws IOException {
+    }
+
+    /// Replaces the repository layout with an empty snapshot rooted at `baseDirectory`.
+    ///
+    /// @param baseDirectory the new repository base directory
+    /// @throws IllegalStateException if a draft is active
     public void setBaseDirectory(Path baseDirectory) {
-        // Mark unloaded before publishing so snapshot listeners do not treat the empty snapshot as ready.
-        this.loaded = false;
-        DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
-        publishSnapshot(initial);
+        beginDirectWrite("set base directory");
+        try {
+            // Mark unloaded before publishing so snapshot listeners do not treat the empty snapshot as ready.
+            this.loaded = false;
+            DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
+            publishSnapshot(initial);
+        } finally {
+            endDirectWrite("set base directory");
+        }
     }
 
     /// {@inheritDoc}
     ///
-    /// The returned snapshot is sealed and must not be modified. Writers must [#clone()] it, edit the
-    /// copy, and publish the result with [#publishSnapshot(DefaultGameRepositorySnapshot)].
+    /// The returned snapshot is sealed and must not be modified. Normal writers must use
+    /// [#openDraft()]; refresh and layout replacement use the internal publication path.
     @Override
     public DefaultGameRepositorySnapshot getSnapshot() {
         return snapshot.get();
@@ -140,6 +183,9 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     /// Seals `newSnapshot` if needed and publishes it as the current repository snapshot.
     ///
+    /// This is the low-level publication mechanism for draft commit, refresh, and layout
+    /// replacement. Other repository writes must use [#openDraft()].
+    ///
     /// When the JavaFX toolkit is running, the property is updated on the JavaFX application thread
     /// (blocking the caller if publish happens off the FX thread) so that listeners run on FX and
     /// [#getSnapshot()] observes the new value before this method returns.
@@ -152,6 +198,43 @@ public abstract class DefaultGameRepository implements GameRepository {
 
             snapshot.set(newSnapshot);
         });
+    }
+
+    /// Publishes the working snapshot of the repository's active draft.
+    ///
+    /// @param draft       the active draft
+    /// @param newSnapshot the draft's working snapshot
+    /// @throws IllegalStateException if `draft` is not the active draft
+    void publishDraftSnapshot(
+            DefaultGameRepositoryDraft draft,
+            DefaultGameRepositorySnapshot newSnapshot) {
+        checkActiveDraft(draft);
+        publishSnapshot(newSnapshot);
+    }
+
+    /// Verifies that `draft` owns this repository's exclusive write session.
+    ///
+    /// @param draft the draft to verify
+    /// @throws IllegalStateException if `draft` is not active
+    void checkActiveDraft(DefaultGameRepositoryDraft draft) {
+        synchronized (writeSessionMonitor) {
+            if (activeDraft != draft) {
+                throw new IllegalStateException("Draft is not the active repository draft");
+            }
+        }
+    }
+
+    /// Releases the exclusive write session owned by `draft`.
+    ///
+    /// @param draft the draft that completed, aborted, or failed
+    /// @throws IllegalStateException if `draft` is not active
+    void releaseDraft(DefaultGameRepositoryDraft draft) {
+        synchronized (writeSessionMonitor) {
+            if (activeDraft != draft) {
+                throw new IllegalStateException("Draft is not the active repository draft");
+            }
+            activeDraft = null;
+        }
     }
 
     /// Runs an action on the JavaFX application thread and waits for its completion.
@@ -204,8 +287,21 @@ public abstract class DefaultGameRepository implements GameRepository {
         return loaded;
     }
 
+    /// {@inheritDoc}
+    ///
+    /// @throws IllegalStateException if a draft is active
     @Override
     public void refresh() {
+        beginDirectWrite("refresh");
+        try {
+            refreshRepository();
+        } finally {
+            endDirectWrite("refresh");
+        }
+    }
+
+    /// Reloads and publishes repository state while the caller owns the direct-write session.
+    private void refreshRepository() {
         DefaultGameRepositorySnapshot newSnapshot = createSnapshot(getSnapshot().getLayout());
         DefaultGameRepositoryLayout layout = newSnapshot.getLayout();
 
@@ -309,7 +405,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         return manifest;
     }
 
-    private static void moveInstanceFiles(Path baseDirectory, GameInstanceID from, GameInstanceID to) throws IOException {
+    static void moveInstanceFiles(Path baseDirectory, GameInstanceID from, GameInstanceID to) throws IOException {
         Path instancesDir = baseDirectory.resolve("versions");
         Path fromDir = instancesDir.resolve(from.id());
         Path toDir = instancesDir.resolve(to.id());
@@ -377,39 +473,11 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     @Override
     public boolean renameInstance(GameInstanceID from, GameInstanceID to) {
-        try {
-            DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
-            DefaultGameInstance fromHolder = newSnapshot.get(from);
-            if (fromHolder == null) {
-                throw new NoSuchGameInstanceException(from);
-            }
-
-            moveInstanceFiles(newSnapshot.getLayout().getBaseDirectory(), from, to);
-
-            GameInstanceManifest renamedManifest = fromHolder.manifest;
-            if (from.equals(renamedManifest.jar())) {
-                renamedManifest = renamedManifest.withJar(null);
-            }
-            renamedManifest = renamedManifest.withId(to);
-            JsonUtils.writeToJsonFile(getInstanceJson(to), renamedManifest);
-
-            newSnapshot.remove(from);
-            newSnapshot.put(fromHolder.withManifest(newSnapshot, renamedManifest));
-
-            for (DefaultGameInstance instance : List.copyOf(newSnapshot.values())) {
-                GameInstanceManifest manifest = instance.manifest;
-                if (from.equals(manifest.inheritsFrom())) {
-                    GameInstanceManifest updatedManifest = manifest.withInheritsFrom(to);
-                    Path targetPath = getInstanceJson(updatedManifest.id());
-                    Files.createDirectories(targetPath.getParent());
-                    JsonUtils.writeToJsonFile(targetPath, updatedManifest);
-                    newSnapshot.put(instance.withManifest(newSnapshot, updatedManifest));
-                }
-            }
-
-            publishSnapshot(newSnapshot);
+        try (DefaultGameRepositoryDraft draft = openDraft()) {
+            draft.rename(from, to);
+            draft.commit();
             return true;
-        } catch (IOException | JsonParseException | NoSuchGameInstanceException | InvalidPathException e) {
+        } catch (IOException | JsonParseException | NoSuchGameInstanceException | IllegalArgumentException e) {
             LOG.warning("Unable to rename instance " + from + " to " + to, e);
             return false;
         }
@@ -417,21 +485,27 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     /// Removes an instance from the published index and attempts to remove its backing directory.
     ///
-    /// The repository is refreshed before this method returns, including when filesystem removal
-    /// fails after the instance has been removed from the published snapshot. After the instance
-    /// directory is staged under its `_removed` sibling, failure to trash or fully delete that
-    /// staging directory is logged but does not change the return value.
+    /// Registered instances are removed through an exclusive draft: their roots are first moved to
+    /// draft-private storage, the new snapshot is published once, and the staged roots are then
+    /// deleted. An unregistered orphan directory uses the legacy trash-or-delete cleanup path and is
+    /// followed by a repository refresh.
     ///
     /// @param id the instance id
     /// @return `false` if removal is denied or the instance directory cannot be staged; `true` if
     ///         the directory is absent or staging succeeds
     public boolean removeInstanceFromDisk(GameInstanceID id) {
         if (getSnapshot().get(id) != null) {
-            DefaultGameRepositorySnapshot newSnapshot = getSnapshot().clone();
-            newSnapshot.remove(id);
-            publishSnapshot(newSnapshot);
+            try (DefaultGameRepositoryDraft draft = openDraft()) {
+                draft.remove(id);
+                draft.commit();
+                return true;
+            } catch (IOException e) {
+                LOG.warning("Unable to remove instance " + id, e);
+                return false;
+            }
         }
 
+        beginDirectWrite("remove instance");
         try {
             Path file = getLayout().getInstanceRoot(id);
             if (Files.notExists(file)) {
@@ -465,7 +539,11 @@ public abstract class DefaultGameRepository implements GameRepository {
             }
             return true;
         } finally {
-            refresh();
+            try {
+                refreshRepository();
+            } finally {
+                endDirectWrite("remove instance");
+            }
         }
     }
 
@@ -515,7 +593,18 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @return a new open draft
     @Override
     public DefaultGameRepositoryDraft openDraft() {
-        return new DefaultGameRepositoryDraft(this);
+        synchronized (writeSessionMonitor) {
+            if (activeDraft != null) {
+                throw new IllegalStateException("Another repository draft is already open");
+            }
+            if (activeDirectWrites != 0) {
+                throw new IllegalStateException("Repository is currently performing a direct write");
+            }
+
+            DefaultGameRepositoryDraft draft = new DefaultGameRepositoryDraft(this);
+            activeDraft = draft;
+            return draft;
+        }
     }
 
     /// Writes a stored manifest and publishes a new snapshot in a single draft commit.
@@ -540,6 +629,47 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @return the task that saves and publishes the manifest
     public Task<GameInstanceManifest> saveAsync(GameInstanceManifest instanceManifest) {
         return Task.supplyAsync(() -> save(instanceManifest));
+    }
+
+    /// Creates a task that updates one registered instance inside an exclusive draft.
+    ///
+    /// The updater receives the instance from the draft's unpublished working snapshot and must
+    /// return a manifest with the same id. Its result is staged and committed exactly once. Failure
+    /// or cancellation aborts the draft; shared cache files written by the updater are retained.
+    ///
+    /// @param <E> the checked exception type thrown while creating the update task
+    /// @param instanceId the instance to update
+    /// @param updater    the asynchronous manifest update
+    /// @return the task that commits the updated manifest
+    public <E extends Exception> Task<Void> updateInstanceAsync(
+            GameInstanceID instanceId,
+            ExceptionalFunction<GameInstance, Task<GameInstanceManifest>, E> updater) {
+        AtomicReference<GameRepositoryDraft> active = new AtomicReference<>();
+        return Task.supplyAsync(() -> {
+                    GameRepositoryDraft draft = openDraft();
+                    active.set(draft);
+                    return draft.getSnapshot().getInstance(instanceId);
+                })
+                .thenComposeAsync(updater)
+                .thenApplyAsync(manifest -> {
+                    GameRepositoryDraft draft = active.get();
+                    if (draft == null) {
+                        throw new IllegalStateException("Game repository draft is unavailable");
+                    }
+                    if (!instanceId.equals(manifest.id())) {
+                        throw new IllegalArgumentException(
+                                "Instance updater changed id from " + instanceId + " to " + manifest.id());
+                    }
+                    draft.put(manifest);
+                    draft.commit();
+                    return manifest;
+                })
+                .whenComplete(exception -> {
+                    GameRepositoryDraft draft = active.getAndSet(null);
+                    if (draft != null && draft.isOpen()) {
+                        draft.abort();
+                    }
+                });
     }
 
     @Override
@@ -580,5 +710,31 @@ public abstract class DefaultGameRepository implements GameRepository {
             GameInstanceID id,
             GameInstanceManifest manifest,
             @Nullable Path manifestFile);
+
+    /// Begins a direct repository write that must not overlap a draft.
+    ///
+    /// @param operation human-readable operation name used in diagnostics
+    /// @throws IllegalStateException if a draft is active
+    private void beginDirectWrite(String operation) {
+        synchronized (writeSessionMonitor) {
+            if (activeDraft != null) {
+                throw new IllegalStateException("Repository has an open draft; cannot " + operation);
+            }
+            activeDirectWrites++;
+        }
+    }
+
+    /// Ends a direct repository write.
+    ///
+    /// @param operation the operation name passed to [#beginDirectWrite(String)]
+    /// @throws IllegalStateException if no direct write is active
+    private void endDirectWrite(String operation) {
+        synchronized (writeSessionMonitor) {
+            if (activeDirectWrites == 0) {
+                throw new IllegalStateException("Direct repository write is not active: " + operation);
+            }
+            activeDirectWrites--;
+        }
+    }
 
 }
