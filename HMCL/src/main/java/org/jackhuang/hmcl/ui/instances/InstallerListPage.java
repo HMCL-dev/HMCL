@@ -107,8 +107,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
             component.setOnRemove(() -> repository.updateInstanceAsync(
                             gameInstance.getId(),
-                            draftInstance -> repository.getDependency().removeComponentAsync(
-                                    draftInstance,
+                            publishedInstance -> repository.getDependency().removeComponentAsync(
+                                    publishedInstance,
                                     component.getComponentType()))
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
                     .start());
@@ -124,8 +124,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             installerItem.versionProperty().set(new InstallerItem.InstalledState(mark.version(), false, false));
             installerItem.setOnRemove(() -> repository.updateInstanceAsync(
                             gameInstance.getId(),
-                            draftInstance -> repository.getDependency().removeComponentAsync(
-                                    draftInstance,
+                            publishedInstance -> repository.getDependency().removeComponentAsync(
+                                    publishedInstance,
                                     mark.componentType()))
                     .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
                     .start());
@@ -155,7 +155,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         HMCLGameRepository repository = gameInstance.getRepository();
         Task<?> task = repository.updateInstanceAsync(
                 gameInstance.getId(),
-                draftInstance -> repository.getDependency().installComponentAsync(draftInstance, file));
+                publishedInstance -> repository.getDependency().installComponentAsync(publishedInstance, file));
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override

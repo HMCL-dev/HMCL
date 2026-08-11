@@ -62,7 +62,7 @@ public interface GameRepository {
     /// A repository permits at most one open draft. Repository refreshes, layout changes, and other
     /// writes are rejected until the draft is committed, aborted, or closed.
     ///
-    /// @return a new open draft cloned from [#getSnapshot()]
+    /// @return a new open draft based on the current published state
     /// @throws IllegalStateException if this repository is already being modified
     /// @see GameRepositoryDraft
     GameRepositoryDraft openDraft();

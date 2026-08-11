@@ -273,6 +273,18 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
+    /// {@inheritDoc}
+    ///
+    /// Resolves HMCL isolation and modpack rules directly from files and settings so an unpublished
+    /// installation does not require a [GameInstance].
+    @Override
+    public Path getRunDirectoryForInstallation(GameInstanceID instanceId) {
+        return computeRunDirectory(
+                instanceId,
+                Files.exists(getLayout().getModpackConfigurationFile(instanceId)),
+                getInstanceGameSettings(instanceId));
+    }
+
     private String selectedRunningDirectory(
             GameSettings.@Nullable Instance localSetting,
             boolean useInstanceRunningDirectory) {

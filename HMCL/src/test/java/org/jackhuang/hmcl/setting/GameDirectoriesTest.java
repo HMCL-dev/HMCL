@@ -28,6 +28,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameRepositoryDraft;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.util.FileSaver;
@@ -438,9 +439,9 @@ public final class GameDirectoriesTest {
         }
     }
 
-    /// Tests that isolation settings written before install make a registered instance use the version root.
+    /// Tests that an unpublished isolated installation resolves paths without a [HMCLGameInstance].
     @Test
-    public void newIsolatedInstallingInstanceUsesVersionRootAfterPlaceholderSave(@TempDir Path tempDirectory)
+    public void newIsolatedInstallationUsesVersionRootBeforePublication(@TempDir Path tempDirectory)
             throws Exception {
         GameSettingsPresetID defaultPresetId =
                 GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174002");
@@ -465,9 +466,15 @@ public final class GameDirectoriesTest {
 
             assertFalse(repository.hasInstance(id));
 
-            // Isolation is configured first; install then registers a placeholder instance.
             repository.applyDefaultIsolationSettingForNewInstance(id, true);
-            repository.saveAsync(new GameInstanceManifest(id)).run();
+            try (GameRepositoryDraft draft = repository.openDraft()) {
+                draft.put(new GameInstanceManifest(id));
+                assertFalse(repository.hasInstance(id));
+                assertEquals(
+                        repository.getLayout().getInstanceRoot(id),
+                        repository.getRunDirectoryForInstallation(id));
+                draft.commit();
+            }
 
             HMCLGameInstance instance = repository.getInstance(id);
             assertEquals(repository.getLayout().getInstanceRoot(id), instance.getRunDirectory());

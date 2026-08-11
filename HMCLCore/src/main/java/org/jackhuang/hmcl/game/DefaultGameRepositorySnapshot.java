@@ -29,15 +29,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Default implementation of a repository index snapshot for [DefaultGameRepository].
 ///
-/// A snapshot begins unsealed so package-private writers can populate it. [#seal()] freezes the
-/// instance map; afterwards any mutating method throws. Repository drafts clone published snapshots,
-/// edit the copies, and publish them through the repository's draft commit path.
-///
-/// Once sealed, this object is exposed as a [GameRepositorySnapshot].
+/// Package-private repository code assembles an instance in an unpublished construction phase and
+/// calls [#seal()] before exposing it as a [GameRepositorySnapshot]. Once sealed, its contents never
+/// change.
 ///
 /// Mutation methods are package-private: only code in `org.jackhuang.hmcl.game` may assemble a
 /// snapshot. Subclasses such as HMCL-specific snapshots may override [#newEmpty()] to preserve
-/// concrete type through [#clone()], analogous to
+/// concrete type through [#mutableCopy()], analogous to
 /// [DefaultGameInstance#withNewSnapshot(DefaultGameRepositorySnapshot)].
 @NotNullByDefault
 public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
@@ -149,34 +147,12 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
                 .toList();
     }
 
-    /// Returns a view of all instances in this snapshot.
-    ///
-    /// @return the instances; unmodifiable after [#seal()]
-    public Collection<DefaultGameInstance> values() {
-        return instances.values();
-    }
-
-    /// Returns an unmodifiable map view after seal, or the live map while building.
-    ///
-    /// @return the instance map
-    public Map<GameInstanceID, DefaultGameInstance> asMap() {
-        return instances;
-    }
-
     /// Adds or replaces an instance in this unsealed snapshot.
     ///
     /// @param instance the instance bound to this snapshot
     void put(DefaultGameInstance instance) {
         checkMutable();
         instances.put(instance.getId(), instance);
-    }
-
-    /// Adds or replaces all instances from the given map.
-    ///
-    /// @param map instances keyed by id
-    void putAll(Map<GameInstanceID, DefaultGameInstance> map) {
-        checkMutable();
-        instances.putAll(map);
     }
 
     /// Removes the instance with the given id.
@@ -187,11 +163,12 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         instances.remove(id);
     }
 
-    /// Creates an unsealed copy of this snapshot with instances rebound to the copy.
+    /// Creates an unpublished mutable copy with instances rebound to the copy.
     ///
-    /// @return a mutable snapshot ready for further edits before publish
-    @Override
-    public DefaultGameRepositorySnapshot clone() {
+    /// The caller must call [#seal()] before retaining or publishing the result as a snapshot.
+    ///
+    /// @return the mutable construction copy
+    DefaultGameRepositorySnapshot mutableCopy() {
         DefaultGameRepositorySnapshot newSnapshot = newEmpty();
         for (DefaultGameInstance instance : instances.values()) {
             newSnapshot.put(instance.withNewSnapshot(newSnapshot));

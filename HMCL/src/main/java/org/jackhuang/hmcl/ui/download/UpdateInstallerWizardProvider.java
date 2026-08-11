@@ -82,16 +82,16 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             }
         }
 
-        return gameInstance.getRepository().updateInstanceAsync(gameInstance.getId(), draftInstance -> {
-            Task<GameInstanceManifest> update = Task.supplyAsync(draftInstance::getManifest);
+        return gameInstance.getRepository().updateInstanceAsync(gameInstance.getId(), publishedInstance -> {
+            Task<GameInstanceManifest> update = Task.supplyAsync(publishedInstance::getManifest);
             for (Object value : settings.asStringMap().values()) {
                 if (value instanceof RemoteVersion remoteVersion) {
                     update = update.thenComposeAsync(manifest ->
-                            dependencyManager.installComponentAsync(draftInstance, manifest, remoteVersion));
+                            dependencyManager.installComponentAsync(publishedInstance, manifest, remoteVersion));
                 } else if (value instanceof RemoveVersionAction removeVersionAction) {
                     update = update.thenComposeAsync(manifest ->
                             dependencyManager.removeComponentAsync(
-                                    draftInstance,
+                                    publishedInstance,
                                     manifest,
                                     removeVersionAction.componentType));
                 }

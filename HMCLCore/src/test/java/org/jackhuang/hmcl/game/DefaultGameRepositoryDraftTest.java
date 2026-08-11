@@ -45,7 +45,7 @@ public final class DefaultGameRepositoryDraftTest {
         assertThrows(IllegalArgumentException.class, () -> new GameInstanceID(".."));
     }
 
-    /// Keeps a new manifest private until commit and publishes the working instance once committed.
+    /// Keeps a new manifest private until commit and publishes the resulting instance once committed.
     @Test
     public void testCommitPublishesStagedManifest(@TempDir Path tempDirectory) throws IOException {
         TestRepository repository = new TestRepository(tempDirectory);
@@ -54,10 +54,8 @@ public final class DefaultGameRepositoryDraftTest {
         Path manifestFile = repository.getLayout().getInstanceJson(id);
 
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
-            GameInstance workingInstance = draft.put(manifest);
+            draft.put(manifest);
 
-            assertEquals(manifest, workingInstance.getManifest());
-            assertTrue(draft.getSnapshot().hasInstance(id));
             assertFalse(repository.hasInstance(id));
             assertFalse(Files.exists(manifestFile));
 
@@ -106,7 +104,6 @@ public final class DefaultGameRepositoryDraftTest {
 
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             draft.put(updated);
-            assertEquals(updated, draft.getSnapshot().getInstance(id).getManifest());
             assertEquals(original, repository.getInstance(id).getManifest());
         }
 
@@ -162,7 +159,6 @@ public final class DefaultGameRepositoryDraftTest {
 
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             draft.remove(id);
-            assertFalse(draft.getSnapshot().hasInstance(id));
             assertTrue(repository.hasInstance(id));
             assertTrue(Files.isDirectory(root));
         }
@@ -228,7 +224,7 @@ public final class DefaultGameRepositoryDraftTest {
         }
     }
 
-    /// Runs an asynchronous instance update against the unpublished working instance.
+    /// Runs an asynchronous update using the published instance as immutable context.
     @Test
     public void testUpdateInstanceAsyncCommitsWorkingManifest(@TempDir Path tempDirectory) throws Exception {
         TestRepository repository = new TestRepository(tempDirectory);

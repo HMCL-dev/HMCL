@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameInstance;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameRepositoryDraft;
 import org.jackhuang.hmcl.task.Task;
@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /// publishes the completed instance once.
 ///
 /// Shared libraries, assets, and download caches may remain after failure. The draft removes the
-/// instance directory that it created and never publishes a placeholder instance.
+/// instance directory that it created and never publishes an incomplete manifest.
 @NotNullByDefault
 public class DefaultGameBuilder extends GameBuilder {
 
@@ -57,7 +57,7 @@ public class DefaultGameBuilder extends GameBuilder {
 
     /// {@inheritDoc}
     ///
-    /// Creates an unpublished working instance, installs the configured game and optional loaders,
+    /// Retains an unpublished working manifest, installs the configured game and optional loaders,
     /// stages the completed manifest, and commits it once. Failure or cancellation aborts the draft.
     ///
     /// @return the build task
@@ -87,21 +87,24 @@ public class DefaultGameBuilder extends GameBuilder {
         return Task.supplyAsync(() -> {
                     GameRepositoryDraft draft = repository.openDraft();
                     activeDraft.set(draft);
-                    return draft.put(new GameInstanceManifest(name));
+                    GameInstanceManifest manifest = new GameInstanceManifest(name);
+                    draft.put(manifest);
+                    return manifest;
                 })
-                .thenComposeAsync(instance -> {
-                    Task<GameInstanceManifest> libraryTask = Task.supplyAsync(instance::getManifest);
+                .thenComposeAsync(initialManifest -> {
+                    Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> initialManifest);
                     libraryTask = libraryTask.thenComposeAsync(
-                            libraryTaskHelper(instance, gameVersion, "game", gameVersion));
+                            libraryTaskHelper(name, gameVersion, "game", gameVersion));
 
                     for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
                         libraryTask = libraryTask.thenComposeAsync(
-                                libraryTaskHelper(instance, gameVersion, entry.getKey(), entry.getValue()));
+                                libraryTaskHelper(name, gameVersion, entry.getKey(), entry.getValue()));
                     }
 
                     for (RemoteVersion remoteVersion : remoteVersions) {
                         libraryTask = libraryTask.thenComposeAsync(working ->
-                                dependencyManager.installComponentAsync(instance, working, remoteVersion));
+                                dependencyManager.installNewInstanceComponentAsync(
+                                        name, working, gameVersion, remoteVersion));
                     }
 
                     return libraryTask.thenApplyAsync(manifest -> {
@@ -124,17 +127,17 @@ public class DefaultGameBuilder extends GameBuilder {
 
     /// Returns a step that installs one remote component into the working manifest.
     ///
-    /// @param instance       the registered instance
+    /// @param instanceId     the unpublished instance id
     /// @param gameVersion    the Minecraft version used to look up the remote list
     /// @param libraryId      the component list id
     /// @param libraryVersion the component version id
     /// @return a function from the current working manifest to the install task
     private ExceptionalFunction<GameInstanceManifest, Task<GameInstanceManifest>, ?> libraryTaskHelper(
-            GameInstance instance,
+            GameInstanceID instanceId,
             String gameVersion,
             String libraryId,
             String libraryVersion) {
-        return working -> dependencyManager.installComponentAsync(
-                instance, working, gameVersion, libraryId, libraryVersion);
+        return working -> dependencyManager.installNewInstanceComponentAsync(
+                instanceId, working, gameVersion, libraryId, libraryVersion);
     }
 }

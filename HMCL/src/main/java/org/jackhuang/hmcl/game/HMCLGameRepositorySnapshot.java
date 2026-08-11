@@ -47,11 +47,6 @@ public class HMCLGameRepositorySnapshot extends DefaultGameRepositorySnapshot {
         return new HMCLGameRepositorySnapshot(getRepository(), getLayout());
     }
 
-    @Override
-    public HMCLGameRepositorySnapshot clone() {
-        return (HMCLGameRepositorySnapshot) super.clone();
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public Collection<HMCLGameInstance> getInstances() {

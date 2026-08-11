@@ -39,11 +39,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Default exclusive [GameRepositoryDraft] implementation.
 ///
-/// Manifest changes are reflected in an unpublished working snapshot and serialized below a
-/// draft-private directory. Instance installers may use the returned working [GameInstance] and
-/// write instance-owned files before commit. A successful commit moves all staged manifests into
-/// place and publishes the working snapshot once. Shared library and asset cache writes are outside
-/// the rollback boundary. Instances of this class are not thread-safe.
+/// Manifest changes are retained as a private write set and serialized below a draft-private
+/// directory. A successful commit applies the write set and publishes one new immutable snapshot.
+/// Shared library and asset cache writes are outside the rollback boundary. Instances of this class
+/// are not thread-safe.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
@@ -53,8 +52,8 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// Immutable published snapshot captured when this draft was opened.
     private final DefaultGameRepositorySnapshot baseSnapshot;
 
-    /// Mutable snapshot containing the draft's unpublished manifest changes.
-    private final DefaultGameRepositorySnapshot workingSnapshot;
+    /// Current unpublished manifests keyed by instance id.
+    private final Map<GameInstanceID, GameInstanceManifest> manifests = new TreeMap<>();
 
     /// Staged manifest files keyed by instance id.
     private final Map<GameInstanceID, StagedManifest> stagedManifests = new TreeMap<>();
@@ -62,7 +61,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// Instance ids whose root directories were absent before this draft first staged them.
     private final Set<GameInstanceID> createdIds = new TreeSet<>();
 
-    /// Instance ids removed from the working snapshot.
+    /// Instance ids absent from the final manifest set.
     private final Set<GameInstanceID> removedIds = new TreeSet<>();
 
     /// Ordered instance renames applied to the filesystem during commit.
@@ -80,28 +79,15 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     DefaultGameRepositoryDraft(DefaultGameRepository repository) {
         this.repository = repository;
         this.baseSnapshot = repository.getSnapshot();
-        this.workingSnapshot = baseSnapshot.clone();
+        for (GameInstanceManifest manifest : baseSnapshot.getInstanceManifests()) {
+            manifests.put(manifest.id(), manifest);
+        }
     }
 
     /// {@inheritDoc}
     @Override
     public DefaultGameRepository getRepository() {
         return repository;
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public GameRepositorySnapshot getBaseSnapshot() {
-        return baseSnapshot;
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public GameRepositorySnapshot getSnapshot() {
-        if (state == GameRepositoryDraftState.ABORTED || state == GameRepositoryDraftState.FAILED) {
-            throw new IllegalStateException("Draft is " + state.name().toLowerCase());
-        }
-        return workingSnapshot;
     }
 
     /// {@inheritDoc}
@@ -124,27 +110,19 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// {@inheritDoc}
     @Override
-    public boolean hasInstance(GameInstanceID instanceId) {
+    public void put(GameInstanceManifest manifest) throws IOException {
         checkOpen();
-        return workingSnapshot.hasInstance(instanceId);
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public DefaultGameInstance put(GameInstanceManifest manifest) throws IOException {
-        checkOpen();
-        return stageManifest(manifest, true);
+        stageManifest(manifest, true);
     }
 
     /// {@inheritDoc}
     @Override
     public void remove(GameInstanceID instanceId) {
         checkOpen();
-        if (workingSnapshot.get(instanceId) == null) {
+        if (manifests.remove(instanceId) == null) {
             throw new NoSuchGameInstanceException(instanceId);
         }
 
-        workingSnapshot.remove(instanceId);
         stagedManifests.remove(instanceId);
         removedIds.add(instanceId);
     }
@@ -153,14 +131,14 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     @Override
     public void rename(GameInstanceID from, GameInstanceID to) throws IOException {
         checkOpen();
-        DefaultGameInstance source = workingSnapshot.get(from);
+        GameInstanceManifest source = manifests.get(from);
         if (source == null) {
             throw new NoSuchGameInstanceException(from);
         }
         if (createdIds.contains(from)) {
             throw new IllegalStateException("Cannot rename an instance created by the same draft");
         }
-        if (workingSnapshot.get(to) != null) {
+        if (manifests.containsKey(to)) {
             throw new IllegalArgumentException("Target instance already exists: " + to);
         }
 
@@ -169,21 +147,18 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             throw new FileAlreadyExistsException(targetRoot.toString());
         }
 
-        GameInstanceManifest renamedManifest = source.getManifest();
+        GameInstanceManifest renamedManifest = source;
         if (from.equals(renamedManifest.jar())) {
             renamedManifest = renamedManifest.withJar(null);
         }
         renamedManifest = renamedManifest.withId(to);
 
-        workingSnapshot.remove(from);
+        manifests.remove(from);
         stagedManifests.remove(from);
         removedIds.remove(from);
-        DefaultGameInstance renamed = repository.createInstance(workingSnapshot, to, renamedManifest);
-        workingSnapshot.put(renamed);
         stageManifest(renamedManifest, false);
 
-        for (DefaultGameInstance instance : List.copyOf(workingSnapshot.values())) {
-            GameInstanceManifest manifest = instance.getManifest();
+        for (GameInstanceManifest manifest : List.copyOf(manifests.values())) {
             if (from.equals(manifest.inheritsFrom())) {
                 stageManifest(manifest.withInheritsFrom(to), false);
             }
@@ -191,19 +166,17 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         renames.add(new RenameOperation(from, to));
     }
 
-    /// Stages one manifest and updates the working snapshot.
+    /// Stages one manifest and updates the draft write set.
     ///
     /// @param manifest     the manifest to stage
     /// @param claimNewRoot whether a previously absent instance root should become draft-owned
-    /// @return the updated working instance
     /// @throws IOException if the root cannot be claimed or the temporary manifest cannot be written
-    private DefaultGameInstance stageManifest(
+    private void stageManifest(
             GameInstanceManifest manifest,
             boolean claimNewRoot) throws IOException {
 
         GameInstanceID id = manifest.id();
-        DefaultGameInstance existing = workingSnapshot.get(id);
-        if (claimNewRoot && existing == null && !stagedManifests.containsKey(id)) {
+        if (claimNewRoot && !manifests.containsKey(id) && !stagedManifests.containsKey(id)) {
             Path root = getValidatedInstanceRoot(id);
             if (!repository.mayClaimDraftInstanceRoot(id, root)) {
                 throw new FileAlreadyExistsException(root.toString(), null,
@@ -217,16 +190,8 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         Path targetFile = previous != null ? previous.targetFile() : getManifestTarget(id);
         Path stagedFile = previous != null ? previous.stagedFile() : createStagedManifestPath();
         FileUtils.saveSafely(stagedFile, JsonUtils.GSON.toJson(manifest));
-        stagedManifests.put(id, new StagedManifest(stagedFile, targetFile));
-
-        DefaultGameInstance updated;
-        if (existing != null) {
-            updated = existing.withManifest(workingSnapshot, manifest);
-        } else {
-            updated = repository.createInstance(workingSnapshot, id, manifest);
-        }
-        workingSnapshot.put(updated);
-        return updated;
+        stagedManifests.put(id, new StagedManifest(manifest, stagedFile, targetFile));
+        manifests.put(id, manifest);
     }
 
     /// {@inheritDoc}
@@ -240,6 +205,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         List<RemovedRoot> removedRoots = new ArrayList<>();
         List<AppliedManifest> applied = new ArrayList<>();
         try {
+            DefaultGameRepositorySnapshot committedSnapshot = buildCommittedSnapshot();
             for (RenameOperation rename : renames) {
                 applyRename(rename, appliedRenames);
             }
@@ -250,11 +216,11 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                 applyManifest(entry.getKey(), entry.getValue(), applied);
             }
 
-            repository.publishDraftSnapshot(this, workingSnapshot);
+            repository.publishDraftSnapshot(this, committedSnapshot);
             state = GameRepositoryDraftState.COMMITTED;
             repository.releaseDraft(this);
             cleanupStagingAfterCommit();
-            return workingSnapshot;
+            return committedSnapshot;
         } catch (IOException | RuntimeException e) {
             IOException rollbackFailure = rollbackAppliedManifests(applied);
             rollbackFailure = accumulateNullable(rollbackFailure, rollbackRemovedRoots(removedRoots));
@@ -270,6 +236,29 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             }
             throw e;
         }
+    }
+
+    /// Builds the immutable successor snapshot represented by the final manifest write set.
+    ///
+    /// @return the sealed snapshot to publish after filesystem changes succeed
+    private DefaultGameRepositorySnapshot buildCommittedSnapshot() {
+        DefaultGameRepositorySnapshot committedSnapshot = baseSnapshot.mutableCopy();
+        for (RenameOperation rename : renames) {
+            committedSnapshot.remove(rename.from());
+        }
+        for (GameInstanceID id : removedIds) {
+            committedSnapshot.remove(id);
+        }
+        for (StagedManifest staged : stagedManifests.values()) {
+            GameInstanceManifest manifest = staged.manifest();
+            DefaultGameInstance existing = committedSnapshot.get(manifest.id());
+            DefaultGameInstance updated = existing != null
+                    ? existing.withManifest(committedSnapshot, manifest)
+                    : repository.createInstance(committedSnapshot, manifest.id(), manifest);
+            committedSnapshot.put(updated);
+        }
+        committedSnapshot.seal();
+        return committedSnapshot;
     }
 
     /// {@inheritDoc}
@@ -595,11 +584,15 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         }
     }
 
-    /// Records the temporary and permanent paths for one staged manifest.
+    /// Records one manifest and its temporary and permanent storage paths.
     ///
+    /// @param manifest   the unpublished manifest value
     /// @param stagedFile the draft-private serialized manifest
     /// @param targetFile the permanent repository manifest path
-    private record StagedManifest(Path stagedFile, Path targetFile) {
+    private record StagedManifest(
+            GameInstanceManifest manifest,
+            Path stagedFile,
+            Path targetFile) {
     }
 
     /// Records enough information to roll back one manifest replacement.

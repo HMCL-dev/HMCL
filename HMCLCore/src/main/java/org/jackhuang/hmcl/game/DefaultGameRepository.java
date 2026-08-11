@@ -190,10 +190,10 @@ public abstract class DefaultGameRepository implements GameRepository {
         });
     }
 
-    /// Publishes the working snapshot of the repository's active draft.
+    /// Publishes the immutable successor snapshot of the repository's active draft.
     ///
     /// @param draft       the active draft
-    /// @param newSnapshot the draft's working snapshot
+    /// @param newSnapshot the draft's successor snapshot
     /// @throws IllegalStateException if `draft` is not the active draft
     void publishDraftSnapshot(
             DefaultGameRepositoryDraft draft,
@@ -565,6 +565,17 @@ public abstract class DefaultGameRepository implements GameRepository {
         return getLayout().getInstanceJson(instanceId);
     }
 
+    /// Returns the run directory to use while installing an instance before it is published.
+    ///
+    /// The default official-layout repository uses its shared base directory. Subclasses may derive
+    /// an isolated directory from repository-specific settings without creating a [GameInstance].
+    ///
+    /// @param instanceId the instance being installed
+    /// @return the installation run directory
+    public Path getRunDirectoryForInstallation(GameInstanceID instanceId) {
+        return getBaseDirectory();
+    }
+
     /// Opens a draft for staging instance index changes and committing them once.
     ///
     /// @return a new open draft
@@ -603,8 +614,8 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     /// Creates a task that updates one registered instance inside an exclusive draft.
     ///
-    /// The updater receives the instance from the draft's unpublished working snapshot and must
-    /// return a manifest with the same id. Its result is staged and committed exactly once. Failure
+    /// The updater receives the instance from the immutable published snapshot and must return a
+    /// working manifest with the same id. Its result is staged and committed exactly once. Failure
     /// or cancellation aborts the draft; shared cache files written by the updater are retained.
     ///
     /// @param <E> the checked exception type thrown while creating the update task
@@ -618,7 +629,8 @@ public abstract class DefaultGameRepository implements GameRepository {
         return Task.supplyAsync(() -> {
                     GameRepositoryDraft draft = openDraft();
                     active.set(draft);
-                    return draft.getSnapshot().getInstance(instanceId);
+                    GameInstance publishedInstance = getInstance(instanceId);
+                    return publishedInstance;
                 })
                 .thenComposeAsync(updater)
                 .thenApplyAsync(manifest -> {

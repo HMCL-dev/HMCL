@@ -28,6 +28,8 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,11 +37,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// Provides downloads and game-component installation for one game repository.
+@NotNullByDefault
 public class DefaultDependencyManager extends AbstractDependencyManager {
 
     /// The repository whose layout and registered instances are managed.
@@ -138,7 +140,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     continue;
 
                 if (type == GameComponentType.OPTIFINE) {
-                    String optifinePatchVersion = Optional.ofNullable(instance.getComponentVersion(type)).map(optifineVersion -> {
+                    @Nullable String optifinePatchVersion = Optional.ofNullable(instance.getComponentVersion(type)).map(optifineVersion -> {
                                 Matcher matcher = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$").matcher(optifineVersion);
                                 return matcher.find() ? matcher.group("optifine") : optifineVersion;
                             })
@@ -197,22 +199,92 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             throw new IllegalArgumentException("baseManifest id does not match instance");
         }
 
-        AtomicReference<GameInstanceManifest> removedComponentManifest = new AtomicReference<>();
         Path modsDirectory = instance.getModsDirectory();
 
         return removeComponentAsync(instance, baseManifest, libraryVersion.getComponentType())
-                .thenComposeAsync(manifest -> {
-                    removedComponentManifest.set(manifest);
-                    return libraryVersion.getInstallTask(this, manifest, modsDirectory);
-                })
-                .thenApplyAsync(patch -> {
-                    if (patch == null) {
-                        return removedComponentManifest.get();
-                    } else {
-                        return removedComponentManifest.get().addPatch(patch);
-                    }
-                })
+                .thenComposeAsync(manifest -> libraryVersion
+                        .getInstallTask(this, manifest, modsDirectory)
+                        .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
                 .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
+    }
+
+    /// Installs a component into an unpublished new instance without constructing a
+    /// [GameInstance].
+    ///
+    /// @param instanceId     the unpublished instance id
+    /// @param baseManifest   the working manifest for this step
+    /// @param gameVersion    the Minecraft version used for component analysis
+    /// @param libraryVersion the remote component to install
+    /// @return the task producing the updated manifest (not yet committed)
+    Task<GameInstanceManifest> installNewInstanceComponentAsync(
+            GameInstanceID instanceId,
+            GameInstanceManifest baseManifest,
+            String gameVersion,
+            RemoteVersion libraryVersion) {
+        if (!instanceId.equals(baseManifest.id())) {
+            throw new IllegalArgumentException("baseManifest id does not match instanceId");
+        }
+
+        Path modsDirectory = repository.getRunDirectoryForInstallation(instanceId).resolve("mods");
+        return removeNewInstanceComponentAsync(
+                baseManifest,
+                GameVersionNumber.asGameVersion(gameVersion),
+                libraryVersion.getComponentType())
+                .thenComposeAsync(manifest -> libraryVersion
+                        .getInstallTask(this, manifest, modsDirectory)
+                        .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
+                .withStage(String.format(
+                        "hmcl.install.%s:%s",
+                        libraryVersion.getLibraryId(),
+                        libraryVersion.getSelfVersion()));
+    }
+
+    /// Resolves and installs a component into an unpublished new instance.
+    ///
+    /// @param instanceId     the unpublished instance id
+    /// @param baseManifest   the working manifest for this step
+    /// @param gameVersion    the Minecraft version used to look up the remote list
+    /// @param libraryId      the component list id, such as `game` or `forge`
+    /// @param libraryVersion the component version id
+    /// @return the installation task
+    Task<GameInstanceManifest> installNewInstanceComponentAsync(
+            GameInstanceID instanceId,
+            GameInstanceManifest baseManifest,
+            String gameVersion,
+            String libraryId,
+            String libraryVersion) {
+        if (!instanceId.equals(baseManifest.id())) {
+            throw new IllegalArgumentException("baseManifest id does not match instanceId");
+        }
+
+        VersionList<?> versionList = getVersionList(libraryId);
+        return versionList.loadAsync(gameVersion)
+                .thenComposeAsync(() -> installNewInstanceComponentAsync(
+                        instanceId,
+                        baseManifest,
+                        gameVersion,
+                        versionList.getVersion(gameVersion, libraryVersion)
+                                .orElseThrow(() -> new IOException(
+                                        "Remote library " + libraryId + " has no version " + libraryVersion))))
+                .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));
+    }
+
+    /// Removes one component from an unpublished new instance manifest.
+    ///
+    /// @param workingManifest the manifest being edited
+    /// @param gameVersion     the Minecraft version used for component analysis
+    /// @param componentType   the component to remove
+    /// @return the task producing the updated standalone manifest
+    private Task<GameInstanceManifest> removeNewInstanceComponentAsync(
+            GameInstanceManifest workingManifest,
+            GameVersionNumber gameVersion,
+            GameComponentType componentType) {
+        return Task.supplyAsync(() -> {
+            GameInstanceManifest standalone = workingManifest.inheritsFrom() == null
+                    ? workingManifest
+                    : repository.resolve(workingManifest).standaloneManifest();
+            return GameComponentAnalyzer.analyze(standalone, gameVersion).removeLibrary(componentType);
+        });
     }
 
     /// Resolves a remote component by id/version and installs it into the working manifest.
