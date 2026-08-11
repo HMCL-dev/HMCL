@@ -43,6 +43,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountID;
+import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
@@ -2261,7 +2262,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         @Nullable JFXButton finalInheritButton = inheritButton;
 
         InvalidationListener propertyListener = observable -> {
-            if (isPresetSetting) {
+            if (isPresetSetting || updatingSelectedAccount) {
                 return;
             }
             GameSettings setting = currentSetting.get();
@@ -2322,6 +2323,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             } finally {
                 updatingSelectedAccount = false;
             }
+            propertyListener.invalidated(property);
         });
 
         if (finalInheritButton != null) {
@@ -2471,16 +2473,22 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     /// Returns the display name shown for the given account in the account list.
     private static String getAccountProfileName(Account account) {
         String profileName = account.getProfileName();
-        return StringUtils.isBlank(profileName) ? account.getProfileID().toString() : profileName;
+        if (StringUtils.isBlank(profileName)) {
+            profileName = account.getProfileID().toString();
+        }
+        if (account instanceof ClassicAccount classicAccount) {
+            return profileName + " - " + classicAccount.getLoginName();
+        }
+        return profileName;
     }
 
     /// Returns the authentication method description shown below the account name in the account list.
     private static String getAccountSubtitle(Account account) {
         String loginTypeName = Accounts.getLocalizedLoginTypeName(Accounts.getAccountFactory(account));
         if (account instanceof AuthlibInjectorAccount authlibInjectorAccount) {
-            return loginTypeName + ", " + i18n("account.injector.server") + ": " + authlibInjectorAccount.getServer().getName();
+            loginTypeName = loginTypeName + ", " + i18n("account.injector.server") + ": " + authlibInjectorAccount.getServer().getName();
         }
-        return loginTypeName;
+        return account.isPortable() ? loginTypeName + ", " + i18n("account.portable") : loginTypeName;
     }
 
     private <T> void bindInheritableSublistDescription(ComponentSublist sublist,
