@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.instances.GameInstanceIconDialog;
@@ -135,6 +136,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final InvalidationListener weakJavaListener = holder.weak(javaListener);
 
     private final RadioChoiceList<@Nullable Account> accountItem;
+    private final Hyperlink accountAddPrompt;
     private boolean updatingSelectedAccount = false;
 
     public GameSettingsPage(Class<S> settingType) {
@@ -515,7 +517,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             accountSublist.setHasSubtitle(true);
             {
                 accountItem = new RadioChoiceList<>();
-                accountSublist.getContent().setAll(accountItem);
+                accountAddPrompt = new Hyperlink(i18n("settings.game.login_method.no_account"));
+                FXUtils.setLimitHeight(accountAddPrompt, 30);
+                accountAddPrompt.setVisible(false);
+                accountAddPrompt.setManaged(false);
+                accountAddPrompt.setOnAction(e -> Controllers.dialog(new CreateAccountPane()));
+                accountSublist.getContent().setAll(accountItem, accountAddPrompt);
                 bindAccountSettings(accountSublist, accountItem);
 
                 Accounts.getAccounts().addListener(holder.weak((ListChangeListener<Account>) ignored -> refreshAccountSettings()));
@@ -2411,7 +2418,22 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     /// Rebuilds the login method radio choices from the current account list.
+    ///
+    /// When the account list is empty, the account choices are hidden and the add-account prompt is shown instead.
     private void refreshAccountOptions() {
+        if (Accounts.getAccounts().isEmpty()) {
+            accountItem.setVisible(false);
+            accountItem.setManaged(false);
+            accountAddPrompt.setVisible(true);
+            accountAddPrompt.setManaged(true);
+            return;
+        }
+
+        accountItem.setVisible(true);
+        accountItem.setManaged(true);
+        accountAddPrompt.setVisible(false);
+        accountAddPrompt.setManaged(false);
+
         var options = new ArrayList<RadioChoiceList.Choice<@Nullable Account>>();
         for (Account account : Accounts.getAccounts()) {
             options.add(new RadioChoiceList.Choice<>(
