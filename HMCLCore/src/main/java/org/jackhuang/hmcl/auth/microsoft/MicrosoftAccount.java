@@ -24,7 +24,9 @@ import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jetbrains.annotations.NotNullByDefault;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Objects;
@@ -34,22 +36,23 @@ import java.util.UUID;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+@NotNullByDefault
 public final class MicrosoftAccount extends OAuthAccount {
 
-    protected final MicrosoftService service;
-    protected UUID profileID;
+    private final MicrosoftService service;
+    private final UUID profileID;
 
     private boolean authenticated = false;
     private MicrosoftSession session;
 
-    protected MicrosoftAccount(AccountID accountID, MicrosoftService service, MicrosoftSession session) {
+    MicrosoftAccount(AccountID accountID, MicrosoftService service, MicrosoftSession session) {
         super(accountID);
         this.service = requireNonNull(service);
         this.session = requireNonNull(session);
         this.profileID = requireNonNull(session.profile().id());
     }
 
-    protected MicrosoftAccount(MicrosoftService service, OAuth.GrantFlow flow) throws AuthenticationException {
+    MicrosoftAccount(MicrosoftService service, OAuth.GrantFlow flow) throws AuthenticationException {
         super(AccountID.generate());
         this.service = requireNonNull(service);
 
@@ -106,12 +109,7 @@ public final class MicrosoftAccount extends OAuthAccount {
             throw new WrongAccountException(profileID, acquiredSession.profile().id());
         }
 
-        if (acquiredSession.profile() == null) {
-            session = service.refresh(acquiredSession);
-        } else {
-            session = acquiredSession;
-        }
-
+        session = acquiredSession;
         authenticated = true;
         invalidate();
         return session.toAuthInfo();
@@ -134,6 +132,14 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public void uploadSkin(boolean isSlim, InputStream file) throws AuthenticationException, UnsupportedOperationException {
         service.uploadSkin(session.accessToken(), isSlim, file);
+    }
+
+    public void updateCape(String id) throws UnsupportedOperationException, IOException {
+        service.updateCape(session.accessToken(), id);
+    }
+
+    public Optional<MicrosoftService.MinecraftProfileResponse> getMinecraftProfileResponse() throws AuthenticationException {
+        return service.getCompleteProfile(session.getAuthorization());
     }
 
     @Override

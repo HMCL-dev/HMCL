@@ -30,9 +30,9 @@ import org.jackhuang.hmcl.game.skin.Skin;
 import org.jackhuang.hmcl.game.skin.SkinModel;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.FileSelector;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -61,7 +61,7 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
             toggleGroup.selectToggle(toggleGroup.getToggles().get(toggleGroup.getToggles().size() - 1));
         } else {
             skinTypeItem.setSelectedData(config.type());
-            toggleGroup.selectToggle(config.textureModel() == SkinModel.WIDE ? toggleGroup.getToggles().get(0) : toggleGroup.getToggles().get(1));
+            toggleGroup.selectToggle(config.textureModel() == SkinModel.WIDE ? toggleGroup.getToggles().get(1) : toggleGroup.getToggles().get(0));
             skinSelector.setValue(config.localSkinPath());
             capeSelector.setValue(config.localCapePath());
         }
@@ -140,7 +140,15 @@ public class OfflineAccountSkinPage extends SkinPageBase<OfflineAccount> {
     @Override
     protected void onDrag(Path skin) {
         skinTypeItem.setSelectedData(OfflineSkinConfig.Type.LOCAL_FILE);
-        skinSelector.setValue(FileUtils.getAbsolutePath(skin));
+
+        try {
+            var img = FXUtils.loadImage(skin);
+            if (img.getHeight() == 32 && img.getWidth() == 64) {
+                capeSelector.setValue(skin.toString());
+            } else skinSelector.setValue(skin.toString());
+        } catch (Exception e) {
+            LOG.warning("Failed to handle drag", e);
+        }
     }
 
     @Override

@@ -29,8 +29,6 @@ import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
-import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
@@ -38,6 +36,7 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -102,7 +101,7 @@ public class MicrosoftService {
             throw new XboxAuthorizationException(response.errorCode, response.redirectUrl);
         }
 
-        if (response.displayClaims == null || response.displayClaims.xui == null || response.displayClaims.xui.size() == 0 || !response.displayClaims.xui.get(0).containsKey("uhs")) {
+        if (response.displayClaims == null || response.displayClaims.xui == null || response.displayClaims.xui.isEmpty() || !response.displayClaims.xui.get(0).containsKey("uhs")) {
             LOG.warning("Unrecognized xbox authorization response " + GSON.toJson(response));
             throw new NoXuiException();
         }
@@ -217,33 +216,6 @@ public class MicrosoftService {
         }
     }
 
-    public static Optional<Map<TextureType, Texture>> getTextures(MinecraftProfileResponse profile) {
-        Objects.requireNonNull(profile);
-
-        Map<TextureType, Texture> textures = new EnumMap<>(TextureType.class);
-
-        if (!profile.skins.isEmpty()) {
-            textures.put(TextureType.SKIN, new Texture(profile.skins.get(0).url, null));
-        }
-        // if (!profile.capes.isEmpty()) {
-        // textures.put(TextureType.CAPE, new Texture(profile.capes.get(0).url, null);
-        // }
-
-        return Optional.of(textures);
-    }
-
-    private static void getXBoxProfile(String uhs, String xstsToken) throws IOException {
-        HttpRequest.GET("https://profile.xboxlive.com/users/me/profile/settings",
-                        pair("settings", "GameDisplayName,AppDisplayName,AppDisplayPicRaw,GameDisplayPicRaw,"
-                                + "PublicGamerpic,ShowUserAsAvatar,Gamerscore,Gamertag,ModernGamertag,ModernGamertagSuffix,"
-                                + "UniqueModernGamertag,AccountTier,TenureLevel,XboxOneRep,"
-                                + "PreferredColor,Location,Bio,Watermarks," + "RealName,RealNameOverride,IsQuarantined"))
-                .accept("application/json")
-                .authorization(String.format("XBL3.0 x=%s;%s", uhs, xstsToken))
-                .header("x-xbl-contract-version", "3")
-                .getString();
-    }
-
     private static MinecraftProfileResponse getMinecraftProfile(String tokenType, String accessToken)
             throws IOException, AuthenticationException {
         HttpURLConnection conn = HttpRequest.GET("https://api.minecraftservices.com/minecraft/profile")
@@ -309,6 +281,20 @@ public class MicrosoftService {
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }
+    }
+
+    public void updateCape(String accessToken, @Nullable String id) throws UnsupportedOperationException, IOException {
+        HttpRequest request;
+        if (id != null) {
+            request = HttpRequest.PUT("https://api.minecraftservices.com/minecraft/profile/capes/active")
+                    .json(new ChangeCapeRequest(id))
+                    .authorization("Bearer " + accessToken);
+        } else {
+            request = HttpRequest.DELETE("https://api.minecraftservices.com/minecraft/profile/capes/active")
+                    .authorization("Bearer " + accessToken);
+        }
+
+        request.getString();
     }
 
     public static class XboxAuthorizationException extends AuthenticationException {
@@ -403,24 +389,6 @@ public class MicrosoftService {
         int expiresIn;
     }
 
-    private final static class MinecraftStoreResponseItem {
-        @SerializedName("name")
-        String name;
-        @SerializedName("signature")
-        String signature;
-    }
-
-    private final static class MinecraftStoreResponse extends MinecraftErrorResponse {
-        @SerializedName("items")
-        List<MinecraftStoreResponseItem> items;
-
-        @SerializedName("signature")
-        String signature;
-
-        @SerializedName("keyId")
-        String keyId;
-    }
-
     public final static class MinecraftProfileResponseSkin implements Validation {
         public String id;
         public String state;
@@ -435,10 +403,6 @@ public class MicrosoftService {
             Validation.requireNonNull(url, "url cannot be null");
             Validation.requireNonNull(variant, "variant cannot be null");
         }
-    }
-
-    public static class MinecraftProfileResponseCape {
-
     }
 
     @JsonSerializable
@@ -474,6 +438,10 @@ public class MicrosoftService {
             Validation.requireNonNull(skins, "skins cannot be null");
             Validation.requireNonNull(capes, "capes cannot be null");
         }
+
+        public List<MinecraftProfileResponseCape> getCapes() {
+            return capes;
+        }
     }
 
     private static class MinecraftErrorResponse {
@@ -482,6 +450,12 @@ public class MicrosoftService {
         public String error;
         public String errorMessage;
         public String developerMessage;
+    }
+
+    private record ChangeCapeRequest(@SerializedName("capeId") String capeId) {
+    }
+
+    public record MinecraftProfileResponseCape(String id, String state, String url, String alias) {
     }
 
     private static final Gson GSON = new GsonBuilder()

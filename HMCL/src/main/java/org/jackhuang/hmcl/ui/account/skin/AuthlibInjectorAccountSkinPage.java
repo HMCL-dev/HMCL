@@ -76,7 +76,7 @@ public class AuthlibInjectorAccountSkinPage extends SkinPageBase<AuthlibInjector
         }).whenComplete(Schedulers.javafx(), (r, e) -> {
             if (e != null) Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
             skinObjectProperty.set(r);
-            toggleGroup.selectToggle(r.model() == SkinModel.WIDE ? toggleGroup.getToggles().get(0) : toggleGroup.getToggles().get(1));
+            toggleGroup.selectToggle(r.model() == SkinModel.WIDE ? toggleGroup.getToggles().get(1) : toggleGroup.getToggles().get(0));
         }).start();
 
         var uploadableTextures = getUploadableTextures();
@@ -128,33 +128,11 @@ public class AuthlibInjectorAccountSkinPage extends SkinPageBase<AuthlibInjector
         }
     }
 
-    private void setSkinTexture(Image skinImg) {
-        try {
-            var current = skinObjectProperty.get();
-            skinObjectProperty.set(new Skin(current.model(), skinImg, current.cape()));
-        } catch (Exception e) {
-            LOG.warning("Failed to parse skin image", e);
-            Controllers.dialog(StringUtils.getStackTrace(e), i18n("message.error"));
-        }
-    }
-
-    private void setCapeTexture(Image capeImg) {
-        var current = skinObjectProperty.get();
-        skinObjectProperty.set(new Skin(current.model(), current.skin(), capeImg));
-    }
-
     @Override
     protected void onDrag(Path skin) {
         if (!getUploadableTextures().contains(TextureType.SKIN)) return;
 
-        try {
-            var img = FXUtils.loadImage(skin);
-            if (img.getHeight() == 32 && img.getWidth() == 64) {
-                setCapeTexture(img);
-            } else setSkinTexture(img);
-        } catch (Exception e) {
-            LOG.warning("Failed to handle drag", e);
-        }
+        super.onDrag(skin);
     }
 
     @Override

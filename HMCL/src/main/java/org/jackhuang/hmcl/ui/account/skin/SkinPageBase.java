@@ -28,6 +28,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.image.Image;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -132,7 +133,16 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         this.state.set(State.fromTitle(i18n("account.skin.manage", account.getProfileName())));
     }
 
-    protected abstract void onDrag(Path skin);
+    protected void onDrag(Path skin) {
+        try {
+            var img = FXUtils.loadImage(skin);
+            if (img.getHeight() == 32 && img.getWidth() == 64) {
+                setCapeTexture(img);
+            } else setSkinTexture(img);
+        } catch (Exception e) {
+            LOG.warning("Failed to handle drag", e);
+        }
+    }
 
     public void savePng(RenderedImage image, String name) throws IOException {
         FileChooser fileChooser = new FileChooser();
@@ -212,6 +222,16 @@ public abstract class SkinPageBase<T extends Account> extends DecoratorAnimatedP
         hBox.getChildren().addAll(slimRadio, wideRadio);
 
         return pair(hBox, group);
+    }
+
+    protected void setSkinTexture(Image skinImg) {
+        var current = skinObjectProperty.get();
+        skinObjectProperty.set(new Skin(current.model(), skinImg, current.cape()));
+    }
+
+    protected void setCapeTexture(Image capeImg) {
+        var current = skinObjectProperty.get();
+        skinObjectProperty.set(new Skin(current.model(), current.skin(), capeImg));
     }
 
     protected final class SkinManagePane extends HBox {

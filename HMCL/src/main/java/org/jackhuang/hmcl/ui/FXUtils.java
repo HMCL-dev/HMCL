@@ -49,6 +49,7 @@ import javafx.scene.control.skin.TableViewSkin;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -1782,5 +1783,14 @@ public final class FXUtils {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ImageIO.write(bufferedImage, format, outputStream);
         return new ByteArrayInputStream(outputStream.toByteArray());
+    }
+
+    public static Image scaleImageNearestNeighbor(Image img, double sx, double sy) {
+        int ow = (int) img.getWidth(), oh = (int) img.getHeight();
+        WritableImage scaled = new WritableImage((int) (ow * sx), (int) (oh * sy));
+        for (int y = 0; y < scaled.getHeight(); y++)
+            for (int x = 0; x < scaled.getWidth(); x++)
+                scaled.getPixelWriter().setColor(x, y, img.getPixelReader().getColor(Math.min(Math.max((int) (x / sx), 0), ow - 1), Math.min(Math.max((int) (y / sy), 0), oh - 1)));
+        return scaled;
     }
 }

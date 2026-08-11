@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -38,6 +39,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.account.skin.AuthlibInjectorAccountSkinPage;
+import org.jackhuang.hmcl.ui.account.skin.MicrosoftAccountSkinPage;
 import org.jackhuang.hmcl.ui.account.skin.OfflineAccountSkinPage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -122,6 +124,9 @@ public class AccountListItem extends RadioButton {
             return null;
         } else if (account instanceof AuthlibInjectorAccount) {
             Controllers.navigate(new AuthlibInjectorAccountSkinPage((AuthlibInjectorAccount) account));
+            return null;
+        } else if (account instanceof MicrosoftAccount) {
+            Controllers.navigate(new MicrosoftAccountSkinPage((MicrosoftAccount) account));
             return null;
         }
 
