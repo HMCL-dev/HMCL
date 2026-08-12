@@ -54,6 +54,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -161,14 +162,24 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             return;
 
         Path parent = currentDirectory.path;
+
+        Set<String> existingFolders;
+
+        try (var list = Files.list(parent)) {
+            existingFolders = list.map(Path::getFileName)
+                    .map(Path::toString)
+                    .collect(Collectors.toSet());
+        } catch (IOException e) {
+            LOG.warning("Failed to list folders in " + parent, e);
+            existingFolders = Set.of();
+        }
+
+        Set<String> finalExistingFolders = existingFolders;
+
         Controllers.prompt(
                 i18n("schematics.create_directory.prompt"),
                 (result, handler) -> {
                     Path targetDir = parent.resolve(result);
-                    if (Files.exists(targetDir)) {
-                        handler.reject(i18n("schematics.create_directory.failed.already_exists"));
-                        return;
-                    }
 
                     try {
                         Files.createDirectories(targetDir);
@@ -178,7 +189,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         LOG.warning("Failed to create directory: " + targetDir, e);
                         handler.reject(i18n("schematics.create_directory.failed", targetDir));
                     }
-                }, "", new RequiredValidator(), new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid));
+                }, "", new RequiredValidator(), new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid), new Validator(i18n("schematics.create_directory.failed.already_exists"), (it) -> !finalExistingFolders.contains(it)));
     }
 
     private DirItem loadAll(Path dir, @Nullable DirItem parent) {
