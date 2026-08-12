@@ -848,7 +848,8 @@ public final class LauncherHelper {
         private final CountDownLatch launchingLatch;
         private final String forbiddenAccessToken;
         private Thread submitLogThread;
-        private LinkedBlockingQueue<Log> logBuffer;
+        /// Pending logs for the log window.
+        private final BlockingDeque<Log> logBuffer = new LinkedBlockingDeque<>(Log.getLogLines());
 
         public HMCLProcessListener(HMCLGameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
             this.repository = repository;
@@ -881,7 +882,6 @@ public final class LauncherHelper {
                     logWindowLatch.countDown();
                 });
 
-                logBuffer = new LinkedBlockingQueue<>();
                 submitLogThread = Lang.thread(new Runnable() {
                     private final ArrayList<Log> currentLogs = new ArrayList<>();
                     private final Semaphore semaphore = new Semaphore(0);
@@ -980,7 +980,7 @@ public final class LauncherHelper {
             if (showLogs) {
                 if (level == null)
                     level = Lang.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
-                logBuffer.add(new Log(log, level));
+                enqueueLog(new Log(log, level));
             } else {
                 lock.lock();
                 try {
@@ -1011,7 +1011,7 @@ public final class LauncherHelper {
         @Override
         public void onExit(int exitCode, ExitType exitType) {
             if (showLogs) {
-                logBuffer.add(new Log(String.format("[%s] [HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", TIME_FORMATTER.format(Instant.now()), exitCode, exitCode, exitType), Log4jLevel.INFO));
+                enqueueLog(new Log(String.format("[%s] [HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", TIME_FORMATTER.format(Instant.now()), exitCode, exitCode, exitType), Log4jLevel.INFO));
                 submitLogThread.interrupt();
                 try {
                     submitLogThread.join();
@@ -1042,6 +1042,12 @@ public final class LauncherHelper {
             }
 
             checkExit();
+        }
+
+        /// Adds a log to the display queue, discarding the oldest pending log when full.
+        private void enqueueLog(Log log) {
+            while (!logBuffer.offerLast(log))
+                logBuffer.pollFirst();
         }
 
     }
