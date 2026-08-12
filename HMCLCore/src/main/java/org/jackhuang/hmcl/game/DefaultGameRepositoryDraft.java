@@ -158,11 +158,13 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         removedIds.remove(from);
         putManifest(renamedManifest, false);
 
-        for (GameInstanceManifest manifest : List.copyOf(manifests.values())) {
-            if (from.equals(manifest.inheritsFrom())) {
-                putManifest(manifest.withInheritsFrom(to), false);
+        manifests.replaceAll((id, manifest) -> {
+            if (!from.equals(manifest.inheritsFrom())) {
+                return manifest;
             }
-        }
+            modifiedIds.add(id);
+            return manifest.withInheritsFrom(to);
+        });
         renames.add(new RenameOperation(from, to));
     }
 
