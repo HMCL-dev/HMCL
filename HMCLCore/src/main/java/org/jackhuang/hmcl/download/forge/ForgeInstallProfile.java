@@ -28,24 +28,16 @@ import org.jackhuang.hmcl.util.gson.Validation;
  * @author huangyuhui
  */
 @Immutable
-public final class ForgeInstallProfile implements Validation {
+public record ForgeInstallProfile(@SerializedName("install") ForgeInstall install,
+                                  @SerializedName("versionInfo") GameInstanceManifest versionInfo) implements Validation {
 
-    @SerializedName("install")
-    private final ForgeInstall install;
-
-    @SerializedName("versionInfo")
-    private final GameInstanceManifest versionInfo;
-
-    public ForgeInstallProfile(ForgeInstall install, GameInstanceManifest versionInfo) {
-        this.install = install;
-        this.versionInfo = versionInfo;
-    }
-
-    public ForgeInstall getInstall() {
+    @Override
+    public ForgeInstall install() {
         return install;
     }
 
-    public GameInstanceManifest getVersionInfo() {
+    @Override
+    public GameInstanceManifest versionInfo() {
         return versionInfo;
     }
 
