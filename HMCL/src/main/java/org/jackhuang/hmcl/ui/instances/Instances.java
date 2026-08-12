@@ -28,11 +28,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.game.QuickPlayOption;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -106,9 +102,7 @@ public final class Instances {
                                 if (StringUtils.isNotBlank(mod.iconUrl()))
                                     installWizardProvider.setIconUrl(mod.iconUrl());
                                 Controllers.getDecorator().startWizard(installWizardProvider);
-                            } else if (e instanceof CancellationException) {
-                                Controllers.showToast(i18n("message.cancelled"));
-                            } else {
+                            } else if (!(e instanceof CancellationException)) {
                                 Controllers.dialog(
                                         i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
                                         i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
