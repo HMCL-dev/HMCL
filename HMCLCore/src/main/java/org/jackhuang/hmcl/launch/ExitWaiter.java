@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Locale;
 import java.util.function.BiConsumer;
 
 /**
@@ -38,6 +38,10 @@ final class ExitWaiter implements Runnable {
     private final ManagedProcess process;
     private final Collection<Thread> joins;
     private final BiConsumer<Integer, ProcessListener.ExitType> watcher;
+    /// Whether the output indicates that the JVM failed to start.
+    private volatile boolean jvmLaunchFailed;
+    /// Whether the output indicates that the game failed.
+    private volatile boolean applicationFailed;
 
     /**
      * Constructor.
@@ -51,6 +55,31 @@ final class ExitWaiter implements Runnable {
         this.watcher = watcher;
     }
 
+    /// Records exit indicators from a process output line.
+    ///
+    /// @param line the process output line
+    void onLog(String line) {
+        if (jvmLaunchFailed && applicationFailed)
+            return;
+
+        String lowerCaseLine = line.toLowerCase(Locale.ROOT);
+        boolean detectedJvmLaunchFailure = !jvmLaunchFailed && StringUtils.containsOne(lowerCaseLine,
+                "could not create the java virtual machine.",
+                "error occurred during initialization of vm",
+                "a fatal exception has occurred. program will exit.");
+        boolean detectedApplicationFailure = !applicationFailed && StringUtils.containsOne(lowerCaseLine,
+                "crash report saved to", "could not save crash report to", "this crash report has been saved to:",
+                "unable to launch", "an exception was thrown, the game will display an error screen and halt.");
+
+        if (!(detectedJvmLaunchFailure || detectedApplicationFailure) || !Log4jLevel.guessLogLineError(line))
+            return;
+
+        if (detectedJvmLaunchFailure)
+            jvmLaunchFailed = true;
+        if (detectedApplicationFailure)
+            applicationFailed = true;
+    }
+
     @Override
     public void run() {
         try {
@@ -59,19 +88,13 @@ final class ExitWaiter implements Runnable {
             for (Thread thread : joins)
                 thread.join();
 
-            List<String> errorLines = process.getLines(Log4jLevel::guessLogLineError);
             ProcessListener.ExitType exitType;
 
             // LaunchWrapper will catch the exception logged and will exit normally.
-            if (exitCode != 0 && StringUtils.containsOne(errorLines,
-                    "Could not create the Java Virtual Machine.",
-                    "Error occurred during initialization of VM",
-                    "A fatal exception has occurred. Program will exit.")) {
+            if (exitCode != 0 && jvmLaunchFailed) {
                 EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(this, process));
                 exitType = ProcessListener.ExitType.JVM_ERROR;
-            } else if (exitCode != 0 || StringUtils.containsOne(errorLines,
-                    "Crash report saved to", "Could not save crash report to", "This crash report has been saved to:",
-                    "Unable to launch", "An exception was thrown, the game will display an error screen and halt.")) {
+            } else if (exitCode != 0 || applicationFailed) {
                 EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(this, process));
 
                 if (exitCode == 137 && OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {

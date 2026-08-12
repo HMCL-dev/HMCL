@@ -872,19 +872,11 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
+    /// Starts the process output pumps and exit monitor.
     private void startMonitors(ManagedProcess managedProcess, Path nativeFolder, ProcessListener processListener, Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
-        Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
-            processListener.onLog(it, false);
-            managedProcess.addLine(it);
-        }, encoding), "stdout-pump", isDaemon);
-        managedProcess.addRelatedThread(stdout);
-        Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
-            processListener.onLog(it, true);
-            managedProcess.addLine(it);
-        }, encoding), "stderr-pump", isDaemon);
-        managedProcess.addRelatedThread(stderr);
-        managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> {
+        List<Thread> joins = new ArrayList<>(2);
+        ExitWaiter exitWaiter = new ExitWaiter(managedProcess, joins, (exitCode, exitType) -> {
             processListener.onExit(exitCode, exitType);
 
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
@@ -896,7 +888,20 @@ public class DefaultLauncher extends Launcher {
                     LOG.warning("An Exception happened while running exit command.", e);
                 }
             }
-        }), "exit-waiter", isDaemon));
+        });
+        Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
+            processListener.onLog(it, false);
+            exitWaiter.onLog(it);
+        }, encoding), "stdout-pump", isDaemon);
+        managedProcess.addRelatedThread(stdout);
+        joins.add(stdout);
+        Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
+            processListener.onLog(it, true);
+            exitWaiter.onLog(it);
+        }, encoding), "stderr-pump", isDaemon);
+        managedProcess.addRelatedThread(stderr);
+        joins.add(stderr);
+        managedProcess.addRelatedThread(Lang.thread(exitWaiter, "exit-waiter", isDaemon));
     }
 
     private record Command(
