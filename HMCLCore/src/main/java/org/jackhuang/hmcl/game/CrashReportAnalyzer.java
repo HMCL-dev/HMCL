@@ -169,7 +169,7 @@ public final class CrashReportAnalyzer {
         private final @Unmodifiable List<String> triggers;
 
         /// Named groups interpolated into the crash explanation.
-        private final String @Unmodifiable [] groupNames;
+        private final @Unmodifiable List<String> groupNames;
 
         /// Creates a crash rule.
         ///
@@ -179,7 +179,7 @@ public final class CrashReportAnalyzer {
         Rule(@Language("RegExp") String pattern, @Unmodifiable List<String> triggers, String... groupNames) {
             this.pattern = Pattern.compile(pattern);
             this.triggers = List.copyOf(triggers);
-            this.groupNames = groupNames.clone();
+            this.groupNames = List.of(groupNames);
         }
 
         /// Returns the compiled crash signature.
@@ -192,8 +192,8 @@ public final class CrashReportAnalyzer {
         /// Returns the names of groups interpolated into the crash explanation.
         ///
         /// @return immutable view of group names
-        public String @Unmodifiable [] getGroupNames() {
-            return groupNames.clone();
+        public @Unmodifiable List<String> getGroupNames() {
+            return groupNames;
         }
     }
 

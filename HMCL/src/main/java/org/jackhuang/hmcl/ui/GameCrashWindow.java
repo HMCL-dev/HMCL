@@ -213,7 +213,7 @@ public class GameCrashWindow extends Stage {
                             break;
                         default:
                             message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
-                                    Arrays.stream(result.rule().getGroupNames()).map(groupName -> result.matcher().group(groupName))
+                                    result.rule().getGroupNames().stream().map(groupName -> result.matcher().group(groupName))
                                             .toArray());
                             break;
                     }
