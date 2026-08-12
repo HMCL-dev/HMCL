@@ -174,12 +174,19 @@ public final class SettingsPage extends ScrollPane {
 
                     SupportedLocale currentLocale = I18n.getLocale();
                     chooseLanguagePane.setNullSafeConverter(locale -> {
+                        String name;
+
                         if (locale.isDefault())
-                            return locale.getDisplayName(currentLocale);
+                            name = locale.getDisplayName(currentLocale);
                         else if (locale.isSameLanguage(currentLocale))
-                            return locale.getDisplayName(locale);
+                            name = locale.getDisplayName(locale);
                         else
-                            return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
+                            name = locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
+
+                        double completeness = locale.getTranslationCompleteness();
+                        if (completeness != 0.0)
+                            return String.format("%s (%.2f%%)", name, completeness * 100);
+                        else return name;
                     });
                     chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
                     chooseLanguagePane.valueProperty().bindBidirectional(settings().languageProperty());
