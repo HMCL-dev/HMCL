@@ -738,6 +738,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         GameSettings.Effective vs = getEffectiveGameSettings(instanceId);
         boolean noJVMOptions = vs.getInheritable(GameSettings::noJVMOptionsProperty);
         boolean autoMemory = vs.getInheritable(GameSettings::autoMemoryProperty);
+        boolean highPerformanceGPU = vs.getInheritable(GameSettings::highPerformanceProperty);
         GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(getGameVersion(instanceId));
 
         @Nullable Integer maxMemory;
@@ -793,6 +794,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setDisableAutoGameOptions(vs.getInheritable(GameSettings::disableAutoGameOptionsProperty))
                 .setUseNativeGLFW(vs.getInheritable(GameSettings::useNativeGLFWProperty))
                 .setUseNativeOpenAL(vs.getInheritable(GameSettings::useNativeOpenALProperty))
+                .setUseHighPerformanceGPU(vs.getInheritable(GameSettings::highPerformanceProperty))
                 .setDaemon(!makeLaunchScript && vs.getInheritable(GameSettings::launcherVisibilityProperty).isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
