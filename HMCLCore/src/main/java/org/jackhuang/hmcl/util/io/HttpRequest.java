@@ -157,11 +157,15 @@ public abstract class HttpRequest {
     }
 
     public static class HttpGetRequest extends HttpSimpleRequest {
-        protected HttpGetRequest(String url) { super(url, "GET"); }
+        protected HttpGetRequest(String url) {
+            super(url, "GET");
+        }
     }
 
     public static class HttpDeleteRequest extends HttpSimpleRequest {
-        protected HttpDeleteRequest(String url) { super(url, "DELETE"); }
+        protected HttpDeleteRequest(String url) {
+            super(url, "DELETE");
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -216,11 +220,15 @@ public abstract class HttpRequest {
     }
 
     public static final class HttpPostRequest extends HttpEntityRequest<HttpPostRequest> {
-        private HttpPostRequest(String url) { super(url, "POST"); }
+        private HttpPostRequest(String url) {
+            super(url, "POST");
+        }
     }
 
     public static final class HttpPutRequest extends HttpEntityRequest<HttpPutRequest> {
-        private HttpPutRequest(String url) { super(url, "PUT"); }
+        private HttpPutRequest(String url) {
+            super(url, "PUT");
+        }
     }
 
     public static HttpGetRequest GET(String url) {
