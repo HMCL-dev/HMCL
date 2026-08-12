@@ -21,7 +21,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -29,7 +28,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -47,7 +45,6 @@ public abstract class HttpRequest {
     protected final String url;
     protected final String method;
     protected final Map<String, String> headers = new HashMap<>();
-    protected ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester;
     protected final Set<Integer> toleratedHttpCodes = new HashSet<>();
     protected int retryTimes = 1;
     protected boolean ignoreHttpCode;
@@ -71,10 +68,6 @@ public abstract class HttpRequest {
 
     public HttpRequest authorization(String tokenType, String tokenString) {
         return authorization(tokenType + " " + tokenString);
-    }
-
-    public HttpRequest authorization(Authorization authorization) {
-        return authorization(authorization.getTokenType(), authorization.getAccessToken());
     }
 
     public HttpRequest header(String key, String value) {
@@ -273,11 +266,5 @@ public abstract class HttpRequest {
             }
         }
         throw new IOException("retry 0");
-    }
-
-    public interface Authorization {
-        String getTokenType();
-
-        String getAccessToken();
     }
 }
