@@ -502,7 +502,7 @@ public final class Controllers {
     }
 
     public static TaskLoadingDialog taskLoadingDialog(TaskExecutor executor, String title, @NotNull TaskCancellationAction onCancel) {
-        TaskLoadingDialog pane = new TaskLoadingDialog(title, onCancel, executor);;
+        TaskLoadingDialog pane = new TaskLoadingDialog(title, onCancel, executor);
         dialog(pane);
         return pane;
     }
