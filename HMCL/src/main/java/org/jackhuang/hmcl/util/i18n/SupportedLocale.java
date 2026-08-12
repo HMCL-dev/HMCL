@@ -338,7 +338,6 @@ public final class SupportedLocale {
         return Math.min(1.0, v);
     }
 
-
     public boolean isSameLanguage(SupportedLocale other) {
         return LocaleUtils.getRootLanguage(this.getLocale())
                 .equals(LocaleUtils.getRootLanguage(other.getLocale()));
