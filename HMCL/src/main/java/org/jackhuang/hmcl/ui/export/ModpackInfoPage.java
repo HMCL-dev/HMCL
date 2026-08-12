@@ -173,7 +173,8 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     public static class ModpackInfoPageSkin extends SkinBase<ModpackInfoPage> {
         private ObservableList<Node> originList;
 
-        private final List<JFXTextField> validatingFields = new ArrayList<>();
+        /// Tracks validation errors that disable the next button.
+        private final List<BooleanProperty> validationErrors = new ArrayList<>();
 
         public ModpackInfoPageSkin(ModpackInfoPage skinnable) {
             super(skinnable);
@@ -268,11 +269,16 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         VBox pane = new VBox();
 
                         Label title = new Label(i18n("settings.memory"));
-                        VBox.setMargin(title, new Insets(0, 0, 8, 0));
+                        Label errorLabel = new Label();
+                        errorLabel.getStyleClass().add("error-label");
+                        errorLabel.setStyle("-fx-text-fill: -monet-error;");
+                        HBox titlePane = new HBox(4, title, errorLabel);
+                        titlePane.setAlignment(Pos.CENTER_LEFT);
+                        VBox.setMargin(titlePane, new Insets(0, 0, 8, 0));
 
                         HBox lowerBoundPane = new HBox(8);
                         lowerBoundPane.setAlignment(Pos.CENTER);
-                        VBox.setMargin(lowerBoundPane, new Insets(0, 0, 8, 16));
+                        VBox.setMargin(lowerBoundPane, new Insets(0, 0, 0, 16));
 
                         {
                             Label label = new Label(i18n("settings.memory.lower_bound"));
@@ -294,14 +300,13 @@ public final class ModpackInfoPage extends Control implements WizardPage {
 
                             JFXTextField txtMinMemory = new JFXTextField();
                             FXUtils.bindInt(txtMinMemory, skinnable.minMemory);
-                            txtMinMemory.getValidators().add(new NumberValidator(i18n("input.number"), false));
+                            registerValidators(txtMinMemory, errorLabel, new NumberValidator(i18n("input.number"), false));
                             FXUtils.setLimitWidth(txtMinMemory, 60);
-                            validatingFields.add(txtMinMemory);
 
                             lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label("MiB"));
                         }
 
-                        pane.getChildren().setAll(title, lowerBoundPane);
+                        pane.getChildren().setAll(titlePane, lowerBoundPane);
                         list.getContent().add(pane);
                     }
 
@@ -373,12 +378,9 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     nextButton.setPrefWidth(100);
                     nextButton.setPrefHeight(40);
                     nextButton.disableProperty().bind(
-                            // Disable nextButton if any text of JFXTextFields in validatingFields does not fulfill
-                            // our requirement.
-                            Bindings.createBooleanBinding(() -> validatingFields.stream()
-                                            .map(field -> !field.validate())
-                                            .reduce(false, (left, right) -> left || right),
-                                    validatingFields.stream().map(JFXTextField::textProperty).toArray(StringProperty[]::new)));
+                            Bindings.createBooleanBinding(
+                                    () -> validationErrors.stream().anyMatch(BooleanProperty::get),
+                                    validationErrors.toArray(BooleanProperty[]::new)));
                     hbox.getChildren().add(nextButton);
                 }
             }
@@ -386,34 +388,54 @@ public final class ModpackInfoPage extends Control implements WizardPage {
             FXUtils.smoothScrolling(scroll);
         }
 
-        /// Creates a compact, fixed-width text input row and registers any supplied validators.
+        /// Creates a compact text input row with its validation message beside the title.
         private LinePane createTextFieldLinePane(String title, StringProperty property, @Nullable ValidatorBase... validators) {
             LinePane linePane = new LinePane();
-            linePane.getStyleClass().add("modpack-info-text-field-line");
-            FXUtils.setLimitHeight(linePane, 64);
-
             JFXTextField textField = new JFXTextField();
-            FXUtils.setLimitWidth(textField, 500);
+            Label errorLabel = new Label();
+            errorLabel.getStyleClass().add("error-label");
+            errorLabel.setStyle("-fx-text-fill: -monet-error;");
+            textField.setMinWidth(500);
 
             linePane.setTitle(title);
+            linePane.setTitleTrailing(errorLabel);
             linePane.setRight(textField);
             textField.textProperty().bindBidirectional(property);
 
-            boolean needValidation = false;
-            if (validators != null) {
-                for (ValidatorBase validator : validators) {
-                    if (validator != null) {
-                        needValidation = true;
-                        textField.getValidators().add(validator);
-                    }
-                }
-            }
-            if (needValidation) {
-                FXUtils.setValidateWhileTextChanged(textField, true);
-                validatingFields.add(textField);
-            }
+            registerValidators(textField, errorLabel, validators);
 
             return linePane;
+        }
+
+        /// Runs validators without activating the text field skin's message below the input.
+        private void registerValidators(JFXTextField textField, Label errorLabel, @Nullable ValidatorBase... validators) {
+            List<ValidatorBase> validatorList = new ArrayList<>();
+            for (@Nullable ValidatorBase validator : validators) {
+                if (validator != null) {
+                    validator.setSrcControl(textField);
+                    validatorList.add(validator);
+                }
+            }
+            if (validatorList.isEmpty())
+                return;
+
+            BooleanProperty hasError = new SimpleBooleanProperty();
+            Runnable validate = () -> {
+                for (ValidatorBase validator : validatorList) {
+                    validator.validate();
+                    if (validator.getHasErrors()) {
+                        errorLabel.setText(validator.getMessage());
+                        hasError.set(true);
+                        return;
+                    }
+                }
+
+                errorLabel.setText(null);
+                hasError.set(false);
+            };
+            textField.textProperty().addListener(observable -> validate.run());
+            validate.run();
+            validationErrors.add(hasError);
         }
     }
 }
