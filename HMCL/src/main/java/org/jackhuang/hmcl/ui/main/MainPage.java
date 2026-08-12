@@ -380,7 +380,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     if (exception == null) {
                         GameDirectoryManager.getSelectedRepository().setSelectedInstance(instanceHolder.value);
                         launch();
-                    } else if (!(exception instanceof CancellationException)) {
+                    } else if (exception instanceof CancellationException) {
+                        Controllers.showToast(i18n("message.cancelled"));
+                    } else {
                         LOG.warning("Failed to install game", exception);
                         Controllers.dialog(StringUtils.getStackTrace(exception),
                                 i18n("install.failed"),
