@@ -170,8 +170,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 task.setName(file.name());
                 return task;
             }).whenComplete(Schedulers.javafx(), exception -> {
-                if (exception != null && !(exception instanceof CancellationException)) {
-                    Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                if (exception != null) {
+                    if (!(exception instanceof CancellationException)) {
+                        Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                    }
                 } else {
                     Controllers.showToast(i18n("install.success"));
                 }
