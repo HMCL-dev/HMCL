@@ -25,8 +25,8 @@ import java.io.IOException;
 ///
 /// A draft records an unpublished manifest write set. It does not expose a snapshot or
 /// [GameInstance]: callers retain their working [GameInstanceManifest] values while the repository's
-/// immutable snapshot remains unchanged until [#commit()] succeeds. Manifest JSON is written to
-/// draft-private temporary storage and moved into the repository during commit.
+/// immutable snapshot remains unchanged until [#commit()] succeeds. Manifest JSON is written only
+/// during commit.
 ///
 /// A repository permits at most one open draft. Repository refreshes, layout changes, and other
 /// writes are rejected while the draft is open. Aborting a draft removes instance directories that
@@ -59,11 +59,12 @@ public interface GameRepositoryDraft extends AutoCloseable {
 
     /// Adds or replaces a stored manifest in the unpublished draft state.
     ///
-    /// The manifest JSON is written to draft-private temporary storage. This operation does not
-    /// create or expose a [GameInstance].
+    /// The manifest is retained in memory until commit. This operation does not serialize the
+    /// manifest or create or expose a [GameInstance]. For a new id, the draft claims its instance
+    /// root and may initialize repository-specific files there.
     ///
     /// @param manifest the persistent instance manifest
-    /// @throws IOException           if the temporary manifest cannot be written
+    /// @throws IOException           if a new instance root cannot be claimed or initialized
     /// @throws IllegalStateException if the draft is not open
     void put(GameInstanceManifest manifest) throws IOException;
 
@@ -84,28 +85,26 @@ public interface GameRepositoryDraft extends AutoCloseable {
     ///
     /// @param from the current instance id
     /// @param to   the target instance id
-    /// @throws IOException                 if the target directory already exists or a temporary
-    ///                                     manifest cannot be written
+    /// @throws IOException                 if the target root is invalid or already exists
     /// @throws NoSuchGameInstanceException if the draft does not contain `from`
     /// @throws IllegalArgumentException    if the draft already contains `to`
     /// @throws IllegalStateException       if the draft is not open
     void rename(GameInstanceID from, GameInstanceID to) throws IOException;
 
-    /// Applies staged manifest files and publishes a new immutable snapshot.
+    /// Writes modified manifest files, then publishes a new immutable snapshot.
     ///
-    /// After this method returns, [GameRepository#getInstance(GameInstanceID)] will resolve staged
+    /// After this method returns, [GameRepository#getInstance(GameInstanceID)] will resolve modified
     /// ids from the published index.
     ///
     /// @return the newly published snapshot
-    /// @throws IOException           if staged filesystem changes cannot be applied
+    /// @throws IOException           if filesystem changes cannot be applied
     /// @throws IllegalStateException if the draft is not open or is not the repository's active draft
     GameRepositorySnapshot commit() throws IOException;
 
-    /// Discards staged changes without publishing a new snapshot.
+    /// Discards pending changes without publishing a new snapshot.
     ///
-    /// Removes temporary manifests and instance directories created only by this draft. Global
-    /// caches (libraries, assets) are not reverted. This method is idempotent after a successful
-    /// abort.
+    /// Removes instance directories created only by this draft. Global caches (libraries, assets)
+    /// are not reverted. This method is idempotent after a successful abort.
     ///
     /// @throws IOException           if cleanup fails
     /// @throws IllegalStateException if the draft was already committed

@@ -39,10 +39,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Default exclusive [GameRepositoryDraft] implementation.
 ///
-/// Manifest changes are retained as a private write set and serialized below a draft-private
-/// directory. A successful commit applies the write set and publishes one new immutable snapshot.
-/// Shared library and asset cache writes are outside the rollback boundary. Instances of this class
-/// are not thread-safe.
+/// Manifest changes are retained in memory until commit. A successful commit writes the final
+/// manifests, applies removals and renames, and publishes one new immutable snapshot. Shared library
+/// and asset cache writes are outside the rollback boundary. Instances of this class are not
+/// thread-safe.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
@@ -55,10 +55,10 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// Current unpublished manifests keyed by instance id.
     private final Map<GameInstanceID, GameInstanceManifest> manifests = new TreeMap<>();
 
-    /// Staged manifest files keyed by instance id.
-    private final Map<GameInstanceID, StagedManifest> stagedManifests = new TreeMap<>();
+    /// Instance ids whose final manifests differ from the published snapshot.
+    private final Set<GameInstanceID> modifiedIds = new TreeSet<>();
 
-    /// Instance ids whose root directories were absent before this draft first staged them.
+    /// Instance ids whose root directories were absent before this draft first added them.
     private final Set<GameInstanceID> createdIds = new TreeSet<>();
 
     /// Instance ids absent from the final manifest set.
@@ -67,7 +67,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// Ordered instance renames applied to the filesystem during commit.
     private final List<RenameOperation> renames = new ArrayList<>();
 
-    /// Draft-private directory containing staged manifests and commit backups.
+    /// Draft-private directory containing removed roots and commit backups.
     private @Nullable Path stagingDirectory;
 
     /// Current lifecycle state.
@@ -112,7 +112,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     @Override
     public void put(GameInstanceManifest manifest) throws IOException {
         checkOpen();
-        stageManifest(manifest, true);
+        putManifest(manifest, true);
     }
 
     /// {@inheritDoc}
@@ -123,7 +123,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             throw new NoSuchGameInstanceException(instanceId);
         }
 
-        stagedManifests.remove(instanceId);
+        modifiedIds.remove(instanceId);
         removedIds.add(instanceId);
     }
 
@@ -131,7 +131,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     @Override
     public void rename(GameInstanceID from, GameInstanceID to) throws IOException {
         checkOpen();
-        GameInstanceManifest source = manifests.get(from);
+        @Nullable GameInstanceManifest source = manifests.get(from);
         if (source == null) {
             throw new NoSuchGameInstanceException(from);
         }
@@ -154,29 +154,29 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         renamedManifest = renamedManifest.withId(to);
 
         manifests.remove(from);
-        stagedManifests.remove(from);
+        modifiedIds.remove(from);
         removedIds.remove(from);
-        stageManifest(renamedManifest, false);
+        putManifest(renamedManifest, false);
 
         for (GameInstanceManifest manifest : List.copyOf(manifests.values())) {
             if (from.equals(manifest.inheritsFrom())) {
-                stageManifest(manifest.withInheritsFrom(to), false);
+                putManifest(manifest.withInheritsFrom(to), false);
             }
         }
         renames.add(new RenameOperation(from, to));
     }
 
-    /// Stages one manifest and updates the draft write set.
+    /// Updates one manifest in the in-memory write set.
     ///
-    /// @param manifest     the manifest to stage
+    /// @param manifest     the manifest to retain
     /// @param claimNewRoot whether a previously absent instance root should become draft-owned
-    /// @throws IOException if the root cannot be claimed or the temporary manifest cannot be written
-    private void stageManifest(
+    /// @throws IOException if a new instance root cannot be claimed or initialized
+    private void putManifest(
             GameInstanceManifest manifest,
             boolean claimNewRoot) throws IOException {
 
         GameInstanceID id = manifest.id();
-        if (claimNewRoot && !manifests.containsKey(id) && !stagedManifests.containsKey(id)) {
+        if (claimNewRoot && !manifests.containsKey(id)) {
             Path root = getValidatedInstanceRoot(id);
             if (!repository.mayClaimDraftInstanceRoot(id, root)) {
                 throw new FileAlreadyExistsException(root.toString(), null,
@@ -186,12 +186,8 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             repository.initializeDraftInstanceRoot(id, root);
         }
 
-        StagedManifest previous = stagedManifests.get(id);
-        Path targetFile = previous != null ? previous.targetFile() : getManifestTarget(id);
-        Path stagedFile = previous != null ? previous.stagedFile() : createStagedManifestPath();
-        FileUtils.saveSafely(stagedFile, JsonUtils.GSON.toJson(manifest));
-        stagedManifests.put(id, new StagedManifest(manifest, stagedFile, targetFile));
         manifests.put(id, manifest);
+        modifiedIds.add(id);
     }
 
     /// {@inheritDoc}
@@ -201,7 +197,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         repository.checkActiveDraft(this);
         state = GameRepositoryDraftState.COMMITTING;
 
-        List<AppliedRename> appliedRenames = new ArrayList<>();
+        List<RenameOperation> appliedRenames = new ArrayList<>();
         List<RemovedRoot> removedRoots = new ArrayList<>();
         List<AppliedManifest> applied = new ArrayList<>();
         try {
@@ -212,8 +208,12 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             for (GameInstanceID id : removedIds) {
                 removeInstanceRoot(id, removedRoots);
             }
-            for (Map.Entry<GameInstanceID, StagedManifest> entry : stagedManifests.entrySet()) {
-                applyManifest(entry.getKey(), entry.getValue(), applied);
+            for (GameInstanceID id : modifiedIds) {
+                @Nullable GameInstanceManifest manifest = manifests.get(id);
+                if (manifest == null) {
+                    throw new IllegalStateException("Modified manifest is missing: " + id);
+                }
+                applyManifest(id, manifest, applied);
             }
 
             repository.publishDraftSnapshot(this, committedSnapshot);
@@ -249,9 +249,12 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         for (GameInstanceID id : removedIds) {
             committedSnapshot.remove(id);
         }
-        for (StagedManifest staged : stagedManifests.values()) {
-            GameInstanceManifest manifest = staged.manifest();
-            DefaultGameInstance existing = committedSnapshot.get(manifest.id());
+        for (GameInstanceID id : modifiedIds) {
+            @Nullable GameInstanceManifest manifest = manifests.get(id);
+            if (manifest == null) {
+                throw new IllegalStateException("Modified manifest is missing: " + id);
+            }
+            @Nullable DefaultGameInstance existing = committedSnapshot.get(manifest.id());
             DefaultGameInstance updated = existing != null
                     ? existing.withManifest(committedSnapshot, manifest)
                     : repository.createInstance(committedSnapshot, manifest.id(), manifest);
@@ -301,20 +304,10 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// @param id the instance id
     /// @return the permanent manifest path
     private Path getManifestTarget(GameInstanceID id) {
-        DefaultGameInstance existing = baseSnapshot.get(id);
+        @Nullable DefaultGameInstance existing = baseSnapshot.get(id);
         return (existing != null ? existing.getManifestFile() : baseSnapshot.getLayout().getInstanceJson(id))
                 .toAbsolutePath()
                 .normalize();
-    }
-
-    /// Creates a unique path for a staged manifest.
-    ///
-    /// @return the staged manifest path
-    /// @throws IOException if the staging directory cannot be created
-    private Path createStagedManifestPath() throws IOException {
-        Path manifests = getOrCreateStagingDirectory().resolve("manifests");
-        Files.createDirectories(manifests);
-        return Files.createTempFile(manifests, "manifest-", ".json");
     }
 
     /// Returns the draft-private staging directory, creating it when necessary.
@@ -342,7 +335,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// @param rename  the requested rename
     /// @param applied rollback records for completed renames
     /// @throws IOException if the source files cannot be renamed
-    private void applyRename(RenameOperation rename, List<AppliedRename> applied) throws IOException {
+    private void applyRename(RenameOperation rename, List<RenameOperation> applied) throws IOException {
         Path sourceRoot = getValidatedInstanceRoot(rename.from());
         Path targetRoot = getValidatedInstanceRoot(rename.to());
         if (!Files.isDirectory(sourceRoot)) {
@@ -356,7 +349,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                 baseSnapshot.getLayout().getBaseDirectory(),
                 rename.from(),
                 rename.to());
-        applied.add(new AppliedRename(rename.from(), rename.to()));
+        applied.add(rename);
     }
 
     /// Moves one removed instance root into the draft staging directory.
@@ -378,26 +371,26 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         removed.add(new RemovedRoot(root, stagedRoot));
     }
 
-    /// Moves one staged manifest into place while retaining a rollback copy.
+    /// Writes one manifest while retaining a rollback copy.
     ///
-    /// @param id      the instance id
-    /// @param staged  the staged and target paths
-    /// @param applied rollback records for changes already started
+    /// @param id       the instance whose manifest will be replaced
+    /// @param manifest the final manifest
+    /// @param applied  rollback records for changes already started
     /// @throws IOException if the target cannot be backed up or replaced
     private void applyManifest(
             GameInstanceID id,
-            StagedManifest staged,
+            GameInstanceManifest manifest,
             List<AppliedManifest> applied) throws IOException {
-        Path target = staged.targetFile();
+        String json = JsonUtils.GSON.toJson(manifest);
+        Path target = getManifestTarget(id);
         Path expectedRoot = getValidatedInstanceRoot(id);
         if (target.equals(expectedRoot) || !target.startsWith(expectedRoot)) {
             throw new IOException("Manifest path escapes instance root: " + target);
         }
 
         Files.createDirectories(target.getParent());
-        boolean hadOriginal = Files.exists(target);
         @Nullable Path backup = null;
-        if (hadOriginal) {
+        if (Files.exists(target)) {
             Path backups = getOrCreateStagingDirectory().resolve("backups");
             Files.createDirectories(backups);
             backup = Files.createTempFile(backups, "manifest-", ".json");
@@ -405,8 +398,8 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             moveReplacing(target, backup);
         }
 
-        applied.add(new AppliedManifest(target, backup, hadOriginal));
-        moveReplacing(staged.stagedFile(), target);
+        applied.add(new AppliedManifest(target, backup));
+        Files.writeString(target, json);
     }
 
     /// Restores manifests changed by an unsuccessful commit in reverse application order.
@@ -420,7 +413,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         for (AppliedManifest manifest : reversed) {
             try {
                 Files.deleteIfExists(manifest.targetFile());
-                if (manifest.hadOriginal() && manifest.backupFile() != null) {
+                if (manifest.backupFile() != null) {
                     moveReplacing(manifest.backupFile(), manifest.targetFile());
                 }
             } catch (IOException e) {
@@ -452,11 +445,11 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     ///
     /// @param applied completed rename records
     /// @return the aggregated rollback failure, or `null` when rollback succeeded
-    private @Nullable IOException rollbackRenames(List<AppliedRename> applied) {
+    private @Nullable IOException rollbackRenames(List<RenameOperation> applied) {
         @Nullable IOException failure = null;
-        List<AppliedRename> reversed = new ArrayList<>(applied);
+        List<RenameOperation> reversed = new ArrayList<>(applied);
         Collections.reverse(reversed);
-        for (AppliedRename rename : reversed) {
+        for (RenameOperation rename : reversed) {
             try {
                 DefaultGameRepository.moveInstanceFiles(
                         baseSnapshot.getLayout().getBaseDirectory(),
@@ -584,26 +577,13 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         }
     }
 
-    /// Records one manifest and its temporary and permanent storage paths.
-    ///
-    /// @param manifest   the unpublished manifest value
-    /// @param stagedFile the draft-private serialized manifest
-    /// @param targetFile the permanent repository manifest path
-    private record StagedManifest(
-            GameInstanceManifest manifest,
-            Path stagedFile,
-            Path targetFile) {
-    }
-
     /// Records enough information to roll back one manifest replacement.
     ///
-    /// @param targetFile  the permanent manifest path
-    /// @param backupFile  the prior manifest backup, or `null` when no prior file existed
-    /// @param hadOriginal whether the permanent manifest existed before commit
+    /// @param targetFile the permanent manifest path
+    /// @param backupFile the prior manifest backup, or `null` when no prior file existed
     private record AppliedManifest(
             Path targetFile,
-            @Nullable Path backupFile,
-            boolean hadOriginal) {
+            @Nullable Path backupFile) {
     }
 
     /// Records an instance rename requested by the draft.
@@ -611,13 +591,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// @param from the source instance id
     /// @param to   the target instance id
     private record RenameOperation(GameInstanceID from, GameInstanceID to) {
-    }
-
-    /// Records an instance rename completed during commit.
-    ///
-    /// @param from the original instance id
-    /// @param to   the renamed instance id
-    private record AppliedRename(GameInstanceID from, GameInstanceID to) {
     }
 
     /// Records an instance root moved into staging during commit.

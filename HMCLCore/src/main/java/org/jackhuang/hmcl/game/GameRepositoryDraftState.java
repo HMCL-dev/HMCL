@@ -25,7 +25,7 @@ public enum GameRepositoryDraftState {
     /// The draft accepts changes and may be committed or aborted.
     OPEN,
 
-    /// The draft is applying staged files and publishing its immutable successor snapshot.
+    /// The draft is applying files and publishing its immutable successor snapshot.
     COMMITTING,
 
     /// The draft completed its commit and no longer accepts changes.

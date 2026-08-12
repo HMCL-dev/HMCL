@@ -45,19 +45,21 @@ public final class DefaultGameRepositoryDraftTest {
         assertThrows(IllegalArgumentException.class, () -> new GameInstanceID(".."));
     }
 
-    /// Keeps a new manifest private until commit and publishes the resulting instance once committed.
+    /// Keeps a new manifest in memory until commit and publishes the resulting instance once committed.
     @Test
-    public void testCommitPublishesStagedManifest(@TempDir Path tempDirectory) throws IOException {
+    public void testCommitPublishesModifiedManifest(@TempDir Path tempDirectory) throws IOException {
         TestRepository repository = new TestRepository(tempDirectory);
         GameInstanceID id = new GameInstanceID("instance");
         GameInstanceManifest manifest = new GameInstanceManifest(id).withMainClass("example.Main");
         Path manifestFile = repository.getLayout().getInstanceJson(id);
+        Path draftStorage = tempDirectory.resolve(".hmcl").resolve("repository-drafts");
 
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             draft.put(manifest);
 
             assertFalse(repository.hasInstance(id));
             assertFalse(Files.exists(manifestFile));
+            assertFalse(Files.exists(draftStorage));
 
             GameRepositorySnapshot committed = draft.commit();
             assertEquals(GameRepositoryDraftState.COMMITTED, draft.getState());
@@ -149,7 +151,7 @@ public final class DefaultGameRepositoryDraftTest {
         assertTrue(Files.exists(retained));
     }
 
-    /// Keeps a staged removal private and preserves the published files when the draft aborts.
+    /// Keeps a pending removal private and preserves the published files when the draft aborts.
     @Test
     public void testAbortPreservesRemovedInstance(@TempDir Path tempDirectory) throws IOException {
         TestRepository repository = new TestRepository(tempDirectory);
@@ -200,7 +202,7 @@ public final class DefaultGameRepositoryDraftTest {
         assertFalse(Files.exists(root));
     }
 
-    /// Restores staged manifests and releases exclusivity when publication fails before replacement.
+    /// Restores modified manifests and releases exclusivity when publication fails after replacement.
     @Test
     public void testCommitFailureRollsBackAndReleasesDraft(@TempDir Path tempDirectory) throws IOException {
         FailingRepository repository = new FailingRepository(tempDirectory);
