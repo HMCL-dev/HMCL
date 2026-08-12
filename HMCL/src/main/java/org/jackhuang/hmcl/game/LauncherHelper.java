@@ -849,7 +849,7 @@ public final class LauncherHelper {
         private final String forbiddenAccessToken;
         private Thread submitLogThread;
         /// Pending logs for the log window.
-        private final BlockingDeque<Log> logBuffer = new LinkedBlockingDeque<>(Log.getLogLines());
+        private final BlockingDeque<Log> logBuffer = new LinkedBlockingDeque<>();
 
         public HMCLProcessListener(HMCLGameRepository repository, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
             this.repository = repository;
@@ -1044,10 +1044,13 @@ public final class LauncherHelper {
             checkExit();
         }
 
-        /// Adds a log to the display queue, discarding the oldest pending log when full.
+        /// Adds a log to the display queue, retaining at most the configured number of lines.
         private void enqueueLog(Log log) {
-            while (!logBuffer.offerLast(log))
-                logBuffer.pollFirst();
+            synchronized (logBuffer) {
+                while (logBuffer.size() >= Log.getLogLines())
+                    logBuffer.pollFirst();
+                logBuffer.addLast(log);
+            }
         }
 
     }
