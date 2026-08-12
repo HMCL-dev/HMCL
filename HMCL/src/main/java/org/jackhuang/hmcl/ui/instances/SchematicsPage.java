@@ -181,6 +181,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 (result, handler) -> {
                     Path targetDir = parent.resolve(result);
 
+                    if (Files.exists(targetDir)) {
+                        handler.reject(i18n("schematics.create_directory.failed.already_exists"));
+                        return;
+                    }
+
                     try {
                         Files.createDirectories(targetDir);
                         handler.resolve();
