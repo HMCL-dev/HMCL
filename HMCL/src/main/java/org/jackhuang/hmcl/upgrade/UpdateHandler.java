@@ -159,7 +159,9 @@ public final class UpdateHandler {
                 } else {
                     Exception e = executor.getException();
                     LOG.warning("Failed to update to " + version, e);
-                    if (!(e instanceof CancellationException)) {
+                    if (e instanceof CancellationException) {
+                        Platform.runLater(() -> Controllers.showToast(i18n("message.cancelled")));
+                    } else {
                         Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
                     }
                 }
