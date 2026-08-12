@@ -145,7 +145,7 @@ public final class I18n {
     }
 
     public static @Nullable String translateLoaderType(Either<LoaderType, String> loader) {
-        return loader.map(
+        return loader.fold(
                 I18n::translateLoaderType,
                 s -> "bungeecord".equalsIgnoreCase(s) ? "BungeeCord" : StringUtils.capitalizeWords(s)
         );

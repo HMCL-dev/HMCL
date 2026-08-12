@@ -33,9 +33,9 @@ public sealed abstract class Either<L, R> {
         return new Right<>(right);
     }
 
-    public abstract boolean hasLeft();
+    public abstract boolean isLeft();
 
-    public abstract boolean hasRight();
+    public abstract boolean isRight();
 
     @Nullable
     public abstract L left();
@@ -43,7 +43,7 @@ public sealed abstract class Either<L, R> {
     @Nullable
     public abstract R right();
 
-    public abstract <T> T map(Function<L, T> lFunc, Function<R, T> rFunc);
+    public abstract <T> T fold(Function<L, T> lFunc, Function<R, T> rFunc);
 
     private static final class Left<L, R> extends Either<L, R> {
 
@@ -54,12 +54,12 @@ public sealed abstract class Either<L, R> {
         }
 
         @Override
-        public boolean hasLeft() {
+        public boolean isLeft() {
             return true;
         }
 
         @Override
-        public boolean hasRight() {
+        public boolean isRight() {
             return false;
         }
 
@@ -74,7 +74,7 @@ public sealed abstract class Either<L, R> {
         }
 
         @Override
-        public <T> T map(Function<L, T> lFunc, Function<R, T> rFunc) {
+        public <T> T fold(Function<L, T> lFunc, Function<R, T> rFunc) {
             return lFunc.apply(value);
         }
 
@@ -101,12 +101,12 @@ public sealed abstract class Either<L, R> {
         }
 
         @Override
-        public boolean hasLeft() {
+        public boolean isLeft() {
             return false;
         }
 
         @Override
-        public boolean hasRight() {
+        public boolean isRight() {
             return true;
         }
 
@@ -121,7 +121,7 @@ public sealed abstract class Either<L, R> {
         }
 
         @Override
-        public <T> T map(Function<L, T> lFunc, Function<R, T> rFunc) {
+        public <T> T fold(Function<L, T> lFunc, Function<R, T> rFunc) {
             return rFunc.apply(value);
         }
 
