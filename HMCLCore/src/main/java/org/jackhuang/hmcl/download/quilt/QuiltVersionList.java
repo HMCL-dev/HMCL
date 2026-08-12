@@ -75,5 +75,6 @@ public final class QuiltVersionList extends VersionList<QuiltRemoteVersion> {
     }
 
     private record GameVersion(String version, String maven, boolean stable) {
+
     }
 }

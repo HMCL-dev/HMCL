@@ -75,5 +75,6 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
     }
 
     private record GameVersion(String version, String maven, boolean stable) {
+
     }
 }
