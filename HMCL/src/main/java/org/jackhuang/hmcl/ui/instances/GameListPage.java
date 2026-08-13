@@ -127,7 +127,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
             List<GameListItem> versionItems = repository.getDisplayInstanceManifests().map(instance -> new GameListItem(repository, instance.id())).toList();
 
-            getItems().setAll(versionItems); // 直接更新源数据
+            getItems().setAll(versionItems);
 
             if (versionItems.isEmpty()) {
                 setFailedReason(i18n("instance.empty.hint"));
@@ -151,7 +151,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 super(skinnable, true);
                 listView.setCellFactory(x -> new GameListCell());
 
-                setupSkin(new Node[]{createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, this::startSearch)}, null);
+                setupSkin(new Node[]{createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList),
+                        createToolbarButton2(i18n("install.new_game"), SVG.ADD_CIRCLE, Instances::addNewGame),
+                        createToolbarButton2(i18n("install.modpack"), SVG.PACKAGE2, Instances::importModpack),
+                        createToolbarButton2(i18n("search"), SVG.SEARCH, this::startSearch)}, null);
             }
 
             @Override
