@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -57,6 +58,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.ui.FXUtils.installFastTooltip;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -163,18 +165,13 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         Path parent = currentDirectory.path;
 
-        Set<String> existingFolders;
-
-        try (var list = Files.list(parent)) {
-            existingFolders = list.map(Path::getFileName)
-                    .map(Path::toString)
-                    .collect(Collectors.toSet());
-        } catch (IOException e) {
+        FileNameSet existingPaths;
+        try {
+            existingPaths = FileNameSet.list(parent, null);
+        } catch (Exception e) {
             LOG.warning("Failed to list folders in " + parent, e);
-            existingFolders = Set.of();
+            existingPaths = new FileNameSet(false);
         }
-
-        Set<String> finalExistingFolders = existingFolders;
 
         Controllers.prompt(
                 i18n("schematics.create_directory.prompt"),
@@ -194,7 +191,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         LOG.warning("Failed to create directory: " + targetDir, e);
                         handler.reject(i18n("schematics.create_directory.failed", targetDir));
                     }
-                }, "", new RequiredValidator(), new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid), new Validator(i18n("schematics.create_directory.failed.already_exists"), (it) -> !finalExistingFolders.contains(it)));
+                },
+                "",
+                new RequiredValidator(),
+                new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid),
+                new Validator(i18n("schematics.create_directory.failed.already_exists"), existingPaths::notContains));
     }
 
     private DirItem loadAll(Path dir, @Nullable DirItem parent) {
