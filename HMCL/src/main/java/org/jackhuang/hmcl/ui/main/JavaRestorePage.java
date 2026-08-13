@@ -151,6 +151,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
             BorderPane root = new BorderPane();
 
             Label label = new Label(skinnable.path);
+            label.setMouseTransparent(true);
             BorderPane.setAlignment(label, Pos.CENTER_LEFT);
             root.setCenter(label);
 

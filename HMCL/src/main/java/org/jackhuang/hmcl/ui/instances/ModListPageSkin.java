@@ -39,7 +39,6 @@ import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -229,7 +228,7 @@ final class ModListPageSkin extends ToolbarListPageSkin<ModListPageSkin.ModInfoO
             titleContainer.setSpacing(8);
             titleContainer.setPadding(new Insets(0, 0, 12, 0));
 
-            DoubleBinding widthBinding = Controllers.windowWidthProperty().multiply(0.7);
+            DoubleBinding widthBinding = Controllers.getDecorator().contentWidthProperty().multiply(0.7);
             prefWidthProperty().bind(widthBinding);
             maxWidthProperty().bind(widthBinding);
 
@@ -269,7 +268,7 @@ final class ModListPageSkin extends ToolbarListPageSkin<ModListPageSkin.ModInfoO
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             description.heightProperty().addListener((obs, oldVal, newVal) -> {
-                double maxHeight = Controllers.windowHeightProperty().get() * 0.5;
+                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });
@@ -286,7 +285,7 @@ final class ModListPageSkin extends ToolbarListPageSkin<ModListPageSkin.ModInfoO
                     Task.runAsync(() -> {
                         Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
+                            RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
                                     String loaderName = switch (modLoaderType) {
@@ -308,15 +307,7 @@ final class ModListPageSkin extends ToolbarListPageSkin<ModListPageSkin.ModInfoO
                                     }
                                 }
 
-                                button.setOnAction(e -> {
-                                    fireEvent(new DialogCloseEvent());
-                                    Controllers.navigate(new DownloadPage(
-                                            repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
-                                            remoteAddon,
-                                            new HMCLGameRepository.InstanceReference(ModListPageSkin.this.getSkinnable().getRepository(), ModListPageSkin.this.getSkinnable().getInstanceId()),
-                                            org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
-                                    ));
-                                });
+                                button.setExternalLink(remoteAddon.pageUrl());
                                 button.setDisable(false);
                             });
                         }
@@ -328,31 +319,21 @@ final class ModListPageSkin extends ToolbarListPageSkin<ModListPageSkin.ModInfoO
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {
                 JFXHyperlink officialPageButton = new JFXHyperlink(i18n("mods.url"));
-                officialPageButton.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(modInfo.getModInfo().getUrl());
-                });
-
+                officialPageButton.setExternalLink(modInfo.getModInfo().getUrl());
                 getActions().add(officialPageButton);
             }
 
             if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().getMcmod())) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
-                searchButton.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
-                            pair("key", modInfo.getModInfo().getName()),
-                            pair("site", "all"),
-                            pair("filter", "0")
-                    )));
-                });
+                searchButton.setExternalLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
+                        pair("key", modInfo.getModInfo().getName()),
+                        pair("site", "all"),
+                        pair("filter", "0")
+                )));
                 getActions().add(searchButton);
             } else {
                 JFXHyperlink mcmodButton = new JFXHyperlink(i18n("mods.mcmod.page"));
-                mcmodButton.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(ModTranslations.MOD.getMcmodUrl(modInfo.getModTranslations()));
-                });
+                mcmodButton.setExternalLink(ModTranslations.MOD.getMcmodUrl(modInfo.getModTranslations()));
                 getActions().add(mcmodButton);
             }
 

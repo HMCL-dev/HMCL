@@ -50,6 +50,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -240,6 +241,36 @@ public final class LauncherHelper {
                     }
                     if (quickPlayOption != null) {
                         launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
+                    }
+
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && setting.getInheritable(GameSettings::highPerformanceProperty)) {
+                        @Nullable String javaPathGpuReg = FileUtils.getAbsolutePath(javaVersionRef.get().getBinary());
+                        try {
+                            WinReg reg = WinReg.INSTANCE;
+                            if (reg != null) {
+                                Object current = reg.queryValue(
+                                        WinReg.HKEY.HKEY_CURRENT_USER,
+                                        "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+                                        javaPathGpuReg
+                                );
+                                if (current == null) {
+                                    boolean result = reg.setValue(
+                                            WinReg.HKEY.HKEY_CURRENT_USER,
+                                            "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+                                            javaPathGpuReg,
+                                            "GpuPreference=2;"
+                                    );
+                                    if (result)
+                                        LOG.info("Successfully applied high performance GPU preference for java: " + javaPathGpuReg);
+                                    else
+                                        LOG.warning("Failed to apply high performance GPU preference for java: " + javaPathGpuReg);
+                                } else {
+                                    LOG.info("GPU preference for %s already exists: %s".formatted(javaPathGpuReg, current));
+                                }
+                            }
+                        } catch (Exception e) {
+                            LOG.warning("Failed to apply high performance GPU preference", e);
+                        }
                     }
 
                     LaunchOptions launchOptions = launchOptionsBuilder.create();

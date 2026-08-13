@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -28,16 +29,11 @@ import java.util.stream.Stream;
 
 public interface RemoteAddonRepository {
 
-    enum Type {
-        MOD,
-        MODPACK,
-        RESOURCE_PACK,
-        SHADER_PACK,
-        WORLD,
-        CUSTOMIZATION
-    }
+    RemoteAddon.Type getType();
 
-    Type getType();
+    String getApiBaseUrl();
+
+    String getBaseUrl();
 
     enum SortType {
         POPULARITY,
@@ -90,15 +86,21 @@ public interface RemoteAddonRepository {
 
     Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException;
 
-    RemoteAddon getModById(DownloadProvider downloadProvider, String id) throws IOException;
+    RemoteAddon getAddonById(DownloadProvider downloadProvider, String id) throws IOException;
 
     default RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
-        return getModById(downloadProvider, id);
+        return getAddonById(downloadProvider, id);
     }
 
-    RemoteAddon.File getModFile(String modId, String fileId) throws IOException;
+    RemoteAddon.File getAddonFile(String projectId, String fileId) throws IOException;
 
     Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException;
+
+    @Nullable
+    String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException;
+
+    @NotNull
+    String getVersionPageUrl(RemoteAddon.Version version) throws IOException;
 
     Stream<Category> getCategories() throws IOException;
 

@@ -455,7 +455,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            maxWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
+            maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
             imageContainer.setImage(packInfoObject.getIcon());
@@ -481,7 +481,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             FXUtils.onChange(description.heightProperty(), newVal -> {
-                double maxHeight = Controllers.windowHeightProperty().get() * 0.5;
+                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });
@@ -497,19 +497,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 Task.runAsync(() -> {
                     Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
                     if (versionOptional.isPresent()) {
-                        RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
+                        RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                         FXUtils.runInFX(() -> {
-                            button.setOnAction(e -> {
-                                fireEvent(new DialogCloseEvent());
-                                Controllers.navigate(new DownloadPage(
-                                        repository instanceof CurseForgeRemoteAddonRepository
-                                                ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
-                                                : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
-                                        remoteAddon,
-                                        new HMCLGameRepository.InstanceReference(page.repository, page.instanceId),
-                                        org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
-                                ));
-                            });
+                            button.setExternalLink(remoteAddon.pageUrl());
                             button.setDisable(false);
                         });
                     }
