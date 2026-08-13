@@ -39,7 +39,7 @@ public final class FileNameSet {
             var set = new FileNameSet(caseSensitive);
 
             list.forEachOrdered(path -> {
-                if (predicate != null && predicate.test(path)) {
+                if (predicate == null || predicate.test(path)) {
                     set.add(path.getFileName().toString());
                 }
             });
