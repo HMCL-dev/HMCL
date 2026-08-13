@@ -115,6 +115,7 @@ public final class GameListPopupMenu extends StackPane {
     private static final class Cell extends ListCell<GameItem> {
 
         private final Region graphic;
+        private final RipplerContainer ripplerContainer;
 
         private final ImageContainer imageView;
         private final TwoLineListItem content;
@@ -143,7 +144,7 @@ public final class GameListPopupMenu extends StackPane {
             container.setLeft(imageView);
             container.setCenter(content);
 
-            RipplerContainer ripplerContainer = new RipplerContainer(container);
+            this.ripplerContainer = new RipplerContainer(container);
 
             StackPane rootPane = new StackPane();
             rootPane.getStyleClass().add("advanced-list-item");
@@ -164,6 +165,7 @@ public final class GameListPopupMenu extends StackPane {
 
         @Override
         protected void updateItem(GameItem item, boolean empty) {
+            this.ripplerContainer.releaseRippleImmediately();
             super.updateItem(item, empty);
 
             this.imageView.imageProperty().unbind();
