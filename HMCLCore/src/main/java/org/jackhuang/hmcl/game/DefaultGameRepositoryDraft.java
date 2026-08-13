@@ -68,7 +68,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     private final List<RenameOperation> renames = new ArrayList<>();
 
     /// Current lifecycle state.
-    private GameRepositoryDraftState state = GameRepositoryDraftState.OPEN;
+    private GameRepositoryDraft.State state = GameRepositoryDraft.State.OPEN;
 
     /// Creates an open draft over the repository's current published snapshot.
     ///
@@ -89,20 +89,20 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// {@inheritDoc}
     @Override
-    public GameRepositoryDraftState getState() {
+    public GameRepositoryDraft.State getState() {
         return state;
     }
 
     /// {@inheritDoc}
     @Override
     public boolean isOpen() {
-        return state == GameRepositoryDraftState.OPEN;
+        return state == GameRepositoryDraft.State.OPEN;
     }
 
     /// {@inheritDoc}
     @Override
     public boolean isCommitted() {
-        return state == GameRepositoryDraftState.COMMITTED;
+        return state == GameRepositoryDraft.State.COMMITTED;
     }
 
     /// {@inheritDoc}
@@ -194,7 +194,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     public DefaultGameRepositorySnapshot commit() throws IOException {
         checkOpen();
         repository.checkActiveDraft(this);
-        state = GameRepositoryDraftState.COMMITTING;
+        state = GameRepositoryDraft.State.COMMITTING;
 
         List<RenameOperation> appliedRenames = new ArrayList<>();
         List<RemovedRoot> removedRoots = new ArrayList<>();
@@ -222,7 +222,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             }
 
             repository.publishDraftSnapshot(this, committedSnapshot);
-            state = GameRepositoryDraftState.COMMITTED;
+            state = GameRepositoryDraft.State.COMMITTED;
             repository.releaseDraft(this);
             cleanupRollbackDirectoryAfterCommit(rollbackDirectory);
             return committedSnapshot;
@@ -230,7 +230,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             IOException rollbackFailure = rollbackAppliedManifests(applied);
             rollbackFailure = accumulateNullable(rollbackFailure, rollbackRemovedRoots(removedRoots));
             rollbackFailure = accumulateNullable(rollbackFailure, rollbackRenames(appliedRenames));
-            state = GameRepositoryDraftState.FAILED;
+            state = GameRepositoryDraft.State.FAILED;
             repository.releaseDraft(this);
             IOException cleanupFailure = cleanupCreatedInstanceRoots();
             cleanupFailure = accumulateNullable(cleanupFailure, cleanupRollbackDirectory(rollbackDirectory));
@@ -273,21 +273,21 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// {@inheritDoc}
     @Override
     public void abort() throws IOException {
-        if (state == GameRepositoryDraftState.ABORTED) {
+        if (state == GameRepositoryDraft.State.ABORTED) {
             return;
         }
-        if (state == GameRepositoryDraftState.COMMITTED) {
+        if (state == GameRepositoryDraft.State.COMMITTED) {
             throw new IllegalStateException("Draft is already committed");
         }
-        if (state == GameRepositoryDraftState.COMMITTING) {
+        if (state == GameRepositoryDraft.State.COMMITTING) {
             throw new IllegalStateException("Draft is committing");
         }
-        if (state == GameRepositoryDraftState.FAILED) {
+        if (state == GameRepositoryDraft.State.FAILED) {
             return;
         }
 
         IOException failure = cleanupCreatedInstanceRoots();
-        state = failure == null ? GameRepositoryDraftState.ABORTED : GameRepositoryDraftState.FAILED;
+        state = failure == null ? GameRepositoryDraft.State.ABORTED : GameRepositoryDraft.State.FAILED;
         repository.releaseDraft(this);
         if (failure != null) {
             throw failure;
@@ -297,7 +297,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// {@inheritDoc}
     @Override
     public void close() throws IOException {
-        if (state == GameRepositoryDraftState.OPEN) {
+        if (state == GameRepositoryDraft.State.OPEN) {
             abort();
         }
     }
@@ -586,7 +586,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     ///
     /// @throws IllegalStateException if the draft is not open
     private void checkOpen() {
-        if (state != GameRepositoryDraftState.OPEN) {
+        if (state != GameRepositoryDraft.State.OPEN) {
             throw new IllegalStateException("Draft is " + state.name().toLowerCase());
         }
     }

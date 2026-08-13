@@ -62,7 +62,7 @@ public final class DefaultGameRepositoryDraftTest {
             assertFalse(Files.exists(draftStorage));
 
             GameRepositorySnapshot committed = draft.commit();
-            assertEquals(GameRepositoryDraftState.COMMITTED, draft.getState());
+            assertEquals(GameRepositoryDraft.State.COMMITTED, draft.getState());
             assertEquals(manifest, committed.getInstance(id).getManifest());
         }
 
@@ -215,7 +215,7 @@ public final class DefaultGameRepositoryDraftTest {
         draft.put(original.withMainClass("updated.Main"));
         assertThrows(IllegalStateException.class, draft::commit);
 
-        assertEquals(GameRepositoryDraftState.FAILED, draft.getState());
+        assertEquals(GameRepositoryDraft.State.FAILED, draft.getState());
         assertEquals(original, repository.getInstance(id).getManifest());
         GameInstanceManifest stored = JsonUtils.fromNonNullJson(
                 Files.readString(repository.getLayout().getInstanceJson(id)),

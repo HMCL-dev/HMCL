@@ -37,6 +37,25 @@ import java.io.IOException;
 @NotNullByDefault
 public interface GameRepositoryDraft extends AutoCloseable {
 
+    /// Describes a draft's lifecycle state.
+    @NotNullByDefault
+    enum State {
+        /// The draft accepts changes and may be committed or aborted.
+        OPEN,
+
+        /// The draft is applying files and publishing its immutable successor snapshot.
+        COMMITTING,
+
+        /// The draft completed its commit and no longer accepts changes.
+        COMMITTED,
+
+        /// The draft discarded its changes and no longer accepts changes.
+        ABORTED,
+
+        /// The draft could not complete a commit or cleanup operation.
+        FAILED
+    }
+
     /// Returns the repository that owns this draft.
     ///
     /// @return the repository
@@ -45,7 +64,7 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// Returns this draft's lifecycle state.
     ///
     /// @return the current state
-    GameRepositoryDraftState getState();
+    State getState();
 
     /// Returns whether this draft still accepts mutations.
     ///
