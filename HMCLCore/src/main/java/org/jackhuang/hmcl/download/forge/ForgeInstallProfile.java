@@ -19,12 +19,14 @@ package org.jackhuang.hmcl.download.forge;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.Objects;
 
 /// @author huangyuhui
 @NotNullByDefault
+@JsonSerializable
 public record ForgeInstallProfile(@SerializedName("install") ForgeInstall install,
                                   @SerializedName("versionInfo") GameInstanceManifest versionInfo) {
 
