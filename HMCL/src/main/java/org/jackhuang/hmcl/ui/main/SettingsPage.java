@@ -188,8 +188,11 @@ public final class SettingsPage extends ScrollPane {
                     chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
                     chooseLanguagePane.valueProperty().bindBidirectional(settings().languageProperty());
 
-                    languagePaneList.getContent().add(chooseLanguagePane);
+                    LineButton helpButton = LineButton.createExternalLinkButton(Metadata.LOCALIZATION_URL);
+                    helpButton.setTitle(i18n("settings.launcher.language.contribution.title"));
+                    helpButton.setSubtitle(i18n("settings.launcher.language.contribution.subtitle"));
 
+                    languagePaneList.getContent().addAll(chooseLanguagePane, helpButton);
                 }
 
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.language")), languagePaneList);
