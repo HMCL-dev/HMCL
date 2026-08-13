@@ -486,7 +486,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
     @NotNullByDefault
     private static final class ThemePackItemCell extends ListCell<ThemePackManager.@Nullable InstalledThemePack> {
         private final ThemePackManagementPage page;
-        private final Region graphic;
+
+        /// Root graphic reused by this cell.
+        private final RipplerContainer graphic;
+
+        /// The text content shown for the current theme pack.
         private final TwoLineListItem content = new TwoLineListItem();
         private final StackPane icon = new StackPane();
         private final ImageContainer iconImage = new ImageContainer(ICON_SIZE);
@@ -551,6 +555,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
             var currentItem = getItem();
 
+            this.graphic.releaseRippleImmediately();
             super.updateItem(themePack, empty);
 
             if (Objects.equals(getItem(), currentItem)) return;
