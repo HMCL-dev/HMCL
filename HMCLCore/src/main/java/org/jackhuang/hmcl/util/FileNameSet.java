@@ -34,8 +34,8 @@ import java.util.function.Predicate;
 public final class FileNameSet {
     public static FileNameSet list(Path directory, @Nullable Predicate<? super Path> predicate) throws IOException {
         try (var list = Files.list(directory)) {
-            boolean caseSensitive = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                    && directory.getFileSystem() == FileSystems.getDefault();
+            boolean caseSensitive = OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+                    || directory.getFileSystem() != FileSystems.getDefault();
             var set = new FileNameSet(caseSensitive);
 
             list.forEachOrdered(path -> {
