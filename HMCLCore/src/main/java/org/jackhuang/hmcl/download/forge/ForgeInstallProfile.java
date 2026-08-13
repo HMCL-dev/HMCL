@@ -17,19 +17,21 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.gson.Validation;
+import org.jetbrains.annotations.NotNullByDefault;
 
-/**
- *
- * @author huangyuhui
- */
-@Immutable
+import java.util.Objects;
+
+/// @author huangyuhui
+@NotNullByDefault
 public record ForgeInstallProfile(@SerializedName("install") ForgeInstall install,
-                                  @SerializedName("versionInfo") GameInstanceManifest versionInfo) implements Validation {
+                                  @SerializedName("versionInfo") GameInstanceManifest versionInfo) {
+
+    public ForgeInstallProfile {
+        Objects.requireNonNull(install, "install");
+        Objects.requireNonNull(versionInfo, "versionInfo");
+    }
 
     @Override
     public ForgeInstall install() {
@@ -39,14 +41,5 @@ public record ForgeInstallProfile(@SerializedName("install") ForgeInstall instal
     @Override
     public GameInstanceManifest versionInfo() {
         return versionInfo;
-    }
-
-    @Override
-    public void validate() throws JsonParseException {
-        if (install == null)
-            throw new JsonParseException("InstallProfile install cannot be null");
-
-        if (versionInfo == null)
-            throw new JsonParseException("InstallProfile versionInfo cannot be null");
     }
 }
