@@ -44,8 +44,8 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.instances.DownloadListPage;
-import org.jackhuang.hmcl.ui.instances.HMCLLocalizedDownloadListPage;
 import org.jackhuang.hmcl.ui.instances.GameInstancePage;
+import org.jackhuang.hmcl.ui.instances.HMCLLocalizedDownloadListPage;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -171,9 +171,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 return task;
             }).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
-                    if (exception instanceof CancellationException) {
-                        Controllers.showToast(i18n("message.cancelled"));
-                    } else {
+                    if (!(exception instanceof CancellationException)) {
                         Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
                     }
                 } else {
