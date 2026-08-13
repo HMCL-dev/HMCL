@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -668,19 +667,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     if (versionOptional.isPresent()) {
                         RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                         FXUtils.runInFX(() -> {
-                            button.setOnAction(e -> {
-                                fireEvent(new DialogCloseEvent());
-                                Controllers.navigate(new DownloadPage(
-                                        repository instanceof CurseForgeRemoteAddonRepository
-                                                ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
-                                                : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
-                                        remoteAddon,
-                                        page.gameInstance != null
-                                                ? HMCLGameInstance.Optional.of(page.gameInstance)
-                                                : HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()),
-                                        org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
-                                ));
-                            });
+                            button.setExternalLink(remoteAddon.pageUrl());
                             button.setDisable(false);
                         });
                     }

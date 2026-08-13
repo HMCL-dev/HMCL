@@ -85,6 +85,10 @@ public final class GraphicsCard {
         return driverVersion;
     }
 
+    public @Nullable Type getType() {
+        return type;
+    }
+
     public List<Path> getVulkanDriverFiles() {
         return vulkanDriverFiles;
     }

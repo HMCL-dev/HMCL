@@ -33,7 +33,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
-import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
@@ -48,6 +47,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 
@@ -145,7 +145,7 @@ public class GameCrashWindow extends Stage {
 
             String log;
             try {
-                log = EncodingDetector.MODERN_WEB.readString(latestLog);
+                log = FileUtils.readTextMaybeNativeEncoding(latestLog);
             } catch (IOException e) {
                 LOG.warning("Failed to read logs/latest.log", e);
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());

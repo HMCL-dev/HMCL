@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -54,9 +55,11 @@ import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- */
+/// Provides image-format detection and loaders for image formats not handled
+/// directly by JavaFX.
+///
+/// @author Glavo
+@NotNullByDefault
 public final class ImageUtils {
 
     // ImageLoaders
@@ -81,7 +84,7 @@ public final class ImageUtils {
         LoaderParameters parameters = new LoaderParameters();
         parameters.autoStartAnimations = false;
 
-        SVGImage image;
+        @Nullable SVGImage image;
 
         if (Platform.isFxApplicationThread()) {
             image = SVGLoader.load(content, parameters);
@@ -198,6 +201,7 @@ public final class ImageUtils {
 
     // ------
 
+    /// Maximum number of leading bytes inspected when selecting an image loader.
     public static final int HEADER_BUFFER_SIZE = 1024;
 
     private static final byte[] RIFF_HEADER = {'R', 'I', 'F', 'F'};
@@ -209,12 +213,272 @@ public final class ImageUtils {
                 && Arrays.equals(headerBuffer, 8, 12, WEBP_HEADER, 0, 4);
     }
 
-    private static final byte[] SVG_HEADER = "<svg".getBytes(StandardCharsets.US_ASCII);
+    /// ASCII local name of an SVG document element.
+    private static final String SVG_ELEMENT_NAME = "svg";
 
-    // This is currently a simple check, more complex checks can be considered in the future
+    /// ASCII prefix of an XML comment.
+    private static final String XML_COMMENT_START = "<!--";
+
+    /// ASCII suffix of an XML comment.
+    private static final String XML_COMMENT_END = "-->";
+
+    /// ASCII prefix of an XML processing instruction.
+    private static final String XML_PROCESSING_INSTRUCTION_START = "<?";
+
+    /// ASCII suffix of an XML processing instruction.
+    private static final String XML_PROCESSING_INSTRUCTION_END = "?>";
+
+    /// Case-sensitive ASCII prefix of an XML document type declaration.
+    private static final String XML_DOCTYPE_START = "<!DOCTYPE";
+
+    /// Returns whether the supplied prefix identifies an SVG XML document.
+    ///
+    /// An optional UTF-8 byte-order mark, XML whitespace, comments, processing
+    /// instructions, and a document type declaration may precede the document
+    /// element. The method identifies the document element only; it does not
+    /// validate the remainder of the XML document. XML markup must use its
+    /// ASCII byte representation; UTF-16 and UTF-32 prefixes are not recognized.
+    ///
+    /// @param headerBuffer leading bytes of the candidate image
+    /// @return whether the first XML document element is `svg`
     public static boolean isSVG(byte[] headerBuffer) {
-        return headerBuffer.length > SVG_HEADER.length
-                && Arrays.equals(headerBuffer, 0, SVG_HEADER.length, SVG_HEADER, 0, SVG_HEADER.length);
+        int offset = hasUtf8ByteOrderMark(headerBuffer) ? 3 : 0;
+
+        while (true) {
+            offset = skipXmlWhitespace(headerBuffer, offset);
+
+            if (isSvgElementStart(headerBuffer, offset))
+                return true;
+
+            if (matchesAscii(headerBuffer, offset, XML_COMMENT_START)) {
+                offset = indexAfterAscii(
+                        headerBuffer,
+                        offset + XML_COMMENT_START.length(),
+                        XML_COMMENT_END
+                );
+            } else if (matchesAscii(headerBuffer, offset, XML_PROCESSING_INSTRUCTION_START)) {
+                offset = indexAfterAscii(
+                        headerBuffer,
+                        offset + XML_PROCESSING_INSTRUCTION_START.length(),
+                        XML_PROCESSING_INSTRUCTION_END
+                );
+            } else if (isDoctypeStart(headerBuffer, offset)) {
+                offset = skipDoctype(headerBuffer, offset);
+            } else {
+                return false;
+            }
+
+            if (offset < 0)
+                return false;
+        }
+    }
+
+    /// Returns whether the byte array starts with a UTF-8 byte-order mark.
+    ///
+    /// @param data bytes to inspect
+    /// @return whether `data` begins with `EF BB BF`
+    private static boolean hasUtf8ByteOrderMark(byte[] data) {
+        return svgScanLimit(data) >= 3
+                && data[0] == (byte) 0xef
+                && data[1] == (byte) 0xbb
+                && data[2] == (byte) 0xbf;
+    }
+
+    /// Returns the bounded length available to SVG detection.
+    ///
+    /// @param data source bytes
+    /// @return the lesser of the array length and [#HEADER_BUFFER_SIZE]
+    private static int svgScanLimit(byte[] data) {
+        return Math.min(data.length, HEADER_BUFFER_SIZE);
+    }
+
+    /// Skips XML whitespace from an array offset.
+    ///
+    /// @param data  source bytes
+    /// @param start inclusive offset at which to begin
+    /// @return the first offset that does not contain XML whitespace
+    private static int skipXmlWhitespace(byte[] data, int start) {
+        int limit = svgScanLimit(data);
+        while (start < limit && isXmlWhitespace(data[start]))
+            start++;
+        return start;
+    }
+
+    /// Returns whether an SVG document-element qualified name begins at an array offset.
+    ///
+    /// @param data  source bytes
+    /// @param start offset of a possible element opening delimiter
+    /// @return whether the unprefixed or prefixed element has the local name `svg`
+    private static boolean isSvgElementStart(byte[] data, int start) {
+        int limit = svgScanLimit(data);
+        if (start < 0 || start >= limit || data[start] != '<')
+            return false;
+
+        int nameStart = start + 1;
+        int localNameStart = nameStart;
+        boolean hasPrefix = false;
+
+        for (int index = nameStart; index < limit; index++) {
+            byte value = data[index];
+            if (value == '>' || isXmlWhitespace(value)
+                    || value == '/' && index + 1 < limit && data[index + 1] == '>') {
+                return index - localNameStart == SVG_ELEMENT_NAME.length()
+                        && matchesAscii(data, localNameStart, SVG_ELEMENT_NAME);
+            }
+
+            if (value == ':') {
+                if (hasPrefix || index == nameStart)
+                    return false;
+                hasPrefix = true;
+                localNameStart = index + 1;
+                continue;
+            }
+
+            boolean nameStartCharacter = index == nameStart || index == localNameStart;
+            if (nameStartCharacter
+                    ? !isAsciiXmlNameStart(value)
+                    : !isAsciiXmlNamePart(value)) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /// Returns whether a byte can begin an ASCII XML name component.
+    ///
+    /// @param value byte to inspect
+    /// @return whether the byte is an ASCII letter or underscore
+    private static boolean isAsciiXmlNameStart(byte value) {
+        return value >= 'A' && value <= 'Z'
+                || value >= 'a' && value <= 'z'
+                || value == '_';
+    }
+
+    /// Returns whether a byte can continue an ASCII XML name component.
+    ///
+    /// @param value byte to inspect
+    /// @return whether the byte is accepted after the first name character
+    private static boolean isAsciiXmlNamePart(byte value) {
+        return isAsciiXmlNameStart(value)
+                || value >= '0' && value <= '9'
+                || value == '-'
+                || value == '.';
+    }
+
+    /// Returns whether an XML document type declaration begins at an offset.
+    ///
+    /// @param data  source bytes
+    /// @param start offset of a possible declaration
+    /// @return whether the case-sensitive keyword is followed by XML whitespace
+    private static boolean isDoctypeStart(byte[] data, int start) {
+        int keywordEnd = start + XML_DOCTYPE_START.length();
+        return matchesAscii(data, start, XML_DOCTYPE_START)
+                && keywordEnd < svgScanLimit(data)
+                && isXmlWhitespace(data[keywordEnd]);
+    }
+
+    /// Skips an XML document type declaration, including its internal subset.
+    ///
+    /// Quoted values, comments, and processing instructions are ignored while
+    /// locating the declaration-closing `>`.
+    ///
+    /// @param data  source bytes
+    /// @param start offset of the `<!DOCTYPE` prefix
+    /// @return the offset after the declaration, or `-1` if it is incomplete
+    private static int skipDoctype(byte[] data, int start) {
+        int internalSubsetDepth = 0;
+        byte quote = 0;
+        int limit = svgScanLimit(data);
+
+        for (int index = start + XML_DOCTYPE_START.length(); index < limit; index++) {
+            byte value = data[index];
+
+            if (quote != 0) {
+                if (value == quote)
+                    quote = 0;
+                continue;
+            }
+
+            if (value == '\'' || value == '"') {
+                quote = value;
+                continue;
+            }
+
+            if (matchesAscii(data, index, XML_COMMENT_START)) {
+                int commentEnd = indexAfterAscii(
+                        data,
+                        index + XML_COMMENT_START.length(),
+                        XML_COMMENT_END
+                );
+                if (commentEnd < 0)
+                    return -1;
+                index = commentEnd - 1;
+                continue;
+            }
+
+            if (matchesAscii(data, index, XML_PROCESSING_INSTRUCTION_START)) {
+                int instructionEnd = indexAfterAscii(
+                        data,
+                        index + XML_PROCESSING_INSTRUCTION_START.length(),
+                        XML_PROCESSING_INSTRUCTION_END
+                );
+                if (instructionEnd < 0)
+                    return -1;
+                index = instructionEnd - 1;
+                continue;
+            }
+
+            if (value == '[') {
+                internalSubsetDepth++;
+            } else if (value == ']' && internalSubsetDepth > 0) {
+                internalSubsetDepth--;
+            } else if (value == '>' && internalSubsetDepth == 0) {
+                return index + 1;
+            }
+        }
+
+        return -1;
+    }
+
+    /// Finds an ASCII sequence in a byte array.
+    ///
+    /// @param data       source bytes
+    /// @param start      inclusive offset at which to begin searching
+    /// @param asciiValue ASCII sequence to find
+    /// @return the offset after the first match, or `-1` if no match exists
+    private static int indexAfterAscii(byte[] data, int start, String asciiValue) {
+        int lastStart = svgScanLimit(data) - asciiValue.length();
+        for (int index = start; index <= lastStart; index++) {
+            if (matchesAscii(data, index, asciiValue))
+                return index + asciiValue.length();
+        }
+        return -1;
+    }
+
+    /// Compares an ASCII string with bytes at an array offset.
+    ///
+    /// @param data       source bytes
+    /// @param start      offset at which to compare
+    /// @param asciiValue ASCII sequence to compare
+    /// @return whether the complete sequence matches
+    private static boolean matchesAscii(byte[] data, int start, String asciiValue) {
+        if (start < 0 || start > svgScanLimit(data) - asciiValue.length())
+            return false;
+
+        for (int index = 0; index < asciiValue.length(); index++) {
+            if (Byte.toUnsignedInt(data[start + index]) != asciiValue.charAt(index))
+                return false;
+        }
+        return true;
+    }
+
+    /// Returns whether a byte is XML whitespace.
+    ///
+    /// @param value byte to inspect
+    /// @return whether the byte is space, tab, carriage return, or line feed
+    private static boolean isXmlWhitespace(byte value) {
+        return value == ' ' || value == '\t' || value == '\r' || value == '\n';
     }
 
     private static final byte[] PNG_HEADER = {
@@ -249,7 +513,7 @@ public final class ImageUtils {
 
         ByteBuffer buffer = ByteBuffer.wrap(headerBuffer, 8, headerBuffer.length - 8);
 
-        PngChunkHeader header;
+        @Nullable PngChunkHeader header;
         while ((header = PngChunkHeader.readHeader(buffer)) != null) {
             // https://wiki.mozilla.org/APNG_Specification#Structure
             // To be recognized as an APNG, an `acTL` chunk must appear in the stream before any `IDAT` chunks.
@@ -436,7 +700,7 @@ public final class ImageUtils {
             }
         }
 
-        PngAnimationControl animationControl = sequence.getAnimationControl();
+        @Nullable PngAnimationControl animationControl = sequence.getAnimationControl();
         int cycleCount;
         if (animationControl != null) {
             cycleCount = animationControl.numPlays();
@@ -465,6 +729,7 @@ public final class ImageUtils {
         return argb;
     }
 
+    /// Prevents instantiation.
     private ImageUtils() {
     }
 }

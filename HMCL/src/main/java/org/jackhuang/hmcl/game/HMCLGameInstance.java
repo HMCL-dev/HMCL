@@ -565,7 +565,9 @@ public class HMCLGameInstance extends DefaultGameInstance {
         if (autoMemory) {
             maxMemory = noJVMOptions
                     ? null
-                    : Math.toIntExact(HMCLGameRepository.getAutoAllocatedMemory(SystemInfo.getPhysicalMemoryStatus().available()) / 1024L / 1024L);
+                    : Math.toIntExact(HMCLGameRepository.getAutoAllocatedMemory(
+                            SystemInfo.getPhysicalMemoryStatus().available(),
+                            javaVersion.getPlatform()) / 1024L / 1024L);
         } else {
             maxMemory = vs.getMaxMemory();
         }
@@ -611,6 +613,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 .setDisableAutoGameOptions(vs.getInheritable(GameSettings::disableAutoGameOptionsProperty))
                 .setUseNativeGLFW(vs.getInheritable(GameSettings::useNativeGLFWProperty))
                 .setUseNativeOpenAL(vs.getInheritable(GameSettings::useNativeOpenALProperty))
+                .setUseHighPerformanceGPU(vs.getInheritable(GameSettings::highPerformanceProperty))
                 .setDaemon(!makeLaunchScript && vs.getInheritable(GameSettings::launcherVisibilityProperty).isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);

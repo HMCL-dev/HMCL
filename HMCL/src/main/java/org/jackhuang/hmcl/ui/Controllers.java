@@ -69,6 +69,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -603,6 +604,24 @@ public final class Controllers {
         } else {
             FXUtils.openLink(href);
         }
+    }
+
+    public static void openUriOrCopy(@Nullable URI uri) {
+        if (uri == null) return;
+        openUriOrCopy(uri.toString());
+    }
+
+    public static void openUriOrCopy(@Nullable String uri) {
+        if (uri == null) return;
+        var dialog = new MessageDialogPane.Builder(
+                i18n("web.open_in_browser", uri),
+                i18n("message.confirm"),
+                MessageDialogPane.MessageType.QUESTION
+        )
+                .addAction(i18n("button.copy"), () -> FXUtils.copyText(uri))
+                .yesOrNo(() -> FXUtils.openLink(uri), null)
+                .build();
+        dialog(dialog);
     }
 
     public static boolean isStopped() {

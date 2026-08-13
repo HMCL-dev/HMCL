@@ -33,6 +33,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.stage.WindowEvent;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
@@ -48,6 +49,18 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 ///
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
+
+    private static final String KEY = GameListPopupMenu.class.getName() + ".popup";
+
+    public static boolean hideShowing(Node owner) {
+        JFXPopup popup = (JFXPopup) owner.getProperties().get(KEY);
+        if (popup != null && popup.isShowing()) {
+            popup.hide();
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     /// Shows an instance selection popup relative to its owner.
     ///
@@ -80,7 +93,9 @@ public final class GameListPopupMenu extends StackPane {
                 .map(GameItem::new)
                 .toList());
         JFXPopup popup = new JFXPopup(menu);
-        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
+        owner.getProperties().put(KEY, popup);
+        popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, event -> owner.getProperties().remove(KEY, popup));
+        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY, true);
 
         return popup;
     }
