@@ -67,9 +67,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// Ordered instance renames applied to the filesystem during commit.
     private final List<RenameOperation> renames = new ArrayList<>();
 
-    /// Draft-private directory containing removed roots and commit backups.
-    private @Nullable Path stagingDirectory;
-
     /// Current lifecycle state.
     private GameRepositoryDraftState state = GameRepositoryDraftState.OPEN;
 
@@ -202,26 +199,32 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         List<RenameOperation> appliedRenames = new ArrayList<>();
         List<RemovedRoot> removedRoots = new ArrayList<>();
         List<AppliedManifest> applied = new ArrayList<>();
+        @Nullable Path rollbackDirectory = null;
         try {
             DefaultGameRepositorySnapshot committedSnapshot = buildCommittedSnapshot();
             for (RenameOperation rename : renames) {
                 applyRename(rename, appliedRenames);
             }
-            for (GameInstanceID id : removedIds) {
-                removeInstanceRoot(id, removedRoots);
-            }
-            for (GameInstanceID id : modifiedIds) {
-                @Nullable GameInstanceManifest manifest = manifests.get(id);
-                if (manifest == null) {
-                    throw new IllegalStateException("Modified manifest is missing: " + id);
+
+            if (!removedIds.isEmpty() || !modifiedIds.isEmpty()) {
+                Path currentRollbackDirectory = createRollbackDirectory();
+                rollbackDirectory = currentRollbackDirectory;
+                for (GameInstanceID id : removedIds) {
+                    removeInstanceRoot(id, currentRollbackDirectory, removedRoots);
                 }
-                applyManifest(id, manifest, applied);
+                for (GameInstanceID id : modifiedIds) {
+                    @Nullable GameInstanceManifest manifest = manifests.get(id);
+                    if (manifest == null) {
+                        throw new IllegalStateException("Modified manifest is missing: " + id);
+                    }
+                    applyManifest(id, manifest, currentRollbackDirectory, applied);
+                }
             }
 
             repository.publishDraftSnapshot(this, committedSnapshot);
             state = GameRepositoryDraftState.COMMITTED;
             repository.releaseDraft(this);
-            cleanupStagingAfterCommit();
+            cleanupRollbackDirectoryAfterCommit(rollbackDirectory);
             return committedSnapshot;
         } catch (IOException | RuntimeException e) {
             IOException rollbackFailure = rollbackAppliedManifests(applied);
@@ -229,7 +232,8 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             rollbackFailure = accumulateNullable(rollbackFailure, rollbackRenames(appliedRenames));
             state = GameRepositoryDraftState.FAILED;
             repository.releaseDraft(this);
-            IOException cleanupFailure = cleanupOwnedFiles();
+            IOException cleanupFailure = cleanupCreatedInstanceRoots();
+            cleanupFailure = accumulateNullable(cleanupFailure, cleanupRollbackDirectory(rollbackDirectory));
             if (rollbackFailure != null) {
                 e.addSuppressed(rollbackFailure);
             }
@@ -282,7 +286,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             return;
         }
 
-        IOException failure = cleanupOwnedFiles();
+        IOException failure = cleanupCreatedInstanceRoots();
         state = failure == null ? GameRepositoryDraftState.ABORTED : GameRepositoryDraftState.FAILED;
         repository.releaseDraft(this);
         if (failure != null) {
@@ -312,24 +316,18 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                 .normalize();
     }
 
-    /// Returns the draft-private staging directory, creating it when necessary.
+    /// Creates a directory for rollback data produced by the current commit attempt.
     ///
-    /// @return the staging directory
+    /// @return the new rollback directory
     /// @throws IOException if the directory cannot be created
-    private Path getOrCreateStagingDirectory() throws IOException {
-        Path current = stagingDirectory;
-        if (current != null) {
-            return current;
-        }
-
+    private Path createRollbackDirectory() throws IOException {
         Path parent = baseSnapshot.getLayout().getBaseDirectory()
                 .toAbsolutePath()
                 .normalize()
                 .resolve(".hmcl")
                 .resolve("repository-drafts");
         Files.createDirectories(parent);
-        stagingDirectory = Files.createTempDirectory(parent, "draft-");
-        return stagingDirectory;
+        return Files.createTempDirectory(parent, "commit-");
     }
 
     /// Applies one instance directory rename.
@@ -354,34 +352,40 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         applied.add(rename);
     }
 
-    /// Moves one removed instance root into the draft staging directory.
+    /// Moves one removed instance root into the commit rollback directory.
     ///
-    /// @param id      the removed instance id
-    /// @param removed rollback records for roots moved out of the repository
-    /// @throws IOException if the root cannot be staged
-    private void removeInstanceRoot(GameInstanceID id, List<RemovedRoot> removed) throws IOException {
+    /// @param id                the removed instance id
+    /// @param rollbackDirectory the directory owned by the current commit attempt
+    /// @param removed           rollback records for roots moved out of the repository
+    /// @throws IOException if the root cannot be moved into the rollback directory
+    private void removeInstanceRoot(
+            GameInstanceID id,
+            Path rollbackDirectory,
+            List<RemovedRoot> removed) throws IOException {
         Path root = getValidatedInstanceRoot(id);
         if (Files.notExists(root)) {
             return;
         }
 
-        Path removals = getOrCreateStagingDirectory().resolve("removed");
+        Path removals = rollbackDirectory.resolve("removed");
         Files.createDirectories(removals);
-        Path stagedRoot = Files.createTempDirectory(removals, "instance-");
-        Files.delete(stagedRoot);
-        moveReplacing(root, stagedRoot);
-        removed.add(new RemovedRoot(root, stagedRoot));
+        Path rollbackRoot = Files.createTempDirectory(removals, "instance-");
+        Files.delete(rollbackRoot);
+        moveReplacing(root, rollbackRoot);
+        removed.add(new RemovedRoot(root, rollbackRoot));
     }
 
     /// Writes one manifest while retaining a rollback copy.
     ///
-    /// @param id       the instance whose manifest will be replaced
-    /// @param manifest the final manifest
-    /// @param applied  rollback records for changes already started
+    /// @param id                the instance whose manifest will be replaced
+    /// @param manifest          the final manifest
+    /// @param rollbackDirectory the directory owned by the current commit attempt
+    /// @param applied           rollback records for changes already started
     /// @throws IOException if the target cannot be backed up or replaced
     private void applyManifest(
             GameInstanceID id,
             GameInstanceManifest manifest,
+            Path rollbackDirectory,
             List<AppliedManifest> applied) throws IOException {
         String json = JsonUtils.GSON.toJson(manifest);
         Path target = getManifestTarget(id);
@@ -393,7 +397,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         Files.createDirectories(target.getParent());
         @Nullable Path backup = null;
         if (Files.exists(target)) {
-            Path backups = getOrCreateStagingDirectory().resolve("backups");
+            Path backups = rollbackDirectory.resolve("backups");
             Files.createDirectories(backups);
             backup = Files.createTempFile(backups, "manifest-", ".json");
             Files.delete(backup);
@@ -435,7 +439,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         Collections.reverse(reversed);
         for (RemovedRoot root : reversed) {
             try {
-                moveReplacing(root.stagedRoot(), root.originalRoot());
+                moveReplacing(root.rollbackRoot(), root.originalRoot());
             } catch (IOException e) {
                 failure = accumulate(failure, e);
             }
@@ -464,10 +468,10 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         return failure;
     }
 
-    /// Removes draft-owned instance roots and temporary files.
+    /// Removes instance roots first created by this draft.
     ///
     /// @return the aggregated cleanup failure, or `null` when cleanup succeeded
-    private @Nullable IOException cleanupOwnedFiles() {
+    private @Nullable IOException cleanupCreatedInstanceRoots() {
         @Nullable IOException failure = null;
         for (GameInstanceID id : createdIds) {
             try {
@@ -482,28 +486,36 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                 failure = accumulate(failure, cleanupException);
             }
         }
-
-        Path currentStagingDirectory = stagingDirectory;
-        if (currentStagingDirectory != null) {
-            try {
-                FileUtils.deleteDirectory(currentStagingDirectory);
-            } catch (IOException e) {
-                failure = accumulate(failure, e);
-            }
-        }
         return failure;
     }
 
-    /// Removes temporary files after a successful commit without changing its outcome.
-    private void cleanupStagingAfterCommit() {
-        Path currentStagingDirectory = stagingDirectory;
-        if (currentStagingDirectory == null) {
+    /// Removes a commit rollback directory.
+    ///
+    /// @param rollbackDirectory the directory to remove, or `null` if none was created
+    /// @return the cleanup failure, or `null` when cleanup succeeded
+    private static @Nullable IOException cleanupRollbackDirectory(@Nullable Path rollbackDirectory) {
+        if (rollbackDirectory == null) {
+            return null;
+        }
+        try {
+            FileUtils.deleteDirectory(rollbackDirectory);
+            return null;
+        } catch (IOException e) {
+            return e;
+        }
+    }
+
+    /// Removes rollback data after a successful commit without changing its outcome.
+    ///
+    /// @param rollbackDirectory the directory to remove, or `null` if none was created
+    private static void cleanupRollbackDirectoryAfterCommit(@Nullable Path rollbackDirectory) {
+        if (rollbackDirectory == null) {
             return;
         }
         try {
-            FileUtils.deleteDirectory(currentStagingDirectory);
+            FileUtils.deleteDirectory(rollbackDirectory);
         } catch (IOException e) {
-            LOG.warning("Failed to remove committed draft staging directory " + currentStagingDirectory, e);
+            LOG.warning("Failed to remove commit rollback directory " + rollbackDirectory, e);
         }
     }
 
@@ -595,10 +607,10 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     private record RenameOperation(GameInstanceID from, GameInstanceID to) {
     }
 
-    /// Records an instance root moved into staging during commit.
+    /// Records an instance root moved aside for rollback during commit.
     ///
     /// @param originalRoot the published instance root
-    /// @param stagedRoot   the temporary removal path
-    private record RemovedRoot(Path originalRoot, Path stagedRoot) {
+    /// @param rollbackRoot the temporary rollback path
+    private record RemovedRoot(Path originalRoot, Path rollbackRoot) {
     }
 }
