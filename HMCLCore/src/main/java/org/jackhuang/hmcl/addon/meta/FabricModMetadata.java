@@ -60,7 +60,7 @@ public final class FabricModMetadata {
         this.contact = contact;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, List<CoreMod> coreMods) throws IOException, JsonParseException {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException, JsonParseException {
         ZipArchiveEntry mcmod = tree.getEntry("fabric.mod.json");
         if (mcmod == null)
             throw new IOException("File " + modFile + " is not a Fabric mod.");

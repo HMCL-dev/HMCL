@@ -124,7 +124,7 @@ public final class ForgeOldModMetadata {
         return authors;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, List<CoreMod> coreMods) throws IOException, JsonParseException {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException, JsonParseException {
         ZipArchiveEntry mcmod = tree.getEntry("mcmod.info");
         if (mcmod == null)
             throw new IOException("File " + modFile + " is not a Forge mod.");

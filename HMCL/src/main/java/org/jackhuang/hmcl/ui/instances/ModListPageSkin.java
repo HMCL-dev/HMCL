@@ -40,7 +40,6 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.meta.CoreMod;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -637,7 +636,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 boolean checkCoreModsDir = !gameVersionNumber.isAtLeast("1.6.1", "13w36a");
 
                 if (modLoaderType != ModLoaderType.UNKNOWN) modFileLoaders.add(modLoaderType);
-                modFileLoaders.addAll(CoreMod.getSupportedLoaders(modInfo.getCoreMods(), gameVersionNumber));
+                modFileLoaders.addAll(modInfo.getCoreMods().getModLoaders(gameVersionNumber));
 
                 if (modFileLoaders.stream().anyMatch(loader -> getSkinnable().supportedLoaders.contains(loader))) {
                     if (modInfo.isCoreMod()) {

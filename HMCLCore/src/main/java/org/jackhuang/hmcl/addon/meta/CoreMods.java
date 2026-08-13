@@ -1,20 +1,3 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
 package org.jackhuang.hmcl.addon.meta;
 
 import com.google.gson.JsonIOException;
@@ -22,6 +5,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -29,36 +13,53 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @see <a href="https://github.com/xfl03/CoreModTutor">CoreModTutor by xfl03 and contributors</a>
-public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumber> mcVersionRange) {
+@Immutable
+public final class CoreMods {
 
-    private CoreMod(ModLoaderType modLoaderType, String min) {
-        this(modLoaderType, GameVersionNumber.atLeast(min));
+    public static final CoreMods EMPTY = new CoreMods();
+
+    private final Map<ModLoaderType, List<VersionRange<GameVersionNumber>>> coreMods;
+
+    private CoreMods() {
+        this.coreMods = Collections.emptyMap();
     }
 
-    private CoreMod(ModLoaderType modLoaderType, String min, String max) {
-        this(modLoaderType, GameVersionNumber.between(min, max));
+    private CoreMods(List<CoreMod> coreModList) {
+        EnumMap<ModLoaderType, List<VersionRange<GameVersionNumber>>> map = new EnumMap<>(ModLoaderType.class);
+        for (var coreMod : coreModList) {
+            map.computeIfAbsent(coreMod.modLoaderType(), k -> new ArrayList<>()).add(coreMod.mcVersionRange());
+        }
+        this.coreMods = Collections.unmodifiableMap(map);
+    }
+
+    public boolean isEmpty() {
+        return coreMods.isEmpty();
+    }
+
+    public Set<ModLoaderType> getModLoaders(GameVersionNumber gameVersionNumber) {
+        EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
+        if (gameVersionNumber == GameVersionNumber.unknown()) return supportedLoaders;
+        for (var entry : coreMods.entrySet())
+            if (entry.getValue().stream().anyMatch(r -> r.contains(gameVersionNumber)))
+                supportedLoaders.add(entry.getKey());
+        return supportedLoaders;
     }
 
     @NotNull
-    @Unmodifiable
-    public static List<CoreMod> fromFile(Path modFile, ZipFileTree tree) {
-        if (!"jar".equalsIgnoreCase(FileUtils.getExtension(modFile))) return List.of();
-        List<CoreMod> coreMods = new ArrayList<>();
+    public static CoreMods fromFile(Path modFile, ZipFileTree tree) {
+        if (!"jar".equalsIgnoreCase(FileUtils.getExtension(modFile))) return EMPTY;
+        List<CoreMod> coreModList = new ArrayList<>();
         {
             // Below 1.13
             ZipArchiveEntry mf = tree.getEntry("META-INF/MANIFEST.MF");
@@ -73,11 +74,15 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
                     String fmlCorePlg = attr.getValue("FMLCorePlugin");
                     String tweakClass = attr.getValue("TweakClass");
                     if (StringUtils.isNotBlank(fmlCorePlg))
-                        coreMods.add(new CoreMod(ModLoaderType.FORGE, "1.3.2", "1.12.2"));
+                        coreModList.addAll(List.of(
+                                new CoreMod(ModLoaderType.FORGE, "1.3.2", "1.12.2"),
+                                new CoreMod(ModLoaderType.CLEANROOM, "1.12.2", "1.12.2") // TODO further testing
+                        ));
                     if (StringUtils.isNotBlank(tweakClass))
-                        coreMods.addAll(List.of(
+                        coreModList.addAll(List.of(
                                 new CoreMod(ModLoaderType.FORGE, "1.6.1", "1.12.2"),
-                                new CoreMod(ModLoaderType.LITE_LOADER, "1.6.1", "1.12.2")
+                                new CoreMod(ModLoaderType.LITE_LOADER, "1.6.1", "1.12.2"),
+                                new CoreMod(ModLoaderType.CLEANROOM, "1.12.2", "1.12.2")
                         ));
                 }
             }
@@ -91,7 +96,7 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
                     var map = JsonUtils.fromJson(in, new TypeToken<Map<String, String>>() {
                     });
                     if (map != null && !map.isEmpty())
-                        coreMods.addAll(List.of(
+                        coreModList.addAll(List.of(
                                 // Removed in https://github.com/MinecraftForge/MinecraftForge/pull/10746
                                 new CoreMod(ModLoaderType.FORGE, "1.13", "1.21.10"),
                                 // Removed in https://github.com/neoforged/NeoForge/pull/2072
@@ -106,7 +111,7 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
         {
             // ITransformationService
             if (tree.getEntry("META-INF/services/cpw.mods.modlauncher.api.ITransformationService") != null)
-                coreMods.addAll(List.of(
+                coreModList.addAll(List.of(
                         new CoreMod(ModLoaderType.FORGE, "1.13.2"),
                         new CoreMod(ModLoaderType.NEO_FORGE, "1.20.1", "1.21.8") // Replaced by ClassProcessorProvider
                 ));
@@ -117,26 +122,27 @@ public record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumbe
             // https://neoforged.net/news/2024-retrospection/#the-changes
             // TODO Find a sample
             if (tree.getEntry("META-INF/services/net.neoforged.neoforgespi.coremod.ICoreMod") != null)
-                coreMods.add(new CoreMod(ModLoaderType.NEO_FORGE, "1.20.5", "1.21.8")); // Replaced by ClassProcessorProvider
+                coreModList.add(new CoreMod(ModLoaderType.NEO_FORGE, "1.20.5", "1.21.8")); // Replaced by ClassProcessorProvider
         }
         {
             // ClassProcessorProvider for NeoForge, replaces ITransformationService & ICoreMod
             // https://github.com/neoforged/NeoForge/pull/2655
             // https://github.com/neoforged/FancyModLoader/pull/358
             if (tree.getEntry("META-INF/services/net.neoforged.neoforgespi.transformation.ClassProcessorProvider") != null)
-                coreMods.add(new CoreMod(ModLoaderType.NEO_FORGE, "1.21.9"));
+                coreModList.add(new CoreMod(ModLoaderType.NEO_FORGE, "1.21.9"));
         }
-        return List.copyOf(coreMods);
+        return new CoreMods(coreModList);
     }
 
-    @NotNull
-    public static EnumSet<ModLoaderType> getSupportedLoaders(List<CoreMod> coreMods, GameVersionNumber gameVersion) {
-        EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
-        if (gameVersion == GameVersionNumber.unknown()) return supportedLoaders;
-        for (var coreMod : coreMods)
-            if (coreMod.mcVersionRange().contains(gameVersion))
-                supportedLoaders.add(coreMod.modLoaderType());
-        return supportedLoaders;
-    }
+    private record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumber> mcVersionRange) {
 
+        private CoreMod(ModLoaderType modLoaderType, String min) {
+            this(modLoaderType, GameVersionNumber.atLeast(min));
+        }
+
+        private CoreMod(ModLoaderType modLoaderType, String min, String max) {
+            this(modLoaderType, GameVersionNumber.between(min, max));
+        }
+
+    }
 }

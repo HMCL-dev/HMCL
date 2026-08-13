@@ -44,7 +44,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     @FunctionalInterface
     private interface ModMetadataReader {
-        LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, List<CoreMod> coreMods) throws IOException, JsonParseException;
+        LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException, JsonParseException;
     }
 
     private static final Map<String, List<Pair<ModMetadataReader, ModLoaderType>>> READERS;
@@ -125,12 +125,12 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
         }
 
-        LocalModFile modInfo = null;
-        List<CoreMod> coreMods = List.of();
+        LocalModFile modInfo  = null;
+        CoreMods coreMods = CoreMods.EMPTY;
 
         List<Exception> exceptions = new ArrayList<>();
         try (ZipFileTree tree = CompressingUtils.openZipTree(file)) {
-            coreMods = CoreMod.fromFile(file, tree);
+            coreMods = CoreMods.fromFile(file, tree);
 
             for (ModMetadataReader reader : supportedReaders) {
                 try {

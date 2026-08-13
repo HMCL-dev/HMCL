@@ -174,15 +174,15 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    public static LocalModFile fromForgeFile(ModManager modManager, Path modFile, ZipFileTree tree, List<CoreMod> coreMods) throws IOException {
+    public static LocalModFile fromForgeFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException {
         return fromFile(modManager, modFile, tree, ModLoaderType.FORGE, coreMods);
     }
 
-    public static LocalModFile fromNeoForgeFile(ModManager modManager, Path modFile, ZipFileTree tree, List<CoreMod> coreMods) throws IOException {
+    public static LocalModFile fromNeoForgeFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException {
         return fromFile(modManager, modFile, tree, ModLoaderType.NEO_FORGE, coreMods);
     }
 
-    private static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType, List<CoreMod> coreMods) throws IOException {
+    private static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType, CoreMods coreMods) throws IOException {
         if (modLoaderType != ModLoaderType.FORGE && modLoaderType != ModLoaderType.NEO_FORGE) {
             throw new IOException("Invalid mod loader: " + modLoaderType);
         }
@@ -213,7 +213,7 @@ public final class ForgeNewModMetadata {
             ModManager modManager,
             Path modFile,
             ZipFileTree tree,
-            List<CoreMod> coreMods) throws IOException, JsonParseException {
+            CoreMods coreMods) throws IOException, JsonParseException {
         ZipArchiveEntry modToml = tree.getEntry(tomlPath);
         if (modToml == null)
             throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
@@ -248,7 +248,7 @@ public final class ForgeNewModMetadata {
                 logoPath, coreMods);
     }
 
-    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType, List<CoreMod> coreMods) throws IOException {
+    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType, CoreMods coreMods) throws IOException {
         ZipArchiveEntry manifestFile = tree.getEntry("META-INF/MANIFEST.MF");
         if (manifestFile == null)
             throw new IOException("Missing MANIFEST.MF in file " + modFile);
