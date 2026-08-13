@@ -349,6 +349,16 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return windowTransparent;
     }
 
+    /// The position of the launcher navigation sidebar drawer.
+    @SerializedName("sidebarPosition")
+    private final ObjectProperty<SidebarPosition> sidebarPosition =
+            new RawPreservingObjectProperty<>(SidebarPosition.LEFT);
+
+    /// Returns the sidebar position property.
+    public ObjectProperty<SidebarPosition> sidebarPositionProperty() {
+        return sidebarPosition;
+    }
+
     // Background source
 
     /// The launcher background source type.

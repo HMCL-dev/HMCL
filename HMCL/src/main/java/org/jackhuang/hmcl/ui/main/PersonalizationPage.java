@@ -471,6 +471,15 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
+            LineSelectButton<SidebarPosition> sidebarPositionPane = new LineSelectButton<>();
+            sidebarPositionPane.setTitle(i18n("settings.launcher.sidebar_position"));
+            sidebarPositionPane.setNullSafeConverter(pos -> i18n("settings.launcher.sidebar_position." + pos.getName()));
+            sidebarPositionPane.setItems(Arrays.asList(SidebarPosition.LEFT, SidebarPosition.RIGHT));
+            sidebarPositionPane.valueProperty().bindBidirectional(settings().sidebarPositionProperty());
+            themeAppearanceList.getContent().add(sidebarPositionPane);
+        }
+
+        {
             ComponentSublist themeColorSublist = new ComponentSublist();
             themeColorSublist.setTitle(i18n("settings.launcher.theme_color"));
             themeColorSublist.setHasSubtitle(true);

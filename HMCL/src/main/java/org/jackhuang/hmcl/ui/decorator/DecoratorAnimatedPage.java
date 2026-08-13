@@ -24,7 +24,11 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.setting.SidebarPosition;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Lang;
+
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 public class DecoratorAnimatedPage extends Control {
 
@@ -62,10 +66,20 @@ public class DecoratorAnimatedPage extends Control {
             super(control);
 
             BorderPane pane = new BorderPane();
-            pane.setLeft(control.left);
             FXUtils.setLimitWidth(control.left, 200);
             pane.setCenter(control.center);
             getChildren().setAll(pane);
+
+            FXUtils.onChangeAndOperate(settings().sidebarPositionProperty(), position -> {
+                SidebarPosition pos = Lang.requireNonNullElse(position, SidebarPosition.LEFT);
+                if (pos == SidebarPosition.RIGHT) {
+                    pane.setLeft(null);
+                    pane.setRight(control.left);
+                } else {
+                    pane.setRight(null);
+                    pane.setLeft(control.left);
+                }
+            });
         }
 
         protected void setLeft(Node... children) {

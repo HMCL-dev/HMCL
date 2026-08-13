@@ -30,6 +30,8 @@ import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.SidebarPosition;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
@@ -149,7 +151,13 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
-            FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0));
+            FXUtils.onSecondaryButtonClicked(accountListItem, () -> {
+                SidebarPosition pos = settings().sidebarPositionProperty().get();
+                JFXPopup.PopupHPosition hPos = (pos == SidebarPosition.RIGHT)
+                        ? JFXPopup.PopupHPosition.RIGHT
+                        : JFXPopup.PopupHPosition.LEFT;
+                AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.TOP, hPos, accountListItem.getWidth(), 0);
+            });
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
@@ -225,7 +233,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 }
             });
 
-            // the left sidebar
+            // the sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
                     .startCategory(i18n("account").toUpperCase(Locale.ROOT))
                     .add(accountListItem)
@@ -241,15 +249,19 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         Controllers.navigate(Controllers.getSettingsPage());
                     });
 
-            // the root page, with the sidebar in left, navigator in center.
+            // the root page, with the sidebar in left or right, navigator in center.
             setLeft(sideBar);
             setCenter(getSkinnable().getMainPage());
         }
 
         public void showGameListPopupMenu(Region gameListItem) {
+            SidebarPosition pos = settings().sidebarPositionProperty().get();
+            JFXPopup.PopupHPosition hPos = (pos == SidebarPosition.RIGHT)
+                    ? JFXPopup.PopupHPosition.RIGHT
+                    : JFXPopup.PopupHPosition.LEFT;
             GameListPopupMenu.show(gameListItem,
                     JFXPopup.PopupVPosition.TOP,
-                    JFXPopup.PopupHPosition.LEFT,
+                    hPos,
                     gameListItem.getWidth(),
                     0,
                     getSkinnable().getMainPage().getRepository(),
