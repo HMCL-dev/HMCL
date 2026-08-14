@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.fabric;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
@@ -74,7 +75,7 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
         return String.format("https://meta.fabricmc.net/v2/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
+    @JsonSerializable
     private record GameVersion(String version, String maven, boolean stable) {
-
     }
 }

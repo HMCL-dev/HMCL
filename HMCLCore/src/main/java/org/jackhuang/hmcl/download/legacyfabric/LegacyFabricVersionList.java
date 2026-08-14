@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.legacyfabric;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
@@ -83,7 +84,7 @@ public final class LegacyFabricVersionList extends VersionList<LegacyFabricRemot
         return String.format("https://meta.legacyfabric.net/v2/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
+    @JsonSerializable
     private record GameVersion(String version, String maven, boolean stable) {
-
     }
 }
