@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
+import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
@@ -27,6 +28,8 @@ import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +41,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -237,6 +241,46 @@ public final class DefaultGameInstanceTest {
         assertFalse(download.getPath().startsWith(repository.getLayout().getInstanceRoot(manifest.id())));
     }
 
+    /// Keeps the detached client JAR path distinct from the Minecraft version processor variable.
+    @Test
+    public void testForgeProcessorSeparatesMinecraftJarAndVersion(@TempDir Path tempDirectory)
+            throws IOException {
+        Path versionMarker = tempDirectory.resolve("minecraft-version");
+        Files.writeString(versionMarker, "version");
+        String markerSha1 = DigestUtils.digestToString("SHA-1", versionMarker);
+
+        Path minecraftJar = tempDirectory.resolve("cache/client.jar");
+        Files.createDirectories(minecraftJar.getParent());
+        Files.writeString(minecraftJar, "client");
+
+        Path installer = tempDirectory.resolve("forge-installer.jar");
+        writeForgeProcessorFixture(
+                installer,
+                versionMarker.toAbsolutePath().normalize().toString(),
+                markerSha1);
+
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(tempDirectory.resolve("download-cache")));
+        ForgeNewInstallTask task = new ForgeNewInstallTask(
+                dependencyManager,
+                new GameInstanceManifest(new GameInstanceID("instance")),
+                minecraftJar,
+                "forge-test",
+                installer) {
+            @Override
+            protected void updateProgressImmediately(double progress) {
+                // Avoid JavaFX toolkit initialization in this isolated processor test.
+            }
+        };
+
+        var executor = task.executor();
+        assertTrue(executor.test(), () -> String.valueOf(executor.getException()));
+        assertTrue(Files.isRegularFile(minecraftJar));
+    }
+
     /// Legacy verification fixes the captured instance jar rather than a newer same-id snapshot.
     @Test
     public void testVerificationFixKeepsCapturedInstance(@TempDir Path tempDirectory) throws IOException {
@@ -335,6 +379,44 @@ public final class DefaultGameInstanceTest {
             output.write(1);
             output.closeEntry();
         }
+    }
+
+    /// Writes a Forge installer fixture whose processor output is keyed by
+    /// `{MINECRAFT_VERSION}`.
+    ///
+    /// @param installer       the installer JAR path
+    /// @param minecraftVersion the value stored in the install profile's `minecraft` field
+    /// @param outputSha1      expected checksum for the processor output
+    private static void writeForgeProcessorFixture(
+            Path installer,
+            String minecraftVersion,
+            String outputSha1) throws IOException {
+        Map<String, Object> profile = Map.of(
+                "spec", 1,
+                "minecraft", minecraftVersion,
+                "json", "version.json",
+                "version", "forge-test",
+                "libraries", List.of(),
+                "processors", List.of(Map.of(
+                        "jar", "example:processor:1.0",
+                        "outputs", Map.of("{MINECRAFT_VERSION}", outputSha1))));
+
+        try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(installer))) {
+            writeZipEntry(output, "install_profile.json", JsonUtils.GSON.toJson(profile));
+            writeZipEntry(output, "version.json", "{\"id\":\"forge-test\",\"libraries\":[]}");
+        }
+    }
+
+    /// Writes one UTF-8 text entry to a ZIP stream.
+    ///
+    /// @param output  the destination ZIP stream
+    /// @param name    the entry name
+    /// @param content the entry content
+    private static void writeZipEntry(ZipOutputStream output, String name, String content)
+            throws IOException {
+        output.putNextEntry(new ZipEntry(name));
+        output.write(content.getBytes(StandardCharsets.UTF_8));
+        output.closeEntry();
     }
 
     /// Returns whether a zip contains an entry with the given name.

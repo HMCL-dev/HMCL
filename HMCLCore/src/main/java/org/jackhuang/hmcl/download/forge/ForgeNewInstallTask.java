@@ -421,7 +421,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
 
         vars.put("SIDE", "client");
         vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(minecraftJar));
-        vars.put("MINECRAFT_VERSION", FileUtils.getAbsolutePath(minecraftJar));
+        vars.put("MINECRAFT_VERSION", profile.getMinecraft());
         vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
         vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
