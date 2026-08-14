@@ -93,6 +93,27 @@ public final class MurmurHash2 {
         return new Hash32Checksum(length, seed);
     }
 
+
+    /// Creates a streaming MurmurHash2 32-bit checksum for exactly `length` bytes.
+    ///
+    /// The length is incorporated into the initial hash state using its low 32 bits. Calls to
+    /// [Checksum#update(int)] and [Checksum#update(byte[], int, int)] may divide the input at
+    /// arbitrary byte boundaries. [Checksum#getValue()] returns the hash as an unsigned 32-bit
+    /// value represented by a `long`, and does not change the checksum state.
+    ///
+    /// The returned checksum verifies the number of supplied bytes when `getValue()` is called.
+    /// If too few bytes have been supplied, the caller may continue updating the checksum and call
+    /// `getValue()` again. Once too many bytes have been supplied, [Checksum#reset()] must be called
+    /// before a value can be obtained. Resetting retains the configured length and seed. The
+    /// returned checksum is mutable and is not safe for concurrent use.
+    ///
+    /// @param length the exact number of input bytes
+    /// @return a new checksum initialized with the specified length and seed
+    /// @throws IllegalArgumentException if `length` is negative
+    public static Checksum hash32(final long length) {
+       return hash32(length, 0x9747b28c);
+    }
+
     /// Computes a MurmurHash2 32-bit value from updates whose total length is known in advance.
     private static final class Hash32Checksum implements Checksum {
         /// The exact number of bytes required before the hash can be obtained.

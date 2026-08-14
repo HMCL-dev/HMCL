@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.MurmurHash2;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -33,15 +34,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.Checksum;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -205,62 +209,58 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     /// Calculates the CurseForge fingerprint without retaining the filtered file in memory.
     static long calculateFingerprint(Path file) throws IOException {
-        byte[] buffer = new byte[8192];
-        long filteredLength = 0;
 
-        try (InputStream stream = Files.newInputStream(file)) {
-            int len;
-            while ((len = stream.read(buffer)) != -1) {
+
+        try (SeekableByteChannel channel = Files.newByteChannel(file, StandardOpenOption.READ)) {
+            long startPosition = channel.position();
+
+            byte[] bufferArray = new byte[1024 * 1024];
+            ByteBuffer buffer = ByteBuffer.wrap(bufferArray);
+
+            long filteredLength = 0;
+            while (channel.read(buffer) > 0) {
+                int len = buffer.position();
                 for (int i = 0; i < len; i++) {
-                    byte b = buffer[i];
+                    byte b = bufferArray[i];
                     if (b != 0x9 && b != 0xa && b != 0xd && b != 0x20) {
                         filteredLength++;
                     }
                 }
+                buffer.clear();
             }
-        }
 
-        final int multiplier = 0x5bd1e995;
-        int hash = 1 ^ (int) filteredLength;
-        int block = 0;
-        int blockSize = 0;
+            channel.position(startPosition);
 
-        try (InputStream stream = Files.newInputStream(file)) {
-            int len;
-            while ((len = stream.read(buffer)) != -1) {
-                for (int i = 0; i < len; i++) {
-                    byte b = buffer[i];
+            Checksum hasher = MurmurHash2.hash32(filteredLength);
+
+            while (channel.read(buffer) > 0) {
+                int len = buffer.position();
+
+                int pos = 0;
+                while (pos < len) {
+                    byte b = bufferArray[pos];
                     if (b == 0x9 || b == 0xa || b == 0xd || b == 0x20) {
-                        continue;
+                        break;
                     }
+                    pos++;
+                }
 
-                    block |= (b & 0xff) << (blockSize * 8);
-                    blockSize++;
-                    if (blockSize == 4) {
-                        int mixed = block;
-                        mixed *= multiplier;
-                        mixed ^= mixed >>> 24;
-                        mixed *= multiplier;
-                        hash *= multiplier;
-                        hash ^= mixed;
-
-                        block = 0;
-                        blockSize = 0;
+                if (pos < len) {
+                    int pos2 = pos + 1;
+                    while (pos2 < len) {
+                        byte b = bufferArray[pos2];
+                        if (b != 0x9 && b != 0xa && b != 0xd && b != 0x20) {
+                            bufferArray[pos++] = b;
+                        }
+                        pos2++;
                     }
                 }
+
+                hasher.update(bufferArray, 0, pos);
+                buffer.clear();
             }
+            return hasher.getValue();
         }
-
-        if (blockSize > 0) {
-            hash ^= block;
-            hash *= multiplier;
-        }
-
-        hash ^= hash >>> 13;
-        hash *= multiplier;
-        hash ^= hash >>> 15;
-
-        return Integer.toUnsignedLong(hash);
     }
 
     /// Finds the remote CurseForge version matching a local file.
@@ -354,7 +354,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 case SECTION_ADDONS -> "mc-addons";
                 case SECTION_CUSTOMIZATION -> "customization";
                 case SECTION_SHADER -> "shaders";
-                default -> throw new IllegalArgumentException("Unsupported CurseForge class id [%d]".formatted(classId));
+                default ->
+                        throw new IllegalArgumentException("Unsupported CurseForge class id [%d]".formatted(classId));
             };
             return "%s/minecraft/%s/%s/files/%s".formatted(BASE, clazz, addon.slug(), version.versionId());
         } finally {
