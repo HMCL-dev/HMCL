@@ -209,8 +209,6 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     /// Calculates the CurseForge fingerprint without retaining the filtered file in memory.
     static long calculateFingerprint(Path file) throws IOException {
-
-
         try (SeekableByteChannel channel = Files.newByteChannel(file, StandardOpenOption.READ)) {
             long startPosition = channel.position();
 
@@ -231,8 +229,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
             channel.position(startPosition);
 
-            Checksum hasher = MurmurHash2.hash32(filteredLength);
-
+            Checksum hasher = MurmurHash2.hash32(filteredLength, 1);
             while (channel.read(buffer) > 0) {
                 int len = buffer.position();
 
@@ -260,6 +257,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 buffer.clear();
             }
             return hasher.getValue();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new IOException(e);
         }
     }
 
