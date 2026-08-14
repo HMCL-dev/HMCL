@@ -121,7 +121,9 @@ public final class CurseCompletionTask extends Task<Void> {
                 manifest.files().parallelStream()
                         .map(file -> {
                             updateProgress(finished.incrementAndGet(), manifest.files().size());
-                            if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
+                            boolean mandatory = StringUtils.isBlank(file.fileName()) || file.url() == null;
+                            boolean needHashes = file.hashes() == null || file.hashes().isEmpty();
+                            if (mandatory || needHashes) {
                                 RemoteAddon.File remoteFile = null;
                                 Exception lastException = null;
                                 for (int attempt = 0; attempt < 3; attempt++) {
@@ -130,7 +132,9 @@ public final class CurseCompletionTask extends Task<Void> {
                                         break;
                                     } catch (FileNotFoundException fof) {
                                         LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.projectID() + ", " + file.fileID(), fof);
-                                        notFound.set(true);
+                                        if (mandatory) {
+                                            notFound.set(true);
+                                        }
                                         return file;
                                     } catch (IOException | JsonParseException e) {
                                         lastException = e;
@@ -147,8 +151,10 @@ public final class CurseCompletionTask extends Task<Void> {
                                 if (remoteFile != null) {
                                     return file.withFileName(remoteFile.filename()).withURL(remoteFile.url()).withHashes(remoteFile.hashes());
                                 } else {
-                                    LOG.warning("Unable to fetch the file name projectID=" + file.projectID() + ", fileID=" + file.fileID(), lastException);
-                                    allNameKnown.set(false);
+                                    LOG.warning("Unable to fetch the file info projectID=" + file.projectID() + ", fileID=" + file.fileID(), lastException);
+                                    if (mandatory) {
+                                        allNameKnown.set(false);
+                                    }
                                     return file;
                                 }
                             } else {
