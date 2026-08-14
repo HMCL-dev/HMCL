@@ -93,7 +93,6 @@ public final class MurmurHash2 {
         return new Hash32Checksum(length, seed);
     }
 
-
     /// Computes a MurmurHash2 32-bit value from updates whose total length is known in advance.
     private static final class Hash32Checksum implements Checksum {
         /// The exact number of bytes required before the hash can be obtained.
