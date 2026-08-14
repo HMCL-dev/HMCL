@@ -104,11 +104,11 @@ public final class MurmurHash2 {
         /// The hash state after all complete four-byte blocks received so far.
         private int hash;
 
-        /// The number of bytes received since construction or the last reset.
+        /// The number of bytes counted before [#inputLengthExceeded] becomes `true`.
         private long inputLength;
 
-        /// Whether the number of received bytes has exceeded the range of a `long`.
-        private boolean inputLengthOverflow;
+        /// Whether more than [#expectedLength] bytes have been received.
+        private boolean inputLengthExceeded;
 
         /// Up to three unprocessed bytes packed in little-endian order.
         private int tail;
@@ -169,9 +169,9 @@ public final class MurmurHash2 {
         /// length
         @Override
         public long getValue() {
-            if (inputLengthOverflow) {
+            if (inputLengthExceeded) {
                 throw new IllegalStateException(
-                        "Expected " + expectedLength + " bytes, but received more than " + Long.MAX_VALUE);
+                        "Expected " + expectedLength + " bytes, but received more than expected");
             }
             if (inputLength != expectedLength) {
                 throw new IllegalStateException(
@@ -195,7 +195,7 @@ public final class MurmurHash2 {
         public void reset() {
             hash = initialHash;
             inputLength = 0;
-            inputLengthOverflow = false;
+            inputLengthExceeded = false;
             tail = 0;
             tailLength = 0;
         }
@@ -204,11 +204,11 @@ public final class MurmurHash2 {
         ///
         /// @param length the non-negative number of additional bytes
         private void addInputLength(int length) {
-            if (inputLengthOverflow) {
+            if (inputLengthExceeded) {
                 return;
             }
-            if (inputLength > Long.MAX_VALUE - length) {
-                inputLengthOverflow = true;
+            if (length > expectedLength - inputLength) {
+                inputLengthExceeded = true;
             } else {
                 inputLength += length;
             }
