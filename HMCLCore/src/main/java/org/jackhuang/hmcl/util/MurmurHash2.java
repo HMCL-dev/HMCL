@@ -17,7 +17,11 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jetbrains.annotations.NotNullByDefault;
+
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+import java.util.zip.Checksum;
 
 /**
  * Implementation of the MurmurHash2 32-bit and 64-bit hash functions.
@@ -48,6 +52,7 @@ import java.nio.charset.StandardCharsets;
  *   Original MurmurHash2 c++ code</a>
  * @since 1.13
  */
+@NotNullByDefault
 public final class MurmurHash2 {
 
     // Constants for 32-bit variant
@@ -62,6 +67,177 @@ public final class MurmurHash2 {
      * No instance methods.
      */
     private MurmurHash2() {
+    }
+
+    /// Creates a streaming MurmurHash2 32-bit checksum for exactly `length` bytes.
+    ///
+    /// The length is incorporated into the initial hash state using its low 32 bits. Calls to
+    /// [Checksum#update(int)] and [Checksum#update(byte[], int, int)] may divide the input at
+    /// arbitrary byte boundaries. [Checksum#getValue()] returns the hash as an unsigned 32-bit
+    /// value represented by a `long`, and does not change the checksum state.
+    ///
+    /// The returned checksum verifies the number of supplied bytes when `getValue()` is called.
+    /// If too few bytes have been supplied, the caller may continue updating the checksum and call
+    /// `getValue()` again. Once too many bytes have been supplied, [Checksum#reset()] must be called
+    /// before a value can be obtained. Resetting retains the configured length and seed. The
+    /// returned checksum is mutable and is not safe for concurrent use.
+    ///
+    /// @param length the exact number of input bytes
+    /// @param seed the initial seed value
+    /// @return a new checksum initialized with the specified length and seed
+    /// @throws IllegalArgumentException if `length` is negative
+    public static Checksum hash32(final long length, final int seed) {
+        if (length < 0) {
+            throw new IllegalArgumentException("length must not be negative: " + length);
+        }
+        return new Hash32Checksum(length, seed);
+    }
+
+    /// Computes a MurmurHash2 32-bit value from updates whose total length is known in advance.
+    private static final class Hash32Checksum implements Checksum {
+        /// The exact number of bytes required before the hash can be obtained.
+        private final long expectedLength;
+
+        /// The hash state restored by [#reset()].
+        private final int initialHash;
+
+        /// The hash state after all complete four-byte blocks received so far.
+        private int hash;
+
+        /// The number of bytes received since construction or the last reset.
+        private long inputLength;
+
+        /// Whether the number of received bytes has exceeded the range of a `long`.
+        private boolean inputLengthOverflow;
+
+        /// Up to three unprocessed bytes packed in little-endian order.
+        private int tail;
+
+        /// The number of bytes currently stored in [#tail].
+        private int tailLength;
+
+        /// Creates a checksum with a precomputed initial hash state.
+        ///
+        /// @param expectedLength the exact number of input bytes
+        /// @param seed the initial seed value
+        private Hash32Checksum(long expectedLength, int seed) {
+            this.expectedLength = expectedLength;
+            this.initialHash = seed ^ (int) expectedLength;
+            this.hash = initialHash;
+        }
+
+        /// Incorporates the low eight bits of `value` into this checksum.
+        ///
+        /// @param value the value whose low eight bits are incorporated
+        @Override
+        public void update(int value) {
+            addInputLength(1);
+            appendByte(value);
+        }
+
+        /// Incorporates `length` bytes beginning at `offset` into this checksum.
+        ///
+        /// @param data the array containing the input bytes
+        /// @param offset the offset of the first input byte
+        /// @param length the number of bytes to incorporate
+        @Override
+        public void update(byte[] data, int offset, int length) {
+            Objects.checkFromIndexSize(offset, length, data.length);
+            addInputLength(length);
+
+            int index = offset;
+            final int end = offset + length;
+
+            while (tailLength != 0 && index < end) {
+                appendByte(data[index++]);
+            }
+
+            while (index <= end - Integer.BYTES) {
+                mixBlock(ByteArray.getIntLE(data, index));
+                index += Integer.BYTES;
+            }
+
+            while (index < end) {
+                appendByte(data[index++]);
+            }
+        }
+
+        /// Returns the MurmurHash2 value after verifying the exact input length.
+        ///
+        /// @return the unsigned 32-bit hash value represented by a `long`
+        /// @throws IllegalStateException if the number of supplied bytes differs from the expected
+        /// length
+        @Override
+        public long getValue() {
+            if (inputLengthOverflow) {
+                throw new IllegalStateException(
+                        "Expected " + expectedLength + " bytes, but received more than " + Long.MAX_VALUE);
+            }
+            if (inputLength != expectedLength) {
+                throw new IllegalStateException(
+                        "Expected " + expectedLength + " bytes, but received " + inputLength);
+            }
+
+            int result = hash;
+            if (tailLength != 0) {
+                result ^= tail;
+                result *= M32;
+            }
+
+            result ^= result >>> 13;
+            result *= M32;
+            result ^= result >>> 15;
+            return Integer.toUnsignedLong(result);
+        }
+
+        /// Restores this checksum to its initial state while retaining its expected length and seed.
+        @Override
+        public void reset() {
+            hash = initialHash;
+            inputLength = 0;
+            inputLengthOverflow = false;
+            tail = 0;
+            tailLength = 0;
+        }
+
+        /// Records that `length` more input bytes have been supplied.
+        ///
+        /// @param length the non-negative number of additional bytes
+        private void addInputLength(int length) {
+            if (inputLengthOverflow) {
+                return;
+            }
+            if (inputLength > Long.MAX_VALUE - length) {
+                inputLengthOverflow = true;
+            } else {
+                inputLength += length;
+            }
+        }
+
+        /// Buffers one byte and mixes the resulting block when four bytes are available.
+        ///
+        /// @param value the value whose low eight bits are appended
+        private void appendByte(int value) {
+            tail |= (value & 0xff) << (tailLength * Byte.SIZE);
+            tailLength++;
+            if (tailLength == Integer.BYTES) {
+                mixBlock(tail);
+                tail = 0;
+                tailLength = 0;
+            }
+        }
+
+        /// Mixes one little-endian four-byte block into the current hash state.
+        ///
+        /// @param block the block to mix
+        private void mixBlock(int block) {
+            int mixedBlock = block;
+            mixedBlock *= M32;
+            mixedBlock ^= mixedBlock >>> R32;
+            mixedBlock *= M32;
+            hash *= M32;
+            hash ^= mixedBlock;
+        }
     }
 
     /**
