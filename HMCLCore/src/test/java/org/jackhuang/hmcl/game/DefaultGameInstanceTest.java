@@ -200,7 +200,7 @@ public final class DefaultGameInstanceTest {
 
     /// A game download with an explicit destination does not follow a later repository snapshot.
     @Test
-    public void testGameDownloadKeepsExplicitDestination(@TempDir Path tempDirectory) {
+    public void testGameDownloadKeepsExplicitDestination(@TempDir Path tempDirectory) throws IOException {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
@@ -214,6 +214,27 @@ public final class DefaultGameInstanceTest {
 
         FileDownloadTask download = (FileDownloadTask) task.getDependencies().iterator().next();
         assertEquals(destination, download.getPath());
+    }
+
+    /// A versioned game download uses shared cache storage instead of the instance tree.
+    @Test
+    public void testGameDownloadUsesSharedDestination(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        Path cacheDirectory = tempDirectory.resolve("cache");
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(cacheDirectory));
+        GameInstanceManifest manifest = new GameInstanceManifest(new GameInstanceID("instance"));
+
+        GameDownloadTask task = new GameDownloadTask(dependencyManager, "1.21.1", manifest);
+        task.execute();
+
+        FileDownloadTask download = (FileDownloadTask) task.getDependencies().iterator().next();
+        assertEquals(
+                cacheDirectory.resolve("jars/1.21.1.jar").toAbsolutePath().normalize(),
+                download.getPath());
+        assertFalse(download.getPath().startsWith(repository.getLayout().getInstanceRoot(manifest.id())));
     }
 
     /// Legacy verification fixes the captured instance jar rather than a newer same-id snapshot.

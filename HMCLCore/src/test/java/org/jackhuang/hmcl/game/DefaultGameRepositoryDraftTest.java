@@ -52,12 +52,14 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceID id = new GameInstanceID("instance");
         GameInstanceManifest manifest = new GameInstanceManifest(id).withMainClass("example.Main");
         Path manifestFile = repository.getLayout().getInstanceJson(id);
+        Path instanceRoot = repository.getLayout().getInstanceRoot(id);
         Path draftStorage = tempDirectory.resolve(".hmcl").resolve("repository-drafts");
 
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             draft.put(manifest);
 
             assertFalse(repository.hasInstance(id));
+            assertFalse(Files.exists(instanceRoot));
             assertFalse(Files.exists(manifestFile));
             assertFalse(Files.exists(draftStorage));
 
@@ -72,6 +74,31 @@ public final class DefaultGameRepositoryDraftTest {
                 GameInstanceManifest.class);
         assertEquals(id, stored.id());
         assertEquals("example.Main", stored.mainClass());
+    }
+
+    /// Materializes a completed client JAR only while committing the new instance.
+    @Test
+    public void testCommitMaterializesPrimaryJar(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest manifest = new GameInstanceManifest(id);
+        Path source = tempDirectory.resolve("cache/client.jar");
+        Files.createDirectories(source.getParent());
+        Files.writeString(source, "client");
+        Path target = repository.getLayout().getInstanceJarFile(id);
+
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            draft.put(manifest);
+            draft.putPrimaryJar(id, source);
+
+            assertFalse(Files.exists(repository.getLayout().getInstanceRoot(id)));
+            assertFalse(Files.exists(target));
+
+            draft.commit();
+        }
+
+        assertEquals("client", Files.readString(target));
+        assertEquals("client", Files.readString(source));
     }
 
     /// Aborting removes files below a root that was first created by the draft.
@@ -224,6 +251,30 @@ public final class DefaultGameRepositoryDraftTest {
         try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
             assertTrue(ignored.isOpen());
         }
+    }
+
+    /// Restores an existing primary JAR when snapshot publication fails after replacement.
+    @Test
+    public void testCommitFailureRollsBackPrimaryJar(@TempDir Path tempDirectory) throws IOException {
+        FailingRepository repository = new FailingRepository(tempDirectory.resolve("game"));
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest original = new GameInstanceManifest(id).withMainClass("original.Main");
+        repository.save(original);
+        Path target = repository.getLayout().getInstanceJarFile(id);
+        Files.writeString(target, "original");
+        Path source = tempDirectory.resolve("cache/replacement.jar");
+        Files.createDirectories(source.getParent());
+        Files.writeString(source, "replacement");
+        repository.failDraftPublish = true;
+
+        DefaultGameRepositoryDraft draft = repository.openDraft();
+        draft.put(original.withMainClass("updated.Main"));
+        draft.putPrimaryJar(id, source);
+        assertThrows(IllegalStateException.class, draft::commit);
+
+        assertEquals("original", Files.readString(target));
+        assertEquals("replacement", Files.readString(source));
+        assertEquals(GameRepositoryDraft.State.FAILED, draft.getState());
     }
 
     /// Runs an asynchronous update using the published instance as immutable context.

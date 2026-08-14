@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
@@ -33,8 +34,8 @@ import java.util.concurrent.atomic.AtomicReference;
 /// Builds a new game instance in an exclusive [GameRepositoryDraft], installs its components, and
 /// publishes the completed instance once.
 ///
-/// Shared libraries, assets, and download caches may remain after failure. The draft removes the
-/// instance directory that it created and never publishes an incomplete manifest.
+/// Shared libraries, assets, and download caches may remain after failure. The instance manifest
+/// and primary JAR enter the instance tree only when the draft commits.
 @NotNullByDefault
 public class DefaultGameBuilder extends GameBuilder {
 
@@ -87,9 +88,7 @@ public class DefaultGameBuilder extends GameBuilder {
         return Task.supplyAsync(() -> {
                     GameRepositoryDraft draft = repository.openDraft();
                     activeDraft.set(draft);
-                    GameInstanceManifest manifest = new GameInstanceManifest(name);
-                    draft.put(manifest);
-                    return manifest;
+                    return new GameInstanceManifest(name);
                 })
                 .thenComposeAsync(initialManifest -> {
                     Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> initialManifest);
@@ -107,14 +106,17 @@ public class DefaultGameBuilder extends GameBuilder {
                                         name, working, gameVersion, remoteVersion));
                     }
 
-                    return libraryTask.thenApplyAsync(manifest -> {
-                        GameRepositoryDraft draft = activeDraft.get();
-                        if (draft == null) {
-                            throw new IllegalStateException("Game repository draft is unavailable");
-                        }
-                        draft.put(manifest);
-                        return draft.commit().getInstance(name);
-                    });
+                    return libraryTask.thenComposeAsync(manifest ->
+                            new GameDownloadTask(dependencyManager, gameVersion, manifest)
+                                    .thenApplyAsync(minecraftJar -> {
+                                        GameRepositoryDraft draft = activeDraft.get();
+                                        if (draft == null) {
+                                            throw new IllegalStateException("Game repository draft is unavailable");
+                                        }
+                                        draft.put(manifest);
+                                        draft.putPrimaryJar(name, minecraftJar);
+                                        return draft.commit().getInstance(name);
+                                    }));
                 })
                 .whenComplete(exception -> {
                     GameRepositoryDraft draft = activeDraft.getAndSet(null);

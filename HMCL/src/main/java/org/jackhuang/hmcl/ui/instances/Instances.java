@@ -191,18 +191,22 @@ public final class Instances {
             GameInstanceID instanceId = new GameInstanceID(result);
 
             DefaultDependencyManager dependencyManager = repository.getDependency();
+            String gameVersion = manifest.id().id();
             GameInstanceManifest newVersion = manifest.withId(instanceId).withJar(instanceId);
+            GameDownloadTask gameDownloadTask = new GameDownloadTask(
+                    dependencyManager,
+                    gameVersion,
+                    newVersion);
             AtomicReference<GameRepositoryDraft> activeDraft = new AtomicReference<>();
 
             Controllers.taskDialog(
                     Task.supplyAsync(() -> {
                                 GameRepositoryDraft draft = repository.openDraft();
                                 activeDraft.set(draft);
-                                draft.put(newVersion);
                                 return draft;
                             })
                             .thenComposeAsync(draft -> Task.allOf(
-                                    new GameDownloadTask(dependencyManager, null, newVersion),
+                                    gameDownloadTask,
                                     Task.allOf(
                                             new GameAssetDownloadTask(
                                                     dependencyManager,
@@ -218,6 +222,8 @@ public final class Instances {
                                 if (draft == null) {
                                     throw new IllegalStateException("Game repository draft is unavailable");
                                 }
+                                draft.put(newVersion);
+                                draft.putPrimaryJar(instanceId, gameDownloadTask.getResult());
                                 draft.commit();
                             })
                             .whenComplete(exception -> {

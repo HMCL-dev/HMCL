@@ -173,6 +173,8 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository gameRepository;
     private final GameInstanceManifest manifest;
+    /// Vanilla client JAR used as processor input.
+    private final Path minecraftJar;
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
@@ -185,10 +187,23 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
     private Path tempDir;
     private AtomicInteger processorDoneCount = new AtomicInteger(0);
 
-    NeoForgeOldInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer) {
+    /// Creates a legacy NeoForge processor installation task.
+    ///
+    /// @param dependencyManager repository-scoped download services
+    /// @param manifest          working manifest receiving the NeoForge patch
+    /// @param minecraftJar      vanilla client JAR for the target Minecraft version
+    /// @param selfVersion       NeoForge version recorded in the returned patch
+    /// @param installer         NeoForge installer JAR
+    NeoForgeOldInstallTask(
+            DefaultDependencyManager dependencyManager,
+            GameInstanceManifest manifest,
+            Path minecraftJar,
+            String selfVersion,
+            Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
         this.manifest = manifest;
+        this.minecraftJar = minecraftJar;
         this.installer = installer;
         this.selfVersion = selfVersion;
 
@@ -364,6 +379,9 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void execute() throws Exception {
+        if (!Files.isRegularFile(minecraftJar)) {
+            throw new FileNotFoundException("Minecraft client JAR not found: " + minecraftJar);
+        }
         tempDir = Files.createTempDirectory("neoforge_installer");
 
         Map<String, String> vars = new HashMap<>();
@@ -386,8 +404,8 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
         }
 
         vars.put("SIDE", "client");
-        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(gameRepository.getInstanceJar(manifest)));
-        vars.put("MINECRAFT_VERSION", FileUtils.getAbsolutePath(gameRepository.getInstanceJar(manifest)));
+        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(minecraftJar));
+        vars.put("MINECRAFT_VERSION", FileUtils.getAbsolutePath(minecraftJar));
         vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
         vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));

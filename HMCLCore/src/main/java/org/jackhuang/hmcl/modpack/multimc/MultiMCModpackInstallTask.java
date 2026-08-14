@@ -304,9 +304,17 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                     Objects.equals(gameVersion, mainJarArtifact.getVersion()) &&
                     "client".equals(mainJarArtifact.getClassifier())
             ) {
-                dependencies.add(new GameDownloadTask(dependencyManager, gameVersion, instanceManifest));
+                dependencies.add(new GameDownloadTask(
+                        dependencyManager,
+                        gameVersion,
+                        instanceManifest,
+                        repository.getInstanceJar(instanceManifest)));
             } else {
-                dependencies.add(new GameDownloadTask(dependencyManager, null, instanceManifest));
+                dependencies.add(new GameDownloadTask(
+                        dependencyManager,
+                        null,
+                        instanceManifest,
+                        repository.getInstanceJar(instanceManifest)));
             }
         }
 

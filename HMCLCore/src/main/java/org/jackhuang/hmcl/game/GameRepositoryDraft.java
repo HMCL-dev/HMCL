@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 /// Provides the exclusive write session for a game repository.
 ///
@@ -29,8 +30,9 @@ import java.io.IOException;
 /// during commit.
 ///
 /// A repository permits at most one open draft. Repository refreshes, layout changes, and other
-/// writes are rejected while the draft is open. Aborting a draft removes instance directories that
-/// were first created by that draft. Shared library, asset, and download caches are not reverted.
+/// writes are rejected while the draft is open. Draft mutation methods do not materialize new
+/// instance directories; [#commit()] creates missing roots as needed. Shared library, asset, and
+/// download caches are not reverted.
 /// Drafts are not thread-safe; callers must serialize all operations on a draft.
 ///
 /// @see GameRepository#openDraft()
@@ -79,13 +81,27 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// Adds or replaces a stored manifest in the unpublished draft state.
     ///
     /// The manifest is retained in memory until commit. This operation does not serialize the
-    /// manifest or create or expose a [GameInstance]. For a new id, the draft claims its instance
-    /// root and may initialize repository-specific files there.
+    /// manifest or create or expose a [GameInstance]. For a new id, the draft reserves its instance
+    /// root but does not create it before commit.
     ///
     /// @param manifest the persistent instance manifest
-    /// @throws IOException           if a new instance root cannot be claimed or initialized
+    /// @throws IOException           if a new instance root cannot be reserved
     /// @throws IllegalStateException if the draft is not open
     void put(GameInstanceManifest manifest) throws IOException;
+
+    /// Records a primary client JAR to copy into an instance when this draft commits.
+    ///
+    /// The source remains outside the instance tree and is not modified by this draft. It must stay
+    /// available and unchanged until commit. No instance directory or target JAR is created by this
+    /// operation.
+    ///
+    /// @param instanceId the instance receiving its own primary JAR
+    /// @param source      the completed source JAR
+    /// @throws IOException                 if the source is not a regular file or its target escapes
+    ///                                     the instance root
+    /// @throws NoSuchGameInstanceException if the draft does not contain `instanceId`
+    /// @throws IllegalStateException       if the draft is not open
+    void putPrimaryJar(GameInstanceID instanceId, Path source) throws IOException;
 
     /// Removes an instance from the unpublished draft state.
     ///
@@ -110,7 +126,8 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// @throws IllegalStateException       if the draft is not open
     void rename(GameInstanceID from, GameInstanceID to) throws IOException;
 
-    /// Writes modified manifest files, then publishes a new immutable snapshot.
+    /// Materializes reserved instance roots, writes recorded primary JARs and modified manifests,
+    /// then publishes a new immutable snapshot.
     ///
     /// After this method returns, [GameRepository#getInstance(GameInstanceID)] will resolve modified
     /// ids from the published index.
@@ -122,8 +139,9 @@ public interface GameRepositoryDraft extends AutoCloseable {
 
     /// Discards pending changes without publishing a new snapshot.
     ///
-    /// Removes instance directories created only by this draft. Global caches (libraries, assets)
-    /// are not reverted. This method is idempotent after a successful abort.
+    /// Removes files placed under roots reserved by this draft by other installation work. Global
+    /// caches (libraries, assets) are not reverted. This method is idempotent after a successful
+    /// abort.
     ///
     /// @throws IOException           if cleanup fails
     /// @throws IllegalStateException if the draft was already committed

@@ -30,6 +30,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -40,9 +41,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Default exclusive [GameRepositoryDraft] implementation.
 ///
 /// Manifest changes are retained in memory until commit. A successful commit writes the final
-/// manifests, applies removals and renames, and publishes one new immutable snapshot. Shared library
-/// and asset cache writes are outside the rollback boundary. Instances of this class are not
-/// thread-safe.
+/// manifests and primary JARs, applies removals and renames, and publishes one new immutable
+/// snapshot. Missing new-instance roots are created while committing. Shared library and asset
+/// cache writes are outside the rollback boundary. Instances of this class are not thread-safe.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
@@ -57,6 +58,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// Instance ids whose final manifests differ from the published snapshot.
     private final Set<GameInstanceID> modifiedIds = new TreeSet<>();
+
+    /// Completed primary JAR sources to copy into instance roots during commit.
+    private final Map<GameInstanceID, Path> primaryJarSources = new TreeMap<>();
 
     /// Instance ids whose root directories were absent before this draft first added them.
     private final Set<GameInstanceID> createdIds = new TreeSet<>();
@@ -114,6 +118,27 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
     /// {@inheritDoc}
     @Override
+    public void putPrimaryJar(GameInstanceID instanceId, Path source) throws IOException {
+        checkOpen();
+        if (!manifests.containsKey(instanceId)) {
+            throw new NoSuchGameInstanceException(instanceId);
+        }
+
+        Path normalizedSource = source.toAbsolutePath().normalize();
+        if (!Files.isRegularFile(normalizedSource)) {
+            throw new IOException("Primary JAR source is not a regular file: " + normalizedSource);
+        }
+
+        Path target = getPrimaryJarTarget(instanceId);
+        if (normalizedSource.equals(target)) {
+            primaryJarSources.remove(instanceId);
+        } else {
+            primaryJarSources.put(instanceId, normalizedSource);
+        }
+    }
+
+    /// {@inheritDoc}
+    @Override
     public void remove(GameInstanceID instanceId) {
         checkOpen();
         if (manifests.remove(instanceId) == null) {
@@ -121,6 +146,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         }
 
         modifiedIds.remove(instanceId);
+        primaryJarSources.remove(instanceId);
         removedIds.add(instanceId);
     }
 
@@ -155,6 +181,11 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         removedIds.remove(from);
         putManifest(renamedManifest, false);
 
+        @Nullable Path primaryJarSource = primaryJarSources.remove(from);
+        if (primaryJarSource != null) {
+            primaryJarSources.put(to, primaryJarSource);
+        }
+
         manifests.replaceAll((id, manifest) -> {
             if (!from.equals(manifest.inheritsFrom())) {
                 return manifest;
@@ -169,23 +200,26 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     ///
     /// @param manifest     the manifest to retain
     /// @param claimNewRoot whether a previously absent instance root should become draft-owned
-    /// @throws IOException if a new instance root cannot be claimed or initialized
+    /// @throws IOException if a new instance root cannot be reserved
     private void putManifest(
             GameInstanceManifest manifest,
             boolean claimNewRoot) throws IOException {
 
         GameInstanceID id = manifest.id();
-        if (claimNewRoot && !manifests.containsKey(id)) {
+        if (claimNewRoot
+                && !manifests.containsKey(id)
+                && baseSnapshot.get(id) == null
+                && !createdIds.contains(id)) {
             Path root = getValidatedInstanceRoot(id);
             if (!repository.mayClaimDraftInstanceRoot(id, root)) {
                 throw new FileAlreadyExistsException(root.toString(), null,
                         "An unregistered instance directory already exists");
             }
             createdIds.add(id);
-            repository.initializeDraftInstanceRoot(id, root);
         }
 
         manifests.put(id, manifest);
+        removedIds.remove(id);
         modifiedIds.add(id);
     }
 
@@ -198,26 +232,34 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
 
         List<RenameOperation> appliedRenames = new ArrayList<>();
         List<RemovedRoot> removedRoots = new ArrayList<>();
-        List<AppliedManifest> applied = new ArrayList<>();
+        List<AppliedFile> appliedFiles = new ArrayList<>();
         @Nullable Path rollbackDirectory = null;
         try {
             DefaultGameRepositorySnapshot committedSnapshot = buildCommittedSnapshot();
             for (RenameOperation rename : renames) {
                 applyRename(rename, appliedRenames);
             }
+            materializeCreatedInstanceRoots();
 
-            if (!removedIds.isEmpty() || !modifiedIds.isEmpty()) {
+            if (!removedIds.isEmpty() || !modifiedIds.isEmpty() || !primaryJarSources.isEmpty()) {
                 Path currentRollbackDirectory = createRollbackDirectory();
                 rollbackDirectory = currentRollbackDirectory;
                 for (GameInstanceID id : removedIds) {
                     removeInstanceRoot(id, currentRollbackDirectory, removedRoots);
+                }
+                for (Map.Entry<GameInstanceID, Path> entry : primaryJarSources.entrySet()) {
+                    applyPrimaryJar(
+                            entry.getKey(),
+                            entry.getValue(),
+                            currentRollbackDirectory,
+                            appliedFiles);
                 }
                 for (GameInstanceID id : modifiedIds) {
                     @Nullable GameInstanceManifest manifest = manifests.get(id);
                     if (manifest == null) {
                         throw new IllegalStateException("Modified manifest is missing: " + id);
                     }
-                    applyManifest(id, manifest, currentRollbackDirectory, applied);
+                    applyManifest(id, manifest, currentRollbackDirectory, appliedFiles);
                 }
             }
 
@@ -227,7 +269,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             cleanupRollbackDirectoryAfterCommit(rollbackDirectory);
             return committedSnapshot;
         } catch (IOException | RuntimeException e) {
-            IOException rollbackFailure = rollbackAppliedManifests(applied);
+            IOException rollbackFailure = rollbackAppliedFiles(appliedFiles);
             rollbackFailure = accumulateNullable(rollbackFailure, rollbackRemovedRoots(removedRoots));
             rollbackFailure = accumulateNullable(rollbackFailure, rollbackRenames(appliedRenames));
             state = GameRepositoryDraft.State.FAILED;
@@ -268,6 +310,20 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         }
         committedSnapshot.seal();
         return committedSnapshot;
+    }
+
+    /// Creates and initializes roots reserved for instances added by this draft.
+    ///
+    /// @throws IOException if a root or repository-specific initial data cannot be created
+    private void materializeCreatedInstanceRoots() throws IOException {
+        for (GameInstanceID id : createdIds) {
+            if (!manifests.containsKey(id)) {
+                continue;
+            }
+            Path root = getValidatedInstanceRoot(id);
+            Files.createDirectories(root);
+            repository.initializeDraftInstanceRoot(id, root);
+        }
     }
 
     /// {@inheritDoc}
@@ -314,6 +370,41 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         return (existing != null ? existing.getManifestFile() : baseSnapshot.getLayout().getInstanceJson(id))
                 .toAbsolutePath()
                 .normalize();
+    }
+
+    /// Returns and validates the permanent target for an instance's own primary JAR.
+    ///
+    /// Existing instances retain a non-conventional JAR path discovered during refresh. New and
+    /// renamed instances use the conventional path from the repository layout.
+    ///
+    /// @param id the instance id
+    /// @return the normalized primary JAR target
+    /// @throws IOException if the target escapes the instance root
+    private Path getPrimaryJarTarget(GameInstanceID id) throws IOException {
+        @Nullable DefaultGameInstance existing = baseSnapshot.get(id);
+        Path target = (existing != null
+                ? existing.getOwnJarFile()
+                : baseSnapshot.getLayout().getInstanceJarFile(id))
+                .toAbsolutePath()
+                .normalize();
+        validateInstanceFileTarget(id, target, "Primary JAR");
+        return target;
+    }
+
+    /// Verifies that a file target is a strict descendant of its instance root.
+    ///
+    /// @param id          the owning instance id
+    /// @param target      the normalized target path
+    /// @param description description used in an exception message
+    /// @throws IOException if the target is outside the instance root
+    private void validateInstanceFileTarget(
+            GameInstanceID id,
+            Path target,
+            String description) throws IOException {
+        Path expectedRoot = getValidatedInstanceRoot(id);
+        if (target.equals(expectedRoot) || !target.startsWith(expectedRoot)) {
+            throw new IOException(description + " path escapes instance root: " + target);
+        }
     }
 
     /// Creates a directory for rollback data produced by the current commit attempt.
@@ -386,41 +477,79 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             GameInstanceID id,
             GameInstanceManifest manifest,
             Path rollbackDirectory,
-            List<AppliedManifest> applied) throws IOException {
+            List<AppliedFile> applied) throws IOException {
         String json = JsonUtils.GSON.toJson(manifest);
         Path target = getManifestTarget(id);
-        Path expectedRoot = getValidatedInstanceRoot(id);
-        if (target.equals(expectedRoot) || !target.startsWith(expectedRoot)) {
-            throw new IOException("Manifest path escapes instance root: " + target);
-        }
+        validateInstanceFileTarget(id, target, "Manifest");
 
         Files.createDirectories(target.getParent());
-        @Nullable Path backup = null;
-        if (Files.exists(target)) {
-            Path backups = rollbackDirectory.resolve("backups");
-            Files.createDirectories(backups);
-            backup = Files.createTempFile(backups, "manifest-", ".json");
-            Files.delete(backup);
-            moveReplacing(target, backup);
-        }
-
-        applied.add(new AppliedManifest(target, backup));
+        @Nullable Path backup = backupFile(target, rollbackDirectory, "manifest-", ".json");
+        applied.add(new AppliedFile(target, backup));
         Files.writeString(target, json);
     }
 
-    /// Restores manifests changed by an unsuccessful commit in reverse application order.
+    /// Copies a completed primary JAR into its permanent instance location while retaining a
+    /// rollback copy of an existing target.
     ///
-    /// @param applied applied manifest records
+    /// @param id                the instance receiving the JAR
+    /// @param source            the completed source JAR
+    /// @param rollbackDirectory the directory holding rollback files
+    /// @param applied           rollback records for files already changed
+    /// @throws IOException if the source or target cannot be read or written
+    private void applyPrimaryJar(
+            GameInstanceID id,
+            Path source,
+            Path rollbackDirectory,
+            List<AppliedFile> applied) throws IOException {
+        if (!Files.isRegularFile(source)) {
+            throw new IOException("Primary JAR source is not a regular file: " + source);
+        }
+
+        Path target = getPrimaryJarTarget(id);
+        Files.createDirectories(target.getParent());
+        @Nullable Path backup = backupFile(target, rollbackDirectory, "jar-", ".jar");
+        applied.add(new AppliedFile(target, backup));
+        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    /// Moves an existing target into rollback storage.
+    ///
+    /// @param target            the file about to be replaced
+    /// @param rollbackDirectory the directory holding rollback files
+    /// @param prefix            the backup file prefix
+    /// @param suffix            the backup file suffix
+    /// @return the backup path, or `null` when the target did not exist
+    /// @throws IOException if the target cannot be backed up
+    private static @Nullable Path backupFile(
+            Path target,
+            Path rollbackDirectory,
+            String prefix,
+            String suffix) throws IOException {
+        if (Files.notExists(target)) {
+            return null;
+        }
+
+        Path backups = rollbackDirectory.resolve("backups");
+        Files.createDirectories(backups);
+        Path backup = Files.createTempFile(backups, prefix, suffix);
+        Files.delete(backup);
+        moveReplacing(target, backup);
+        return backup;
+    }
+
+    /// Restores files changed by an unsuccessful commit in reverse application order.
+    ///
+    /// @param applied applied file records
     /// @return the aggregated rollback failure, or `null` when rollback succeeded
-    private static @Nullable IOException rollbackAppliedManifests(List<AppliedManifest> applied) {
+    private static @Nullable IOException rollbackAppliedFiles(List<AppliedFile> applied) {
         @Nullable IOException failure = null;
-        List<AppliedManifest> reversed = new ArrayList<>(applied);
+        List<AppliedFile> reversed = new ArrayList<>(applied);
         Collections.reverse(reversed);
-        for (AppliedManifest manifest : reversed) {
+        for (AppliedFile file : reversed) {
             try {
-                Files.deleteIfExists(manifest.targetFile());
-                if (manifest.backupFile() != null) {
-                    moveReplacing(manifest.backupFile(), manifest.targetFile());
+                Files.deleteIfExists(file.targetFile());
+                if (file.backupFile() != null) {
+                    moveReplacing(file.backupFile(), file.targetFile());
                 }
             } catch (IOException e) {
                 failure = accumulate(failure, e);
@@ -587,15 +716,15 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// @throws IllegalStateException if the draft is not open
     private void checkOpen() {
         if (state != GameRepositoryDraft.State.OPEN) {
-            throw new IllegalStateException("Draft is " + state.name().toLowerCase());
+            throw new IllegalStateException("Draft is " + state.name().toLowerCase(Locale.ROOT));
         }
     }
 
-    /// Records enough information to roll back one manifest replacement.
+    /// Records enough information to roll back one file replacement.
     ///
-    /// @param targetFile the permanent manifest path
-    /// @param backupFile the prior manifest backup, or `null` when no prior file existed
-    private record AppliedManifest(
+    /// @param targetFile the permanent file path
+    /// @param backupFile the prior file backup, or `null` when no prior file existed
+    private record AppliedFile(
             Path targetFile,
             @Nullable Path backupFile) {
     }

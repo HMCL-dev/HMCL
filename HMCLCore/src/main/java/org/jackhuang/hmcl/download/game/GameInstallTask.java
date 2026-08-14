@@ -32,8 +32,9 @@ import java.util.List;
 
 /// Downloads the base game component and returns its manifest patch without publishing it.
 ///
-/// Game files, libraries, and assets are downloaded as dependencies. The caller owns the working
-/// manifest and must stage the returned patch in its repository draft.
+/// The vanilla client JAR is downloaded into shared cache storage; libraries and assets use their
+/// repository-wide stores. The caller owns the working manifest and must stage the returned patch
+/// in its repository draft.
 @NotNullByDefault
 public class GameInstallTask extends Task<GameInstancePatch> {
 

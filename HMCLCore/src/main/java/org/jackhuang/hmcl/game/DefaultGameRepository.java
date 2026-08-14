@@ -131,8 +131,9 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     /// Materializes subclass-specific data for a newly claimed draft instance root.
     ///
-    /// This method is called after the draft has recorded ownership, so failure cleanup will remove
-    /// the root. The default implementation has no additional data to materialize.
+    /// This method is called during commit, after the draft has recorded ownership and created the
+    /// root, so failure cleanup will remove the root. The default implementation has no additional
+    /// data to materialize.
     ///
     /// @param instanceId   the instance being created
     /// @param instanceRoot the normalized instance root owned by the draft

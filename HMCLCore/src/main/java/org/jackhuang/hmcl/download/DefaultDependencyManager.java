@@ -160,7 +160,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         if (GameLibrariesTask.shouldDownloadLibrary(repository, manifest, installer, integrityCheck)) {
                             tasks.add(installComponentAsync(instance, original, gameVersion, "optifine", optifinePatchVersion));
                         } else {
-                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLayout().getLibraryFile(manifest.id(), installer)));
+                            tasks.add(OptiFineInstallTask.install(
+                                    this,
+                                    original,
+                                    gameVersion,
+                                    repository.getLayout().getLibraryFile(manifest.id(), installer)));
                         }
                     }
                 }
@@ -362,26 +366,27 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         if (!instance.getId().equals(baseManifest.id())) {
             throw new IllegalArgumentException("baseManifest id does not match instance");
         }
+        String gameVersion = instance.getVersion().toString();
 
         return Task
                 .composeAsync(() -> {
                     try {
-                        return CleanroomInstallTask.install(this, baseManifest, installer);
+                        return CleanroomInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return NeoForgeInstallTask.install(this, baseManifest, installer);
+                        return NeoForgeInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return ForgeInstallTask.install(this, baseManifest, installer);
+                        return ForgeInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return OptiFineInstallTask.install(this, baseManifest, installer);
+                        return OptiFineInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
