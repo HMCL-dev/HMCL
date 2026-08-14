@@ -188,7 +188,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// @param libraryVersion the remote library version to install
     /// @return the existing intact matching patch, or `null` if the library is not installed, version mismatches, or files need repair
     private @Nullable GameInstancePatch getIntactMatchingPatch(GameInstanceManifest baseVersion, RemoteVersion libraryVersion) {
-        if (!repository.hasInstance(baseVersion.id())) {
+        if (LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(libraryVersion.getLibraryId()) || !repository.hasInstance(baseVersion.id())) {
             return null;
         }
 
