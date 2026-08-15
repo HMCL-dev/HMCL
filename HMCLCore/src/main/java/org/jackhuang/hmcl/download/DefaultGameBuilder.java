@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 /// Builds a new game instance in an exclusive [GameRepositoryDraft], installs its components, and
 /// publishes the completed instance once.
@@ -65,7 +64,7 @@ public class DefaultGameBuilder extends GameBuilder {
     /// @throws NullPointerException if [#name] was not set
     @Override
     public Task<?> buildAsync() {
-        Objects.requireNonNull(name, "GameBuilder.name must be set");
+        GameInstanceID name = Objects.requireNonNull(this.name, "GameBuilder.name must be set");
         var hints = new ArrayList<Task.StagesHint>();
 
         hints.add(new Task.StagesHint("hmcl.install.game:" + gameVersion));
@@ -83,14 +82,12 @@ public class DefaultGameBuilder extends GameBuilder {
         }
 
         DefaultGameRepository repository = dependencyManager.getGameRepository();
-        AtomicReference<GameRepositoryDraft> activeDraft = new AtomicReference<>();
 
-        return Task.supplyAsync(() -> {
-                    GameRepositoryDraft draft = repository.openDraft();
-                    activeDraft.set(draft);
-                    return new GameInstanceManifest(name);
-                })
-                .thenComposeAsync(initialManifest -> {
+        //noinspection resource
+        GameRepositoryDraft draft = repository.openDraft();
+        return Task.composeAsync(() -> {
+                    GameInstanceManifest initialManifest = new GameInstanceManifest(name);
+
                     Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> initialManifest);
                     libraryTask = libraryTask.thenComposeAsync(
                             libraryTaskHelper(name, gameVersion, "game", gameVersion));
@@ -109,18 +106,13 @@ public class DefaultGameBuilder extends GameBuilder {
                     return libraryTask.thenComposeAsync(manifest ->
                             new GameDownloadTask(dependencyManager, gameVersion, manifest)
                                     .thenApplyAsync(minecraftJar -> {
-                                        GameRepositoryDraft draft = activeDraft.get();
-                                        if (draft == null) {
-                                            throw new IllegalStateException("Game repository draft is unavailable");
-                                        }
                                         draft.put(manifest);
                                         draft.putPrimaryJar(name, minecraftJar);
                                         return draft.commit().getInstance(name);
                                     }));
                 })
                 .whenComplete(exception -> {
-                    GameRepositoryDraft draft = activeDraft.getAndSet(null);
-                    if (draft != null && draft.isOpen()) {
+                    if (draft.isOpen()) {
                         draft.abort();
                     }
                 })
