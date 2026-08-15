@@ -104,9 +104,7 @@ public final class Instances {
                                 if (StringUtils.isNotBlank(mod.iconUrl()))
                                     installWizardProvider.setIconUrl(mod.iconUrl());
                                 Controllers.getDecorator().startWizard(installWizardProvider);
-                            } else if (e instanceof CancellationException) {
-                                Controllers.showToast(i18n("message.cancelled"));
-                            } else {
+                            } else if (!(e instanceof CancellationException)) {
                                 Controllers.dialog(
                                         i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
                                         i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);

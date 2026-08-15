@@ -139,8 +139,8 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
                 return true;
             } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
                 ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
-                if (!gameVersion.equals(profile.getInstall().getMinecraft()))
-                    throw new VersionMismatchException(profile.getInstall().getMinecraft(), gameVersion);
+                if (!gameVersion.equals(profile.install().getMinecraft()))
+                    throw new VersionMismatchException(profile.install().getMinecraft(), gameVersion);
                 return false;
             } else {
                 throw new IOException();
@@ -182,9 +182,9 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
                                 installer));
             } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
                 ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
-                if (!gameVersion.equals(profile.getInstall().getMinecraft()))
-                    throw new VersionMismatchException(profile.getInstall().getMinecraft(), gameVersion);
-                return new ForgeOldInstallTask(dependencyManager, manifest, modifyVersion(gameVersion, profile.getInstall().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
+                if (!gameVersion.equals(profile.install().getMinecraft()))
+                    throw new VersionMismatchException(profile.install().getMinecraft(), gameVersion);
+                return new ForgeOldInstallTask(dependencyManager, manifest, modifyVersion(gameVersion, profile.install().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
             } else {
                 throw new IOException();
             }

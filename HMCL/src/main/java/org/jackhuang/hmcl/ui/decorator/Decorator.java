@@ -1018,6 +1018,13 @@ public final class Decorator {
                 return;
             }
 
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    && event.getEventType() == KeyEvent.KEY_PRESSED
+                    && event.isMetaDown()
+                    && event.getCode() == KeyCode.Q) {
+                return;
+            }
+
             Node newTarget;
             @Nullable JFXDialogPane currentDialogPane =
                     (JFXDialogPane) getDialogContainer().getProperties()

@@ -340,6 +340,7 @@ public final class WorldListPage extends ListPageBase<World> {
             World oldWorld = getItem();
             boolean oldEmpty = isEmpty();
 
+            this.graphic.releaseRippleImmediately();
             super.updateItem(world, empty);
 
             if (oldWorld == world && oldEmpty == empty) return;

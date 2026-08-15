@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -173,10 +174,20 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
             return;
 
         Path parent = currentDirectory.path;
+
+        FileNameSet existingPaths;
+        try {
+            existingPaths = FileNameSet.list(parent, null);
+        } catch (Exception e) {
+            LOG.warning("Failed to list folders in " + parent, e);
+            existingPaths = new FileNameSet(false);
+        }
+
         Controllers.prompt(
                 i18n("schematics.create_directory.prompt"),
                 (result, handler) -> {
                     Path targetDir = parent.resolve(result);
+
                     if (Files.exists(targetDir)) {
                         handler.reject(i18n("schematics.create_directory.failed.already_exists"));
                         return;
@@ -190,7 +201,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                         LOG.warning("Failed to create directory: " + targetDir, e);
                         handler.reject(i18n("schematics.create_directory.failed", targetDir));
                     }
-                }, "", new RequiredValidator(), new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid));
+                },
+                "",
+                new RequiredValidator(),
+                new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid),
+                new Validator(i18n("schematics.create_directory.failed.already_exists"), existingPaths::notContains));
     }
 
     private DirItem loadAll(Path dir, @Nullable DirItem parent) {
@@ -610,6 +625,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
         @Override
         protected void updateItem(Item item, boolean empty) {
+            graphics.releaseRippleImmediately();
             super.updateItem(item, empty);
 
             iconImageView.setImage(null);

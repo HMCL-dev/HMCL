@@ -185,7 +185,9 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             analyzer = instance.getAnalyzer();
 
             boolean supportSubfolders = analyzer.has(GameComponentType.FORGE)
-                    || analyzer.has(GameComponentType.QUILT);
+                    || analyzer.has(GameComponentType.QUILT)
+                    || analyzer.has(GameComponentType.CLEANROOM)
+                    || analyzer.has(GameComponentType.LITELOADER);
 
             if (Files.isDirectory(getDirectory())) {
                 try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {

@@ -23,6 +23,7 @@ Currently, HMCL supports the following languages:
 | Spanish               | `es`         | `es`                       | `_es`                              | `es_es`                                                  | Secondary      | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
 | Russian               | `ru`         | `ru`                       | `_ru`                              | `ru_ru`                                                  | Secondary      | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
 | Ukrainian             | `uk`         | `uk`                       | `_uk`                              | `uk_ua`                                                  | Secondary      |                                           |
+| German                | `de`         | `de`                       | `_de`                              | `de_de`                                                  | Secondary      | [BANSAFAn](https://github.com/BANSAFAn)   |
 
 <details>
 <summary>About Language Tags</summary>
