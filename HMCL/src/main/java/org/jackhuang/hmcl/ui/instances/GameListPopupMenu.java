@@ -26,6 +26,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
@@ -36,7 +37,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -139,8 +143,23 @@ public final class GameListPopupMenu extends StackPane {
         JFXPopup popup = new JFXPopup(menu);
         owner.getProperties().put(KEY, popup);
         popup.setAutoHide(false);
+        popup.setHideOnEscape(false);
         Scene scene = owner.getScene();
         EventHandler<MouseEvent> outsideClickHandler = event -> {
+            if (popup.isShowing()) {
+                Bounds ownerBounds = owner.localToScreen(owner.getBoundsInLocal());
+                if (ownerBounds != null && ownerBounds.contains(event.getScreenX(), event.getScreenY())) {
+                    return;
+                }
+
+                Bounds popupBounds = menu.localToScreen(menu.getBoundsInLocal());
+                if (popupBounds != null && !popupBounds.contains(event.getScreenX(), event.getScreenY())) {
+                    hideAnimated(popup);
+                }
+            }
+        };
+
+        EventHandler<ScrollEvent> outsideScrollHandler = event -> {
             if (popup.isShowing()) {
                 Bounds popupBounds = menu.localToScreen(menu.getBoundsInLocal());
                 if (popupBounds != null && !popupBounds.contains(event.getScreenX(), event.getScreenY())) {
@@ -149,7 +168,14 @@ public final class GameListPopupMenu extends StackPane {
             }
         };
 
-        javafx.beans.value.ChangeListener<Boolean> focusListener = (obs, wasFocused, isFocused) -> {
+        EventHandler<KeyEvent> escHandler = event -> {
+            if (event.getCode() == KeyCode.ESCAPE && popup.isShowing()) {
+                event.consume();
+                hideAnimated(popup);
+            }
+        };
+
+        ChangeListener<Boolean> focusListener = (obs, wasFocused, isFocused) -> {
             if (!isFocused && popup.isShowing()) {
                 hideAnimated(popup);
             }
@@ -157,6 +183,8 @@ public final class GameListPopupMenu extends StackPane {
 
         if (scene != null) {
             scene.addEventFilter(MouseEvent.MOUSE_PRESSED, outsideClickHandler);
+            scene.addEventFilter(ScrollEvent.SCROLL, outsideScrollHandler);
+            scene.addEventFilter(KeyEvent.KEY_PRESSED, escHandler);
             if (scene.getWindow() != null) {
                 scene.getWindow().focusedProperty().addListener(focusListener);
             }
@@ -167,6 +195,8 @@ public final class GameListPopupMenu extends StackPane {
             owner.getProperties().remove(KEY, popup);
             if (scene != null) {
                 scene.removeEventFilter(MouseEvent.MOUSE_PRESSED, outsideClickHandler);
+                scene.removeEventFilter(ScrollEvent.SCROLL, outsideScrollHandler);
+                scene.removeEventFilter(KeyEvent.KEY_PRESSED, escHandler);
                 if (scene.getWindow() != null) {
                     scene.getWindow().focusedProperty().removeListener(focusListener);
                 }
