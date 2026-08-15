@@ -690,14 +690,10 @@ public class HMCLGameInstance extends DefaultGameInstance {
                     JsonSchema.check(jsonObject, GameSettings.Instance.CURRENT_SCHEMA);
             switch (schemaResult.status()) {
                 case MISSING -> LOG.warning("Missing schema in instance game settings: " + file);
-                case INVALID ->
-                        LOG.warning("Invalid schema in instance game settings: %s, Actual: %s".formatted(file, schemaResult.invalidValue()));
-                case UNPARSEABLE ->
-                        LOG.warning("Unparseable schema in instance game settings: %s, Actual: %s".formatted(file, schemaResult.actual()));
-                case UNEXPECTED_ID ->
-                        LOG.warning("Unexpected instance game settings schema. Expected: %s, Actual: %s".formatted(GameSettings.Instance.CURRENT_SCHEMA, schemaResult.actual()));
-                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA ->
-                        LOG.warning("Unsupported instance game settings schema. Expected: %s, Actual: %s".formatted(GameSettings.Instance.CURRENT_SCHEMA, schemaResult.actual()));
+                case INVALID -> LOG.warning("Invalid schema in instance game settings: %s, Actual: %s".formatted(file, schemaResult.invalidValue()));
+                case UNPARSEABLE -> LOG.warning("Unparseable schema in instance game settings: %s, Actual: %s".formatted(file, schemaResult.actual()));
+                case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: %s, Actual: %s".formatted(GameSettings.Instance.CURRENT_SCHEMA, schemaResult.actual()));
+                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA -> LOG.warning("Unsupported instance game settings schema. Expected: %s, Actual: %s".formatted(GameSettings.Instance.CURRENT_SCHEMA, schemaResult.actual()));
                 case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
                 }
             }

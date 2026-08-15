@@ -49,7 +49,6 @@ public final class GameAssetDownloadTask extends Task<Void> {
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>();
 
-
     /// Constructor.
     ///
     /// @param dependencyManager the dependency manager that can provides [GameRepository]

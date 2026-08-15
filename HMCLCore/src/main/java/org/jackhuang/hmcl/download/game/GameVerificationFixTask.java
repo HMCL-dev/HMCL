@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.download.game;
 
-import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
