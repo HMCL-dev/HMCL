@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -29,13 +31,7 @@ import java.util.*;
 public abstract class GameBuilder {
 
     protected @Nullable GameInstanceID id;
-    protected String gameVersion = "";
-    protected final Map<String, String> toolVersions = new HashMap<>();
-    protected final Set<RemoteVersion> remoteVersions = new HashSet<>();
-
-    public GameInstanceID getId() {
-        return id;
-    }
+    protected final Map<GameComponentType, Object /* String | RemoteVersion */> components = new EnumMap<>(GameComponentType.class);
 
     /// The new game version name, for `.minecraft/<instanceId>`.
     ///
@@ -45,25 +41,21 @@ public abstract class GameBuilder {
         return this;
     }
 
+    @Contract("_ -> this")
     public GameBuilder gameVersion(String version) {
-        this.gameVersion = Objects.requireNonNull(version);
+        components.put(GameComponentType.GAME, version);
         return this;
     }
 
-    /**
-     * @param id the core library id. i.e. "forge", "liteloader", "optifine"
-     * @param version the version of the core library. For documents, you can first try [VersionList.versions]
-     */
-    public GameBuilder version(String id, String version) {
-        if ("game".equals(id))
-            gameVersion(version);
-        else
-            toolVersions.put(id, version);
+    @Contract("_, _ -> this")
+    public GameBuilder component(GameComponentType componentType, String version) {
+        components.put(componentType, version);
         return this;
     }
 
-    public GameBuilder version(RemoteVersion remoteVersion) {
-        remoteVersions.add(remoteVersion);
+    @Contract("_ -> this")
+    public GameBuilder component(RemoteVersion remoteVersion) {
+        components.put(remoteVersion.getComponentType(), remoteVersion);
         return this;
     }
 

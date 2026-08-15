@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
@@ -86,11 +87,11 @@ public final class CurseInstallTask extends Task<Void> {
         GameBuilder builder = dependencyManager.newGameBuilder().id(instanceId).gameVersion(manifest.minecraft().gameVersion());
         for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
             if (modLoader.id().startsWith("forge-")) {
-                builder.version("forge", modLoader.id().substring("forge-".length()));
+                builder.component(GameComponentType.FORGE, modLoader.id().substring("forge-".length()));
             } else if (modLoader.id().startsWith("fabric-")) {
-                builder.version("fabric", modLoader.id().substring("fabric-".length()));
+                builder.component(GameComponentType.FABRIC, modLoader.id().substring("fabric-".length()));
             } else if (modLoader.id().startsWith("neoforge-")) {
-                builder.version("neoforge", modLoader.id().substring("neoforge-".length()));
+                builder.component(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
             }
         }
         dependents.add(builder.buildAsync());

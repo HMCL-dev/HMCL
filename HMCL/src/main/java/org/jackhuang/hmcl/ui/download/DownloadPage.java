@@ -316,7 +316,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.asStringMap().forEach((key, value) -> {
                 if (!GameComponentType.GAME.getPatchId().equals(key)
                         && value instanceof RemoteVersion remoteVersion)
-                    builder.version(remoteVersion);
+                    builder.component(remoteVersion);
             });
 
             repository.applyDefaultIsolationSettingForNewInstance(instanceId, settings.isInstallingModdedVersion());

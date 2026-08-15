@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
@@ -143,7 +144,9 @@ public class ServerModpackCompletionTask extends Task<Void> {
         if (!Objects.equals(oldAddons, newAddons)) {
             GameBuilder builder = dependencyManager.newGameBuilder().id(instance.getId());
             for (ServerModpackManifest.Addon addon : remoteManifest.getAddons()) {
-                builder.version(addon.getId(), addon.getVersion());
+                @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
+                if (componentType != null)
+                    builder.component(componentType, addon.getVersion());
             }
 
             dependencies.add(builder.buildAsync());

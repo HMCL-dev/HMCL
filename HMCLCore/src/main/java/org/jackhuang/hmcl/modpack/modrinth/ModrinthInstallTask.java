@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
@@ -74,18 +75,18 @@ public class ModrinthInstallTask extends Task<Void> {
                 case "minecraft":
                     break;
                 case "forge":
-                    builder.version("forge", modLoader.getValue());
+                    builder.component(GameComponentType.FORGE, modLoader.getValue());
                     break;
                 case "neoforge":
                 // https://github.com/HMCL-dev/HMCL/pull/5170
                 case "neo-forge":
-                    builder.version("neoforge", modLoader.getValue());
+                    builder.component(GameComponentType.NEO_FORGE, modLoader.getValue());
                     break;
                 case "fabric-loader":
-                    builder.version("fabric", modLoader.getValue());
+                    builder.component(GameComponentType.FABRIC, modLoader.getValue());
                     break;
                 case "quilt-loader":
-                    builder.version("quilt", modLoader.getValue());
+                    builder.component(GameComponentType.QUILT, modLoader.getValue());
                     break;
                 default:
                     throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());

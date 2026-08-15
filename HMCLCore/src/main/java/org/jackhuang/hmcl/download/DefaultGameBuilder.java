@@ -61,21 +61,25 @@ public class DefaultGameBuilder extends GameBuilder {
     @Override
     public Task<?> buildAsync() {
         GameInstanceID id = Objects.requireNonNull(this.id, "GameBuilder.id must be set");
+        String gameVersion = (String) components.get(GameComponentType.GAME);
+        if (gameVersion == null)
+            throw new IllegalStateException("GameBuilder.gameVersion must be set");
+
         var hints = new ArrayList<Task.StagesHint>();
 
-        hints.add(new Task.StagesHint("hmcl.install.game:" + gameVersion));
-        hints.add(new Task.StagesHint("hmcl.install.libraries"));
-        hints.add(new Task.StagesHint("hmcl.install.assets"));
-        for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
+        components.forEach((componentType, version) -> {
             hints.add(new Task.StagesHint(
-                    String.format("hmcl.install.%s:%s", entry.getKey(), entry.getValue())));
-        }
-        for (RemoteVersion remoteVersion : remoteVersions) {
-            hints.add(new Task.StagesHint(String.format(
-                    "hmcl.install.%s:%s",
-                    remoteVersion.getLibraryId(),
-                    remoteVersion.getSelfVersion())));
-        }
+                    String.format("hmcl.install.%s:%s", componentType.getPatchId(),
+                            version instanceof RemoteVersion remoteVersion
+                                    ? remoteVersion.getSelfVersion()
+                                    : (String) version)));
+
+            if (componentType == GameComponentType.GAME) {
+                hints.add(new Task.StagesHint("hmcl.install.libraries"));
+                hints.add(new Task.StagesHint("hmcl.install.assets"));
+            }
+        });
+
 
         DefaultGameRepository repository = dependencyManager.getGameRepository();
         //noinspection resource
@@ -84,15 +88,20 @@ public class DefaultGameBuilder extends GameBuilder {
         Task<GameInstanceManifest> libraryTask = dependencyManager.installNewInstanceComponentAsync(
                 id, new GameInstanceManifest(id), gameVersion, GameComponentType.GAME, gameVersion);
 
-        for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
-            libraryTask = libraryTask.thenComposeAsync(manifest -> dependencyManager.installNewInstanceComponentAsync(
-                    id, manifest, gameVersion, GameComponentType.fromPatchId(entry.getKey()), entry.getValue()));
-        }
+        for (Map.Entry<GameComponentType, Object> entry : components.entrySet()) {
+            GameComponentType componentType = entry.getKey();
 
-        for (RemoteVersion remoteVersion : remoteVersions) {
-            libraryTask = libraryTask.thenComposeAsync(manifest ->
-                    dependencyManager.installNewInstanceComponentAsync(
-                            id, manifest, gameVersion, remoteVersion));
+            if (entry.getValue() instanceof RemoteVersion remoteVersion) {
+                libraryTask = libraryTask.thenComposeAsync(manifest ->
+                        dependencyManager.installNewInstanceComponentAsync(
+                                id, manifest, gameVersion, remoteVersion));
+            } else if (entry.getValue() instanceof String version) {
+                libraryTask = libraryTask.thenComposeAsync(manifest ->
+                        dependencyManager.installNewInstanceComponentAsync(
+                                id, manifest, gameVersion, componentType, version));
+            } else {
+                throw new AssertionError("Unexpected version type: " + entry.getValue().getClass());
+            }
         }
 
         return libraryTask.thenComposeAsync(manifest ->
