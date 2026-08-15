@@ -174,16 +174,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         });
     }
 
-    /// Installs a component into a registered instance using its stored manifest as the base.
-    ///
-    /// @param instance       the target instance; must belong to this manager's repository
-    /// @param libraryVersion the remote component to install
-    /// @return the task producing the updated standalone manifest (not yet saved)
-    public Task<GameInstanceManifest> installComponentAsync(GameInstance instance, RemoteVersion libraryVersion) {
-        validateGameInstance(instance);
-        return installComponentAsync(instance, instance.getManifest(), libraryVersion);
-    }
-
     /// Installs a component using a working manifest that may be ahead of the instance's stored state.
     ///
     /// Used by multi-step install pipelines after a previous in-memory remove/install. `instance`
