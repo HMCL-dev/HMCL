@@ -135,8 +135,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     public static void alertFailureMessage(Exception exception, Runnable next) {
         if (exception instanceof LibraryDownloadException) {
             String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().name()) + "\n";
-            if (exception.getCause() instanceof ResponseCodeException) {
-                ResponseCodeException rce = (ResponseCodeException) exception.getCause();
+            if (exception.getCause() instanceof ResponseCodeException rce) {
                 int responseCode = rce.getResponseCode();
                 String uri = rce.getUri();
                 if (responseCode == 404)
@@ -151,8 +150,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             URI uri = ((DownloadException) exception).getUri();
             if (exception.getCause() instanceof SocketTimeoutException) {
                 Controllers.dialog(i18n("install.failed.downloading.timeout", uri), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
-            } else if (exception.getCause() instanceof ResponseCodeException) {
-                ResponseCodeException responseCodeException = (ResponseCodeException) exception.getCause();
+            } else if (exception.getCause() instanceof ResponseCodeException responseCodeException) {
                 if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
                     Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), uri), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
                 } else {
@@ -161,14 +159,12 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             } else {
                 Controllers.dialog(i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
             }
-        } else if (exception instanceof UnsupportedInstallationException) {
-            switch (((UnsupportedInstallationException) exception).getReason()) {
-                case UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2:
-                    Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-                    break;
-                default:
-                    Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-                    break;
+        } else if (exception instanceof UnsupportedInstallationException unsupportedInstallationException) {
+            switch (unsupportedInstallationException.getReason()) {
+                case UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2 ->
+                        Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+                default ->
+                        Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
             }
         } else if (exception instanceof DefaultDependencyManager.UnsupportedLibraryInstallerException) {
             Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
@@ -176,8 +172,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             Controllers.dialog(i18n("install.failed.malformed"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
         } else if (exception instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
             Controllers.dialog(i18n("assets.index.malformed"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-        } else if (exception instanceof VersionMismatchException) {
-            VersionMismatchException e = ((VersionMismatchException) exception);
+        } else if (exception instanceof VersionMismatchException e) {
             Controllers.dialog(i18n("install.failed.version_mismatch", e.getExpect(), e.getActual()), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
         } else if (exception instanceof CancellationException) {
             // Ignore cancel
