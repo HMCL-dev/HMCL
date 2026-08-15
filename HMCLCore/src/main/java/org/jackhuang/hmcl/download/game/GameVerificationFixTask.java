@@ -63,9 +63,8 @@ public final class GameVerificationFixTask extends Task<Void> {
     @Override
     public void execute() throws IOException {
         Path jar = instance.getInstanceJarFile();
-        var analyzer = instance.getAnalyzer();
 
-        if (Files.exists(jar) && gameVersion.compareTo("1.6") < 0 && analyzer.has(GameComponentType.FORGE)) {
+        if (Files.exists(jar) && gameVersion.compareTo("1.6") < 0 && instance.hasComponent(GameComponentType.FORGE)) {
             try (FileSystem fs = CompressingUtils.createWritableZipFileSystem(jar, StandardCharsets.UTF_8)) {
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.DSA"));
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.SF"));
