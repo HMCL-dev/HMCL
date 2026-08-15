@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameRepositoryDraft;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -82,35 +79,31 @@ public class DefaultGameBuilder extends GameBuilder {
         }
 
         DefaultGameRepository repository = dependencyManager.getGameRepository();
-
         //noinspection resource
         GameRepositoryDraft draft = repository.openDraft();
-        return Task.composeAsync(() -> {
-                    GameInstanceManifest initialManifest = new GameInstanceManifest(id);
+        GameInstanceManifest initialManifest = new GameInstanceManifest(id);
 
-                    Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> initialManifest);
-                    libraryTask = libraryTask.thenComposeAsync(
-                            libraryTaskHelper(id, gameVersion, "game", gameVersion));
+        Task<GameInstanceManifest> libraryTask = dependencyManager.installNewInstanceComponentAsync(
+                id, new GameInstanceManifest(id), gameVersion, GameComponentType.GAME.getPatchId(), gameVersion);
 
-                    for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
-                        libraryTask = libraryTask.thenComposeAsync(
-                                libraryTaskHelper(id, gameVersion, entry.getKey(), entry.getValue()));
-                    }
+        for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
+            libraryTask = libraryTask.thenComposeAsync(manifest -> dependencyManager.installNewInstanceComponentAsync(
+                    id, manifest, gameVersion, entry.getKey(), entry.getValue()));
+        }
 
-                    for (RemoteVersion remoteVersion : remoteVersions) {
-                        libraryTask = libraryTask.thenComposeAsync(working ->
-                                dependencyManager.installNewInstanceComponentAsync(
-                                        id, working, gameVersion, remoteVersion));
-                    }
+        for (RemoteVersion remoteVersion : remoteVersions) {
+            libraryTask = libraryTask.thenComposeAsync(manifest ->
+                    dependencyManager.installNewInstanceComponentAsync(
+                            id, manifest, gameVersion, remoteVersion));
+        }
 
-                    return libraryTask.thenComposeAsync(manifest ->
-                            new GameDownloadTask(dependencyManager, gameVersion, manifest)
-                                    .thenApplyAsync(minecraftJar -> {
-                                        draft.put(manifest);
-                                        draft.putPrimaryJar(id, minecraftJar);
-                                        return draft.commit().getInstance(id);
-                                    }));
-                })
+        return libraryTask.thenComposeAsync(manifest ->
+                        new GameDownloadTask(dependencyManager, gameVersion, manifest)
+                                .thenApplyAsync(minecraftJar -> {
+                                    draft.put(manifest);
+                                    draft.putPrimaryJar(id, minecraftJar);
+                                    return draft.commit().getInstance(id);
+                                }))
                 .whenComplete(exception -> {
                     if (draft.isOpen()) {
                         draft.abort();
@@ -119,19 +112,4 @@ public class DefaultGameBuilder extends GameBuilder {
                 .withStagesHints(hints);
     }
 
-    /// Returns a step that installs one remote component into the working manifest.
-    ///
-    /// @param instanceId     the unpublished instance id
-    /// @param gameVersion    the Minecraft version used to look up the remote list
-    /// @param libraryId      the component list id
-    /// @param libraryVersion the component version id
-    /// @return a function from the current working manifest to the install task
-    private ExceptionalFunction<GameInstanceManifest, Task<GameInstanceManifest>, ?> libraryTaskHelper(
-            GameInstanceID instanceId,
-            String gameVersion,
-            String libraryId,
-            String libraryVersion) {
-        return working -> dependencyManager.installNewInstanceComponentAsync(
-                instanceId, working, gameVersion, libraryId, libraryVersion);
-    }
 }
