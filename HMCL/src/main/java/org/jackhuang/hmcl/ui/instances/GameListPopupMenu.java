@@ -68,6 +68,10 @@ public final class GameListPopupMenu extends StackPane {
             return;
         }
 
+        if (Boolean.TRUE.equals(popup.getProperties().put(HIDING_KEY, true))) {
+            return;
+        }
+
         if (!AnimationUtils.isAnimationEnabled()) {
             popup.hide();
             return;
@@ -112,11 +116,6 @@ public final class GameListPopupMenu extends StackPane {
             return false;
         }
 
-        if (Boolean.TRUE.equals(popup.getProperties().get(HIDING_KEY))) {
-            return true;
-        }
-
-        popup.getProperties().put(HIDING_KEY, true);
         hideAnimated(popup);
         return true;
     }
