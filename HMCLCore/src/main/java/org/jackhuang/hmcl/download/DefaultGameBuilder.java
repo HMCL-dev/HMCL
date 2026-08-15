@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.ArrayList;
@@ -81,7 +80,6 @@ public class DefaultGameBuilder extends GameBuilder {
         DefaultGameRepository repository = dependencyManager.getGameRepository();
         //noinspection resource
         GameRepositoryDraft draft = repository.openDraft();
-        GameInstanceManifest initialManifest = new GameInstanceManifest(id);
 
         Task<GameInstanceManifest> libraryTask = dependencyManager.installNewInstanceComponentAsync(
                 id, new GameInstanceManifest(id), gameVersion, GameComponentType.GAME.getPatchId(), gameVersion);
