@@ -83,7 +83,7 @@ public final class CurseInstallTask extends Task<Void> {
         if (repository.hasInstance(instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
-        GameBuilder builder = dependencyManager.newGameBuilder().name(instanceId).gameVersion(manifest.minecraft().gameVersion());
+        GameBuilder builder = dependencyManager.newGameBuilder().id(instanceId).gameVersion(manifest.minecraft().gameVersion());
         for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
             if (modLoader.id().startsWith("forge-")) {
                 builder.version("forge", modLoader.id().substring("forge-".length()));

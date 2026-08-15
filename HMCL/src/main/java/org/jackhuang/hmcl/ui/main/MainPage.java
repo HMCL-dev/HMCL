@@ -381,7 +381,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     instanceHolder.value = instanceId;
 
                     return dependency.newGameBuilder()
-                            .name(instanceId)
+                            .id(instanceId)
                             .gameVersion(gameVersion)
                             .buildAsync();
                 })

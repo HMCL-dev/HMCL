@@ -61,10 +61,10 @@ public class DefaultGameBuilder extends GameBuilder {
     /// stages the completed manifest, and commits it once. Failure or cancellation aborts the draft.
     ///
     /// @return the build task
-    /// @throws NullPointerException if [#name] was not set
+    /// @throws NullPointerException if [#id] was not set
     @Override
     public Task<?> buildAsync() {
-        GameInstanceID name = Objects.requireNonNull(this.name, "GameBuilder.name must be set");
+        GameInstanceID id = Objects.requireNonNull(this.id, "GameBuilder.id must be set");
         var hints = new ArrayList<Task.StagesHint>();
 
         hints.add(new Task.StagesHint("hmcl.install.game:" + gameVersion));
@@ -86,29 +86,29 @@ public class DefaultGameBuilder extends GameBuilder {
         //noinspection resource
         GameRepositoryDraft draft = repository.openDraft();
         return Task.composeAsync(() -> {
-                    GameInstanceManifest initialManifest = new GameInstanceManifest(name);
+                    GameInstanceManifest initialManifest = new GameInstanceManifest(id);
 
                     Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> initialManifest);
                     libraryTask = libraryTask.thenComposeAsync(
-                            libraryTaskHelper(name, gameVersion, "game", gameVersion));
+                            libraryTaskHelper(id, gameVersion, "game", gameVersion));
 
                     for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
                         libraryTask = libraryTask.thenComposeAsync(
-                                libraryTaskHelper(name, gameVersion, entry.getKey(), entry.getValue()));
+                                libraryTaskHelper(id, gameVersion, entry.getKey(), entry.getValue()));
                     }
 
                     for (RemoteVersion remoteVersion : remoteVersions) {
                         libraryTask = libraryTask.thenComposeAsync(working ->
                                 dependencyManager.installNewInstanceComponentAsync(
-                                        name, working, gameVersion, remoteVersion));
+                                        id, working, gameVersion, remoteVersion));
                     }
 
                     return libraryTask.thenComposeAsync(manifest ->
                             new GameDownloadTask(dependencyManager, gameVersion, manifest)
                                     .thenApplyAsync(minecraftJar -> {
                                         draft.put(manifest);
-                                        draft.putPrimaryJar(name, minecraftJar);
-                                        return draft.commit().getInstance(name);
+                                        draft.putPrimaryJar(id, minecraftJar);
+                                        return draft.commit().getInstance(id);
                                     }));
                 })
                 .whenComplete(exception -> {

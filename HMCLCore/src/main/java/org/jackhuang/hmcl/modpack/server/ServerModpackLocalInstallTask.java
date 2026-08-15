@@ -58,7 +58,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         if (repository.hasInstance(instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
-        GameBuilder builder = dependencyManager.newGameBuilder().name(instanceId);
+        GameBuilder builder = dependencyManager.newGameBuilder().id(instanceId);
         for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
             builder.version(addon.getId(), addon.getVersion());
         }

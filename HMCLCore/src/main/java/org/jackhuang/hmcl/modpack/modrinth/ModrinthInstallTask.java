@@ -68,7 +68,7 @@ public class ModrinthInstallTask extends Task<Void> {
         if (repository.hasInstance(instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
-        GameBuilder builder = dependencyManager.newGameBuilder().name(instanceId).gameVersion(manifest.getGameVersion());
+        GameBuilder builder = dependencyManager.newGameBuilder().id(instanceId).gameVersion(manifest.getGameVersion());
         for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
             switch (modLoader.getKey()) {
                 case "minecraft":

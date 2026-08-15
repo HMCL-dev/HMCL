@@ -23,29 +23,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * The builder which provide a task to build Minecraft environment.
- *
- * @author huangyuhui
- */
+/// The builder which provide a task to build Minecraft environment.
+///
+/// @author huangyuhui
 public abstract class GameBuilder {
 
-    protected @Nullable GameInstanceID name;
+    protected @Nullable GameInstanceID id;
     protected String gameVersion = "";
     protected final Map<String, String> toolVersions = new HashMap<>();
     protected final Set<RemoteVersion> remoteVersions = new HashSet<>();
 
-    public GameInstanceID getName() {
-        return name;
+    public GameInstanceID getId() {
+        return id;
     }
 
-    /**
-     * The new game version name, for .minecraft/&lt;version name&gt;.
-     *
-     * @param name the name of new game version.
-     */
-    public GameBuilder name(GameInstanceID name) {
-        this.name = Objects.requireNonNull(name);
+    /// The new game version name, for `.minecraft/<instanceId>`.
+    ///
+    /// @param id the name of new game version.
+    public GameBuilder id(GameInstanceID id) {
+        this.id = Objects.requireNonNull(id);
         return this;
     }
 

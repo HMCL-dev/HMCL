@@ -67,7 +67,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         this.update = repository.hasInstance(instanceId);
 
 
-        GameBuilder builder = dependencyManager.newGameBuilder().name(instanceId);
+        GameBuilder builder = dependencyManager.newGameBuilder().id(instanceId);
         for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
             builder.version(addon.getId(), addon.getVersion());
         }
