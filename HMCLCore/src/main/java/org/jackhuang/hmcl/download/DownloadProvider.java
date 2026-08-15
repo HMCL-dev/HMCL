@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URI;
@@ -59,6 +60,13 @@ public interface DownloadProvider {
         }
         return List.copyOf(result);
     }
+
+    /// the specific version list that this download provider provides. i.e. "fabric", "forge", "liteloader", "game", "optifine"
+    ///
+    /// @param componentType the component type of specific version list that this download provider provides. i.e. "fabric", "forge", "liteloader", "game", "optifine"
+    /// @return the version list
+    /// @throws IllegalArgumentException if the version list does not exist
+    VersionList<?> getVersionList(GameComponentType componentType);
 
     /// the specific version list that this download provider provides. i.e. "fabric", "forge", "liteloader", "game", "optifine"
     ///

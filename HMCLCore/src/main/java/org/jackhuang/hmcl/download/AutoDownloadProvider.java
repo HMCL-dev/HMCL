@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
+
 import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -91,6 +93,11 @@ public final class AutoDownloadProvider implements DownloadProvider {
     @Override
     public List<URI> injectURLsWithCandidates(List<String> urls) {
         return getAll(fileProviders, provider -> provider.injectURLsWithCandidates(urls));
+    }
+
+    @Override
+    public VersionList<?> getVersionList(GameComponentType componentType) {
+        return null; // TODO
     }
 
     @Override

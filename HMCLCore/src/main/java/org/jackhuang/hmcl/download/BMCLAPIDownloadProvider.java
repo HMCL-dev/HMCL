@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
@@ -117,6 +118,25 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     @Override
     public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
         return List.of(NetworkUtils.toURI(apiRoot + "/assets/" + assetObjectLocation));
+    }
+
+    @Override
+    public VersionList<?> getVersionList(GameComponentType componentType) {
+        return switch (componentType) {
+            case GAME -> game;
+            case FABRIC -> fabric;
+            case FABRIC_API -> fabricApi;
+            case FORGE -> forge;
+            case CLEANROOM -> cleanroom;
+            case NEO_FORGE -> neoforge;
+            case LITELOADER -> liteLoader;
+            case OPTIFINE -> optifine;
+            case QUILT -> quilt;
+            case QUILT_API -> quiltApi;
+            case LEGACY_FABRIC -> legacyFabric;
+            case LEGACY_FABRIC_API -> legacyFabricApi;
+            case BOOTSTRAP_LAUNCHER -> throw new IllegalArgumentException("Unrecognized component: " + componentType);
+        };
     }
 
     @Override

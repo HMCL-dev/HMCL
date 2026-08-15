@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.Task;
 
 import java.net.URI;
@@ -65,6 +66,35 @@ public final class DownloadProviderWrapper implements DownloadProvider {
     @Override
     public List<URI> injectURLsWithCandidates(List<String> urls) {
         return getProvider().injectURLsWithCandidates(urls);
+    }
+
+    @Override
+    public VersionList<?> getVersionList(GameComponentType componentType) {
+        return new VersionList<>() {
+            @Override
+            public boolean hasType() {
+                return getProvider().getVersionList(componentType).hasType();
+            }
+
+            @Override
+            public Task<?> refreshAsync() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Task<?> refreshAsync(String gameVersion) {
+                return getProvider().getVersionList(componentType).refreshAsync(gameVersion)
+                        .thenComposeAsync(() -> {
+                            lock.writeLock().lock();
+                            try {
+                                versions.putAll(gameVersion, getProvider().getVersionList(componentType).getVersions(gameVersion));
+                            } finally {
+                                lock.writeLock().unlock();
+                            }
+                            return null;
+                        });
+            }
+        };
     }
 
     @Override
