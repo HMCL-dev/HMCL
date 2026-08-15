@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.versions;
+package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
@@ -46,7 +46,7 @@ import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -64,6 +64,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -103,6 +104,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         pane.getStyleClass().addAll("notice-pane");
 
         ComponentList root = new ComponentList();
+        pane.getChildren().setAll(root);
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
         listView.getStyleClass().add("no-horizontal-scrollbar");
@@ -244,14 +246,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             center.setContent(listView);
             root.getContent().add(center);
         }
-
-        Label label = new Label(i18n("mods.not_modded"));
-        label.prefWidthProperty().bind(pane.widthProperty().add(-100));
-
-        FXUtils.onChangeAndOperate(skinnable.moddedProperty(), modded -> {
-            if (modded) pane.getChildren().setAll(root);
-            else pane.getChildren().setAll(label);
-        });
 
         getChildren().setAll(pane);
     }
@@ -500,7 +494,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 LOG.warning("Failed to load mod icons", e);
             }
 
-            return VersionIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
+            return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
         }
 
         public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
@@ -516,7 +510,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
                 this.iconCache = new SoftReference<>(imageFuture);
             }
-            imageContainer.setImage(VersionIconType.getIconType(localModFile.getModLoaderType()).getIcon());
+            imageContainer.setImage(GameInstanceIconType.getIconType(localModFile.getModLoaderType()).getIcon());
             imageFuture.thenAcceptAsync(image -> {
                 if (current != null) {
                     ObjectProperty<ModInfoObject> infoObjectProperty = current.get();
@@ -592,7 +586,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     Task.runAsync(() -> {
                         Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteAddon remoteAddon = repository.getModById(DownloadProviders.getDownloadProvider(), versionOptional.get().modid());
+                            RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
                                     String loaderName = switch (modLoaderType) {
@@ -617,7 +611,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
                                     Controllers.navigate(new DownloadPage(
-                                            repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
+                                            repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofMod(null, false) : HMCLLocalizedDownloadListPage.ofMod(null, false),
                                             remoteAddon,
                                             new HMCLGameRepository.InstanceReference(ModListPageSkin.this.getSkinnable().getRepository(), ModListPageSkin.this.getSkinnable().getInstanceId()),
                                             org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
@@ -700,7 +694,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
-            imageContainer.setImage(VersionIconType.COMMAND.getIcon());
+            imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 

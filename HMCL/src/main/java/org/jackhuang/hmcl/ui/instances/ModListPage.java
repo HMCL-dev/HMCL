@@ -738,14 +738,14 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         // Fetch CurseForge info
         try {
             if (CurseForgeRemoteAddonRepository.isAvailable()) {
-                RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddonRepository.Type.MOD);
+                RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddon.Type.MOD);
                 if (curseForgeRepo != null) {
                     Optional<RemoteAddon.Version> curseForgeVersion = curseForgeRepo.getRemoteVersionByLocalFile(filePath);
                     if (curseForgeVersion.isPresent()) {
                         RemoteAddon.Version version = curseForgeVersion.get();
                         curseForgeFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
                         try {
-                            RemoteAddon addon = curseForgeRepo.getModById(downloadProvider, version.modid());
+                            RemoteAddon addon = curseForgeRepo.getAddonById(downloadProvider, version.projectId());
                             if (addon != null) {
                                 curseForgeUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
                                 if (version.self() instanceof CurseForgeRemoteAddonRepository.CurseAddon.LatestFile latestFile) {
@@ -766,14 +766,14 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         // Fetch Modrinth info
         try {
-            RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddonRepository.Type.MOD);
+            RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddon.Type.MOD);
             if (modrinthRepo != null) {
                 Optional<RemoteAddon.Version> modrinthVersion = modrinthRepo.getRemoteVersionByLocalFile(filePath);
                 if (modrinthVersion.isPresent()) {
                     RemoteAddon.Version version = modrinthVersion.get();
                     modrinthFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
                     try {
-                        RemoteAddon addon = modrinthRepo.getModById(downloadProvider, version.modid());
+                        RemoteAddon addon = modrinthRepo.getAddonById(downloadProvider, version.projectId());
                         if (addon != null) {
                             modrinthUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
                         }
