@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
+import org.jetbrains.annotations.Nullable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -115,7 +116,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
-        Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        Path file = Controllers.showOpenDialog(chooser);
         if (file != null) {
             JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
@@ -226,7 +227,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     }
 
     private static final class JavaItemCell extends ListCell<JavaRuntime> {
-        private final Node graphic;
+        private final RipplerContainer graphic;
         private final Label label = new Label();
         private final TwoLineListItem content;
 
@@ -244,10 +245,10 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             center.setAlignment(Pos.CENTER_LEFT);
 
             label.setAlignment(Pos.CENTER);
-            label.setMinSize(24, 24);
-            label.setMaxSize(24, 24);
-            label.setPrefSize(24, 24);
-            label.setStyle("-fx-background-color: -monet-secondary-container; -fx-background-radius: 2; -fx-padding: 2; -fx-font-weight: normal; -fx-font-size: 12px;");
+            FXUtils.setLimitWidth(label, 32);
+            FXUtils.setLimitHeight(label, 32);
+
+            label.setStyle("-fx-background-color: -monet-secondary-container; -fx-background-radius: 2; -fx-padding: 2; -fx-font-weight: normal; -fx-font-size: 16px;");
 
             this.content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
@@ -297,6 +298,8 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         @Override
         protected void updateItem(JavaRuntime item, boolean empty) {
             JavaRuntime oldItem = getItem();
+
+            this.graphic.releaseRippleImmediately();
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setGraphic(null);
@@ -304,15 +307,14 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 int parsedVersion = item.getParsedVersion();
                 label.setText(parsedVersion >= 0 ? String.valueOf(parsedVersion) : "?");
 
-                content.setTitle((item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
+                @Nullable String vendor = JavaInfo.normalizeVendor(item.getVendor());
+
+                content.setTitle((vendor != null ? vendor : i18n("message.unknown")) + " " + (item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
 
                 if (oldItem != item) {
                     content.getTags().clear();
-                    content.addTag(i18n("java.info.architecture") + ": " + item.getArchitecture().getDisplayName());
-                    String vendor = JavaInfo.normalizeVendor(item.getVendor());
-                    if (vendor != null)
-                        content.addTag(i18n("java.info.vendor") + ": " + vendor);
+                    content.addTag(item.getArchitecture().getDisplayName());                    
                 }
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;

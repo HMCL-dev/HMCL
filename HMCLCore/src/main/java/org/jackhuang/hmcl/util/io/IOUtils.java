@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import org.glavo.chardet.DetectedCharset;
-import org.glavo.chardet.UniversalDetector;
+import kala.encdet.EncodingDetector;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -50,10 +51,29 @@ public final class IOUtils {
         FileChannel channel = FileChannel.open(file);
         try {
             long oldPosition = channel.position();
-            DetectedCharset detectedCharset = UniversalDetector.detectCharset(channel);
-            Charset charset = detectedCharset != null && detectedCharset.isSupported()
-                    && (detectedCharset.getCharset() == UTF_8 || detectedCharset.getCharset() == US_ASCII)
-                    ? UTF_8 : NATIVE_CHARSET;
+            long size = channel.size();
+
+            EncodingDetector detector = EncodingDetector.MODERN_WEB;
+
+            int bufferSize = (int) Math.max(Math.min(size - oldPosition, detector.maxBytes()), 8192L);
+            ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
+
+            //noinspection StatementWithEmptyBody
+            while (buffer.hasRemaining() && channel.read(buffer) > 0) {
+                // do nothing
+            }
+
+            buffer.flip();
+            Charset charset;
+            if (buffer.remaining() == 0) {
+                charset = UTF_8;
+            } else {
+                EncodingDetector.@Nullable Encoding encoding = detector.detect(buffer).bestEncoding();
+                Charset detectedCharset = encoding != null ? encoding.approximateCharset() : null;
+                charset = detectedCharset != null && (detectedCharset == UTF_8 || detectedCharset == US_ASCII)
+                        ? UTF_8
+                        : NATIVE_CHARSET;
+            }
             channel.position(oldPosition);
             return new BufferedReader(new InputStreamReader(Channels.newInputStream(channel), charset));
         } catch (Throwable e) {

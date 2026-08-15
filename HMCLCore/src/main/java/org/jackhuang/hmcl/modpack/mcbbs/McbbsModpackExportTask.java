@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.modpack.mcbbs;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -34,6 +35,9 @@ import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -45,13 +49,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class McbbsModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
-    private final String version;
+    private final GameInstanceID instanceId;
     private final ModpackExportInfo info;
     private final Path modpackFile;
 
-    public McbbsModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo info, Path modpackFile) {
+    public McbbsModpackExportTask(DefaultGameRepository repository, GameInstanceID instanceId, ModpackExportInfo info, Path modpackFile) {
         this.repository = repository;
-        this.version = version;
+        this.instanceId = instanceId;
         this.info = info.validate();
         this.modpackFile = modpackFile;
 
@@ -66,14 +70,16 @@ public class McbbsModpackExportTask extends Task<Void> {
         });
     }
 
+/// Exports the selected game files and manifests to the target archive.
+    
     @Override
     public void execute() throws Exception {
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
-        blackList.add(version + ".jar");
-        blackList.add(version + ".json");
+        blackList.add(instanceId + ".jar");
+        blackList.add(instanceId + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (var zip = new Zipper(modpackFile)) {
-            Path runDirectory = repository.getRunDirectory(version);
+            Path runDirectory = repository.getRunDirectory(instanceId);
             List<McbbsModpackManifest.File> files = new ArrayList<>();
             zip.putDirectory(runDirectory, "overrides", path -> {
                 if (Modpack.acceptFile(path, blackList, info.getWhitelist())) {
@@ -88,9 +94,9 @@ public class McbbsModpackExportTask extends Task<Void> {
                 }
             });
 
-            String gameVersion = repository.getGameVersion(version)
-                    .orElseThrow(() -> new IOException("Cannot parse the version of " + version));
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
+            String gameVersion = repository.getGameVersion(instanceId)
+                    .orElseThrow(() -> new IOException("Cannot parse the version of " + instanceId));
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId), gameVersion);
 
             // Mcbbs manifest
             List<McbbsModpackManifest.Addon> addons = new ArrayList<>();
@@ -122,7 +128,9 @@ public class McbbsModpackExportTask extends Task<Void> {
             McbbsModpackManifest.LaunchInfo launchInfo = new McbbsModpackManifest.LaunchInfo(info.getMinMemory(), info.getSupportedJavaVersions(), StringUtils.tokenize(info.getLaunchArguments()), StringUtils.tokenize(info.getJavaArguments()));
 
             McbbsModpackManifest mcbbsManifest = new McbbsModpackManifest(McbbsModpackManifest.MANIFEST_TYPE, 2, info.getName(), info.getVersion(), info.getAuthor(), info.getDescription(), info.getFileApi() == null ? null : StringUtils.removeSuffix(info.getFileApi(), "/"), info.getUrl(), info.isForceUpdate(), origins, addons, libraries, files, settings, launchInfo);
-            zip.putTextFile(JsonUtils.GSON.toJson(mcbbsManifest), "mcbbs.packmeta");
+            try (Writer writer = new OutputStreamWriter(zip.putStream("mcbbs.packmeta"), StandardCharsets.UTF_8)) {
+                JsonUtils.GSON.toJson(mcbbsManifest, writer);
+            }
 
             // CurseForge manifest
             List<CurseManifestModLoader> modLoaders = new ArrayList<>();

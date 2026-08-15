@@ -44,12 +44,7 @@ import javafx.stage.FileChooser;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
-import org.jackhuang.hmcl.setting.BackgroundType;
-import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.setting.ThemeColorType;
-import org.jackhuang.hmcl.setting.UserSettings;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.theme.BuiltinBackground;
 import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
@@ -347,20 +342,25 @@ public class PersonalizationPage extends StackPane {
         String defaultPackId = "com.example.hmcl.theme-pack." + UUIDs.toCompactString(UUIDs.generateV7(exportTimestamp));
         String defaultPackName = LocalDateTime.ofInstant(exportTimestamp, ZoneId.systemDefault()).format(EXPORTED_THEME_NAME_FORMATTER);
 
-        String userName = System.getProperty("user.name").trim();
-        String defaultAuthorName = StringUtils.isBlank(userName) ? "Unknown" : userName;
+        String accountName = null;
+        {
+            var currentAccount = Accounts.getSelectedAccount();
+            if (currentAccount != null) accountName = currentAccount.getProfileName();
+        }
+        if (StringUtils.isBlank(accountName)) accountName = System.getProperty("user.name").trim();
+        String defaultAuthorName = StringUtils.isBlank(accountName) ? "Unknown" : accountName;
 
         PromptDialogPane.Builder.StringQuestion packNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.name"),
-                "")
+                defaultPackName)
                 .setPromptText(defaultPackName);
         PromptDialogPane.Builder.StringQuestion versionQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.version"),
-                "")
+                ThemePackManager.CURRENT_THEME_PACK_VERSION)
                 .setPromptText(ThemePackManager.CURRENT_THEME_PACK_VERSION);
         PromptDialogPane.Builder.StringQuestion authorNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.author"),
-                "")
+                defaultAuthorName)
                 .setPromptText(defaultAuthorName);
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
@@ -387,7 +387,7 @@ public class PersonalizationPage extends StackPane {
         chooser.getExtensionFilters().setAll(
                 new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
 
-        @Nullable Path output = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
+        @Nullable Path output = Controllers.showSaveDialog(chooser);
         if (output == null) {
             return;
         }
@@ -713,6 +713,17 @@ public class PersonalizationPage extends StackPane {
                 }
                 updatingBackground.value = true;
                 try {
+                    builtinBackgroundComboBox.setValue(Objects.requireNonNullElse(
+                            settings().builtinBackgroundIdProperty().get(),
+                            BuiltinBackground.FALLBACK.id()));
+                    customBackgroundOption.setPath(Objects.toString(
+                            settings().customBackgroundImagePathProperty().get(),
+                            ""));
+                    networkBackgroundOption.setText(Objects.toString(
+                            settings().networkBackgroundImageUrlProperty().get(),
+                            ""));
+                    paintBackgroundOption.setPaint(settings().customBackgroundPaintProperty().get());
+
                     boolean overridden = settings().getThemeAppearanceOverrides().contains(
                             LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                     ThemePackManager.ResolvedBackground background;
@@ -1007,6 +1018,7 @@ public class PersonalizationPage extends StackPane {
 
                 Label textOpacity = new Label();
                 FXUtils.setLimitWidth(textOpacity, 50);
+                textOpacity.setAlignment(Pos.CENTER);
 
                 StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
                 textOpacity.textProperty().bind(valueBinding);
@@ -1171,7 +1183,8 @@ public class PersonalizationPage extends StackPane {
 
             LineToggleButton animationButton = new LineToggleButton();
             appearanceList.getContent().add(animationButton);
-            animationButton.selectedProperty().bindBidirectional(settings().animationDisabledProperty());
+            animationButton.setSelected(settings().isAnimationDisabled());
+            FXUtils.onChange(animationButton.selectedProperty(), value -> settings().animationDisabledProperty().set(value));
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
 
