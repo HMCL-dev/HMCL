@@ -199,7 +199,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .thenComposeAsync(manifest -> libraryVersion
                         .getInstallTask(this, manifest, modsDirectory)
                         .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
-                .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
+                .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getComponentType().getPatchId(), libraryVersion.getSelfVersion()));
     }
 
     /// Installs a component into an unpublished new instance without constructing a
@@ -208,13 +208,13 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// @param instanceId     the unpublished instance id
     /// @param baseManifest   the working manifest for this step
     /// @param gameVersion    the Minecraft version used for component analysis
-    /// @param libraryVersion the remote component to install
+    /// @param componentVersion the remote component to install
     /// @return the task producing the updated manifest (not yet committed)
     Task<GameInstanceManifest> installNewInstanceComponentAsync(
             GameInstanceID instanceId,
             GameInstanceManifest baseManifest,
             String gameVersion,
-            RemoteVersion libraryVersion) {
+            RemoteVersion componentVersion) {
         if (!instanceId.equals(baseManifest.id())) {
             throw new IllegalArgumentException("baseManifest id does not match instanceId");
         }
@@ -223,14 +223,14 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return removeNewInstanceComponentAsync(
                 baseManifest,
                 GameVersionNumber.asGameVersion(gameVersion),
-                libraryVersion.getComponentType())
-                .thenComposeAsync(manifest -> libraryVersion
+                componentVersion.getComponentType())
+                .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
                         .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
                 .withStage(String.format(
                         "hmcl.install.%s:%s",
-                        libraryVersion.getLibraryId(),
-                        libraryVersion.getSelfVersion()));
+                        componentVersion.getComponentType().getPatchId(),
+                        componentVersion.getSelfVersion()));
     }
 
     /// Resolves and installs a component into an unpublished new instance.
@@ -259,7 +259,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         gameVersion,
                         versionList.getVersion(gameVersion, componentVersion)
                                 .orElseThrow(() -> new IOException(
-                                        "Remote library " + componentType + " has no version " + componentVersion))))
+                                        "Remote component " + componentType + " has no version " + componentVersion))))
                 .withStage(String.format("hmcl.install.%s:%s", componentType, componentVersion));
     }
 

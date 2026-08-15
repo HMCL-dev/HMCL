@@ -35,9 +35,9 @@ public abstract class GameBuilder {
     protected @Nullable GameInstanceID id;
     protected final Map<GameComponentType, Object /* String | RemoteVersion */> components = new EnumMap<>(GameComponentType.class);
 
-    /// The new game version name, for `.minecraft/<instanceId>`.
+    /// The new game instance id, for `.minecraft/<instanceId>`.
     ///
-    /// @param id the name of new game version.
+    /// @param id the instance id of new game instance.
     public GameBuilder id(GameInstanceID id) {
         this.id = Objects.requireNonNull(id);
         return this;

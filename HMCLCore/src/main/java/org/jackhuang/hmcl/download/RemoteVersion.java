@@ -37,7 +37,6 @@ import java.util.Objects;
 public class RemoteVersion implements Comparable<RemoteVersion> {
 
     private final GameComponentType componentType;
-    private final String libraryId;
     private final String gameVersion;
     private final String selfVersion;
     private final Instant releaseDate;
@@ -64,7 +63,6 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      */
     public RemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, Type type, List<String> urls) {
         this.componentType = Objects.requireNonNull(componentType);
-        this.libraryId = componentType.getPatchId();
         this.gameVersion = Objects.requireNonNull(gameVersion);
         this.selfVersion = Objects.requireNonNull(selfVersion);
         this.releaseDate = releaseDate;
@@ -74,10 +72,6 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
 
     public GameComponentType getComponentType() {
         return componentType;
-    }
-
-    public String getLibraryId() {
-        return getComponentType().getPatchId();
     }
 
     public String getGameVersion() {
