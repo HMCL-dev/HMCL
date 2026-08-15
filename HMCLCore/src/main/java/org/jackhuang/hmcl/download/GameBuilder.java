@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -28,6 +29,7 @@ import java.util.*;
 /// The builder which provide a task to build Minecraft environment.
 ///
 /// @author huangyuhui
+@NotNullByDefault
 public abstract class GameBuilder {
 
     protected @Nullable GameInstanceID id;
