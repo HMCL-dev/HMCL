@@ -46,6 +46,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -382,7 +383,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
                     return dependency.newGameBuilder()
                             .id(instanceId)
-                            .gameVersion(gameVersion)
+                            .component(GameComponentType.GAME, gameVersion)
                             .buildAsync();
                 })
                 .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refresh())

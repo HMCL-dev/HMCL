@@ -311,7 +311,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
             builder.id(instanceId);
-            builder.gameVersion(((RemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion());
+            builder.component(GameComponentType.GAME, ((RemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion());
 
             settings.asStringMap().forEach((key, value) -> {
                 if (!GameComponentType.GAME.getPatchId().equals(key)

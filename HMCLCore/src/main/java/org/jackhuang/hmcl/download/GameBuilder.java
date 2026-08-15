@@ -41,12 +41,6 @@ public abstract class GameBuilder {
         return this;
     }
 
-    @Contract("_ -> this")
-    public GameBuilder gameVersion(String version) {
-        components.put(GameComponentType.GAME, version);
-        return this;
-    }
-
     @Contract("_, _ -> this")
     public GameBuilder component(GameComponentType componentType, String version) {
         components.put(componentType, version);

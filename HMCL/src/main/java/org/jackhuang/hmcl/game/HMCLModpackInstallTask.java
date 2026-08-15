@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -55,7 +56,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         if (repository.hasInstance(this.instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists");
 
-        dependents.add(dependency.newGameBuilder().id(this.instanceId).gameVersion(modpack.getGameVersion()).buildAsync());
+        dependents.add(dependency.newGameBuilder().id(this.instanceId).component(GameComponentType.GAME, modpack.getGameVersion()).buildAsync());
 
         onDone().register(event -> {
             if (event.isFailed()) repository.removeInstanceFromDisk(this.instanceId);
