@@ -33,7 +33,7 @@ import java.util.*;
 public abstract class GameBuilder {
 
     protected @Nullable GameInstanceID id;
-    protected final Map<GameComponentType, Object /* String | RemoteVersion */> components = new EnumMap<>(GameComponentType.class);
+    protected final EnumMap<GameComponentType, Object /* String | RemoteVersion */> components = new EnumMap<>(GameComponentType.class);
 
     /// The new game instance id, for `.minecraft/<instanceId>`.
     ///
