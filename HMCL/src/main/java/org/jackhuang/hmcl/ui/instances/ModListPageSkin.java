@@ -306,7 +306,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         final String i18nKey;
         final boolean selectedByDefault;
 
-        FieldInfo(String id, String i18nKey, boolean selectedByDefault) {
+        FieldInfo(String id, @PropertyKey(resourceBundle = "assets.lang.I18N") String i18nKey, boolean selectedByDefault) {
             this.id = id;
             this.i18nKey = i18nKey;
             this.selectedByDefault = selectedByDefault;
