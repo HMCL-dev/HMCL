@@ -107,7 +107,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
                         publishedInstance,
                         manifest,
                         modpack.getGameVersion(),
-                        mark.componentType().getPatchId(),
+                        mark.componentType(),
                         componentVersion));
             }
             return libraryTask;

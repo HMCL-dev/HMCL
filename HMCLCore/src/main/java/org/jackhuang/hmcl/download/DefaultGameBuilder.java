@@ -82,11 +82,11 @@ public class DefaultGameBuilder extends GameBuilder {
         GameRepositoryDraft draft = repository.openDraft();
 
         Task<GameInstanceManifest> libraryTask = dependencyManager.installNewInstanceComponentAsync(
-                id, new GameInstanceManifest(id), gameVersion, GameComponentType.GAME.getPatchId(), gameVersion);
+                id, new GameInstanceManifest(id), gameVersion, GameComponentType.GAME, gameVersion);
 
         for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
             libraryTask = libraryTask.thenComposeAsync(manifest -> dependencyManager.installNewInstanceComponentAsync(
-                    id, manifest, gameVersion, entry.getKey(), entry.getValue()));
+                    id, manifest, gameVersion, GameComponentType.fromPatchId(entry.getKey()), entry.getValue()));
         }
 
         for (RemoteVersion remoteVersion : remoteVersions) {

@@ -158,7 +158,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     if (needsReInstallation) {
                         Library installer = new Library(new Artifact("optifine", "OptiFine", gameVersion + "_" + optifinePatchVersion, "installer"));
                         if (GameLibrariesTask.shouldDownloadLibrary(repository, manifest, installer, integrityCheck)) {
-                            tasks.add(installComponentAsync(instance, original, gameVersion, "optifine", optifinePatchVersion));
+                            tasks.add(installComponentAsync(instance, original, gameVersion, GameComponentType.OPTIFINE, optifinePatchVersion));
                         } else {
                             tasks.add(OptiFineInstallTask.install(
                                     this,
@@ -235,32 +235,32 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     /// Resolves and installs a component into an unpublished new instance.
     ///
-    /// @param instanceId     the unpublished instance id
-    /// @param baseManifest   the working manifest for this step
-    /// @param gameVersion    the Minecraft version used to look up the remote list
-    /// @param libraryId      the component list id, such as `game` or `forge`
-    /// @param libraryVersion the component version id
+    /// @param instanceId       the unpublished instance id
+    /// @param baseManifest     the working manifest for this step
+    /// @param gameVersion      the Minecraft version used to look up the remote list
+    /// @param componentType    the component list id, such as `game` or `forge`
+    /// @param componentVersion the component version id
     /// @return the installation task
     Task<GameInstanceManifest> installNewInstanceComponentAsync(
             GameInstanceID instanceId,
             GameInstanceManifest baseManifest,
             String gameVersion,
-            String libraryId,
-            String libraryVersion) {
+            GameComponentType componentType,
+            String componentVersion) {
         if (!instanceId.equals(baseManifest.id())) {
             throw new IllegalArgumentException("baseManifest id does not match instanceId");
         }
 
-        VersionList<?> versionList = getVersionList(libraryId);
+        VersionList<?> versionList = getVersionList(componentType);
         return versionList.loadAsync(gameVersion)
                 .thenComposeAsync(() -> installNewInstanceComponentAsync(
                         instanceId,
                         baseManifest,
                         gameVersion,
-                        versionList.getVersion(gameVersion, libraryVersion)
+                        versionList.getVersion(gameVersion, componentVersion)
                                 .orElseThrow(() -> new IOException(
-                                        "Remote library " + libraryId + " has no version " + libraryVersion))))
-                .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));
+                                        "Remote library " + componentType + " has no version " + componentVersion))))
+                .withStage(String.format("hmcl.install.%s:%s", componentType, componentVersion));
     }
 
     /// Removes one component from an unpublished new instance manifest.
@@ -286,29 +286,29 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// @param instance       the registered instance being modified
     /// @param baseManifest   the working manifest for this step
     /// @param gameVersion    the Minecraft version used to look up the remote list
-    /// @param libraryId      the component list id, such as `game` or `forge`
-    /// @param libraryVersion the component version id
+    /// @param componentType  the component list id, such as `game` or `forge`
+    /// @param componentVersion the component version id
     /// @return the installation task
     public Task<GameInstanceManifest> installComponentAsync(
             GameInstance instance,
             GameInstanceManifest baseManifest,
             String gameVersion,
-            String libraryId,
-            String libraryVersion) {
+            GameComponentType componentType,
+            String componentVersion) {
         validateGameInstance(instance);
         if (!instance.getId().equals(baseManifest.id())) {
             throw new IllegalArgumentException("baseManifest id does not match instance");
         }
 
-        VersionList<?> versionList = getVersionList(libraryId);
+        VersionList<?> versionList = getVersionList(componentType);
         return versionList.loadAsync(gameVersion)
                 .thenComposeAsync(() -> installComponentAsync(
                         instance,
                         baseManifest,
-                        versionList.getVersion(gameVersion, libraryVersion)
+                        versionList.getVersion(gameVersion, componentVersion)
                                 .orElseThrow(() -> new IOException(
-                                        "Remote library " + libraryId + " has no version " + libraryVersion))))
-                .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));
+                                        "Remote library " + componentType + " has no version " + componentVersion))))
+                .withStage(String.format("hmcl.install.%s:%s", componentType, componentVersion));
     }
 
     /// Installs a component from a local installer jar into a registered instance.
@@ -337,8 +337,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         }
         String gameVersion = instance.getVersion().toString();
 
-        return Task
-                .composeAsync(() -> {
+        return Task.composeAsync(() -> {
                     try {
                         return CleanroomInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {

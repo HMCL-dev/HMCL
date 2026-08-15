@@ -77,13 +77,6 @@ public interface DependencyManager {
 
     /// Returns a registered remote-version list.
     ///
-    /// @param id the list identifier, such as `game`, `forge`, or `optifine`
-    /// @return the registered version list
-    /// @throws IllegalArgumentException if no list is registered for `id`
-    VersionList<?> getVersionList(String id);
-
-    /// Returns a registered remote-version list.
-    ///
     /// @param componentType the component type, such as `game`, `forge`, or `optifine`
     /// @return the registered version list
     /// @throws IllegalArgumentException if no list is registered for `id`
