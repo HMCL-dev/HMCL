@@ -22,6 +22,8 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -33,8 +35,6 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Node;
-
-import java.net.URL;
 
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -59,7 +59,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
                 // Downgrade update, no need to display changelog
                 return null;
 
-            Document document = Jsoup.parse(new URL(url), 30 * 1000);
+            Document document = Jsoup.parse(WebURL.toURL(url), 30 * 1000);
             Node node = document.selectFirst("h1[data-version=\"%s\"]".formatted(targetVersion));
 
             if (node == null || !"h1".equals(node.nodeName())) {
