@@ -321,27 +321,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));
     }
 
-    @Override
-    public Task<GameInstanceManifest> installComponentAsync(
-            String gameVersion,
-            GameInstanceManifest baseManifest,
-            String libraryId,
-            String libraryVersion) {
-        return installComponentAsync(
-                repository.getInstance(baseManifest.id()),
-                baseManifest,
-                gameVersion,
-                libraryId,
-                libraryVersion);
-    }
-
-    @Override
-    public Task<GameInstanceManifest> installComponentAsync(
-            GameInstanceManifest baseVersion,
-            RemoteVersion libraryVersion) {
-        return installComponentAsync(repository.getInstance(baseVersion.id()), baseVersion, libraryVersion);
-    }
-
     /// Installs a component from a local installer jar into a registered instance.
     ///
     /// @param instance  the target instance

@@ -75,26 +75,6 @@ public interface DependencyManager {
     /// @return a new game builder
     GameBuilder newGameBuilder();
 
-    /// Creates a task that installs a loader or patch into a registered instance's working manifest.
-    ///
-    /// The instance must already be saved in [#getGameRepository()] so install tasks can resolve
-    /// run/mods directories. Prefer instance-bound overloads on concrete managers when available.
-    ///
-    /// @param gameVersion    the Minecraft version required by the library
-    /// @param baseVersion    the working manifest for this step (same id as the registered instance)
-    /// @param libraryId      the registered library type, such as `forge` or `optifine`
-    /// @param libraryVersion the library version to install
-    /// @return the installation task
-    Task<?> installComponentAsync(String gameVersion, GameInstanceManifest baseVersion, String libraryId, String libraryVersion);
-
-    /// Creates a task that installs a remote loader or patch into a registered instance's working
-    /// manifest.
-    ///
-    /// @param baseVersion    the working manifest for this step (same id as the registered instance)
-    /// @param libraryVersion the remote library version to install
-    /// @return the installation task
-    Task<?> installComponentAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion);
-
     /// Returns a registered remote-version list.
     ///
     /// @param id the list identifier, such as `game`, `forge`, or `optifine`
