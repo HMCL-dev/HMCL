@@ -548,7 +548,7 @@ public class DefaultLauncher extends Launcher {
         if (!instance.hasComponent(GameComponentType.FORGE) && !instance.hasComponent(GameComponentType.NEO_FORGE)) {
             return jvmArguments;
         }
-        @Nullable String bootstrapVersion = instance.getAnalyzer().getVersion(GameComponentType.BOOTSTRAP_LAUNCHER);
+        @Nullable String bootstrapVersion = instance.getAnalyzer().getBootstrapVersion();
         if (bootstrapVersion == null || VersionNumber.compare(bootstrapVersion, "0.1.17") >= 0) {
             return jvmArguments;
         }

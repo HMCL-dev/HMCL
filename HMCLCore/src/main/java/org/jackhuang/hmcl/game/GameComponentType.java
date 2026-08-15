@@ -218,12 +218,7 @@ public enum GameComponentType {
             return "org.quiltmc".equals(library.groupId()) && "quilt-api".equals(library.artifactId());
         }
     },
-    BOOTSTRAP_LAUNCHER("") {
-        @Override
-        protected boolean matchLibrary(Library library, List<Library> libraries) {
-            return "cpw.mods".equals(library.groupId()) && "bootstraplauncher".equals(library.artifactId());
-        }
-    };
+    ;
 
     public static final List<GameComponentType> ALL = List.of(GameComponentType.values());
     public static final List<GameComponentType> MOD_LOADERS = ALL.stream()

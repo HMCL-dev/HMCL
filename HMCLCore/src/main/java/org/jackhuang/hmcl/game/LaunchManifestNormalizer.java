@@ -191,7 +191,7 @@ public final class LaunchManifestNormalizer {
             return manifest;
         }
 
-        if (Optional.ofNullable(analyzer.getVersion(GameComponentType.BOOTSTRAP_LAUNCHER))
+        if (Optional.ofNullable(analyzer.getBootstrapVersion())
                 .filter(version -> VersionNumber.compare(version, "0.1.17") >= 0)
                 .isEmpty()) {
             return manifest;

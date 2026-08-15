@@ -135,7 +135,6 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
             case QUILT_API -> quiltApi;
             case LEGACY_FABRIC -> legacyFabric;
             case LEGACY_FABRIC_API -> legacyFabricApi;
-            case BOOTSTRAP_LAUNCHER -> throw new IllegalArgumentException("Unrecognized component: " + componentType);
         };
     }
 

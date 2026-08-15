@@ -35,6 +35,7 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
             GameInstanceManifest launchManifest,
             @Nullable GameVersionNumber gameVersion) {
         var components = new EnumMap<GameComponentType, Mark>(GameComponentType.class);
+        @Nullable String bootstrapVersion = null;
 
         if (gameVersion != null && !gameVersion.equals(GameVersionNumber.unknown())) {
             components.put(GameComponentType.GAME, new Mark(GameComponentType.GAME, gameVersion.toString(), true));
@@ -59,9 +60,13 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
                     break;
                 }
             }
+
+            if (bootstrapVersion == null && library.is("cpw.mods", "bootstraplauncher")) {
+                bootstrapVersion = library.version();
+            }
         }
 
-        return new GameComponentAnalyzer(standaloneManifest, components);
+        return new GameComponentAnalyzer(standaloneManifest, components, bootstrapVersion);
     }
 
     public static GameComponentAnalyzer analyze(GameInstanceManifest.Resolved resolved, @Nullable GameVersionNumber gameVersion) {
@@ -77,10 +82,12 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
 
     private final GameInstanceManifest manifest;
     private final @Unmodifiable Map<GameComponentType, Mark> components;
+    private final @Nullable String bootstrapVersion;
 
-    private GameComponentAnalyzer(GameInstanceManifest manifest, @Unmodifiable Map<GameComponentType, Mark> components) {
+    private GameComponentAnalyzer(GameInstanceManifest manifest, @Unmodifiable Map<GameComponentType, Mark> components, @Nullable String bootstrapVersion) {
         this.manifest = manifest;
         this.components = components;
+        this.bootstrapVersion = bootstrapVersion;
     }
 
     public boolean has(GameComponentType type) {
@@ -144,6 +151,10 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
     public @Nullable String getVersion(GameComponentType type) {
         Mark mark = components.get(type);
         return mark != null ? mark.version() : null;
+    }
+
+    public @Nullable String getBootstrapVersion() {
+        return bootstrapVersion;
     }
 
     /// If a library is provided in `$.patches`, it's structure is so clear that we can do any operation.
