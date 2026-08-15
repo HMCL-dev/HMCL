@@ -98,36 +98,6 @@ public final class DownloadProviderWrapper implements DownloadProvider {
     }
 
     @Override
-    public VersionList<?> getVersionListById(String id) {
-
-        return new VersionList<>() {
-            @Override
-            public boolean hasType() {
-                return getProvider().getVersionListById(id).hasType();
-            }
-
-            @Override
-            public Task<?> refreshAsync() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Task<?> refreshAsync(String gameVersion) {
-                return getProvider().getVersionListById(id).refreshAsync(gameVersion)
-                        .thenComposeAsync(() -> {
-                            lock.writeLock().lock();
-                            try {
-                                versions.putAll(gameVersion, getProvider().getVersionListById(id).getVersions(gameVersion));
-                            } finally {
-                                lock.writeLock().unlock();
-                            }
-                            return null;
-                        });
-            }
-        };
-    }
-
-    @Override
     public int getConcurrency() {
         return getProvider().getConcurrency();
     }

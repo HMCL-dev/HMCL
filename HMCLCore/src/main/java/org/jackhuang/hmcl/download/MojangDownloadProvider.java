@@ -101,25 +101,6 @@ public class MojangDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public VersionList<?> getVersionListById(String id) {
-        return switch (id) {
-            case "game" -> game;
-            case "fabric" -> fabric;
-            case "fabric-api" -> fabricApi;
-            case "forge" -> forge;
-            case "cleanroom" -> cleanroom;
-            case "neoforge" -> neoforge;
-            case "liteloader" -> liteLoader;
-            case "optifine" -> optifine;
-            case "quilt" -> quilt;
-            case "quilt-api" -> quiltApi;
-            case "legacyfabric" -> legacyFabric;
-            case "legacyfabric-api" -> legacyFabricApi;
-            default -> throw new IllegalArgumentException("Unrecognized version list id: " + id);
-        };
-    }
-
-    @Override
     public String injectURL(String baseURL) {
         return baseURL;
     }

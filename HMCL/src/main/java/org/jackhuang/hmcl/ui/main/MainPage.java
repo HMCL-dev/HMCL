@@ -361,7 +361,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launchNoGame() {
         DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
-        VersionList<?> versionList = downloadProvider.getVersionListById("game");
+        VersionList<?> versionList = downloadProvider.getVersionList(GameComponentType.GAME);
 
         Holder<GameInstanceID> instanceHolder = new Holder<>();
         Task<?> task = versionList.refreshAsync("")

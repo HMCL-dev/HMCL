@@ -30,7 +30,7 @@ import java.util.function.Function;
 public final class AutoDownloadProvider implements DownloadProvider {
     private final List<DownloadProvider> versionListProviders;
     private final List<DownloadProvider> fileProviders;
-    private final ConcurrentMap<String, VersionList<?>> versionLists = new ConcurrentHashMap<>();
+    private final ConcurrentMap<GameComponentType, VersionList<?>> versionLists = new ConcurrentHashMap<>();
 
     public AutoDownloadProvider(
             List<DownloadProvider> versionListProviders,
@@ -97,15 +97,10 @@ public final class AutoDownloadProvider implements DownloadProvider {
 
     @Override
     public VersionList<?> getVersionList(GameComponentType componentType) {
-        return null; // TODO
-    }
-
-    @Override
-    public VersionList<?> getVersionListById(String id) {
-        return versionLists.computeIfAbsent(id, value -> {
+        return versionLists.computeIfAbsent(componentType, value -> {
             VersionList<?>[] lists = new VersionList<?>[versionListProviders.size()];
             for (int i = 0; i < versionListProviders.size(); i++) {
-                lists[i] = versionListProviders.get(i).getVersionListById(value);
+                lists[i] = versionListProviders.get(i).getVersionList(value);
             }
             return new MultipleSourceVersionList(lists);
         });

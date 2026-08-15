@@ -68,13 +68,6 @@ public interface DownloadProvider {
     /// @throws IllegalArgumentException if the version list does not exist
     VersionList<?> getVersionList(GameComponentType componentType);
 
-    /// the specific version list that this download provider provides. i.e. "fabric", "forge", "liteloader", "game", "optifine"
-    ///
-    /// @param id the id of specific version list that this download provider provides. i.e. "fabric", "forge", "liteloader", "game", "optifine"
-    /// @return the version list
-    /// @throws IllegalArgumentException if the version list does not exist
-    VersionList<?> getVersionListById(String id);
-
     /// The maximum download concurrency that this download provider supports.
     ///
     /// @return the maximum download concurrency.

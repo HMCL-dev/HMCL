@@ -139,25 +139,6 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
         };
     }
 
-    @Override
-    public VersionList<?> getVersionListById(String id) {
-        return switch (id) {
-            case "game" -> game;
-            case "fabric" -> fabric;
-            case "fabric-api" -> fabricApi;
-            case "forge" -> forge;
-            case "cleanroom" -> cleanroom;
-            case "neoforge" -> neoforge;
-            case "liteloader" -> liteLoader;
-            case "optifine" -> optifine;
-            case "quilt" -> quilt;
-            case "quilt-api" -> quiltApi;
-            case "legacyfabric" -> legacyFabric;
-            case "legacyfabric-api" -> legacyFabricApi;
-            default -> throw new IllegalArgumentException("Unrecognized version list id: " + id);
-        };
-    }
-
     private static String injectURL(List<Pair<String, String>> replacement, String baseURL) {
         for (Pair<String, String> pair : replacement) {
             if (baseURL.startsWith(pair.getKey())) {
