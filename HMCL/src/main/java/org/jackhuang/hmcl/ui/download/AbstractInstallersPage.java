@@ -83,7 +83,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                                     i18n("install.installer.choose", i18n("install.installer." + type.getPatchId())),
                                     gameVersion,
                                     downloadProvider,
-                                    type.getPatchId(),
+                                    type,
                                     () -> controller.onPrev(false, Navigation.NavigationDirection.PREVIOUS)
                             ), Navigation.NavigationDirection.NEXT
                     );

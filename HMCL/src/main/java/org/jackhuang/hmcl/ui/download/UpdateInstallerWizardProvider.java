@@ -49,13 +49,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class UpdateInstallerWizardProvider implements WizardProvider {
     private final HMCLGameInstance gameInstance;
     private final DefaultDependencyManager dependencyManager;
-    private final String libraryId;
+    private final GameComponentType componentType;
     private final String oldLibraryVersion;
     private final DownloadProvider downloadProvider;
 
-    public UpdateInstallerWizardProvider(@NotNull HMCLGameInstance gameInstance, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
+    public UpdateInstallerWizardProvider(@NotNull HMCLGameInstance gameInstance, @NotNull GameComponentType componentType, @Nullable String oldLibraryVersion) {
         this.gameInstance = gameInstance;
-        this.libraryId = libraryId;
+        this.componentType = componentType;
         this.oldLibraryVersion = oldLibraryVersion;
         this.downloadProvider = DownloadProviders.getDownloadProvider();
         this.dependencyManager = gameInstance.getRepository().getDependency(downloadProvider);
@@ -104,14 +104,14 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameInstance.getVersion().toString(), downloadProvider, libraryId, () -> {
+                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + componentType)), gameInstance.getVersion().toString(), downloadProvider, componentType, () -> {
                     if (oldLibraryVersion == null) {
                         controller.onFinish();
-                    } else if ("game".equals(libraryId)) {
-                        String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
+                    } else if (componentType == GameComponentType.GAME) {
+                        String newGameVersion = ((RemoteVersion) settings.get(componentType.getPatchId())).getSelfVersion();
                         controller.onNext(new AdditionalInstallersPage(gameInstance, newGameVersion, controller, downloadProvider));
                     } else {
-                        Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
+                        Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + componentType), oldLibraryVersion, ((RemoteVersion) settings.get(componentType.getPatchId())).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);
                     }
                 });

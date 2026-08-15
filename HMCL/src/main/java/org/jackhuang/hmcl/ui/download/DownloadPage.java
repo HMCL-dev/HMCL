@@ -96,7 +96,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     public DownloadPage(GameInstanceID uploadInstance) {
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
-                "game", versionPageNavigator::onGameSelected)));
+                GameComponentType.GAME, versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
             DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, repository, __, modpack, file) -> {
                 Instances.downloadModpackImpl(downloadProvider, repository, uploadInstance, modpack, file);

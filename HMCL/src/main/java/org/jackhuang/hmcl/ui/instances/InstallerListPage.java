@@ -102,7 +102,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             }
 
             component.setOnInstall(() -> {
-                Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, component.getComponentType().getPatchId(), libraryVersion));
+                Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, component.getComponentType(), libraryVersion));
             });
 
             component.setOnRemove(() -> repository.updateInstanceAsync(
