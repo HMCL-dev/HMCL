@@ -146,17 +146,18 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         Path runDirectory = instanceId != null && repository.hasInstance(instanceId) ? repository.getRunDirectory(instanceId) : repository.getBaseDirectory();
 
+        var targetPath = runDirectory.resolve(subdirectoryName);
 
         FileNameSet existingPaths;
         try {
-            existingPaths = FileNameSet.list(runDirectory.resolve(subdirectoryName), null);
+            existingPaths = FileNameSet.list(targetPath, null);
         } catch (Exception e) {
-            LOG.warning("Failed to list folders in " + runDirectory.resolve(subdirectoryName), e);
+            LOG.warning("Failed to list folders in " + targetPath, e);
             existingPaths = new FileNameSet(false);
         }
 
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
-            Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
+            Path dest = targetPath.resolve(result);
 
             Controllers.taskDialog(Task.composeAsync(() -> {
                 var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.file().url()), dest);
