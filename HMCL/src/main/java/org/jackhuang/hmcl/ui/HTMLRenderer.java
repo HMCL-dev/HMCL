@@ -34,11 +34,13 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
+import org.jsoup.select.Elements;
 
 import java.net.URI;
 import java.util.*;
@@ -275,7 +277,7 @@ public final class HTMLRenderer {
     }
 
     private void appendTable(Node table) {
-        var childElements = ((Element) table).children();
+        Elements childElements = ((Element) table).children();
         List<Element> captions = new ArrayList<>();
 
         List<Element> head = new ArrayList<>();
@@ -309,7 +311,7 @@ public final class HTMLRenderer {
                     columnCount = Math.max(columnCount, head.size());
                 }
                 case "tbody" -> {
-                    var rows = child.children().stream()
+                    List<@Unmodifiable @NotNull List<Element>> rows = child.children().stream()
                             .filter(e -> e.nameIs("tr"))
                             .map(e ->
                                     e.children().stream().filter(n -> n.nameIs("th") || n.nameIs("td")).toList())
@@ -445,7 +447,7 @@ public final class HTMLRenderer {
             }
             case "dt" -> appendText(" ");
             case "p" -> {
-                var n = node.parent();
+                Node n = node.parent();
                 if (!children.isEmpty() && (n == null || !n.nameIs("li")))
                     appendAutoLineBreak("\n\n");
             }
@@ -464,7 +466,7 @@ public final class HTMLRenderer {
         switch (name) {
             case "br", "dd", "h1", "h2", "h3", "h4", "h5", "h6" -> appendAutoLineBreak("\n");
             case "p" -> {
-                var n = node.parent();
+                Node n = node.parent();
                 if (n == null || !n.nameIs("li"))
                     appendAutoLineBreak("\n");
             }
@@ -517,7 +519,7 @@ public final class HTMLRenderer {
             // Remove empty lines at the beginning
             int size = children.size();
             for (int i = 0; i < size; i++) {
-                var child = children.get(i);
+                javafx.scene.Node child = children.get(i);
                 if (child instanceof AutoLineBreak || child instanceof Text txt && isSpacing(txt.getText())) {
                     // NO-OP
                 } else {
@@ -530,7 +532,7 @@ public final class HTMLRenderer {
             // Remove empty lines and spaces at the end
             int size = children.size();
             for (int i = size - 1; i > -1; i--) {
-                var child = children.get(i);
+                javafx.scene.Node child = children.get(i);
                 if (child instanceof AutoLineBreak || child instanceof Text txt && isSpacing(txt.getText())) {
                     // NO-OP
                 } else {

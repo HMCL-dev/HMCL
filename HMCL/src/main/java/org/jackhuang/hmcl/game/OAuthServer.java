@@ -57,7 +57,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         this.port = port;
 
-        var encoder = Base64.getUrlEncoder().withoutPadding();
+        Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
         var random = new SecureRandom();
 
         {

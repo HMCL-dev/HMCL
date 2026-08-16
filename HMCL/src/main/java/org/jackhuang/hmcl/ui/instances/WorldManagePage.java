@@ -114,7 +114,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             return;
         }
 
-        for (var tab : header.getTabs()) {
+        for (TabControl.Tab<?> tab : header.getTabs()) {
             if (tab.getNode() instanceof WorldRefreshable r) {
                 r.refresh();
             }

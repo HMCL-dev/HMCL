@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -60,7 +61,7 @@ public class DefaultGameBuilder extends GameBuilder {
             hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
         }
 
-        var repository = dependencyManager.getGameRepository();
+        DefaultGameRepository repository = dependencyManager.getGameRepository();
         boolean isUpdate = repository.hasInstance(name);
 
         return libraryTask.thenComposeAsync(repository::saveAsync).whenComplete(exception -> {

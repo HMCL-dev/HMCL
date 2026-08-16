@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
@@ -170,7 +171,7 @@ public class TwoLineListItem extends VBox {
             tagsBox.setMinWidth(0);
             HBox.setHgrow(tagsBox, Priority.ALWAYS);
             Bindings.bindContent(tagsBox.getChildren(), tags);
-            var isNotEmpty = Bindings.isNotEmpty(tags);
+            BooleanBinding isNotEmpty = Bindings.isNotEmpty(tags);
             tagsBox.managedProperty().bind(isNotEmpty);
             tagsBox.visibleProperty().bind(isNotEmpty);
 

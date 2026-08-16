@@ -109,7 +109,7 @@ public abstract class ObservableSetting implements Observable {
 
         @SuppressWarnings("unchecked")
         var fields = (List<ObservableField<ObservableSetting>>) FIELDS.get(this.getClass());
-        for (var field : fields) {
+        for (ObservableField<ObservableSetting> field : fields) {
             Observable observable = field.get(this);
             tracker.track(observable);
             observable.addListener(helper);
@@ -350,7 +350,7 @@ public abstract class ObservableSetting implements Observable {
             var fields = (List<ObservableField<T>>) FIELDS.get(setting.getClass());
 
             JsonObject result = new JsonObject();
-            for (var field : fields) {
+            for (ObservableField<T> field : fields) {
                 Observable observable = field.get(setting);
                 if (setting.tracker.isDirty(observable)) {
                     field.serialize(result, setting, context);

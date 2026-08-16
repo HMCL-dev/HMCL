@@ -36,7 +36,7 @@ public final class AprilFools {
     private static final boolean ENABLED;
 
     static {
-        var date = LocalDate.now();
+        LocalDate date = LocalDate.now();
 
         // Some countries/regions may oppose April Fools' Day for various reasons.
         // Therefore, we use a regional whitelist to avoid risks.

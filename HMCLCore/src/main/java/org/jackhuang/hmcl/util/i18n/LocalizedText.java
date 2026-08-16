@@ -204,7 +204,7 @@ public final class LocalizedText {
     public void writeTo(JsonWriter jsonWriter) throws IOException {
         if (localizedValues != null) {
             jsonWriter.beginObject();
-            for (var entry : localizedValues.entrySet()) {
+            for (Map.Entry<String, String> entry : localizedValues.entrySet()) {
                 jsonWriter.name(entry.getKey());
                 jsonWriter.value(entry.getValue());
             }

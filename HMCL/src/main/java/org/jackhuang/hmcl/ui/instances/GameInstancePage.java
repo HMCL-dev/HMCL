@@ -196,7 +196,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     private void clearLibraries() {
-        var libraries = getRepository().getBaseDirectory().resolve("libraries");
+        Path libraries = getRepository().getBaseDirectory().resolve("libraries");
         Task.runAsync(Schedulers.io(), () -> {
             FileUtils.deleteDirectoryQuietly(libraries);
         }).whenComplete(Schedulers.javafx(), (exception) -> {

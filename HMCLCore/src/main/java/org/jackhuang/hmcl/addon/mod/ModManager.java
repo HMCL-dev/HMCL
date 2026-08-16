@@ -51,7 +51,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     static {
         var map = new HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>>();
-        var zipReaders = List.<Pair<ModMetadataReader, ModLoaderType>>of(
+        List<Pair<ModMetadataReader, ModLoaderType>> zipReaders = List.of(
                 pair(ForgeNewModMetadata::fromForgeFile, ModLoaderType.FORGE),
                 pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGE),
                 pair(ForgeOldModMetadata::fromFile, ModLoaderType.FORGE),

@@ -360,7 +360,7 @@ public class DownloadSettingsPage extends StackPane {
         if (commonDirectory != null) {
             cleaningCache = true;
             cleanButton.setMinWidth(cleanButton.getWidth());
-            var txt = cleanButton.getText();
+            String txt = cleanButton.getText();
             cleanButton.setText("");
             var spinner = new JFXSpinner();
             spinner.setRadius(8);

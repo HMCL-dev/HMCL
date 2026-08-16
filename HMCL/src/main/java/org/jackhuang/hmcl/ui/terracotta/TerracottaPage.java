@@ -26,6 +26,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -78,7 +79,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         AdvancedListBox toolbar = new AdvancedListBox()
                 .add(accountListItem)
                 .addNavigationDrawerItem(i18n("instance.launch"), SVG.ROCKET_LAUNCH, () -> {
-                    var repository = GameDirectoryManager.getSelectedRepository();
+                    HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
                     Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
                         launcherHelper.setKeep();
                         launcherHelper.setDisableOfflineSkin();

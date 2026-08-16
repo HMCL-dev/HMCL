@@ -33,7 +33,7 @@ public final class MacOSNativeUtils {
         }
 
         try {
-            var objc = ObjectiveCRuntime.INSTANCE;
+            ObjectiveCRuntime objc = ObjectiveCRuntime.INSTANCE;
 
             Pointer nsApplication = objc.objc_getClass("NSApplication");
             if (!isNull(nsApplication)) {
@@ -64,7 +64,7 @@ public final class MacOSNativeUtils {
         if (nsApp == null) return;
 
         try {
-            var objc = ObjectiveCRuntime.INSTANCE;
+            ObjectiveCRuntime objc = ObjectiveCRuntime.INSTANCE;
 
             Pointer nsAppearance = objc.objc_getClass("NSAppearance");
             if (isNull(nsAppearance))

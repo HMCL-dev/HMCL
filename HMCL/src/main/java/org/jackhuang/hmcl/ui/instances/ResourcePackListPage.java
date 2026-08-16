@@ -562,7 +562,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             content.getTags().clear();
             content.setTitle(file.getFileName());
             {
-                var description = file.getDescription();
+                LocalAddonFile.Description description = file.getDescription();
                 content.setSubtitle(description != null ? description.toStringSingleLine() : "");
             }
 
@@ -577,7 +577,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
 
             {
-                var compatibility = file.getCompatibility();
+                ResourcePackFile.Compatibility compatibility = file.getCompatibility();
                 if (compatibility != ResourcePackFile.Compatibility.COMPATIBLE) {
                     pseudoClassStateChanged(WARNING, true);
                     content.addTagWarning(getWarning(compatibility));
@@ -602,7 +602,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(pack.getFileName());
             title.setSubtitle(pack.getFileNameWithExtension());
-            var compatibility = pack.getCompatibility();
+            ResourcePackFile.Compatibility compatibility = pack.getCompatibility();
             if (compatibility != ResourcePackFile.Compatibility.COMPATIBLE) {
                 title.addTagWarning(getWarning(compatibility));
             }

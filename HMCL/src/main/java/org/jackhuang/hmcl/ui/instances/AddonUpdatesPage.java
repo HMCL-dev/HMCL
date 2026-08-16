@@ -31,6 +31,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Callback;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -101,7 +102,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         TableColumn<AddonUpdateObject, String> changelogColumn = new TableColumn<>(i18n("addon.changelog"));
         {
-            var oldCellFactory = changelogColumn.getCellFactory();
+            Callback<TableColumn<AddonUpdateObject, String>, TableCell<AddonUpdateObject, String>> oldCellFactory = changelogColumn.getCellFactory();
             changelogColumn.setCellFactory(param -> {
                 TableCell<AddonUpdateObject, String> cell = oldCellFactory.call(param);
                 cell.getStyleClass().add("addon-changelog-table-cell");

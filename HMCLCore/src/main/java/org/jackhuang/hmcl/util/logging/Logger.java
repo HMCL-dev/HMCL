@@ -151,7 +151,7 @@ public final class Logger {
         String caller = CLASS_NAME + ".onExit";
 
         if (logRetention > 0 && logFile != null) {
-            var list = findRecentLogFiles(Integer.MAX_VALUE);
+            List<Path> list = findRecentLogFiles(Integer.MAX_VALUE);
             if (list.size() > logRetention) {
                 for (int i = 0, end = list.size() - logRetention; i < end; i++) {
                     Path file = list.get(i);
@@ -267,7 +267,7 @@ public final class Logger {
         if (n <= 0 || logFile == null)
             return List.of();
 
-        var currentLogFile = LogFile.ofFile(logFile);
+        LogFile currentLogFile = LogFile.ofFile(logFile);
 
         Path logDir = logFile.getParent();
         if (logDir == null || !Files.isDirectory(logDir))

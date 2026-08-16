@@ -82,7 +82,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
                     Rectangle rectangle = FXUtils.setOverflowHidden(container);
                     rectangle.getStyleClass().add("overflow-hidden");
 
-                    var last = PseudoClass.getPseudoClass("last");
+                    PseudoClass last = PseudoClass.getPseudoClass("last");
 
                     InvalidationListener updateArc = o -> {
                         if (ComponentSublistWrapper.this.getPseudoClassStates().contains(last)) {

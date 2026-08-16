@@ -18,11 +18,13 @@
 package org.jackhuang.hmcl.addon.resourcepack;
 
 import javafx.scene.image.Image;
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -45,14 +47,14 @@ final class ResourcePackZipFile extends ResourcePackFile {
         PackMcMeta metaTemp = null;
         byte[] iconData = null;
 
-        try (var zipFileTree = CompressingUtils.openZipTree(path)) {
+        try (ZipFileTree zipFileTree = CompressingUtils.openZipTree(path)) {
             try {
                 metaTemp = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
             } catch (Exception e) {
                 LOG.warning("Failed to parse resource pack meta", e);
             }
 
-            var iconEntry = zipFileTree.getEntry("/pack.png");
+            ZipArchiveEntry iconEntry = zipFileTree.getEntry("/pack.png");
             if (iconEntry != null) {
                 try {
                     iconData = zipFileTree.readBinaryEntry(iconEntry);

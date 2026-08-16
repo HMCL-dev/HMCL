@@ -80,7 +80,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         try (var zipFileTree = new ZipFileTree(CompressingUtils.openZipFile(gameJar))) {
             String versionJson = zipFileTree.readTextEntry("/version.json");
             try {
-                var info = JsonUtils.fromNonNullJson(versionJson, GameVersionInfo117.class).packVersionInfo();
+                PackVersionInfo117 info = JsonUtils.fromNonNullJson(versionJson, GameVersionInfo117.class).packVersionInfo();
                 if (info.resourceMajor() > 64) {
                     return new PackMcMeta.PackVersion(info.resourceMajor(), info.resourceMinor());
                 } else {
@@ -252,7 +252,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         //noinspection DataFlowIssue
         new String(bytes, optionsFileEncoding).lines().forEach(s -> {
             if (StringUtils.isNotBlank(s)) {
-                var entry = s.split(":", 2);
+                String[] entry = s.split(":", 2);
                 if (entry.length == 2) {
                     options.put(entry[0], entry[1]);
                 }
@@ -263,7 +263,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private void saveOptions(@NotNull Map<String, String> options) {
         StringBuilder sb = new StringBuilder();
-        for (var entry : options.entrySet()) {
+        for (Map.Entry<String, String> entry : options.entrySet()) {
             sb.append(entry.getKey()).append(":").append(entry.getValue()).append(System.lineSeparator());
         }
         try {
@@ -407,7 +407,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             Map<String, String> options = loadOptions();
             List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
             List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
-            for (var pack : resourcePackFiles) {
+            for (ResourcePackFile pack : resourcePackFiles) {
                 if (enableResourcePack(pack, resourcePacks, incompatibleResourcePacks)) modified = true;
             }
             if (modified) {
@@ -450,7 +450,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             Map<String, String> options = loadOptions();
             List<String> resourcePacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
             List<String> incompatibleResourcePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
-            for (var pack : resourcePackFiles) {
+            for (ResourcePackFile pack : resourcePackFiles) {
                 if (disableResourcePack(pack, resourcePacks, incompatibleResourcePacks)) modified = true;
             }
             if (modified) {

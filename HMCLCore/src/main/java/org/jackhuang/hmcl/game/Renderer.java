@@ -323,7 +323,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                     default -> Architecture.SYSTEM_ARCH.getCheckedName();
                 };
 
-                var icdFileNamePattern = Pattern.compile("(?<name>[a-zA-Z0-9_-]+)_icd(?:\\." + Pattern.quote(archName) + ")?\\.json");
+                Pattern icdFileNamePattern = Pattern.compile("(?<name>[a-zA-Z0-9_-]+)_icd(?:\\." + Pattern.quote(archName) + ")?\\.json");
                 Map<String, Vulkan> icdNameToDriver = Stream.of(values()).collect(Collectors.toMap(Vulkan::icdName, Function.identity()));
 
                 supported.add(DEFAULT);

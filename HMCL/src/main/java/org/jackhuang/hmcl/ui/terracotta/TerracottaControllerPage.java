@@ -37,6 +37,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -159,7 +160,7 @@ public class TerracottaControllerPage extends StackPane {
                 body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
-                var download = createLargeTitleLineButton();
+                LineButton download = createLargeTitleLineButton();
                 download.setLeading(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
                 download.setTitle(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
@@ -203,7 +204,7 @@ public class TerracottaControllerPage extends StackPane {
                 flow.getStyleClass().add("terracotta-hint");
                 flow.setLineSpacing(4);
 
-                var host = createLargeTitleLineButton();
+                LineButton host = createLargeTitleLineButton();
                 host.setLeading(SVG.HOST, ICON_SIZE);
                 host.setTitle(i18n("terracotta.status.waiting.host.title"));
                 host.setSubtitle(i18n("terracotta.status.waiting.host.desc"));
@@ -220,7 +221,7 @@ public class TerracottaControllerPage extends StackPane {
                                 i18n("terracotta.status.waiting.host.launch.title"),
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("instance.launch"), () -> {
-                            var repository = GameDirectoryManager.getSelectedRepository();
+                            HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
                             Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
                                 launcherHelper.setKeep();
                                 launcherHelper.setDisableOfflineSkin();
@@ -235,7 +236,7 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                var guest = createLargeTitleLineButton();
+                LineButton guest = createLargeTitleLineButton();
                 guest.setLeading(SVG.ADD_CIRCLE, ICON_SIZE);
                 guest.setTitle(i18n("terracotta.status.waiting.guest.title"));
                 guest.setSubtitle(i18n("terracotta.status.waiting.guest.desc"));
@@ -259,7 +260,7 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 if (ThreadLocalRandom.current().nextDouble() < 0.02D) {
-                    var feedback = createLargeTitleLineButton();
+                    LineButton feedback = createLargeTitleLineButton();
                     feedback.setLeading(SVG.FEEDBACK, ICON_SIZE);
                     feedback.setTitle(i18n("terracotta.feedback.title"));
                     feedback.setSubtitle(i18n("terracotta.feedback.desc"));
@@ -278,7 +279,7 @@ public class TerracottaControllerPage extends StackPane {
                 body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
-                var room = createLargeTitleLineButton();
+                LineButton room = createLargeTitleLineButton();
                 room.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.scanning.back"));
@@ -294,7 +295,7 @@ public class TerracottaControllerPage extends StackPane {
                 statusProperty.set(i18n("terracotta.status.host_starting"));
                 progressProperty.set(-1);
 
-                var room = createLargeTitleLineButton();
+                LineButton room = createLargeTitleLineButton();
                 room.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.host_starting.back"));
@@ -338,13 +339,13 @@ public class TerracottaControllerPage extends StackPane {
                     code.setCursor(Cursor.HAND);
                     FXUtils.onClicked(code, () -> copyCode(cs));
 
-                    var copy = createLargeTitleLineButton();
+                    LineButton copy = createLargeTitleLineButton();
                     copy.setLeading(SVG.CONTENT_COPY, ICON_SIZE);
                     copy.setTitle(i18n("terracotta.status.host_ok.code.copy"));
                     copy.setSubtitle(i18n("terracotta.status.host_ok.code.desc"));
                     FXUtils.onClicked(copy, () -> copyCode(cs));
 
-                    var back = createLargeTitleLineButton();
+                    LineButton back = createLargeTitleLineButton();
                     back.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                     back.setTitle(i18n("terracotta.back"));
                     back.setSubtitle(i18n("terracotta.status.host_ok.back"));
@@ -365,7 +366,7 @@ public class TerracottaControllerPage extends StackPane {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
                 progressProperty.set(-1);
 
-                var room = createLargeTitleLineButton();
+                LineButton room = createLargeTitleLineButton();
                 room.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.guest_starting.back"));
@@ -380,7 +381,7 @@ public class TerracottaControllerPage extends StackPane {
                 if (state instanceof TerracottaState.GuestStarting) {
                     TerracottaState.GuestStarting.Difficulty difficulty = ((TerracottaState.GuestStarting) state).getDifficulty();
                     if (difficulty != null && difficulty != TerracottaState.GuestStarting.Difficulty.UNKNOWN) {
-                        var info = createLargeTitleLineButton();
+                        LineButton info = createLargeTitleLineButton();
                         info.setLeading(switch (difficulty) {
                             case UNKNOWN -> throw new AssertionError();
                             case EASIEST, SIMPLE -> SVG.INFO;
@@ -408,11 +409,11 @@ public class TerracottaControllerPage extends StackPane {
                     statusProperty.set(i18n("terracotta.status.guest_ok"));
                     progressProperty.set(1);
 
-                    var tutorial = createLargeTitleLineButton();
+                    LineButton tutorial = createLargeTitleLineButton();
                     tutorial.setTitle(i18n("terracotta.status.guest_ok.title"));
                     tutorial.setSubtitle(i18n("terracotta.status.guest_ok.desc", guestOK.getUrl()));
 
-                    var back = createLargeTitleLineButton();
+                    LineButton back = createLargeTitleLineButton();
                     back.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                     back.setTitle(i18n("terracotta.back"));
                     back.setSubtitle(i18n("terracotta.status.guest_ok.back"));
@@ -434,7 +435,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
                 nodesProperty.setAll();
 
-                var back = createLargeTitleLineButton();
+                LineButton back = createLargeTitleLineButton();
                 back.setLeading(SVG.ARROW_BACK, ICON_SIZE);
                 back.setTitle(i18n("terracotta.back"));
                 back.setSubtitle(i18n("terracotta.status.exception.back"));
@@ -446,7 +447,7 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 SpinnerPane exportLog = new SpinnerPane();
-                var exportLogInner = createLargeTitleLineButton();
+                LineButton exportLogInner = createLargeTitleLineButton();
                 exportLogInner.setLeading(SVG.OUTPUT, ICON_SIZE);
                 exportLogInner.setTitle(i18n("terracotta.export_log"));
                 exportLogInner.setSubtitle(i18n("terracotta.export_log.desc"));
@@ -489,7 +490,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
 
                 if (fatal.isRecoverable()) {
-                    var retry = createLargeTitleLineButton();
+                    LineButton retry = createLargeTitleLineButton();
                     retry.setLeading(SVG.RESTORE, ICON_SIZE);
                     retry.setTitle(i18n("terracotta.status.fatal.retry"));
                     retry.setSubtitle(message);

@@ -141,7 +141,7 @@ public abstract class FetchTask<T> extends Task<T> {
             if (!acceptRanges)
                 return null;
 
-            var contentEncoding = ContentEncoding.fromHeaders(response.headers());
+            ContentEncoding contentEncoding = ContentEncoding.fromHeaders(response.headers());
             if (contentEncoding != ContentEncoding.IDENTITY)
                 return null;
 
@@ -184,7 +184,7 @@ public abstract class FetchTask<T> extends Task<T> {
             if (statusCode != HttpURLConnection.HTTP_PARTIAL)
                 return false;
 
-            var contentEncoding = ContentEncoding.fromHeaders(response.headers());
+            ContentEncoding contentEncoding = ContentEncoding.fromHeaders(response.headers());
             if (contentEncoding != ContentEncoding.IDENTITY)
                 return false;
 
@@ -235,7 +235,7 @@ public abstract class FetchTask<T> extends Task<T> {
                           ContentEncoding contentEncoding) throws IOException, InterruptedException {
         boolean success = false;
         try (var counter = new CounterInputStream(inputStream);
-             var input = contentEncoding.wrap(counter)) {
+             InputStream input = contentEncoding.wrap(counter)) {
             long lastDownloaded = 0L;
             byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
             while (true) {
@@ -411,7 +411,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         }
 
                         long contentLength = responseInfo.headers().firstValueAsLong("content-length").orElse(-1L);
-                        var contentEncoding = ContentEncoding.fromHeaders(responseInfo.headers());
+                        ContentEncoding contentEncoding = ContentEncoding.fromHeaders(responseInfo.headers());
 
                         if (context == null) {
                             context = getContext(responseInfo, checkETag, bmclapiHash);

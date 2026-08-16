@@ -33,6 +33,7 @@ import javafx.stage.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -553,7 +554,7 @@ public final class Controllers {
                     Controllers.navigate(Controllers.getSettingsPage());
                     break;
                 case "hmcl://game/launch":
-                    var repository = GameDirectoryManager.getSelectedRepository();
+                    HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
                     Instances.launch(repository, repository.getSelectedInstance(), LauncherHelper::setKeep);
                     break;
             }
@@ -569,7 +570,7 @@ public final class Controllers {
 
     public static void openUriOrCopy(@Nullable String uri) {
         if (uri == null) return;
-        var dialog = new MessageDialogPane.Builder(
+        MessageDialogPane dialog = new MessageDialogPane.Builder(
                 i18n("web.open_in_browser", uri),
                 i18n("message.confirm"),
                 MessageDialogPane.MessageType.QUESTION

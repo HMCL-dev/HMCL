@@ -442,7 +442,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             bindMemorySelectedValue(memorySelectedValue);
 
             // Launcher Visibility Setting
-            var launcherVisibilityPane = createInheritableButton(
+            LineSelectButton<LauncherVisibility> launcherVisibilityPane = createInheritableButton(
                     GameSettings::launcherVisibilityProperty,
                     value -> i18n("settings.advanced.launcher_visibility." + value.name().toLowerCase(Locale.ROOT)),
                     null,
@@ -451,12 +451,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             launcherSettings.getContent().add(launcherVisibilityPane);
             launcherVisibilityPane.setTitle(i18n("settings.advanced.launcher_visible"));
 
-            var allowAutoAgentPane = createInheritableBooleanButton(GameSettings::allowAutoAgentProperty);
+            LineInheritableToggleButton allowAutoAgentPane = createInheritableBooleanButton(GameSettings::allowAutoAgentProperty);
             launcherSettings.getContent().add(allowAutoAgentPane);
             allowAutoAgentPane.setTitle(i18n("settings.launcher.allow_auto_agent"));
             allowAutoAgentPane.setSubtitle(i18n("settings.launcher.allow_auto_agent.subtitle"));
 
-            var disableAutoGameOptionsPane = createInheritableBooleanButton(GameSettings::disableAutoGameOptionsProperty);
+            LineInheritableToggleButton disableAutoGameOptionsPane = createInheritableBooleanButton(GameSettings::disableAutoGameOptionsProperty);
             launcherSettings.getContent().add(disableAutoGameOptionsPane);
             disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
 
@@ -500,16 +500,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             }
 
             // Show Logs Window Setting
-            var showLogsPane = createInheritableBooleanButton(GameSettings::showLogsProperty);
+            LineInheritableToggleButton showLogsPane = createInheritableBooleanButton(GameSettings::showLogsProperty);
             launcherSettings.getContent().add(showLogsPane);
             showLogsPane.setTitle(i18n("settings.show_log"));
 
             // Enable Debug Log Output Setting
-            var enableDebugLogOutputPane = createInheritableBooleanButton(GameSettings::enableDebugLogOutputProperty);
+            LineInheritableToggleButton enableDebugLogOutputPane = createInheritableBooleanButton(GameSettings::enableDebugLogOutputProperty);
             launcherSettings.getContent().add(enableDebugLogOutputPane);
             enableDebugLogOutputPane.setTitle(i18n("settings.enable_debug_log_output"));
 
-            var noGameCheckPane = createInheritableBooleanButton(GameSettings::notCheckGameProperty);
+            LineInheritableToggleButton noGameCheckPane = createInheritableBooleanButton(GameSettings::notCheckGameProperty);
             launcherSettings.getContent().add(noGameCheckPane);
             noGameCheckPane.setTitle(i18n("settings.advanced.dont_check_game_completeness"));
 
@@ -584,7 +584,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var runningDirPane = new LinePane();
                 runningDirPane.setTitle(i18n("settings.game.running_directory"));
                 {
-                    var runningDirSelector = new FileSelector()
+                    FileSelector runningDirSelector = new FileSelector()
                             .setChooserTitle(i18n("settings.game.working_directory.choose"))
                             .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
                     runningDirSelector.setPrefWidth(400);
@@ -612,7 +612,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     bindIndependentTextField(environmentVariablesPane, txtEnvironmentVariables, GameSettings::environmentVariablesProperty);
                 }
 
-                var processPriorityPane = createInheritableButton(
+                LineSelectButton<ProcessPriority> processPriorityPane = createInheritableButton(
                         GameSettings::processPriorityProperty,
                         e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT)),
                         e -> {
@@ -637,16 +637,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 jvmSettings
         );
         {
-            var noJVMArgsPane = createInheritableBooleanButton(GameSettings::noJVMOptionsProperty);
+            LineInheritableToggleButton noJVMArgsPane = createInheritableBooleanButton(GameSettings::noJVMOptionsProperty);
             jvmSettings.getContent().add(noJVMArgsPane);
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
 
-            var noOptimizingJVMArgsPane = createInheritableBooleanButton(GameSettings::noOptimizingJVMOptionsProperty);
+            LineInheritableToggleButton noOptimizingJVMArgsPane = createInheritableBooleanButton(GameSettings::noOptimizingJVMOptionsProperty);
             jvmSettings.getContent().add(noOptimizingJVMArgsPane);
             noOptimizingJVMArgsPane.setTitle(i18n("settings.advanced.no_optimizing_jvm_args"));
             noOptimizingJVMArgsPane.disableProperty().bind(noJVMArgsPane.effectiveValueProperty());
 
-            var noJVMCheckPane = createInheritableBooleanButton(GameSettings::notCheckJVMProperty);
+            LineInheritableToggleButton noJVMCheckPane = createInheritableBooleanButton(GameSettings::notCheckJVMProperty);
             jvmSettings.getContent().add(noJVMCheckPane);
             noJVMCheckPane.setTitle(i18n("settings.advanced.dont_check_jvm_validity"));
 
@@ -750,7 +750,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 graphicsSettings
         );
         {
-            var graphicsBackendPane = createInheritableButton(
+            LineSelectButton<GraphicsAPI> graphicsBackendPane = createInheritableButton(
                     GameSettings::graphicsBackendProperty,
                     backend -> i18n("settings.advanced.graphics_backend." + backend.name().toLowerCase(Locale.ROOT)),
                     backend -> switch (backend) {
@@ -765,7 +765,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             if (isPresetSetting)
                 graphicsBackendPane.setSubtitle(i18n("settings.advanced.graphics_backend.desc"));
 
-            var openGLRendererPane = createInheritableButton(
+            LineSelectButton<Renderer> openGLRendererPane = createInheritableButton(
                     GameSettings::openGLRendererProperty,
                     e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)),
                     e -> {
@@ -776,7 +776,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             graphicsSettings.getContent().add(openGLRendererPane);
             openGLRendererPane.setTitle(i18n("settings.advanced.renderer.opengl"));
 
-            var vulkanRendererPane = createInheritableButton(
+            LineSelectButton<Renderer> vulkanRendererPane = createInheritableButton(
                     GameSettings::vulkanRendererProperty,
                     e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)),
                     e -> {
@@ -787,7 +787,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             graphicsSettings.getContent().add(vulkanRendererPane);
             vulkanRendererPane.setTitle(i18n("settings.advanced.renderer.vulkan"));
 
-            var highPerformancePane = createInheritableBooleanButton(GameSettings::highPerformanceProperty);
+            LineInheritableToggleButton highPerformancePane = createInheritableBooleanButton(GameSettings::highPerformanceProperty);
             graphicsSettings.getContent().add(highPerformancePane);
             highPerformancePane.setTitle(i18n("settings.advanced.renderer.gpu_preferences"));
 
@@ -812,7 +812,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 nativeLibrarySettings
         );
         {
-            var useCustomNativesDirPane = createIndependentBooleanButton(GameSettings::useCustomNativesProperty);
+            LineInheritableToggleButton useCustomNativesDirPane = createIndependentBooleanButton(GameSettings::useCustomNativesProperty);
             nativeLibrarySettings.getContent().add(useCustomNativesDirPane);
             useCustomNativesDirPane.setTitle(i18n("settings.advanced.natives_directory.custom.enabled"));
 
@@ -826,16 +826,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 bindIndependentTextField(nativesDirPane, txtNativesDir, GameSettings::nativesDirectoryProperty);
             }
 
-            var noNativesPatchPane = createIndependentBooleanButton(GameSettings::notPatchNativesProperty);
+            LineInheritableToggleButton noNativesPatchPane = createIndependentBooleanButton(GameSettings::notPatchNativesProperty);
             nativeLibrarySettings.getContent().add(noNativesPatchPane);
             noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
 
-            var useNativeGLFWPane = createIndependentBooleanButton(GameSettings::useNativeGLFWProperty);
+            LineInheritableToggleButton useNativeGLFWPane = createIndependentBooleanButton(GameSettings::useNativeGLFWProperty);
             nativeLibrarySettings.getContent().add(useNativeGLFWPane);
             useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
             useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
 
-            var useNativeOpenALPane = createIndependentBooleanButton(GameSettings::useNativeOpenALProperty);
+            LineInheritableToggleButton useNativeOpenALPane = createIndependentBooleanButton(GameSettings::useNativeOpenALProperty);
             nativeLibrarySettings.getContent().add(useNativeOpenALPane);
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
             useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
@@ -945,7 +945,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return;
         }
 
-        var button = createInheritanceButton();
+        JFXButton button = createInheritanceButton();
         sublist.setTitleRight(button);
 
         InvalidationListener refresh = observable -> {
@@ -2763,8 +2763,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                     try {
                         JavaRuntime java = resolveEffectiveSetting(setting).getJava(null, null);
                         if (java != null) {
-                            for (var candidate : javaItem.getChoices()) {
-                                var value = candidate.getValue();
+                            for (RadioChoiceList.Choice<@Nullable Pair<@Nullable JavaVersionType, @Nullable JavaRuntime>> candidate : javaItem.getChoices()) {
+                                Pair<@Nullable JavaVersionType, @Nullable JavaRuntime> value = candidate.getValue();
                                 if (value != null && value.getValue() != null && java.getBinary().equals(value.getValue().getBinary())) {
                                     choice = candidate;
                                     break;
@@ -2803,7 +2803,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             return;
         }
 
-        var selectedJava = javaItem.getSelectedValue();
+        Pair<@Nullable JavaVersionType, @Nullable JavaRuntime> selectedJava = javaItem.getSelectedValue();
         if (selectedJava != null && selectedJava.getValue() != null) {
             javaSublist.setDescription(selectedJava.getValue().getBinary().toString());
             return;

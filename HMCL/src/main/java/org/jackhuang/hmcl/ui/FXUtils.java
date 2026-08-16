@@ -786,10 +786,8 @@ public final class FXUtils {
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (!(o instanceof EnumBidirectionalBinding))
+            if (!(o instanceof EnumBidirectionalBinding<?> that))
                 return false;
-
-            EnumBidirectionalBinding<?> that = (EnumBidirectionalBinding<?>) o;
 
             final JFXComboBox<E> comboBox = this.comboBoxRef.get();
             final Property<E> property = this.propertyRef.get();
@@ -955,9 +953,9 @@ public final class FXUtils {
         @Override
         public void invalidated(Observable observable) {
             if (!updating) {
-                var comboBox = this.comboBoxRef.get();
-                var widthProperty = this.widthPropertyRef.get();
-                var heightProperty = this.heightPropertyRef.get();
+                JFXComboBox<String> comboBox = this.comboBoxRef.get();
+                IntegerProperty widthProperty = this.widthPropertyRef.get();
+                IntegerProperty heightProperty = this.heightPropertyRef.get();
 
                 if (comboBox == null || widthProperty == null || heightProperty == null) {
                     if (comboBox != null) {
@@ -1031,18 +1029,16 @@ public final class FXUtils {
         public boolean equals(Object obj) {
             if (this == obj)
                 return true;
-            if (!(obj instanceof WindowsSizeBidirectionalBinding))
+            if (!(obj instanceof WindowsSizeBidirectionalBinding that))
                 return false;
 
-            var that = (WindowsSizeBidirectionalBinding) obj;
+            JFXComboBox<String> comboBox = this.comboBoxRef.get();
+            IntegerProperty widthProperty = this.widthPropertyRef.get();
+            IntegerProperty heightProperty = this.heightPropertyRef.get();
 
-            var comboBox = this.comboBoxRef.get();
-            var widthProperty = this.widthPropertyRef.get();
-            var heightProperty = this.heightPropertyRef.get();
-
-            var thatComboBox = that.comboBoxRef.get();
-            var thatWidthProperty = that.widthPropertyRef.get();
-            var thatHeightProperty = that.heightPropertyRef.get();
+            JFXComboBox<String> thatComboBox = that.comboBoxRef.get();
+            IntegerProperty thatWidthProperty = that.widthPropertyRef.get();
+            IntegerProperty thatHeightProperty = that.heightPropertyRef.get();
 
             if (comboBox == null || widthProperty == null || heightProperty == null
                     || thatComboBox == null || thatWidthProperty == null || thatHeightProperty == null) {
@@ -1718,7 +1714,7 @@ public final class FXUtils {
     }
 
     public static TextFlow renderAddonChangelog(String changelogHtml, String baseUri) {
-        var textFlow = new HTMLRenderer(Controllers::openUriOrCopy).appendNode(Jsoup.parse(changelogHtml, baseUri)).mergeLineBreaks().render();
+        TextFlow textFlow = new HTMLRenderer(Controllers::openUriOrCopy).appendNode(Jsoup.parse(changelogHtml, baseUri)).mergeLineBreaks().render();
         textFlow.getStyleClass().add("addon-changelog");
         return textFlow;
     }

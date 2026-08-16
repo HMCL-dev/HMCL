@@ -383,13 +383,13 @@ public final class ThemePackManager {
             }
 
             try (var reader = new ZipArchiveReader(normalizedFile)) {
-                var manifestEntry = reader.getEntry(ThemePackExporter.MANIFEST_ENTRY);
+                ZipArchiveEntry manifestEntry = reader.getEntry(ThemePackExporter.MANIFEST_ENTRY);
                 if (manifestEntry == null || manifestEntry.isDirectory()) {
                     throw new IOException("Theme pack does not contain " + ThemePackExporter.MANIFEST_ENTRY);
                 }
 
                 ThemePackManifest manifest;
-                try (var inputStream = reader.getInputStream(manifestEntry)) {
+                try (InputStream inputStream = reader.getInputStream(manifestEntry)) {
                     manifest = JsonUtils.fromNonNullJsonFully(inputStream, ThemePackManifest.class);
                 }
                 return new LoadedThemePack(normalizedFile, manifest);

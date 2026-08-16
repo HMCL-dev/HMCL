@@ -201,7 +201,7 @@ public final class GameVersionNumberTest {
         assertEquals(suffix, rawVersion.getSuffix());
         assertFalse(rawVersion.isUnobfuscated());
 
-        var unobfuscated = raw + "_unobfuscated";
+        String unobfuscated = raw + "_unobfuscated";
         var unobfuscatedVersion = (GameVersionNumber.LegacySnapshot) asGameVersion(unobfuscated);
         assertInstanceOf(GameVersionNumber.LegacySnapshot.class, rawVersion);
         assertEquals(unobfuscated, unobfuscatedVersion.toString());
@@ -211,7 +211,7 @@ public final class GameVersionNumberTest {
         assertEquals(suffix, unobfuscatedVersion.getSuffix());
         assertTrue(unobfuscatedVersion.isUnobfuscated());
 
-        var unobfuscated2 = raw + " Unobfuscated";
+        String unobfuscated2 = raw + " Unobfuscated";
         var unobfuscatedVersion2 = (GameVersionNumber.LegacySnapshot) asGameVersion(unobfuscated2);
         assertInstanceOf(GameVersionNumber.LegacySnapshot.class, rawVersion);
         assertEquals(unobfuscated2, unobfuscatedVersion2.toString());

@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.modpack.curse;
 
 import com.google.gson.JsonParseException;
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -147,8 +149,8 @@ public final class CurseInstallTask extends Task<Void> {
         }
 
         String pathPrefix = StringUtils.addSuffix(FileUtils.normalizePath(overridesDir), "/");
-        try (var reader = CompressingUtils.openZipFileWithPossibleEncoding(zipFile, modpack.getEncoding())) {
-            for (var entry : reader.getEntries()) {
+        try (ZipArchiveReader reader = CompressingUtils.openZipFileWithPossibleEncoding(zipFile, modpack.getEncoding())) {
+            for (ZipArchiveEntry entry : reader.getEntries()) {
                 String normalizedPath = FileUtils.normalizePath(entry.getName());
                 if (!normalizedPath.startsWith(pathPrefix)) {
                     continue;

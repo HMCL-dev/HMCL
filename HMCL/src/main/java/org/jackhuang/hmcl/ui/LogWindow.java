@@ -219,7 +219,7 @@ public final class LogWindow extends Stage {
                 }
 
                 Platform.runLater(() -> {
-                    var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageDialogPane.MessageType.SUCCESS).ok(null).build();
+                    MessageDialogPane dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageDialogPane.MessageType.SUCCESS).ok(null).build();
                     DialogUtils.show(stackPane, dialog);
                 });
 
@@ -244,7 +244,7 @@ public final class LogWindow extends Stage {
                     LOG.warning("Failed to create minecraft jstack dump", e);
 
                     Platform.runLater(() -> {
-                        var dialog = new MessageDialogPane.Builder(i18n("logwindow.export_dump") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR).ok(null).build();
+                        MessageDialogPane dialog = new MessageDialogPane.Builder(i18n("logwindow.export_dump") + "\n" + StringUtils.getStackTrace(e), i18n("message.error"), MessageDialogPane.MessageType.ERROR).ok(null).build();
                         DialogUtils.show(stackPane, dialog);
                     });
                 }

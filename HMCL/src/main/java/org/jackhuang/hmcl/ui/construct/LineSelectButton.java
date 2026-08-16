@@ -221,7 +221,7 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
         if (list == null || list.isEmpty()) return;
         int index = list.indexOf(getValue());
 
-        var code = event.getCode();
+        KeyCode code = event.getCode();
 
         if (code == KeyCode.UP) {
             if (index > 0) {

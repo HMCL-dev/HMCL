@@ -444,7 +444,7 @@ public class GameCrashWindow extends Stage {
 
                         if (exception == null) {
                             FXUtils.showFileInExplorer(result);
-                            var dialog = new MessageDialogPane.Builder(
+                            MessageDialogPane dialog = new MessageDialogPane.Builder(
                                     i18n("settings.launcher.launcher_log.export.success", result),
                                     i18n("message.success"),
                                     MessageDialogPane.MessageType.SUCCESS
@@ -452,7 +452,7 @@ public class GameCrashWindow extends Stage {
                             DialogUtils.show(stackPane, dialog);
                         } else {
                             LOG.warning("Failed to export game crash info", exception);
-                            var dialog = new MessageDialogPane.Builder(
+                            MessageDialogPane dialog = new MessageDialogPane.Builder(
                                     i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception),
                                     i18n("message.error"),
                                     MessageDialogPane.MessageType.ERROR

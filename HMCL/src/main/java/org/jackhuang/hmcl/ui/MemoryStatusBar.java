@@ -180,7 +180,7 @@ public final class MemoryStatusBar extends Control {
         @FXThread
         static ReadOnlyObjectProperty<PhysicalMemoryStatus> memoryStatusProperty() {
             if (memoryStatusPropertyCache != null) {
-                var property = memoryStatusPropertyCache.get();
+                ObjectProperty<PhysicalMemoryStatus> property = memoryStatusPropertyCache.get();
                 if (property != null) {
                     return property;
                 }
@@ -207,7 +207,7 @@ public final class MemoryStatusBar extends Control {
             while (true) {
                 PhysicalMemoryStatus status = SystemInfo.getPhysicalMemoryStatus();
 
-                var memoryStatusProperty = memoryStatusPropertyRef.get();
+                ObjectProperty<PhysicalMemoryStatus> memoryStatusProperty = memoryStatusPropertyRef.get();
                 if (memoryStatusProperty == null)
                     return;
 

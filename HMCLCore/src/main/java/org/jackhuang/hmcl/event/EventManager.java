@@ -52,7 +52,7 @@ public final class EventManager<T extends Event> {
     public void register(Consumer<T> consumer, EventPriority priority) {
         lock.lock();
         try {
-            var handlers = allHandlers[priority.ordinal()];
+            CopyOnWriteArrayList<Consumer<T>> handlers = allHandlers[priority.ordinal()];
             if (handlers == null) {
                 handlers = new CopyOnWriteArrayList<>();
                 allHandlers[priority.ordinal()] = handlers;
@@ -74,7 +74,7 @@ public final class EventManager<T extends Event> {
     public Event.Result fireEvent(T event) {
         lock.lock();
         try {
-            for (var handlers : allHandlers) {
+            for (CopyOnWriteArrayList<Consumer<T>> handlers : allHandlers) {
                 if (handlers != null) {
                     for (Consumer<T> handler : handlers) {
                         if (handler instanceof WeakListener<T> weakListener) {

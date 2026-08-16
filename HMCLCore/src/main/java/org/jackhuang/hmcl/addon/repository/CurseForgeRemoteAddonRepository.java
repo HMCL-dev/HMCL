@@ -341,9 +341,9 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + version.projectId()))
                     .getJson(Response.typeOf(CurseAddon.class));
-            var addon = response.data();
-            var classId = addon.classId();
-            var clazz = switch (classId) {
+            CurseAddon addon = response.data();
+            int classId = addon.classId();
+            String clazz = switch (classId) {
                 case SECTION_MOD -> "mc-mods";
                 case SECTION_RESOURCE_PACK -> "texture-packs";
                 case SECTION_WORLD -> "worlds";

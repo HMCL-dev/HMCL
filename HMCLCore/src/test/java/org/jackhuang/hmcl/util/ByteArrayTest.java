@@ -130,7 +130,7 @@ public final class ByteArrayTest {
     }
 
     private static byte[] changedArray(Consumer<byte[]> consumer) {
-        var array = TEST_ARRAY.clone();
+        byte[] array = TEST_ARRAY.clone();
         consumer.accept(array);
         return array;
     }

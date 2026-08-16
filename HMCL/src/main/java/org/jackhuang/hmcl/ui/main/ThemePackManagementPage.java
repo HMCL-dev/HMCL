@@ -713,7 +713,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Updates this cell for one installed theme pack.
         @Override
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
-            var currentItem = getItem();
+            ThemePackManager.InstalledThemePack currentItem = getItem();
 
             this.graphic.releaseRippleImmediately();
             super.updateItem(themePack, empty);

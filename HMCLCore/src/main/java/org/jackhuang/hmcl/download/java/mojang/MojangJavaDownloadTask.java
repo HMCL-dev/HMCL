@@ -119,7 +119,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
                         Path decompressed = tempDir.resolve(entry.getKey() + ".tmp");
-                        var digest = MessageDigest.getInstance("SHA-1");
+                        MessageDigest digest = MessageDigest.getInstance("SHA-1");
                         try (var input = new DigestInputStream(new LZMAInputStream(Files.newInputStream(tempFile)), digest)) {
                             Files.copy(input, decompressed, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {

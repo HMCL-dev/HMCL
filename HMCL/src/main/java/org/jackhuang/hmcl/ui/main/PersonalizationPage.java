@@ -44,6 +44,7 @@ import javafx.stage.FileChooser;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
 import org.jackhuang.hmcl.theme.BuiltinBackground;
@@ -344,7 +345,7 @@ public class PersonalizationPage extends StackPane {
 
         String accountName = null;
         {
-            var currentAccount = Accounts.getSelectedAccount();
+            Account currentAccount = Accounts.getSelectedAccount();
             if (currentAccount != null) accountName = currentAccount.getProfileName();
         }
         if (StringUtils.isBlank(accountName)) accountName = System.getProperty("user.name").trim();

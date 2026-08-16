@@ -49,7 +49,7 @@ public final class HomebrewUtils {
             LIB_VULKAN = HOMEBREW_PREFIX.resolve("lib/libvulkan.1.dylib");
         } else {
             // For other operating systems, we don't need Homebrew.
-            var placeholder = Path.of("");
+            Path placeholder = Path.of("");
             HOMEBREW_PREFIX = placeholder;
             LIB_VULKAN = placeholder;
         }
