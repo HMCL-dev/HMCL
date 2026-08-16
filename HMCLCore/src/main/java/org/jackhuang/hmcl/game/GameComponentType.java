@@ -43,7 +43,7 @@ public enum GameComponentType {
     LEGACY_FABRIC("legacyfabric", ModLoaderType.LEGACY_FABRIC) {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            if ("net.fabricmc".equals(library.groupId()) && "fabric-loader".equals(library.artifactId())) {
+            if (library.is("net.fabricmc", "fabric-loader")) {
                 for (Library l : libraries) {
                     if ("net.legacyfabric".equals(l.groupId())) {
                         return true;
@@ -56,13 +56,13 @@ public enum GameComponentType {
     LEGACY_FABRIC_API("legacyfabric-api") {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            return "net.legacyfabric".equals(library.groupId()) && "legacyfabric-api".equals(library.artifactId());
+            return library.is("net.legacyfabric", "legacyfabric-api");
         }
     },
     FABRIC("fabric", ModLoaderType.FABRIC) {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            if ("net.fabricmc".equals(library.groupId()) && "fabric-loader".equals(library.artifactId())) {
+            if (library.is("net.fabricmc", "fabric-loader")) {
                 for (Library l : libraries) {
                     if ("net.legacyfabric".equals(l.groupId())) {
                         return false;
@@ -78,7 +78,7 @@ public enum GameComponentType {
     FABRIC_API("fabric-api") {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            return "net.fabricmc".equals(library.groupId()) && "fabric-api".equals(library.artifactId());
+            return library.is("net.fabricmc", "fabric-api");
         }
     },
     FORGE("forge", ModLoaderType.FORGE) {
@@ -107,7 +107,7 @@ public enum GameComponentType {
     CLEANROOM("cleanroom", ModLoaderType.CLEANROOM) {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            return "com.cleanroommc".equals(library.groupId()) && "cleanroom".equals(library.artifactId());
+            return library.is("com.cleanroommc", "cleanroom");
         }
     },
     NEO_FORGE("neoforge", ModLoaderType.NEO_FORGE) {
@@ -195,7 +195,7 @@ public enum GameComponentType {
     LITELOADER("liteloader", ModLoaderType.LITE_LOADER) {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            return "com.mumfrey".equals(library.groupId()) && "liteloader".equals(library.artifactId());
+            return library.is("com.mumfrey", "liteloader");
         }
     },
     OPTIFINE("optifine") {
@@ -209,13 +209,13 @@ public enum GameComponentType {
     QUILT("quilt", ModLoaderType.QUILT) {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            return "org.quiltmc".equals(library.groupId()) && "quilt-loader".equals(library.artifactId());
+            return library.is("org.quiltmc", "quilt-loader");
         }
     },
     QUILT_API("quilt-api") {
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            return "org.quiltmc".equals(library.groupId()) && "quilt-api".equals(library.artifactId());
+            return library.is("org.quiltmc", "quilt-api");
         }
     },
     ;
