@@ -190,11 +190,11 @@ public final class Instances {
 
             DefaultDependencyManager dependencyManager = repository.getDependency();
             String gameVersion = manifest.id().id();
-            GameInstanceManifest newVersion = manifest.withId(instanceId).withJar(instanceId);
+            GameInstanceManifest newManifest = manifest.withId(instanceId).withJar(instanceId);
             GameDownloadTask gameDownloadTask = new GameDownloadTask(
                     dependencyManager,
                     gameVersion,
-                    newVersion);
+                    newManifest);
             AtomicReference<GameRepositoryDraft> activeDraft = new AtomicReference<>();
 
             Controllers.taskDialog(
@@ -208,10 +208,10 @@ public final class Instances {
                                     Task.allOf(
                                             new GameAssetDownloadTask(
                                                     dependencyManager,
-                                                    newVersion,
+                                                    newManifest,
                                                     GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
                                                     true),
-                                            new GameLibrariesTask(dependencyManager, newVersion, true))
+                                            new GameLibrariesTask(dependencyManager, newManifest, true))
                                             .withRunAsync(() -> {
                                                 // ignore failure
                                             })))
@@ -220,7 +220,7 @@ public final class Instances {
                                 if (draft == null) {
                                     throw new IllegalStateException("Game repository draft is unavailable");
                                 }
-                                draft.put(newVersion);
+                                draft.put(newManifest);
                                 draft.putPrimaryJar(instanceId, gameDownloadTask.getResult());
                                 draft.commit();
                             })
