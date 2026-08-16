@@ -121,6 +121,10 @@
             <property name="ignoreComments" value="true"/>
             <property name="message" value="Should not use String#toUpperCase(), use String#toUpperCase(Locale.ROOT) instead."/>
         </module>
+        <module name="MatchXpath">
+            <property name="query" value="//VARIABLE_DEF[./TYPE/IDENT[@text='var'] and not(./ASSIGN/EXPR/LITERAL_NEW or ./ASSIGN/EXPR/TYPECAST)]"/>
+            <message key="matchxpath.match" value="'var' not allowed unless assigning a new instance or casting"/>
+        </module>
     </module>
 
     <module name="SuppressionSingleFilter">
