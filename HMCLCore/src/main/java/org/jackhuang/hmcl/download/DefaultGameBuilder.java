@@ -54,7 +54,8 @@ public class DefaultGameBuilder extends GameBuilder {
     /// {@inheritDoc}
     ///
     /// Retains an unpublished working manifest, installs the configured game and optional loaders,
-    /// stages the completed manifest, and commits it once. Failure or cancellation aborts the draft.
+    /// resolves their patches into the final manifest, and commits it once. Failure or cancellation
+    /// aborts the draft.
     ///
     /// @return the build task
     /// @throws NullPointerException if [#id] was not set
@@ -104,13 +105,15 @@ public class DefaultGameBuilder extends GameBuilder {
             }
         }
 
-        return libraryTask.thenComposeAsync(manifest ->
-                        new GameDownloadTask(dependencyManager, gameVersion, manifest)
-                                .thenApplyAsync(minecraftJar -> {
-                                    draft.put(manifest);
-                                    draft.putPrimaryJar(id, minecraftJar);
-                                    return draft.commit().getInstance(id);
-                                }))
+        return libraryTask.thenComposeAsync(manifest -> {
+                    GameInstanceManifest resolvedManifest = repository.resolve(manifest).launchManifest();
+                    return new GameDownloadTask(dependencyManager, gameVersion, resolvedManifest)
+                            .thenApplyAsync(minecraftJar -> {
+                                draft.put(resolvedManifest);
+                                draft.putPrimaryJar(id, minecraftJar);
+                                return draft.commit().getInstance(id);
+                            });
+                })
                 .whenComplete(exception -> {
                     if (draft.isOpen()) {
                         draft.abort();

@@ -59,7 +59,7 @@ public final class GameLibrariesTask extends Task<Void> {
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link GameRepository}
-     * @param manifest           the game version
+     * @param manifest          the game version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean integrityCheck) {
         this(dependencyManager, manifest, integrityCheck, dependencyManager.getGameRepository().resolve(manifest).launchManifest().getLibraries());
@@ -69,7 +69,7 @@ public final class GameLibrariesTask extends Task<Void> {
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link GameRepository}
-     * @param manifest           the game version
+     * @param manifest          the game version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean integrityCheck, List<Library> libraries) {
         this.dependencyManager = dependencyManager;
@@ -142,7 +142,7 @@ public final class GameLibrariesTask extends Task<Void> {
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/3975
-            if ("net.minecraftforge".equals(library.groupId()) && "minecraftforge".equals(library.artifactId())
+            if (library.is("net.minecraftforge", "minecraftforge")
                     && gameRepository instanceof DefaultGameRepository defaultGameRepository) {
                 List<FMLLib> fmlLibs = getFMLLibs(library.version());
                 if (fmlLibs != null) {
@@ -172,8 +172,7 @@ public final class GameLibrariesTask extends Task<Void> {
                         throw new IOException("Cannot fix optifine", e);
                     }
                 }
-            } else if ("org.jackhuang.hmcl".equals(library.groupId())
-                    && "mmc-bootstrap".equals(library.artifactId())) {
+            } else if (library.is("org.jackhuang.hmcl", "mmc-bootstrap")) {
                 if (!Files.exists(file)) {
                     try (InputStream input = Objects.requireNonNull(
                             GameLibrariesTask.class.getResourceAsStream(
@@ -183,8 +182,7 @@ public final class GameLibrariesTask extends Task<Void> {
                         Files.copy(input, file, StandardCopyOption.REPLACE_EXISTING);
                     }
                 }
-            } else if ("org.jackhuang.hmcl".equals(library.groupId())
-                    && "transformer-discovery-service".equals(library.artifactId())) {
+            } else if (library.is("org.jackhuang.hmcl", "transformer-discovery-service")) {
                 try (InputStream input = Objects.requireNonNull(
                         GameLibrariesTask.class.getResourceAsStream(
                                 "/assets/game/HMCLTransformerDiscoveryService-1.0.jar"),
