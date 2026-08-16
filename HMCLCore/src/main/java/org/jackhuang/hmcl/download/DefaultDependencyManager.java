@@ -157,31 +157,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));
     }
 
-    /// Checks whether a resolved [Library] belongs to the given loader type.
-    ///
-    /// The mapping must stay consistent with [LibraryAnalyzer.LibraryType]'s
-    /// group-id patterns so that the file-integrity check covers the correct jars.
-    ///
-    /// @param library   a library entry from the resolved launch manifest
-    /// @param libraryId the patch id of the loader (e.g. `"forge"`, `"fabric"`)
-    /// @return `true` if the library's groupId matches the loader
-    private static boolean isLoaderLibrary(Library library, String libraryId) {
-        if (library == null || library.groupId() == null) return false;
-        String groupId = library.groupId().toLowerCase(java.util.Locale.ROOT);
-        String targetId = libraryId.toLowerCase(java.util.Locale.ROOT);
-        return switch (targetId) {
-            case "forge" -> groupId.startsWith("net.minecraftforge");
-            case "neoforge" -> groupId.startsWith("net.neoforged");
-            case "optifine" -> "optifine".equals(groupId) || "net.optifine".equals(groupId);
-            case "fabric" -> groupId.startsWith("net.fabricmc");
-            case "quilt" -> groupId.startsWith("org.quiltmc");
-            case "legacyfabric" -> groupId.startsWith("net.legacyfabric") || groupId.startsWith("net.fabricmc");
-            case "liteloader" -> "com.mumfrey".equals(groupId);
-            case "cleanroom" -> groupId.startsWith("com.cleanroommc") || groupId.startsWith("zone.rong");
-            default -> groupId.contains(targetId);
-        };
-    }
-
     /// Checks if a matching library patch is already installed for the target instance on disk and intact.
     ///
     /// @param baseVersion the base game instance manifest
@@ -208,9 +183,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 return null;
             }
 
-            GameInstanceManifest.Resolved resolved = repository.getResolvedInstanceManifest(baseVersion.id());
-            boolean needsRepair = resolved.launchManifest().getLibraries().stream()
-                    .filter(lib -> isLoaderLibrary(lib, libraryVersion.getLibraryId()))
+            List<Library> patchLibraries = matchingPatch.libraries();
+            boolean needsRepair = patchLibraries != null && patchLibraries.stream()
+                    .filter(Library::appliesToCurrentEnvironment)
                     .anyMatch(lib -> GameLibrariesTask.shouldDownloadLibrary(repository, existingManifest, lib, true));
 
             return needsRepair ? null : matchingPatch;

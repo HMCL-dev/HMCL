@@ -72,7 +72,14 @@ public class GameInstallTask extends Task<GameInstancePatch> {
                 GameInstancePatch.PRIORITY_MC).withJar(null);
         setResult(patch);
 
-        GameInstanceManifest version = new GameInstanceManifest(this.manifest.id()).addPatch(patch);
+        GameInstanceManifest existingManifest = null;
+        if (gameRepository.hasInstance(this.manifest.id())) {
+            try {
+                existingManifest = gameRepository.getInstanceManifest(this.manifest.id());
+            } catch (Exception ignored) {
+            }
+        }
+        GameInstanceManifest version = (existingManifest != null ? existingManifest : this.manifest).addPatch(patch);
         dependencies.add(Task.allOf(
                 new GameDownloadTask(dependencyManager, remote.getGameVersion(), version),
                 Task.allOf(
