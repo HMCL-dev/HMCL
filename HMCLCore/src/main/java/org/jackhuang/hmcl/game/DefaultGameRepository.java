@@ -477,9 +477,9 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public AssetIndex getAssetIndex(GameInstanceID instanceId, String assetId) throws IOException {
+    public AssetIndex getAssetIndex(@Nullable GameInstanceID ignored, String assetId) throws IOException {
         try {
-            return Objects.requireNonNull(JsonUtils.fromJsonFile(getIndexFile(instanceId, assetId), AssetIndex.class));
+            return Objects.requireNonNull(JsonUtils.fromJsonFile(getIndexFile(ignored, assetId), AssetIndex.class));
         } catch (JsonParseException | NullPointerException e) {
             throw new IOException("Asset index file malformed", e);
         }
