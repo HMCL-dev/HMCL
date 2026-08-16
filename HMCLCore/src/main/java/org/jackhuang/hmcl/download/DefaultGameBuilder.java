@@ -84,7 +84,7 @@ public class DefaultGameBuilder extends GameBuilder {
 
         DefaultGameRepository repository = dependencyManager.getGameRepository();
         //noinspection resource
-        GameRepositoryDraft draft = repository.openDraft();
+        DefaultGameRepositoryDraft draft = repository.openDraft();
 
         Task<GameInstanceManifest> libraryTask = dependencyManager.installNewInstanceComponentAsync(
                 id, new GameInstanceManifest(id), gameVersion, GameComponentType.GAME, gameVersion);
@@ -106,7 +106,7 @@ public class DefaultGameBuilder extends GameBuilder {
         }
 
         return libraryTask.thenComposeAsync(manifest -> {
-                    GameInstanceManifest resolvedManifest = repository.resolve(manifest).launchManifest();
+                    GameInstanceManifest resolvedManifest = draft.getBaseSnapshot().resolve(manifest).launchManifest();
                     return new GameDownloadTask(dependencyManager, gameVersion, resolvedManifest)
                             .thenApplyAsync(minecraftJar -> {
                                 draft.put(resolvedManifest);

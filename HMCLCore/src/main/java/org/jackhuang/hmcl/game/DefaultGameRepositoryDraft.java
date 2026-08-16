@@ -91,6 +91,10 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         return repository;
     }
 
+    public DefaultGameRepositorySnapshot getBaseSnapshot() {
+        return baseSnapshot;
+    }
+
     /// {@inheritDoc}
     @Override
     public GameRepositoryDraft.State getState() {
