@@ -687,33 +687,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         }
     }
 
-    /// Aggregates an additional cleanup failure.
-    ///
-    /// @param current    the current aggregate, or `null`
-    /// @param additional the additional failure
-    /// @return the resulting aggregate
-    private static IOException accumulate(@Nullable IOException current, IOException additional) {
-        if (current == null) {
-            return additional;
-        }
-        current.addSuppressed(additional);
-        return current;
-    }
-
-    /// Combines two optional failure aggregates.
-    ///
-    /// @param current    the current aggregate, or `null`
-    /// @param additional the additional aggregate, or `null`
-    /// @return the combined aggregate, or `null` when both arguments are `null`
-    private static @Nullable IOException accumulateNullable(
-            @Nullable IOException current,
-            @Nullable IOException additional) {
-        if (additional == null) {
-            return current;
-        }
-        return accumulate(current, additional);
-    }
-
     /// Ensures the draft accepts changes.
     ///
     /// @throws IllegalStateException if the draft is not open
