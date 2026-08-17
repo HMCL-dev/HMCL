@@ -841,7 +841,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
     /// If `true`, HMCL will use native SDL.
     @SerializedName(PROPERTY_USE_NATIVE_SDL)
-    private final InheritableProperty<Boolean> useNativeSDL = newInheritableProperty(PROPERTY_USE_NATIVE_OPENAL, false);
+    private final InheritableProperty<Boolean> useNativeSDL = newInheritableProperty(PROPERTY_USE_NATIVE_SDL, false);
 
     /// Returns the native SDL property.
     public InheritableProperty<Boolean> useNativeSDLProperty() {
