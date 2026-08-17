@@ -273,18 +273,61 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             cleanupRollbackDirectoryAfterCommit(rollbackDirectory);
             return committedSnapshot;
         } catch (IOException | RuntimeException e) {
-            IOException rollbackFailure = rollbackAppliedFiles(appliedFiles);
-            rollbackFailure = accumulateNullable(rollbackFailure, rollbackRemovedRoots(removedRoots));
-            rollbackFailure = accumulateNullable(rollbackFailure, rollbackRenames(appliedRenames));
+            // rollback applied files
+            List<AppliedFile> reversedAppliedFiles = new ArrayList<>(appliedFiles);
+            Collections.reverse(reversedAppliedFiles);
+            for (AppliedFile file : reversedAppliedFiles) {
+                try {
+                    Files.deleteIfExists(file.targetFile());
+                    if (file.backupFile() != null) {
+                        moveReplacing(file.backupFile(), file.targetFile());
+                    }
+                } catch (IOException e1) {
+                    e.addSuppressed(e1);
+                }
+            }
+
+            // rollback removed roots
+            List<RemovedRoot> reversedRemovedRoots = new ArrayList<>(removedRoots);
+            Collections.reverse(reversedRemovedRoots);
+            for (RemovedRoot root : reversedRemovedRoots) {
+                try {
+                    moveReplacing(root.rollbackRoot(), root.originalRoot());
+                } catch (IOException e1) {
+                    e.addSuppressed(e1);
+                }
+            }
+
+            // rollback renames
+            List<RenameOperation> reversed = new ArrayList<>(appliedRenames);
+            Collections.reverse(reversed);
+            for (RenameOperation rename : reversed) {
+                try {
+                    DefaultGameRepository.moveInstanceFiles(
+                            baseSnapshot.getLayout().getBaseDirectory(),
+                            rename.to(),
+                            rename.from());
+                } catch (IOException e1) {
+                    e.addSuppressed(e1);
+                }
+            }
+
             state = GameRepositoryDraft.State.FAILED;
             repository.releaseDraft(this);
-            IOException cleanupFailure = cleanupCreatedInstanceRoots();
-            cleanupFailure = accumulateNullable(cleanupFailure, cleanupRollbackDirectory(rollbackDirectory));
-            if (rollbackFailure != null) {
-                e.addSuppressed(rollbackFailure);
+
+            try {
+                cleanupCreatedInstanceRoots();
+            } catch (Exception e1) {
+                e.addSuppressed(e1);
             }
-            if (cleanupFailure != null) {
-                e.addSuppressed(cleanupFailure);
+
+            // cleanup rollback directory
+            if (rollbackDirectory != null) {
+                try {
+                    FileUtils.deleteDirectory(rollbackDirectory);
+                } catch (IOException e1) {
+                    e.addSuppressed(e1);
+                }
             }
             throw e;
         }
@@ -346,11 +389,14 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             return;
         }
 
-        IOException failure = cleanupCreatedInstanceRoots();
-        state = failure == null ? GameRepositoryDraft.State.ABORTED : GameRepositoryDraft.State.FAILED;
-        repository.releaseDraft(this);
-        if (failure != null) {
-            throw failure;
+        try {
+            cleanupCreatedInstanceRoots();
+            state = GameRepositoryDraft.State.ABORTED;
+        } catch (Exception e) {
+            state = GameRepositoryDraft.State.FAILED;
+            throw e;
+        } finally {
+            repository.releaseDraft(this);
         }
     }
 
@@ -541,71 +587,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         return backup;
     }
 
-    /// Restores files changed by an unsuccessful commit in reverse application order.
-    ///
-    /// @param applied applied file records
-    /// @return the aggregated rollback failure, or `null` when rollback succeeded
-    private static @Nullable IOException rollbackAppliedFiles(List<AppliedFile> applied) {
-        @Nullable IOException failure = null;
-        List<AppliedFile> reversed = new ArrayList<>(applied);
-        Collections.reverse(reversed);
-        for (AppliedFile file : reversed) {
-            try {
-                Files.deleteIfExists(file.targetFile());
-                if (file.backupFile() != null) {
-                    moveReplacing(file.backupFile(), file.targetFile());
-                }
-            } catch (IOException e) {
-                failure = accumulate(failure, e);
-            }
-        }
-        return failure;
-    }
-
-    /// Restores roots moved out of the repository by an unsuccessful commit.
-    ///
-    /// @param removed removed-root rollback records
-    /// @return the aggregated rollback failure, or `null` when rollback succeeded
-    private static @Nullable IOException rollbackRemovedRoots(List<RemovedRoot> removed) {
-        @Nullable IOException failure = null;
-        List<RemovedRoot> reversed = new ArrayList<>(removed);
-        Collections.reverse(reversed);
-        for (RemovedRoot root : reversed) {
-            try {
-                moveReplacing(root.rollbackRoot(), root.originalRoot());
-            } catch (IOException e) {
-                failure = accumulate(failure, e);
-            }
-        }
-        return failure;
-    }
-
-    /// Reverses instance renames completed by an unsuccessful commit.
-    ///
-    /// @param applied completed rename records
-    /// @return the aggregated rollback failure, or `null` when rollback succeeded
-    private @Nullable IOException rollbackRenames(List<RenameOperation> applied) {
-        @Nullable IOException failure = null;
-        List<RenameOperation> reversed = new ArrayList<>(applied);
-        Collections.reverse(reversed);
-        for (RenameOperation rename : reversed) {
-            try {
-                DefaultGameRepository.moveInstanceFiles(
-                        baseSnapshot.getLayout().getBaseDirectory(),
-                        rename.to(),
-                        rename.from());
-            } catch (IOException e) {
-                failure = accumulate(failure, e);
-            }
-        }
-        return failure;
-    }
-
     /// Removes instance roots first created by this draft.
-    ///
-    /// @return the aggregated cleanup failure, or `null` when cleanup succeeded
-    private @Nullable IOException cleanupCreatedInstanceRoots() {
-        @Nullable IOException failure = null;
+    private void cleanupCreatedInstanceRoots() throws IOException {
+        ArrayList<IOException> exceptions = null;
         for (GameInstanceID id : createdIds) {
             try {
                 Path root = getValidatedInstanceRoot(id);
@@ -613,13 +597,28 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                     FileUtils.deleteDirectory(root);
                 }
             } catch (IOException | RuntimeException e) {
+                if (exceptions == null)
+                    exceptions = new ArrayList<>(1);
+
                 IOException cleanupException = e instanceof IOException ioException
                         ? ioException
                         : new IOException("Failed to remove draft-created instance " + id, e);
-                failure = accumulate(failure, cleanupException);
+
+                exceptions.add(cleanupException);
             }
         }
-        return failure;
+
+        if (exceptions != null) {
+            if (exceptions.size() == 1) {
+                throw exceptions.get(0);
+            } else {
+                IOException aggregate = new IOException("Failed to remove one or more draft-created instances");
+                for (IOException e : exceptions) {
+                    aggregate.addSuppressed(e);
+                }
+                throw aggregate;
+            }
+        }
     }
 
     /// Removes a commit rollback directory.
