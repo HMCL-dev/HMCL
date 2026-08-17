@@ -835,10 +835,23 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
             useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
 
+            var useNativeSDLPane = createIndependentBooleanButton(GameSettings::useNativeSDLProperty);
+            nativeLibrarySettings.getContent().add(useNativeSDLPane);
+            useNativeSDLPane.setTitle(i18n("settings.advanced.use_native_sdl"));
+            useNativeSDLPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+
             var useNativeOpenALPane = createIndependentBooleanButton(GameSettings::useNativeOpenALProperty);
             nativeLibrarySettings.getContent().add(useNativeOpenALPane);
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
             useNativeOpenALPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+
+            this.currentGameVersionNumber.addListener((o, oldValue, newValue) -> {
+                boolean isUsingSDL = isPresetSetting || newValue.compareTo("26.3-snapshot-4") >= 0;
+                useNativeGLFWPane.setVisible(!isUsingSDL);
+                useNativeGLFWPane.setManaged(!isUsingSDL);
+                useNativeSDLPane.setManaged(isUsingSDL);
+                useNativeSDLPane.setVisible(isUsingSDL);
+            });
         }
 
     }

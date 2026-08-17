@@ -482,6 +482,9 @@ public class DefaultLauncher extends Launcher {
                                 if (options.isUseNativeOpenAL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("openal")) {
                                     return false;
                                 }
+                                if (options.isUseNativeSDL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("sdl")) {
+                                    return false;
+                                }
 
                                 return library.getExtract().shouldExtract(relativePath);
                             })

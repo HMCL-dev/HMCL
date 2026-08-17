@@ -836,6 +836,18 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return useNativeOpenAL;
     }
 
+    /// Property name for using native SDL.
+    public static final String PROPERTY_USE_NATIVE_SDL = "useNativeSDL";
+
+    /// If `true`, HMCL will use native SDL.
+    @SerializedName(PROPERTY_USE_NATIVE_SDL)
+    private final InheritableProperty<Boolean> useNativeSDL = newInheritableProperty(PROPERTY_USE_NATIVE_OPENAL, false);
+
+    /// Returns the native SDL property.
+    public InheritableProperty<Boolean> useNativeSDLProperty() {
+        return useNativeSDL;
+    }
+
     private static Renderer selectRenderer(GraphicsAPI api, @Nullable Renderer renderer) {
         if (renderer instanceof Renderer.Driver driver && driver.api() != api) {
             return Renderer.DEFAULT;
