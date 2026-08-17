@@ -70,15 +70,6 @@
     -fx-fill: -monet-on-primary-fixed;
 }
 
-.hint.success {
-    -fx-background-color: #d1e7dd;
-    -fx-border-color: -monet-outline;
-}
-
-.hint.success Text, .hint.success .svg {
-    -fx-fill: #0a3622;
-}
-
 .hint.error {
     -fx-background-color: -monet-error-container;
     -fx-border-color: -monet-outline;
