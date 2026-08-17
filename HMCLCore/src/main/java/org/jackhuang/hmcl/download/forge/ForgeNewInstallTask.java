@@ -189,7 +189,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository gameRepository;
     private final GameInstanceManifest manifest;
-    /// Vanilla client JAR used as processor input.
+    /// Source vanilla client JAR copied before processors are invoked.
     private final Path minecraftJar;
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);
@@ -207,7 +207,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     ///
     /// @param dependencyManager repository-scoped download services
     /// @param manifest          working manifest receiving the Forge patch
-    /// @param minecraftJar      vanilla client JAR for the target Minecraft version
+    /// @param minecraftJar      source vanilla client JAR copied for processor use
     /// @param selfVersion       Forge version recorded in the returned patch
     /// @param installer         Forge installer JAR
     public ForgeNewInstallTask(
@@ -399,6 +399,9 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
             throw new FileNotFoundException("Minecraft client JAR not found: " + minecraftJar);
         }
         tempDir = Files.createTempDirectory("forge_installer");
+        // External processors must not receive the shared cache path.
+        Path isolatedMinecraftJar = tempDir.resolve("minecraft.jar");
+        FileUtils.copyFile(minecraftJar, isolatedMinecraftJar);
 
         Map<String, String> vars = new HashMap<>();
 
@@ -420,7 +423,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
         }
 
         vars.put("SIDE", "client");
-        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(minecraftJar));
+        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(isolatedMinecraftJar));
         vars.put("MINECRAFT_VERSION", profile.getMinecraft());
         vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
         vars.put("INSTALLER", installer.toAbsolutePath().toString());

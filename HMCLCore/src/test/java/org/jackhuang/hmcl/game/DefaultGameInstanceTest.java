@@ -274,6 +274,7 @@ public final class DefaultGameInstanceTest {
         writeForgeProcessorFixture(
                 installer,
                 versionMarker.toAbsolutePath().normalize().toString(),
+                "{MINECRAFT_VERSION}",
                 markerSha1);
 
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
@@ -296,6 +297,42 @@ public final class DefaultGameInstanceTest {
         var executor = task.executor();
         assertTrue(executor.test(), () -> String.valueOf(executor.getException()));
         assertTrue(Files.isRegularFile(minecraftJar));
+    }
+
+    /// Prevents processor output handling from deleting the source Minecraft JAR.
+    @Test
+    public void testForgeProcessorUsesDisposableMinecraftJar(@TempDir Path tempDirectory)
+            throws IOException {
+        Path minecraftJar = tempDirectory.resolve("cache/client.jar");
+        Files.createDirectories(minecraftJar.getParent());
+        Files.writeString(minecraftJar, "client");
+
+        Path installer = tempDirectory.resolve("forge-installer.jar");
+        writeForgeProcessorFixture(
+                installer,
+                "1.20.1",
+                "{MINECRAFT_JAR}",
+                "0000000000000000000000000000000000000000");
+
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(tempDirectory.resolve("download-cache")));
+        ForgeNewInstallTask task = new ForgeNewInstallTask(
+                dependencyManager,
+                new GameInstanceManifest(new GameInstanceID("instance")),
+                minecraftJar,
+                "forge-test",
+                installer) {
+            @Override
+            protected void updateProgressImmediately(double progress) {
+                // Avoid JavaFX toolkit initialization in this isolated processor test.
+            }
+        };
+
+        assertFalse(task.executor().test());
+        assertEquals("client", Files.readString(minecraftJar));
     }
 
     /// Legacy verification fixes the captured instance jar rather than a newer same-id snapshot.
@@ -398,15 +435,16 @@ public final class DefaultGameInstanceTest {
         }
     }
 
-    /// Writes a Forge installer fixture whose processor output is keyed by
-    /// `{MINECRAFT_VERSION}`.
+    /// Writes a Forge installer fixture with one processor output.
     ///
-    /// @param installer       the installer JAR path
+    /// @param installer        the installer JAR path
     /// @param minecraftVersion the value stored in the install profile's `minecraft` field
-    /// @param outputSha1      expected checksum for the processor output
+    /// @param outputKey        processor output path expression
+    /// @param outputSha1       expected checksum for the processor output
     private static void writeForgeProcessorFixture(
             Path installer,
             String minecraftVersion,
+            String outputKey,
             String outputSha1) throws IOException {
         Map<String, Object> profile = Map.of(
                 "spec", 1,
@@ -416,7 +454,7 @@ public final class DefaultGameInstanceTest {
                 "libraries", List.of(),
                 "processors", List.of(Map.of(
                         "jar", "example:processor:1.0",
-                        "outputs", Map.of("{MINECRAFT_VERSION}", outputSha1))));
+                        "outputs", Map.of(outputKey, outputSha1))));
 
         try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(installer))) {
             writeZipEntry(output, "install_profile.json", JsonUtils.GSON.toJson(profile));

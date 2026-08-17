@@ -85,8 +85,6 @@ public final class GameDownloadTask extends Task<Path> {
     }
 
     /// Requests post-execution so the completed destination can be returned.
-    ///
-    /// @return `true`
     @Override
     public boolean doPostExecute() {
         return true;
@@ -98,6 +96,7 @@ public final class GameDownloadTask extends Task<Path> {
     @Override
     public void postExecute() throws IOException {
         @Nullable Path result = getResult();
+        //noinspection ConstantValue
         if (result == null || !Files.isRegularFile(result)) {
             throw new IOException("Minecraft client JAR was not downloaded");
         }
