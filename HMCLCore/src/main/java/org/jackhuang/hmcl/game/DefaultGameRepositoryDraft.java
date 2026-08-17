@@ -621,22 +621,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         }
     }
 
-    /// Removes a commit rollback directory.
-    ///
-    /// @param rollbackDirectory the directory to remove, or `null` if none was created
-    /// @return the cleanup failure, or `null` when cleanup succeeded
-    private static @Nullable IOException cleanupRollbackDirectory(@Nullable Path rollbackDirectory) {
-        if (rollbackDirectory == null) {
-            return null;
-        }
-        try {
-            FileUtils.deleteDirectory(rollbackDirectory);
-            return null;
-        } catch (IOException e) {
-            return e;
-        }
-    }
-
     /// Removes rollback data after a successful commit without changing its outcome.
     ///
     /// @param rollbackDirectory the directory to remove, or `null` if none was created
