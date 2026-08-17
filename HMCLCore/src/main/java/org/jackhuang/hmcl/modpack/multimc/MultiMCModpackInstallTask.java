@@ -296,26 +296,9 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                     true
             ));
 
-            Artifact mainJarArtifact = artifact.getMainJar().artifact();
-            String gameVersion = artifact.getGameVersion();
-            if (gameVersion != null &&
-                    "com.mojang".equals(mainJarArtifact.getGroup()) &&
-                    "minecraft".equals(mainJarArtifact.getName()) &&
-                    Objects.equals(gameVersion, mainJarArtifact.getVersion()) &&
-                    "client".equals(mainJarArtifact.getClassifier())
-            ) {
-                dependencies.add(new GameDownloadTask(
-                        dependencyManager,
-                        gameVersion,
-                        instanceManifest,
-                        repository.getInstanceJar(instanceManifest)));
-            } else {
-                dependencies.add(new GameDownloadTask(
-                        dependencyManager,
-                        null,
-                        instanceManifest,
-                        repository.getInstanceJar(instanceManifest)));
-            }
+            Path instanceJar = repository.getInstanceJar(instanceManifest);
+            dependencies.add(new GameDownloadTask(dependencyManager, instanceManifest)
+                    .thenAcceptAsync(cachedJar -> FileUtils.copyFile(cachedJar, instanceJar)));
         }
 
         setResult(artifact);

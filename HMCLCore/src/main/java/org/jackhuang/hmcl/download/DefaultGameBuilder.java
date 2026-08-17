@@ -107,7 +107,7 @@ public class DefaultGameBuilder extends GameBuilder {
 
         return libraryTask.thenComposeAsync(manifest -> {
                     GameInstanceManifest resolvedManifest = draft.getBaseSnapshot().resolve(manifest).launchManifest();
-                    return new GameDownloadTask(dependencyManager, gameVersion, resolvedManifest)
+                    return new GameDownloadTask(dependencyManager, resolvedManifest)
                             .thenApplyAsync(minecraftJar -> {
                                 draft.put(resolvedManifest);
                                 draft.putPrimaryJar(id, minecraftJar);

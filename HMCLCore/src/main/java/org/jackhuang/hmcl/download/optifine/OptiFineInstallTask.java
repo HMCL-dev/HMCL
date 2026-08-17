@@ -287,7 +287,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
                     ofEdition + "_" + ofRelease,
                     Collections.singletonList(""),
                     false);
-            return new GameDownloadTask(dependencyManager, gameVersion, version)
+            return new GameDownloadTask(dependencyManager, version)
                     .thenComposeAsync(minecraftJar -> new OptiFineInstallTask(
                             dependencyManager,
                             version,

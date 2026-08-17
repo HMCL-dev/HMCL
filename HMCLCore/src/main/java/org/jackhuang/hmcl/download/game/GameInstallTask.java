@@ -95,7 +95,7 @@ public class GameInstallTask extends Task<GameInstancePatch> {
 
         GameInstanceManifest newManifest = new GameInstanceManifest(this.manifest.id()).addPatch(patch);
         dependencies.add(Task.allOf(
-                new GameDownloadTask(dependencyManager, remote.getGameVersion(), newManifest),
+                new GameDownloadTask(dependencyManager, newManifest),
                 Task.allOf(
                         new GameAssetDownloadTask(dependencyManager, newManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
                         new GameLibrariesTask(dependencyManager, newManifest, true)

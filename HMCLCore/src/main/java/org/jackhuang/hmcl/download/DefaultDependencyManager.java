@@ -103,10 +103,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
         return Task.allOf(
                 Task.composeAsync(() -> {
-                    Path versionJar = instance.getInstanceJarFile();
+                    Path instanceJar = instance.getInstanceJarFile();
 
-                    return Files.notExists(versionJar) || FileUtils.size(versionJar) == 0L
-                            ? new GameDownloadTask(this, null, manifest, versionJar)
+                    return Files.notExists(instanceJar) || FileUtils.size(instanceJar) == 0L
+                            ? new GameDownloadTask(this, manifest).thenAcceptAsync(
+                                    cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
                             : null;
                 }).thenComposeAsync(checkPatchCompletionAsync(instance, manifest, integrityCheck)),
                 new GameAssetDownloadTask(this, manifest, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)

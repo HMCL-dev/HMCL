@@ -40,7 +40,7 @@ public class OptiFineRemoteVersion extends RemoteVersion {
 
     @Override
     public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
-        return new GameDownloadTask(dependencyManager, getGameVersion(), baseVersion)
+        return new GameDownloadTask(dependencyManager, baseVersion)
                 .thenComposeAsync(minecraftJar -> new OptiFineInstallTask(
                         dependencyManager,
                         baseVersion,

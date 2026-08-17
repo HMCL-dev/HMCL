@@ -146,7 +146,7 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
             cleanroomVersion = selfVersion;
         }
 
-        task = new GameDownloadTask(dependencyManager, gameVersion, manifest)
+        task = new GameDownloadTask(dependencyManager, manifest)
                 .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
                         dependencyManager,
                         manifest,

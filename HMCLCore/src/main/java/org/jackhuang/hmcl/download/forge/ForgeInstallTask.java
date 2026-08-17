@@ -108,7 +108,7 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
         }
 
         if (detectForgeInstallerType(remote.getGameVersion(), installer)) {
-            dependency = new GameDownloadTask(dependencyManager, remote.getGameVersion(), manifest)
+            dependency = new GameDownloadTask(dependencyManager, manifest)
                     .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
                             dependencyManager,
                             manifest,
@@ -173,7 +173,7 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
-                return new GameDownloadTask(dependencyManager, gameVersion, manifest)
+                return new GameDownloadTask(dependencyManager, manifest)
                         .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
                                 dependencyManager,
                                 manifest,

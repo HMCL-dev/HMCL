@@ -126,7 +126,7 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
-                return new GameDownloadTask(dependencyManager, gameVersion, manifest)
+                return new GameDownloadTask(dependencyManager, manifest)
                         .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
                                 dependencyManager,
                                 manifest,
@@ -146,7 +146,7 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
-                return new GameDownloadTask(dependencyManager, gameVersion, manifest)
+                return new GameDownloadTask(dependencyManager, manifest)
                         .thenComposeAsync(minecraftJar -> new NeoForgeOldInstallTask(
                                 dependencyManager,
                                 manifest,

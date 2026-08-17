@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
-import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -202,43 +201,61 @@ public final class DefaultGameInstanceTest {
         assertEquals(Optional.of("1.21.1"), repository.getGameVersion(requestedManifest));
     }
 
-    /// A game download with an explicit destination does not follow a later repository snapshot.
+    /// A cached game download can be materialized at an explicit destination.
     @Test
-    public void testGameDownloadKeepsExplicitDestination(@TempDir Path tempDirectory) throws IOException {
+    public void testGameDownloadMaterializesExplicitDestination(@TempDir Path tempDirectory)
+            throws Exception {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cacheRepository =
+                new DefaultCacheRepository(tempDirectory.resolve("cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
                 new MojangDownloadProvider(),
-                new DefaultCacheRepository(tempDirectory.resolve("cache")));
-        GameInstanceManifest manifest = new GameInstanceManifest(new GameInstanceID("instance"));
+                cacheRepository);
+        Path source = tempDirectory.resolve("client.jar");
+        Files.writeString(source, "client");
+        String sha1 = DigestUtils.digestToString("SHA-1", source);
+        Path cached = cacheRepository.cacheFile(source, "SHA-1", sha1);
+        GameInstanceManifest manifest = new GameInstanceManifest(new GameInstanceID("instance"))
+                .withDownloads(Map.of(
+                        DownloadType.CLIENT,
+                        new DownloadInfo("https://example.invalid/client.jar", sha1)));
         Path destination = tempDirectory.resolve("fixed.jar");
 
-        GameDownloadTask task = new GameDownloadTask(dependencyManager, null, manifest, destination);
-        task.execute();
+        var task = new GameDownloadTask(dependencyManager, manifest)
+                .thenAcceptAsync(cachedJar -> Files.copy(cachedJar, destination));
 
-        FileDownloadTask download = (FileDownloadTask) task.getDependencies().iterator().next();
-        assertEquals(destination, download.getPath());
+        assertTrue(task.executor().test());
+        assertEquals("client", Files.readString(destination));
+        assertEquals("client", Files.readString(cached));
     }
 
-    /// A versioned game download uses shared cache storage instead of the instance tree.
+    /// A game download returns the content-addressed cache file without a version-named copy.
     @Test
-    public void testGameDownloadUsesSharedDestination(@TempDir Path tempDirectory) throws IOException {
+    public void testGameDownloadReturnsContentAddressedCacheFile(@TempDir Path tempDirectory)
+            throws Exception {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
         Path cacheDirectory = tempDirectory.resolve("cache");
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(cacheDirectory);
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
                 new MojangDownloadProvider(),
-                new DefaultCacheRepository(cacheDirectory));
-        GameInstanceManifest manifest = new GameInstanceManifest(new GameInstanceID("instance"));
+                cacheRepository);
+        Path source = tempDirectory.resolve("client.jar");
+        Files.writeString(source, "client");
+        String sha1 = DigestUtils.digestToString("SHA-1", source);
+        Path cached = cacheRepository.cacheFile(source, "SHA-1", sha1);
+        GameInstanceManifest manifest = new GameInstanceManifest(new GameInstanceID("instance"))
+                .withDownloads(Map.of(
+                        DownloadType.CLIENT,
+                        new DownloadInfo("https://example.invalid/client.jar", sha1)));
 
-        GameDownloadTask task = new GameDownloadTask(dependencyManager, "1.21.1", manifest);
-        task.execute();
+        GameDownloadTask task = new GameDownloadTask(dependencyManager, manifest);
 
-        FileDownloadTask download = (FileDownloadTask) task.getDependencies().iterator().next();
-        assertEquals(
-                cacheDirectory.resolve("jars/1.21.1.jar").toAbsolutePath().normalize(),
-                download.getPath());
-        assertFalse(download.getPath().startsWith(repository.getLayout().getInstanceRoot(manifest.id())));
+        assertTrue(task.executor().test());
+        assertEquals(cached, task.getResult());
+        assertFalse(Files.exists(cacheDirectory.resolve("jars")));
+        assertFalse(cached.startsWith(repository.getLayout().getInstanceRoot(manifest.id())));
     }
 
     /// Keeps the detached client JAR path distinct from the Minecraft version processor variable.
