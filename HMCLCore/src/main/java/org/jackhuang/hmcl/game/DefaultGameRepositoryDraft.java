@@ -169,7 +169,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             throw new IllegalArgumentException("Target instance already exists: " + to);
         }
 
-        Path targetRoot = getValidatedInstanceRoot(to);
+        Path targetRoot = baseSnapshot.getLayout().getInstanceRoot(to);
         if (Files.exists(targetRoot)) {
             throw new FileAlreadyExistsException(targetRoot.toString());
         }
@@ -214,7 +214,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                 && !manifests.containsKey(id)
                 && baseSnapshot.get(id) == null
                 && !createdIds.contains(id)) {
-            Path root = getValidatedInstanceRoot(id);
+            Path root = baseSnapshot.getLayout().getInstanceRoot(id);
             if (!repository.mayClaimDraftInstanceRoot(id, root)) {
                 throw new FileAlreadyExistsException(root.toString(), null,
                         "An unregistered instance directory already exists");
@@ -367,7 +367,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             if (!manifests.containsKey(id)) {
                 continue;
             }
-            Path root = getValidatedInstanceRoot(id);
+            Path root = baseSnapshot.getLayout().getInstanceRoot(id);
             Files.createDirectories(root);
             repository.initializeDraftInstanceRoot(id, root);
         }
@@ -451,7 +451,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             GameInstanceID id,
             Path target,
             String description) throws IOException {
-        Path expectedRoot = getValidatedInstanceRoot(id);
+        Path expectedRoot = baseSnapshot.getLayout().getInstanceRoot(id);
         if (target.equals(expectedRoot) || !target.startsWith(expectedRoot)) {
             throw new IOException(description + " path escapes instance root: " + target);
         }
@@ -477,8 +477,8 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
     /// @param applied rollback records for completed renames
     /// @throws IOException if the source files cannot be renamed
     private void applyRename(RenameOperation rename, List<RenameOperation> applied) throws IOException {
-        Path sourceRoot = getValidatedInstanceRoot(rename.from());
-        Path targetRoot = getValidatedInstanceRoot(rename.to());
+        Path sourceRoot = baseSnapshot.getLayout().getInstanceRoot(rename.from());
+        Path targetRoot = baseSnapshot.getLayout().getInstanceRoot(rename.to());
         if (!Files.isDirectory(sourceRoot)) {
             throw new IOException("Instance directory does not exist: " + sourceRoot);
         }
@@ -503,7 +503,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             GameInstanceID id,
             Path rollbackDirectory,
             List<RemovedRoot> removed) throws IOException {
-        Path root = getValidatedInstanceRoot(id);
+        Path root = baseSnapshot.getLayout().getInstanceRoot(id);
         if (Files.notExists(root)) {
             return;
         }
@@ -592,7 +592,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         ArrayList<IOException> exceptions = null;
         for (GameInstanceID id : createdIds) {
             try {
-                Path root = getValidatedInstanceRoot(id);
+                Path root = baseSnapshot.getLayout().getInstanceRoot(id);
                 if (Files.exists(root)) {
                     FileUtils.deleteDirectory(root);
                 }
@@ -633,24 +633,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         } catch (IOException e) {
             LOG.warning("Failed to remove commit rollback directory " + rollbackDirectory, e);
         }
-    }
-
-    /// Returns a normalized instance root after verifying that it is a strict descendant of the
-    /// repository's versions directory.
-    ///
-    /// @param id the instance id
-    /// @return the validated instance root
-    /// @throws IOException if the resolved root escapes the versions directory
-    private Path getValidatedInstanceRoot(GameInstanceID id) throws IOException {
-        Path versions = baseSnapshot.getLayout().getBaseDirectory()
-                .toAbsolutePath()
-                .normalize()
-                .resolve("versions");
-        Path root = baseSnapshot.getLayout().getInstanceRoot(id).toAbsolutePath().normalize();
-        if (root.equals(versions) || !root.startsWith(versions)) {
-            throw new IOException("Instance root escapes versions directory: " + root);
-        }
-        return root;
     }
 
     /// Moves a file to `target`, using an atomic move when supported by the file system.
