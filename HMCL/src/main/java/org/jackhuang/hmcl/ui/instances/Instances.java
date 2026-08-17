@@ -189,11 +189,9 @@ public final class Instances {
             GameInstanceID instanceId = new GameInstanceID(result);
 
             DefaultDependencyManager dependencyManager = repository.getDependency();
-            String gameVersion = manifest.id().id();
             GameInstanceManifest newManifest = manifest.withId(instanceId).withJar(instanceId);
             GameDownloadTask gameDownloadTask = new GameDownloadTask(
                     dependencyManager,
-                    gameVersion,
                     newManifest);
             AtomicReference<GameRepositoryDraft> activeDraft = new AtomicReference<>();
 
