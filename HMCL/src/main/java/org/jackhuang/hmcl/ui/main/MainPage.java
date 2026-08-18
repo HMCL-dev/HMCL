@@ -259,6 +259,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
             menuButton.setOnAction(e -> {
+                if (GameListPopupMenu.hideShowing(menuButton)) {
+                    return;
+                }
+
                 JFXPopup popup = GameListPopupMenu.showAndGetPopup(
                         menuButton,
                         JFXPopup.PopupVPosition.BOTTOM,
@@ -376,9 +380,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     if (exception == null) {
                         GameDirectoryManager.getSelectedRepository().setSelectedInstance(instanceHolder.value);
                         launch();
-                    } else if (exception instanceof CancellationException) {
-                        Controllers.showToast(i18n("message.cancelled"));
-                    } else {
+                    } else if (!(exception instanceof CancellationException)) {
                         LOG.warning("Failed to install game", exception);
                         Controllers.dialog(StringUtils.getStackTrace(exception),
                                 i18n("install.failed"),
