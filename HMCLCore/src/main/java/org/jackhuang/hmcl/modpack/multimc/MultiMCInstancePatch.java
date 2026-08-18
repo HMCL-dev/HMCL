@@ -300,10 +300,10 @@ public final class MultiMCInstancePatch {
             for (String jvmArg : patch.getJvmArgs()) {
                 jvmArguments.add(new StringArgument(jvmArg));
             }
-            mainClass = Lang.requireNonNullElse(mainClass, patch.getMainClass());
-            assetIndex = Lang.requireNonNullElse(patch.getAssetIndex(), assetIndex);
-            javaMajors = Lang.requireNonNullElse(patch.getJavaMajors(), javaMajors);
-            mainJar = Lang.requireNonNullElse(patch.getMainJar(), mainJar);
+            mainClass = Objects.requireNonNullElse(mainClass, patch.getMainClass());
+            assetIndex = Objects.requireNonNullElse(patch.getAssetIndex(), assetIndex);
+            javaMajors = Objects.requireNonNullElse(patch.getJavaMajors(), javaMajors);
+            mainJar = Objects.requireNonNullElse(patch.getMainJar(), mainJar);
             traits = Lang.merge(patch.getTraits(), traits);
             tweakers = Lang.merge(patch.getTweakers(), tweakers);
             libraries = Lang.merge(patch.getLibraries(), libraries);
@@ -311,7 +311,7 @@ public final class MultiMCInstancePatch {
             jarModFileNames = Lang.merge(patch.getJarMods().stream().map(library -> library.filename()).collect(Collectors.toList()), jarModFileNames);
         }
 
-        mainClass = Lang.requireNonNullElse(mainClass, "net.minecraft.client.Minecraft");
+        mainClass = Objects.requireNonNullElse(mainClass, "net.minecraft.client.Minecraft");
 
         if (minecraftArguments == null) {
             minecraftArguments = new ArrayList<>();

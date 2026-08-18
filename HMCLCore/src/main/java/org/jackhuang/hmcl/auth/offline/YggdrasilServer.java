@@ -17,12 +17,11 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
-import org.glavo.uuid.UUIDs;
 import org.glavo.png.javafx.PNGJavaFXUtils;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.util.KeyUtils;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpServer;
@@ -85,7 +84,7 @@ public class YggdrasilServer extends HttpServer {
         List<String> names = JsonUtils.fromNonNullJsonFully(request.getSession().getInputStream(), listTypeOf(String.class));
         return ok(names.stream().distinct()
                 .map(this::findCharacterByName)
-                .flatMap(Lang::toStream)
+                .flatMap(Optional::stream)
                 .map(Character::toSimpleResponse)
                 .collect(Collectors.toList()));
     }

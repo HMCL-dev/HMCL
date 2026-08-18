@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
@@ -59,6 +60,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
             });
         }
 
+        installable.bind(Bindings.createBooleanBinding(() -> compatible.get() && txtName.validate(), txtName.textProperty(), compatible));
         installable.bind(Bindings.createBooleanBinding(() -> compatible.get() && txtName.validate(), txtName.textProperty(), compatible));
     }
 
@@ -90,7 +92,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             String version = analyzer.getVersion(libraryId).orElse(null);
-            String libraryVersion = Lang.requireNonNullElse(getVersion(libraryId), version);
+            String libraryVersion = Objects.requireNonNullElse(getVersion(libraryId), version);
             boolean alreadyInstalled = version != null && !(controller.getSettings().get(libraryId) instanceof UpdateInstallerWizardProvider.RemoveVersionAction);
             if (!"game".equals(libraryId) && currentGameVersion != null && !currentGameVersion.equals(game) && getVersion(libraryId) == null && alreadyInstalled) {
                 // For third-party libraries, if game version is being changed, and the library is not being reinstalled,

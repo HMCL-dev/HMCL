@@ -45,11 +45,11 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
-import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
-import org.jackhuang.hmcl.ui.nbt.NBTFileType;
 import org.jackhuang.hmcl.ui.instances.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
+import org.jackhuang.hmcl.ui.nbt.NBTFileType;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -65,6 +65,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -128,7 +129,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 List<GameInstanceManifest> children = repository.getInstanceManifests().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
-                                .comparing((GameInstanceManifest manifest) -> Lang.requireNonNullElse(manifest.releaseTime(), Instant.EPOCH))
+                                .comparing((GameInstanceManifest manifest) -> Objects.requireNonNullElse(manifest.releaseTime(), Instant.EPOCH))
                                 .thenComparing(manifest -> VersionNumber.asVersion(repository.getGameVersion(manifest).orElse(manifest.id().toString()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {

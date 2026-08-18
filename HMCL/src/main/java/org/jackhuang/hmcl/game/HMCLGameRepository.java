@@ -35,23 +35,12 @@ import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
-import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.setting.DefaultIsolationType;
-import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.GameWindowType;
-import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
-import org.jackhuang.hmcl.setting.GameDirectory;
-import org.jackhuang.hmcl.setting.ProxyType;
-import org.jackhuang.hmcl.setting.SettingFileUtils;
-import org.jackhuang.hmcl.setting.GameSettingsPresetID;
-import org.jackhuang.hmcl.setting.GameInstanceIconType;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Bits;
@@ -207,7 +196,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public Stream<GameInstanceManifest> getDisplayInstanceManifests() {
         return getInstanceManifests().stream()
                 .filter(v -> !v.isHidden())
-                .sorted(Comparator.comparing((GameInstanceManifest v) -> Lang.requireNonNullElse(v.releaseTime(), Instant.EPOCH))
+                .sorted(Comparator.comparing((GameInstanceManifest v) -> Objects.requireNonNullElse(v.releaseTime(), Instant.EPOCH))
                         .thenComparing(v -> VersionNumber.asVersion(v.id().id())));
     }
 
@@ -549,7 +538,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         GameSettings.Instance instanceSetting = getInstanceGameSettings(instanceId);
         GameSettings.Preset preset = getParentGameSettings(instanceSetting);
-        DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
+        DefaultIsolationType type = Objects.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
         boolean isolated = switch (type) {
             case NEVER -> false;
             case ALWAYS -> true;
@@ -567,7 +556,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// Returns whether a new instance should use an isolated running directory under the default isolation settings.
     public boolean shouldIsolateNewInstance(boolean modded) {
         GameSettings.Preset preset = getParentGameSettings(null);
-        DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
+        DefaultIsolationType type = Objects.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
         return switch (type) {
             case NEVER -> false;
             case ALWAYS -> true;
@@ -631,7 +620,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return GameInstanceIconType.DEFAULT.getIcon();
 
         GameSettings.Instance setting = getInstanceGameSettings(instanceId);
-        GameInstanceIconType iconType = setting != null ? Lang.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT) : GameInstanceIconType.DEFAULT;
+        GameInstanceIconType iconType = setting != null ? Objects.requireNonNullElse(setting.iconProperty().getValue(), GameInstanceIconType.DEFAULT) : GameInstanceIconType.DEFAULT;
 
         if (iconType == GameInstanceIconType.DEFAULT) {
             GameInstanceManifest.Resolved resolvedInstanceManifest = getResolvedInstanceManifest(instanceId);

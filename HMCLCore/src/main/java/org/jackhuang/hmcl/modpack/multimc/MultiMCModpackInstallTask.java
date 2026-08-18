@@ -38,18 +38,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.nio.file.*;
+import java.util.*;
 
 /**
  * <p>A task transforming MultiMC Modpack Scheme to Official Launcher Scheme.
@@ -206,7 +196,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                         String componentID = require.getID();
                         if (!existed.containsKey(componentID)) {
                             Task<MultiMCInstancePatch> task = new GetTask(MultiMCComponents.getMetaURL(
-                                    componentID, Lang.requireNonNullElse(require.getEqualsVersion(), require.getSuggests()), mcVersion
+                                    componentID, Objects.requireNonNullElse(require.getEqualsVersion(), require.getSuggests()), mcVersion
                             )).thenApplyAsync(s -> MultiMCInstancePatch.read(componentID, s));
                             task.run();
 

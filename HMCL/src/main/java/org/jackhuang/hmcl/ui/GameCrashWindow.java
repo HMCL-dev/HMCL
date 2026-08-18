@@ -44,7 +44,6 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -365,7 +364,7 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem os = new TwoLineListItem();
                 os.getStyleClass().setAll("two-line-item-second-large");
                 os.setTitle(i18n("system.operating_system"));
-                os.setSubtitle(Lang.requireNonNullElse(OperatingSystem.OS_RELEASE_NAME, OperatingSystem.SYSTEM_NAME));
+                os.setSubtitle(Objects.requireNonNullElse(OperatingSystem.OS_RELEASE_NAME, OperatingSystem.SYSTEM_NAME));
 
                 TwoLineListItem arch = new TwoLineListItem();
                 arch.getStyleClass().setAll("two-line-item-second-large");
