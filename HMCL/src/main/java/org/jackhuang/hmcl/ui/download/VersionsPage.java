@@ -67,6 +67,7 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -218,7 +219,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             super.updateItem(remoteVersion, empty);
 
-            if (oldRemoteVersion == remoteVersion && oldEmpty == empty) return;
+            if (Objects.equals(oldRemoteVersion, remoteVersion) && oldEmpty == empty) return;
 
             ripplerContainer.releaseRippleImmediately();
 

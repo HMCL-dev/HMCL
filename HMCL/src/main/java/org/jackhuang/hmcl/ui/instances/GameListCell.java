@@ -35,6 +35,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.util.Objects;
+
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -162,8 +164,14 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     @Override
     public void updateItem(GameListItem item, boolean empty) {
-        this.graphic.releaseRippleImmediately();
+        GameListItem oldItem = getItem();
+        boolean oldEmpty = isEmpty();
+
         super.updateItem(item, empty);
+
+        if (Objects.equals(oldItem, item) && oldEmpty == empty) return;
+
+        this.graphic.releaseRippleImmediately();
 
         this.imageView.imageProperty().unbind();
         this.content.titleProperty().unbind();

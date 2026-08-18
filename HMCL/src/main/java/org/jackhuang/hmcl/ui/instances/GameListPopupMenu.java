@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -165,9 +166,14 @@ public final class GameListPopupMenu extends StackPane {
 
         @Override
         protected void updateItem(GameItem item, boolean empty) {
-            this.ripplerContainer.releaseRippleImmediately();
+            GameItem oldItem = getItem();
+            boolean oldEmpty = isEmpty();
+
             super.updateItem(item, empty);
 
+            if (Objects.equals(oldItem, item) && oldEmpty == empty) return;
+
+            this.ripplerContainer.releaseRippleImmediately();
             this.imageView.imageProperty().unbind();
             this.content.titleProperty().unbind();
             this.content.subtitleProperty().unbind();
