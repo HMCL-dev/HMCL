@@ -214,17 +214,19 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         @Override
         public void updateItem(RemoteVersion remoteVersion, boolean empty) {
             RemoteVersion oldRemoteVersion = getItem();
+            boolean oldEmpty = isEmpty();
+
+            super.updateItem(remoteVersion, empty);
+
+            if (oldRemoteVersion == remoteVersion && oldEmpty == empty) return;
 
             ripplerContainer.releaseRippleImmediately();
-            super.updateItem(remoteVersion, empty);
 
             if (empty) {
                 setGraphic(null);
                 return;
             }
             setGraphic(pane);
-
-            if (oldRemoteVersion == remoteVersion) return;
 
             twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {

@@ -326,11 +326,11 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
             World oldWorld = getItem();
             boolean oldEmpty = isEmpty();
 
-            this.graphic.releaseRippleImmediately();
             super.updateItem(world, empty);
 
             if (oldWorld == world && oldEmpty == empty) return;
 
+            this.graphic.releaseRippleImmediately();
             this.content.getTags().clear();
 
             if (empty || world == null) {

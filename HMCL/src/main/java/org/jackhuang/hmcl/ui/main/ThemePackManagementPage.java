@@ -714,20 +714,21 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         @Override
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
             var currentItem = getItem();
+            boolean oldEmpty = isEmpty();
 
-            this.graphic.releaseRippleImmediately();
             super.updateItem(themePack, empty);
 
-            if (Objects.equals(getItem(), currentItem)) return;
+            if (Objects.equals(getItem(), currentItem) && oldEmpty == empty) return;
 
+            this.graphic.releaseRippleImmediately();
             content.getTags().clear();
             iconImage.setImage(null);
             iconFallback.setVisible(false);
+
             if (empty || themePack == null) {
                 setGraphic(null);
                 return;
             }
-
             setGraphic(graphic);
 
             ThemePackManifest manifest = themePack.manifest();
