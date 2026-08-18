@@ -125,7 +125,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
         }
 
-        LocalModFile modInfo  = null;
+        LocalModFile modInfo = null;
         CoreMods coreMods = CoreMods.EMPTY;
 
         List<Exception> exceptions = new ArrayList<>();
@@ -327,34 +327,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public static boolean isFileNameMod(Path file) {
         String name = getLocalAddonName(file);
         return MOD_EXTENSIONS.contains(FileUtils.getExtension(name).toLowerCase(Locale.ROOT));
-    }
-
-    public static boolean isFileMod(Path modFile) {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-            if (Files.exists(fs.getPath("mcmod.info")) || Files.exists(fs.getPath("META-INF/mods.toml"))) {
-                // Forge mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("fabric.mod.json"))) {
-                // Fabric mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("quilt.mod.json"))) {
-                // Quilt mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("litemod.json"))) {
-                // Liteloader mod
-                return true;
-            }
-
-            return false;
-        } catch (IOException e) {
-            return false;
-        }
     }
 
     /**
