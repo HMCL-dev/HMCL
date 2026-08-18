@@ -603,7 +603,18 @@ public final class ImageUtils {
                 throw new PngIntegrityException("Invalid frame control: " + control);
             }
 
-            int[] currentFrameBuffer = buffer.clone();
+            int[] currentFrameBuffer;
+            if (frameIndex == 0 && control.blendOp == 0) {
+                // The first frame is validated to cover the whole canvas, and a
+                // direct copy onto a blank buffer is identical to the decoded
+                // pixels. Referencing the bitmap directly avoids an allocation
+                // and a full copy per decode. Blended frames must still start
+                // from a blank buffer, otherwise the source would blend with
+                // itself.
+                currentFrameBuffer = frame.bitmap().array();
+            } else {
+                currentFrameBuffer = buffer.clone();
+            }
             if (control.blendOp == 0) {
                 for (int row = 0; row < control.height; row++) {
                     System.arraycopy(frame.bitmap().array(),

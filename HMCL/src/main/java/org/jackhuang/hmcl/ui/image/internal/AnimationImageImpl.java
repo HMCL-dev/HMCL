@@ -28,11 +28,15 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.image.AnimationImage;
 
 import java.lang.ref.WeakReference;
+import java.nio.IntBuffer;
 
 /**
  * @author Glavo
  */
 public final class AnimationImageImpl extends WritableImage implements AnimationImage {
+
+    /// The pixel format shared by all animation frames.
+    private static final PixelFormat<IntBuffer> PIXEL_FORMAT = PixelFormat.getIntArgbInstance();
 
     private Animation animation;
     private final int[][] frames;
@@ -67,7 +71,7 @@ public final class AnimationImageImpl extends WritableImage implements Animation
         final int[] frame = frames[frameIndex];
         this.getPixelWriter().setPixels(0, 0,
                 width, height,
-                PixelFormat.getIntArgbInstance(),
+                PIXEL_FORMAT,
                 frame, 0, width
         );
     }

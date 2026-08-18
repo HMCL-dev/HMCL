@@ -20,6 +20,7 @@
 package com.jfoenix.transitions;
 
 import javafx.animation.AnimationTimer;
+import javafx.beans.value.WritableDoubleValue;
 import javafx.beans.value.WritableValue;
 import javafx.scene.Node;
 import javafx.util.Duration;
@@ -179,78 +180,112 @@ public class JFXAnimationTimer extends AnimationTimer {
     static class AnimationHandler {
         private final double duration;
         private double currentDuration;
-        private final Set<JFXKeyValue<?>> keyValues;
+        private final JFXKeyValue<?>[] keyValues;
+        private final WritableValue<?>[] targets;
+        private final Object[] initialValues;
+        private final Object[] endValues;
+        private final boolean[] valid;
         private Supplier<Boolean> animationCondition = null;
         private boolean finished = false;
-
-        private final HashMap<WritableValue<?>, Object> initialValuesMap = new HashMap<>();
-        private final HashMap<WritableValue<?>, Object> endValuesMap = new HashMap<>();
 
         AnimationHandler(Duration duration, Supplier<Boolean> animationCondition, Set<JFXKeyValue<?>> keyValues) {
             this.duration = duration.toMillis();
             currentDuration = this.duration;
-            this.keyValues = keyValues;
             this.animationCondition = animationCondition;
+
+            this.keyValues = keyValues.toArray(new JFXKeyValue<?>[0]);
+            final int length = this.keyValues.length;
+            this.targets = new WritableValue<?>[length];
+            this.initialValues = new Object[length];
+            this.endValues = new Object[length];
+            this.valid = new boolean[length];
+        }
+
+        /// Captures the current value and the end value of every key value.
+        ///
+        /// Must be called after every state change that can affect the animated targets
+        /// (that is, whenever the animation is started or reversed).
+        private void collect() {
+            for (int i = 0; i < keyValues.length; i++) {
+                JFXKeyValue<?> keyValue = keyValues[i];
+                WritableValue<?> target = keyValue.getTarget();
+                targets[i] = target;
+                if (target != null) {
+                    valid[i] = true;
+                    initialValues[i] = target.getValue();
+                    endValues[i] = keyValue.getEndValue();
+                } else {
+                    valid[i] = false;
+                }
+            }
         }
 
         public void init() {
             finished = animationCondition != null && !animationCondition.get();
-            for (JFXKeyValue<?> keyValue : keyValues) {
-                if (keyValue.getTarget() != null) {
-                    // replaced putIfAbsent for mobile compatibility
-                    if (!initialValuesMap.containsKey(keyValue.getTarget())) {
-                        initialValuesMap.put(keyValue.getTarget(), keyValue.getTarget().getValue());
-                    }
-                    if (!endValuesMap.containsKey(keyValue.getTarget())) {
-                        endValuesMap.put(keyValue.getTarget(), keyValue.getEndValue());
-                    }
-                }
-            }
+            collect();
         }
 
         void reverse(double now) {
             finished = animationCondition != null && !animationCondition.get();
             currentDuration = duration - (currentDuration - now);
             // update initial values
-            for (JFXKeyValue<?> keyValue : keyValues) {
-                final WritableValue<?> target = keyValue.getTarget();
+            for (int i = 0; i < keyValues.length; i++) {
+                WritableValue<?> target = targets[i];
                 if (target != null) {
-                    initialValuesMap.put(target, target.getValue());
-                    endValuesMap.put(target, keyValue.getEndValue());
+                    initialValues[i] = target.getValue();
+                    endValues[i] = keyValues[i].getEndValue();
                 }
             }
         }
 
         // now in milliseconds
-        @SuppressWarnings({"unchecked"})
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public void animate(double now) {
             // if animate condition for the key frame is not met then do nothing
             if (finished) {
                 return;
             }
             if (now <= currentDuration) {
-                for (JFXKeyValue<?> keyValue : keyValues) {
-                    if (keyValue.isValid()) {
-                        @SuppressWarnings("rawtypes") final WritableValue target = keyValue.getTarget();
-                        final Object endValue = endValuesMap.get(target);
-                        if (endValue != null && target != null && !target.getValue().equals(endValue)) {
-                            target.setValue(keyValue.getInterpolator().interpolate(initialValuesMap.get(target), endValue, now / currentDuration));
+                final double frac = now / currentDuration;
+                for (int i = 0; i < keyValues.length; i++) {
+                    if (!valid[i] || !keyValues[i].isValid())
+                        continue;
+
+                    final Object endValue = endValues[i];
+                    if (endValue == null)
+                        continue;
+
+                    final WritableValue target = targets[i];
+
+                    // Primitive fast path for double properties: avoids boxing the
+                    // interpolated value on every frame.
+                    if (target instanceof WritableDoubleValue
+                            && initialValues[i] instanceof Double initial
+                            && endValue instanceof Double end) {
+                        double value = keyValues[i].getInterpolator().interpolate(
+                                initial.doubleValue(), end.doubleValue(), frac);
+                        if (((WritableDoubleValue) target).get() != value) {
+                            ((WritableDoubleValue) target).set(value);
                         }
+                        continue;
+                    }
+
+                    if (!target.getValue().equals(endValue)) {
+                        target.setValue(keyValues[i].getInterpolator().interpolate(initialValues[i], endValue, frac));
                     }
                 }
             } else {
                 if (!finished) {
                     finished = true;
-                    for (JFXKeyValue<?> keyValue : keyValues) {
-                        if (keyValue.isValid()) {
-                            @SuppressWarnings("rawtypes") final WritableValue target = keyValue.getTarget();
-                            if (target != null) {
-                                // set updated end value instead of cached
-                                final Object endValue = keyValue.getEndValue();
-                                if (endValue != null) {
-                                    target.setValue(endValue);
-                                }
-                            }
+                    for (int i = 0; i < keyValues.length; i++) {
+                        if (!valid[i] || !keyValues[i].isValid())
+                            continue;
+
+                        final WritableValue target = targets[i];
+                        // set updated end value instead of cached
+                        final Object endValue = keyValues[i].getEndValue();
+                        if (endValue != null) {
+                            target.setValue(endValue);
                         }
                     }
                     currentDuration = duration;
@@ -258,29 +293,29 @@ public class JFXAnimationTimer extends AnimationTimer {
             }
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public void applyEndValues() {
-            for (JFXKeyValue<?> keyValue : keyValues) {
-                if (keyValue.isValid()) {
-                    @SuppressWarnings("rawtypes") final WritableValue target = keyValue.getTarget();
-                    if (target != null) {
-                        final Object endValue = keyValue.getEndValue();
-                        if (endValue != null && !target.getValue().equals(endValue)) {
-                            target.setValue(endValue);
-                        }
-                    }
+            for (int i = 0; i < keyValues.length; i++) {
+                if (!valid[i] || !keyValues[i].isValid())
+                    continue;
+
+                final WritableValue target = targets[i];
+                final Object endValue = keyValues[i].getEndValue();
+                if (endValue != null && !target.getValue().equals(endValue)) {
+                    target.setValue(endValue);
                 }
             }
         }
 
         public void clear() {
-            initialValuesMap.clear();
-            endValuesMap.clear();
+            // Values are captured again by the next collect() call, so there is
+            // nothing to reset here.
         }
 
         void dispose() {
+            // The parallel arrays are released together with the handler itself;
+            // they are re-captured by collect() if the timer is ever restarted.
             clear();
-            keyValues.clear();
         }
     }
 }

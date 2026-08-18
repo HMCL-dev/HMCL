@@ -493,7 +493,7 @@ public class TabHeader extends Control implements TabControl, PageAware {
                                         new KeyValue(selectedTabLine.translateYProperty(), selectedTabLine.getTranslateY(), Interpolator.EASE_BOTH)
                                 ),
                                 new KeyFrame(
-                                        Duration.seconds(1.24D),
+                                        Duration.seconds(0.24D),
                                         new KeyValue(scale.yProperty(), newScaleY, Interpolator.EASE_BOTH),
                                         new KeyValue(selectedTabLine.translateYProperty(), newTransY, Interpolator.EASE_BOTH)
                                 )
