@@ -645,7 +645,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             Task.supplyAsync(() -> repo.getVersionPageUrl(version))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception == null && StringUtils.isNotBlank(result)) {
-                            button.setOnAction(__ -> Controllers.openUriInBrowser(result));
+                            button.setExternalLink(result);
                             button.setDisable(false);
                         } else {
                             LOG.warning("Failed to load addon version page url", exception);

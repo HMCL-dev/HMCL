@@ -135,8 +135,8 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
                 return true;
             } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
                 ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
-                if (!gameVersion.get().equals(profile.getInstall().getMinecraft()))
-                    throw new VersionMismatchException(profile.getInstall().getMinecraft(), gameVersion.get());
+                if (!gameVersion.get().equals(profile.install().getMinecraft()))
+                    throw new VersionMismatchException(profile.install().getMinecraft(), gameVersion.get());
                 return false;
             } else {
                 throw new IOException();
@@ -168,9 +168,9 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
                 return new ForgeNewInstallTask(dependencyManager, manifest, modifyVersion(gameVersion.get(), profile.getVersion()), installer);
             } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
                 ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
-                if (!gameVersion.get().equals(profile.getInstall().getMinecraft()))
-                    throw new VersionMismatchException(profile.getInstall().getMinecraft(), gameVersion.get());
-                return new ForgeOldInstallTask(dependencyManager, manifest, modifyVersion(gameVersion.get(), profile.getInstall().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
+                if (!gameVersion.get().equals(profile.install().getMinecraft()))
+                    throw new VersionMismatchException(profile.install().getMinecraft(), gameVersion.get());
+                return new ForgeOldInstallTask(dependencyManager, manifest, modifyVersion(gameVersion.get(), profile.install().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
             } else {
                 throw new IOException();
             }
