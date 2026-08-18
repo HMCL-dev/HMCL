@@ -491,7 +491,7 @@ public final class FXUtils {
 
     @FXThread
     public static void installSlowTooltip(Node node, Tooltip tooltip) {
-       installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip);
+        installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip);
     }
 
     @FXThread
