@@ -56,6 +56,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryListItem;
+import org.jackhuang.hmcl.ui.directory.GameDirectoryListPopupMenu;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.util.FXThread;
@@ -84,6 +85,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         gameDirectoryListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
             GameDirectoryListItem item = new GameDirectoryListItem(gameDirectory);
             FXUtils.setLimitWidth(item, 200);
+            FXUtils.onSecondaryButtonClicked(item, () -> GameDirectoryListPopupMenu.show(item, gameDirectory));
             return item;
         });
 
