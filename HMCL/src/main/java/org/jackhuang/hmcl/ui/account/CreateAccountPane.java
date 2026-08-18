@@ -67,8 +67,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static javafx.beans.binding.Bindings.bindContent;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor;
@@ -388,7 +388,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 add(lblServers, 0, rowIndex);
 
                 cboServers = new JFXComboBox<>();
-                cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
+//                cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
                 cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
                 bindContent(cboServers.getItems(), getAuthlibInjectorServers());
                 cboServers.getItems().addListener(onInvalidating(
