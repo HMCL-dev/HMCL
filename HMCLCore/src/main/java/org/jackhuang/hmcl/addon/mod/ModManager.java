@@ -187,7 +187,9 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
 
             boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
-                    || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
+                    || analyzer.has(LibraryAnalyzer.LibraryType.QUILT)
+                    || analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)
+                    || analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER);
 
             if (Files.isDirectory(getDirectory())) {
                 try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
