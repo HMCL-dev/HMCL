@@ -562,12 +562,12 @@ public final class Controllers {
         }
     }
 
-    public static void openUriInBrowser(@Nullable URI uri) {
+    public static void openUriOrCopy(@Nullable URI uri) {
         if (uri == null) return;
-        openUriInBrowser(uri.toString());
+        openUriOrCopy(uri.toString());
     }
 
-    public static void openUriInBrowser(@Nullable String uri) {
+    public static void openUriOrCopy(@Nullable String uri) {
         if (uri == null) return;
         var dialog = new MessageDialogPane.Builder(
                 i18n("web.open_in_browser", uri),
