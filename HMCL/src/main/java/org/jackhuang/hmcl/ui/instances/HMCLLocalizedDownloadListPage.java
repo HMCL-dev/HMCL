@@ -49,14 +49,6 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         return page;
     }
 
-    public static DownloadListPage ofCurseForgeShaderPack(boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(null, instanceSelection, RemoteAddon.Type.SHADER_PACK, CurseForgeRemoteAddonRepository.SHADERS, null);
-    }
-
-    public static DownloadListPage ofModrinthShaderPack(boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(null, instanceSelection, RemoteAddon.Type.SHADER_PACK, null, ModrinthRemoteAddonRepository.SHADER_PACKS);
-    }
-
     private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean instanceSelection, RemoteAddon.Type type, CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
         super(null, callback, instanceSelection);
 

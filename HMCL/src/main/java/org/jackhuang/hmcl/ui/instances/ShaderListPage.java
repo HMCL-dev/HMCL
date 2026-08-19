@@ -503,17 +503,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInst
                     if (versionOptional.isPresent()) {
                         RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                         FXUtils.runInFX(() -> {
-                            button.setOnAction(e -> {
-                                fireEvent(new DialogCloseEvent());
-                                Controllers.navigate(new DownloadPage(
-                                        repository instanceof CurseForgeRemoteAddonRepository
-                                                ? HMCLLocalizedDownloadListPage.ofCurseForgeShaderPack(false)
-                                                : HMCLLocalizedDownloadListPage.ofModrinthShaderPack(false),
-                                        remoteAddon,
-                                        new HMCLGameRepository.InstanceReference(page.repository, page.instanceId),
-                                        null
-                                ));
-                            });
+                            button.setExternalLink(remoteAddon.pageUrl());
                             button.setDisable(false);
                         });
                     }
