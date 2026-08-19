@@ -91,6 +91,8 @@ public class DefaultGameBuilder extends GameBuilder {
 
         for (Map.Entry<GameComponentType, Object> entry : components.entrySet()) {
             GameComponentType componentType = entry.getKey();
+            if (componentType == GameComponentType.GAME)
+                continue;
 
             if (entry.getValue() instanceof RemoteVersion remoteVersion) {
                 libraryTask = libraryTask.thenComposeAsync(manifest ->
