@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -137,16 +138,25 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             return;
         }
 
+        var gameVersionNumber = GameVersionNumber.asGameVersion(gameVersion);
+
         for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
             if (type.isModLoader() && analyzer.has(type)) {
                 ModLoaderType modLoaderType = type.getModLoaderType();
                 if (modLoaderType != null) {
                     supportedLoaders.add(modLoaderType);
-
-                    if (modLoaderType == ModLoaderType.CLEANROOM)
-                        supportedLoaders.add(ModLoaderType.FORGE);
                 }
             }
+        }
+
+        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
+            supportedLoaders.add(ModLoaderType.FORGE);
+        }
+
+        if ((analyzer.has(LibraryAnalyzer.LibraryType.FORGE) || analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
+                && modManager.hasLiteLoaderAsMod()
+                && !gameVersionNumber.isAtLeast("1.13", "17w43a")) {
+            supportedLoaders.add(ModLoaderType.LITE_LOADER);
         }
 
         if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {

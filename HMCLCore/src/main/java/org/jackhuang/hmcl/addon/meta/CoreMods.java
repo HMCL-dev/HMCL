@@ -47,21 +47,28 @@ public final class CoreMods {
     public static final CoreMods EMPTY = new CoreMods();
 
     private final Map<ModLoaderType, List<VersionRange<GameVersionNumber>>> coreMods;
+    private final boolean liteLoaderAsMod;
 
     private CoreMods() {
         this.coreMods = Collections.emptyMap();
+        this.liteLoaderAsMod = false;
     }
 
-    private CoreMods(List<CoreMod> coreModList) {
+    private CoreMods(List<CoreMod> coreModList, boolean liteloaderAsMod) {
         EnumMap<ModLoaderType, List<VersionRange<GameVersionNumber>>> map = new EnumMap<>(ModLoaderType.class);
         for (var coreMod : coreModList) {
             map.computeIfAbsent(coreMod.modLoaderType(), k -> new ArrayList<>()).add(coreMod.mcVersionRange());
         }
         this.coreMods = Collections.unmodifiableMap(map);
+        this.liteLoaderAsMod = liteloaderAsMod;
     }
 
     public boolean isEmpty() {
         return coreMods.isEmpty();
+    }
+
+    public boolean isLiteLoaderAsMod() {
+        return liteLoaderAsMod;
     }
 
     public Set<ModLoaderType> getModLoaders(GameVersionNumber gameVersionNumber) {
@@ -77,6 +84,7 @@ public final class CoreMods {
     public static CoreMods fromFile(Path modFile, ZipFileTree tree) {
         if (!"jar".equalsIgnoreCase(FileUtils.getExtension(modFile))) return EMPTY;
         List<CoreMod> coreModList = new ArrayList<>();
+        boolean liteloaderAsMod = false;
         {
             // Below 1.13
             ZipArchiveEntry mf = tree.getEntry("META-INF/MANIFEST.MF");
@@ -95,12 +103,14 @@ public final class CoreMods {
                                 new CoreMod(ModLoaderType.FORGE, "1.3.2", "1.12.2"),
                                 new CoreMod(ModLoaderType.CLEANROOM, "1.12.2", "1.12.2") // TODO further testing
                         ));
-                    if (StringUtils.isNotBlank(tweakClass))
+                    if (StringUtils.isNotBlank(tweakClass)) {
+                        if (tweakClass.trim().startsWith("com.mumfrey.liteloader")) liteloaderAsMod = true;
                         coreModList.addAll(List.of(
                                 new CoreMod(ModLoaderType.FORGE, "1.6.1", "1.12.2"),
                                 new CoreMod(ModLoaderType.LITE_LOADER, "1.6.1", "1.12.2"),
                                 new CoreMod(ModLoaderType.CLEANROOM, "1.12.2", "1.12.2")
                         ));
+                    }
                 }
             }
         }
@@ -148,7 +158,7 @@ public final class CoreMods {
             if (tree.getEntry("META-INF/services/net.neoforged.neoforgespi.transformation.ClassProcessorProvider") != null)
                 coreModList.add(new CoreMod(ModLoaderType.NEO_FORGE, "1.21.9"));
         }
-        return new CoreMods(coreModList);
+        return new CoreMods(coreModList, liteloaderAsMod);
     }
 
     private record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumber> mcVersionRange) {

@@ -66,6 +66,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
+    private boolean hasLiteLoaderAsMod = false;
     private LibraryAnalyzer analyzer;
 
     private boolean loaded = false;
@@ -97,6 +98,15 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         lock.lock();
         try {
             return localMods.containsKey(pair(modId, modLoaderType));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean hasLiteLoaderAsMod() {
+        lock.lock();
+        try {
+            return hasLiteLoaderAsMod;
         } finally {
             lock.unlock();
         }
@@ -173,6 +183,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
 
         if (!modInfo.isOld()) {
+            hasLiteLoaderAsMod |= coreMods.isLiteLoaderAsMod();
             localFiles.add(modInfo);
         }
     }
@@ -183,6 +194,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         try {
             localFiles.clear();
             localMods.clear();
+            hasLiteLoaderAsMod = false;
 
             try {
                 analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedInstanceManifest(instanceId), null);
