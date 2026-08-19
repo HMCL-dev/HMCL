@@ -753,14 +753,14 @@ public final class GameDirectoriesTest {
             repository.setSelectedInstance(firstInstance);
 
             assertSame(firstInstance, selectedInstance.get());
-            assertSame(firstInstance, observedSelections.getLast());
+            assertSame(firstInstance, observedSelections.get(observedSelections.size() - 1));
             assertEquals(firstId, settings().getSelectedInstance(gameDirectory.getId()));
 
             repository.saveAsync(firstManifest).run();
             HMCLGameInstance refreshedFirstInstance = repository.getInstance(firstId);
             assertNotSame(firstInstance, refreshedFirstInstance);
             assertSame(refreshedFirstInstance, selectedInstance.get());
-            assertSame(refreshedFirstInstance, observedSelections.getLast());
+            assertSame(refreshedFirstInstance, observedSelections.get(observedSelections.size() - 1));
             repository.setSelectedInstance(firstInstance);
             assertSame(refreshedFirstInstance, selectedInstance.get());
 
