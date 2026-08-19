@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
