@@ -162,9 +162,9 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         } else if (exception instanceof UnsupportedInstallationException unsupportedInstallationException) {
             switch (unsupportedInstallationException.getReason()) {
                 case UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2 ->
-                        Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
                 default ->
-                        Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
             }
         } else if (exception instanceof DefaultDependencyManager.UnsupportedLibraryInstallerException) {
             Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
