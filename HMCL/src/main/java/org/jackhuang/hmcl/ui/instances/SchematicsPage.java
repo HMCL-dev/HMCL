@@ -55,6 +55,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SynchronizedLazy;
@@ -272,10 +273,20 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         if (currentDirectoryProperty().get() == null) return;
 
         Path parent = currentDirectoryProperty().get().getPath();
+
+        FileNameSet existingPaths;
+        try {
+            existingPaths = FileNameSet.list(parent, null);
+        } catch (Exception e) {
+            LOG.warning("Failed to list folders in " + parent, e);
+            existingPaths = new FileNameSet(false);
+        }
+
         Controllers.prompt(
                 i18n("schematics.create_directory.prompt"),
                 (result, handler) -> {
                     Path targetDir = parent.resolve(result);
+
                     if (Files.exists(targetDir)) {
                         handler.reject(i18n("schematics.create_directory.failed.already_exists"));
                         return;
@@ -289,7 +300,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         LOG.warning("Failed to create directory: " + targetDir, e);
                         handler.reject(i18n("schematics.create_directory.failed", targetDir));
                     }
-                }, "", new RequiredValidator(), new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid));
+                },
+                "",
+                new RequiredValidator(),
+                new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid),
+                new Validator(i18n("schematics.create_directory.failed.already_exists"), existingPaths::notContains));
     }
 
     public void onRevealSchematicsFolder() {
