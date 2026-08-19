@@ -54,7 +54,9 @@ import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -732,17 +734,21 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             boolean allowSave) {
     }
 
-    public LaunchOptions.Builder getLaunchOptions(GameInstanceID instanceId, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
+    public LaunchOptions.Builder getLaunchOptions(GameInstanceID instanceId, JavaRuntime java, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         GameSettings.Effective vs = getEffectiveGameSettings(instanceId);
         boolean noJVMOptions = vs.getInheritable(GameSettings::noJVMOptionsProperty);
         boolean autoMemory = vs.getInheritable(GameSettings::autoMemoryProperty);
+        boolean highPerformanceGPU = vs.getInheritable(GameSettings::highPerformanceProperty);
         GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(getGameVersion(instanceId));
 
         @Nullable Integer maxMemory;
         if (autoMemory) {
             maxMemory = noJVMOptions
                     ? null
-                    : Math.toIntExact(getAutoAllocatedMemory(SystemInfo.getPhysicalMemoryStatus().available()) / 1024L / 1024L);
+                    : Math.toIntExact(getAutoAllocatedMemory(
+                    SystemInfo.getPhysicalMemoryStatus().available(),
+                    java.getPlatform()
+            ) / 1024L / 1024L);
         } else {
             maxMemory = vs.getMaxMemory();
         }
@@ -750,7 +756,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setInstanceId(instanceId)
                 .setGameDir(gameDir)
-                .setJava(javaVersion)
+                .setJava(java)
                 .setVersionType(Metadata.TITLE)
                 .setVersionName(instanceId.id())
                 .setProfileName(Metadata.TITLE)
@@ -788,6 +794,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setDisableAutoGameOptions(vs.getInheritable(GameSettings::disableAutoGameOptionsProperty))
                 .setUseNativeGLFW(vs.getInheritable(GameSettings::useNativeGLFWProperty))
                 .setUseNativeOpenAL(vs.getInheritable(GameSettings::useNativeOpenALProperty))
+                .setUseHighPerformanceGPU(vs.getInheritable(GameSettings::highPerformanceProperty))
                 .setDaemon(!makeLaunchScript && vs.getInheritable(GameSettings::launcherVisibilityProperty).isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
@@ -892,7 +899,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public static long getAutoAllocatedMemory(long available) {
+    public static long getAutoAllocatedMemory(long available, Platform platform) {
         long usable = available - 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
         if (usable <= 0) {
             return available;
@@ -906,7 +913,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             suggested = Math.min(
                     (long) (threshold * 0.8 + (usable - threshold) * 0.2),
                     16L * 1024 * 1024 * 1024);
-        return suggested;
+        return platform.getBits() == Bits.BIT_32
+                ? Math.min(suggested, 768 * 1024 * 1024) // https://github.com/HMCL-dev/HMCL/issues/6638
+                : suggested;
     }
 
     public static ProxyOption getProxyOption() {

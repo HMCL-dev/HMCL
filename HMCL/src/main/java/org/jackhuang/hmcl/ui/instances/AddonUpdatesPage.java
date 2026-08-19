@@ -372,7 +372,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 return repo == null ? null : repo.getVersionPageUrl(object.data.targetVersion());
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null && StringUtils.isNotBlank(result)) {
-                    button.setOnAction(__ -> Controllers.openUriInBrowser(result));
+                    button.setExternalLink(result);
                     button.setDisable(false);
                 } else {
                     LOG.warning("Failed to load addon version page url", exception);

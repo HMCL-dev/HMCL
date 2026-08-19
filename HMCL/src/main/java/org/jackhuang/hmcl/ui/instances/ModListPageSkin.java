@@ -44,7 +44,6 @@ import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -481,15 +480,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                     }
                                 }
 
-                                button.setOnAction(e -> {
-                                    fireEvent(new DialogCloseEvent());
-                                    Controllers.navigate(new DownloadPage(
-                                            repository instanceof CurseForgeRemoteAddonRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(false) : HMCLLocalizedDownloadListPage.ofModrinthMod(false),
-                                            remoteAddon,
-                                            new HMCLGameRepository.InstanceReference(ModListPageSkin.this.getSkinnable().getRepository(), ModListPageSkin.this.getSkinnable().getInstanceId()),
-                                            null
-                                    ));
-                                });
+                                button.setExternalLink(remoteAddon.pageUrl());
                                 button.setDisable(false);
                             });
                         }
@@ -501,31 +492,21 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {
                 JFXHyperlink officialPageButton = new JFXHyperlink(i18n("mods.url"));
-                officialPageButton.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(modInfo.getModInfo().getUrl());
-                });
-
+                officialPageButton.setExternalLink(modInfo.getModInfo().getUrl());
                 getActions().add(officialPageButton);
             }
 
             if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().mcmod())) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
-                searchButton.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
-                            pair("key", modInfo.getModInfo().getName()),
-                            pair("site", "all"),
-                            pair("filter", "0")
-                    )));
-                });
+                searchButton.setExternalLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
+                        pair("key", modInfo.getModInfo().getName()),
+                        pair("site", "all"),
+                        pair("filter", "0")
+                )));
                 getActions().add(searchButton);
             } else {
                 JFXHyperlink mcmodButton = new JFXHyperlink(i18n("mods.mcmod.page"));
-                mcmodButton.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(ModTranslations.MOD.getMcmodUrl(modInfo.getModTranslations()));
-                });
+                mcmodButton.setExternalLink(ModTranslations.MOD.getMcmodUrl(modInfo.getModTranslations()));
                 getActions().add(mcmodButton);
             }
 

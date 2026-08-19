@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import kala.encdet.EncodingDetector;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -90,7 +90,7 @@ public final class LogExporter {
             for (Path file : stream) {
                 if (Files.isRegularFile(file)) {
                     if (logMatcher == null || logMatcher.matches(file)) {
-                        try (BufferedReader reader = EncodingDetector.MODERN_WEB.newBufferedReader(file)) {
+                        try (BufferedReader reader = IOUtils.newBufferedReaderMaybeNativeEncoding(file)) {
                             zipper.putLines(reader.lines().map(Logger::filterForbiddenToken), file.getFileName().toString());
                         } catch (IOException e) {
                             LOG.warning("Failed to read log file: " + file, e);
