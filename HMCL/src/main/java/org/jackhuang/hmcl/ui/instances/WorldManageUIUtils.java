@@ -33,6 +33,8 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
+import org.jackhuang.hmcl.util.FileNameSet;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -96,8 +98,19 @@ public final class WorldManageUIUtils {
     public static void installWorld(Path zipFile, Path savesDir, @Nullable Runnable runnable) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.supplyAsync(Schedulers.io(), () -> new World(zipFile))
-                .whenComplete(Schedulers.javafx(), world -> {
+        Task.supplyAsync(Schedulers.io(), () -> {
+                    FileNameSet existingPaths;
+                    try {
+                        existingPaths = FileNameSet.list(savesDir, null);
+                    } catch (Exception e) {
+                        LOG.warning("Failed to list folders in " + savesDir, e);
+                        existingPaths = new FileNameSet(false);
+                    }
+                    return Pair.pair(new World(zipFile), existingPaths);
+                })
+                .whenComplete(Schedulers.javafx(), pair -> {
+                    var world = pair.key();
+                    var existingPaths = pair.value();
                     Controllers.prompt(
                             i18n("world.name.enter"),
                             (name, handler) -> {
@@ -115,7 +128,7 @@ public final class WorldManageUIUtils {
                                         }).start();
                             }, world.getWorldName(),
                             new RequiredValidator(),
-                            new Validator(i18n("world.add.already_exists"), name -> !Files.exists(savesDir.resolve(name))),
+                            new Validator(i18n("world.add.already_exists"), existingPaths::notContains),
                             new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid)
                     );
                 }, e -> {
