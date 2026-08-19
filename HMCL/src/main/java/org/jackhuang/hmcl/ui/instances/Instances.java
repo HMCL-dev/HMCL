@@ -122,8 +122,13 @@ public final class Instances {
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");
         deleteButton.setOnAction(e -> {
+            // Block instance game settings from being written back to disk while the deletion
+            // task is running, otherwise a settings change during the deletion may recreate
+            // the instance directory after it has been moved to the trash
+            repository.markInstanceBeingRemoved(instanceId);
             Task.supplyAsync(Schedulers.io(), () -> repository.removeInstanceFromDisk(instanceId))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        repository.unmarkInstanceBeingRemoved(instanceId);
                         if (exception != null || !Boolean.TRUE.equals(result)) {
                             Controllers.dialog(i18n("instance.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                         }
