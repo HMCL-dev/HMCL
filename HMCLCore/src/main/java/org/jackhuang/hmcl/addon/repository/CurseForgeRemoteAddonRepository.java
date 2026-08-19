@@ -594,7 +594,15 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                         fileName(),
                         fileDate(),
                         versionType,
-                        new RemoteAddon.File(Collections.emptyMap(), downloadUrl(), fileName()),
+                        new RemoteAddon.File(hashes == null ? Collections.emptyMap() : hashes.stream().collect(Collectors.toMap(
+                                hash -> switch (hash.algo()) {
+                                    case 1 -> "sha1";
+                                    case 2 -> "md5";
+                                    default -> "algo" + hash.algo();
+                                },
+                                LatestFileHash::value,
+                                (a, b) -> a
+                        )), downloadUrl(), fileName()),
                         dependencies.stream().map(dependency -> {
                             if (!RELATION_TYPE.containsKey(dependency.relationType())) {
                                 throw new IllegalStateException("Broken datas.");
