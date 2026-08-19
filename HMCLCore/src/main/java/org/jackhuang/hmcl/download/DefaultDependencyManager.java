@@ -27,9 +27,11 @@ import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -155,8 +157,50 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));
     }
 
+    /// Checks if a matching library patch is already installed for the target instance on disk and intact.
+    ///
+    /// @param baseVersion the base game instance manifest
+    /// @param libraryVersion the remote library version to install
+    /// @return the existing intact matching patch, or `null` if the library is not installed, version mismatches, or files need repair
+    private @Nullable GameInstancePatch getIntactMatchingPatch(GameInstanceManifest baseVersion, RemoteVersion libraryVersion) {
+        if (LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(libraryVersion.getLibraryId()) || !repository.hasInstance(baseVersion.id())) {
+            return null;
+        }
+
+        try {
+            GameInstanceManifest existingManifest = repository.getInstanceManifest(baseVersion.id());
+            String currentGameVersion = repository.getGameVersion(existingManifest).orElse(null);
+            if (!java.util.Objects.equals(currentGameVersion, libraryVersion.getGameVersion())) {
+                return null;
+            }
+
+            GameInstancePatch matchingPatch = existingManifest.getPatches().stream()
+                    .filter(patch -> libraryVersion.getLibraryId().equals(patch.id())
+                            && java.util.Objects.equals(patch.version(), libraryVersion.getSelfVersion()))
+                    .findFirst()
+                    .orElse(null);
+            if (matchingPatch == null) {
+                return null;
+            }
+
+            List<Library> patchLibraries = matchingPatch.libraries();
+            boolean needsRepair = patchLibraries != null && patchLibraries.stream()
+                    .filter(Library::appliesToCurrentEnvironment)
+                    .anyMatch(lib -> GameLibrariesTask.shouldDownloadLibrary(repository, existingManifest, lib, true));
+
+            return needsRepair ? null : matchingPatch;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
     @Override
     public Task<GameInstanceManifest> installLibraryAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion) {
+        GameInstancePatch matchingPatch = getIntactMatchingPatch(baseVersion, libraryVersion);
+        if (matchingPatch != null) {
+            return Task.completed(baseVersion.addPatch(matchingPatch));
+        }
+
         AtomicReference<GameInstanceManifest> removedLibraryVersion = new AtomicReference<>();
 
         return removeLibraryAsync(baseVersion, libraryVersion.getLibraryId())
