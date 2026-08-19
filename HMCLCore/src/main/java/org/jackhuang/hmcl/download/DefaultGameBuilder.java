@@ -17,12 +17,18 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
+import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  *
@@ -44,6 +50,18 @@ public class DefaultGameBuilder extends GameBuilder {
     public Task<?> buildAsync() {
         var hints = new ArrayList<Task.StagesHint>();
 
+        var repository = dependencyManager.getGameRepository();
+        boolean isUpdate = repository.hasInstance(name);
+        GameInstanceManifest preUpdateManifest = null;
+        String preUpdateGameVersion = null;
+        if (isUpdate) {
+            try {
+                preUpdateManifest = repository.getInstanceManifest(name);
+                preUpdateGameVersion = repository.getGameVersion(preUpdateManifest).orElse(null);
+            } catch (Exception ignored) {
+            }
+        }
+
         Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> new GameInstanceManifest(name));
         libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "game", gameVersion));
         hints.add(new Task.StagesHint("hmcl.install.game:" + gameVersion));
@@ -51,23 +69,57 @@ public class DefaultGameBuilder extends GameBuilder {
         hints.add(new Task.StagesHint("hmcl.install.assets"));
 
         for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
-            libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, entry.getKey(), entry.getValue()));
+            GameInstancePatch matchingPatch = getIntactLoaderPatch(preUpdateManifest, preUpdateGameVersion, entry.getKey(), entry.getValue());
+            if (matchingPatch != null) {
+                libraryTask = libraryTask.thenApplyAsync(version -> version.addPatch(matchingPatch));
+            } else {
+                libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, entry.getKey(), entry.getValue()));
+            }
             hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", entry.getKey(), entry.getValue())));
         }
 
         for (RemoteVersion remoteVersion : remoteVersions) {
-            libraryTask = libraryTask.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
+            GameInstancePatch matchingPatch = getIntactLoaderPatch(preUpdateManifest, preUpdateGameVersion, remoteVersion.getLibraryId(), remoteVersion.getSelfVersion());
+            if (matchingPatch != null) {
+                libraryTask = libraryTask.thenApplyAsync(version -> version.addPatch(matchingPatch));
+            } else {
+                libraryTask = libraryTask.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
+            }
             hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
         }
-
-        var repository = dependencyManager.getGameRepository();
-        boolean isUpdate = repository.hasInstance(name);
 
         return libraryTask.thenComposeAsync(repository::saveAsync).whenComplete(exception -> {
             if (exception != null && !isUpdate) {
                 repository.removeInstanceFromDisk(name);
             }
         }).withStagesHints(hints);
+    }
+
+    /// Checks if a matching loader patch was installed prior to the rebuild for the same game version and is intact.
+    private @Nullable GameInstancePatch getIntactLoaderPatch(
+            @Nullable GameInstanceManifest preUpdateManifest,
+            @Nullable String preUpdateGameVersion,
+            String libraryId,
+            String libraryVersion) {
+        if (preUpdateManifest == null || !Objects.equals(gameVersion, preUpdateGameVersion)) {
+            return null;
+        }
+
+        GameInstancePatch matchingPatch = preUpdateManifest.getPatches().stream()
+                .filter(patch -> libraryId.equals(patch.id()) && Objects.equals(patch.version(), libraryVersion))
+                .findFirst()
+                .orElse(null);
+        if (matchingPatch == null) {
+            return null;
+        }
+
+        var repository = dependencyManager.getGameRepository();
+        List<Library> patchLibraries = matchingPatch.libraries();
+        boolean needsRepair = patchLibraries != null && patchLibraries.stream()
+                .filter(Library::appliesToCurrentEnvironment)
+                .anyMatch(lib -> GameLibrariesTask.shouldDownloadLibrary(repository, preUpdateManifest, lib, true));
+
+        return needsRepair ? null : matchingPatch;
     }
 
     private ExceptionalFunction<GameInstanceManifest, Task<GameInstanceManifest>, ?> libraryTaskHelper(String gameVersion, String libraryId, String libraryVersion) {
