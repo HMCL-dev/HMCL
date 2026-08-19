@@ -292,10 +292,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// installation does not require a [GameInstance].
     @Override
     public Path getRunDirectoryForInstallation(GameInstanceID instanceId) {
+        @Nullable PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
         return computeRunDirectory(
                 instanceId,
                 Files.exists(getLayout().getModpackConfigurationFile(instanceId)),
-                getInstanceGameSettings(instanceId));
+                prepared != null ? prepared.settings() : getInstanceGameSettings(instanceId));
     }
 
     private String selectedRunningDirectory(

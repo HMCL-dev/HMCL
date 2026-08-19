@@ -479,9 +479,16 @@ public final class GameDirectoriesTest {
             HMCLGameInstance instance = repository.getInstance(id);
             assertEquals(repository.getLayout().getInstanceRoot(id), instance.getRunDirectory());
             assertEquals(repository.getLayout().getInstanceRoot(id).resolve("mods"), instance.getModsDirectory());
+            GameSettings.Instance instanceSettings = Objects.requireNonNull(instance.getSettings());
+            instanceSettings.maxMemoryProperty().setValue(1024);
 
             assertTrue(repository.removeInstanceFromDisk(id));
+            instanceSettings.maxMemoryProperty().setValue(2048);
+            FileSaver.waitForAllSaves();
+
             assertFalse(repository.hasInstance(id));
+            assertFalse(instanceSettings.isSavable());
+            assertFalse(Files.exists(repository.getLayout().getInstanceRoot(id)));
         }
     }
 
