@@ -28,6 +28,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -40,6 +41,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AccountID;
+import org.jackhuang.hmcl.auth.ClassicAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -47,6 +52,7 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.setting.property.InheritableProperty;
 import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.instances.GameInstanceIconDialog;
@@ -128,6 +134,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final ObjectProperty<@Nullable InheritableProperty<GameSettings.DetectedJava>> activeParentDetectedJavaProperty = new SimpleObjectProperty<>();
     private final InvalidationListener javaListener = o -> refreshJavaSettings();
     private final InvalidationListener weakJavaListener = holder.weak(javaListener);
+
+    private final RadioChoiceList<@Nullable Account> accountItem;
+    private final Hyperlink accountAddPrompt;
+    private boolean updatingSelectedAccount = false;
 
     public GameSettingsPage(Class<S> settingType) {
         assert settingType == GameSettings.Preset.class || settingType == GameSettings.Instance.class;
@@ -497,6 +507,27 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                         windowTypeSublist,
                         GameSettings::windowTypeProperty,
                         GameSettingsPage::getWindowTypeDisplayName);
+            }
+
+            // Login Method Setting
+            var accountSublist = new ComponentSublist();
+            gameSettings.getContent().add(accountSublist);
+            accountSublist.setTitle(i18n("settings.game.login_method"));
+            accountSublist.setSubtitle(i18n("settings.game.login_method.subtitle"));
+            accountSublist.setHasSubtitle(true);
+            {
+                accountItem = new RadioChoiceList<>();
+                accountAddPrompt = new Hyperlink(i18n("settings.game.login_method.no_account"));
+                FXUtils.setLimitHeight(accountAddPrompt, 30);
+                accountAddPrompt.setVisible(false);
+                accountAddPrompt.setManaged(false);
+                accountAddPrompt.setOnAction(e -> Controllers.dialog(new CreateAccountPane()));
+                accountSublist.getContent().setAll(accountItem, accountAddPrompt);
+                bindAccountSettings(accountSublist, accountItem);
+
+                Accounts.getAccounts().addListener(holder.weak((ListChangeListener<Account>) ignored -> refreshAccountSettings()));
+                holder.add(FXUtils.onWeakChangeAndOperate(Accounts.selectedAccountProperty(), ignored -> initializeSelectedAccount()));
+                refreshAccountSettings();
             }
 
             // Show Logs Window Setting
@@ -2214,6 +2245,271 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
 
         setPropertyOverridden(setting, setting.windowTypeProperty(), overridden);
+    }
+
+    /// Binds the login method radio choice list to the account list or the account selection setting.
+    ///
+    /// In global game settings the list mirrors the account list: selecting an account updates the
+    /// selected account. In instance-specific settings the list switches the instance to its specific
+    /// account selection when the user selects an account.
+    private void bindAccountSettings(
+            ComponentSublist sublist,
+            RadioChoiceList<@Nullable Account> item) {
+        ObjectProperty<@Nullable InheritableProperty<AccountSelectionType>> activeTypeProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable InheritableProperty<AccountSelectionType>> activeParentTypeProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable InheritableProperty<@Nullable AccountID>> activeSpecificProperty = new SimpleObjectProperty<>();
+        ObjectProperty<@Nullable InheritableProperty<@Nullable AccountID>> activeParentSpecificProperty = new SimpleObjectProperty<>();
+        final Holder<InvalidationListener> refreshHolder = new Holder<>();
+        @Nullable JFXButton inheritButton = null;
+        if (!isPresetSetting) {
+            inheritButton = createInheritanceButton();
+            sublist.setTitleRight(inheritButton);
+        }
+        @Nullable JFXButton finalInheritButton = inheritButton;
+
+        InvalidationListener propertyListener = observable -> {
+            if (isPresetSetting || updatingSelectedAccount) {
+                return;
+            }
+            GameSettings setting = currentSetting.get();
+            updateParentInheritablePropertyListener(
+                    setting,
+                    activeParentTypeProperty,
+                    GameSettings::accountTypeProperty,
+                    refreshHolder.value);
+            updateParentInheritablePropertyListener(
+                    setting,
+                    activeParentSpecificProperty,
+                    GameSettings::specificAccountIDProperty,
+                    refreshHolder.value);
+            InheritableProperty<AccountSelectionType> property = activeTypeProperty.get();
+            if (setting == null || property == null) {
+                return;
+            }
+
+            initializeSelectedAccount();
+            if (finalInheritButton != null) {
+                updateInheritanceButton(finalInheritButton, !isPropertyOverridden(setting, property));
+            }
+        };
+        InvalidationListener weakPropertyListener = holder.weak(propertyListener);
+        refreshHolder.value = weakPropertyListener;
+        activeParentSetting.addListener(weakPropertyListener);
+
+        item.selectedValueProperty().addListener((observable, oldValue, newValue) -> {
+            if (updatingSelectedAccount) {
+                return;
+            }
+
+            if (isPresetSetting) {
+                if (newValue != null) {
+                    Accounts.setSelectedAccount(newValue);
+                }
+                return;
+            }
+
+            GameSettings setting = currentSetting.get();
+            InheritableProperty<AccountSelectionType> property = activeTypeProperty.get();
+            if (setting == null || property == null || newValue == null) {
+                return;
+            }
+
+            updatingSelectedAccount = true;
+            try {
+                setPropertyOverridden(setting, property, true);
+                property.setValue(AccountSelectionType.SPECIFIC);
+                InheritableProperty<@Nullable AccountID> specificProperty = activeSpecificProperty.get();
+                if (specificProperty != null) {
+                    setPropertyOverridden(setting, specificProperty, true);
+                    specificProperty.setValue(newValue.getAccountID());
+                }
+                if (finalInheritButton != null) {
+                    updateInheritanceButton(finalInheritButton, false);
+                }
+            } finally {
+                updatingSelectedAccount = false;
+            }
+            propertyListener.invalidated(property);
+        });
+
+        if (finalInheritButton != null) {
+            finalInheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                GameSettings setting = currentSetting.get();
+                InheritableProperty<AccountSelectionType> property = activeTypeProperty.get();
+                if (setting == null || property == null || updatingSelectedAccount) {
+                    return;
+                }
+
+                updatingSelectedAccount = true;
+                try {
+                    if (!isPropertyOverridden(setting, property)) {
+                        property.setValue(AccountSelectionType.SPECIFIC);
+                        setPropertyOverridden(setting, property, true);
+                        InheritableProperty<@Nullable AccountID> specificProperty = activeSpecificProperty.get();
+                        if (specificProperty != null) {
+                            Account selected = Accounts.getSelectedAccount();
+                            specificProperty.setValue(selected != null ? selected.getAccountID() : null);
+                            setPropertyOverridden(setting, specificProperty, true);
+                        }
+                    } else {
+                        setPropertyOverridden(setting, property, false);
+                        InheritableProperty<@Nullable AccountID> specificProperty = activeSpecificProperty.get();
+                        if (specificProperty != null) {
+                            setPropertyOverridden(setting, specificProperty, false);
+                        }
+                    }
+                } finally {
+                    updatingSelectedAccount = false;
+                }
+                propertyListener.invalidated(property);
+                event.consume();
+            });
+        }
+
+        currentSetting.addListener((observable, oldValue, newValue) -> {
+            if (isPresetSetting) {
+                return;
+            }
+            if (oldValue != null) {
+                oldValue.removeListener(weakPropertyListener);
+            }
+
+            InheritableProperty<AccountSelectionType> oldTypeProperty = activeTypeProperty.get();
+            if (oldTypeProperty != null) {
+                oldTypeProperty.removeListener(weakPropertyListener);
+            }
+            InheritableProperty<@Nullable AccountID> oldSpecificProperty = activeSpecificProperty.get();
+            if (oldSpecificProperty != null) {
+                oldSpecificProperty.removeListener(weakPropertyListener);
+            }
+
+            InheritableProperty<AccountSelectionType> newTypeProperty = newValue != null ? newValue.accountTypeProperty() : null;
+            activeTypeProperty.set(newTypeProperty);
+            InheritableProperty<@Nullable AccountID> newSpecificProperty = newValue != null ? newValue.specificAccountIDProperty() : null;
+            activeSpecificProperty.set(newSpecificProperty);
+            if (newValue != null) {
+                newValue.addListener(weakPropertyListener);
+            }
+            if (newTypeProperty != null) {
+                newTypeProperty.addListener(weakPropertyListener);
+            }
+            if (newSpecificProperty != null) {
+                newSpecificProperty.addListener(weakPropertyListener);
+            }
+            propertyListener.invalidated(newValue);
+        });
+
+        S setting = currentSetting.get();
+        if (setting != null && !isPresetSetting) {
+            activeTypeProperty.set(setting.accountTypeProperty());
+            activeSpecificProperty.set(setting.specificAccountIDProperty());
+            setting.addListener(weakPropertyListener);
+            setting.accountTypeProperty().addListener(weakPropertyListener);
+            setting.specificAccountIDProperty().addListener(weakPropertyListener);
+        }
+        propertyListener.invalidated(setting);
+    }
+
+    /// Rebuilds the login method account options and refreshes the selected account.
+    private void refreshAccountSettings() {
+        refreshAccountOptions();
+        initializeSelectedAccount();
+    }
+
+    /// Rebuilds the login method radio choices from the current account list.
+    ///
+    /// When the account list is empty, the account choices are hidden and the add-account prompt is shown instead.
+    private void refreshAccountOptions() {
+        if (Accounts.getAccounts().isEmpty()) {
+            accountItem.setVisible(false);
+            accountItem.setManaged(false);
+            accountAddPrompt.setVisible(true);
+            accountAddPrompt.setManaged(true);
+            return;
+        }
+
+        accountItem.setVisible(true);
+        accountItem.setManaged(true);
+        accountAddPrompt.setVisible(false);
+        accountAddPrompt.setManaged(false);
+
+        var options = new ArrayList<RadioChoiceList.Choice<@Nullable Account>>();
+        for (Account account : Accounts.getAccounts()) {
+            options.add(new RadioChoiceList.Choice<>(
+                    getAccountProfileName(account),
+                    account)
+                    .setSubtitle(getAccountSubtitle(account)));
+        }
+        accountItem.setChoices(options);
+    }
+
+    /// Selects the login method radio choice matching the current account selection setting.
+    private void initializeSelectedAccount() {
+        if (isPresetSetting) {
+            setSelectedAccountValue(Accounts.getSelectedAccount());
+            return;
+        }
+
+        S setting = currentSetting.get();
+        if (setting == null) {
+            return;
+        }
+
+        AccountSelectionType accountType = getEffectiveValue(setting, GameSettings::accountTypeProperty);
+        @Nullable Account account = null;
+        if (accountType == AccountSelectionType.SPECIFIC) {
+            @Nullable AccountID specificAccountID = getEffectiveValue(setting, GameSettings::specificAccountIDProperty);
+            account = findAccountById(specificAccountID);
+        }
+        if (account == null) {
+            account = Accounts.getSelectedAccount();
+        }
+        setSelectedAccountValue(account);
+    }
+
+    /// Selects the given account without treating the change as a user action.
+    private void setSelectedAccountValue(@Nullable Account account) {
+        updatingSelectedAccount = true;
+        try {
+            accountItem.setSelectedValue(account);
+        } finally {
+            updatingSelectedAccount = false;
+        }
+    }
+
+    /// Returns the account with the given account ID, if it still exists.
+    private @Nullable Account findAccountById(@Nullable AccountID accountID) {
+        if (accountID == null) {
+            return null;
+        }
+
+        for (Account account : Accounts.getAccounts()) {
+            if (accountID.equals(account.getAccountID())) {
+                return account;
+            }
+        }
+        return null;
+    }
+
+    /// Returns the display name shown for the given account in the account list.
+    private static String getAccountProfileName(Account account) {
+        String profileName = account.getProfileName();
+        if (StringUtils.isBlank(profileName)) {
+            profileName = account.getProfileID().toString();
+        }
+        if (account instanceof ClassicAccount classicAccount) {
+            return profileName + " - " + classicAccount.getLoginName();
+        }
+        return profileName;
+    }
+
+    /// Returns the authentication method description shown below the account name in the account list.
+    private static String getAccountSubtitle(Account account) {
+        String loginTypeName = Accounts.getLocalizedLoginTypeName(Accounts.getAccountFactory(account));
+        if (account instanceof AuthlibInjectorAccount authlibInjectorAccount) {
+            loginTypeName = loginTypeName + ", " + i18n("account.injector.server") + ": " + authlibInjectorAccount.getServer().getName();
+        }
+        return account.isPortable() ? loginTypeName + ", " + i18n("account.portable") : loginTypeName;
     }
 
     private <T> void bindInheritableSublistDescription(ComponentSublist sublist,
