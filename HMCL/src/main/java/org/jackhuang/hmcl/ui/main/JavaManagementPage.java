@@ -302,7 +302,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
             super.updateItem(item, empty);
 
-            if (Objects.equals(oldItem, item) && oldEmpty == empty) return;
+            if (oldItem == item && oldEmpty == empty) return;
 
             this.graphic.releaseRippleImmediately();
 
