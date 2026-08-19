@@ -162,7 +162,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
         return getRepository().computeRunDirectory(getId(), isModpack(), getSettings());
     }
 
-    /// Returns the loaded instance-local game settings, loading them on first access.
+    /// Returns the loaded instance-local game settings, loading them while this instance is current.
     ///
     /// @return the settings, or `null` when no local settings exist after loading
     public @Nullable GameSettings.Instance getSettings() {
@@ -233,9 +233,12 @@ public class HMCLGameInstance extends DefaultGameInstance {
         return gameSettingsReadOnly;
     }
 
-    /// Backs up and overwrites the instance-local game settings file with the currently loaded settings.
+    /// Backs up and overwrites the settings file when this instance still owns its settings.
     public void forceOverwriteSettings() {
         ensureGameSettingsLoaded();
+        if (!ownsGameSettings()) {
+            return;
+        }
 
         GameSettings.Instance setting = gameSettings;
         if (setting == null) {
@@ -257,9 +260,9 @@ public class HMCLGameInstance extends DefaultGameInstance {
         }
     }
 
-    /// Saves the currently loaded instance-local game settings asynchronously when writable.
+    /// Saves the settings asynchronously when writable and still owned by the current instance.
     public void saveSettings() {
-        if (gameSettings == null || gameSettingsReadOnly) {
+        if (gameSettings == null || gameSettingsReadOnly || !ownsGameSettings()) {
             return;
         }
 
@@ -278,11 +281,11 @@ public class HMCLGameInstance extends DefaultGameInstance {
         FileSaver.save(file, LauncherSettings.SETTINGS_GSON.toJson(setting));
     }
 
-    /// Saves the currently loaded instance-local game settings synchronously when writable.
+    /// Saves the settings synchronously when writable and still owned by the current instance.
     ///
     /// @throws IOException if saving the file fails
     public void saveSettingsSync() throws IOException {
-        if (gameSettings == null || gameSettingsReadOnly) {
+        if (gameSettings == null || gameSettingsReadOnly || !ownsGameSettings()) {
             return;
         }
 
@@ -514,10 +517,22 @@ public class HMCLGameInstance extends DefaultGameInstance {
         return true;
     }
 
+    /// Loads settings once while this object is the repository's current instance.
     private void ensureGameSettingsLoaded() {
-        if (!gameSettingsLoaded) {
+        if (!gameSettingsLoaded && getRepository().findInstance(id) == this) {
             loadGameSettings();
         }
+    }
+
+    /// Returns whether this instance still owns the settings object used by the current snapshot.
+    private boolean ownsGameSettings() {
+        @Nullable HMCLGameInstance current = getRepository().findInstance(id);
+        boolean owns = current == this
+                || current != null && gameSettings != null && current.gameSettings == gameSettings;
+        if (!owns && gameSettings != null) {
+            gameSettings.setSavable(false);
+        }
+        return owns;
     }
 
     private void loadGameSettings() {

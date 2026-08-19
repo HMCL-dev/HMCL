@@ -240,6 +240,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         @Nullable Path rollbackDirectory = null;
         try {
             DefaultGameRepositorySnapshot committedSnapshot = buildCommittedSnapshot();
+            if (!renames.isEmpty() || !removedIds.isEmpty()) {
+                repository.flushPendingInstanceWrites();
+            }
             for (RenameOperation rename : renames) {
                 applyRename(rename, appliedRenames);
             }

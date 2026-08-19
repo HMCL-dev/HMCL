@@ -141,6 +141,14 @@ public abstract class DefaultGameRepository implements GameRepository {
     protected void initializeDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) throws IOException {
     }
 
+    /// Prepares subclass-managed writes before instance files are moved or removed.
+    ///
+    /// The default implementation does nothing.
+    ///
+    /// @throws IOException if pending writes cannot be completed
+    protected void flushPendingInstanceWrites() throws IOException {
+    }
+
     /// Replaces the repository layout with an empty snapshot rooted at `baseDirectory`.
     ///
     /// @param baseDirectory the new repository base directory

@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -169,6 +170,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     /// @return the instance, or `null` when absent
     public @Nullable HMCLGameInstance findInstance(GameInstanceID id) {
         return (HMCLGameInstance) getSnapshot().findInstance(id);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    protected void flushPendingInstanceWrites() throws IOException {
+        try {
+            FileSaver.waitForAllSaves();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while waiting for pending instance writes", e);
+        }
     }
 
     /// Returns the persistent game directory for this repository.
