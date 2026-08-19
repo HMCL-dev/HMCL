@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
@@ -82,7 +81,6 @@ public final class CoreMods {
 
     @NotNull
     public static CoreMods fromFile(Path modFile, ZipFileTree tree) {
-        if (!"jar".equalsIgnoreCase(FileUtils.getExtension(modFile))) return EMPTY;
         List<CoreMod> coreModList = new ArrayList<>();
         boolean liteloaderAsMod = false;
         {
