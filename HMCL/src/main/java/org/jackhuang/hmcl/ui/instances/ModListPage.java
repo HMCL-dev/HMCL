@@ -20,13 +20,13 @@ package org.jackhuang.hmcl.ui.instances;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.addon.mod.LocalModFile;
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -164,6 +164,13 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
             supportedLoaders.add(ModLoaderType.FORGE);
             supportedLoaders.add(ModLoaderType.NEO_FORGE);
+        }
+
+        try {
+            if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && (modManager.getLocalFiles().stream().anyMatch(it -> it.getFileName().startsWith("liteloader-" + gameVersion) && it.isActive()))) {
+                supportedLoaders.add(ModLoaderType.LITE_LOADER);
+            }
+        } catch (IOException ignored) {
         }
 
         // Sinytra Connector
