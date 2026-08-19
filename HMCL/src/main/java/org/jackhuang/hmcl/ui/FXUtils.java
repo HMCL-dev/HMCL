@@ -1397,7 +1397,7 @@ public final class FXUtils {
     }
 
     public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
-        return view -> new JFXListCell<T>() {
+        return view -> new JFXListCell<>() {
             @Override
             public void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
@@ -1758,7 +1758,7 @@ public final class FXUtils {
     }
 
     public static TextFlow renderAddonChangelog(String changelogHtml, String baseUri) {
-        var textFlow = new HTMLRenderer(Controllers::openUriInBrowser).appendNode(Jsoup.parse(changelogHtml, baseUri)).mergeLineBreaks().render();
+        var textFlow = new HTMLRenderer(Controllers::openUriOrCopy).appendNode(Jsoup.parse(changelogHtml, baseUri)).mergeLineBreaks().render();
         textFlow.getStyleClass().add("addon-changelog");
         return textFlow;
     }

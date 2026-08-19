@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -38,6 +39,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -250,6 +253,22 @@ public final class FileUtils {
         if (sizeInBytes >= KB)
             return String.format(Locale.ROOT, "%.2f KiB", (float) sizeInBytes / KB);
         return String.format(Locale.ROOT, "%d B", sizeInBytes);
+    }
+
+    public static String readTextMaybeNativeEncoding(Path file) throws IOException {
+        byte[] bytes = Files.readAllBytes(file);
+
+        if (OperatingSystem.NATIVE_CHARSET == UTF_8)
+            return new String(bytes, UTF_8);
+
+        EncodingDetector detector = EncodingDetector.MODERN_WEB;
+        EncodingDetector.@Nullable Encoding bestEncoding = detector.detect(bytes).bestEncoding();
+        @Nullable Charset detectedCharset = bestEncoding != null ? bestEncoding.approximateCharset() : null;
+
+        if (detectedCharset != null && (detectedCharset == UTF_8 || detectedCharset == US_ASCII))
+            return new String(bytes, UTF_8);
+        else
+            return new String(bytes, OperatingSystem.NATIVE_CHARSET);
     }
 
     public static void deleteDirectory(Path directory) throws IOException {

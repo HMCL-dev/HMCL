@@ -61,6 +61,7 @@ public class LaunchOptions implements Serializable {
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean useHighPerformanceGPU;
     private boolean enableDebugLogOutput;
     private boolean allowAutoAgent;
     private boolean disableAutoGameOptions;
@@ -261,6 +262,10 @@ public class LaunchOptions implements Serializable {
 
     public boolean isUseNativeOpenAL() {
         return useNativeOpenAL;
+    }
+
+    public boolean isUseHighPerformanceGPU() {
+        return useHighPerformanceGPU;
     }
 
     public boolean isEnableDebugLogOutput() {
@@ -473,6 +478,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
             options.useNativeOpenAL = useNativeOpenAL;
+            return this;
+        }
+
+        public Builder setUseHighPerformanceGPU(boolean useHighPerformanceGPU) {
+            options.useHighPerformanceGPU = useHighPerformanceGPU;
             return this;
         }
 
