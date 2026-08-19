@@ -62,15 +62,15 @@ public final class HMCLModpackInstallTask extends Task<Void> {
             if (event.isFailed()) repository.removeInstanceFromDisk(this.instanceId);
         });
 
-        ModpackConfiguration<Modpack> config = null;
+        ModpackConfiguration<?> config = null;
         try {
             if (Files.exists(json)) {
-                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(Modpack.class));
+                config = ModpackHelper.readModpackConfiguration(json);
 
                 if (config.getType() != null && !HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
             }
-        } catch (JsonParseException | IOException ignore) {
+        } catch (IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/minecraft"), it -> !"pack.json".equals(it), config));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(this.instanceId)).withStage("hmcl.modpack"));
