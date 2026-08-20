@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -34,13 +35,13 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -54,6 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -63,7 +65,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements GameInstancePage.GameInstanceLoadable {
+public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
@@ -72,14 +74,25 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         return author;
     }
 
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private Path schematicsDirectory;
     private DirItem currentDirectory;
 
-    public SchematicsPage() {
+    /// Creates a schematics list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public SchematicsPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this,
                 file -> currentDirectory != null && Files.isRegularFile(file) && FileUtils.getName(file).endsWith(".litematic"),
                 this::addFiles
         );
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -87,9 +100,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         return new SchematicsPageSkin();
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        this.schematicsDirectory = repository.getSchematicsDirectory(instanceId);
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        HMCLGameInstance gameInstance = instance.instance();
+        this.schematicsDirectory = gameInstance != null ? gameInstance.getSchematicsDirectory() : null;
 
         refresh();
     }
@@ -161,10 +174,20 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             return;
 
         Path parent = currentDirectory.path;
+
+        FileNameSet existingPaths;
+        try {
+            existingPaths = FileNameSet.list(parent, null);
+        } catch (Exception e) {
+            LOG.warning("Failed to list folders in " + parent, e);
+            existingPaths = new FileNameSet(false);
+        }
+
         Controllers.prompt(
                 i18n("schematics.create_directory.prompt"),
                 (result, handler) -> {
                     Path targetDir = parent.resolve(result);
+
                     if (Files.exists(targetDir)) {
                         handler.reject(i18n("schematics.create_directory.failed.already_exists"));
                         return;
@@ -178,7 +201,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         LOG.warning("Failed to create directory: " + targetDir, e);
                         handler.reject(i18n("schematics.create_directory.failed", targetDir));
                     }
-                }, "", new RequiredValidator(), new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid));
+                },
+                "",
+                new RequiredValidator(),
+                new Validator(i18n("schematics.create_directory.failed.invalid_name"), FileUtils::isNameValid),
+                new Validator(i18n("schematics.create_directory.failed.already_exists"), existingPaths::notContains));
     }
 
     private DirItem loadAll(Path dir, @Nullable DirItem parent) {
@@ -598,6 +625,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         protected void updateItem(Item item, boolean empty) {
+            graphics.releaseRippleImmediately();
             super.updateItem(item, empty);
 
             iconImageView.setImage(null);

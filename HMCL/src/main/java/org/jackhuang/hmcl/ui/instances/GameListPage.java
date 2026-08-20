@@ -22,14 +22,17 @@ import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
@@ -56,6 +59,7 @@ import org.jackhuang.hmcl.ui.directory.GameDirectoryListItem;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
@@ -152,11 +156,13 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> versionItems = repository.getDisplayInstanceManifests().map(instance -> new GameListItem(repository, instance.id())).toList();
+            List<GameListItem> instanceItems = repository.getDisplayInstances()
+                    .map(GameListItem::new)
+                    .toList();
 
-            sourceList.setAll(versionItems);
+            sourceList.setAll(instanceItems);
 
-            if (versionItems.isEmpty()) {
+            if (instanceItems.isEmpty()) {
                 setFailedReason(i18n("instance.empty.hint"));
             }
 
@@ -172,12 +178,12 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 String regex = searchText.substring("regex:".length());
                 try {
                     Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-                    return item -> pattern.matcher(item.id).find();
+                    return item -> pattern.matcher(item.getId()).find();
                 } catch (PatternSyntaxException e) {
                     return item -> false;
                 }
             } else {
-                return item -> item.id.toLowerCase(Locale.ROOT).contains(searchText.toLowerCase(Locale.ROOT));
+                return item -> item.getId().toLowerCase(Locale.ROOT).contains(searchText.toLowerCase(Locale.ROOT));
             }
         }
 
@@ -194,6 +200,9 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             private final TransitionPane toolbarPane;
             private final HBox searchBar;
             private final HBox toolbarNormal;
+
+            /// Whether the search mechanism is currently active.
+            private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
             private final JFXTextField searchField;
 
@@ -222,13 +231,19 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     PauseTransition pause = new PauseTransition(Duration.millis(100));
                     pause.setOnFinished(e -> skinnable.filteredList.setPredicate(skinnable.createPredicate(searchField.getText())));
                     searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                        pause.setRate(1);
-                        pause.playFromStart();
+                        if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                            pause.setRate(1);
+                            pause.playFromStart();
+                        }
                     });
 
                     JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
                         changeToolbar(toolbarNormal);
                         searchField.clear();
+
+                        pause.stop();
+                        skinnable.filteredList.setPredicate(null);
+                        isSearching.set(false);
                     });
 
                     onEscPressed(searchField, closeSearchBar::fire);
@@ -255,6 +270,15 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                     ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
+                    StackPane placeholderContainer = new StackPane();
+                    placeholderContainer.getStyleClass().add("notice-pane");
+                    Label placeholderLabel = new Label();
+                    placeholderLabel.textProperty().bind(
+                        Bindings.when(isSearching).then(i18n("search.no_results_found")).otherwise("")
+                    );
+                    placeholderContainer.getChildren().add(placeholderLabel);
+                    listView.setPlaceholder(placeholderContainer);
+
                     center.setContent(listView);
                     root.getContent().add(center);
                 }
@@ -269,6 +293,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
                     if (newToolbar == searchBar) {
                         runInFX(searchField::requestFocus);
+
+                        isSearching.set(true);
                     }
                 }
             }

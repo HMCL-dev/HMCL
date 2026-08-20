@@ -132,12 +132,12 @@ public final class LegacyGameSettingsMigrator {
             HMCLGameRepository repository,
             GameInstanceID instanceId,
             @Nullable GameSettingsPresetID parent) {
-        Path instanceRoot = repository.getInstanceRoot(instanceId);
+        Path instanceRoot = repository.getLayout().getInstanceRoot(instanceId);
         Path file = instanceRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
         if (!Files.exists(file)) {
             return null;
         }
-        Path receiptLocation = repository.getInstanceStateDirectory(instanceId)
+        Path receiptLocation = repository.getLayout().getInstanceStateDirectory(instanceId)
                 .resolve(LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME);
         if (MigrationReceipt.matches(receiptLocation, file)) {
             LOG.info("Skipping already migrated legacy version setting " + file);
