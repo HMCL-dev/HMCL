@@ -44,8 +44,8 @@ import javafx.scene.text.Text;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.mod.LocalMod;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.schematic.Schematic;
@@ -119,8 +119,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
-    private HMCLGameRepository repository;
-    private GameInstanceID instanceId;
+    private @Nullable HMCLGameInstance gameInstance;
     private Path schematicsDirectory;
 
     private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
@@ -149,11 +148,15 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
         return new SchematicsPageSkin(this);
     }
 
-    @Override
     public void loadInstance(HMCLGameInstance.Optional instance) {
-        this.repository = repository;
-        this.instanceId = instanceId;
-        this.schematicsDirectory = instanceId != null ? repository.getSchematicsDirectory(instanceId) : null;
+        this.gameInstance = instance.instance();
+
+        if (gameInstance == null) {
+            this.schematicsDirectory = null;
+            return;
+        }
+
+        this.schematicsDirectory = gameInstance.getSchematicsDirectory();
 
         refresh();
     }
@@ -173,13 +176,13 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
     }
 
     public void downloadLitematica() {
-        if (downloadTarget.get() != null) {
+        if (downloadTarget.get() != null && gameInstance != null) {
             var modDownloads = Controllers.getDownloadPage().showModDownloads();
-            modDownloads.selectInstance(instanceId);
+            modDownloads.selectInstance(gameInstance.getId());
             Controllers.navigate(new DownloadPage(
                     modDownloads,
                     downloadTarget.get(),
-                    modDownloads.getInstanceReference(),
+                    modDownloads.getInstanceOptional(),
                     modDownloads.getCallback())
             );
         }
@@ -187,9 +190,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     public void refresh() {
         if (schematicsDirectory == null) return;
+        HMCLGameInstance currentGameInstance = this.gameInstance;
+        if (currentGameInstance == null) return;
 
         setLoading(true);
-        GameInstanceID currentInstanceId = this.instanceId;
         DirItem currentDir = currentDirectoryProperty().get();
         Task.supplyAsync(Schedulers.io(), () -> {
             DirItem target = loadRoot(schematicsDirectory);
@@ -213,7 +217,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
             }
             return target;
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            if (!Objects.equals(currentInstanceId, this.instanceId)) return;
+            if (!Objects.equals(currentGameInstance, this.gameInstance)) return;
             if (exception == null) {
                 navigateTo(result);
             } else {
@@ -224,11 +228,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
         downloadTarget.set(null);
         Task.supplyAsync(Schedulers.io(), () -> {
-            var modManager = repository.getModManager(instanceId);
+            var modManager = currentGameInstance.getModManager();
             modManager.analyze();
-            var analyzer = modManager.getLibraryAnalyzer();
+            var analyzer = modManager.getComponentAnalyzer();
             if (analyzer == null) return null;
-            var modLoaders = analyzer.getModLoaders(); // We don't care about kilt or connector
             var modIds = modManager.getLocalFiles().stream()
                     .map(LocalModFile::getMod)
                     .map(LocalMod::getId)
@@ -237,12 +240,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
             var gameVersionNumber = GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion()));
             if (!gameVersionNumber.isAtLeast("1.12", "17w31a"))
                 return null;
-            if ((modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGE))
+            if ((analyzer.has(GameComponentType.FORGE) || analyzer.has(GameComponentType.NEO_FORGE))
                     && gameVersionNumber.isAtLeast("1.16.4", "20w45a"))
                 return forgematicaLazy.get();
             return litematicaLazy.get();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            if (!Objects.equals(currentInstanceId, this.instanceId)) return;
+            if (!Objects.equals(currentGameInstance, gameInstance)) return;
             if (exception == null) {
                 downloadTarget.set(result);
             } else {
@@ -687,8 +690,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     onEscPressed(this, okButton::fire);
                 }
 
-                this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.6));
-                this.maxHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.8));
+                this.prefWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.6));
+                this.maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.8));
 
                 updateContent(file);
             }

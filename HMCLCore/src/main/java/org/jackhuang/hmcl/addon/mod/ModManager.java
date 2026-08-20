@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.addon.meta.*;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.NoSuchGameInstanceException;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -204,7 +205,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public void analyze() throws IOException {
         lock.lock();
         try {
-            gameVersion = instance.getVersion();
+            gameVersion = instance.getVersion().toString();
             analyzer = instance.getAnalyzer();
         } catch (NoSuchGameInstanceException e) {
             throw new IOException(e);
@@ -297,9 +298,12 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     private void updateSupportedLoaders() {
         supportedLoaders.clear();
 
-        if (this.analyzer == null) Collections.addAll(supportedLoaders, ModLoaderType.values());
+        if (this.analyzer == null) {
+            Collections.addAll(supportedLoaders, ModLoaderType.values());
+            return;
+        }
 
-        for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+        for (GameComponentType type : GameComponentType.values()) {
             if (type.isModLoader() && this.analyzer.has(type)) {
                 ModLoaderType modLoaderType = type.getModLoaderType();
                 if (modLoaderType != null) {
@@ -311,26 +315,26 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
         }
 
-        if (this.analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
+        if (this.analyzer.has(GameComponentType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
             supportedLoaders.add(ModLoaderType.FORGE);
         }
 
-        if (this.analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
+        if (this.analyzer.has(GameComponentType.QUILT)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
 
-        if (this.analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
+        if (this.analyzer.has(GameComponentType.LEGACY_FABRIC)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
 
-        if (this.analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && hasMod("kilt", ModLoaderType.FABRIC)) {
+        if (this.analyzer.has(GameComponentType.FABRIC) && hasMod("kilt", ModLoaderType.FABRIC)) {
             supportedLoaders.add(ModLoaderType.FORGE);
             supportedLoaders.add(ModLoaderType.NEO_FORGE);
         }
 
         // Sinytra Connector
-        if (this.analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && (hasMod("connector", ModLoaderType.NEO_FORGE) || hasMod("connectormod", ModLoaderType.NEO_FORGE))
-                || "1.20.1".equals(gameVersion) && this.analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && hasMod("connectormod", ModLoaderType.FORGE)) {
+        if (this.analyzer.has(GameComponentType.NEO_FORGE) && (hasMod("connector", ModLoaderType.NEO_FORGE) || hasMod("connectormod", ModLoaderType.NEO_FORGE))
+                || "1.20.1".equals(gameVersion) && this.analyzer.has(GameComponentType.FORGE) && hasMod("connectormod", ModLoaderType.FORGE)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
     }
