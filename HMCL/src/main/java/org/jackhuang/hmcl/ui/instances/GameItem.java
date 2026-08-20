@@ -19,23 +19,20 @@ package org.jackhuang.hmcl.ui.instances;
 
 import javafx.beans.property.*;
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -43,9 +40,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class GameItem {
     private static final ThreadPoolExecutor POOL_VERSION_RESOLVE = threadPool("VersionResolve", true, 1, 10, TimeUnit.SECONDS);
 
-    protected final HMCLGameRepository repository;
-    protected final String id;
-    protected final GameInstanceID instanceId;
+    protected final HMCLGameInstance gameInstance;
 
     private boolean initialized = false;
     private StringProperty title;
@@ -53,22 +48,28 @@ public class GameItem {
     private StringProperty subtitle;
     private ObjectProperty<Image> image;
 
-    public GameItem(HMCLGameRepository repository, GameInstanceID instanceId) {
-        this.repository = repository;
-        this.id = instanceId.toString();
-        this.instanceId = instanceId;
+    public GameItem(HMCLGameInstance gameInstance) {
+        this.gameInstance = gameInstance;
     }
 
     public GameDirectory getGameDirectory() {
-        return repository.getGameDirectory();
+        return gameInstance.getRepository().getGameDirectory();
     }
 
     public HMCLGameRepository getRepository() {
-        return repository;
+        return gameInstance.getRepository();
+    }
+
+    public GameInstanceID getInstanceId() {
+        return gameInstance.getId();
+    }
+
+    public HMCLGameInstance getGameInstance() {
+        return gameInstance;
     }
 
     public String getId() {
-        return id;
+        return gameInstance.getId().toString();
     }
 
     private void init() {
@@ -86,15 +87,16 @@ public class GameItem {
 
         CompletableFuture.supplyAsync(() -> {
             // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
-            Optional<String> gameVersion = repository.getGameVersion(instanceId);
-            String modPackVersion = null;
+            GameVersionNumber version = gameInstance.getVersion();
+            @Nullable String gameVersion = version == GameVersionNumber.unknown() ? null : version.toString();
+            @Nullable String modPackVersion = null;
             try {
-                ModpackConfiguration<?> config = repository.readModpackConfiguration(instanceId);
+                @Nullable ModpackConfiguration<?> config = gameInstance.readModpackConfiguration();
                 modPackVersion = config != null ? config.getVersion() : null;
             } catch (IOException e) {
-                LOG.warning("Failed to read modpack configuration from " + id, e);
+                LOG.warning("Failed to read modpack configuration from " + getId(), e);
             }
-            return new Result(gameVersion.orElse(null), modPackVersion);
+            return new Result(gameVersion, modPackVersion);
         }, POOL_VERSION_RESOLVE).whenCompleteAsync((result, exception) -> {
             if (exception == null) {
                 if (result.tag != null) {
@@ -102,26 +104,25 @@ public class GameItem {
                 }
 
                 StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
-                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId), result.gameVersion);
-                for (LibraryAnalyzer.LibraryMark mark : analyzer) {
-                    String libraryId = mark.getLibraryId();
-                    String libraryVersion = mark.getLibraryVersion();
-                    if (libraryId.equals(MINECRAFT.getPatchId())) continue;
-                    if (I18n.hasKey("install.installer." + libraryId)) {
-                        libraries.append(", ").append(i18n("install.installer." + libraryId));
-                        if (libraryVersion != null)
-                            libraries.append(": ").append(libraryVersion.replaceAll("(?i)" + libraryId, ""));
+                GameComponentAnalyzer analyzer = gameInstance.getAnalyzer();
+                for (GameComponentAnalyzer.Mark mark : analyzer) {
+                    if (mark.componentType() == GameComponentType.GAME) continue;
+
+                    if (I18n.hasKey("install.installer." + mark.componentType().getPatchId())) {
+                        libraries.append(", ").append(i18n("install.installer." + mark.componentType().getPatchId()));
+                        if (mark.version() != null)
+                            libraries.append(": ").append(mark.version().replaceAll("(?i)" + mark.componentType().getPatchId(), ""));
                     }
                 }
 
                 subtitle.set(libraries.toString());
             } else {
-                LOG.warning("Failed to read version info from " + id, exception);
+                LOG.warning("Failed to read version info from " + getId(), exception);
             }
         }, Schedulers.javafx());
 
-        title.set(id);
-        image.set(repository.getInstanceIconImage(instanceId));
+        title.set(getId());
+        image.set(gameInstance.getIconImage());
     }
 
     public ReadOnlyStringProperty titleProperty() {

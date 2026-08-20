@@ -156,11 +156,13 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> versionItems = repository.getDisplayInstanceManifests().map(instance -> new GameListItem(repository, instance.id())).toList();
+            List<GameListItem> instanceItems = repository.getDisplayInstances()
+                    .map(GameListItem::new)
+                    .toList();
 
-            sourceList.setAll(versionItems);
+            sourceList.setAll(instanceItems);
 
-            if (versionItems.isEmpty()) {
+            if (instanceItems.isEmpty()) {
                 setFailedReason(i18n("instance.empty.hint"));
             }
 
@@ -176,12 +178,12 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 String regex = searchText.substring("regex:".length());
                 try {
                     Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-                    return item -> pattern.matcher(item.id).find();
+                    return item -> pattern.matcher(item.getId()).find();
                 } catch (PatternSyntaxException e) {
                     return item -> false;
                 }
             } else {
-                return item -> item.id.toLowerCase(Locale.ROOT).contains(searchText.toLowerCase(Locale.ROOT));
+                return item -> item.getId().toLowerCase(Locale.ROOT).contains(searchText.toLowerCase(Locale.ROOT));
             }
         }
 

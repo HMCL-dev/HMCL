@@ -22,10 +22,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.setting.GameSettings;
+import org.jackhuang.hmcl.setting.GameInstanceIconType;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.setting.TriPreference;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -33,6 +34,7 @@ import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,16 +53,14 @@ public class GameInstanceIconDialog extends DialogPane {
 
     private static final SimpleDateFormat fileNameFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss_");
 
-    private final HMCLGameRepository repository;
-    private final GameInstanceID instanceId;
+    private final HMCLGameInstance gameInstance;
     private final Runnable onFinish;
-    private final GameSettings.Instance setting;
+    private final GameSettings.@Nullable Instance setting;
 
-    public GameInstanceIconDialog(HMCLGameRepository repository, GameInstanceID instanceId, Runnable onFinish) {
-        this.repository = repository;
-        this.instanceId = instanceId;
+    public GameInstanceIconDialog(HMCLGameInstance gameInstance, Runnable onFinish) {
+        this.gameInstance = gameInstance;
         this.onFinish = onFinish;
-        this.setting = repository.getInstanceGameSettingsOrCreate(instanceId);
+        this.setting = gameInstance.getSettingsOrCreate();
 
         setTitle(i18n("settings.icon"));
         FlowPane pane = new FlowPane();
@@ -139,7 +139,7 @@ public class GameInstanceIconDialog extends DialogPane {
             } else {
                 dest = saveIcon(selectedFile);
             }
-            repository.setInstanceIconFile(instanceId, dest);
+            gameInstance.setIconFile(dest);
 
             if (setting != null) {
                 setting.iconProperty().setValue(GameInstanceIconType.DEFAULT);
@@ -190,7 +190,7 @@ public class GameInstanceIconDialog extends DialogPane {
         FXUtils.setLimitHeight(container, 36);
         FXUtils.onClicked(container, () -> {
             try {
-                repository.setInstanceIconFile(instanceId, path);
+                gameInstance.setIconFile(path);
             } catch (IOException e) {
                 LOG.error("Failed to set icon file: " + path, e);
             }
@@ -204,7 +204,7 @@ public class GameInstanceIconDialog extends DialogPane {
 
     @Override
     protected void onAccept() {
-        repository.onInstanceIconChanged.fireEvent(new Event(this));
+        // Icon file / settings.iconProperty updates already invalidate iconImageProperty.
         onFinish.run();
         super.onAccept();
     }
