@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -77,7 +78,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class VersionsPage extends Control implements WizardPage, Refreshable {
     private final String gameVersion;
-    private final String libraryId;
+    private final GameComponentType componentType;
     private final String title;
     private final Navigation navigation;
     private final DownloadProvider downloadProvider;
@@ -90,14 +91,14 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     public VersionsPage(Navigation navigation,
                         String title, String gameVersion,
                         DownloadProvider downloadProvider,
-                        String libraryId,
+                        GameComponentType componentType,
                         Runnable callback) {
         this.title = title;
         this.gameVersion = gameVersion;
-        this.libraryId = libraryId;
+        this.componentType = componentType;
         this.navigation = navigation;
         this.downloadProvider = downloadProvider;
-        this.versionList = downloadProvider.getVersionListById(libraryId);
+        this.versionList = downloadProvider.getVersionList(componentType);
         this.callback = callback;
 
         refresh();
@@ -173,7 +174,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             HBox actions = new HBox(8);
             actions.setAlignment(Pos.CENTER);
             {
-                if ("game".equals(control.libraryId)) {
+                if (control.componentType == GameComponentType.GAME) {
                     JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
                     wikiButton.setOnAction(event -> onOpenWiki());
                     FXUtils.installFastTooltip(wikiButton, i18n("wiki.tooltip"));
@@ -199,7 +200,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             if (item == null)
                 return;
 
-            control.navigation.getSettings().put(control.libraryId, item);
+            control.navigation.getSettings().put(control.componentType.getPatchId(), item);
             control.callback.run();
         }
 
@@ -339,7 +340,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     nameField.setPromptText(i18n("instance.search.prompt"));
                     nameField.textProperty().addListener(o -> updateList());
 
-                    if ("game".equals(control.libraryId)) {
+                    if (control.componentType == GameComponentType.GAME) {
                         categoryField.getItems().setAll(
                                 VersionTypeFilter.ALL,
                                 VersionTypeFilter.RELEASE,
