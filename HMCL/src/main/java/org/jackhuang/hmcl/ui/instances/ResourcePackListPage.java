@@ -61,7 +61,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -256,7 +255,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             GameVersionNumber version = gameInstance.getVersion();
                             return version != GameVersionNumber.unknown()
                                     ? new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(),
-                                            version.toString(), resourcePacks)
+                                    version.toString(), resourcePacks)
                                     : null;
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
