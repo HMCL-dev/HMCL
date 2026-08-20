@@ -412,7 +412,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.loadingProperty().bind(control.loadingProperty());
 
-                listView.setCellFactory(x -> new ResourcePackListCell(listView, control));
+                listView.setCellFactory(x -> new ResourcePackListCell(listView));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
                 StackPane placeholderContainer = new StackPane();
@@ -437,7 +437,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     ResourcePackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ResourcePackInfoDialog(control, selectedItem));
+                        Controllers.dialog(new ResourcePackInfoDialog(selectedItem));
                     }
                 });
 
@@ -528,8 +528,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
-        private final ResourcePackListPage page;
-
         private final JFXCheckBox checkBox;
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
@@ -540,9 +538,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private BooleanProperty booleanProperty = null;
 
-        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
+        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView) {
             super(listView);
-            this.page = page;
 
             getStyleClass().add("resource-pack-list-cell");
 
@@ -602,7 +599,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getFile()));
 
-            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(this.page, item)));
+            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
 
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
@@ -621,7 +618,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private static final class ResourcePackInfoDialog extends JFXDialogLayout {
 
-        ResourcePackInfoDialog(ResourcePackListPage page, ResourcePackInfoObject packInfoObject) {
+        ResourcePackInfoDialog(ResourcePackInfoObject packInfoObject) {
             ResourcePackFile pack = packInfoObject.getFile();
 
             HBox titleContainer = new HBox();

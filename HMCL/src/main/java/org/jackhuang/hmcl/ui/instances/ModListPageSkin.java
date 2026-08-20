@@ -394,7 +394,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    final class ModInfoDialog extends JFXDialogLayout {
+    static final class ModInfoDialog extends JFXDialogLayout {
 
         ModInfoDialog(ModInfoObject modInfo) {
             HBox titleContainer = new HBox();

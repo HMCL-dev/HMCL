@@ -24,6 +24,7 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -35,22 +36,17 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.shader.ShaderFile;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -59,6 +55,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -75,16 +72,24 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInstancePage.GameInstanceLoadable {
+public class ShaderListPage extends ListPageBase<ShaderFile> {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    private HMCLGameRepository repository;
-    private @Nullable GameInstanceID instanceId;
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+    private @Nullable HMCLGameInstance gameInstance;
+
     private @Nullable Path shadersDir;
 
-    public ShaderListPage() {
+    public ShaderListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this, ShaderFile::isFileShaderPack, this::addFiles);
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -92,11 +97,16 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInst
         return new ShaderListPageSkin(this);
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        this.repository = repository;
-        this.instanceId = instanceId;
-        this.shadersDir = instanceId != null ? repository.getShadersDirectory(instanceId) : null;
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        this.gameInstance = instance.instance();
+        if (gameInstance == null) {
+            this.shadersDir = null;
+            getItems().clear();
+            return;
+        }
+
+        this.shadersDir = gameInstance.getShadersDirectory();
+
         refresh();
     }
 
@@ -175,12 +185,16 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInst
     }
 
     public void checkUpdates(Collection<ShaderFile> shaderPacks) {
-        if (shadersDir == null) return;
+        HMCLGameInstance gameInstance = this.gameInstance;
+        if (gameInstance == null) return;
 
         Controllers.taskDialog(
                 Task.composeAsync(() -> {
-                    Optional<String> gameVersion = repository.getGameVersion(instanceId);
-                    return gameVersion.map(g -> new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), g, shaderPacks)).orElse(null);
+                    GameVersionNumber version = gameInstance.getVersion();
+                    return version != GameVersionNumber.unknown()
+                            ? new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(),
+                            version.toString(), shaderPacks)
+                            : null;
                 }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception != null || result == null) {
                         Controllers.dialog(I18n.i18n("addon.check_update.failed_check"), I18n.i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
@@ -204,7 +218,8 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInst
     }
 
     private void onDownload() {
-        Controllers.getDownloadPage().showShaderDownloads().selectInstance(instanceId);
+        if (gameInstance == null) return;
+        Controllers.getDownloadPage().showShaderDownloads().selectInstance(gameInstance.getId());
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
@@ -332,7 +347,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInst
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.loadingProperty().bind(control.loadingProperty());
 
-                listView.setCellFactory(x -> new ShaderListCell(listView, control));
+                listView.setCellFactory(x -> new ShaderListCell(listView));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
                 Bindings.bindContent(listView.getItems(), control.getItems());
 
@@ -340,7 +355,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInst
                     ShaderFile selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ShaderInfoDialog(control, selectedItem));
+                        Controllers.dialog(new ShaderInfoDialog(selectedItem));
                     }
                 });
 
@@ -400,16 +415,13 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInst
 
     private static final class ShaderListCell extends MDListCell<ShaderFile> {
 
-        private final ShaderListPage page;
-
         private final ImageContainer imageContainer = new ImageContainer(24);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
 
-        public ShaderListCell(JFXListView<ShaderFile> listView, ShaderListPage page) {
+        public ShaderListCell(JFXListView<ShaderFile> listView) {
             super(listView);
-            this.page = page;
 
             HBox root = new HBox(8);
             root.setPickOnBounds(false);
@@ -445,19 +457,18 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInst
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(item.getFile()));
 
-            btnInfo.setOnAction(e -> Controllers.dialog(new ShaderInfoDialog(this.page, item)));
+            btnInfo.setOnAction(e -> Controllers.dialog(new ShaderInfoDialog(item)));
         }
     }
 
     private static final class ShaderInfoDialog extends JFXDialogLayout {
 
-        public ShaderInfoDialog(ShaderListPage page, ShaderFile shaderFile) {
+        public ShaderInfoDialog(ShaderFile shaderFile) {
 
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            Stage stage = Controllers.getStage();
-            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+            maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
             imageContainer.setImage(getOrCreateIcon(shaderFile));
@@ -485,7 +496,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> implements GameInst
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             FXUtils.onChange(description.heightProperty(), newVal -> {
-                double maxHeight = stage.getHeight() * 0.5;
+                double maxHeight = Controllers.getDecorator().contentHeightProperty().get() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
             });
