@@ -20,13 +20,8 @@ package org.jackhuang.hmcl.download.quilt;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
-import org.jackhuang.hmcl.game.Arguments;
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameInstancePatch;
-import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -66,7 +61,7 @@ public final class QuiltInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void preExecute() throws Exception {
-        if (!Objects.equals("net.minecraft.client.main.Main", manifest.resolve(dependencyManager.getGameRepository()).mainClass()))
+        if (!Objects.equals("net.minecraft.client.main.Main", dependencyManager.getGameRepository().resolve(manifest).launchManifest().mainClass()))
             throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
     }
 
@@ -126,7 +121,7 @@ public final class QuiltInstallTask extends Task<GameInstancePatch> {
         }
         libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.loader.maven), getMavenRepositoryByGroup(quiltInfo.loader.maven), null));
 
-        return new GameInstancePatch(LibraryAnalyzer.LibraryType.QUILT.getPatchId(), loaderVersion, GameInstancePatch.PRIORITY_LOADER, arguments, mainClass, libraries);
+        return new GameInstancePatch(GameComponentType.QUILT.getPatchId(), loaderVersion, GameInstancePatch.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
 
     private static String getMavenRepositoryByGroup(String maven) {

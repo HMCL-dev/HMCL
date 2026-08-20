@@ -73,13 +73,14 @@ public final class NativePatcher {
         );
     }
 
-    public static GameInstanceManifest patchNative(DefaultGameRepository repository,
-                                                   GameInstanceManifest manifest, String gameVersion,
+    public static GameInstanceManifest patchNative(DefaultGameInstance instance,
+                                                   GameInstanceManifest manifest,
                                                    JavaRuntime javaVersion,
                                                    GameSettings.Effective settings,
                                                    List<String> javaArguments) {
+        GameVersionNumber gameVersion = instance.getVersion();
         if (settings.getInheritable(GameSettings::useCustomNativesProperty)) {
-            if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
+            if (gameVersion.compareTo("1.19") < 0)
                 return manifest;
 
             ArrayList<Library> newLibraries = new ArrayList<>();
@@ -99,8 +100,8 @@ public final class NativePatcher {
         final boolean useNativeGLFW = settings.getInheritable(GameSettings::useNativeGLFWProperty);
         final boolean useNativeOpenAL = settings.getInheritable(GameSettings::useNativeOpenALProperty);
 
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && (useNativeGLFW || useNativeOpenAL)
-                && gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") >= 0) {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
+                && (useNativeGLFW || useNativeOpenAL) && gameVersion.compareTo("1.19") >= 0) {
 
             manifest = manifest.withLibraries(manifest.getLibraries().stream()
                     .filter(library -> {
@@ -122,7 +123,6 @@ public final class NativePatcher {
 
         OperatingSystem os = javaVersion.getPlatform().getOperatingSystem();
         Architecture arch = javaVersion.getArchitecture();
-        GameVersionNumber gameVersionNumber = gameVersion != null ? GameVersionNumber.asGameVersion(gameVersion) : null;
 
         if (settings.getInheritable(GameSettings::notPatchNativesProperty))
             return manifest;
@@ -131,8 +131,7 @@ public final class NativePatcher {
             return manifest;
 
         if (arch == Architecture.ARM64 && (os == OperatingSystem.MACOS || os == OperatingSystem.WINDOWS)
-                && gameVersionNumber != null
-                && gameVersionNumber.compareTo("1.19") >= 0)
+                && gameVersion.compareTo("1.19") >= 0)
             return manifest;
 
         Map<String, Library> replacements = getNatives(javaVersion.getPlatform());
@@ -172,7 +171,7 @@ public final class NativePatcher {
         }
 
         if (lwjglVersionChanged) {
-            ModManager modManager = repository.getModManager(manifest.id());
+            ModManager modManager = instance.getModManager();
             try {
                 for (LocalModFile mod : modManager.getLocalFiles()) {
                     if ("sodium".equals(mod.getId())) {
