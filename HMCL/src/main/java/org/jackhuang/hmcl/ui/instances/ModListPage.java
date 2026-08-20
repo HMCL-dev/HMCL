@@ -187,7 +187,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.add.title"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.litemod"));
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
         List<Path> res = Controllers.showOpenMultipleDialog(chooser);
 
         if (res == null) return;

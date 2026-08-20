@@ -39,7 +39,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModManager extends LocalAddonManager<LocalModFile> {
-    public static final List<String> MOD_EXTENSIONS = List.of("jar", "litemod");
+    public static final List<String> MOD_EXTENSIONS = List.of("jar", "zip", "litemod");
 
     @FunctionalInterface
     private interface ModMetadataReader {
@@ -59,6 +59,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         );
 
         map.put("jar", zipReaders);
+        map.put("zip", zipReaders);
         map.put("litemod", List.of(pair(LiteModMetadata::fromFile, ModLoaderType.LITE_LOADER)));
 
         READERS = map;
