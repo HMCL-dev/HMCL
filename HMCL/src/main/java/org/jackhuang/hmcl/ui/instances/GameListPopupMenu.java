@@ -33,9 +33,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import javafx.stage.WindowEvent;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -46,27 +45,57 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Displays game instances in a popup selection list.
+///
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
 
+    private static final String KEY = GameListPopupMenu.class.getName() + ".popup";
+
+    public static boolean hideShowing(Node owner) {
+        JFXPopup popup = (JFXPopup) owner.getProperties().get(KEY);
+        if (popup != null && popup.isShowing()) {
+            popup.hide();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /// Shows an instance selection popup relative to its owner.
+    ///
+    /// @param owner       the node used to position the popup
+    /// @param vAlign      the popup's vertical alignment relative to `owner`
+    /// @param hAlign      the popup's horizontal alignment relative to `owner`
+    /// @param initOffsetX the horizontal offset from the aligned position
+    /// @param initOffsetY the vertical offset from the aligned position
+    /// @param instances   the instances to copy into the popup, in display order
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY,
-                            HMCLGameRepository repository, List<GameInstanceManifest> versions) {
-        showAndGetPopup(owner, vAlign, hAlign, initOffsetX, initOffsetY, repository, versions);
+                            List<HMCLGameInstance> instances) {
+        showAndGetPopup(owner, vAlign, hAlign, initOffsetX, initOffsetY, instances);
     }
 
     /// Shows and returns an instance selection popup relative to its owner.
+    ///
+    /// @param owner       the node used to position the popup
+    /// @param vAlign      the popup's vertical alignment relative to `owner`
+    /// @param hAlign      the popup's horizontal alignment relative to `owner`
+    /// @param initOffsetX the horizontal offset from the aligned position
+    /// @param initOffsetY the vertical offset from the aligned position
+    /// @param instances   the instances to copy into the popup, in display order
+    /// @return the shown popup
     public static JFXPopup showAndGetPopup(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                                            double initOffsetX, double initOffsetY,
-                                           HMCLGameRepository repository, List<GameInstanceManifest> versions) {
+                                           List<HMCLGameInstance> instances) {
         GameListPopupMenu menu = new GameListPopupMenu();
-        menu.getItems().setAll(versions.stream()
-                .filter(it -> repository.hasInstance(it.id()))
-                .map(it -> new GameItem(repository, it.id()))
+        menu.getItems().setAll(instances.stream()
+                .map(GameItem::new)
                 .toList());
         JFXPopup popup = new JFXPopup(menu);
-        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
+        owner.getProperties().put(KEY, popup);
+        popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, event -> owner.getProperties().remove(KEY, popup));
+        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY, true);
 
         return popup;
     }
@@ -100,6 +129,7 @@ public final class GameListPopupMenu extends StackPane {
     private static final class Cell extends ListCell<GameItem> {
 
         private final Region graphic;
+        private final RipplerContainer ripplerContainer;
 
         private final ImageContainer imageView;
         private final TwoLineListItem content;
@@ -128,7 +158,7 @@ public final class GameListPopupMenu extends StackPane {
             container.setLeft(imageView);
             container.setCenter(content);
 
-            RipplerContainer ripplerContainer = new RipplerContainer(container);
+            this.ripplerContainer = new RipplerContainer(container);
 
             StackPane rootPane = new StackPane();
             rootPane.getStyleClass().add("advanced-list-item");
@@ -138,7 +168,7 @@ public final class GameListPopupMenu extends StackPane {
             FXUtils.onClicked(rootPane, () -> {
                 GameItem item = getItem();
                 if (item != null) {
-                    item.getRepository().setSelectedInstance(new GameInstanceID(item.getId()));
+                    item.getRepository().setSelectedInstance(item.getGameInstance());
                     if (getScene().getWindow() instanceof JFXPopup popup)
                         popup.hide();
                 }
@@ -149,6 +179,7 @@ public final class GameListPopupMenu extends StackPane {
 
         @Override
         protected void updateItem(GameItem item, boolean empty) {
+            this.ripplerContainer.releaseRippleImmediately();
             super.updateItem(item, empty);
 
             this.imageView.imageProperty().unbind();

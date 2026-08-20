@@ -33,9 +33,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
-import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.StyleSheets;
@@ -49,6 +47,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 
@@ -73,17 +72,15 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameCrashWindow extends Stage {
-    private final GameInstanceManifest manifest;
+    private final HMCLGameInstance gameInstance;
     private final String memory;
     private final String total_memory;
     private final String java;
-    private final LibraryAnalyzer analyzer;
     private final TextFlow reasonTextFlow = new TextFlow(new Text(i18n("game.crash.reason.unknown")));
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TextFlow feedbackTextFlow = new TextFlow();
 
     private final ManagedProcess managedProcess;
-    private final DefaultGameRepository repository;
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
     private final View view;
@@ -91,16 +88,14 @@ public class GameCrashWindow extends Stage {
 
     private final List<Log> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, GameInstanceManifest manifest, LaunchOptions launchOptions, List<Log> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs) {
         Themes.applyNativeDarkMode(this);
 
         this.managedProcess = managedProcess;
         this.exitType = exitType;
-        this.repository = repository;
-        this.manifest = manifest;
+        this.gameInstance = gameInstance;
         this.launchOptions = launchOptions;
         this.logs = logs;
-        this.analyzer = LibraryAnalyzer.analyze(manifest, repository.getGameVersion(manifest).orElse(null));
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " " + i18n("settings.memory.unit.mib")).orElse("-");
 
@@ -142,14 +137,15 @@ public class GameCrashWindow extends Stage {
 
             return pair(CrashReportAnalyzer.analyze(rawLog), crashReport != null ? CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport) : new HashSet<>());
         }), Task.supplyAsync(() -> {
-            Path latestLog = repository.getRunDirectory(manifest.id()).resolve("logs/latest.log");
+            Path runDirectory = gameInstance.getRunDirectory();
+            Path latestLog = runDirectory.resolve("logs/latest.log");
             if (!Files.isReadable(latestLog)) {
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
 
             String log;
             try {
-                log = EncodingDetector.MODERN_WEB.readString(latestLog);
+                log = FileUtils.readTextMaybeNativeEncoding(latestLog);
             } catch (IOException e) {
                 LOG.warning("Failed to read logs/latest.log", e);
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
@@ -291,7 +287,7 @@ public class GameCrashWindow extends Stage {
                                 }
                             });
 
-                    return LogExporter.exportLogs(logFile, repository, launchOptions.getInstanceId(), logs,
+                    return LogExporter.exportLogs(logFile, gameInstance, launchOptions, logs,
                             new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
                             path -> {
                                 try {
@@ -342,10 +338,10 @@ public class GameCrashWindow extends Stage {
                 launcher.setTitle(i18n("launcher"));
                 launcher.setSubtitle(Metadata.VERSION);
 
-                TwoLineListItem version = new TwoLineListItem();
-                version.getStyleClass().setAll("two-line-item-second-large");
-                version.setTitle(i18n("game.version"));
-                version.setSubtitle(GameCrashWindow.this.manifest.id().toString());
+                TwoLineListItem instance = new TwoLineListItem();
+                instance.getStyleClass().setAll("two-line-item-second-large");
+                instance.setTitle(i18n("game.version"));
+                instance.setSubtitle(GameCrashWindow.this.gameInstance.getId().toString());
 
                 TwoLineListItem total_memory = new TwoLineListItem();
                 total_memory.getStyleClass().setAll("two-line-item-second-large");
@@ -372,7 +368,7 @@ public class GameCrashWindow extends Stage {
                 arch.setTitle(i18n("system.architecture"));
                 arch.setSubtitle(Architecture.SYSTEM_ARCH.getDisplayName());
 
-                infoPane.getChildren().setAll(launcher, version, total_memory, memory, java, os, arch);
+                infoPane.getChildren().setAll(launcher, instance, total_memory, memory, java, os, arch);
             }
 
             HBox moddedPane = new HBox(8);
@@ -380,15 +376,13 @@ public class GameCrashWindow extends Stage {
                 moddedPane.setPadding(new Insets(8));
                 moddedPane.setAlignment(Pos.CENTER_LEFT);
 
-                for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
-                    if (!type.getPatchId().isEmpty()) {
-                        analyzer.getVersion(type).ifPresent(ver -> {
-                            TwoLineListItem item = new TwoLineListItem();
-                            item.getStyleClass().setAll("two-line-item-second-large");
-                            item.setTitle(i18n("install.installer." + type.getPatchId()));
-                            item.setSubtitle(ver);
-                            moddedPane.getChildren().add(item);
-                        });
+                for (GameComponentAnalyzer.Mark mark : gameInstance.getAnalyzer()) {
+                    if (mark.version() != null) {
+                        TwoLineListItem item = new TwoLineListItem();
+                        item.getStyleClass().setAll("two-line-item-second-large");
+                        item.setTitle(i18n("install.installer." + mark.componentType().getPatchId()));
+                        item.setSubtitle(mark.version());
+                        moddedPane.getChildren().add(item);
                     }
                 }
             }

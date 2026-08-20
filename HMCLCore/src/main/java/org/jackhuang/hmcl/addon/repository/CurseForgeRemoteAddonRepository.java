@@ -33,17 +33,19 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.Checksum;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -205,23 +207,65 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         }
     }
 
-    @Override
-    public Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (InputStream stream = Files.newInputStream(file)) {
-            byte[] buf = new byte[1024];
-            int len;
-            while ((len = stream.read(buf, 0, buf.length)) != -1) {
+    /// Calculates the CurseForge fingerprint without retaining the filtered file in memory.
+    static long calculateFingerprint(Path file) throws IOException {
+        try (SeekableByteChannel channel = Files.newByteChannel(file, StandardOpenOption.READ)) {
+            long startPosition = channel.position();
+
+            byte[] bufferArray = new byte[1024 * 1024];
+            ByteBuffer buffer = ByteBuffer.wrap(bufferArray);
+
+            long filteredLength = 0;
+            while (channel.read(buffer) > 0) {
+                int len = buffer.position();
                 for (int i = 0; i < len; i++) {
-                    byte b = buf[i];
+                    byte b = bufferArray[i];
                     if (b != 0x9 && b != 0xa && b != 0xd && b != 0x20) {
-                        baos.write(b);
+                        filteredLength++;
                     }
                 }
+                buffer.clear();
             }
-        }
 
-        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
+            channel.position(startPosition);
+
+            Checksum hasher = MurmurHash2.hash32(filteredLength, 1);
+            while (channel.read(buffer) > 0) {
+                int len = buffer.position();
+
+                int pos = 0;
+                while (pos < len) {
+                    byte b = bufferArray[pos];
+                    if (b == 0x9 || b == 0xa || b == 0xd || b == 0x20) {
+                        break;
+                    }
+                    pos++;
+                }
+
+                if (pos < len) {
+                    int pos2 = pos + 1;
+                    while (pos2 < len) {
+                        byte b = bufferArray[pos2];
+                        if (b != 0x9 && b != 0xa && b != 0xd && b != 0x20) {
+                            bufferArray[pos++] = b;
+                        }
+                        pos2++;
+                    }
+                }
+
+                hasher.update(bufferArray, 0, pos);
+                buffer.clear();
+            }
+            return hasher.getValue();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new IOException(e);
+        }
+    }
+
+    /// Finds the remote CurseForge version matching a local file.
+    @Override
+    public Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
+        long hash = calculateFingerprint(file);
         if (hash == 811513880) { // Workaround for https://github.com/HMCL-dev/HMCL/issues/4597
             return Optional.empty();
         }
@@ -309,7 +353,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 case SECTION_ADDONS -> "mc-addons";
                 case SECTION_CUSTOMIZATION -> "customization";
                 case SECTION_SHADER -> "shaders";
-                default -> throw new IllegalArgumentException("Unsupported CurseForge class id [%d]".formatted(classId));
+                default ->
+                        throw new IllegalArgumentException("Unsupported CurseForge class id [%d]".formatted(classId));
             };
             return "%s/minecraft/%s/%s/files/%s".formatted(BASE, clazz, addon.slug(), version.versionId());
         } finally {

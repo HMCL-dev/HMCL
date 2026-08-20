@@ -17,15 +17,17 @@
  */
 package org.jackhuang.hmcl.modpack.multimc;
 
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -35,26 +37,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * Export the game to a mod pack file.
- */
+/// Exports one registered game instance as a MultiMC modpack archive.
+@NotNullByDefault
 public class MultiMCModpackExportTask extends Task<Void> {
-    private final DefaultGameRepository repository;
-    private final GameInstanceID instanceId;
+    /// The fixed instance snapshot exported by this task.
+    private final DefaultGameInstance instance;
+
+    /// The paths selected for inclusion in the archive.
     private final List<String> whitelist;
+
+    /// The MultiMC instance configuration written to the archive.
     private final MultiMCInstanceConfiguration configuration;
+
+    /// The archive written by this task.
     private final Path output;
 
-    /**
-     * @param output    mod pack file.
-     * @param instanceId to locate version.json
-     */
-    public MultiMCModpackExportTask(DefaultGameRepository repository, GameInstanceID instanceId, List<String> whitelist, MultiMCInstanceConfiguration configuration, Path output) {
-        this.repository = repository;
-        this.instanceId = instanceId;
+    /// Creates a MultiMC modpack export task.
+    ///
+    /// @param instance      the registered instance snapshot to export
+    /// @param whitelist     the paths selected for inclusion
+    /// @param configuration the MultiMC instance configuration
+    /// @param output        the archive to write
+    public MultiMCModpackExportTask(DefaultGameInstance instance, List<String> whitelist, MultiMCInstanceConfiguration configuration, Path output) {
+        this.instance = instance;
         this.whitelist = whitelist;
         this.configuration = configuration;
         this.output = output;
@@ -70,26 +77,32 @@ public class MultiMCModpackExportTask extends Task<Void> {
         });
     }
 
+    /// {@inheritDoc}
     @Override
     public void execute() throws Exception {
+        var instanceId = instance.getId();
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(instanceId + ".jar");
         blackList.add(instanceId + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (Zipper zip = new Zipper(output)) {
-            zip.putDirectory(repository.getRunDirectory(instanceId), ".minecraft", path -> Modpack.acceptFile(path, blackList, whitelist));
+            zip.putDirectory(instance.getRunDirectory(), ".minecraft", path -> Modpack.acceptFile(path, blackList, whitelist));
 
-            String gameVersion = repository.getGameVersion(instanceId)
-                    .orElseThrow(() -> new IOException("Cannot parse the version of " + instanceId));
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId), gameVersion);
+            GameVersionNumber version = instance.getVersion();
+            if (version == GameVersionNumber.unknown()) {
+                throw new IOException("Cannot parse the version of " + instanceId);
+            }
+            String gameVersion = version.toString();
+            GameComponentAnalyzer analyzer = instance.getAnalyzer();
             List<MultiMCManifest.MultiMCManifestComponent> components = new ArrayList<>();
-            components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, MultiMCComponents.getComponent(MINECRAFT), gameVersion));
+            components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, MultiMCComponents.getComponent(GameComponentType.GAME), gameVersion));
 
-            for (Map.Entry<String, LibraryAnalyzer.LibraryType> pair : MultiMCComponents.getPairs()) {
+            for (Map.Entry<String, GameComponentType> pair : MultiMCComponents.getPairs()) {
                 if (pair.getValue().isModLoader()) {
-                    analyzer.getVersion(pair.getValue()).ifPresent(
-                            v -> components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, pair.getKey(), v))
-                    );
+                    String componentVersion = analyzer.getVersion(pair.getValue());
+                    if (componentVersion != null) {
+                        components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, pair.getKey(), componentVersion));
+                    }
                 }
             }
 
@@ -104,6 +117,7 @@ public class MultiMCModpackExportTask extends Task<Void> {
         }
     }
 
+    /// Export options supported by the MultiMC format.
     public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
             .requireAuthor()
             .requireMinMemory();
