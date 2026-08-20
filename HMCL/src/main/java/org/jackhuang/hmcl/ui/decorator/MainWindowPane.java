@@ -28,15 +28,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
@@ -75,6 +67,9 @@ final class MainWindowPane extends StackPane {
     /// The transition container used when the title-bar state changes.
     private final TransitionPane navBarPane;
 
+    /// The pane that behaves as the overlay of dialogs.
+    private final StackPane dialogOverlayPane;
+
     /// Retains listener delegates that are registered through weak listener wrappers.
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
@@ -112,11 +107,12 @@ final class MainWindowPane extends StackPane {
         center.getChildren().setAll(decorator.getNavigator());
         frame.setCenter(center);
 
-        HBox rightButtonsContainer = createWindowButtons();
+        Rectangle buttonsPlaceholder = new Rectangle();
+        buttonsPlaceholder.setFill(null);
         titleBar = new BorderPane();
         titleBar.setPickOnBounds(false);
         titleBar.getStyleClass().add("jfx-tool-bar");
-        titleBar.setRight(rightButtonsContainer);
+        titleBar.setRight(buttonsPlaceholder);
 
         navBarPane = new TransitionPane();
         titleBar.setCenter(navBarPane);
@@ -133,7 +129,18 @@ final class MainWindowPane extends StackPane {
 
         decorator.capableDraggingWindow(titleBar);
 
-        getChildren().setAll(backgroundNode, frame);
+        dialogOverlayPane = new StackPane();
+        dialogOverlayPane.setVisible(false);
+
+        HBox rightButtonsContainer = createWindowButtons();
+        AnchorPane buttonsLayer = new AnchorPane(rightButtonsContainer);
+        buttonsLayer.setPickOnBounds(false);
+        AnchorPane.setTopAnchor(rightButtonsContainer, 0D);
+        AnchorPane.setRightAnchor(rightButtonsContainer, 0D);
+        buttonsPlaceholder.heightProperty().bind(rightButtonsContainer.heightProperty());
+        buttonsPlaceholder.widthProperty().bind(rightButtonsContainer.widthProperty());
+
+        getChildren().setAll(backgroundNode, frame, dialogOverlayPane, buttonsLayer);
     }
 
     /// Updates the content-corner shape for an edge-to-edge window state.
@@ -310,6 +317,10 @@ final class MainWindowPane extends StackPane {
         }
 
         return navBar;
+    }
+
+    public StackPane getDialogOverlayPane() {
+        return dialogOverlayPane;
     }
 
     /// Produces directional transitions for page-title changes.
