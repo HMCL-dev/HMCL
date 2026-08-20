@@ -21,6 +21,8 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
@@ -44,7 +46,7 @@ public class ModrinthInstallTask extends Task<Void> {
     private final Path zipFile;
     private final Modpack modpack;
     private final ModrinthManifest manifest;
-    private final String name;
+    private final GameInstanceID instanceId;
     private final String iconUrl;
     private final Path run;
     private final ModpackConfiguration<ModrinthManifest> config;
@@ -53,38 +55,39 @@ public class ModrinthInstallTask extends Task<Void> {
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ModrinthManifest manifest, String name, String iconUrl) {
+    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ModrinthManifest manifest, GameInstanceID instanceId, String iconUrl) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
-        this.name = name;
+        this.instanceId = instanceId;
         this.iconUrl = iconUrl;
         this.repository = dependencyManager.getGameRepository();
-        this.run = repository.getRunDirectory(name);
+        this.run = repository.getLayout().getInstanceRoot(instanceId);
 
-        Path json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && Files.notExists(json))
-            throw new IllegalArgumentException("Version " + name + " already exists.");
+        Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
+        if (repository.hasInstance(instanceId) && Files.notExists(json))
+            throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
-        GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.getGameVersion());
+        GameBuilder builder = dependencyManager.newGameBuilder().id(instanceId);
+        builder.component(GameComponentType.GAME, manifest.getGameVersion());
         for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
             switch (modLoader.getKey()) {
                 case "minecraft":
                     break;
                 case "forge":
-                    builder.version("forge", modLoader.getValue());
+                    builder.component(GameComponentType.FORGE, modLoader.getValue());
                     break;
                 case "neoforge":
                 // https://github.com/HMCL-dev/HMCL/pull/5170
                 case "neo-forge":
-                    builder.version("neoforge", modLoader.getValue());
+                    builder.component(GameComponentType.NEO_FORGE, modLoader.getValue());
                     break;
                 case "fabric-loader":
-                    builder.version("fabric", modLoader.getValue());
+                    builder.component(GameComponentType.FABRIC, modLoader.getValue());
                     break;
                 case "quilt-loader":
-                    builder.version("quilt", modLoader.getValue());
+                    builder.component(GameComponentType.QUILT, modLoader.getValue());
                     break;
                 default:
                     throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());
@@ -96,7 +99,7 @@ public class ModrinthInstallTask extends Task<Void> {
             Exception ex = event.getTask().getException();
             if (event.isFailed()) {
                 if (!(ex instanceof ModpackCompletionException)) {
-                    repository.removeVersionFromDisk(name);
+                    repository.removeInstanceFromDisk(instanceId);
                 }
             }
         });
@@ -107,7 +110,7 @@ public class ModrinthInstallTask extends Task<Void> {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ModrinthManifest.class));
 
                 if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Version " + name + " is not a Modrinth modpack. Cannot update this version.");
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Modrinth modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
@@ -115,7 +118,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.config = config;
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
         URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
         if (iconUri != null) {
@@ -126,7 +129,6 @@ public class ModrinthInstallTask extends Task<Void> {
                 dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
             }
         }
-        dependencies.add(new ModrinthCompletionTask(dependencyManager, name, manifest));
     }
 
     @Override
@@ -152,7 +154,7 @@ public class ModrinthInstallTask extends Task<Void> {
             }
         }
 
-        Path root = repository.getVersionRoot(name);
+        Path root = repository.getLayout().getInstanceRoot(instanceId);
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("modrinth.index.json"), manifest);
 
@@ -163,5 +165,8 @@ public class ModrinthInstallTask extends Task<Void> {
                 LOG.warning("Failed to copy modpack icon", e);
             }
         }
+
+        // The game builder runs as a dependent and registers the instance before this phase.
+        dependencies.add(new ModrinthCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest));
     }
 }

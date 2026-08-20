@@ -18,9 +18,10 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 
 import java.util.List;
@@ -34,11 +35,11 @@ public class FabricRemoteVersion extends RemoteVersion {
      * @param urls        the installer or universal jar original URL.
      */
     FabricRemoteVersion(String gameVersion, String selfVersion, List<String> urls) {
-        super(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), gameVersion, selfVersion, null, urls);
+        super(GameComponentType.FABRIC, gameVersion, selfVersion, null, urls);
     }
 
     @Override
-    public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
         return new FabricInstallTask(dependencyManager, baseVersion, this);
     }
 }

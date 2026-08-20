@@ -18,8 +18,9 @@
 package org.jackhuang.hmcl.ui.download;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.InstallerItem;
@@ -42,8 +43,8 @@ public class InstallersPage extends AbstractInstallersPage {
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
-                new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
-                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+                new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
+                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
 
         txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
@@ -59,12 +60,12 @@ public class InstallersPage extends AbstractInstallersPage {
     }
 
     protected void reload() {
-        for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getLibraryId();
+        for (InstallerItem component : group.getComponents()) {
+            String libraryId = component.getComponentType().getPatchId();
             if (controller.getSettings().containsKey(libraryId)) {
-                library.versionProperty().set(new InstallerItem.InstalledState(getVersion(libraryId), false, false));
+                component.versionProperty().set(new InstallerItem.InstalledState(getVersion(libraryId), false, false));
             } else {
-                library.versionProperty().set(null);
+                component.versionProperty().set(null);
             }
         }
         if (!isNameModifiedByUser) {
@@ -91,22 +92,22 @@ public class InstallersPage extends AbstractInstallersPage {
     }
 
     protected void onInstall() {
-        String name = txtName.getText();
+        GameInstanceID instanceId = new GameInstanceID(txtName.getText());
 
-        if (!checkName(name)) {
+        if (!checkName(instanceId.id())) {
             Controllers.dialog(new MessageDialogPane.Builder(
                     i18n("install.name.invalid"),
                     i18n("message.warning"),
                     MessageDialogPane.MessageType.QUESTION)
                     .yesOrNo(() -> {
-                        controller.getSettings().put("name", name);
+                        controller.getSettings().put(INSTANCE_ID, instanceId);
                         controller.onFinish();
                     }, () -> {
                         // The user selects Cancel and does nothing.
                     })
                     .build());
         } else {
-            controller.getSettings().put("name", name);
+            controller.getSettings().put(INSTANCE_ID, instanceId);
             controller.onFinish();
         }
     }
@@ -114,33 +115,39 @@ public class InstallersPage extends AbstractInstallersPage {
     private void setTxtNameWithLoaders() {
         StringBuilder nameBuilder = new StringBuilder(getTitle());
 
-        for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getLibraryId().replace(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), "");
-            if (!controller.getSettings().containsKey(libraryId)) {
+        for (InstallerItem component : group.getComponents()) {
+            if (component.getComponentType() == GameComponentType.GAME
+                    || !controller.getSettings().containsKey(component.getComponentType().getPatchId()))
                 continue;
-            }
 
-            LibraryAnalyzer.LibraryType libraryType = LibraryAnalyzer.LibraryType.fromPatchId(libraryId);
+            String loaderName = switch (component.getComponentType()) {
+                case FORGE -> "Forge";
+                case NEO_FORGE -> "NeoForge";
+                case CLEANROOM -> "Cleanroom";
+                case LEGACY_FABRIC -> "LegacyFabric";
+                case FABRIC -> "Fabric";
+                case LITELOADER -> "LiteLoader";
+                case QUILT -> "Quilt";
+                case OPTIFINE -> "OptiFine";
+                default -> null;
+            };
 
-            if (libraryType != null) {
-                String loaderName = switch (libraryType) {
-                    case FORGE -> "Forge";
-                    case NEO_FORGE -> "NeoForge";
-                    case CLEANROOM -> "Cleanroom";
-                    case LEGACY_FABRIC -> "LegacyFabric";
-                    case FABRIC -> "Fabric";
-                    case LITELOADER -> "LiteLoader";
-                    case QUILT -> "Quilt";
-                    case OPTIFINE -> "OptiFine";
-                    default -> null;
-                };
-
-                if (loaderName != null)
-                    nameBuilder.append('-').append(loaderName);
-            }
+            if (loaderName != null)
+                nameBuilder.append('-').append(loaderName);
         }
 
         txtName.setText(nameBuilder.toString());
         isNameModifiedByUser = false;
+    }
+
+    @Override
+    protected boolean showExtendPane() {
+        return true;
+    }
+
+    @Override
+    protected void resetDefaultName() {
+        isNameModifiedByUser = false;
+        setTxtNameWithLoaders();
     }
 }

@@ -27,6 +27,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -43,7 +44,6 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -113,7 +113,6 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"));
         Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile == null) {
-            Platform.runLater(controller::onEnd);
             return;
         }
 
@@ -157,15 +156,15 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                             TaskCancellationAction.NORMAL
                     );
                 }
-            } catch (IOException e) {
-                handler.reject(e.getMessage());
+            } catch (Exception e) {
+                handler.reject(i18n("message.failed"));
             }
         }, "", new URLValidator());
     }
 
     public void onChooseRepository() {
         String modPackName = controller.getSettings().get(MODPACK_NAME);
-        DownloadPage downloadPage = new DownloadPage(modPackName);
+        DownloadPage downloadPage = new DownloadPage(modPackName != null ? new GameInstanceID(modPackName) : null);
         downloadPage.showModpackDownloads();
         Controllers.navigate(downloadPage);
     }

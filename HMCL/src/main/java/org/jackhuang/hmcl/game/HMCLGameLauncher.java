@@ -42,16 +42,27 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class HMCLGameLauncher extends DefaultLauncher {
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
-        this(repository, version, authInfo, options, null);
+    /// Creates a launcher with daemon process monitors.
+    ///
+    /// @param instance the instance being launched
+    /// @param manifest the effective launch-time manifest
+    /// @param authInfo authentication information for the game process
+    /// @param options  launch options
+    /// @param listener process listener, or `null` to inherit IO
+    public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+        this(instance, manifest, authInfo, options, listener, true);
     }
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, true);
-    }
-
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
-        super(repository, version, authInfo, options, listener, daemon);
+    /// Creates a launcher for the given instance and launch plan.
+    ///
+    /// @param instance the instance being launched
+    /// @param manifest the effective launch-time manifest
+    /// @param authInfo authentication information for the game process
+    /// @param options  launch options
+    /// @param listener process listener, or `null` to inherit IO
+    /// @param daemon   whether monitors should be daemon threads
+    public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+        super(instance, manifest, authInfo, options, listener, daemon);
     }
 
     @Override
@@ -66,7 +77,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (options.isDisableAutoGameOptions())
             return;
 
-        Path runDir = repository.getRunDirectory(version.getId());
+        Path runDir = instance.getRunDirectory();
         Path optionsFile = runDir.resolve("options.txt");
         Path configFolder = runDir.resolve("config");
 
@@ -91,8 +102,8 @@ public final class HMCLGameLauncher extends DefaultLauncher {
          *  1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
          *  1.13+       : zh_cn works fine, zh_CN will automatically switch to English
          */
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
-        if (gameVersion.compareTo("1.1") < 0)
+        GameVersionNumber gameVersion = instance.getVersion();
+        if (gameVersion == GameVersionNumber.unknown() || gameVersion.compareTo("1.1") < 0)
             return;
 
         String lang = normalizedLanguageTag(locale, gameVersion);
@@ -161,7 +172,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (options.isAllowAutoAgent()
                 && !options.isNoGeneratedJVMArgs()
                 && !options.isNoGeneratedOptimizingJVMArgs()
-                && NativePatcher.needPatchMemoryUtil(version, options.getJava().getParsedVersion())) {
+                && NativePatcher.needPatchMemoryUtil(manifest, options.getJava().getParsedVersion())) {
             LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
             try {
                 result.add("-javaagent:" + extractLwjglUnsafeAgent());
@@ -178,9 +189,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
 
         Library library = new Library(new Artifact("org.glavo", "lwjgl-unsafe-agent", agentVersion));
-        String fileName = library.getArtifact().getFileName();
+        String fileName = library.artifact().getFileName();
 
-        Path agentPath = repository.getLibraryFile(version, library).toAbsolutePath().normalize();
+        Path agentPath = instance.getLayout().getLibraryFile(instance.getId(), library).toAbsolutePath().normalize();
         if (agentPath.toString().contains("=")) {
             throw new IOException("Invalid library path: " + agentPath);
         }

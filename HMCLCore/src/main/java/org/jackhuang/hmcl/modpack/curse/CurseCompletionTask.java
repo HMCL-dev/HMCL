@@ -21,7 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -29,6 +29,8 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -43,51 +45,60 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * Complete the CurseForge version.
- *
- * @author huangyuhui
- */
+/// Completes missing files for an installed CurseForge modpack.
+@NotNullByDefault
 public final class CurseCompletionTask extends Task<Void> {
 
+    /// The dependency manager used to resolve and download remote files.
     private final DefaultDependencyManager dependency;
-    private final DefaultGameRepository repository;
-    private final ModManager modManager;
-    private final String version;
-    private CurseManifest manifest;
-    private List<Task<?>> dependencies;
 
+    /// The fixed registered instance completed by this task.
+    private final DefaultGameInstance instance;
+
+    /// The mod manager associated with [#instance].
+    private final ModManager modManager;
+
+    /// The manifest supplied by the caller or loaded from disk, if available.
+    private @Nullable CurseManifest manifest;
+
+    /// Download tasks produced during [#execute()].
+    private List<Task<?>> dependencies = List.of();
+
+    /// Whether every manifest file name could be resolved.
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
+
+    /// The number of manifest entries processed in the current phase.
     private final AtomicInteger finished = new AtomicInteger(0);
+
+    /// Whether a manifest entry refers to a deleted remote file.
     private final AtomicBoolean notFound = new AtomicBoolean(false);
 
-    /**
-     * Constructor.
-     *
-     * @param dependencyManager the dependency manager.
-     * @param version           the existent and physical version.
-     */
-    public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        this(dependencyManager, version, null);
+    /// Creates a task that completes the installed CurseForge modpack.
+    ///
+    /// @param dependencyManager the dependency manager
+    /// @param instance          the registered instance to complete
+    public CurseCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
+        this(dependencyManager, instance, null);
     }
 
-    /**
-     * Constructor.
-     *
-     * @param dependencyManager the dependency manager.
-     * @param version           the existent and physical version.
-     * @param manifest          the CurseForgeModpack manifest.
-     */
-    public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest) {
+    /// Creates a task that completes the installed CurseForge modpack using an optional manifest.
+    ///
+    /// @param dependencyManager the dependency manager
+    /// @param instance          the registered instance to complete
+    /// @param manifest          the CurseForge manifest, or `null` to read it from disk
+    public CurseCompletionTask(
+            DefaultDependencyManager dependencyManager,
+            DefaultGameInstance instance,
+            @Nullable CurseManifest manifest) {
+        dependencyManager.validateGameInstance(instance);
         this.dependency = dependencyManager;
-        this.repository = dependencyManager.getGameRepository();
-        this.modManager = repository.getModManager(version);
-        this.version = version;
+        this.instance = instance;
+        this.modManager = instance.getModManager();
         this.manifest = manifest;
 
         if (manifest == null)
             try {
-                Path manifestFile = repository.getVersionRoot(version).resolve("manifest.json");
+                Path manifestFile = instance.getInstanceRoot().resolve("manifest.json");
                 if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
             } catch (Exception e) {
@@ -112,7 +123,7 @@ public final class CurseCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path root = repository.getVersionRoot(version);
+        Path root = instance.getInstanceRoot();
 
         // Because in China, Curse is too difficult to visit,
         // if failed, ignore it and retry next time.
@@ -122,7 +133,7 @@ public final class CurseCompletionTask extends Task<Void> {
                             updateProgress(finished.incrementAndGet(), manifest.files().size());
                             if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
                                 try {
-                                    RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.MODS.getModFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
+                                    RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.MODS.getAddonFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
                                     return file.withFileName(remoteFile.filename()).withURL(remoteFile.url());
                                 } catch (FileNotFoundException fof) {
                                     LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.projectID() + ", " + file.fileID(), fof);
@@ -140,7 +151,7 @@ public final class CurseCompletionTask extends Task<Void> {
                         .collect(Collectors.toList()));
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
 
-        Path versionRoot = repository.getVersionRoot(modManager.getInstanceId());
+        Path versionRoot = instance.getInstanceRoot();
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
         Path shaderPacksRoot = versionRoot.resolve("shaderpacks");
         finished.set(0);
@@ -173,18 +184,16 @@ public final class CurseCompletionTask extends Task<Void> {
         }
     }
 
-    /**
-     * Guess where to store the file.
-     *
-     * @param file              The file.
-     * @param downloadProvider
-     * @param resourcePacksRoot ./resourcepacks.
-     * @param shaderPacksRoot   ./shaderpacks.
-     * @return ./resourcepacks/$filename or ./shaderpacks/$filename or ./mods/$filename if the file doesn't exist. null if the file existed.
-     * @throws IOException If IOException was encountered during getting data from CurseForge.
-     */
-    private Path guessFilePath(CurseManifestFile file, DownloadProvider downloadProvider, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
-        RemoteAddon mod = CurseForgeRemoteAddonRepository.MODS.getModById(downloadProvider, Integer.toString(file.projectID()));
+    /// Returns the destination for a missing CurseForge file based on its project class.
+    ///
+    /// @param file              the manifest file
+    /// @param downloadProvider  the download provider used for CurseForge requests
+    /// @param resourcePacksRoot the resource-pack directory
+    /// @param shaderPacksRoot   the shader-pack directory
+    /// @return the destination, or `null` when the file already exists
+    /// @throws IOException if CurseForge metadata cannot be read
+    private @Nullable Path guessFilePath(CurseManifestFile file, DownloadProvider downloadProvider, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
+        RemoteAddon mod = CurseForgeRemoteAddonRepository.MODS.getAddonById(downloadProvider, Integer.toString(file.projectID()));
         int classID = ((CurseForgeRemoteAddonRepository.CurseAddon) mod.data()).classId();
         String fileName = file.fileName();
         return switch (classID) {

@@ -17,13 +17,19 @@
  */
 package org.jackhuang.hmcl.ui.game;
 
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.*;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -32,11 +38,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextFormatter;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -50,8 +52,8 @@ import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.VersionIconDialog;
-import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.instances.GameInstanceIconDialog;
+import org.jackhuang.hmcl.ui.instances.GameInstancePage;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.ServerAddress;
@@ -77,7 +79,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Glavo
 @NotNullByDefault
 public final class GameSettingsPage<S extends GameSettings> extends StackPane
-        implements DecoratorPage, VersionPage.GameInstanceLoadable, PageAware {
+        implements DecoratorPage, PageAware {
 
     private static final Object INHERIT_BUTTON_TOOLTIP_KEY = new Object();
     private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");
@@ -89,19 +91,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final ObjectProperty<State> state = new SimpleObjectProperty<>(this, "state", new State("", null, false, false, false));
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
-    /// The selected game directory.
-    private @Nullable GameDirectory gameDirectory;
-
-    /// The selected repository.
-    private @Nullable HMCLGameRepository repository;
-
-    /// The current instance ID.
-    private @Nullable String instanceId;
+    /// The current game instance when editing instance settings, or `null` for preset settings.
+    private final ObjectProperty<@Nullable HMCLGameInstance> gameInstance =
+            new SimpleObjectProperty<>(this, "gameInstance");
 
     /// The current setting.
     private final ObjectProperty<@Nullable S> currentSetting = new SimpleObjectProperty<>(this, "setting");
-
-    private final ObjectProperty<GameVersionNumber> currentGameVersionNumber = new SimpleObjectProperty<>(this, "currentGameVersionNumber", GameVersionNumber.unknown());
 
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
@@ -130,12 +125,24 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final InvalidationListener javaListener = o -> refreshJavaSettings();
     private final InvalidationListener weakJavaListener = holder.weak(javaListener);
 
-    public GameSettingsPage(Class<S> settingType) {
+    /// Creates a settings page.
+    ///
+    /// @param settingType     [GameSettings.Instance] or [GameSettings.Preset]
+    /// @param instanceContext parent instance property for instance settings; ignored for presets and may be `null`
+    public GameSettingsPage(
+            Class<S> settingType,
+            @Nullable ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         assert settingType == GameSettings.Preset.class || settingType == GameSettings.Instance.class;
 
         this.isPresetSetting = settingType == GameSettings.Preset.class;
         if (!isPresetSetting) {
             bindActiveParentSetting();
+            Objects.requireNonNull(instanceContext, "instanceContext");
+            holder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+                if (current != null) {
+                    loadInstance(current);
+                }
+            }));
         }
 
         this.scrollPane = new ScrollPane();
@@ -788,19 +795,26 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             graphicsSettings.getContent().add(vulkanRendererPane);
             vulkanRendererPane.setTitle(i18n("settings.advanced.renderer.vulkan"));
 
-            this.currentGameVersionNumber.addListener((o, oldValue, newValue) -> {
-                boolean showBackendChoose = isPresetSetting || newValue.compareTo("26.2-snapshot-2") >= 0;
+            var highPerformancePane = createInheritableBooleanButton(GameSettings::highPerformanceProperty);
+            graphicsSettings.getContent().add(highPerformancePane);
+            highPerformancePane.setTitle(i18n("settings.advanced.renderer.gpu_preferences"));
+
+            InvalidationListener updateGraphicsVisibility = o -> {
+                GameVersionNumber version = currentGameVersion();
+                boolean showBackendChoose = isPresetSetting || version.compareTo("26.2-snapshot-2") >= 0;
                 graphicsBackendPane.setVisible(showBackendChoose);
                 graphicsBackendPane.setManaged(showBackendChoose);
 
-                boolean showOpenGL = GraphicsAPI.OPENGL.isSupported(newValue);
+                boolean showOpenGL = GraphicsAPI.OPENGL.isSupported(version);
                 openGLRendererPane.setVisible(showOpenGL);
                 openGLRendererPane.setManaged(showOpenGL);
 
-                boolean showVulkan = GraphicsAPI.VULKAN.isSupported(newValue);
+                boolean showVulkan = GraphicsAPI.VULKAN.isSupported(version);
                 vulkanRendererPane.setVisible(showVulkan);
                 vulkanRendererPane.setManaged(showVulkan);
-            });
+            };
+            this.gameInstance.addListener(updateGraphicsVisibility);
+            updateGraphicsVisibility.invalidated(this.gameInstance);
         }
 
         var nativeLibrarySettings = new ComponentList();
@@ -1721,6 +1735,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
             refresh.invalidated(instance);
+
+            fireEvent(new GameInstancePage.WorkingDirChangedEvent());
         });
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
@@ -1809,6 +1825,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 updating.value = false;
             }
             refresh.invalidated(instance);
+
+            fireEvent(new GameInstancePage.WorkingDirChangedEvent());
+
             event.consume();
         });
 
@@ -1828,6 +1847,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             } finally {
                 updating.value = false;
             }
+
+            fireEvent(new GameInstancePage.WorkingDirChangedEvent());
         });
 
         currentSetting.addListener((observable, oldValue, newValue) -> {
@@ -1849,16 +1870,20 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     private boolean isCurrentInstanceModpack() {
-        return repository != null && instanceId != null && repository.isModpack(instanceId);
+        HMCLGameInstance gameInstance = this.gameInstance.get();
+        return gameInstance != null && gameInstance.isModpack();
     }
 
     /// Returns the current instance version root displayed for modpack running directories.
     private String getCurrentInstanceVersionRoot() {
-        if (repository == null || instanceId == null) {
-            return "";
-        }
+        HMCLGameInstance gameInstance = this.gameInstance.get();
+        return gameInstance != null ? gameInstance.getInstanceRoot().toString() : "";
+    }
 
-        return repository.getVersionRoot(instanceId).toString();
+    /// Returns the Minecraft version of the loaded instance, or [GameVersionNumber#unknown()] for presets.
+    private GameVersionNumber currentGameVersion() {
+        HMCLGameInstance gameInstance = this.gameInstance.get();
+        return gameInstance != null ? gameInstance.getVersion() : GameVersionNumber.unknown();
     }
 
     /// Keeps a listener attached to the current instance's parent preset property.
@@ -2578,8 +2603,9 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Returns the runtime parent preset for an instance, including the game directory's migrated preset fallback.
     private GameSettings.Preset getEffectiveParentGameSettings(GameSettings.Instance instance) {
-        if (repository != null) {
-            return repository.getParentGameSettings(instance);
+        HMCLGameInstance gameInstance = this.gameInstance.get();
+        if (gameInstance != null) {
+            return gameInstance.getRepository().getParentGameSettings(instance);
         }
 
         return getExplicitParentGameSettings(instance);
@@ -2618,26 +2644,21 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable String instanceId) {
-        this.gameDirectory = repository.getGameDirectory();
-        this.repository = repository;
-        this.instanceId = instanceId;
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        HMCLGameInstance gameInstance = instance.instance();
+        this.gameInstance.set(gameInstance);
 
-        assert isPresetSetting == (instanceId == null);
+        assert isPresetSetting == (gameInstance == null);
 
-        if (instanceId != null) {
-            this.currentGameVersionNumber.set(GameVersionNumber.asGameVersion(repository.getGameVersion(instanceId)));
-
-            @Nullable GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(instanceId);
+        if (gameInstance != null) {
+            @Nullable GameSettings.Instance setting = gameInstance.getSettingsOrCreate();
             this.currentSetting.set((S) setting);
             setSettingsReadOnly(
-                    setting == null || repository.isInstanceGameSettingsReadOnly(instanceId),
+                    setting == null || gameInstance.isSettingsReadOnly(),
                     i18n("settings.game.instance_settings.unsupported"),
                     setting != null ? this::forceOverwriteInstanceGameSettings : null);
             loadIcon();
         } else {
-            this.currentGameVersionNumber.set(GameVersionNumber.unknown());
             this.currentSetting.set((S) SettingsManager.getDefaultGameSettingsPresetOrCreate());
             setSettingsReadOnly(
                     SettingsManager.isGameSettingsReadOnly(),
@@ -2685,12 +2706,13 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
     /// Backs up and overwrites the current instance's `instance-game-settings.json`.
     private void forceOverwriteInstanceGameSettings() {
-        if (repository == null || instanceId == null) {
+        HMCLGameInstance gameInstance = this.gameInstance.get();
+        if (gameInstance == null) {
             return;
         }
 
         Controllers.confirmBackupAndOverwrite(i18n("settings.game.instance_settings.unsupported"), () -> {
-            repository.forceOverwriteInstanceGameSettings(instanceId);
+            gameInstance.forceOverwriteSettings();
             setSettingsReadOnly(false, "");
         });
     }
@@ -2704,10 +2726,12 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     private void loadIcon() {
-        if (repository == null || instanceId == null)
+        HMCLGameInstance gameInstance = this.gameInstance.get();
+        if (gameInstance == null) {
             return;
+        }
 
-        iconPickerItem.setImage(repository.getVersionIconImage(instanceId));
+        iconPickerItem.setImage(gameInstance.getIconImage());
     }
 
     /// Refreshes Java selection controls and keeps inherited parent Java properties observed.
@@ -2771,16 +2795,19 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private void initJavaSubtitle() {
         S setting = currentSetting.get();
 
-        if (setting == null || gameDirectory == null)
+        if (setting == null) {
             return;
+        }
         initializeSelectedJava();
 
         JavaVersionType javaVersionType = setting.javaTypeProperty().getValue();
-        GameSettings.Effective effectiveSetting = this.instanceId != null && repository != null ? repository.getEffectiveGameSettings(this.instanceId) : null;
+        HMCLGameInstance gameInstance = this.gameInstance.get();
+        @Nullable GameSettings.Effective effectiveSetting =
+                gameInstance != null ? gameInstance.getEffectiveSettings() : null;
         JavaVersionType effectiveJavaVersionType = effectiveSetting != null ? effectiveSetting.getInheritable(GameSettings::javaTypeProperty) : javaVersionType;
         boolean autoSelected = effectiveJavaVersionType == JavaVersionType.AUTO || effectiveJavaVersionType == JavaVersionType.VERSION;
 
-        if (instanceId == null && autoSelected) {
+        if (gameInstance == null && autoSelected) {
             javaSublist.setDescription(i18n("settings.game.java_directory.auto"));
             return;
         }
@@ -2792,18 +2819,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
 
         if (JavaManager.isInitialized()) {
-            GameVersionNumber gameVersionNumber = this.currentGameVersionNumber.get();
-            Version version;
-            if (this.instanceId == null) {
-                version = null;
-            } else {
-                version = repository != null ? repository.getResolvedVersion(this.instanceId) : null;
-            }
+            GameVersionNumber gameVersionNumber = currentGameVersion();
+            GameInstanceManifest manifest = gameInstance != null
+                    ? gameInstance.getResolvedManifest().launchManifest()
+                    : null;
 
             try {
                 JavaRuntime java = effectiveSetting != null
-                        ? effectiveSetting.getJava(gameVersionNumber, version)
-                        : resolveEffectiveSetting(setting).getJava(gameVersionNumber, version);
+                        ? effectiveSetting.getJava(gameVersionNumber, manifest)
+                        : resolveEffectiveSetting(setting).getJava(gameVersionNumber, manifest);
                 if (java != null) {
                     javaSublist.setDescription(java.getBinary().toString());
                 } else {
@@ -2818,20 +2842,23 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     }
 
     private void onExploreIcon() {
-        if (repository == null || instanceId == null)
+        HMCLGameInstance gameInstance = this.gameInstance.get();
+        if (gameInstance == null) {
             return;
-
-        Controllers.dialog(new VersionIconDialog(repository, instanceId, this::loadIcon));
+        }
+        Controllers.dialog(new GameInstanceIconDialog(gameInstance, this::loadIcon));
     }
 
     private void onDeleteIcon() {
-        if (repository == null || instanceId == null)
+        HMCLGameInstance gameInstance = this.gameInstance.get();
+        if (gameInstance == null) {
             return;
+        }
 
-        repository.deleteIconFile(instanceId);
-        GameSettings.Instance localGameSettings = repository.getInstanceGameSettingsOrCreate(instanceId);
+        gameInstance.deleteIconFile();
+        GameSettings.Instance localGameSettings = gameInstance.getSettingsOrCreate();
         if (localGameSettings != null) {
-            localGameSettings.iconProperty().setValue(VersionIconType.DEFAULT);
+            localGameSettings.iconProperty().setValue(GameInstanceIconType.DEFAULT);
         }
         loadIcon();
     }

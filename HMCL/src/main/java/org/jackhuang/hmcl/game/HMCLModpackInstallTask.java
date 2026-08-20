@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -37,29 +36,29 @@ import java.util.List;
 
 public final class HMCLModpackInstallTask extends Task<Void> {
     private final Path zipFile;
-    private final String name;
+    private final GameInstanceID instanceId;
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependency;
     private final Modpack modpack;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public HMCLModpackInstallTask(HMCLGameRepository repository, Path zipFile, Modpack modpack, String name) {
+    public HMCLModpackInstallTask(HMCLGameRepository repository, Path zipFile, Modpack modpack, GameInstanceID instanceId) {
         this.repository = repository;
         this.dependency = repository.getDependency();
         this.zipFile = zipFile;
-        this.name = name;
+        this.instanceId = instanceId;
         this.modpack = modpack;
 
-        Path run = repository.getRunDirectory(name);
-        Path json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && Files.notExists(json))
-            throw new IllegalArgumentException("Version " + name + " already exists");
+        Path run = repository.getLayout().getInstanceRoot(this.instanceId);
+        Path json = repository.getLayout().getModpackConfigurationFile(this.instanceId);
+        if (repository.hasInstance(this.instanceId) && Files.notExists(json))
+            throw new IllegalArgumentException("Instance " + instanceId + " already exists");
 
-        dependents.add(dependency.gameBuilder().name(name).gameVersion(modpack.getGameVersion()).buildAsync());
+        dependents.add(dependency.newGameBuilder().id(this.instanceId).component(GameComponentType.GAME, modpack.getGameVersion()).buildAsync());
 
         onDone().register(event -> {
-            if (event.isFailed()) repository.removeVersionFromDisk(name);
+            if (event.isFailed()) repository.removeInstanceFromDisk(this.instanceId);
         });
 
         ModpackConfiguration<Modpack> config = null;
@@ -68,12 +67,12 @@ public final class HMCLModpackInstallTask extends Task<Void> {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(Modpack.class));
 
                 if (!HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Version " + name + " is not a HMCL modpack. Cannot update this version.");
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/minecraft"), it -> !"pack.json".equals(it), config));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
     }
 
     @Override
@@ -86,20 +85,32 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         return dependents;
     }
 
+    /// {@inheritDoc}
     @Override
     public void execute() throws Exception {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
-        Version originalVersion = JsonUtils.GSON.fromJson(json, Version.class).setId(name).setJar(null);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(originalVersion, null);
-        Task<Version> libraryTask = Task.supplyAsync(() -> originalVersion);
-        // reinstall libraries
-        // libraries of Forge and OptiFine should be obtained by installation.
-        for (LibraryAnalyzer.LibraryMark mark : analyzer) {
-            if (LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(mark.getLibraryId()))
-                continue;
-            libraryTask = libraryTask.thenComposeAsync(version -> dependency.installLibraryAsync(modpack.getGameVersion(), version, mark.getLibraryId(), mark.getLibraryVersion()));
-        }
+        GameInstanceManifest originalManifest = JsonUtils.GSON.fromJson(json, GameInstanceManifest.class).withId(instanceId).withJar(null);
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
 
-        dependencies.add(libraryTask.thenComposeAsync(repository::saveAsync));
+        dependencies.add(repository.updateInstanceAsync(instanceId, publishedInstance -> {
+            Task<GameInstanceManifest> libraryTask = Task.supplyAsync(() -> originalManifest);
+            // Forge and OptiFine libraries must be regenerated by their installers.
+            for (GameComponentAnalyzer.Mark mark : analyzer) {
+                if (mark.componentType() == GameComponentType.GAME) {
+                    continue;
+                }
+                String componentVersion = mark.version();
+                if (componentVersion == null) {
+                    continue;
+                }
+                libraryTask = libraryTask.thenComposeAsync(manifest -> dependency.installComponentAsync(
+                        publishedInstance,
+                        manifest,
+                        modpack.getGameVersion(),
+                        mark.componentType(),
+                        componentVersion));
+            }
+            return libraryTask;
+        }));
     }
 }

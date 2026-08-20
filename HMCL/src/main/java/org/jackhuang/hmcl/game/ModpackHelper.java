@@ -157,16 +157,12 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, String name, Modpack modpack) {
-        repository.markVersionAsModpack(name);
+    public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, Modpack modpack) {
+        repository.ensureIsolatedRunningDirectory(instanceId);
 
         ExceptionalRunnable<?> success = () -> {
-            repository.refreshVersions();
-            GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(name);
-            repository.undoMark(name);
-            if (setting != null) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-            }
+            repository.refresh();
+            repository.ensureIsolatedRunningDirectory(instanceId);
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -176,7 +172,7 @@ public final class ModpackHelper {
             }
         };
 
-        return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, name)
+        return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId)
                 .whenComplete(Schedulers.defaultScheduler(), success, failure)
                 .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
@@ -201,16 +197,12 @@ public final class ModpackHelper {
                 });
     }
 
-    public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, String name, Modpack modpack, String iconUrl) {
-        repository.markVersionAsModpack(name);
+    public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, Modpack modpack, @Nullable String iconUrl) {
+        repository.ensureIsolatedRunningDirectory(instanceId);
 
         ExceptionalRunnable<?> success = () -> {
-            repository.refreshVersions();
-            GameSettings.Instance setting = repository.getInstanceGameSettingsOrCreate(name);
-            repository.undoMark(name);
-            if (setting != null) {
-                setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-            }
+            repository.refresh();
+            repository.ensureIsolatedRunningDirectory(instanceId);
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -221,45 +213,47 @@ public final class ModpackHelper {
         };
 
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return modpack.getInstallTask(repository.getDependency(), zipFile, name, iconUrl)
+            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(createMultiMCPostInstallTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
+                    .thenComposeAsync(createMultiMCPostInstallTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
-            return modpack.getInstallTask(repository.getDependency(), zipFile, name, iconUrl)
+            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(createMcbbsPostInstallTask(repository, (McbbsModpackManifest) modpack.getManifest(), name))
+                    .thenComposeAsync(createMcbbsPostInstallTask(repository, (McbbsModpackManifest) modpack.getManifest(), instanceId))
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
-            return modpack.getInstallTask(repository.getDependency(), zipFile, name, iconUrl)
+            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
-    public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
+    public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, Charset charset, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
-                return new ModpackUpdateTask(repository, name, new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, name))
-                        .thenComposeAsync(repository.refreshVersionsAsync())
+                return new ModpackUpdateTask(
+                        repository.getInstance(instanceId),
+                        new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId))
+                        .thenComposeAsync(repository.refreshAsync())
                         .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
             default:
                 throw new UnsupportedModpackException();
         }
     }
 
-    public static Task<?> getUpdateTask(HMCLGameRepository repository, Path zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+    public static Task<?> getUpdateTask(HMCLGameRepository repository, Path zipFile, Charset charset, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
         ModpackProvider provider = getProviderByType(configuration.getType());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return provider.createUpdateTask(repository.getDependency(), name, zipFile, modpack)
-                    .thenComposeAsync(() -> createMultiMCPostUpdateTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
-                    .thenComposeAsync(repository.refreshVersionsAsync());
+            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack)
+                    .thenComposeAsync(() -> createMultiMCPostUpdateTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
+                    .thenComposeAsync(repository.refreshAsync());
         else
-            return provider.createUpdateTask(repository.getDependency(), name, zipFile, modpack)
-                    .thenComposeAsync(repository.refreshVersionsAsync());
+            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack)
+                    .thenComposeAsync(repository.refreshAsync());
     }
 
     public static void toGameSettings(MultiMCInstanceConfiguration c, GameSettings.Instance setting) {
@@ -334,25 +328,25 @@ public final class ModpackHelper {
         }
     }
 
-    private static Task<Void> createMultiMCPostUpdateTask(HMCLGameRepository repository, MultiMCInstanceConfiguration manifest, String version) {
+    private static Task<Void> createMultiMCPostUpdateTask(HMCLGameRepository repository, MultiMCInstanceConfiguration manifest, GameInstanceID instanceId) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(version));
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(instanceId));
             ModpackHelper.applyCommandAndJvmSettings(manifest, setting);
         });
     }
 
-    private static Task<Void> createMultiMCPostInstallTask(HMCLGameRepository repository, MultiMCInstanceConfiguration manifest, String version) {
+    private static Task<Void> createMultiMCPostInstallTask(HMCLGameRepository repository, MultiMCInstanceConfiguration manifest, GameInstanceID instanceId) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(version));
+            GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(instanceId));
             ModpackHelper.toGameSettings(manifest, setting);
         });
     }
 
-    private static Task<Void> createMcbbsPostInstallTask(HMCLGameRepository repository, McbbsModpackManifest manifest, String version) {
+    private static Task<Void> createMcbbsPostInstallTask(HMCLGameRepository repository, McbbsModpackManifest manifest, GameInstanceID instanceId) {
         return Task.runAsync(Schedulers.javafx(), () -> {
-            GameSettings.Effective effective = repository.getEffectiveGameSettings(version);
+            GameSettings.Effective effective = repository.getEffectiveGameSettings(instanceId);
             if (manifest.getLaunchInfo().getMinMemory() > effective.getMaxMemory()) {
-                GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(version));
+                GameSettings.Instance setting = Objects.requireNonNull(repository.getInstanceGameSettingsOrCreate(instanceId));
                 setting.getOverrideProperties().addAll(List.of(
                         GameSettings.PROPERTY_AUTO_MEMORY,
                         GameSettings.PROPERTY_MIN_MEMORY,

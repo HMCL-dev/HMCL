@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl;
 
+import com.sun.jna.Pointer;
+import com.sun.jna.WString;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -39,6 +41,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WindowsNativeUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -46,6 +49,10 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.windows.Gdi32;
+import org.jackhuang.hmcl.util.platform.windows.Shell32;
+import org.jackhuang.hmcl.util.platform.windows.User32;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -135,6 +142,7 @@ public final class Launcher extends Application {
 
                 UpdateChecker.init();
 
+                WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(primaryStage);
                 primaryStage.show();
             });
         } catch (Throwable e) {
@@ -335,6 +343,7 @@ public final class Launcher extends Application {
             }
 
             setupJavaFXVMOptions();
+            setupWindowsAppUserModelID();
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
@@ -368,6 +377,25 @@ public final class Launcher extends Application {
         });
     }
 
+    /// Sets the process-level AppUserModelID on Windows so the launcher groups correctly on the taskbar.
+    private static void setupWindowsAppUserModelID() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+            return;
+        if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
+            return;
+
+        try {
+            int hr = Shell32.INSTANCE.SetCurrentProcessExplicitAppUserModelID(new WString(Metadata.WINDOWS_APP_USER_MODEL_ID));
+            if (hr < 0) {
+                LOG.warning("Failed to set AppUserModelID, HRESULT=0x" + Integer.toHexString(hr));
+            } else {
+                LOG.info("Set AppUserModelID: " + Metadata.WINDOWS_APP_USER_MODEL_ID);
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to set AppUserModelID", e);
+        }
+    }
+
     private static void setupJavaFXVMOptions() {
         if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU"))) {
             LOG.info("HMCL_FORCE_GPU: true");
@@ -376,19 +404,50 @@ public final class Launcher extends Application {
 
         setUpAnimationFrameRate:
         {
+            if (System.getProperty("javafx.animation.pulse") != null) {
+                break setUpAnimationFrameRate;
+            }
+
             String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
             if (animationFrameRate != null) {
                 LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
 
                 try {
-                    if (Integer.parseInt(animationFrameRate) <= 0)
+                    int value = Integer.parseInt(animationFrameRate);
+                    if (value <= 0)
                         throw new NumberFormatException(animationFrameRate);
 
-                    System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
+                    if (value != 60)
+                        System.setProperty("javafx.animation.pulse", animationFrameRate);
                 } catch (NumberFormatException e) {
                     LOG.warning("Invalid animation frame rate: " + animationFrameRate);
                 }
                 break setUpAnimationFrameRate;
+            }
+
+            // To avoid prematurely loading FXUtils, we only check if animationDisabled has been explicitly set to true
+            if (Boolean.TRUE.equals(settings().animationDisabledProperty().get()))
+                break setUpAnimationFrameRate;
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (NativeUtils.USE_JNA && Gdi32.INSTANCE != null && User32.INSTANCE != null) {
+                    @Nullable Pointer pointer = User32.INSTANCE.GetDC(Pointer.NULL);
+                    if (pointer != null) {
+                        try {
+                            int refreshRate = Gdi32.INSTANCE.GetDeviceCaps(pointer, Gdi32.VREFRESH);
+
+                            if (refreshRate > 0) {
+                                LOG.info("Detected refresh rate: " + refreshRate + "Hz");
+
+                                if (refreshRate >= 90) {
+                                    System.getProperties().putIfAbsent("javafx.animation.pulse", String.valueOf(refreshRate));
+                                }
+                            }
+                        } finally {
+                            User32.INSTANCE.ReleaseDC(Pointer.NULL, pointer);
+                        }
+                    }
+                }
             }
         }
 

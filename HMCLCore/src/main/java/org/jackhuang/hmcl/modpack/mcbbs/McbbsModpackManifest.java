@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.modpack.mcbbs;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -36,8 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 
 public class McbbsModpackManifest implements ModpackManifest, Validation {
     public static final String MANIFEST_TYPE = "minecraftModpack";
@@ -420,12 +420,12 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
     }
 
     public Modpack toModpack(Charset encoding) throws IOException {
-        String gameVersion = addons.stream().filter(x -> MINECRAFT.getPatchId().equals(x.id)).findAny()
+        String gameVersion = addons.stream().filter(x -> GameComponentType.GAME.getPatchId().equals(x.id)).findAny()
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
         return new Modpack(name, author, version, gameVersion, description, encoding, this) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl) {
-                return new McbbsModpackLocalInstallTask(dependencyManager, zipFile, this, McbbsModpackManifest.this, name);
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, GameInstanceID instanceId, String iconUrl) {
+                return new McbbsModpackLocalInstallTask(dependencyManager, zipFile, this, McbbsModpackManifest.this, instanceId);
             }
         };
     }

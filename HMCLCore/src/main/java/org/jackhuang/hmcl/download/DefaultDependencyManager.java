@@ -24,37 +24,54 @@ import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Note: This class has no state.
- *
- * @author huangyuhui
- */
+/// Provides downloads and game-component installation for one game repository.
+@NotNullByDefault
 public class DefaultDependencyManager extends AbstractDependencyManager {
 
+    /// The repository whose layout and registered instances are managed.
     private final DefaultGameRepository repository;
+
+    /// The provider used to resolve remote download URLs and version lists.
     private final DownloadProvider downloadProvider;
+
+    /// The cache used to source and retain downloaded artifacts.
     private final DefaultCacheRepository cacheRepository;
 
+    /// Creates a dependency manager for a repository and download context.
+    ///
+    /// @param repository       the associated game repository
+    /// @param downloadProvider the remote download provider
+    /// @param cacheRepository  the artifact cache
     public DefaultDependencyManager(DefaultGameRepository repository, DownloadProvider downloadProvider, DefaultCacheRepository cacheRepository) {
         this.repository = repository;
         this.downloadProvider = downloadProvider;
         this.cacheRepository = cacheRepository;
+    }
+
+    /// Ensures that an instance belongs to this manager's repository.
+    ///
+    /// @param instance the instance to validate
+    /// @throws IllegalArgumentException if the instance belongs to another repository
+    public void validateGameInstance(GameInstance instance) {
+        if (instance.getRepository() != repository) {
+            throw new IllegalArgumentException("Game instance and dependency manager belong to different repositories");
+        }
     }
 
     @Override
@@ -73,70 +90,82 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public GameBuilder gameBuilder() {
+    public GameBuilder newGameBuilder() {
         return new DefaultGameBuilder(this);
     }
 
     @Override
-    public Task<?> checkGameCompletionAsync(Version version, boolean integrityCheck) {
+    public Task<?> checkGameCompletionAsync(
+            GameInstance instance,
+            GameInstanceManifest manifest,
+            boolean integrityCheck) {
+        validateGameInstance(instance);
+
         return Task.allOf(
                 Task.composeAsync(() -> {
-                    Path versionJar = repository.getVersionJar(version);
+                    Path instanceJar = instance.getInstanceJarFile();
 
-                    return Files.notExists(versionJar) || FileUtils.size(versionJar) == 0L
-                            ? new GameDownloadTask(this, null, version)
+                    return Files.notExists(instanceJar) || FileUtils.size(instanceJar) == 0L
+                            ? new GameDownloadTask(this, manifest).thenAcceptAsync(
+                                    cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
                             : null;
-                }).thenComposeAsync(checkPatchCompletionAsync(version, integrityCheck)),
-                new GameAssetDownloadTask(this, version, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
+                }).thenComposeAsync(checkPatchCompletionAsync(instance, manifest, integrityCheck)),
+                new GameAssetDownloadTask(this, manifest, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
                         .setSignificance(Task.TaskSignificance.MODERATE),
-                new GameLibrariesTask(this, version, integrityCheck)
+                new GameLibrariesTask(this, manifest, integrityCheck)
         );
     }
 
     @Override
-    public Task<?> checkLibraryCompletionAsync(Version version, boolean integrityCheck) {
-        return new GameLibrariesTask(this, version, integrityCheck, version.getLibraries());
+    public Task<?> checkComponentCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck) {
+        return new GameLibrariesTask(this, manifest, integrityCheck, manifest.getLibraries());
     }
 
     @Override
-    public Task<?> checkPatchCompletionAsync(Version version, boolean integrityCheck) {
+    public Task<?> checkPatchCompletionAsync(
+            GameInstance instance,
+            GameInstanceManifest manifest,
+            boolean integrityCheck) {
+        validateGameInstance(instance);
+
         return Task.composeAsync(() -> {
             List<Task<?>> tasks = new ArrayList<>(0);
 
-            String gameVersion = repository.getGameVersion(version).orElse(null);
-            if (gameVersion == null) return null;
+            GameVersionNumber detectedVersion = instance.getVersion();
+            if (detectedVersion.equals(GameVersionNumber.unknown())) return null;
+            String gameVersion = detectedVersion.toString();
 
-            Version original = repository.getVersion(version.getId());
-            Version resolved = original.resolvePreservingPatches(repository);
-
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
-            for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
-                if (!analyzer.has(type))
+            GameInstanceManifest original = instance.getManifest();
+            for (GameComponentType type : GameComponentType.values()) {
+                if (!instance.hasComponent(type))
                     continue;
 
-                if (type == LibraryAnalyzer.LibraryType.OPTIFINE) {
-                    String optifinePatchVersion = analyzer.getVersion(type)
-                            .map(optifineVersion -> {
+                if (type == GameComponentType.OPTIFINE) {
+                    @Nullable String optifinePatchVersion = Optional.ofNullable(instance.getComponentVersion(type)).map(optifineVersion -> {
                                 Matcher matcher = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$").matcher(optifineVersion);
                                 return matcher.find() ? matcher.group("optifine") : optifineVersion;
                             })
-                            .orElseGet(() -> resolved.getPatches().stream()
-                                    .filter(patch -> "optifine".equals(patch.getId()))
+                            .orElseGet(() -> instance.getResolvedManifest().standaloneManifest().getPatches().stream()
+                                    .filter(patch -> "optifine".equals(patch.id()))
                                     .findAny()
-                                    .map(Version::getVersion)
+                                    .map(GameInstancePatch::version)
                                     .orElse(null));
 
-                    boolean needsReInstallation = version.getLibraries().stream()
+                    boolean needsReInstallation = manifest.getLibraries().stream()
                             .anyMatch(library -> !library.hasDownloadURL()
-                                    && "optifine".equals(library.getGroupId())
-                                    && GameLibrariesTask.shouldDownloadLibrary(repository, version, library, integrityCheck));
+                                    && "optifine".equals(library.groupId())
+                                    && GameLibrariesTask.shouldDownloadLibrary(repository, manifest, library, integrityCheck));
 
                     if (needsReInstallation) {
                         Library installer = new Library(new Artifact("optifine", "OptiFine", gameVersion + "_" + optifinePatchVersion, "installer"));
-                        if (GameLibrariesTask.shouldDownloadLibrary(repository, version, installer, integrityCheck)) {
-                            tasks.add(installLibraryAsync(gameVersion, original, "optifine", optifinePatchVersion));
+                        if (GameLibrariesTask.shouldDownloadLibrary(repository, manifest, installer, integrityCheck)) {
+                            tasks.add(installComponentAsync(instance, original, gameVersion, GameComponentType.OPTIFINE, optifinePatchVersion));
                         } else {
-                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(version, installer)));
+                            tasks.add(OptiFineInstallTask.install(
+                                    this,
+                                    original,
+                                    gameVersion,
+                                    repository.getLayout().getLibraryFile(manifest.id(), installer)));
                         }
                     }
                 }
@@ -146,89 +175,243 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         });
     }
 
-    @Override
-    public Task<Version> installLibraryAsync(String gameVersion, Version baseVersion, String libraryId, String libraryVersion) {
-        if (baseVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
+    /// Installs a component using a working manifest that may be ahead of the instance's stored state.
+    ///
+    /// Used by multi-step install pipelines after a previous in-memory remove/install. `instance`
+    /// supplies repository identity, mods directory, and detected game version; `baseManifest` is
+    /// the draft JSON being edited.
+    ///
+    /// @param instance       the registered instance being modified
+    /// @param baseManifest   the working standalone-oriented manifest for this step
+    /// @param libraryVersion the remote component to install
+    /// @return the task producing the updated manifest (not yet saved)
+    public Task<GameInstanceManifest> installComponentAsync(
+            GameInstance instance,
+            GameInstanceManifest baseManifest,
+            RemoteVersion libraryVersion) {
+        validateGameInstance(instance);
+        if (!instance.getId().equals(baseManifest.id())) {
+            throw new IllegalArgumentException("baseManifest id does not match instance");
+        }
 
-        VersionList<?> versionList = getVersionList(libraryId);
+        Path modsDirectory = instance.getModsDirectory();
+
+        return removeComponentAsync(instance, baseManifest, libraryVersion.getComponentType())
+                .thenComposeAsync(manifest -> libraryVersion
+                        .getInstallTask(this, manifest, modsDirectory)
+                        .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
+                .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getComponentType().getPatchId(), libraryVersion.getSelfVersion()));
+    }
+
+    /// Installs a component into an unpublished new instance without constructing a
+    /// [GameInstance].
+    ///
+    /// @param instanceId     the unpublished instance id
+    /// @param baseManifest   the working manifest for this step
+    /// @param gameVersion    the Minecraft version used for component analysis
+    /// @param componentVersion the remote component to install
+    /// @return the task producing the updated manifest (not yet committed)
+    Task<GameInstanceManifest> installNewInstanceComponentAsync(
+            GameInstanceID instanceId,
+            GameInstanceManifest baseManifest,
+            String gameVersion,
+            RemoteVersion componentVersion) {
+        if (!instanceId.equals(baseManifest.id())) {
+            throw new IllegalArgumentException("baseManifest id does not match instanceId");
+        }
+
+        Path modsDirectory = repository.getRunDirectoryForInstallation(instanceId).resolve("mods");
+        return removeNewInstanceComponentAsync(
+                baseManifest,
+                GameVersionNumber.asGameVersion(gameVersion),
+                componentVersion.getComponentType())
+                .thenComposeAsync(manifest -> componentVersion
+                        .getInstallTask(this, manifest, modsDirectory)
+                        .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
+                .withStage(String.format(
+                        "hmcl.install.%s:%s",
+                        componentVersion.getComponentType().getPatchId(),
+                        componentVersion.getSelfVersion()));
+    }
+
+    /// Resolves and installs a component into an unpublished new instance.
+    ///
+    /// @param instanceId       the unpublished instance id
+    /// @param baseManifest     the working manifest for this step
+    /// @param gameVersion      the Minecraft version used to look up the remote list
+    /// @param componentType    the component list id, such as `game` or `forge`
+    /// @param componentVersion the component version id
+    /// @return the installation task
+    Task<GameInstanceManifest> installNewInstanceComponentAsync(
+            GameInstanceID instanceId,
+            GameInstanceManifest baseManifest,
+            String gameVersion,
+            GameComponentType componentType,
+            String componentVersion) {
+        if (!instanceId.equals(baseManifest.id())) {
+            throw new IllegalArgumentException("baseManifest id does not match instanceId");
+        }
+
+        VersionList<?> versionList = getVersionList(componentType);
         return versionList.loadAsync(gameVersion)
-                .thenComposeAsync(() -> installLibraryAsync(baseVersion, versionList.getVersion(gameVersion, libraryVersion)
-                        .orElseThrow(() -> new IOException("Remote library " + libraryId + " has no version " + libraryVersion))))
-                .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));
+                .thenComposeAsync(() -> installNewInstanceComponentAsync(
+                        instanceId,
+                        baseManifest,
+                        gameVersion,
+                        versionList.getVersion(gameVersion, componentVersion)
+                                .orElseThrow(() -> new IOException(
+                                        "Remote component " + componentType + " has no version " + componentVersion))))
+                .withStage(String.format("hmcl.install.%s:%s", componentType, componentVersion));
     }
 
-    @Override
-    public Task<Version> installLibraryAsync(Version baseVersion, RemoteVersion libraryVersion) {
-        if (baseVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
-
-        AtomicReference<Version> removedLibraryVersion = new AtomicReference<>();
-
-        return removeLibraryAsync(baseVersion.resolvePreservingPatches(repository), libraryVersion.getLibraryId())
-                .thenComposeAsync(version -> {
-                    removedLibraryVersion.set(version);
-                    return libraryVersion.getInstallTask(this, version);
-                })
-                .thenApplyAsync(patch -> {
-                    if (patch == null) {
-                        return removedLibraryVersion.get();
-                    } else {
-                        return removedLibraryVersion.get().addPatch(patch);
-                    }
-                })
-                .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
+    /// Removes one component from an unpublished new instance manifest.
+    ///
+    /// @param workingManifest the manifest being edited
+    /// @param gameVersion     the Minecraft version used for component analysis
+    /// @param componentType   the component to remove
+    /// @return the task producing the updated standalone manifest
+    private Task<GameInstanceManifest> removeNewInstanceComponentAsync(
+            GameInstanceManifest workingManifest,
+            GameVersionNumber gameVersion,
+            GameComponentType componentType) {
+        return Task.supplyAsync(() -> {
+            GameInstanceManifest standalone = workingManifest.inheritsFrom() == null
+                    ? workingManifest
+                    : repository.resolve(workingManifest).standaloneManifest();
+            return GameComponentAnalyzer.analyze(standalone, gameVersion).removeLibrary(componentType);
+        });
     }
 
-    public Task<Version> installLibraryAsync(Version oldVersion, Path installer) {
-        if (oldVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
+    /// Resolves a remote component by id/version and installs it into the working manifest.
+    ///
+    /// @param instance       the registered instance being modified
+    /// @param baseManifest   the working manifest for this step
+    /// @param gameVersion    the Minecraft version used to look up the remote list
+    /// @param componentType  the component list id, such as `game` or `forge`
+    /// @param componentVersion the component version id
+    /// @return the installation task
+    public Task<GameInstanceManifest> installComponentAsync(
+            GameInstance instance,
+            GameInstanceManifest baseManifest,
+            String gameVersion,
+            GameComponentType componentType,
+            String componentVersion) {
+        validateGameInstance(instance);
+        if (!instance.getId().equals(baseManifest.id())) {
+            throw new IllegalArgumentException("baseManifest id does not match instance");
+        }
 
-        return Task
-                .composeAsync(() -> {
+        VersionList<?> versionList = getVersionList(componentType);
+        return versionList.loadAsync(gameVersion)
+                .thenComposeAsync(() -> installComponentAsync(
+                        instance,
+                        baseManifest,
+                        versionList.getVersion(gameVersion, componentVersion)
+                                .orElseThrow(() -> new IOException(
+                                        "Remote library " + componentType + " has no version " + componentVersion))))
+                .withStage(String.format("hmcl.install.%s:%s", componentType, componentVersion));
+    }
+
+    /// Installs a component from a local installer jar into a registered instance.
+    ///
+    /// @param instance  the target instance
+    /// @param installer the local installer jar
+    /// @return the task producing the updated manifest (not yet saved)
+    public Task<GameInstanceManifest> installComponentAsync(GameInstance instance, Path installer) {
+        validateGameInstance(instance);
+        return installComponentAsync(instance, instance.getManifest(), installer);
+    }
+
+    /// Installs a component from a local installer jar into a working manifest.
+    ///
+    /// @param instance     the registered instance (paths / identity)
+    /// @param baseManifest the working manifest for this step
+    /// @param installer    the local installer jar
+    /// @return the task producing the updated manifest (not yet saved)
+    public Task<GameInstanceManifest> installComponentAsync(
+            GameInstance instance,
+            GameInstanceManifest baseManifest,
+            Path installer) {
+        validateGameInstance(instance);
+        if (!instance.getId().equals(baseManifest.id())) {
+            throw new IllegalArgumentException("baseManifest id does not match instance");
+        }
+        String gameVersion = instance.getVersion().toString();
+
+        return Task.composeAsync(() -> {
                     try {
-                        return CleanroomInstallTask.install(this, oldVersion, installer);
+                        return CleanroomInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return NeoForgeInstallTask.install(this, oldVersion, installer);
+                        return NeoForgeInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return ForgeInstallTask.install(this, oldVersion, installer);
+                        return ForgeInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return OptiFineInstallTask.install(this, oldVersion, installer);
+                        return OptiFineInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
                     throw new UnsupportedLibraryInstallerException();
                 })
-                .thenApplyAsync(oldVersion::addPatch);
+                .thenApplyAsync(patch -> patch == null ? baseManifest : baseManifest.addPatch(patch));
     }
 
+    /// Indicates that a local library installer is not recognized by any supported installer.
     public static class UnsupportedLibraryInstallerException extends Exception {
+
+        /// Creates an unsupported-installer exception.
+        public UnsupportedLibraryInstallerException() {
+        }
     }
 
-    /**
-     * Remove installed library.
-     * Will try to remove libraries and patches.
-     *
-     * @param version not resolved version
-     * @param libraryId forge/liteloader/optifine/fabric
-     * @return task to remove the specified library
-     */
-    public Task<Version> removeLibraryAsync(Version version, String libraryId) {
-        // MaintainTask requires version that does not inherits from any version.
-        // If we want to remove a library in dependent version, we should keep the dependents not changed
-        // So resolving this game version to preserve all information in this version.json is necessary.
-        if (version.isResolved())
-            throw new IllegalArgumentException("removeLibraryWithoutSavingAsync requires non-resolved version");
-        Version independentVersion = version.resolvePreservingPatches(repository);
-        String gameVersion = repository.getGameVersion(independentVersion).orElse(null);
+    /// Removes a component from a registered instance using its current stored manifest.
+    ///
+    /// @param instance      the target instance
+    /// @param componentType the component to remove
+    /// @return the task producing the updated standalone manifest (not yet saved)
+    public Task<GameInstanceManifest> removeComponentAsync(GameInstance instance, GameComponentType componentType) {
+        validateGameInstance(instance);
+        return removeComponentAsync(instance, instance.getManifest(), componentType);
+    }
 
-        return Task.supplyAsync(() -> LibraryAnalyzer.analyze(independentVersion, gameVersion).removeLibrary(libraryId).build());
+    /// Removes a component from a working manifest bound to a registered instance.
+    ///
+    /// When `workingManifest` is the instance's stored manifest, edits its resolved standalone view;
+    /// otherwise edits the independent draft (resolving inheritance if still present).
+    ///
+    /// @param instance        the registered instance
+    /// @param workingManifest the draft being edited
+    /// @param componentType   the component to remove
+    /// @return the task producing the updated standalone manifest (not yet saved)
+    public Task<GameInstanceManifest> removeComponentAsync(
+            GameInstance instance,
+            GameInstanceManifest workingManifest,
+            GameComponentType componentType) {
+        validateGameInstance(instance);
+        if (!instance.getId().equals(workingManifest.id())) {
+            throw new IllegalArgumentException("workingManifest id does not match instance");
+        }
+
+        return Task.supplyAsync(() -> {
+            GameInstanceManifest standalone;
+            if (workingManifest.equals(instance.getManifest())) {
+                standalone = instance.getResolvedManifest().standaloneManifest();
+            } else if (workingManifest.inheritsFrom() == null) {
+                standalone = workingManifest;
+            } else {
+                standalone = repository.resolve(workingManifest).standaloneManifest();
+            }
+
+            return GameComponentAnalyzer.analyze(standalone, instance.getVersion()).removeLibrary(componentType);
+        });
     }
 
 }

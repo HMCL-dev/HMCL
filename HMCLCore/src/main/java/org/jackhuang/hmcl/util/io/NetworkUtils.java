@@ -394,7 +394,7 @@ public final class NetworkUtils {
         StringBuilder sb = new StringBuilder();
         if (params != null) {
             for (Map.Entry<String, String> e : params.entrySet())
-                sb.append(e.getKey()).append("=").append(e.getValue()).append("&");
+                sb.append(encodeURL(e.getKey())).append("=").append(encodeURL(e.getValue())).append("&");
             sb.deleteCharAt(sb.length() - 1);
         }
         return doPost(u, sb.toString());

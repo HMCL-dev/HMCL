@@ -18,9 +18,11 @@
 package org.jackhuang.hmcl.download.optifine;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 
 import java.util.List;
@@ -28,7 +30,7 @@ import java.util.List;
 public class OptiFineRemoteVersion extends RemoteVersion {
 
     public OptiFineRemoteVersion(String gameVersion, String selfVersion, List<String> urls, boolean snapshot) {
-        super(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(), gameVersion, selfVersion, null, snapshot ? Type.SNAPSHOT : Type.RELEASE, urls);
+        super(GameComponentType.OPTIFINE, gameVersion, selfVersion, null, snapshot ? Type.SNAPSHOT : Type.RELEASE, urls);
     }
 
     @Override
@@ -37,7 +39,12 @@ public class OptiFineRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
-        return new OptiFineInstallTask(dependencyManager, baseVersion, this);
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
+        return new GameDownloadTask(dependencyManager, baseVersion)
+                .thenComposeAsync(minecraftJar -> new OptiFineInstallTask(
+                        dependencyManager,
+                        baseVersion,
+                        this,
+                        minecraftJar));
     }
 }

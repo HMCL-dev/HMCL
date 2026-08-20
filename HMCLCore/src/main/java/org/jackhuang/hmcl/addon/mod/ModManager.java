@@ -21,8 +21,9 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.meta.*;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -38,7 +39,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModManager extends LocalAddonManager<LocalModFile> {
-    public static final List<String> MOD_EXTENSIONS = List.of("jar", "litemod");
+    public static final List<String> MOD_EXTENSIONS = List.of("jar", "zip", "litemod");
 
     @FunctionalInterface
     private interface ModMetadataReader {
@@ -58,26 +59,30 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         );
 
         map.put("jar", zipReaders);
+        map.put("zip", zipReaders);
         map.put("litemod", List.of(pair(LiteModMetadata::fromFile, ModLoaderType.LITE_LOADER)));
 
         READERS = map;
     }
 
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
-    private LibraryAnalyzer analyzer;
+    private GameComponentAnalyzer analyzer;
 
     private boolean loaded = false;
 
-    public ModManager(GameRepository repository, String id) {
-        super(repository, id);
+    /// Creates a mod manager for the given instance.
+    ///
+    /// @param instance the snapshot member whose mods directory this manager operates on
+    public ModManager(DefaultGameInstance instance) {
+        super(instance);
     }
 
     @Override
     public Path getDirectory() {
-        return repository.getModsDirectory(id);
+        return instance.getModsDirectory();
     }
 
-    public LibraryAnalyzer getLibraryAnalyzer() {
+    public GameComponentAnalyzer getComponentAnalyzer() {
         return analyzer;
     }
 
@@ -110,7 +115,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             return;
         }
 
-        Set<ModLoaderType> modLoaderTypes = analyzer.getModLoaders();
+        Set<ModLoaderType> modLoaderTypes = instance.getModLoaders();
 
         var supportedReaders = new ArrayList<ModMetadataReader>();
         var unsupportedReaders = new ArrayList<ModMetadataReader>();
@@ -178,10 +183,12 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             localFiles.clear();
             localMods.clear();
 
-            analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
+            analyzer = instance.getAnalyzer();
 
-            boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
-                    || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
+            boolean supportSubfolders = analyzer.has(GameComponentType.FORGE)
+                    || analyzer.has(GameComponentType.QUILT)
+                    || analyzer.has(GameComponentType.CLEANROOM)
+                    || analyzer.has(GameComponentType.LITELOADER);
 
             if (Files.isDirectory(getDirectory())) {
                 try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {

@@ -18,13 +18,15 @@
 package org.jackhuang.hmcl.modpack.modrinth;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,46 +40,60 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Completes missing files for an installed Modrinth modpack.
+@NotNullByDefault
 public class ModrinthCompletionTask extends Task<Void> {
 
+    /// The dependency manager used to download remote files.
     private final DefaultDependencyManager dependency;
-    private final DefaultGameRepository repository;
+
+    /// The fixed registered instance completed by this task.
+    private final DefaultGameInstance instance;
+
+    /// The mod manager associated with [#instance].
     private final ModManager modManager;
-    private final String version;
-    private ModrinthManifest manifest;
+
+    /// The manifest supplied by the caller or loaded from disk, if available.
+    private @Nullable ModrinthManifest manifest;
+
+    /// Download tasks produced during [#execute()].
     private final List<Task<?>> dependencies = new ArrayList<>();
 
+    /// Whether every required download has at least one usable URL.
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
+
+    /// The number of manifest entries processed.
     private final AtomicInteger finished = new AtomicInteger(0);
+
+    /// Whether a required file has no usable download URL.
     private final AtomicBoolean notFound = new AtomicBoolean(false);
 
-    /**
-     * Constructor.
-     *
-     * @param dependencyManager the dependency manager.
-     * @param version           the existent and physical version.
-     */
-    public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        this(dependencyManager, version, null);
+    /// Creates a task that completes the installed Modrinth modpack.
+    ///
+    /// @param dependencyManager the dependency manager
+    /// @param instance          the registered instance to complete
+    public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
+        this(dependencyManager, instance, null);
     }
 
-    /**
-     * Constructor.
-     *
-     * @param dependencyManager the dependency manager.
-     * @param version           the existent and physical version.
-     * @param manifest          the CurseForgeModpack manifest.
-     */
-    public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest) {
+    /// Creates a task that completes the installed Modrinth modpack using an optional manifest.
+    ///
+    /// @param dependencyManager the dependency manager
+    /// @param instance          the registered instance to complete
+    /// @param manifest          the Modrinth manifest, or `null` to read it from disk
+    public ModrinthCompletionTask(
+            DefaultDependencyManager dependencyManager,
+            DefaultGameInstance instance,
+            @Nullable ModrinthManifest manifest) {
+        dependencyManager.validateGameInstance(instance);
         this.dependency = dependencyManager;
-        this.repository = dependencyManager.getGameRepository();
-        this.modManager = repository.getModManager(version);
-        this.version = version;
+        this.instance = instance;
+        this.modManager = instance.getModManager();
         this.manifest = manifest;
 
         if (manifest == null)
             try {
-                Path manifestFile = repository.getVersionRoot(version).resolve("modrinth.index.json");
+                Path manifestFile = instance.getInstanceRoot().resolve("modrinth.index.json");
                 if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
             } catch (Exception e) {
@@ -102,7 +118,7 @@ public class ModrinthCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path runDirectory = FileUtils.toAbsolute(repository.getRunDirectory(version));
+        Path runDirectory = FileUtils.toAbsolute(instance.getRunDirectory());
         Path modsDirectory = runDirectory.resolve("mods");
 
         for (ModrinthManifest.File file : manifest.getFiles()) {

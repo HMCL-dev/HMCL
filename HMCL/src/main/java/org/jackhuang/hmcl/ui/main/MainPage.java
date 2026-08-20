@@ -24,6 +24,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.beans.property.*;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -46,10 +47,8 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -63,8 +62,8 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -74,9 +73,10 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
@@ -87,17 +87,27 @@ import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Displays the launcher home controls for the currently selected game repository.
 public final class MainPage extends StackPane implements DecoratorPage {
     private static final String ANNOUNCEMENT = "announcement";
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
 
-    private final StringProperty currentGame = new SimpleStringProperty(this, "currentGame");
+    private final ObjectProperty<@Nullable HMCLGameInstance> currentGame = new SimpleObjectProperty<>(this, "currentGame");
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
     private final BooleanProperty showUpdateDialog = new SimpleBooleanProperty(this, "showUpdateDialog");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
-    private final ObservableList<Version> versions = FXCollections.observableArrayList();
-    private HMCLGameRepository repository;
+    /// Mutable storage for visible instances from the selected repository's current snapshot.
+    private final ObservableList<HMCLGameInstance> mutableInstances = FXCollections.observableArrayList();
+
+    /// Read-only observable view of [#mutableInstances].
+    private final @UnmodifiableView ObservableList<HMCLGameInstance> instances =
+            FXCollections.unmodifiableObservableList(mutableInstances);
+
+    /// Current snapshot of the repository selected by [GameDirectoryManager].
+    private final ObservableValue<HMCLGameRepositorySnapshot> selectedRepositorySnapshot =
+            BindingMapping.of(GameDirectoryManager.selectedRepositoryProperty())
+                    .flatMap(HMCLGameRepository::snapshotProperty);
 
     private TransitionPane announcementPane;
     private final StackPane updatePane;
@@ -209,10 +219,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         HBox launchPane = new HBox();
         launchPane.getStyleClass().add("launch-pane");
-        FXUtils.onScroll(launchPane, versions, list -> {
-            String currentId = getCurrentGame();
+        FXUtils.onChangeAndOperate(selectedRepositorySnapshot, ignored -> mutableInstances.setAll(GameDirectoryManager.getSelectedRepository().getDisplayInstances().toList()));
+        FXUtils.onScroll(launchPane, instances, list -> {
+            @Nullable HMCLGameInstance currentGame = getCurrentGame();
+            @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-        }, it -> repository.setSelectedInstance(it.getId()));
+        }, instance -> instance.getRepository().setSelectedInstance(instance));
 
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
@@ -231,18 +243,18 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     private Tooltip tooltip;
 
                     @Override
-                    public void accept(String currentGame) {
+                    public void accept(@Nullable HMCLGameInstance currentGame) {
                         if (currentGame == null) {
-                            launchLabel.setText(i18n("version.launch.empty"));
+                            launchLabel.setText(i18n("instance.launch.empty"));
                             currentLabel.setText(null);
                             graphic.getChildren().setAll(launchLabel);
                             FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launchNoGame);
                             if (tooltip == null)
-                                tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
+                                tooltip = new Tooltip(i18n("instance.launch.empty.tooltip"));
                             FXUtils.installFastTooltip(launchButton, tooltip);
                         } else {
-                            launchLabel.setText(i18n("version.launch"));
-                            currentLabel.setText(currentGame);
+                            launchLabel.setText(i18n("instance.launch"));
+                            currentLabel.setText(currentGame.getId().toString());
                             graphic.getChildren().setAll(launchLabel, currentLabel);
                             FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launch);
                             if (tooltip != null)
@@ -257,37 +269,39 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
             menuButton.setOnAction(e -> {
+                if (GameListPopupMenu.hideShowing(menuButton)) {
+                    return;
+                }
+
                 JFXPopup popup = GameListPopupMenu.showAndGetPopup(
-                    menuButton,
-                    JFXPopup.PopupVPosition.BOTTOM,
-                    JFXPopup.PopupHPosition.RIGHT,
-                    0,
-                    -menuButton.getHeight(),
-                    repository, versions
+                        menuButton,
+                        JFXPopup.PopupVPosition.BOTTOM,
+                        JFXPopup.PopupHPosition.RIGHT,
+                        0,
+                        -menuButton.getHeight(),
+                        instances
                 );
 
-                if (popup != null) {
-                    Node graphic = menuButton.getGraphic();
-                    if (graphic != null) {
-                        if (AnimationUtils.isAnimationEnabled()) {
-                            Duration duration = Duration.millis(200);
-                            RotateTransition rotateOpen = new RotateTransition(duration, graphic);
-                            rotateOpen.setToAngle(-180);
-                            FXUtils.playAnimation(graphic, "arrow-rotation", rotateOpen);
+                Node graphic = menuButton.getGraphic();
+                if (graphic != null) {
+                    if (AnimationUtils.isAnimationEnabled()) {
+                        Duration duration = Duration.millis(200);
+                        RotateTransition rotateOpen = new RotateTransition(duration, graphic);
+                        rotateOpen.setToAngle(-180);
+                        FXUtils.playAnimation(graphic, "arrow-rotation", rotateOpen);
 
-                            popup.setOnHidden(windowEvent -> {
-                                RotateTransition rotateClose = new RotateTransition(duration, graphic);
-                                rotateClose.setToAngle(0);
-                                FXUtils.playAnimation(graphic, "arrow-rotation", rotateClose);
-                            });
-                        } else {
-                            graphic.setRotate(-180);
-                            popup.setOnHidden(windowEvent -> graphic.setRotate(0));
-                        }
+                        popup.setOnHidden(windowEvent -> {
+                            RotateTransition rotateClose = new RotateTransition(duration, graphic);
+                            rotateClose.setToAngle(0);
+                            FXUtils.playAnimation(graphic, "arrow-rotation", rotateClose);
+                        });
+                    } else {
+                        graphic.setRotate(-180);
+                        popup.setOnHidden(windowEvent -> graphic.setRotate(0));
                     }
                 }
             });
-            FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
+            FXUtils.installFastTooltip(menuButton, i18n("instance.switch"));
             menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
 
             EventHandler<MouseEvent> secondaryClickHandle = event -> {
@@ -342,14 +356,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launch() {
         HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-        Versions.launch(repository, repository.getSelectedInstance());
+        Instances.launch(repository.getSelectedInstance());
     }
 
     private void launchNoGame() {
         DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
-        VersionList<?> versionList = downloadProvider.getVersionListById("game");
+        VersionList<?> versionList = downloadProvider.getVersionList(GameComponentType.GAME);
 
-        Holder<String> gameVersionHolder = new Holder<>();
+        Holder<GameInstanceID> instanceHolder = new Holder<>();
         Task<?> task = versionList.refreshAsync("")
                 .thenSupplyAsync(() -> versionList.getVersions("").stream()
                         .filter(it -> it.getVersionType() == RELEASE)
@@ -360,28 +374,31 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 .thenComposeAsync(version -> {
                     HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
                     DefaultDependencyManager dependency = repository.getDependency();
-                    String gameVersion = gameVersionHolder.value = version.getGameVersion();
 
-                    return dependency.gameBuilder()
-                            .name(gameVersion)
-                            .gameVersion(gameVersion)
+                    String gameVersion = version.getGameVersion();
+                    GameInstanceID instanceId = new GameInstanceID(gameVersion);
+
+                    instanceHolder.value = instanceId;
+
+                    return dependency.newGameBuilder()
+                            .id(instanceId)
+                            .component(GameComponentType.GAME, gameVersion)
                             .buildAsync();
                 })
-                .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refreshVersions())
+                .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refresh())
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        GameDirectoryManager.getSelectedRepository().setSelectedInstance(gameVersionHolder.value);
+                        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+                        repository.setSelectedInstance(repository.getInstance(instanceHolder.value));
                         launch();
-                    } else if (exception instanceof CancellationException) {
-                        Controllers.showToast(i18n("message.cancelled"));
-                    } else {
+                    } else if (!(exception instanceof CancellationException)) {
                         LOG.warning("Failed to install game", exception);
                         Controllers.dialog(StringUtils.getStackTrace(exception),
                                 i18n("install.failed"),
                                 MessageDialogPane.MessageType.WARNING);
                     }
                 });
-        Controllers.taskDialog(task, i18n("version.launch.empty.installing"), TaskCancellationAction.NORMAL);
+        Controllers.taskDialog(task, i18n("instance.launch.empty.installing"), TaskCancellationAction.NORMAL);
     }
 
     private void onUpgrade() {
@@ -402,28 +419,35 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return state;
     }
 
-    public GameDirectory getGameDirectory() {
-        return repository.getGameDirectory();
-    }
-
-    public HMCLGameRepository getRepository() {
-        return repository;
-    }
-
-    public String getCurrentGame() {
+    /// Returns the instance shown by the launch controls.
+    ///
+    /// @return the current instance, or `null` when no instance is selected
+    public @Nullable HMCLGameInstance getCurrentGame() {
         return currentGame.get();
     }
 
-    public StringProperty currentGameProperty() {
+    /// Returns the property for the instance shown by the launch controls.
+    ///
+    /// @return the current-instance property
+    public ObjectProperty<@Nullable HMCLGameInstance> currentGameProperty() {
         return currentGame;
     }
 
-    public void setCurrentGame(String currentGame) {
+    /// Sets the instance shown by the launch controls.
+    ///
+    /// @param currentGame the instance to show, or `null` to show the empty state
+    public void setCurrentGame(@Nullable HMCLGameInstance currentGame) {
         this.currentGame.set(currentGame);
     }
 
-    public ObservableList<Version> getVersions() {
-        return versions;
+    /// Returns the observable instances displayed by launch-selection controls.
+    ///
+    /// The list is updated from the selected repository's published snapshot and contains no hidden
+    /// instances. The returned view cannot be mutated.
+    ///
+    /// @return the observable launch-menu instances
+    public @UnmodifiableView ObservableList<HMCLGameInstance> getInstances() {
+        return instances;
     }
 
     public boolean isShowUpdate() {
@@ -462,9 +486,4 @@ public final class MainPage extends StackPane implements DecoratorPage {
         this.latestVersion.set(latestVersion);
     }
 
-    public void initVersions(HMCLGameRepository repository, List<Version> versions) {
-        FXUtils.checkFxUserThread();
-        this.repository = repository;
-        this.versions.setAll(versions);
-    }
 }

@@ -30,6 +30,7 @@ import java.util.*;
  */
 public class LaunchOptions implements Serializable {
 
+    private GameInstanceID instanceId;
     private Path gameDir;
     private JavaRuntime java;
     private String versionName;
@@ -60,10 +61,15 @@ public class LaunchOptions implements Serializable {
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean useHighPerformanceGPU;
     private boolean enableDebugLogOutput;
     private boolean allowAutoAgent;
     private boolean disableAutoGameOptions;
     private boolean daemon;
+
+    public GameInstanceID getInstanceId() {
+        return instanceId;
+    }
 
     /**
      * The game directory
@@ -258,6 +264,10 @@ public class LaunchOptions implements Serializable {
         return useNativeOpenAL;
     }
 
+    public boolean isUseHighPerformanceGPU() {
+        return useHighPerformanceGPU;
+    }
+
     public boolean isEnableDebugLogOutput() {
         return enableDebugLogOutput;
     }
@@ -309,6 +319,11 @@ public class LaunchOptions implements Serializable {
 
         public List<String> getJavaAgents() {
             return options.javaAgents;
+        }
+
+        public Builder setInstanceId(GameInstanceID instanceId) {
+            options.instanceId = instanceId;
+            return this;
         }
 
         public Builder setGameDir(Path gameDir) {
@@ -463,6 +478,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
             options.useNativeOpenAL = useNativeOpenAL;
+            return this;
+        }
+
+        public Builder setUseHighPerformanceGPU(boolean useHighPerformanceGPU) {
+            options.useHighPerformanceGPU = useHighPerformanceGPU;
             return this;
         }
 

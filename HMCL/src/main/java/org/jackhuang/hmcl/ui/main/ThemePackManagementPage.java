@@ -22,8 +22,11 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -32,6 +35,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
@@ -414,7 +418,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// @param themePack the installed theme pack to display
         private ThemePackInfoDialog(ThemePackManagementPage page, ThemePackManager.InstalledThemePack themePack) {
             ThemePackManifest manifest = themePack.manifest();
-            maxWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
+            maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             HBox heading = new HBox(8);
             heading.setAlignment(Pos.CENTER_LEFT);
@@ -479,7 +483,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             scrollPane.setPrefViewportWidth(520);
             scrollPane.setPrefViewportHeight(Math.min(360, manifest.themes().size() * 86));
-            scrollPane.maxHeightProperty().bind(Controllers.windowHeightProperty().multiply(0.55));
+            scrollPane.maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.55));
 
             StackPane body = new StackPane(scrollPane);
             body.setPadding(new Insets(10, 0, 0, 0));
@@ -505,6 +509,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
         /// Toolbar shown during normal browsing.
         private final HBox toolbarNormal = new HBox();
+
+        /// Whether the search mechanism is currently active.
+        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
         /// Search input.
         private final JFXTextField searchField = new JFXTextField();
@@ -543,13 +550,20 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             pause.setOnFinished(event ->
                     skinnable.filteredList.setPredicate(skinnable.createPredicate(searchField.getText())));
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                pause.setRate(1);
-                pause.playFromStart();
+                if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                    pause.setRate(1);
+                    pause.playFromStart();
+                }
             });
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
                 changeToolbar(toolbarNormal);
+
                 searchField.clear();
+                pause.stop();
+
+                skinnable.filteredList.setPredicate(null);
+                isSearching.set(false);
             });
             onEscPressed(searchField, closeSearchBar::fire);
 
@@ -584,6 +598,15 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             listView.getStyleClass().add("no-horizontal-scrollbar");
             ignoreEvent(listView, KeyEvent.KEY_PRESSED, event -> event.getCode() == KeyCode.ESCAPE);
 
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label();
+            placeholderLabel.textProperty().bind(
+                Bindings.when(isSearching).then(i18n("search.no_results_found")).otherwise("")
+            );
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+
             center.setContent(listView);
             root.getContent().add(center);
         }
@@ -595,6 +618,8 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
                 if (newToolbar == searchBar) {
                     runInFX(searchField::requestFocus);
+
+                    isSearching.set(true);
                 }
             }
         }
@@ -607,7 +632,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private final ThemePackManagementPage page;
 
         /// Root graphic reused by this cell.
-        private final Region graphic;
+        private final RipplerContainer graphic;
 
         /// The text content shown for the current theme pack.
         private final TwoLineListItem content = new TwoLineListItem();
@@ -690,6 +715,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
             var currentItem = getItem();
 
+            this.graphic.releaseRippleImmediately();
             super.updateItem(themePack, empty);
 
             if (Objects.equals(getItem(), currentItem)) return;
