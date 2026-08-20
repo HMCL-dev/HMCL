@@ -437,7 +437,7 @@ public final class LauncherHelper {
         Task<JavaRuntime> task;
         JavaVersionType javaVersionType = setting.getInheritable(GameSettings::javaTypeProperty);
         if (setting.getInheritable(GameSettings::notCheckJVMProperty)) {
-            task = getJavaTask.thenApplyAsync(java -> Objects.requireNonNullElse(java, JavaRuntime.getDefault()));
+            task = getJavaTask.thenApplyAsync(java -> Lang.requireNonNullElse(java, JavaRuntime.getDefault()));
         } else if (javaVersionType == JavaVersionType.AUTO || javaVersionType == JavaVersionType.VERSION) {
             task = getJavaTask.thenComposeAsync(Schedulers.javafx(), java -> {
                 if (java != null) {

@@ -34,6 +34,10 @@ public final class Lang {
     private Lang() {
     }
 
+    public static <T> T requireNonNullElse(T value, T defaultValue) {
+        return value != null ? value : defaultValue;
+    }
+
     /**
      * Construct a mutable map by given key-value pairs.
      *

@@ -196,7 +196,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                         String componentID = require.getID();
                         if (!existed.containsKey(componentID)) {
                             Task<MultiMCInstancePatch> task = new GetTask(MultiMCComponents.getMetaURL(
-                                    componentID, Objects.requireNonNullElse(require.getEqualsVersion(), require.getSuggests()), mcVersion
+                                    componentID, Lang.requireNonNullElse(require.getEqualsVersion(), require.getSuggests()), mcVersion
                             )).thenApplyAsync(s -> MultiMCInstancePatch.read(componentID, s));
                             task.run();
 

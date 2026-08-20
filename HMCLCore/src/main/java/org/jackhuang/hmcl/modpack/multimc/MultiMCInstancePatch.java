@@ -300,10 +300,10 @@ public final class MultiMCInstancePatch {
             for (String jvmArg : patch.getJvmArgs()) {
                 jvmArguments.add(new StringArgument(jvmArg));
             }
-            mainClass = Objects.requireNonNullElse(mainClass, patch.getMainClass());
-            assetIndex = Objects.requireNonNullElse(patch.getAssetIndex(), assetIndex);
-            javaMajors = Objects.requireNonNullElse(patch.getJavaMajors(), javaMajors);
-            mainJar = Objects.requireNonNullElse(patch.getMainJar(), mainJar);
+            mainClass = Lang.requireNonNullElse(mainClass, patch.getMainClass());
+            assetIndex = Lang.requireNonNullElse(patch.getAssetIndex(), assetIndex);
+            javaMajors = Lang.requireNonNullElse(patch.getJavaMajors(), javaMajors);
+            mainJar = Lang.requireNonNullElse(patch.getMainJar(), mainJar);
             traits = Lang.merge(patch.getTraits(), traits);
             tweakers = Lang.merge(patch.getTweakers(), tweakers);
             libraries = Lang.merge(patch.getLibraries(), libraries);
