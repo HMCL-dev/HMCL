@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -30,8 +31,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -52,10 +52,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -64,18 +61,31 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> implements GameInstancePage.GameInstanceLoadable, PageAware {
+public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> {
+
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private @Nullable Path screenshotsDir;
+
+    public ScreenshotsPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
+    }
 
     @Override
     protected Skin<?> createDefaultSkin() {
         return new ScreenshotsPageSkin(this);
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        screenshotsDir = instanceId != null ? repository.getRunDirectory(instanceId).resolve("screenshots") : null;
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        HMCLGameInstance gameInstance = instance.instance();
+        if (gameInstance == null) return;
+        screenshotsDir = gameInstance.getRunDirectory().resolve("screenshots");
         refresh();
     }
 
