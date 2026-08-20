@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.modpack.multimc;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
+
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
@@ -413,7 +413,7 @@ public final class MultiMCInstancePatch {
 
         String gameVersion = null;
         for (MultiMCInstancePatch patch : patches) {
-            if (MultiMCComponents.getComponent(patch.getID()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
+            if (MultiMCComponents.getComponent(patch.getID()) == GameComponentType.GAME) {
                 gameVersion = patch.getVersion();
                 break;
             }

@@ -26,7 +26,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.game.JavaVersionConstraint;
@@ -320,7 +320,7 @@ public final class JavaManager {
 
     @Nullable
     public static JavaRuntime findSuitableJava(Collection<JavaRuntime> javaRuntimes, GameVersionNumber gameVersion, GameInstanceManifest manifest) {
-        LibraryAnalyzer analyzer = manifest != null ? LibraryAnalyzer.analyze(manifest, gameVersion != null ? gameVersion.toString() : null) : null;
+        GameComponentAnalyzer analyzer = manifest != null ? GameComponentAnalyzer.analyze(manifest, gameVersion) : null;
 
         boolean forceX86 = Architecture.SYSTEM_ARCH == Architecture.ARM64
                 && (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
