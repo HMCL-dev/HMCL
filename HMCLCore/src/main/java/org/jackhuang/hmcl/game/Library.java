@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,6 +152,7 @@ public record Library(
         return artifact.getVersion();
     }
 
+    @Contract(pure = true)
     public @Nullable String classifier() {
         if (artifact.getClassifier() == null) {
             if (natives != null) {

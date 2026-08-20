@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 
@@ -42,7 +43,7 @@ public final class GameInstanceJsonDownloadTask extends Task<String> {
     public GameInstanceJsonDownloadTask(String gameVersion, DefaultDependencyManager dependencyManager) {
         this.gameVersion = gameVersion;
         this.dependencyManager = dependencyManager;
-        this.gameVersionList = dependencyManager.getVersionList("game");
+        this.gameVersionList = dependencyManager.getVersionList(GameComponentType.GAME);
 
         dependents.add(gameVersionList.loadAsync(gameVersion));
 
