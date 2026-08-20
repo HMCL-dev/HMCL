@@ -25,6 +25,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -45,8 +46,7 @@ import org.jackhuang.hmcl.addon.mod.LocalMod;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.schematic.Schematic;
 import org.jackhuang.hmcl.schematic.SchematicType;
@@ -83,7 +83,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements GameInstancePage.GameInstanceLoadable {
+public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     private static final SynchronizedLazy<RemoteAddon> litematicaLazy = new SynchronizedLazy<>(() -> {
         try {
@@ -117,6 +117,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         };
     }
 
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+
     private HMCLGameRepository repository;
     private GameInstanceID instanceId;
     private Path schematicsDirectory;
@@ -125,11 +127,21 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
     private final ObjectProperty<RemoteAddon> downloadTarget = new SimpleObjectProperty<>(this, "downloadTarget");
 
-    public SchematicsPage() {
+    /// Creates a schematics list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public SchematicsPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this,
                 file -> currentDirectoryProperty().get() != null && Schematic.isFileSchematic(file),
                 this::addFiles
         );
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -138,7 +150,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
+    public void loadInstance(HMCLGameInstance.Optional instance) {
         this.repository = repository;
         this.instanceId = instanceId;
         this.schematicsDirectory = instanceId != null ? repository.getSchematicsDirectory(instanceId) : null;

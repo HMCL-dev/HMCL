@@ -17,12 +17,14 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -34,7 +36,7 @@ import java.util.Objects;
  */
 public class RemoteVersion implements Comparable<RemoteVersion> {
 
-    private final String libraryId;
+    private final GameComponentType componentType;
     private final String gameVersion;
     private final String selfVersion;
     private final Instant releaseDate;
@@ -48,8 +50,8 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar original URL.
      */
-    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, Instant releaseDate, List<String> urls) {
-        this(libraryId, gameVersion, selfVersion, releaseDate, Type.UNCATEGORIZED, urls);
+    public RemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, List<String> urls) {
+        this(componentType, gameVersion, selfVersion, releaseDate, Type.UNCATEGORIZED, urls);
     }
 
     /**
@@ -59,8 +61,8 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar URL.
      */
-    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, Instant releaseDate, Type type, List<String> urls) {
-        this.libraryId = Objects.requireNonNull(libraryId);
+    public RemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, Type type, List<String> urls) {
+        this.componentType = Objects.requireNonNull(componentType);
         this.gameVersion = Objects.requireNonNull(gameVersion);
         this.selfVersion = Objects.requireNonNull(selfVersion);
         this.releaseDate = releaseDate;
@@ -68,8 +70,8 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
         this.type = Objects.requireNonNull(type);
     }
 
-    public String getLibraryId() {
-        return libraryId;
+    public GameComponentType getComponentType() {
+        return componentType;
     }
 
     public String getGameVersion() {
@@ -98,6 +100,23 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
 
     public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
         throw new UnsupportedOperationException(this + " cannot be installed yet");
+    }
+
+    /// Creates an install task with an explicit mods directory for libraries that download into the
+    /// instance run tree (for example Fabric/Quilt API).
+    ///
+    /// The default implementation ignores `modsDirectory` and delegates to
+    /// [#getInstallTask(DefaultDependencyManager, GameInstanceManifest)].
+    ///
+    /// @param dependencyManager the dependency manager
+    /// @param baseVersion       the manifest being installed into
+    /// @param modsDirectory     the mods directory of the target instance run directory
+    /// @return the install task
+    public Task<GameInstancePatch> getInstallTask(
+            DefaultDependencyManager dependencyManager,
+            GameInstanceManifest baseVersion,
+            Path modsDirectory) {
+        return getInstallTask(dependencyManager, baseVersion);
     }
 
     @Override
