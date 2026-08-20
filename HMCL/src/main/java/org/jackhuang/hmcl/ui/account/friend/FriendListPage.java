@@ -53,13 +53,13 @@ public final class FriendListPage extends ListPageBase<FriendListItem> {
         this.control = control;
         this.onAddFriend = onAddFriend;
 
+        setOnFailedAction(e -> refresh());
         refresh();
     }
 
     public void refresh() {
         setLoading(true);
         setFailedReason(null);
-        setOnFailedAction(null);
 
         Task.supplyAsync(control::getFriendList)
                 .thenApplyAsync(result -> pair(result, control.getPresence(EnumPresenceStatus.ONLINE)))

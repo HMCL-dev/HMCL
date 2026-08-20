@@ -94,7 +94,7 @@ public final class FriendListCell extends MDListCell<FriendListItem> {
         rejectButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.reject.confirm"), i18n("account.friend.reject.failed")));
         FXUtils.installFastTooltip(rejectButton, i18n("account.friend.reject"));
 
-        revokeButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.revoke"), i18n("account.friend.revoke")));
+        revokeButton.setOnAction(event -> friendListPage.confirmUpdateFriend(getItem(), EnumUpdateType.REMOVE, i18n("account.friend.revoke.confirm"), i18n("account.friend.revoke.failed")));
         FXUtils.installFastTooltip(revokeButton, i18n("account.friend.revoke"));
 
         actions.setAlignment(Pos.CENTER_RIGHT);
