@@ -48,6 +48,10 @@ public class ManuallyCreatedModpackInstallTask extends Task<Path> {
 
         setResult(dest);
 
-        new Unzipper(zipFile, dest).setSubDirectory(subdirectory).setTerminateIfSubDirectoryNotExists().setEncoding(charset).unzip();
+        new Unzipper(zipFile, dest)
+                .setSubDirectory(subdirectory)
+                .setTerminateIfSubDirectoryNotExists()
+                .setEncoding(charset)
+                .unzip();
     }
 }
