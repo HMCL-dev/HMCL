@@ -33,10 +33,15 @@ import javafx.stage.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
@@ -56,6 +61,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -64,6 +70,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
@@ -371,6 +379,42 @@ public final class Controllers {
                         }, updateShowTips);
                     }, updateShowTips);
         }
+
+        tryInstallBundledModpack(GameDirectoryManager.getSelectedRepository());
+    }
+
+    /// Offers automatic install when a package exists under `.hmcl/modpack/`.
+    ///
+    /// Called from [Controllers#initialize] after the UI is ready. Install does not wait for repository
+    /// refresh: instance paths come from the selected repository layout. The package file itself is the
+    /// install signal; it is deleted after a successful install so later startups do not re-prompt.
+    private static void tryInstallBundledModpack(HMCLGameRepository repository) {
+        @Nullable Path modpackFile = Metadata.findBundledModpackFile();
+        if (modpackFile == null) {
+            return;
+        }
+
+        LOG.info("Found bundled modpack at " + modpackFile + "; starting automatic install");
+
+        Controllers.taskDialog(
+                Task.composeAsync(Schedulers.io(), () -> {
+                            Charset encoding = CompressingUtils.findSuitableEncoding(modpackFile);
+                            Modpack modpack = ModpackHelper.readModpackManifest(modpackFile, encoding);
+                            return ModpackHelper.getInstallTask(
+                                    repository, modpackFile, new GameInstanceID(modpack.getName()), modpack, null);
+                        })
+                        .whenComplete(Schedulers.javafx(), (ignored, exception) -> {
+                            if (exception != null) {
+                                LOG.warning("Failed to install bundled modpack", exception);
+                                return;
+                            }
+                            try {
+                                Files.deleteIfExists(modpackFile);
+                            } catch (IOException e) {
+                                LOG.warning("Failed to delete bundled modpack: " + modpackFile, e);
+                            }
+                        }), i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL
+        );
     }
 
     public static void dialog(Region content) {
@@ -554,7 +598,7 @@ public final class Controllers {
                     break;
                 case "hmcl://game/launch":
                     var repository = GameDirectoryManager.getSelectedRepository();
-                    Instances.launch(repository, repository.getSelectedInstance(), LauncherHelper::setKeep);
+                    Instances.launch(repository.getSelectedInstance(), LauncherHelper::setKeep);
                     break;
             }
         } else {
@@ -562,12 +606,12 @@ public final class Controllers {
         }
     }
 
-    public static void openUriInBrowser(@Nullable URI uri) {
+    public static void openUriOrCopy(@Nullable URI uri) {
         if (uri == null) return;
-        openUriInBrowser(uri.toString());
+        openUriOrCopy(uri.toString());
     }
 
-    public static void openUriInBrowser(@Nullable String uri) {
+    public static void openUriOrCopy(@Nullable String uri) {
         if (uri == null) return;
         var dialog = new MessageDialogPane.Builder(
                 i18n("web.open_in_browser", uri),

@@ -4,6 +4,7 @@
 
 # ─── Explicitly text – source & build ────────────────────────────────────────
 *.java        text eol=lf
+*.js          text eol=lf
 *.kt          text eol=lf
 *.kts         text eol=lf
 *.groovy      text eol=lf

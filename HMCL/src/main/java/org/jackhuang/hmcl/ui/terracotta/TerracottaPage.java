@@ -26,6 +26,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -41,6 +42,7 @@ import org.jackhuang.hmcl.ui.main.MainPage;
 import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.Lang;
+import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.userState;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -54,7 +56,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     private final TransitionPane transitionPane = new TransitionPane();
 
     @SuppressWarnings("unused")
-    private ChangeListener<GameInstanceID> instanceChangeListenerHolder;
+    private @Nullable ChangeListener<@Nullable HMCLGameInstance> instanceChangeListenerHolder;
 
     public TerracottaPage() {
         statusPage.setNodeSupplier(TerracottaControllerPage::new);
@@ -79,27 +81,28 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                 .add(accountListItem)
                 .addNavigationDrawerItem(i18n("instance.launch"), SVG.ROCKET_LAUNCH, () -> {
                     var repository = GameDirectoryManager.getSelectedRepository();
-                    Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
+                    Instances.launch(repository.getSelectedInstance(), launcherHelper -> {
                         launcherHelper.setKeep();
                         launcherHelper.setDisableOfflineSkin();
                     });
                 }, item -> {
                     instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(),
-                            instanceName -> item.setSubtitle(instanceName != null ? instanceName.toString() : i18n("instance.empty"))
+                            instance -> item.setSubtitle(instance != null ? instance.getId().toString() : i18n("instance.empty"))
                     );
 
                     MainPage mainPage = Controllers.getRootPage().getMainPage();
-                    FXUtils.onScroll(item, mainPage.getVersions(), list -> {
-                        GameInstanceID currentId = mainPage.getCurrentGame();
-                        return Lang.indexWhere(list, instance -> instance.id().equals(currentId));
-                    }, it -> mainPage.getRepository().setSelectedInstance(it.id()));
+                    FXUtils.onScroll(item, mainPage.getInstances(), list -> {
+                        @Nullable HMCLGameInstance currentGame = mainPage.getCurrentGame();
+                        @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
+                        return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
+                    }, instance -> instance.getRepository().setSelectedInstance(instance));
 
                     FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
                             JFXPopup.PopupVPosition.BOTTOM,
                             JFXPopup.PopupHPosition.LEFT,
                             item.getWidth(),
                             0,
-                            mainPage.getRepository(), mainPage.getVersions()));
+                            mainPage.getInstances()));
                 })
                 .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));

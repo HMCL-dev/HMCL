@@ -23,6 +23,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -43,8 +44,7 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -53,18 +53,21 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -76,7 +79,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements GameInstancePage.GameInstanceLoadable {
+public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> {
 
     private static final String TIP_KEY = "resourcePackWarning";
     private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
@@ -90,16 +93,26 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         };
     }
 
-    private HMCLGameRepository repository;
-    private GameInstanceID instanceId;
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+    private @Nullable HMCLGameInstance gameInstance;
 
     private Path resourcePackDirectory;
     private ResourcePackManager resourcePackManager;
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    public ResourcePackListPage() {
+    /// Creates a resource-pack list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public ResourcePackListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this, ResourcePackFile::isFileResourcePack, this::addFiles);
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -107,11 +120,16 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         return new ResourcePackListPageSkin(this);
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        this.repository = repository;
-        this.instanceId = instanceId;
-        this.resourcePackManager = new ResourcePackManager(repository, instanceId);
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        this.gameInstance = instance.instance();
+        if (gameInstance == null) {
+            this.resourcePackManager = null;
+            this.resourcePackDirectory = null;
+            getItems().clear();
+            return;
+        }
+
+        this.resourcePackManager = gameInstance.getResourcePackManager();
         this.resourcePackDirectory = this.resourcePackManager.getDirectory();
 
         refresh();
@@ -185,7 +203,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void onDownload() {
-        Controllers.getDownloadPage().showResourcePackDownloads().selectInstance(instanceId);
+        if (gameInstance == null) {
+            return;
+        }
+        Controllers.getDownloadPage().showResourcePackDownloads().selectInstance(gameInstance.getId());
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
@@ -232,10 +253,18 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
+        HMCLGameInstance gameInstance = this.gameInstance;
+        if (gameInstance == null) {
+            return;
+        }
+
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = repository.getGameVersion(instanceId);
-                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, resourcePacks)).orElse(null);
+                            GameVersionNumber version = gameInstance.getVersion();
+                            return version != GameVersionNumber.unknown()
+                                    ? new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(),
+                                            version.toString(), resourcePacks)
+                                    : null;
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {
@@ -249,7 +278,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         .withStagesHints("update.checking"),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (repository.isModpack(instanceId)) {
+        if (gameInstance.isModpack()) {
             Controllers.confirm(
                     i18n("resourcepack.update_in_modpack.warning"), null,
                     MessageDialogPane.MessageType.WARNING,
@@ -638,17 +667,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     if (versionOptional.isPresent()) {
                         RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                         FXUtils.runInFX(() -> {
-                            button.setOnAction(e -> {
-                                fireEvent(new DialogCloseEvent());
-                                Controllers.navigate(new DownloadPage(
-                                        repository instanceof CurseForgeRemoteAddonRepository
-                                                ? HMCLLocalizedDownloadListPage.ofCurseForgeResourcePack(null, false)
-                                                : HMCLLocalizedDownloadListPage.ofModrinthResourcePack(null, false),
-                                        remoteAddon,
-                                        new HMCLGameRepository.InstanceReference(page.repository, page.instanceId),
-                                        org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
-                                ));
-                            });
+                            button.setExternalLink(remoteAddon.pageUrl());
                             button.setDisable(false);
                         });
                     }
