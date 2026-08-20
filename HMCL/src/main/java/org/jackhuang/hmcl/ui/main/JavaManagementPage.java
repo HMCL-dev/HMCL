@@ -314,7 +314,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
                 if (oldItem != item) {
                     content.getTags().clear();
-                    content.addTag(item.getArchitecture().getDisplayName());
+                    content.addTag(item.getArchitecture().getDisplayName());                    
                 }
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;
