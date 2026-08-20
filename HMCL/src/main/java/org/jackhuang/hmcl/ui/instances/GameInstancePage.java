@@ -208,7 +208,11 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     private void onBrowseSchematics() {
-        FXUtils.openFolder(getRepository().getSchematicsDirectory(getInstanceId()));
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance == null) {
+            return;
+        }
+        FXUtils.openFolder(gameInstance.getSchematicsDirectory());
     }
 
     private void redownloadAssetIndex() {
