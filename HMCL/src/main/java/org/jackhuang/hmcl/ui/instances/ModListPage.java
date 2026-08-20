@@ -159,11 +159,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             }
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
+        if (analyzer.has(GameComponentType.CLEANROOM)) {
             supportedLoaders.add(ModLoaderType.FORGE);
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE) // No cleanroom because LiteLoader cannot run on Java 21
+        if (analyzer.has(GameComponentType.FORGE) // No cleanroom because LiteLoader cannot run on Java 21
                 && modManager.hasLiteLoaderAsMod()
                 && !gameVersionNumber.isAtLeast("1.13", "17w43a")) {
             supportedLoaders.add(ModLoaderType.LITE_LOADER);
