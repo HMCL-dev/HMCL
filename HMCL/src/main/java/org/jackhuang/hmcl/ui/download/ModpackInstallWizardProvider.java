@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
-import org.jackhuang.hmcl.game.ModpackHelper;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
@@ -109,9 +106,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
             try {
                 if (serverModpackManifest != null) {
-                    return ModpackHelper.getUpdateTask(repository, serverModpackManifest, modpack.getEncoding(), instanceId, ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(instanceId)));
+                    return ModpackHelper.getUpdateTask(repository, serverModpackManifest, modpack.getEncoding(), instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)));
                 } else {
-                    return ModpackHelper.getUpdateTask(repository, selected, modpack.getEncoding(), instanceId, ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(instanceId)));
+                    return ModpackHelper.getUpdateTask(repository, selected, modpack.getEncoding(), instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)));
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -124,10 +121,10 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         } else {
             if (serverModpackManifest != null) {
                 return ModpackHelper.getInstallTask(repository, serverModpackManifest, instanceId, modpack)
-                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(instanceId));
+                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
             } else {
                 return ModpackHelper.getInstallTask(repository, selected, instanceId, modpack, iconUrl)
-                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(instanceId));
+                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
             }
         }
     }

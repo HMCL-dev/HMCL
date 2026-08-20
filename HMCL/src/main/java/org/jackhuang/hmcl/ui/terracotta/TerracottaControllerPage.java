@@ -221,7 +221,7 @@ public class TerracottaControllerPage extends StackPane {
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("instance.launch"), () -> {
                             var repository = GameDirectoryManager.getSelectedRepository();
-                            Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
+                            Instances.launch(repository.getSelectedInstance(), launcherHelper -> {
                                 launcherHelper.setKeep();
                                 launcherHelper.setDisableOfflineSkin();
                             });

@@ -19,7 +19,9 @@ package org.jackhuang.hmcl.setting;
 
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jetbrains.annotations.Nullable;
 
 public enum GameInstanceIconType {
     DEFAULT("/assets/img/grass.png"),
@@ -53,6 +55,22 @@ public enum GameInstanceIconType {
             default -> GameInstanceIconType.COMMAND;
         };
     }
+
+    public static @Nullable GameInstanceIconType getIconType(GameComponentType componentType) {
+        return switch (componentType) {
+            case GAME -> GameInstanceIconType.GRASS;
+            case FABRIC, FABRIC_API -> GameInstanceIconType.FABRIC;
+            case LEGACY_FABRIC, LEGACY_FABRIC_API -> GameInstanceIconType.LEGACY_FABRIC;
+            case FORGE -> GameInstanceIconType.FORGE;
+            case CLEANROOM -> GameInstanceIconType.CLEANROOM;
+            case LITELOADER -> GameInstanceIconType.CHICKEN;
+            case OPTIFINE -> GameInstanceIconType.OPTIFINE;
+            case QUILT, QUILT_API -> GameInstanceIconType.QUILT;
+            case NEO_FORGE -> GameInstanceIconType.NEO_FORGE;
+            default -> null;
+        };
+    }
+
 
     private final String resourceUrl;
 
