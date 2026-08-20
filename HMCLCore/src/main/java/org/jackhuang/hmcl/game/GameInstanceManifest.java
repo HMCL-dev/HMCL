@@ -65,8 +65,9 @@ public record GameInstanceManifest(
 
     /// Resolved manifest views with inheritance folded.
     ///
-    /// @param launchManifest     the final manifest data used by launch-time consumers
-    /// @param standaloneManifest the standalone manifest data with pending patches preserved
+    /// @param unresolved         the stored manifest supplied to resolution
+    /// @param launchManifest     the normalized final manifest data used by launch-time consumers
+    /// @param standaloneManifest the structural standalone manifest with pending patches preserved
     @NotNullByDefault
     public record Resolved(GameInstanceManifest unresolved,
                            GameInstanceManifest launchManifest,
@@ -90,6 +91,20 @@ public record GameInstanceManifest(
             if (standaloneManifest.inheritsFrom() != null) {
                 throw new IllegalArgumentException("Standalone manifest cannot inherit from another manifest");
             }
+        }
+
+        public boolean isModded() {
+            String mainClass = launchManifest().mainClass();
+            if (mainClass == null || GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
+                return false;
+            }
+
+            for (String packageName : GameComponentAnalyzer.MOD_LOADER_MAIN_CLASSES_PACKAGES) {
+                if (mainClass.startsWith(packageName))
+                    return true;
+            }
+
+            return false;
         }
     }
 
@@ -340,13 +355,6 @@ public record GameInstanceManifest(
         return root != null && root;
     }
 
-    /// Returns whether this manifest is already a standalone view.
-    ///
-    /// @return whether this manifest has no parent
-    public boolean isResolvedPreservingPatches() {
-        return inheritsFrom == null;
-    }
-
     /// Returns the pending patches.
     ///
     /// @return the pending patches, or an empty list when absent
@@ -416,21 +424,6 @@ public record GameInstanceManifest(
         } else {
             return assetIndex;
         }
-    }
-
-    /// Returns whether this manifest applies to the current environment.
-    ///
-    /// @return whether this manifest applies to the current environment
-    public boolean appliesToCurrentEnvironment() {
-        return CompatibilityRule.appliesToCurrentEnvironment(compatibilityRules);
-    }
-
-    /// Resolves this manifest through the repository.
-    ///
-    /// @param repository the repository that provides parent manifests
-    /// @return the resolved manifest
-    public GameInstanceManifest resolve(GameRepository repository) throws NoSuchGameInstanceException {
-        return repository.resolve(this).launchManifest();
     }
 
     public GameInstanceManifest withId(GameInstanceID id) {
