@@ -882,6 +882,7 @@ public final class Decorator {
     private void playOpenAnimation() {
         if (!AnimationUtils.playWindowAnimation()) {
             stopWindowAnimation();
+            Controllers.trimHeap();
             return;
         }
 
@@ -901,7 +902,7 @@ public final class Decorator {
 
             // Proactively triggering GC after the window open animation typically
             // reduces physical memory usage after HMCL startup.
-            System.gc();
+            Controllers.trimHeap();
         });
         // Apply the initial frame before WINDOW_SHOWING returns so the window cannot flash at full opacity.
         timeline.jumpTo(Duration.ZERO);
