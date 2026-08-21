@@ -117,9 +117,11 @@ public class TaskExecutorDialogPane extends BorderPane {
                         Platform.runLater(() -> {
                             fireEvent(new DialogCloseEvent());
 
-                            // Trim heap memory when tasks finish, allowing GC to return memory to the OS faster,
-                            // prevent excessive peak memory from consuming system resources.
-                            Controllers.trimHeap();
+                            if (Controllers.AUTO_TRIM_HEAP) {
+                                // Trim heap memory when tasks finish, allowing GC to return memory to the OS faster,
+                                // prevent excessive peak memory from consuming system resources.
+                                Platform.runLater(Controllers::trimHeap);
+                            }
                         });
                     }
                 });
