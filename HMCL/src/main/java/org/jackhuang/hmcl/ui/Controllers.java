@@ -29,7 +29,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
-import javafx.stage.*;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
@@ -51,12 +54,12 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
+import org.jackhuang.hmcl.ui.instances.GameInstancePage;
+import org.jackhuang.hmcl.ui.instances.GameListPage;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
-import org.jackhuang.hmcl.ui.instances.GameListPage;
-import org.jackhuang.hmcl.ui.instances.GameInstancePage;
-import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -78,10 +81,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
-import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
-import static org.jackhuang.hmcl.setting.SettingsManager.state;
-import static org.jackhuang.hmcl.setting.SettingsManager.userState;
+import static org.jackhuang.hmcl.setting.SettingsManager.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -541,6 +541,19 @@ public final class Controllers {
     public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, @NotNull TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
         TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
+        executor.start();
+        return pane;
+    }
+
+    public static TaskLoadingDialog taskLoadingDialog(TaskExecutor executor, String title, @NotNull TaskCancellationAction onCancel) {
+        TaskLoadingDialog pane = new TaskLoadingDialog(title, onCancel, executor);
+        dialog(pane);
+        return pane;
+    }
+
+    public static TaskLoadingDialog taskLoadingDialog(Task<?> task, String title, @NotNull TaskCancellationAction onCancel) {
+        TaskExecutor executor = task.executor();
+        TaskLoadingDialog pane = taskLoadingDialog(executor, title, onCancel);
         executor.start();
         return pane;
     }
