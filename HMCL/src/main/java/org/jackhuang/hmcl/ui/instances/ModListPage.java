@@ -165,7 +165,9 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         if (analyzer.has(GameComponentType.FORGE) // No cleanroom because LiteLoader cannot run on Java 21
                 && modManager.hasLiteLoaderAsMod()
-                && !gameVersionNumber.isAtLeast("1.13", "17w43a")) {
+                && !gameVersionNumber.isAtLeast("1.13", "17w43a")
+                // LiteLoader indicates that it supports 1.5.2 as well in this way, but it actually does nothing
+                && gameVersionNumber.isAtLeast("1.6.1", "13w36a" /* 1.7-snapshot-1 */)) {
             supportedLoaders.add(ModLoaderType.LITE_LOADER);
         }
 

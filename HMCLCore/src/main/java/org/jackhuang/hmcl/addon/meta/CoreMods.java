@@ -102,7 +102,8 @@ public final class CoreMods {
                                 new CoreMod(ModLoaderType.CLEANROOM, "1.12.2", "1.12.2") // TODO further testing
                         ));
                     if (StringUtils.isNotBlank(tweakClass)) {
-                        if (tweakClass.trim().startsWith("com.mumfrey.liteloader")) liteloaderAsMod = true;
+                        // I have no idea why LiteLoader tries to use TweakClass in 1.5.2, when it is not supported
+                        if (tweakClass.equals("com.mumfrey.liteloader.launch.LiteLoaderTweaker")) liteloaderAsMod = true;
                         coreModList.addAll(List.of(
                                 new CoreMod(ModLoaderType.FORGE, "1.6.1", "1.12.2"),
                                 new CoreMod(ModLoaderType.LITE_LOADER, "1.6.1", "1.12.2"),

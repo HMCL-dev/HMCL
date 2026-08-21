@@ -108,7 +108,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public boolean hasLiteLoaderAsMod() {
         lock.lock();
         try {
-            return getLocalMod("liteloader", ModLoaderType.FORGE).getFiles().stream().anyMatch(LocalModFile::isActive);
+            return getLocalMod("liteloader-forge", ModLoaderType.FORGE).getFiles().stream().anyMatch(LocalModFile::isActive);
         } finally {
             lock.unlock();
         }
@@ -150,10 +150,10 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
             if (coreMods.isLiteLoaderAsMod()) {
                 modInfo = new LocalModFile(this,
-                        getLocalMod("liteloader", ModLoaderType.FORGE),
+                        getLocalMod("liteloader-forge", ModLoaderType.FORGE),
                         file,
                         "LiteLoader",
-                        new LocalAddonFile.Description("LiteLoader"),
+                        new LocalAddonFile.Description("LiteLoader working together with Forge as a mod"),
                         coreMods
                 );
             } else {
