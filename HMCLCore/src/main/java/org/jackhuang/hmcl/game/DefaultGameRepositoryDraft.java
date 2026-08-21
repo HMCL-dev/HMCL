@@ -214,7 +214,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                 && !manifests.containsKey(id)
                 && baseSnapshot.get(id) == null
                 && !createdIds.contains(id)) {
-            Path root = baseSnapshot.getLayout().getInstanceRoot(id);
+            Path root = baseSnapshot.getLayout().getInstanceRoot(id)
+                    .toAbsolutePath()
+                    .normalize();
             if (!repository.mayClaimDraftInstanceRoot(id, root)) {
                 throw new FileAlreadyExistsException(root.toString(), null,
                         "An unregistered instance directory already exists");
@@ -370,7 +372,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             if (!manifests.containsKey(id)) {
                 continue;
             }
-            Path root = baseSnapshot.getLayout().getInstanceRoot(id);
+            Path root = baseSnapshot.getLayout().getInstanceRoot(id)
+                    .toAbsolutePath()
+                    .normalize();
             Files.createDirectories(root);
             repository.initializeDraftInstanceRoot(id, root);
         }
