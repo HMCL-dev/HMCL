@@ -173,19 +173,26 @@ public final class SettingsPage extends ScrollPane {
                     chooseLanguagePane.setSubtitle(i18n("settings.take_effect_after_restart"));
 
                     SupportedLocale currentLocale = I18n.getLocale();
-                    chooseLanguagePane.setNullSafeConverter(locale -> {
+                    chooseLanguagePane.setNullSafeConverter(it -> it.getDisplayName(currentLocale));
+                    chooseLanguagePane.setNullSafeDescriptionConverter(locale -> {
                         if (locale.isDefault())
-                            return locale.getDisplayName(currentLocale);
-                        else if (locale.isSameLanguage(currentLocale))
-                            return locale.getDisplayName(locale);
-                        else
-                            return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
+                            return "";
+
+                        String name = locale.getDisplayName(locale);
+
+                        double completeness = locale.getTranslationCompleteness();
+                        if (completeness != 0.0)
+                            return String.format("%s - %.2f%%", name, completeness * 100);
+                        else return name;
                     });
                     chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
                     chooseLanguagePane.valueProperty().bindBidirectional(settings().languageProperty());
 
-                    languagePaneList.getContent().add(chooseLanguagePane);
+                    LineButton helpButton = LineButton.createExternalLinkButton(Metadata.LOCALIZATION_URL);
+                    helpButton.setTitle(i18n("settings.launcher.language.contribution.title"));
+                    helpButton.setSubtitle(i18n("settings.launcher.language.contribution.subtitle"));
 
+                    languagePaneList.getContent().addAll(chooseLanguagePane, helpButton);
                 }
 
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.language")), languagePaneList);
