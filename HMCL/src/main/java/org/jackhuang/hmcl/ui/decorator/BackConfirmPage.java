@@ -15,16 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.auth.yggdrasil;
+package org.jackhuang.hmcl.ui.decorator;
 
-import org.jackhuang.hmcl.util.Immutable;
-import org.jetbrains.annotations.Nullable;
+public interface BackConfirmPage {
+    boolean canBack();
 
-import java.util.Map;
-
-@Immutable
-public record Texture(@Nullable String url, @Nullable Map<String, String> metadata) {
-    public Texture() {
-        this(null, null);
-    }
+    void confirmBack(Runnable onConfirm);
 }

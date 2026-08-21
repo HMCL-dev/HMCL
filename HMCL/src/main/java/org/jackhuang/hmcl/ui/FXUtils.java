@@ -49,6 +49,7 @@ import javafx.scene.control.skin.TableViewSkin;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -79,6 +80,7 @@ import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
+import org.jackhuang.hmcl.util.SwingFXUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
@@ -92,9 +94,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -1530,4 +1534,19 @@ public final class FXUtils {
 
     }
 
+    public static InputStream getInputStreamFromImage(Image image, String format) throws IOException {
+        BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ImageIO.write(bufferedImage, format, outputStream);
+        return new ByteArrayInputStream(outputStream.toByteArray());
+    }
+
+    public static Image scaleImageNearestNeighbor(Image img, double sx, double sy) {
+        int ow = (int) img.getWidth(), oh = (int) img.getHeight();
+        WritableImage scaled = new WritableImage((int) (ow * sx), (int) (oh * sy));
+        for (int y = 0; y < scaled.getHeight(); y++)
+            for (int x = 0; x < scaled.getWidth(); x++)
+                scaled.getPixelWriter().setColor(x, y, img.getPixelReader().getColor(Math.min(Math.max((int) (x / sx), 0), ow - 1), Math.min(Math.max((int) (y / sy), 0), oh - 1)));
+        return scaled;
+    }
 }
