@@ -18,31 +18,30 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Displays optional component changes while updating an existing game instance.
 class AdditionalInstallersPage extends AbstractInstallersPage {
-    protected final BooleanProperty compatible = new SimpleBooleanProperty();
-    protected final String gameVersion;
-    protected final GameInstanceManifest manifest;
-    protected final HMCLGameInstance instance;
-
+    /// Creates a page for selecting additional component changes.
+    ///
+    /// @param instance the instance being updated
+    /// @param gameVersion the selected game version
+    /// @param controller the wizard controller that stores the selected changes
+    /// @param downloadProvider the provider used to retrieve available component versions
     public AdditionalInstallersPage(HMCLGameInstance instance, String gameVersion, WizardController controller, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
-        this.instance = instance;
-        this.gameVersion = gameVersion;
-        this.manifest = instance.getManifest();
 
         txtName.setText(instance.getId().id());
         txtName.setEditable(false);
@@ -57,59 +56,62 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
             });
         }
 
-        installable.bind(Bindings.createBooleanBinding(() -> compatible.get() && txtName.validate(), txtName.textProperty(), compatible));
+        installable.bind(Bindings.createBooleanBinding(() -> txtName.validate(), txtName.textProperty()));
     }
 
+    /// Finishes the update wizard.
     @Override
     protected void onInstall() {
         controller.onFinish();
     }
 
+    /// Returns the title of the installer selection page.
+    ///
+    /// @return the localized page title
     @Override
     public String getTitle() {
         return i18n("settings.tabs.installers");
     }
 
-    private String getVersion(GameComponentType type) {
+    /// Returns the selected version of a component, or `null` if no version is selected.
+    ///
+    /// @param type the component type
+    /// @return the selected component version, or `null`
+    private @Nullable String getVersion(GameComponentType type) {
         return Optional.ofNullable(controller.getSettings().get(type.getPatchId()))
                 .flatMap(it -> Lang.tryCast(it, RemoteVersion.class))
                 .map(RemoteVersion::getSelfVersion).orElse(null);
     }
 
+    /// Refreshes component states from the changes selected in the wizard.
     @Override
     protected void reload() {
-        boolean gameVersionChanged = !instance.getVersion().toString().equals(getVersion(GameComponentType.GAME));
-        boolean compatible = true;
-
         for (InstallerItem component : group.getComponents()) {
             GameComponentType componentType = component.getComponentType();
-            String version = instance.getComponentVersion(component.getComponentType());
-            String libraryVersion = Lang.requireNonNullElse(getVersion(componentType), version);
-            boolean alreadyInstalled = version != null && !(controller.getSettings().get(componentType.getPatchId()) instanceof UpdateInstallerWizardProvider.RemoveVersionAction);
-            if (component.getComponentType() != GameComponentType.GAME && gameVersionChanged && getVersion(componentType) == null && alreadyInstalled) {
-                // For third-party libraries, if game version is being changed, and the library is not being reinstalled,
-                // warns the user that we should update the library.
-                component.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, true));
-                compatible = false;
-            } else if (alreadyInstalled || getVersion(componentType) != null) {
-                component.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
+            if (controller.getSettings().containsKey(componentType.getPatchId())) {
+                component.versionProperty().set(new InstallerItem.InstalledState(getVersion(componentType), false, false));
             } else {
                 component.versionProperty().set(null);
             }
         }
-
-        this.compatible.set(compatible);
     }
 
+    /// Leaves the wizard settings unchanged when navigating away from this page.
+    ///
+    /// @param settings the wizard settings
     @Override
     public void cleanup(SettingsMap settings) {
     }
 
+    /// Returns whether name-field extension controls are displayed.
+    ///
+    /// @return `false`
     @Override
     protected boolean showExtendPane() {
         return false;
     }
 
+    /// Performs no action because the instance name cannot be edited on this page.
     @Override
     protected void resetDefaultName() {
     }
