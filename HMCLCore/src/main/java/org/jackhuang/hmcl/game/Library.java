@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -28,7 +27,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 /// A class that describes a Minecraft dependency.
 ///
@@ -235,7 +237,7 @@ public record Library(
             }
         }
 
-        String repo = Lang.requireNonNullElse(url, Constants.DEFAULT_LIBRARY_URL);
+        String repo = Objects.requireNonNullElse(url, Constants.DEFAULT_LIBRARY_URL);
         if (!repo.endsWith("/")) {
             repo += '/';
         }
