@@ -66,7 +66,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
-    private boolean hasLiteLoaderAsMod = false;
+    private final Set<LocalModFile> liteLoaderAsMods = new HashSet<>();
     private GameComponentAnalyzer analyzer;
 
     private boolean loaded = false;
@@ -109,7 +109,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public boolean hasLiteLoaderAsMod() {
         lock.lock();
         try {
-            return hasLiteLoaderAsMod;
+            return liteLoaderAsMods.stream().anyMatch(LocalModFile::isActive);
         } finally {
             lock.unlock();
         }
@@ -186,9 +186,10 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
 
         if (!modInfo.isOld()) {
-            hasLiteLoaderAsMod |= coreMods.isLiteLoaderAsMod();
             localFiles.add(modInfo);
         }
+
+        liteLoaderAsMods.add(modInfo);
     }
 
     @Override
@@ -197,7 +198,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         try {
             localFiles.clear();
             localMods.clear();
-            hasLiteLoaderAsMod = false;
+            liteLoaderAsMods.clear();
 
             analyzer = instance.getAnalyzer();
 
