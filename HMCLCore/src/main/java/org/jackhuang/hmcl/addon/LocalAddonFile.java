@@ -18,16 +18,14 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /// Sub-classes should implement `Comparable`
@@ -54,19 +52,43 @@ public abstract class LocalAddonFile {
     public abstract void delete() throws IOException;
 
     @Nullable
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
+    protected AddonUpdate.UpdateConditions getUpdateConditions() {
         return null;
     }
 
-    @NotNullByDefault
-    public record AddonUpdate(
-            RemoteAddon.Source source,
-            RemoteAddon.Type repoType,
-            LocalAddonFile localAddonFile,
-            RemoteAddon.Version currentVersion,
-            RemoteAddon.Version targetVersion,
-            boolean useRemoteFileName
-    ) {
+    /// @return A pair of addon update info, the first for all versions and the second for release versions only (might be null).
+    @Nullable
+    public Pair<AddonUpdate, @Nullable AddonUpdate> checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
+        var conditions = getUpdateConditions();
+        if (conditions == null) return null;
+
+        RemoteAddonRepository repository = source.getRepoForType(conditions.type());
+        if (repository == null) return null;
+        Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(getFile());
+        if (currentVersion.isEmpty()) return null;
+        var current = currentVersion.orElseThrow();
+
+        var stream = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().projectId())
+                .filter(version -> version.gameVersions().contains(gameVersion));
+        if (current.gameVersions().contains(gameVersion)) // Otherwise it means we are upgrading from another game version
+            stream = stream.filter(version -> version.datePublished().isAfter(current.datePublished()));
+        if (conditions.predicates() != null)
+            for (var p : conditions.predicates())
+                stream = stream.filter(p);
+
+        List<RemoteAddon.Version> remoteVersions = stream.sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed()).toList();
+        if (remoteVersions.isEmpty()) return null;
+        var release = remoteVersions.stream()
+                .filter(v -> v.versionType() == RemoteAddon.VersionType.Release)
+                .findFirst().orElse(null);
+
+        return Pair.pair(
+                new AddonUpdate(this, current, remoteVersions.get(0)), // All channels
+                release != null ? new AddonUpdate(this, current, release) : null // Release channel
+        );
+    }
+
+    public void onUpdated(String newFileNameWithExt) {
     }
 
     public static class Description {

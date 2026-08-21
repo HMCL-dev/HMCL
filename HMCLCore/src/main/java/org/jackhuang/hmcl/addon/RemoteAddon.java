@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -180,6 +181,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
             };
         }
 
+        @NotNull
         public RemoteAddonRepository getCommonRepo() {
             return commonRepo;
         }
@@ -218,11 +220,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
         Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
     }
 
-    public interface IVersion {
-        Source getSource();
-    }
-
-    public record Version(IVersion self, String versionId, String projectId, String name, String version,
+    public record Version(RemoteAddon.Source source, String versionId, String projectId, String name, String version,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
                           List<String> gameVersions, List<ModLoaderType> loaders) {
     }

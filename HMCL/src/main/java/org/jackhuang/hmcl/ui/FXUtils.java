@@ -64,6 +64,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import javafx.util.Subscription;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
@@ -828,7 +829,7 @@ public final class FXUtils {
         property.addListener(binding);
     }
 
-    public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
+    public static List<Subscription> bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
         int itemCount = children.length;
         int childSelectedCount = 0;
         for (BooleanProperty child : children) {
@@ -838,49 +839,46 @@ public final class FXUtils {
 
         allEnabled.set(childSelectedCount == itemCount);
 
-        class Listener implements InvalidationListener {
+        class AllListener {
             private int childSelectedCount;
             private boolean updating = false;
+            private final List<Subscription> subscriptions = new ArrayList<>(children.length + 1);
 
-            public Listener(int childSelectedCount) {
+            public AllListener(int childSelectedCount) {
                 this.childSelectedCount = childSelectedCount;
             }
 
-            @Override
-            public void invalidated(Observable observable) {
-                if (updating)
-                    return;
-
-                updating = true;
-                try {
-                    boolean value = ((BooleanProperty) observable).get();
-
-                    if (observable == allEnabled) {
+            {
+                subscriptions.add(allEnabled.subscribe(() -> {
+                    if (updating) return;
+                    updating = true;
+                    try {
+                        boolean value = allEnabled.get();
                         for (BooleanProperty child : children) {
-                            child.setValue(value);
+                            child.set(value);
                         }
                         childSelectedCount = value ? itemCount : 0;
-                    } else {
-                        if (value)
-                            childSelectedCount++;
-                        else
-                            childSelectedCount--;
-
-                        allEnabled.set(childSelectedCount == itemCount);
+                    } finally {
+                        updating = false;
                     }
-                } finally {
-                    updating = false;
+                }));
+                for (var child : children) {
+                    subscriptions.add(child.subscribe(() -> {
+                        if (updating) return;
+                        updating = true;
+                        try {
+                            if (child.get()) childSelectedCount++;
+                            else childSelectedCount--;
+                            allEnabled.set(childSelectedCount == itemCount);
+                        } finally {
+                            updating = false;
+                        }
+                    }));
                 }
             }
         }
 
-        InvalidationListener listener = new Listener(childSelectedCount);
-
-        WeakInvalidationListener weakListener = new WeakInvalidationListener(listener);
-        allEnabled.addListener(listener);
-        for (BooleanProperty child : children) {
-            child.addListener(weakListener);
-        }
+        return new AllListener(childSelectedCount).subscriptions;
     }
 
     public static void setIcon(Stage stage) {

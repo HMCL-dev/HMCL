@@ -18,9 +18,8 @@
 package org.jackhuang.hmcl.addon.resourcepack;
 
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.addon.AddonUpdate;
 import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
@@ -29,13 +28,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
+
+    private static final AddonUpdate.UpdateConditions UPDATE_CONDITIONS = new AddonUpdate.UpdateConditions(RemoteAddon.Type.RESOURCE_PACK, null);
+
     private final PackMcMeta meta;
     private final @Nullable Image icon;
 
@@ -90,18 +89,14 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
-        RemoteAddonRepository repository = source.getRepoForType(RemoteAddon.Type.RESOURCE_PACK);
-        if (repository == null) return null;
-        Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
-        if (currentVersion.isEmpty()) return null;
-        List<RemoteAddon.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().projectId())
-                .filter(version -> version.gameVersions().contains(gameVersion))
-                .filter(version -> version.datePublished().compareTo(currentVersion.get().datePublished()) > 0)
-                .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
-                .toList();
-        if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(source, RemoteAddon.Type.RESOURCE_PACK, this, currentVersion.get(), remoteVersions.get(0), false);
+    protected AddonUpdate.UpdateConditions getUpdateConditions() {
+        return UPDATE_CONDITIONS;
+    }
+
+    @Override
+    public void onUpdated(String newFileNameWithExt) {
+        super.onUpdated(newFileNameWithExt);
+        manager.rename(getFileNameWithExtension(), newFileNameWithExt);
     }
 }
 

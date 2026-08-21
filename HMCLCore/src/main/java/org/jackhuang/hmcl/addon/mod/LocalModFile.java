@@ -19,11 +19,10 @@ package org.jackhuang.hmcl.addon.mod;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import org.jackhuang.hmcl.addon.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
@@ -195,19 +194,8 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     @Override
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
-        RemoteAddonRepository repository = source.getRepoForType(RemoteAddon.Type.MOD);
-        if (repository == null) return null;
-        Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
-        if (currentVersion.isEmpty()) return null;
-        List<RemoteAddon.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().projectId())
-                .filter(version -> version.gameVersions().contains(gameVersion))
-                .filter(version -> version.loaders().contains(getModLoaderType()))
-                .filter(version -> version.datePublished().compareTo(currentVersion.get().datePublished()) > 0)
-                .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
-                .toList();
-        if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(source, RemoteAddon.Type.MOD, this, currentVersion.get(), remoteVersions.get(0), true);
+    protected AddonUpdate.UpdateConditions getUpdateConditions() {
+        return new AddonUpdate.UpdateConditions(RemoteAddon.Type.MOD, List.of(v -> v.loaders().contains(getModLoaderType())));
     }
 
     @Override
