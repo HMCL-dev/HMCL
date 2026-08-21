@@ -582,8 +582,15 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                     @Override
                     protected void updateItem(RemoteAddon item, boolean empty) {
-                        this.graphic.releaseRippleImmediately();
+                        RemoteAddon oldItem = getItem();
+                        boolean oldEmpty = isEmpty();
+
                         super.updateItem(item, empty);
+
+                        if (Objects.equals(oldItem, item) && oldEmpty == empty) return;
+
+                        this.graphic.releaseRippleImmediately();
+
                         if (empty || item == null) {
                             setGraphic(null);
                         } else {

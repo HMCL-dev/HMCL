@@ -68,6 +68,7 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -215,17 +216,19 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         @Override
         public void updateItem(RemoteVersion remoteVersion, boolean empty) {
             RemoteVersion oldRemoteVersion = getItem();
+            boolean oldEmpty = isEmpty();
+
+            super.updateItem(remoteVersion, empty);
+
+            if (Objects.equals(oldRemoteVersion, remoteVersion) && oldEmpty == empty) return;
 
             ripplerContainer.releaseRippleImmediately();
-            super.updateItem(remoteVersion, empty);
 
             if (empty) {
                 setGraphic(null);
                 return;
             }
             setGraphic(pane);
-
-            if (oldRemoteVersion == remoteVersion) return;
 
             twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
