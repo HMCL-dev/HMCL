@@ -23,6 +23,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
+import javafx.css.PseudoClass;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
@@ -34,6 +35,8 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class AccountListPopupMenu extends StackPane {
+    private static final PseudoClass ACTIVE = PseudoClass.getPseudoClass("active");
+
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY) {
         var menu = new AccountListPopupMenu();
@@ -58,7 +61,8 @@ public final class AccountListPopupMenu extends StackPane {
 
             for (Account account : Accounts.getAccounts()) {
                 AccountAdvancedListItem item = new AccountAdvancedListItem(account);
-                if (Accounts.getSelectedAccount() == account) item.setActive(true);
+                item.getStyleClass().add("popup-item");
+                item.pseudoClassStateChanged(ACTIVE, Accounts.getSelectedAccount() == account);
                 item.setOnAction(e -> {
                     Accounts.setSelectedAccount(account);
                     if (getScene().getWindow() instanceof JFXPopup popup)
