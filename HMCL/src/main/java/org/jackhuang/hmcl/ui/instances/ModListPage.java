@@ -17,13 +17,11 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
@@ -34,16 +32,19 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,17 +52,21 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements GameInstancePage.GameInstanceLoadable, PageAware {
+public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements PageAware {
     private final ReentrantLock lock = new ReentrantLock();
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private ModManager modManager;
-    private HMCLGameRepository repository;
-    private GameInstanceID instanceId;
+    private @Nullable HMCLGameInstance gameInstance;
     private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
-    public ModListPage() {
+    /// Creates a mod list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public ModListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this, it -> ModManager.MOD_EXTENSIONS.contains(FileUtils.getExtension(it).toLowerCase(Locale.ROOT)), mods -> {
             mods.forEach(it -> {
                 try {
@@ -72,6 +77,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             });
             loadMods(modManager);
         });
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -83,15 +94,15 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         loadMods(modManager);
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        this.repository = repository;
-        this.instanceId = instanceId;
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        this.gameInstance = instance.instance();
+        if (gameInstance == null) {
+            return;
+        }
 
-        GameInstanceManifest resolved = repository.getResolvedInstanceManifest(instanceId).standaloneManifest();
-        this.gameVersion = repository.getGameVersion(resolved).orElse(null);
+        this.gameVersion = gameInstance.getVersion().toString();
 
-        loadMods(repository.getModManager(instanceId));
+        loadMods(gameInstance.getModManager());
     }
 
     private void loadMods(ModManager modManager) {
@@ -131,13 +142,13 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private void updateSupportedLoaders(ModManager modManager) {
         supportedLoaders.clear();
 
-        LibraryAnalyzer analyzer = modManager.getLibraryAnalyzer();
+        GameComponentAnalyzer analyzer = modManager.getComponentAnalyzer();
         if (analyzer == null) {
             Collections.addAll(supportedLoaders, ModLoaderType.values());
             return;
         }
 
-        for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+        for (GameComponentType type : GameComponentType.MOD_LOADERS) {
             if (type.isModLoader() && analyzer.has(type)) {
                 ModLoaderType modLoaderType = type.getModLoaderType();
                 if (modLoaderType != null) {
@@ -149,26 +160,26 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             }
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
+        if (analyzer.has(GameComponentType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
             supportedLoaders.add(ModLoaderType.FORGE);
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
+        if (analyzer.has(GameComponentType.QUILT)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
+        if (analyzer.has(GameComponentType.LEGACY_FABRIC)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
+        if (analyzer.has(GameComponentType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
             supportedLoaders.add(ModLoaderType.FORGE);
             supportedLoaders.add(ModLoaderType.NEO_FORGE);
         }
 
         // Sinytra Connector
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && (modManager.hasMod("connector", ModLoaderType.NEO_FORGE) || modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE))
-                || "1.20.1".equals(gameVersion) && analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE)) {
+        if (analyzer.has(GameComponentType.NEO_FORGE) && (modManager.hasMod("connector", ModLoaderType.NEO_FORGE) || modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE))
+                || "1.20.1".equals(gameVersion) && analyzer.has(GameComponentType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
     }
@@ -176,7 +187,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.add.title"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.litemod"));
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
         List<Path> res = Controllers.showOpenMultipleDialog(chooser);
 
         if (res == null) return;
@@ -235,19 +246,25 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void openModFolder() {
-        FXUtils.openFolder(repository.getRunDirectory(instanceId).resolve("mods"));
+        if (gameInstance != null) {
+            FXUtils.openFolder(gameInstance.getModsDirectory());
+        }
     }
 
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
-        if (isLoading()) {
+        if (isLoading() || gameInstance == null) {
             return;
         }
 
+        HMCLGameInstance gameInstance = this.gameInstance;
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = repository.getGameVersion(instanceId);
-                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(), g, mods)).orElse(null);
+                            GameVersionNumber version = gameInstance.getVersion();
+                            return version != GameVersionNumber.unknown()
+                                    ? new AddonCheckUpdatesTask<>(
+                                            DownloadProviders.getDownloadProvider(), version.toString(), mods)
+                                    : null;
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
@@ -262,7 +279,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .withStagesHints("update.checking"),
                 i18n("addon.check_update"), TaskCancellationAction.NORMAL);
 
-        if (repository.isModpack(instanceId)) {
+        if (gameInstance.isModpack()) {
             Controllers.confirm(
                     i18n("mods.update_modpack_mod.warning"), null,
                     MessageDialogPane.MessageType.WARNING,
@@ -273,7 +290,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void download() {
-        Controllers.getDownloadPage().showModDownloads().selectInstance(instanceId);
+        if (gameInstance == null) {
+            return;
+        }
+        Controllers.getDownloadPage().showModDownloads().selectInstance(gameInstance.getId());
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
@@ -287,14 +307,14 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public GameDirectory getGameDirectory() {
-        return this.repository.getGameDirectory();
+        return gameInstance != null ? gameInstance.getRepository().getGameDirectory() : null;
     }
 
     public HMCLGameRepository getRepository() {
-        return this.repository;
+        return gameInstance != null ? gameInstance.getRepository() : null;
     }
 
     public GameInstanceID getInstanceId() {
-        return this.instanceId;
+        return gameInstance != null ? gameInstance.getId() : null;
     }
 }
