@@ -65,6 +65,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
+    private final TabControl.Tab<StructureListPage> structureTab = new TabControl.Tab<>("structureListPage");
 
     public WorldManagePage(World world, HMCLGameInstance gameInstance) {
         this.world = world;
@@ -83,6 +84,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         dataPackTab.setNodeSupplier(() -> new DataPackListPage(this));
+        structureTab.setNodeSupplier(() -> new StructureListPage(this));
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
@@ -216,6 +218,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 if (getSkinnable().world.supportDataPacks()) {
                     getSkinnable().header.getTabs().add(getSkinnable().dataPackTab);
                     tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+                }
+
+                if (getSkinnable().world.supportStructures()) {
+                    getSkinnable().header.getTabs().add(getSkinnable().structureTab);
+                    tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().structureTab, i18n("world.structure"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL);
                 }
             }
 

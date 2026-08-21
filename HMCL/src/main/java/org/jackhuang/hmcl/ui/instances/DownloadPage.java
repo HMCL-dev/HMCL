@@ -389,7 +389,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                 case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
                 case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
                 case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
-                default -> null; // Dependencies should not be modpacks, worlds or customized stuff
+                case WORLD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_WORLD;
+                default -> null; // Dependencies should not be modpacks or customized stuff
             };
             setOnAction((e) -> {
                 fireEvent(new DialogCloseEvent());
