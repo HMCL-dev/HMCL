@@ -57,7 +57,7 @@ fi
 if [ -n "${HMCL_JAVA_OPTS+x}" ]; then
   _HMCL_VM_OPTIONS=${HMCL_JAVA_OPTS}
 else
-  _HMCL_VM_OPTIONS="-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"
+  _HMCL_VM_OPTIONS="-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15 -XX:G1PeriodicGCInterval=600000 -XX:G1PeriodicGCSystemLoadThreshold=0.75"
 fi
 
 function show_warning_console() {
