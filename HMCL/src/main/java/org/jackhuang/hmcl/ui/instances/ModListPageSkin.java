@@ -38,6 +38,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.addon.LoaderType;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
@@ -54,10 +55,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.FXThread;
-import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -80,6 +78,7 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.i18n.I18n.translateLoaderType;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
@@ -460,25 +459,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         if (versionOptional.isPresent()) {
                             RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                             FXUtils.runInFX(() -> {
-                                for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
-                                    String loaderName = switch (modLoaderType) {
-                                        case FORGE -> i18n("install.installer.forge");
-                                        case CLEANROOM -> i18n("install.installer.cleanroom");
-                                        case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                                        case NEO_FORGE -> i18n("install.installer.neoforge");
-                                        case FABRIC -> i18n("install.installer.fabric");
-                                        case LITE_LOADER -> i18n("install.installer.liteloader");
-                                        case QUILT -> i18n("install.installer.quilt");
-                                        default -> null;
-                                    };
-                                    if (loaderName == null)
-                                        continue;
-                                    if (title.getTags()
-                                            .stream()
-                                            .noneMatch(it -> it.getText().equals(loaderName))) {
-                                        title.addTag(loaderName);
-                                    }
+                                Set<String> tags = new LinkedHashSet<>();
+                                for (Either<LoaderType, String> loader : versionOptional.get().loaders()) {
+                                    String tag = I18n.translateLoaderType(loader);
+                                    if (tag != null) tags.add(tag);
                                 }
+                                title.addTagsIfNotExist(tags);
 
                                 button.setExternalLink(remoteAddon.pageUrl());
                                 button.setDisable(false);
@@ -613,15 +599,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 content.addTagWarning(i18n("mods.unknown"));
             } else if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
-                switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
-                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
-                    case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
-                    case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
-                    case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
-                    case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
-                    case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
-                }
+                content.addTagWarning(translateLoaderType(dataItem.getModInfo().getModLoaderType()));
             }
 
             String modVersion = modInfo.getVersion();
