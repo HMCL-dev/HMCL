@@ -20,36 +20,38 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.beans.binding.Bindings;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Displays optional component changes while updating an existing game instance.
 class AdditionalInstallersPage extends AbstractInstallersPage {
-    protected final HMCLGameRepository repository;
-    protected final String gameVersion;
-    protected final GameInstanceManifest manifest;
-
-    public AdditionalInstallersPage(String gameVersion, GameInstanceManifest manifest, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
+    /// Creates a page for selecting additional component changes.
+    ///
+    /// @param instance the instance being updated
+    /// @param gameVersion the selected game version
+    /// @param controller the wizard controller that stores the selected changes
+    /// @param downloadProvider the provider used to retrieve available component versions
+    public AdditionalInstallersPage(HMCLGameInstance instance, String gameVersion, WizardController controller, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
-        this.gameVersion = gameVersion;
-        this.manifest = manifest;
-        this.repository = repository;
 
-        txtName.setText(manifest.id().toString());
+        txtName.setText(instance.getId().id());
         txtName.setEditable(false);
 
-        for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getLibraryId();
-            if (libraryId.equals("game")) continue;
-            library.setOnRemove(() -> {
-                controller.getSettings().put(libraryId, new UpdateInstallerWizardProvider.RemoveVersionAction(libraryId));
+        for (InstallerItem component : group.getComponents()) {
+            if (component.getComponentType() == GameComponentType.GAME) continue;
+            component.setOnRemove(() -> {
+                controller.getSettings().put(
+                        component.getComponentType().getPatchId(),
+                        new UpdateInstallerWizardProvider.RemoveVersionAction(component.getComponentType()));
                 reload();
             });
         }
@@ -57,43 +59,59 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
         installable.bind(Bindings.createBooleanBinding(() -> txtName.validate(), txtName.textProperty()));
     }
 
+    /// Finishes the update wizard.
     @Override
     protected void onInstall() {
         controller.onFinish();
     }
 
+    /// Returns the title of the installer selection page.
+    ///
+    /// @return the localized page title
     @Override
     public String getTitle() {
         return i18n("settings.tabs.installers");
     }
 
-    private String getVersion(String id) {
-        return Optional.ofNullable(controller.getSettings().get(id))
+    /// Returns the selected version of a component, or `null` if no version is selected.
+    ///
+    /// @param type the component type
+    /// @return the selected component version, or `null`
+    private @Nullable String getVersion(GameComponentType type) {
+        return Optional.ofNullable(controller.getSettings().get(type.getPatchId()))
                 .flatMap(it -> Lang.tryCast(it, RemoteVersion.class))
                 .map(RemoteVersion::getSelfVersion).orElse(null);
     }
 
+    /// Refreshes component states from the changes selected in the wizard.
     @Override
     protected void reload() {
-        for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getLibraryId();
-            if (controller.getSettings().containsKey(libraryId)) {
-                library.versionProperty().set(new InstallerItem.InstalledState(getVersion(libraryId), false, false));
+        for (InstallerItem component : group.getComponents()) {
+            GameComponentType componentType = component.getComponentType();
+            if (controller.getSettings().containsKey(componentType.getPatchId())) {
+                component.versionProperty().set(new InstallerItem.InstalledState(getVersion(componentType), false, false));
             } else {
-                library.versionProperty().set(null);
+                component.versionProperty().set(null);
             }
         }
     }
 
+    /// Leaves the wizard settings unchanged when navigating away from this page.
+    ///
+    /// @param settings the wizard settings
     @Override
     public void cleanup(SettingsMap settings) {
     }
 
+    /// Returns whether name-field extension controls are displayed.
+    ///
+    /// @return `false`
     @Override
     protected boolean showExtendPane() {
         return false;
     }
 
+    /// Performs no action because the instance name cannot be edited on this page.
     @Override
     protected void resetDefaultName() {
     }

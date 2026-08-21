@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.Task;
 
 import java.net.URI;
@@ -68,12 +69,11 @@ public final class DownloadProviderWrapper implements DownloadProvider {
     }
 
     @Override
-    public VersionList<?> getVersionListById(String id) {
-
+    public VersionList<?> getVersionList(GameComponentType componentType) {
         return new VersionList<>() {
             @Override
             public boolean hasType() {
-                return getProvider().getVersionListById(id).hasType();
+                return getProvider().getVersionList(componentType).hasType();
             }
 
             @Override
@@ -83,11 +83,11 @@ public final class DownloadProviderWrapper implements DownloadProvider {
 
             @Override
             public Task<?> refreshAsync(String gameVersion) {
-                return getProvider().getVersionListById(id).refreshAsync(gameVersion)
+                return getProvider().getVersionList(componentType).refreshAsync(gameVersion)
                         .thenComposeAsync(() -> {
                             lock.writeLock().lock();
                             try {
-                                versions.putAll(gameVersion, getProvider().getVersionListById(id).getVersions(gameVersion));
+                                versions.putAll(gameVersion, getProvider().getVersionList(componentType).getVersions(gameVersion));
                             } finally {
                                 lock.writeLock().unlock();
                             }

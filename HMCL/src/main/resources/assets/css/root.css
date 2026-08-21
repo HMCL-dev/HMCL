@@ -70,15 +70,6 @@
     -fx-fill: -monet-on-primary-fixed;
 }
 
-.hint.success {
-    -fx-background-color: #d1e7dd;
-    -fx-border-color: -monet-outline;
-}
-
-.hint.success Text, .hint.success .svg {
-    -fx-fill: #0a3622;
-}
-
 .hint.error {
     -fx-background-color: -monet-error-container;
     -fx-border-color: -monet-outline;
@@ -1237,69 +1228,14 @@
     -fx-font-size: 14.0px;
 }
 
-/* unused */
-.toggle-icon1 .icon {
-    -fx-fill: #4285F4;
-    -fx-padding: 20.0;
-}
-
-.toggle-icon1 {
-    -fx-pref-width: 80px;
-    -fx-background-radius: 80px;
-    -fx-pref-height: 80px;
-    -fx-background-color: transparent;
-    -jfx-toggle-color: rgba(66.0, 133.0, 244.0, 0.29885056614875793);
-    -jfx-untoggle-color: transparent;
-}
-
-.toggle-icon1 .jfx-rippler {
-    -jfx-rippler-fill: rgba(66.0, 133.0, 244.0, 0.29885056614875793);
-    -jfx-mask-type: CIRCLE;
-}
-
-.toggle-icon2, .toggle-icon3, .jfx-decorator-button {
+.jfx-decorator-button {
     -fx-pref-width: 50px;
     -fx-background-radius: 50px;
     -fx-pref-height: 50px;
     -fx-background-color: transparent;
 }
 
-/* unused */
-.toggle-icon2 .icon {
-    -fx-fill: RED;
-}
 
-.toggle-icon2 .jfx-rippler {
-    -jfx-rippler-fill: RED;
-    -jfx-mask-type: CIRCLE;
-}
-
-/* unused */
-.toggle-icon3 {
-    -fx-toggle-icon4-size: 35px;
-    -fx-pref-width: -fx-toggle-icon4-size;
-    -fx-max-width: -fx-toggle-icon4-size;
-    -fx-min-width: -fx-toggle-icon4-size;
-    -fx-pref-height: -fx-toggle-icon4-size;
-    -fx-max-height: -fx-toggle-icon4-size;
-    -fx-min-height: -fx-toggle-icon4-size;
-    -fx-background-radius: 50px;
-    -fx-background-color: transparent;
-    -jfx-toggle-color: white;
-    -jfx-untoggle-color: transparent;
-}
-
-.toggle-icon3 .icon {
-    -fx-fill: rgb(204.0, 204.0, 51.0);
-    -fx-padding: 10.0;
-}
-
-.toggle-icon3 .jfx-rippler {
-    -jfx-rippler-fill: white;
-    -jfx-mask-type: CIRCLE;
-}
-
-/* used */
 .toggle-icon4 {
     -fx-toggle-icon4-size: 30px;
     -fx-pref-width: -fx-toggle-icon4-size;
@@ -1762,11 +1698,6 @@
     -fx-font-size: 14;
 }
 
-.window {
-    -fx-background-color: transparent;
-    -fx-padding: 8;
-}
-
 .debug-border {
     -fx-border-color: red;
     -fx-border-width: 1;
@@ -1928,6 +1859,15 @@
     -fx-font-style: italic;
 }
 
+.html-code {
+    -fx-font-size: 15;
+}
+
+.html .separator > .line {
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 0.5;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Tooltip                                                                     *
@@ -2008,4 +1948,50 @@
 
 .update-pane:active .subtitle-label {
     -fx-text-fill: -monet-tertiary;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Mod Changelog                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
+.addon-changelog {
+    -fx-background-color: -monet-surface;
+    -fx-background-radius: 4;
+    -fx-padding: 10;
+    -fx-font-size: 12;
+    -fx-text-fill: -monet-on-surface;
+    -fx-line-spacing: 2;
+}
+
+.addon-changelog .html {
+    -fx-font-size: 12;
+}
+
+.addon-changelog .html-h1 {
+    -fx-font-size: 16.5;
+}
+
+.addon-changelog .html-h2 {
+    -fx-font-size: 15;
+}
+
+.addon-changelog .html-h3 {
+    -fx-font-size: 13.5;
+}
+
+.addon-changelog .html-code {
+    -fx-font-size: 11.25;
+}
+
+.addon-changelog .html-code-block {
+    -fx-padding: 0 3 0 3;
+    -fx-background-radius: 5;
+    /* Should be -monet-surface-bright in dark mode and -dim in light mode, however that's not supported */
+    -fx-background-color: -monet-surface-container;
+}
+
+.addon-changelog-table-cell {
+    -fx-text-fill: -monet-primary;
 }
