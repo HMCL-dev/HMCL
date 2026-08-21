@@ -31,10 +31,13 @@ import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.game.friend.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +45,7 @@ import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -312,6 +316,35 @@ public class MicrosoftService {
         }
     }
 
+    public FriendResponse getFriendList(String accessToken) throws IOException {
+        var url = "https://api.minecraftservices.com/friends";
+
+        return HttpRequest.GET(url)
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").getJson(FriendResponse.class);
+    }
+
+    public FriendResponse updateFriend(String accessToken, @Nullable String name, @Nullable UUID uuid, EnumUpdateType updateType) throws IOException {
+        var url = "https://api.minecraftservices.com/friends";
+
+        return HttpRequest.PUT(url)
+                .json(new FriendUpdateRequst(name, uuid != null ? uuid.toString() : null, updateType), GSON)
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").getJson(FriendResponse.class);
+    }
+
+    public PresenceResponse getPresence(String accessToken, @NotNull EnumPresenceStatus status) throws IOException {
+        var url = "https://api.minecraftservices.com/presence";
+
+        return HttpRequest.POST(url)
+                .json(new PresenceRequst(status), GSON)
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").getJson(PresenceResponse.class);
+    }
+
     public static class XboxAuthorizationException extends AuthenticationException {
         private final long errorCode;
         private final String redirect;
@@ -477,16 +510,22 @@ public class MicrosoftService {
         }
     }
 
-    private static class MinecraftErrorResponse {
+    public static class MinecraftErrorResponse {
         public String path;
         public String errorType;
         public String error;
         public String errorMessage;
         public String developerMessage;
+        public Details details;
+    }
+
+    public static class Details {
+        public String status;
     }
 
     private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
             .create();
 
 }
