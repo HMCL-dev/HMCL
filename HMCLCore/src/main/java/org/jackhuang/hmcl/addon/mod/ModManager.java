@@ -66,7 +66,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
-    private final Set<LocalModFile> liteLoaderAsMods = new HashSet<>();
     private GameComponentAnalyzer analyzer;
 
     private boolean loaded = false;
@@ -109,7 +108,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public boolean hasLiteLoaderAsMod() {
         lock.lock();
         try {
-            return liteLoaderAsMods.stream().anyMatch(LocalModFile::isActive);
+            return getLocalMod("liteloader", ModLoaderType.FORGE).getFiles().stream().anyMatch(LocalModFile::isActive);
         } finally {
             lock.unlock();
         }
@@ -143,23 +142,37 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
         List<Exception> exceptions = new ArrayList<>();
         try (ZipFileTree tree = CompressingUtils.openZipTree(file)) {
-            coreMods = CoreMods.fromFile(file, tree);
-
-            for (ModMetadataReader reader : supportedReaders) {
-                try {
-                    modInfo = reader.fromFile(this, file, tree, coreMods);
-                    break;
-                } catch (Exception e) {
-                    exceptions.add(e);
-                }
+            try {
+                coreMods = CoreMods.fromFile(file, tree);
+            } catch (Exception e) {
+                exceptions.add(e);
             }
 
-            if (modInfo == null) {
-                for (ModMetadataReader reader : unsupportedReaders) {
+            if (coreMods.isLiteLoaderAsMod()) {
+                modInfo = new LocalModFile(this,
+                        getLocalMod("liteloader", ModLoaderType.FORGE),
+                        file,
+                        "LiteLoader",
+                        new LocalAddonFile.Description("LiteLoader"),
+                        coreMods
+                );
+            } else {
+                for (ModMetadataReader reader : supportedReaders) {
                     try {
                         modInfo = reader.fromFile(this, file, tree, coreMods);
                         break;
-                    } catch (Exception ignored) {
+                    } catch (Exception e) {
+                        exceptions.add(e);
+                    }
+                }
+
+                if (modInfo == null) {
+                    for (ModMetadataReader reader : unsupportedReaders) {
+                        try {
+                            modInfo = reader.fromFile(this, file, tree, coreMods);
+                            break;
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
             }
@@ -188,8 +201,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         if (!modInfo.isOld()) {
             localFiles.add(modInfo);
         }
-
-        liteLoaderAsMods.add(modInfo);
     }
 
     @Override
@@ -198,7 +209,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         try {
             localFiles.clear();
             localMods.clear();
-            liteLoaderAsMods.clear();
 
             analyzer = instance.getAnalyzer();
 
