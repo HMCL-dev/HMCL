@@ -169,13 +169,6 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         return components.values().iterator();
     }
 
-    /// If a library is provided in `$.patches`, it's structure is so clear that we can do any operation.
-    /// Otherwise, we must guess how are these libraries mixed.
-    /// Maybe a guessing implementation will be provided in the future. But by now, we simply set it to JUST\_EXISTED.
-    public enum Status {
-        CLEAR, UNSURE, JUST_EXISTED
-    }
-
     public record Mark(
             GameComponentType componentType,
             @Nullable String version,
