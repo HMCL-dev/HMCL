@@ -62,6 +62,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -532,9 +533,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
-        BooleanProperty booleanProperty;
+        @Nullable BooleanProperty booleanProperty;
 
-        Tooltip warningTooltip;
+        @Nullable Tooltip warningTooltip;
 
         ModInfoListCell(JFXListView<ModInfoObject> listView) {
             super(listView);
@@ -609,18 +610,41 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             content.setSubtitle(joiner.toString());
 
-            if (modLoaderType == ModLoaderType.UNKNOWN) {
-                content.addTagWarning(i18n("mods.unknown"));
-            } else if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
-                warning.add(i18n("mods.warning.loader_mismatch"));
-                switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
-                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
-                    case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
-                    case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
-                    case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
-                    case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
-                    case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
+            {
+                Set<ModLoaderType> modFileLoaders = EnumSet.noneOf(ModLoaderType.class);
+                GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(Optional.ofNullable(getSkinnable().gameVersion));
+                // Uses 1.7 snapshot as there's no snapshots for 1.6 after its first release
+                boolean checkCoreModsDir = !gameVersionNumber.isAtLeast("1.6.1", "13w36a");
+
+                if (modLoaderType != ModLoaderType.UNKNOWN) modFileLoaders.add(modLoaderType);
+                modFileLoaders.addAll(modInfo.getCoreMods().getModLoaders(gameVersionNumber));
+
+                if (modFileLoaders.stream().anyMatch(loader -> getSkinnable().supportedLoaders.contains(loader))) {
+                    if (modInfo.isCoreMod()) {
+                        if (checkCoreModsDir) {
+                            content.addTagWarning("CoreMod");
+                            warning.add(i18n("mods.coremods.check_dir"));
+                        } else {
+                            content.addTag("CoreMod");
+                        }
+                    }
+                } else {
+                    if (modLoaderType == ModLoaderType.UNKNOWN) {
+                        content.addTagWarning(i18n("mods.unknown"));
+                    } else {
+                        warning.add(i18n("mods.warning.loader_mismatch"));
+                        switch (modLoaderType) {
+                            case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
+                            case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
+                            case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
+                            case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
+                            case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
+                            case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
+                            case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
+                        }
+                    }
+                    if (modInfo.isCoreMod())
+                        content.addTagWarning("CoreMod");
                 }
             }
 

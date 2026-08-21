@@ -60,14 +60,14 @@ public final class FabricModMetadata {
         this.contact = contact;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException, JsonParseException {
         ZipArchiveEntry mcmod = tree.getEntry("fabric.mod.json");
         if (mcmod == null)
             throw new IOException("File " + modFile + " is not a Fabric mod.");
         FabricModMetadata metadata = JsonUtils.fromNonNullJsonFully(tree.getInputStream(mcmod), FabricModMetadata.class);
         String authors = metadata.authors == null ? "" : metadata.authors.stream().map(author -> author.name).collect(Collectors.joining(", "));
         return new LocalModFile(modManager, modManager.getLocalMod(metadata.id, ModLoaderType.FABRIC), modFile, metadata.name, new LocalAddonFile.Description(metadata.description),
-                authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon);
+                authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon, coreMods);
     }
 
     @JsonAdapter(FabricModAuthorSerializer.class)

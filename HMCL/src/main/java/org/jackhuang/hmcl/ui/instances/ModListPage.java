@@ -58,7 +58,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
-    private String gameVersion;
+    String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -148,16 +148,27 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             return;
         }
 
+        var gameVersionNumber = GameVersionNumber.asGameVersion(gameVersion);
+
         for (GameComponentType type : GameComponentType.MOD_LOADERS) {
             if (type.isModLoader() && analyzer.has(type)) {
                 ModLoaderType modLoaderType = type.getModLoaderType();
                 if (modLoaderType != null) {
                     supportedLoaders.add(modLoaderType);
-
-                    if (modLoaderType == ModLoaderType.CLEANROOM)
-                        supportedLoaders.add(ModLoaderType.FORGE);
                 }
             }
+        }
+
+        if (analyzer.has(GameComponentType.CLEANROOM)) {
+            supportedLoaders.add(ModLoaderType.FORGE);
+        }
+
+        if (analyzer.has(GameComponentType.FORGE) // No cleanroom because LiteLoader cannot run on Java 21
+                && modManager.hasLiteLoaderAsMod()
+                && !gameVersionNumber.isAtLeast("1.13", "17w43a")
+                // LiteLoader indicates that it supports 1.5.2 as well in this way, but it actually does nothing
+                && gameVersionNumber.isAtLeast("1.6.1", "13w36a" /* 1.7-snapshot-1 */)) {
+            supportedLoaders.add(ModLoaderType.LITE_LOADER);
         }
 
         if (analyzer.has(GameComponentType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {

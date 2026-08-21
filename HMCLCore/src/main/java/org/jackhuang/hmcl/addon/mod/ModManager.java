@@ -43,7 +43,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     @FunctionalInterface
     private interface ModMetadataReader {
-        LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException;
+        LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException, JsonParseException;
     }
 
     private static final Map<String, List<Pair<ModMetadataReader, ModLoaderType>>> READERS;
@@ -105,6 +105,15 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
+    public boolean hasLiteLoaderAsMod() {
+        lock.lock();
+        try {
+            return getLocalMod("liteloader-forge", ModLoaderType.FORGE).getFiles().stream().anyMatch(LocalModFile::isActive);
+        } finally {
+            lock.unlock();
+        }
+    }
+
     private void addModInfo(Path file) {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
@@ -129,24 +138,41 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
 
         LocalModFile modInfo = null;
+        CoreMods coreMods = CoreMods.EMPTY;
 
         List<Exception> exceptions = new ArrayList<>();
         try (ZipFileTree tree = CompressingUtils.openZipTree(file)) {
-            for (ModMetadataReader reader : supportedReaders) {
-                try {
-                    modInfo = reader.fromFile(this, file, tree);
-                    break;
-                } catch (Exception e) {
-                    exceptions.add(e);
-                }
+            try {
+                coreMods = CoreMods.fromFile(file, tree);
+            } catch (Exception e) {
+                exceptions.add(e);
             }
 
-            if (modInfo == null) {
-                for (ModMetadataReader reader : unsupportedReaders) {
+            if (coreMods.isLiteLoaderAsMod()) {
+                modInfo = new LocalModFile(this,
+                        getLocalMod("liteloader-forge", ModLoaderType.FORGE),
+                        file,
+                        "LiteLoader",
+                        new LocalAddonFile.Description("LiteLoader working together with Forge as a mod"),
+                        coreMods
+                );
+            } else {
+                for (ModMetadataReader reader : supportedReaders) {
                     try {
-                        modInfo = reader.fromFile(this, file, tree);
+                        modInfo = reader.fromFile(this, file, tree, coreMods);
                         break;
-                    } catch (Exception ignored) {
+                    } catch (Exception e) {
+                        exceptions.add(e);
+                    }
+                }
+
+                if (modInfo == null) {
+                    for (ModMetadataReader reader : unsupportedReaders) {
+                        try {
+                            modInfo = reader.fromFile(this, file, tree, coreMods);
+                            break;
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
             }
@@ -167,7 +193,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     getLocalMod(fileNameWithoutExtension, ModLoaderType.UNKNOWN),
                     file,
                     fileNameWithoutExtension,
-                    new LocalAddonFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : "")
+                    new LocalAddonFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : ""),
+                    coreMods
             );
         }
 
@@ -324,34 +351,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public static boolean isFileNameMod(Path file) {
         String name = getLocalAddonName(file);
         return MOD_EXTENSIONS.contains(FileUtils.getExtension(name).toLowerCase(Locale.ROOT));
-    }
-
-    public static boolean isFileMod(Path modFile) {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-            if (Files.exists(fs.getPath("mcmod.info")) || Files.exists(fs.getPath("META-INF/mods.toml"))) {
-                // Forge mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("fabric.mod.json"))) {
-                // Fabric mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("quilt.mod.json"))) {
-                // Quilt mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("litemod.json"))) {
-                // Liteloader mod
-                return true;
-            }
-
-            return false;
-        } catch (IOException e) {
-            return false;
-        }
     }
 
     /**
