@@ -262,7 +262,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
                             if (version != GameVersionNumber.unknown()) {
-                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), gameVersion.get(), mods);
+                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), mods);
                             } else {
                                 LOG.warning("Failed to check for updates, due to unable to get instance game version");
                                 return null;
