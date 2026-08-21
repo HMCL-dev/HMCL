@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -745,5 +746,27 @@ public class CrashReportAnalyzerTest {
         assertEquals(
                 new HashSet<>(Collections.singletonList("icycream")),
                 CrashReportAnalyzer.findKeywordsFromCrashReport(loadLog("/crash-report/mod/icycream.txt")));
+    }
+
+    /// Verifies that a rule spanning adjacent streaming windows is still detected.
+    @Test
+    public void streamingAnalysisFindsCrossWindowMatch() throws IOException {
+        String marker = "java.lang.OutOfMemoryError";
+        String log = "x".repeat(4 * 1024 * 1024 - marker.length() / 2) + marker;
+
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.analyze(new StringReader(log)).results(),
+                CrashReportAnalyzer.Rule.OUT_OF_MEMORY);
+        assertEquals(marker, result.matcher().group());
+    }
+
+    /// Verifies that streaming keyword extraction matches the in-memory path.
+    @Test
+    public void streamingAnalysisFindsCrashReportKeywords() throws IOException {
+        String crashReport = loadLog("/crash-report/mod/tconstruct.txt");
+
+        assertEquals(
+                CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport),
+                CrashReportAnalyzer.analyze(new StringReader(crashReport)).keywords());
     }
 }

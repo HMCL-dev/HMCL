@@ -47,10 +47,11 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
@@ -118,6 +119,7 @@ public class GameCrashWindow extends Stage {
         analyzeCrashReport();
     }
 
+    /// Analyzes captured output and the complete latest log without blocking the JavaFX thread.
     @SuppressWarnings("unchecked")
     private void analyzeCrashReport() {
         loading.set(true);
@@ -143,15 +145,15 @@ public class GameCrashWindow extends Stage {
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
 
-            String log;
-            try {
-                log = FileUtils.readTextMaybeNativeEncoding(latestLog);
+            CrashReportAnalyzer.Analysis analysis;
+            try (BufferedReader reader = IOUtils.newBufferedReaderMaybeNativeEncoding(latestLog)) {
+                analysis = CrashReportAnalyzer.analyze(reader);
             } catch (IOException e) {
                 LOG.warning("Failed to read logs/latest.log", e);
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
 
-            return pair(CrashReportAnalyzer.analyze(log), CrashReportAnalyzer.findKeywordsFromCrashReport(log));
+            return pair(analysis.results(), analysis.keywords());
         })).whenComplete(Schedulers.javafx(), (taskResult, exception) -> {
             loading.set(false);
 
@@ -207,7 +209,7 @@ public class GameCrashWindow extends Stage {
                             break;
                         default:
                             message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
-                                    Arrays.stream(result.rule().getGroupNames()).map(groupName -> result.matcher().group(groupName))
+                                    result.rule().getGroupNames().stream().map(groupName -> result.matcher().group(groupName))
                                             .toArray());
                             break;
                     }
