@@ -313,6 +313,11 @@ public final class Controllers {
                     .build());
         }
 
+        if (HotSpotCrashDetector.hasPreviousCrash()) {
+            Controllers.dialogLater(new MessageDialogPane.Builder(
+                    i18n("launcher.crash.previous_run"), null, MessageType.WARNING).ok(null).build());
+        }
+
         if (SettingsManager.userState().agreementVersionProperty().get() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
