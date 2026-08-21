@@ -361,8 +361,11 @@ public class HMCLGameInstance extends DefaultGameInstance {
             throw new IllegalArgumentException("Unsupported icon file: " + extension);
         }
 
+        Path dest = getInstanceRoot().resolve("icon." + extension);
+        if (dest.equals(iconFile)) return;
+
         clearIconFiles();
-        FileUtils.copyFile(iconFile, getInstanceRoot().resolve("icon." + extension));
+        FileUtils.copyFile(iconFile, dest);
         invalidateIconImage();
     }
 
