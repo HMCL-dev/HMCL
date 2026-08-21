@@ -454,7 +454,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             GameInstanceID id,
             Path target,
             String description) throws IOException {
-        Path expectedRoot = baseSnapshot.getLayout().getInstanceRoot(id);
+        Path expectedRoot = baseSnapshot.getLayout().getInstanceRoot(id)
+                .toAbsolutePath()
+                .normalize();
         if (target.equals(expectedRoot) || !target.startsWith(expectedRoot)) {
             throw new IOException(description + " path escapes instance root: " + target);
         }
