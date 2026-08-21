@@ -113,7 +113,13 @@ public class TaskExecutorDialogPane extends BorderPane {
                 executor.addTaskListener(new TaskListener() {
                     @Override
                     public void onStop(boolean success, TaskExecutor executor) {
-                        Platform.runLater(() -> fireEvent(new DialogCloseEvent()));
+                        Platform.runLater(() -> {
+                            // Trim heap memory when tasks finish, allowing GC to return memory to the OS faster,
+                            // prevent excessive peak memory from consuming system resources.
+                            System.gc();
+
+                            fireEvent(new DialogCloseEvent());
+                        });
                     }
                 });
         }
