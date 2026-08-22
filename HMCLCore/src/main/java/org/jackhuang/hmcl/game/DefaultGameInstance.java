@@ -18,6 +18,9 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.addon.LocalAddonFile;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -184,6 +187,21 @@ public abstract class DefaultGameInstance implements GameInstance {
             version = detectVersion();
         }
         return version;
+    }
+
+    /// Returns the manager for this snapshot member and the specific addon type.
+    ///
+    /// The manager is created on first use and is not shared with other snapshot wrappers. After a
+    /// repository refresh or COW publish, callers should obtain the manager from the current
+    /// instance again.
+    ///
+    /// @return the manager for the specific addon type, or null if not supported
+    public @Nullable LocalAddonManager<? extends LocalAddonFile> getManagerForType(RemoteAddon.Type type) {
+        return switch (type) {
+            case MOD -> getModManager();
+            case RESOURCE_PACK -> getResourcePackManager();
+            default -> null;
+        };
     }
 
     /// Returns the mod manager for this snapshot member.

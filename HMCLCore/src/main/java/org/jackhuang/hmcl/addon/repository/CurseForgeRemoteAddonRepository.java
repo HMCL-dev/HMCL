@@ -77,6 +77,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     private final @Nullable RemoteAddon.Type type;
     private final int section;
 
+    private boolean cacheEnabled = false;
+
     public CurseForgeRemoteAddonRepository() {
         this.type = null;
         this.section = -1;
@@ -127,6 +129,15 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     private static int calculateTotalPages(Response<List<CurseAddon>> response, int pageSize) {
         return (int) Math.ceil((double) Math.min(response.pagination.totalCount, 10000) / pageSize);
+    }
+
+    public void enableCache() {
+        cacheEnabled = true;
+    }
+
+    public void disableCache() {
+        cacheEnabled = false;
+        latestFilesCache.clear();
     }
 
     @Override
@@ -208,7 +219,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     }
 
     /// Calculates the CurseForge fingerprint without retaining the filtered file in memory.
-    static long calculateFingerprint(Path file) throws IOException {
+    public static long calculateFingerprint(Path file) throws IOException {
         try (SeekableByteChannel channel = Files.newByteChannel(file, StandardOpenOption.READ)) {
             long startPosition = channel.position();
 
@@ -310,17 +321,33 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         }
     }
 
-    @Override
-    public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
+    private final Map<String, List<CurseAddon.LatestFile>> latestFilesCache = new HashMap<>();
+
+    private List<CurseAddon.LatestFile> getLatestFiles(DownloadProvider downloadProvider, String addonId) throws IOException {
+        if (cacheEnabled && latestFilesCache.containsKey(addonId)) return latestFilesCache.get(addonId);
         SEMAPHORE.acquireUninterruptibly();
         try {
-            Response<List<CurseAddon.LatestFile>> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
+            List<CurseAddon.LatestFile> data = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + addonId + "/files",
                     pair("pageSize", "10000")))
-                    .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
-            return response.data().stream().map(CurseAddon.LatestFile::toVersion);
+                    .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)))
+                    .data();
+            if (cacheEnabled) latestFilesCache.put(addonId, data);
+            return data;
         } finally {
             SEMAPHORE.release();
         }
+    }
+
+    @Override
+    public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
+        return getLatestFiles(downloadProvider, id).stream().map(CurseAddon.LatestFile::toVersion);
+    }
+
+    @Override
+    public boolean hasRemoteVersionWithHashes(DownloadProvider downloadProvider, String id, Set<?> hashes) throws IOException {
+        if (hashes.isEmpty() || hashes.stream().anyMatch(o -> !(o instanceof Long)))
+            return false;
+        return getLatestFiles(downloadProvider, id).stream().map(CurseAddon.LatestFile::fileFingerprint).anyMatch(hashes::contains);
     }
 
     @Override
@@ -424,6 +451,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             case SECTION_MODPACK -> RemoteAddon.Type.MODPACK;
             case SECTION_RESOURCE_PACK -> RemoteAddon.Type.RESOURCE_PACK;
             case SECTION_WORLD -> RemoteAddon.Type.WORLD;
+            case SECTION_DATAPACK -> RemoteAddon.Type.DATA_PACK;
             case SECTION_CUSTOMIZATION -> RemoteAddon.Type.CUSTOMIZATION;
             case SECTION_SHADER -> RemoteAddon.Type.SHADER_PACK;
             case SECTION_MOD -> RemoteAddon.Type.MOD;
@@ -470,7 +498,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                              List<LatestFile> latestFiles,
                              List<LatestFileIndex> latestFileIndices, Instant dateCreated, Instant dateModified,
                              Instant dateReleased, boolean allowModDistribution, int gamePopularityRank,
-                             boolean isAvailable, int thumbsUpCount) implements RemoteAddon.IAddon {
+                             boolean isAvailable, int thumbsUpCount) {
         public static final Map<Integer, RemoteAddon.DependencyType> RELATION_TYPE = mapOf(
                 pair(1, RemoteAddon.DependencyType.EMBEDDED),
                 pair(2, RemoteAddon.DependencyType.OPTIONAL),
@@ -479,25 +507,6 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 pair(5, RemoteAddon.DependencyType.INCOMPATIBLE),
                 pair(6, RemoteAddon.DependencyType.INCLUDE)
         );
-
-        @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
-            Set<Integer> dependencies = latestFiles.stream()
-                    .flatMap(latestFile -> latestFile.dependencies().stream())
-                    .filter(dep -> dep.relationType() == 3)
-                    .map(Dependency::modId)
-                    .collect(Collectors.toSet());
-            List<RemoteAddon> mods = new ArrayList<>();
-            for (int dependencyId : dependencies) {
-                mods.add(repo.getAddonById(downloadProvider, Integer.toString(dependencyId)));
-            }
-            return mods;
-        }
-
-        @Override
-        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
-            return repo.getRemoteVersionsById(downloadProvider, Integer.toString(id));
-        }
 
         public RemoteAddon toAddon() {
             String iconUrl = "";
@@ -509,6 +518,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             }
 
             return new RemoteAddon(
+                    Integer.toString(id),
                     slug,
                     "",
                     name,
@@ -516,8 +526,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     categories.stream().map(category -> Integer.toString(category.getId())).collect(Collectors.toList()),
                     links.websiteUrl,
                     iconUrl,
-                    this,
-                    toAddonType(classId)
+                    toAddonType(classId),
+                    RemoteAddon.Source.CURSEFORGE
             );
         }
 

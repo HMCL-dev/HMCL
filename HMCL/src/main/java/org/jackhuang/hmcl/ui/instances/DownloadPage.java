@@ -24,11 +24,14 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -48,6 +51,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
@@ -62,6 +66,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
+    private final BooleanProperty installed = new SimpleBooleanProperty(false);
     private final RemoteAddonRepository repository;
     private final ModTranslations translations;
     private final RemoteAddon addon;
@@ -92,11 +97,28 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.supplyAsync(() -> {
-            Stream<RemoteAddon.Version> versions = addon.data().loadVersions(repository, page.getDownloadProvider());
-            return sortVersions(versions);
+            repository.enableCache();
+            Stream<RemoteAddon.Version> versions = repository.getRemoteVersionsById(getDownloadProvider(), addon.id());
+            boolean installed = false;
+            {
+                DefaultGameInstance instance = instanceReference.instance();
+                if (instance != null && addon.type() != null && addon.source() != null) {
+                    LocalAddonManager<?> manager = instance.getManagerForType(addon.type());
+                    if (manager != null) {
+                        try {
+                            installed = repository.hasRemoteVersionWithHashes(getDownloadProvider(), addon.id(), manager.getHashes(addon.source()));
+                        } catch (IOException e) {
+                            LOG.warning("Failed to check if addon %s on %s is installed".formatted(addon.id(), addon.source()), e);
+                        }
+                    }
+                }
+            }
+            repository.disableCache();
+            return Pair.pair(sortVersions(versions), installed);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                this.versions = result;
+                this.versions = result.key();
+                this.installed.set(result.value());
 
                 loaded.set(true);
                 setFailed(false);
@@ -125,6 +147,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     public RemoteAddon getAddon() {
         return addon;
+    }
+
+    public DownloadProvider getDownloadProvider() {
+        return page.getDownloadProvider();
     }
 
     public HMCLGameInstance.Optional getInstanceOptional() {
@@ -228,6 +254,20 @@ public class DownloadPage extends Control implements DecoratorPage {
                         .forEach(content::addTag);
                 content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
+
+                if (control.installed.get()) {
+                    content.addTagFirst(i18n("addon.installed"), null);
+                } else {
+                    control.installed.addListener(new ChangeListener<>() {
+                        @Override
+                        public void changed(ObservableValue<? extends Boolean> o, Boolean __, Boolean newValue) {
+                            if (newValue) {
+                                content.addTagFirst(i18n("addon.installed"), null);
+                                control.installed.removeListener(this);
+                            }
+                        }
+                    });
+                }
 
                 if (getSkinnable().mod != null) {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
@@ -371,7 +411,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         public final RemoteAddon addon;
 
-        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference) {
+        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference, boolean installed) {
             this.addon = addon;
 
             HBox pane = new HBox(8);
@@ -401,6 +441,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(addon.slug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
                 content.setSubtitle(addon.description());
+                if (installed)
+                    content.addTag(i18n("addon.installed"));
                 for (String category : addon.categories()) {
                     if (page.shouldDisplayCategory(category))
                         content.addTag(page.getLocalizedCategory(category, null));
@@ -526,7 +568,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             box.getChildren().setAll(addonItem);
 
             JFXHyperlink changelogButton = new JFXHyperlink(i18n("addon.changelog"));
-            changelogButton.setOnAction(__ -> Controllers.dialog(new AddonChangelog(version, selfPage.repository, selfPage.page.getDownloadProvider())));
+            changelogButton.setOnAction(__ -> Controllers.dialog(new AddonChangelog(version, selfPage.repository, selfPage.getDownloadProvider())));
 
             JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
             versionPageBtn.setDisable(true);
@@ -608,13 +650,30 @@ public class DownloadPage extends Control implements DecoratorPage {
                         dependencies.put(dependency.getType(), Pair.pair(title, list));
                     }
 
-                    queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
+                    queue.add(Task.supplyAsync(Schedulers.io(), () -> {
+                                var addon = dependency.load(selfPage.getDownloadProvider());
+                                boolean installed = false;
+                                {
+                                    DefaultGameInstance instance = selfPage.getInstanceOptional().instance();
+                                    if (instance != null && addon.type() != null && addon.source() != null) {
+                                        LocalAddonManager<?> manager = instance.getManagerForType(addon.type());
+                                        if (manager != null) {
+                                            try {
+                                                installed = selfPage.repository.hasRemoteVersionWithHashes(selfPage.getDownloadProvider(), addon.id(), manager.getHashes(addon.source()));
+                                            } catch (IOException e) {
+                                                LOG.warning("Failed to check if addon %s on %s is installed".formatted(addon.id(), addon.source()), e);
+                                            }
+                                        }
+                                    }
+                                }
+                                return Pair.pair(addon, installed);
+                            })
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
-                                if (dep == RemoteAddon.BROKEN) {
+                                if (dep.key() == RemoteAddon.BROKEN) {
                                     return;
                                 }
-                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.instanceReference);
+                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep.key(), selfPage.instanceReference, dep.value());
                                 dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));
