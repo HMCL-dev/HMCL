@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,24 +30,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 public record RemoteAddon(String id, String slug, String author, String title, String description, List<String> categories,
                           String pageUrl, String iconUrl, @Nullable Type type, @Nullable Source source) {
 
     public static final RemoteAddon BROKEN = new RemoteAddon("", "", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", null, null);
-
-    public boolean checkInstalled(@Nullable DefaultGameInstance instance, DownloadProvider downloadProvider) {
-        if (instance == null || type == null || source == null) return false;
-        LocalAddonManager<?> manager = instance.getManagerForType(type);
-        if (manager == null) return false;
-        try {
-            return source.getCommonRepo().hasRemoteVersionWithHashes(downloadProvider, id, manager.getHashes(source));
-        } catch (IOException e) {
-            LOG.warning("Failed to check if addon %s on %s is installed".formatted(id, source), e);
-            return false;
-        }
-    }
 
     public enum VersionType {
         Release,

@@ -37,24 +37,24 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
 
     private static final int INITIAL_CAPACITY = 16;
 
-    protected abstract RemoteAddonRepository getBackedRemoteModRepository();
+    protected abstract RemoteAddonRepository getBackedRepository();
 
-    protected abstract SortType getBackedRemoteModRepositorySortOrder();
+    protected abstract SortType getBackedRepositorySortOrder();
 
     @Override
     public String getApiBaseUrl() {
-        return getBackedRemoteModRepository().getApiBaseUrl();
+        return getBackedRepository().getApiBaseUrl();
     }
 
     @Override
     public String getBaseUrl() {
-        return getBackedRemoteModRepository().getBaseUrl();
+        return getBackedRepository().getBaseUrl();
     }
 
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         if (!StringUtils.containsChinese(searchFilter)) {
-            return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
+            return getBackedRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
         }
 
         Set<String> englishSearchFiltersSet = new LinkedHashSet<>(INITIAL_CAPACITY);
@@ -71,7 +71,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
         }
 
         if (englishSearchFiltersSet.isEmpty()) {
-            return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
+            return getBackedRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
         }
 
         RemoteAddon[] searchResultArray = new RemoteAddon[pageSize];
@@ -80,7 +80,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
             SearchResult searchResult = null;
             List<RemoteAddon> remoteAddons = List.of();
             for (String englishSearchFilter : englishSearchFiltersSet) {
-                searchResult = getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, englishSearchFilter, getBackedRemoteModRepositorySortOrder(), sortOrder);
+                searchResult = getBackedRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, englishSearchFilter, getBackedRepositorySortOrder(), sortOrder);
                 remoteAddons = searchResult.getUnsortedResults().toList();
                 if (!remoteAddons.isEmpty()) {
                     break;
@@ -125,41 +125,41 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
 
     @Override
     public Stream<Category> getCategories() throws IOException {
-        return getBackedRemoteModRepository().getCategories();
+        return getBackedRepository().getCategories();
     }
 
     @Override
     public Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
-        return getBackedRemoteModRepository().getRemoteVersionByLocalFile(file);
+        return getBackedRepository().getRemoteVersionByLocalFile(file);
     }
 
     @Override
     public RemoteAddon getAddonById(DownloadProvider downloadProvider, String id) throws IOException {
-        return getBackedRemoteModRepository().getAddonById(downloadProvider, id);
+        return getBackedRepository().getAddonById(downloadProvider, id);
     }
 
     @Override
     public RemoteAddon.File getAddonFile(String projectId, String fileId) throws IOException {
-        return getBackedRemoteModRepository().getAddonFile(projectId, fileId);
+        return getBackedRepository().getAddonFile(projectId, fileId);
     }
 
     @Override
     public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
-        return getBackedRemoteModRepository().getRemoteVersionsById(downloadProvider, id);
+        return getBackedRepository().getRemoteVersionsById(downloadProvider, id);
     }
 
     @Override
     public boolean hasRemoteVersionWithHashes(DownloadProvider downloadProvider, String id, Set<?> hashes) throws IOException {
-        return getBackedRemoteModRepository().hasRemoteVersionWithHashes(downloadProvider, id, hashes);
+        return getBackedRepository().hasRemoteVersionWithHashes(downloadProvider, id, hashes);
     }
 
     @Override
     public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
-        return getBackedRemoteModRepository().getAddonChangelog(downloadProvider, addonId, versionId);
+        return getBackedRepository().getAddonChangelog(downloadProvider, addonId, versionId);
     }
 
     @Override
     public @NotNull String getVersionPageUrl(RemoteAddon.Version version) throws IOException {
-        return getBackedRemoteModRepository().getVersionPageUrl(version);
+        return getBackedRepository().getVersionPageUrl(version);
     }
 }

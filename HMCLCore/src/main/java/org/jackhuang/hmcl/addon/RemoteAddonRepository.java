@@ -36,6 +36,10 @@ public interface RemoteAddonRepository {
 
     String getBaseUrl();
 
+    void enableCache();
+
+    void disableCache();
+
     enum SortType {
         POPULARITY,
         NAME,

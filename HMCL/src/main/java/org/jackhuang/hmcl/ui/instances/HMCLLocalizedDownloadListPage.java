@@ -94,7 +94,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         }
 
         @Override
-        protected RemoteAddonRepository getBackedRemoteModRepository() {
+        protected RemoteAddonRepository getBackedRepository() {
             if ("addon.modrinth".equals(downloadSource.get())) {
                 return modrinth;
             } else {
@@ -103,7 +103,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         }
 
         @Override
-        protected SortType getBackedRemoteModRepositorySortOrder() {
+        protected SortType getBackedRepositorySortOrder() {
             if ("addon.modrinth".equals(downloadSource.get())) {
                 return SortType.NAME;
             } else {
@@ -114,6 +114,18 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         @Override
         public RemoteAddon.Type getType() {
             return type;
+        }
+
+        @Override
+        public void enableCache() {
+            if (modrinth != null) modrinth.enableCache();
+            if (curseForge != null) curseForge.enableCache();
+        }
+
+        @Override
+        public void disableCache() {
+            if (modrinth != null) modrinth.disableCache();
+            if (curseForge != null) curseForge.disableCache();
         }
     }
 
