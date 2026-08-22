@@ -54,8 +54,11 @@ public class TwoLineListItem extends VBox {
         firstLine.getStyleClass().add("first-line");
         firstLine.setMaxWidth(Double.MAX_VALUE);
         firstLine.setMinWidth(0);
+        firstLine.prefWidthProperty().bind(widthProperty());
         firstLine.minHeightProperty().bind(lblTitle.heightProperty());
         firstLine.prefHeightProperty().bind(lblTitle.heightProperty());
+
+        widthProperty().addListener((obs, old, val) -> firstLine.requestLayout());
 
         this.getChildren().setAll(firstLine);
     }
@@ -90,7 +93,6 @@ public class TwoLineListItem extends VBox {
         @Override
         protected void invalidated() {
             lblTitle.setText(get());
-//            firstLine.requestLayout();
         }
     };
 
