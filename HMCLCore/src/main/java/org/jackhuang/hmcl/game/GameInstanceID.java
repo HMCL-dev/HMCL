@@ -22,6 +22,7 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +31,9 @@ import java.io.IOException;
 
 /// Identifies one game instance and forms the instance's directory name in repository layouts.
 ///
-/// An id must be a non-blank path segment. Directory separators and the special `.` and `..`
-/// segments are rejected so layout operations cannot escape or alias the instances directory.
+/// An id must be a non-blank path segment that is valid for the current operating system's file
+/// names and JAR paths. Directory separators and the special `.` and `..` segments are rejected
+/// so layout operations cannot escape or alias the instances directory.
 ///
 /// @param id the validated instance id
 @NotNullByDefault
@@ -39,16 +41,17 @@ import java.io.IOException;
 @JsonSerializable
 public record GameInstanceID(String id) implements Comparable<GameInstanceID> {
 
-    /// Returns whether `id` is a non-blank instance path segment.
+    /// Returns whether `id` is a valid instance path and JAR file name on the current operating system.
     ///
     /// @param id the candidate id
-    /// @return whether the id satisfies the repository-independent safety requirements
+    /// @return whether the id satisfies the current operating system's path safety requirements
     public static boolean isValid(String id) {
         return !id.isBlank()
                 && !id.equals(".")
                 && !id.equals("..")
                 && !id.contains("/")
-                && !id.contains("\\");
+                && !id.contains("\\")
+                && FileUtils.isNameValidForJar(id);
     }
 
     /// Creates a validated instance id.
