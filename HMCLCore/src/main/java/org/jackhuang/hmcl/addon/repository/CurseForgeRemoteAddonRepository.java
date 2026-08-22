@@ -208,7 +208,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     }
 
     /// Calculates the CurseForge fingerprint without retaining the filtered file in memory.
-    static long calculateFingerprint(Path file) throws IOException {
+    public static long calculateFingerprint(Path file) throws IOException {
         try (SeekableByteChannel channel = Files.newByteChannel(file, StandardOpenOption.READ)) {
             long startPosition = channel.position();
 
@@ -310,17 +310,28 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         }
     }
 
-    @Override
-    public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
+    private List<CurseAddon.LatestFile> getLatestFiles(DownloadProvider downloadProvider, String addonId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
-            Response<List<CurseAddon.LatestFile>> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
+            Response<List<CurseAddon.LatestFile>> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + addonId + "/files",
                     pair("pageSize", "10000")))
                     .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
-            return response.data().stream().map(CurseAddon.LatestFile::toVersion);
+            return response.data();
         } finally {
             SEMAPHORE.release();
         }
+    }
+
+    @Override
+    public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
+        return getLatestFiles(downloadProvider, id).stream().map(CurseAddon.LatestFile::toVersion);
+    }
+
+    @Override
+    public boolean hasRemoteVersionWithHashes(DownloadProvider downloadProvider, String id, Set<?> hashes) throws IOException {
+        if (hashes.isEmpty() || hashes.stream().anyMatch(o -> !(o instanceof Long)))
+            return false;
+        return getLatestFiles(downloadProvider, id).stream().map(CurseAddon.LatestFile::fileFingerprint).anyMatch(hashes::contains);
     }
 
     @Override
@@ -509,6 +520,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             }
 
             return new RemoteAddon(
+                    Integer.toString(id),
                     slug,
                     "",
                     name,
@@ -517,7 +529,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     links.websiteUrl,
                     iconUrl,
                     this,
-                    toAddonType(classId)
+                    toAddonType(classId),
+                    RemoteAddon.Source.CURSEFORGE
             );
         }
 

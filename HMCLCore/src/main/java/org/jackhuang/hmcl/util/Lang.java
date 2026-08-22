@@ -349,11 +349,6 @@ public final class Lang {
         };
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public static <T> Stream<T> toStream(Optional<T> optional) {
-        return optional.map(Stream::of).orElseGet(Stream::empty);
-    }
-
     public static <T> Iterable<T> toIterable(Enumeration<T> enumeration) {
         if (enumeration == null) {
             throw new NullPointerException();

@@ -31,10 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public record RemoteAddon(String slug, String author, String title, String description, List<String> categories,
-                          String pageUrl, String iconUrl, IAddon data, @Nullable Type type) {
+public record RemoteAddon(String id, String slug, String author, String title, String description, List<String> categories,
+                          String pageUrl, String iconUrl, IAddon data, @Nullable Type type, @Nullable Source source) {
 
-    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IAddon() {
+    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IAddon() {
         @Override
         public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
@@ -44,7 +44,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
         public Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
-    }, Type.MOD);
+    }, null, null);
 
     public enum VersionType {
         Release,

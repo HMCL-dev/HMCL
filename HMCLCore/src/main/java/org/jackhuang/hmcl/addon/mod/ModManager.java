@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -68,8 +67,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
     private GameComponentAnalyzer analyzer;
 
-    private boolean loaded = false;
-
     /// Creates a mod manager for the given instance.
     ///
     /// @param instance the snapshot member whose mods directory this manager operates on
@@ -105,6 +102,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
+    /// Call this only in [#refresh()]
     private void addModInfo(Path file) {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
@@ -192,15 +190,15 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
             if (Files.isDirectory(getDirectory())) {
                 try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
-                    for (Path subitem : modsDirectoryStream) {
-                        if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
-                            try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
-                                for (Path subsubitem : subitemDirectoryStream) {
-                                    addModInfo(subsubitem);
+                    for (Path item : modsDirectoryStream) {
+                        if (supportSubfolders && Files.isDirectory(item) && !".connector".equalsIgnoreCase(item.getFileName().toString())) {
+                            try (DirectoryStream<Path> subDirectoryStream = Files.newDirectoryStream(item)) {
+                                for (Path subItem : subDirectoryStream) {
+                                    addModInfo(subItem);
                                 }
                             }
                         } else {
-                            addModInfo(subitem);
+                            addModInfo(item);
                         }
                     }
                 }
@@ -214,17 +212,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     @Override
     public Comparator<LocalModFile> getComparator() {
         return LocalModFile::compareTo;
-    }
-
-    public @Unmodifiable List<LocalModFile> getLocalFiles() throws IOException {
-        lock.lock();
-        try {
-            if (!loaded)
-                refresh();
-            return super.getLocalFiles();
-        } finally {
-            lock.unlock();
-        }
     }
 
     public void addMod(Path file) throws IOException {

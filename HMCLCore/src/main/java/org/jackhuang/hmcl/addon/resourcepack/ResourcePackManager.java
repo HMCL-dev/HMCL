@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -219,8 +218,6 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     private @Nullable PackMcMeta.PackVersion requiredVersion;
     private boolean supportsNewOptionsFormat;
 
-    private boolean loaded = false;
-
     /// Creates a resource-pack manager for the given instance.
     ///
     /// @param instance the snapshot member whose resource packs this manager operates on
@@ -343,39 +340,18 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         return ResourcePackFile::compareTo;
     }
 
-    @Override
-    public @Unmodifiable List<ResourcePackFile> getLocalFiles() throws IOException {
-        lock.lock();
-        try {
-            if (!loaded)
-                refresh();
-            return super.getLocalFiles();
-        } finally {
-            lock.unlock();
-        }
-    }
+    public void addResourcePack(Path file) throws IOException, IllegalArgumentException {
+        if (ResourcePackFile.isFileResourcePack(file)) {
+            Files.createDirectories(resourcePackDirectory);
 
-    public void importResourcePack(Path file) throws IOException, IllegalArgumentException {
-        lock.lock();
-        try {
-            if (ResourcePackFile.isFileResourcePack(file)) {
-                if (!loaded)
-                    refresh();
-                Files.createDirectories(resourcePackDirectory);
-
-                Path newFile = resourcePackDirectory.resolve(file.getFileName());
-                if (Files.isDirectory(file)) {
-                    FileUtils.copyDirectory(file, newFile);
-                } else {
-                    FileUtils.copyFile(file, newFile);
-                }
-
-                addResourcePackInfo(newFile);
+            Path newFile = resourcePackDirectory.resolve(file.getFileName());
+            if (Files.isDirectory(file)) {
+                FileUtils.copyDirectory(file, newFile);
             } else {
-                throw new IllegalArgumentException("File '" + file + "' is not a resource pack");
+                FileUtils.copyFile(file, newFile);
             }
-        } finally {
-            lock.unlock();
+        } else {
+            throw new IllegalArgumentException("File '" + file + "' is not a resource pack");
         }
     }
 

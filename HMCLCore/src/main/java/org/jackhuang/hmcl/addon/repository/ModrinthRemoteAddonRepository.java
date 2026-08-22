@@ -280,8 +280,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
+    private List<ProjectVersion> getProjectVersions(DownloadProvider downloadProvider, String id) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
@@ -291,9 +290,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
             for (URI candidate : candidates) {
                 try {
-                    List<ProjectVersion> versions = HttpRequest.GET(candidate.toString())
-                            .getJson(listTypeOf(ProjectVersion.class));
-                    return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
+                    return HttpRequest.GET(candidate.toString()).getJson(listTypeOf(ProjectVersion.class));
                 } catch (IOException e) {
                     IOException wrapper = new IOException("Failed to get remote versions: " + candidate, e);
                     if (candidates.size() == 1) {
@@ -311,6 +308,24 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         } finally {
             SEMAPHORE.release();
         }
+    }
+
+    @Override
+    public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
+        return getProjectVersions(downloadProvider, id).stream().map(ProjectVersion::toVersion).flatMap(Optional::stream);
+    }
+
+    @Override
+    public boolean hasRemoteVersionWithHashes(DownloadProvider downloadProvider, String id, Set<?> hashes) throws IOException {
+        if (hashes.isEmpty() || hashes.stream().anyMatch(o -> !(o instanceof String)))
+            return false;
+        return getProjectVersions(downloadProvider, id).stream()
+                .map(ProjectVersion::files)
+                .filter(files -> !files.isEmpty())
+                .map(files -> files.get(0))
+                .map(file -> file.hashes().get("sha1"))
+                .filter(Objects::nonNull)
+                .anyMatch(hashes::contains);
     }
 
     @Override
@@ -403,6 +418,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
         public RemoteAddon toAddon() {
             return new RemoteAddon(
+                    id,
                     slug,
                     "",
                     title,
@@ -411,7 +427,8 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
                     this,
-                    toAddonType(projectType)
+                    toAddonType(projectType),
+                    RemoteAddon.Source.MODRINTH
             );
         }
     }
@@ -529,6 +546,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
         public RemoteAddon toAddon() {
             return new RemoteAddon(
+                    projectId,
                     slug,
                     author,
                     title,
@@ -537,7 +555,8 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
                     this,
-                    toAddonType(projectType)
+                    toAddonType(projectType),
+                    RemoteAddon.Source.MODRINTH
             );
         }
     }
