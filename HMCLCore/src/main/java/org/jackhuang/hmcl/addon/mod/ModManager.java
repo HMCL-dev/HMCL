@@ -117,14 +117,14 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
         Set<ModLoaderType> modLoaderTypes = instance.getModLoaders();
 
-        var supportedReaders = new ArrayList<ModMetadataReader>();
-        var unsupportedReaders = new ArrayList<ModMetadataReader>();
+        var preferredReaders = new ArrayList<ModMetadataReader>();
+        var alternativeReaders = new ArrayList<ModMetadataReader>();
 
         for (Pair<ModMetadataReader, ModLoaderType> reader : readersMap) {
             if (modLoaderTypes.contains(reader.getValue())) {
-                supportedReaders.add(reader.getKey());
+                preferredReaders.add(reader.getKey());
             } else {
-                unsupportedReaders.add(reader.getKey());
+                alternativeReaders.add(reader.getKey());
             }
         }
 
@@ -132,7 +132,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
         List<Exception> exceptions = new ArrayList<>();
         try (ZipFileTree tree = CompressingUtils.openZipTree(file)) {
-            for (ModMetadataReader reader : supportedReaders) {
+            for (ModMetadataReader reader : preferredReaders) {
                 try {
                     modInfo = reader.fromFile(this, file, tree);
                     break;
@@ -142,7 +142,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
 
             if (modInfo == null) {
-                for (ModMetadataReader reader : unsupportedReaders) {
+                for (ModMetadataReader reader : alternativeReaders) {
                     try {
                         modInfo = reader.fromFile(this, file, tree);
                         break;
@@ -231,21 +231,11 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         if (!isFileNameMod(file))
             throw new IllegalArgumentException("File " + file + " is not a valid mod file.");
 
-        lock.lock();
-        try {
-            if (!loaded)
-                refresh();
+        Path modsDirectory = getDirectory();
+        Files.createDirectories(modsDirectory);
 
-            Path modsDirectory = getDirectory();
-            Files.createDirectories(modsDirectory);
-
-            Path newFile = modsDirectory.resolve(file.getFileName());
-            FileUtils.copyFile(file, newFile);
-
-            addModInfo(newFile);
-        } finally {
-            lock.unlock();
-        }
+        Path newFile = modsDirectory.resolve(file.getFileName());
+        FileUtils.copyFile(file, newFile);
     }
 
     public void removeMods(LocalModFile... localModFiles) throws IOException {
