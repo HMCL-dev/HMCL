@@ -45,6 +45,8 @@ public class TwoLineListItem extends VBox {
 
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
+        lblTitle.setWrapText(true);
+        lblTitle.setMaxWidth(Double.MAX_VALUE);
 
         this.firstLine = new HBox(lblTitle);
         firstLine.getStyleClass().add("first-line");
@@ -176,7 +178,6 @@ public class TwoLineListItem extends VBox {
 
             FXUtils.setOverflowHidden(tagsBox);
 
-            lblTitle.setMinWidth(Label.USE_PREF_SIZE);
             firstLine.getChildren().setAll(lblTitle, tagsBox);
         }
         return tags;
