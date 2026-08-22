@@ -199,6 +199,7 @@ public final class Decorator {
         @Nullable Stage currentStage = stage;
         if (currentStage != null) {
             updateWindowDecoration(currentStage.isMaximized() || currentStage.isFullScreen());
+            synchronizeContentSize(currentStage);
         }
     };
 
@@ -209,7 +210,7 @@ public final class Decorator {
             return;
         }
 
-        Insets insets = getWindowInsets();
+        Insets insets = getContentInsets(currentStage);
         boolean saveBounds = !currentStage.isIconified()
                 // https://github.com/HMCL-dev/HMCL/issues/4290
                 && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
@@ -226,20 +227,14 @@ public final class Decorator {
                 SettingsManager.state().setY(currentContentY / PRIMARY_SCREEN_BOUNDS.getHeight());
             }
         } else if (observable == currentStage.widthProperty()) {
-            double currentContentWidth = Math.max(
-                    MIN_CONTENT_WIDTH,
-                    currentStage.getWidth() - insets.getLeft() - insets.getRight());
-            contentWidth.set(currentContentWidth);
+            synchronizeContentSize(currentStage, insets);
             if (saveBounds) {
-                SettingsManager.state().setWidth(currentContentWidth);
+                SettingsManager.state().setWidth(contentWidth.get());
             }
         } else if (observable == currentStage.heightProperty()) {
-            double currentContentHeight = Math.max(
-                    MIN_CONTENT_HEIGHT,
-                    currentStage.getHeight() - insets.getTop() - insets.getBottom());
-            contentHeight.set(currentContentHeight);
+            synchronizeContentSize(currentStage, insets);
             if (saveBounds) {
-                SettingsManager.state().setHeight(currentContentHeight);
+                SettingsManager.state().setHeight(contentHeight.get());
             }
         }
     };
@@ -321,6 +316,37 @@ public final class Decorator {
         root.setPadding(edgeToEdge ? Insets.EMPTY : SHADOW_INSETS);
         shadowContainer.setEffect(edgeToEdge ? null : windowShadow);
         mainWindowPane.setWindowEdgeToEdge(edgeToEdge);
+    }
+
+    /// Returns the decoration insets that belong to the current stage state.
+    ///
+    /// The stage state is used instead of the root padding because JavaFX may deliver a stage bounds change before
+    /// the maximized/full-screen property listener updates the custom decoration.
+    ///
+    /// @param currentStage the stage whose content size is being calculated
+    /// @return empty insets for an edge-to-edge stage, otherwise the normal shadow insets
+    private Insets getContentInsets(Stage currentStage) {
+        return currentStage.isMaximized() || currentStage.isFullScreen() ? Insets.EMPTY : SHADOW_INSETS;
+    }
+
+    /// Synchronizes both visible content dimensions with the current stage bounds.
+    ///
+    /// @param currentStage the stage whose bounds are being synchronized
+    private void synchronizeContentSize(Stage currentStage) {
+        synchronizeContentSize(currentStage, getContentInsets(currentStage));
+    }
+
+    /// Synchronizes both visible content dimensions using the supplied decoration insets.
+    ///
+    /// @param currentStage the stage whose bounds are being synchronized
+    /// @param insets the decoration insets to remove from the stage bounds
+    private void synchronizeContentSize(Stage currentStage, Insets insets) {
+        contentWidth.set(Math.max(
+                MIN_CONTENT_WIDTH,
+                currentStage.getWidth() - insets.getLeft() - insets.getRight()));
+        contentHeight.set(Math.max(
+                MIN_CONTENT_HEIGHT,
+                currentStage.getHeight() - insets.getTop() - insets.getBottom()));
     }
 
     /// Returns the pane on which application dialogs are stacked.
