@@ -159,8 +159,8 @@ public record ModGameVersionCheck(
 
         @Unmodifiable List<String> localGameVersions = List.copyOf(currentVersion.get().gameVersions());
 
-        // 远程条目一个游戏版本都没声明属于数据异常，此时任何判断都是猜测：
-        // 判成不匹配会把可能正常的模组标记为需要禁用，因此按无法判定处理
+        // A remote entry declaring no game version at all is anomalous data, and any verdict here would
+        // be a guess: calling it incompatible would mark a possibly working mod for disabling
         if (localGameVersions.isEmpty()) {
             return new ModGameVersionCheck(localModFile, Status.UNKNOWN, List.of(), null, source);
         }
@@ -208,7 +208,7 @@ public record ModGameVersionCheck(
                     return result;
                 }
                 case REPLACEABLE -> {
-                    // targetVersion 在 REPLACEABLE 下必定非空，这里的判空只是为了让编译器满意
+                    // targetVersion is never null for REPLACEABLE; the null checks only satisfy the compiler
                     if (replaceable == null || replaceable.targetVersion() == null
                             || (result.targetVersion() != null && replaceable.targetVersion()
                             .datePublished().isBefore(result.targetVersion().datePublished()))) {

@@ -266,7 +266,8 @@ public final class ModGameVersionMigrationPage extends BorderPane implements Dec
 
             LocalModFile localModFile = check.localModFile();
 
-            // 本来就处于禁用状态的模组默认不参与迁移，与 AddonUpdatesPage 的初始化规则保持一致
+            // Mods that are already disabled stay out of the migration by default, matching how
+            // AddonUpdatesPage initializes its selection
             enabled.set(!localModFile.isDisabled());
             fileName.set(localModFile.getFileName());
             localGameVersion.set(check.localGameVersions().isEmpty()
@@ -324,7 +325,8 @@ public final class ModGameVersionMigrationPage extends BorderPane implements Dec
                     continue;
                 }
 
-                // 在构造阶段（JavaFX 线程）读取原状态，失败回滚时据此决定是否重新启用
+                // Read the previous state here, on the JavaFX thread, to decide whether a failed download
+                // should re-enable the file
                 boolean wasActive = local.isActive();
 
                 dependents.add(Task

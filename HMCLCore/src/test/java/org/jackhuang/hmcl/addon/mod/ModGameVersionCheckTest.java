@@ -110,9 +110,9 @@ public final class ModGameVersionCheckTest {
         assertTrue(ModGameVersionCheck.matchesLoader(forgeOnly, ModLoaderType.FORGE));
         assertFalse(ModGameVersionCheck.matchesLoader(forgeOnly, ModLoaderType.FABRIC));
 
-        // CurseForge 认不出 LiteLoader / Cleanroom，loaders() 恒为空
+        // CurseForge does not recognize LiteLoader or Cleanroom, so loaders() is always empty for them
         assertTrue(ModGameVersionCheck.matchesLoader(noLoader, ModLoaderType.LITE_LOADER));
-        // 本地元数据没读出加载器时无从比较
+        // Nothing to compare against when the local metadata yielded no loader
         assertTrue(ModGameVersionCheck.matchesLoader(forgeOnly, ModLoaderType.UNKNOWN));
     }
 

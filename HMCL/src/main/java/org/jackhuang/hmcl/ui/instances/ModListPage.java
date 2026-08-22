@@ -311,7 +311,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         HMCLGameInstance gameInstance = this.gameInstance;
         ModManager modManager = this.modManager;
-        // 提前取出版本字符串，保证提示文案与实际用于检查的版本是同一个值
+        // Resolve the version string up front so the message and the actual check use the same value
         String targetGameVersion = gameInstance.getVersion().toString();
         Runnable action = () -> Controllers.taskDialog(Task
                         .<List<ModGameVersionCheck>>composeAsync(() -> {
