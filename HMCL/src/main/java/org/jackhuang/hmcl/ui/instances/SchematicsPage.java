@@ -237,7 +237,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     .map(LocalMod::getId)
                     .collect(Collectors.toSet());
             if (modIds.contains("litematica") || modIds.contains("forgematica")) return null;
-            var gameVersionNumber = GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion()));
+            var gameVersionNumber = GameVersionNumber.asGameVersion(modManager.getGameVersion());
             if (!gameVersionNumber.isAtLeast("1.12", "17w31a"))
                 return null;
             if ((analyzer.has(GameComponentType.FORGE) || analyzer.has(GameComponentType.NEO_FORGE))

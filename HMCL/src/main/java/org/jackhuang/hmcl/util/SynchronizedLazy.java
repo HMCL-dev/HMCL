@@ -19,19 +19,32 @@ package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.util.Objects;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 public final class SynchronizedLazy<T> {
     private final Supplier<T> supplier;
-    private T value = null;
+    private Result<T> result = null;
+
+    private final ReentrantLock lock = new ReentrantLock();
 
     public SynchronizedLazy(Supplier<@Nullable T> supplier) {
         this.supplier = Objects.requireNonNull(supplier);
     }
 
-    public synchronized T get() {
-        if (value == null) value = supplier.get();
-        return value;
+    public T get() {
+        if (result != null) return result.value();
+        lock.lock();
+        try {
+            if (result == null) result = new Result<>(supplier.get());
+            return result.value();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private record Result<T>(T value) {
     }
 }
