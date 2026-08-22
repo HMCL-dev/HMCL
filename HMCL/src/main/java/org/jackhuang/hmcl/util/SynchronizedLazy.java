@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.Reference;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
