@@ -362,6 +362,20 @@ public record GameInstanceManifest(
         return patches == null ? List.of() : patches;
     }
 
+    /// Finds a patch by its id.
+    ///
+    /// @return the patch with the given id, or `null` if no such patch exists.
+    public @Nullable GameInstancePatch findPatch(String patchId) {
+        if (patches != null) {
+            for (GameInstancePatch patch : patches) {
+                if (patchId.equals(patch.id())) {
+                    return patch;
+                }
+            }
+        }
+        return null;
+    }
+
     /// Returns logging metadata.
     ///
     /// @return logging metadata

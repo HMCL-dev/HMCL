@@ -36,9 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /// Provides downloads and game-component installation for one game repository.
 @NotNullByDefault
@@ -107,7 +105,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     return Files.notExists(instanceJar) || FileUtils.size(instanceJar) == 0L
                             ? new GameDownloadTask(this, manifest).thenAcceptAsync(
-                                    cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
+                            cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
                             : null;
                 }).thenComposeAsync(checkPatchCompletionAsync(instance, manifest, integrityCheck)),
                 new GameAssetDownloadTask(this, manifest, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
@@ -136,37 +134,43 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             String gameVersion = detectedVersion.toString();
 
             GameInstanceManifest original = instance.getManifest();
-            for (GameComponentType type : GameComponentType.values()) {
-                if (!instance.hasComponent(type))
-                    continue;
 
-                if (type == GameComponentType.OPTIFINE) {
-                    @Nullable String optifinePatchVersion = Optional.ofNullable(instance.getComponentVersion(type)).map(optifineVersion -> {
-                                Matcher matcher = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$").matcher(optifineVersion);
-                                return matcher.find() ? matcher.group("optifine") : optifineVersion;
-                            })
-                            .orElseGet(() -> instance.getResolvedManifest().standaloneManifest().getPatches().stream()
-                                    .filter(patch -> "optifine".equals(patch.id()))
-                                    .findAny()
-                                    .map(GameInstancePatch::version)
-                                    .orElse(null));
 
-                    boolean needsReInstallation = manifest.getLibraries().stream()
-                            .anyMatch(library -> !library.hasDownloadURL()
-                                    && "optifine".equals(library.groupId())
-                                    && GameLibrariesTask.shouldDownloadLibrary(repository, manifest, library, integrityCheck));
+            optifine:
+            {
+                @Nullable GameComponentAnalyzer.Mark mark = instance.getAnalyzer().getMark(GameComponentType.OPTIFINE);
+                if (mark == null || mark.version() == null)
+                    break optifine;
 
-                    if (needsReInstallation) {
-                        Library installer = new Library(new Artifact("optifine", "OptiFine", gameVersion + "_" + optifinePatchVersion, "installer"));
-                        if (GameLibrariesTask.shouldDownloadLibrary(repository, manifest, installer, integrityCheck)) {
-                            tasks.add(installComponentAsync(instance, original, gameVersion, GameComponentType.OPTIFINE, optifinePatchVersion));
-                        } else {
-                            tasks.add(OptiFineInstallTask.install(
-                                    this,
-                                    original,
-                                    gameVersion,
-                                    repository.getLayout().getLibraryFile(manifest.id(), installer)));
-                        }
+                String fullVersion = mark.version();
+                String patchVersion;
+
+                Matcher matcher = GameComponentAnalyzer.OPTIFINE_VERSION_PATTERN.matcher(fullVersion);
+                if (matcher.matches()) {
+                    patchVersion = matcher.group("optifine");
+                } else {
+                    @Nullable GameInstancePatch patch = manifest.findPatch(GameComponentType.OPTIFINE.getPatchId());
+                    if (patch != null && patch.version() != null)
+                        patchVersion = patch.version();
+                    else
+                        break optifine;
+                }
+
+                boolean needsReInstallation = manifest.getLibraries().stream()
+                        .anyMatch(library -> !library.hasDownloadURL()
+                                && "optifine".equals(library.groupId())
+                                && GameLibrariesTask.shouldDownloadLibrary(repository, manifest, library, integrityCheck));
+
+                if (needsReInstallation) {
+                    Library installer = new Library("optifine", "OptiFine", fullVersion, "installer");
+                    if (GameLibrariesTask.shouldDownloadLibrary(repository, manifest, installer, integrityCheck)) {
+                        tasks.add(installComponentAsync(instance, original, gameVersion, GameComponentType.OPTIFINE, patchVersion));
+                    } else {
+                        tasks.add(OptiFineInstallTask.install(
+                                this,
+                                original,
+                                gameVersion,
+                                repository.getLayout().getLibraryFile(manifest.id(), installer)));
                     }
                 }
             }
@@ -206,9 +210,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// Installs a component into an unpublished new instance without constructing a
     /// [GameInstance].
     ///
-    /// @param instanceId     the unpublished instance id
-    /// @param baseManifest   the working manifest for this step
-    /// @param gameVersion    the Minecraft version used for component analysis
+    /// @param instanceId       the unpublished instance id
+    /// @param baseManifest     the working manifest for this step
+    /// @param gameVersion      the Minecraft version used for component analysis
     /// @param componentVersion the remote component to install
     /// @return the task producing the updated manifest (not yet committed)
     Task<GameInstanceManifest> installNewInstanceComponentAsync(
@@ -284,10 +288,10 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     /// Resolves a remote component by id/version and installs it into the working manifest.
     ///
-    /// @param instance       the registered instance being modified
-    /// @param baseManifest   the working manifest for this step
-    /// @param gameVersion    the Minecraft version used to look up the remote list
-    /// @param componentType  the component list id, such as `game` or `forge`
+    /// @param instance         the registered instance being modified
+    /// @param baseManifest     the working manifest for this step
+    /// @param gameVersion      the Minecraft version used to look up the remote list
+    /// @param componentType    the component list id, such as `game` or `forge`
     /// @param componentVersion the component version id
     /// @return the installation task
     public Task<GameInstanceManifest> installComponentAsync(
@@ -308,8 +312,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         baseManifest,
                         versionList.getVersion(gameVersion, componentVersion)
                                 .orElseThrow(() -> new IOException(
-                                        "Remote library " + componentType + " has no version " + componentVersion))))
-                .withStage(String.format("hmcl.install.%s:%s", componentType, componentVersion));
+                                        "Remote component " + componentType + " has no version " + componentVersion))))
+                .withStage("hmcl.install.%s:%s".formatted(componentType, componentVersion));
     }
 
     /// Installs a component from a local installer jar into a registered instance.
@@ -361,7 +365,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     throw new UnsupportedLibraryInstallerException();
                 })
-                .thenApplyAsync(patch -> patch == null ? baseManifest : baseManifest.addPatch(patch));
+                .thenApplyAsync(patch -> {
+                    return patch == null ? baseManifest : baseManifest.addPatch(patch);
+                });
     }
 
     /// Indicates that a local library installer is not recognized by any supported installer.

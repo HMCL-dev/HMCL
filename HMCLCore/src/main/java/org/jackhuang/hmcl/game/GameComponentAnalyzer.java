@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 @NotNullByDefault
 public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyzer.Mark> {
@@ -148,6 +149,10 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
                 .toList());
     }
 
+    public @Nullable Mark getMark(GameComponentType type) {
+        return components.get(type);
+    }
+
     public @Nullable String getVersion(GameComponentType type) {
         Mark mark = components.get(type);
         return mark != null ? mark.version() : null;
@@ -213,4 +218,6 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
             "optifine.OptiFineForgeTweaker"
     );
     public static final String LITELOADER_TWEAKER = "com.mumfrey.liteloader.launch.LiteLoaderTweaker";
+
+    public static final Pattern OPTIFINE_VERSION_PATTERN = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$");
 }

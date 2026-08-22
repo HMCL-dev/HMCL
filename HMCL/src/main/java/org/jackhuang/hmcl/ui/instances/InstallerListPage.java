@@ -35,10 +35,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -52,7 +49,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     /// @param instanceContext the parent page's instance property
     public InstallerListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         Objects.requireNonNull(instanceContext, "instanceContext");
-        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
+        FXUtils.applyDragListener(this, it -> Set.of("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
             if (!mods.isEmpty())
                 doInstallOffline(mods.get(0));
         });
