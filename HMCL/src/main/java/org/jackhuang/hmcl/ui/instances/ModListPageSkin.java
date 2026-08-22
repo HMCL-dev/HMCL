@@ -161,6 +161,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                             .toList()
                             )
                     ),
+                    createToolbarButton2(i18n("mods.check_game_version.button"), SVG.TUNE, () ->
+                            skinnable.checkGameVersion(
+                                    listView.getItems().stream()
+                                            .map(ModInfoObject::getModInfo)
+                                            .toList()
+                            )
+                    ),
                     createToolbarButton2(i18n("mods.download"), SVG.DOWNLOAD, skinnable::download),
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
@@ -190,6 +197,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
                     createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                             skinnable.checkUpdates(
+                                    listView.getSelectionModel().getSelectedItems().stream()
+                                            .map(ModInfoObject::getModInfo)
+                                            .toList()
+                            )
+                    ),
+                    createToolbarButton2(i18n("mods.check_game_version.button"), SVG.TUNE, () ->
+                            skinnable.checkGameVersion(
                                     listView.getSelectionModel().getSelectedItems().stream()
                                             .map(ModInfoObject::getModInfo)
                                             .toList()

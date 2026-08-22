@@ -23,6 +23,7 @@ import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModGameVersionCheck;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -287,6 +288,87 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         } else {
             action.run();
         }
+    }
+
+    /// Checks whether a set of mods targets the game version of the current instance and guides the user
+    /// through the mismatches.
+    ///
+    /// The division of labour with [#checkUpdates]: that method looks for newer builds within the same
+    /// game version and requires the candidate to be published later than the local file, while this one
+    /// asks whether the game versions declared by the local file cover the instance at all. Publication
+    /// time is never compared here, so instances running an older game version than their mods are
+    /// covered too. See [ModGameVersionCheck] for the selection rules.
+    ///
+    /// Modpack instances get the same `mods.update_modpack_mod.warning` confirmation as regular updates,
+    /// since swapping mods across game versions is even more likely to break a modpack.
+    ///
+    /// @param mods the mods to check, usually every row of the list or the user's selection
+    public void checkGameVersion(Collection<LocalModFile> mods) {
+        Objects.requireNonNull(mods);
+        if (isLoading() || gameInstance == null) {
+            return;
+        }
+
+        HMCLGameInstance gameInstance = this.gameInstance;
+        ModManager modManager = this.modManager;
+        // 提前取出版本字符串，保证提示文案与实际用于检查的版本是同一个值
+        String targetGameVersion = gameInstance.getVersion().toString();
+        Runnable action = () -> Controllers.taskDialog(Task
+                        .<List<ModGameVersionCheck>>composeAsync(() -> {
+                            GameVersionNumber version = gameInstance.getVersion();
+                            return version != GameVersionNumber.unknown()
+                                    ? new ModGameVersionCheckTask(
+                                            DownloadProviders.getDownloadProvider(), version.toString(), mods)
+                                    : null;
+                        })
+                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            if (exception instanceof CancellationException) return;
+                            if (exception != null || result == null) {
+                                Controllers.dialog(i18n("mods.check_game_version.failed_check"),
+                                        i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                            } else if (result.isEmpty()) {
+                                Controllers.dialog(i18n("mods.check_game_version.empty", targetGameVersion));
+                            } else {
+                                promptMigration(modManager, targetGameVersion, result);
+                            }
+                        })
+                        .withStagesHints(ModGameVersionCheckTask.STAGE),
+                i18n("mods.check_game_version"), TaskCancellationAction.NORMAL);
+
+        if (gameInstance.isModpack()) {
+            Controllers.confirm(
+                    i18n("mods.update_modpack_mod.warning"), null,
+                    MessageDialogPane.MessageType.WARNING,
+                    action, null);
+        } else {
+            action.run();
+        }
+    }
+
+    /// Asks the user for confirmation and navigates to the migration page once they agree.
+    ///
+    /// The dialog reports how many mods can be replaced by a compatible build and how many can only be
+    /// disabled, so the user knows what is about to happen. [#refresh()] is passed as the completion
+    /// callback because the old files get renamed and the new ones have just landed; without a refresh
+    /// the list would still show the pre-migration state.
+    ///
+    /// @param modManager        the mod manager of the target instance
+    /// @param targetGameVersion the game version of the target instance, used only in the message
+    /// @param checks            the check results needing user action, expected to be non-empty
+    private void promptMigration(ModManager modManager, String targetGameVersion,
+                                 List<ModGameVersionCheck> checks) {
+        long replaceable = checks.stream()
+                .filter(check -> check.status() == ModGameVersionCheck.Status.REPLACEABLE)
+                .count();
+
+        Controllers.confirm(
+                i18n("mods.check_game_version.prompt",
+                        checks.size(), targetGameVersion, replaceable, checks.size() - replaceable),
+                i18n("mods.check_game_version"),
+                MessageDialogPane.MessageType.WARNING,
+                () -> Controllers.navigateForward(
+                        new ModGameVersionMigrationPage(modManager, checks, this::refresh)),
+                null);
     }
 
     public void download() {
