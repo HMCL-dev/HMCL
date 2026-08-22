@@ -126,12 +126,6 @@ public interface GameRepository {
         return getLayout().getInstanceRoot(instanceId);
     }
 
-    /// Returns the shader pack directory for an instance.
-    ///
-    /// @param instanceId instance id
-    /// @return the shader pack directory
-    Path getShadersDirectory(GameInstanceID instanceId);
-
     /// Returns the primary client jar path for a manifest.
     ///
     /// @param manifest the manifest whose jar should be located
