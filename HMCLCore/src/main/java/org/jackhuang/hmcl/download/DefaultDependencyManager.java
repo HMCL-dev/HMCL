@@ -187,12 +187,12 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     ///
     /// @param instance       the registered instance being modified
     /// @param baseManifest   the working standalone-oriented manifest for this step
-    /// @param libraryVersion the remote component to install
+    /// @param componentVersion the remote component to install
     /// @return the task producing the updated manifest (not yet saved)
     public Task<GameInstanceManifest> installComponentAsync(
             GameInstance instance,
             GameInstanceManifest baseManifest,
-            RemoteVersion libraryVersion) {
+            RemoteVersion componentVersion) {
         validateGameInstance(instance);
         if (!instance.getId().equals(baseManifest.id())) {
             throw new IllegalArgumentException("baseManifest id does not match instance");
@@ -200,11 +200,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
         Path modsDirectory = instance.getModsDirectory();
 
-        return removeComponentAsync(instance, baseManifest, libraryVersion.getComponentType())
-                .thenComposeAsync(manifest -> libraryVersion
+        return removeComponentAsync(instance, baseManifest, componentVersion.getComponentType())
+                .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
                         .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
-                .withStage("hmcl.install.%s:%s".formatted(libraryVersion.getComponentType().getPatchId(), libraryVersion.getSelfVersion()));
+                .withStage("hmcl.install.%s:%s".formatted(componentVersion.getComponentType().getPatchId(), componentVersion.getSelfVersion()));
     }
 
     /// Installs a component into an unpublished new instance without constructing a
