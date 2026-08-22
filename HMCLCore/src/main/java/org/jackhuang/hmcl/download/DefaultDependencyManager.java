@@ -204,7 +204,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .thenComposeAsync(manifest -> libraryVersion
                         .getInstallTask(this, manifest, modsDirectory)
                         .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
-                .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getComponentType().getPatchId(), libraryVersion.getSelfVersion()));
+                .withStage("hmcl.install.%s:%s".formatted(libraryVersion.getComponentType().getPatchId(), libraryVersion.getSelfVersion()));
     }
 
     /// Installs a component into an unpublished new instance without constructing a
@@ -232,8 +232,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
                         .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
-                .withStage(String.format(
-                        "hmcl.install.%s:%s",
+                .withStage("hmcl.install.%s:%s".formatted(
                         componentVersion.getComponentType().getPatchId(),
                         componentVersion.getSelfVersion()));
     }
@@ -265,7 +264,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         versionList.getVersion(gameVersion, componentVersion)
                                 .orElseThrow(() -> new IOException(
                                         "Remote component " + componentType + " has no version " + componentVersion))))
-                .withStage(String.format("hmcl.install.%s:%s", componentType, componentVersion));
+                .withStage("hmcl.install.%s:%s".formatted(componentType, componentVersion));
     }
 
     /// Removes one component from an unpublished new instance manifest.
