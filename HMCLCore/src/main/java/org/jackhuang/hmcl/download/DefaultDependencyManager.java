@@ -135,7 +135,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
             GameInstanceManifest original = instance.getManifest();
 
-
             optifine:
             {
                 @Nullable GameComponentAnalyzer.Mark mark = instance.getAnalyzer().getMark(GameComponentType.OPTIFINE);

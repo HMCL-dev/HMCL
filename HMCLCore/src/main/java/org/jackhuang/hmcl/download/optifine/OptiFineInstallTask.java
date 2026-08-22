@@ -86,7 +86,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
     /// @param remoteVersion     selected OptiFine version
     /// @param minecraftJar      vanilla client JAR for the target Minecraft version
     /// @param installer         local installer JAR, or `null` to download it
-    public OptiFineInstallTask(
+    public  OptiFineInstallTask(
             DefaultDependencyManager dependencyManager,
             GameInstanceManifest manifest,
             OptiFineRemoteVersion remoteVersion,
