@@ -513,7 +513,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     "",
                     name,
                     summary,
-                    categories.stream().map(category -> Integer.toString(category.getId())).collect(Collectors.toList()),
+                    categories.stream().map(category -> Integer.toString(category.getId())).toList(),
                     links.websiteUrl,
                     iconUrl,
                     this,

@@ -42,8 +42,8 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
-import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -57,6 +57,7 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -80,6 +81,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> {
+
+    public static final Lazy<Image> UNKNOWN_PACK_IMAGE = new Lazy<>(() ->
+            FXUtils.newBuiltinImage("/assets/img/unknown_pack.png", 64, 64, false, false));
 
     private static final String TIP_KEY = "resourcePackWarning";
     private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
@@ -175,7 +179,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 try {
                     resourcePackManager.importResourcePack(file);
                 } catch (Exception e) {
-                    LOG.warning("Failed to add resource pack", e);
+                    LOG.warning("Failed to add resource pack " + file, e);
                     failures.add(file);
                 }
             }
@@ -192,10 +196,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     }
 
-    public void onAddFiles() {
+    private void onAddFiles() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("resourcepack.add"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.resourcepack"), "*.zip"));
         List<Path> files = Controllers.showOpenMultipleDialog(fileChooser);
         if (files != null && !files.isEmpty()) {
             addFiles(files);
@@ -262,7 +266,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
                             return version != GameVersionNumber.unknown()
-                                    ? new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(),
+                                    ? new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(),
                                             version.toString(), resourcePacks)
                                     : null;
                         })
@@ -272,7 +276,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage<>(resourcePackManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(resourcePackDirectory, result));
                             }
                         })
                         .withStagesHints("update.checking"),
@@ -408,7 +412,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.loadingProperty().bind(control.loadingProperty());
 
-                listView.setCellFactory(x -> new ResourcePackListCell(listView, control));
+                listView.setCellFactory(x -> new ResourcePackListCell(listView));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
                 StackPane placeholderContainer = new StackPane();
@@ -433,7 +437,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     ResourcePackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ResourcePackInfoDialog(control, selectedItem));
+                        Controllers.dialog(new ResourcePackInfoDialog(selectedItem));
                     }
                 });
 
@@ -483,7 +487,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     LocalAddonFile.Description description = resourcePack.getDescription();
                     Stream<String> descriptionParts = description == null
                             ? Stream.empty()
-                            : description.getParts().stream().map(LocalAddonFile.Description.Part::getText);
+                            : description.parts().stream().map(LocalAddonFile.Description.Part::text);
                     if (predicate.test(resourcePack.getFileNameWithExtension())
                             || predicate.test(resourcePack.getFileName())
                             || descriptionParts.anyMatch(predicate)) {
@@ -515,7 +519,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             Image image = file.getIcon();
             if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
                     (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
-                image = FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+                image = UNKNOWN_PACK_IMAGE.get();
             }
             return image;
         }
@@ -523,8 +527,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
-
-        private final ResourcePackListPage page;
 
         private final JFXCheckBox checkBox;
         private final ImageContainer imageContainer = new ImageContainer(32);
@@ -536,9 +538,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private BooleanProperty booleanProperty = null;
 
-        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
+        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView) {
             super(listView);
-            this.page = page;
 
             getStyleClass().add("resource-pack-list-cell");
 
@@ -598,7 +599,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getFile()));
 
-            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(this.page, item)));
+            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
 
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
@@ -617,7 +618,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private static final class ResourcePackInfoDialog extends JFXDialogLayout {
 
-        ResourcePackInfoDialog(ResourcePackListPage page, ResourcePackInfoObject packInfoObject) {
+        ResourcePackInfoDialog(ResourcePackInfoObject packInfoObject) {
             ResourcePackFile pack = packInfoObject.getFile();
 
             HBox titleContainer = new HBox();
@@ -663,7 +664,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 RemoteAddonRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                 Task.runAsync(() -> {
-                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
+                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(pack.getFile());
                     if (versionOptional.isPresent()) {
                         RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                         FXUtils.runInFX(() -> {

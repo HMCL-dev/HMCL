@@ -149,6 +149,13 @@ public interface GameInstance {
         return getRunDirectory().resolve("resourcepacks");
     }
 
+    /// Returns the directory containing shader packs used by this instance.
+    ///
+    /// @return the shader pack directory below the run directory
+    default Path getShadersDirectory() {
+        return getRunDirectory().resolve("shaderpacks");
+    }
+
     /// Returns the directory containing saved worlds used by this instance.
     ///
     /// @return the saves directory below the run directory
