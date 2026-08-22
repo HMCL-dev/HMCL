@@ -435,6 +435,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             case SECTION_MODPACK -> RemoteAddon.Type.MODPACK;
             case SECTION_RESOURCE_PACK -> RemoteAddon.Type.RESOURCE_PACK;
             case SECTION_WORLD -> RemoteAddon.Type.WORLD;
+            case SECTION_DATAPACK -> RemoteAddon.Type.DATA_PACK;
             case SECTION_CUSTOMIZATION -> RemoteAddon.Type.CUSTOMIZATION;
             case SECTION_SHADER -> RemoteAddon.Type.SHADER_PACK;
             case SECTION_MOD -> RemoteAddon.Type.MOD;
@@ -481,7 +482,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                              List<LatestFile> latestFiles,
                              List<LatestFileIndex> latestFileIndices, Instant dateCreated, Instant dateModified,
                              Instant dateReleased, boolean allowModDistribution, int gamePopularityRank,
-                             boolean isAvailable, int thumbsUpCount) implements RemoteAddon.IAddon {
+                             boolean isAvailable, int thumbsUpCount) {
         public static final Map<Integer, RemoteAddon.DependencyType> RELATION_TYPE = mapOf(
                 pair(1, RemoteAddon.DependencyType.EMBEDDED),
                 pair(2, RemoteAddon.DependencyType.OPTIONAL),
@@ -490,25 +491,6 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 pair(5, RemoteAddon.DependencyType.INCOMPATIBLE),
                 pair(6, RemoteAddon.DependencyType.INCLUDE)
         );
-
-        @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
-            Set<Integer> dependencies = latestFiles.stream()
-                    .flatMap(latestFile -> latestFile.dependencies().stream())
-                    .filter(dep -> dep.relationType() == 3)
-                    .map(Dependency::modId)
-                    .collect(Collectors.toSet());
-            List<RemoteAddon> mods = new ArrayList<>();
-            for (int dependencyId : dependencies) {
-                mods.add(repo.getAddonById(downloadProvider, Integer.toString(dependencyId)));
-            }
-            return mods;
-        }
-
-        @Override
-        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
-            return repo.getRemoteVersionsById(downloadProvider, Integer.toString(id));
-        }
 
         public RemoteAddon toAddon() {
             String iconUrl = "";
@@ -528,7 +510,6 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     categories.stream().map(category -> Integer.toString(category.getId())).collect(Collectors.toList()),
                     links.websiteUrl,
                     iconUrl,
-                    this,
                     toAddonType(classId),
                     RemoteAddon.Source.CURSEFORGE
             );

@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,22 +30,25 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public record RemoteAddon(String id, String slug, String author, String title, String description, List<String> categories,
-                          String pageUrl, String iconUrl, IAddon data, @Nullable Type type, @Nullable Source source) {
+                          String pageUrl, String iconUrl, @Nullable Type type, @Nullable Source source) {
 
-    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IAddon() {
-        @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
-            throw new IOException();
-        }
+    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", null, null);
 
-        @Override
-        public Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
-            throw new IOException();
+    public boolean checkInstalled(@Nullable DefaultGameInstance instance, DownloadProvider downloadProvider) {
+        if (instance == null || type == null || source == null) return false;
+        LocalAddonManager<?> manager = instance.getManagerForType(type);
+        if (manager == null) return false;
+        try {
+            return source.getCommonRepo().hasRemoteVersionWithHashes(downloadProvider, id, manager.getHashes(source));
+        } catch (IOException e) {
+            LOG.warning("Failed to check if addon %s on %s is installed".formatted(id, source), e);
+            return false;
         }
-    }, null, null);
+    }
 
     public enum VersionType {
         Release,
@@ -148,6 +152,7 @@ public record RemoteAddon(String id, String slug, String author, String title, S
                 CurseForgeRemoteAddonRepository.SHADERS,
                 CurseForgeRemoteAddonRepository.WORLDS,
                 CurseForgeRemoteAddonRepository.MODPACKS,
+                null,
                 CurseForgeRemoteAddonRepository.CUSTOMIZATIONS
         ),
         MODRINTH(
@@ -155,6 +160,7 @@ public record RemoteAddon(String id, String slug, String author, String title, S
                 ModrinthRemoteAddonRepository.MODS,
                 ModrinthRemoteAddonRepository.RESOURCE_PACKS,
                 ModrinthRemoteAddonRepository.SHADER_PACKS,
+                null,
                 null,
                 ModrinthRemoteAddonRepository.MODPACKS,
                 null
@@ -165,6 +171,7 @@ public record RemoteAddon(String id, String slug, String author, String title, S
         private final RemoteAddonRepository resourcePackRepo;
         private final RemoteAddonRepository shaderPackRepo;
         private final RemoteAddonRepository worldRepo;
+        private final RemoteAddonRepository dataPackRepo;
         private final RemoteAddonRepository modpackRepo;
         private final RemoteAddonRepository customizationRepo;
 
@@ -175,6 +182,7 @@ public record RemoteAddon(String id, String slug, String author, String title, S
                 case RESOURCE_PACK -> resourcePackRepo;
                 case SHADER_PACK -> shaderPackRepo;
                 case WORLD -> worldRepo;
+                case DATA_PACK -> dataPackRepo;
                 case MODPACK -> modpackRepo;
                 case CUSTOMIZATION -> customizationRepo;
             };
@@ -190,6 +198,7 @@ public record RemoteAddon(String id, String slug, String author, String title, S
                 RemoteAddonRepository resourcePackRepo,
                 RemoteAddonRepository shaderPackRepo,
                 RemoteAddonRepository worldRepo,
+                RemoteAddonRepository dataPackRepo,
                 RemoteAddonRepository modpackRepo,
                 RemoteAddonRepository customizationRepo
         ) {
@@ -198,6 +207,7 @@ public record RemoteAddon(String id, String slug, String author, String title, S
             this.resourcePackRepo = resourcePackRepo;
             this.shaderPackRepo = shaderPackRepo;
             this.worldRepo = worldRepo;
+            this.dataPackRepo = dataPackRepo;
             this.modpackRepo = modpackRepo;
             this.customizationRepo = customizationRepo;
         }
@@ -209,13 +219,8 @@ public record RemoteAddon(String id, String slug, String author, String title, S
         RESOURCE_PACK,
         SHADER_PACK,
         WORLD,
+        DATA_PACK,
         CUSTOMIZATION
-    }
-
-    public interface IAddon {
-        List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
-
-        Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
     }
 
     public interface IVersion {

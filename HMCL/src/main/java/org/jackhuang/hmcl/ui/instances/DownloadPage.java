@@ -24,12 +24,13 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -49,7 +50,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
@@ -64,6 +64,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
+    private final BooleanProperty installed = new SimpleBooleanProperty(false);
     private final RemoteAddonRepository repository;
     private final ModTranslations translations;
     private final RemoteAddon addon;
@@ -94,11 +95,13 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.supplyAsync(() -> {
-            Stream<RemoteAddon.Version> versions = addon.data().loadVersions(repository, page.getDownloadProvider());
-            return sortVersions(versions);
+            Stream<RemoteAddon.Version> versions = repository.getRemoteVersionsById(getDownloadProvider(), addon.id());
+            boolean installed = addon.checkInstalled(instanceReference.instance(), getDownloadProvider());
+            return Pair.pair(sortVersions(versions), installed);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                this.versions = result;
+                this.versions = result.key();
+                this.installed.set(result.value());
 
                 loaded.set(true);
                 setFailed(false);
@@ -234,6 +237,20 @@ public class DownloadPage extends Control implements DecoratorPage {
                         .forEach(content::addTag);
                 content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
+
+                if (control.installed.get()) {
+                    content.addTagFirst(i18n("addon.installed"), null);
+                } else {
+                    control.installed.addListener(new ChangeListener<>() {
+                        @Override
+                        public void changed(ObservableValue<? extends Boolean> o, Boolean __, Boolean newValue) {
+                            if (newValue) {
+                                content.addTagFirst(i18n("addon.installed"), null);
+                                control.installed.removeListener(this);
+                            }
+                        }
+                    });
+                }
 
                 if (getSkinnable().mod != null) {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
@@ -408,7 +425,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
                 content.setSubtitle(addon.description());
                 if (installed)
-                    content.addTag(i18n("addon.dependency.installed"));
+                    content.addTag(i18n("addon.installed"));
                 for (String category : addon.categories()) {
                     if (page.shouldDisplayCategory(category))
                         content.addTag(page.getLocalizedCategory(category, null));
@@ -618,23 +635,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> {
                                 var addon = dependency.load(selfPage.getDownloadProvider());
-                                if (addon == RemoteAddon.BROKEN) return Pair.pair(addon, false);
-                                HMCLGameInstance instance = selfPage.getInstanceOptional().instance();
-                                RemoteAddon.Source source = addon.source();
-                                RemoteAddon.Type type = addon.type();
-                                LocalAddonManager<?> manager = type != null && instance != null ? instance.getManagerForType(type) : null;
-                                if (source != null && manager != null) {
-                                    try {
-                                        return Pair.pair(addon, source.getCommonRepo().hasRemoteVersionWithHashes(
-                                                selfPage.getDownloadProvider(),
-                                                addon.id(),
-                                                manager.getHashes(source)
-                                        ));
-                                    } catch (IOException e) {
-                                        LOG.warning("Failed to check hashes of addons", e);
-                                    }
-                                }
-                                return Pair.pair(addon, false);
+                                return Pair.pair(addon, addon.checkInstalled(selfPage.getInstanceOptional().instance(), selfPage.getDownloadProvider()));
                             })
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {

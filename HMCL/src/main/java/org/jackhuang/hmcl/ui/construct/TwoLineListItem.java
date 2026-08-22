@@ -29,6 +29,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jetbrains.annotations.Nullable;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
@@ -182,7 +183,7 @@ public class TwoLineListItem extends VBox {
         return tags;
     }
 
-    public void addTag(String tag, PseudoClass pseudoClass) {
+    public void addTag(String tag, @Nullable PseudoClass pseudoClass) {
         var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag");
         tagLabel.setMinWidth(Label.USE_PREF_SIZE);
@@ -193,6 +194,15 @@ public class TwoLineListItem extends VBox {
 
     public void addTag(String tag) {
         addTag(tag, null);
+    }
+
+    public void addTagFirst(String tag, @Nullable PseudoClass pseudoClass) {
+        var tagLabel = new Label(tag);
+        tagLabel.getStyleClass().add("tag");
+        tagLabel.setMinWidth(Label.USE_PREF_SIZE);
+        if (pseudoClass != null)
+            tagLabel.pseudoClassStateChanged(pseudoClass, true);
+        getTags().add(0, tagLabel);
     }
 
     private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");

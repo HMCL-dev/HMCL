@@ -397,24 +397,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     public record Project(String slug, String title, String description, List<String> categories, String body,
                           @SerializedName("project_type") String projectType, int downloads,
                           @SerializedName("icon_url") String iconUrl, String id, String team, Instant published,
-                          Instant updated, List<String> versions) implements RemoteAddon.IAddon {
-
-        @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
-            Set<RemoteAddon.Dependency> dependencies = repo.getRemoteVersionsById(downloadProvider, id())
-                    .flatMap(version -> version.dependencies().stream())
-                    .collect(Collectors.toSet());
-            List<RemoteAddon> addons = new ArrayList<>();
-            for (RemoteAddon.Dependency dependency : dependencies) {
-                addons.add(dependency.load(downloadProvider));
-            }
-            return addons;
-        }
-
-        @Override
-        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
-            return repo.getRemoteVersionsById(downloadProvider, id());
-        }
+                          Instant updated, List<String> versions) {
 
         public RemoteAddon toAddon() {
             return new RemoteAddon(
@@ -426,7 +409,6 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     categories,
                     String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
-                    this,
                     toAddonType(projectType),
                     RemoteAddon.Source.MODRINTH
             );
@@ -525,24 +507,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                                       @SerializedName("project_id") String projectId, String author,
                                       List<String> versions, @SerializedName("date_created") Instant dateCreated,
                                       @SerializedName("date_modified") Instant dateModified,
-                                      @SerializedName("latest_version") String latestVersion) implements RemoteAddon.IAddon {
-
-        @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
-            Set<RemoteAddon.Dependency> dependencies = repo.getRemoteVersionsById(downloadProvider, projectId())
-                    .flatMap(version -> version.dependencies().stream())
-                    .collect(Collectors.toSet());
-            List<RemoteAddon> addons = new ArrayList<>();
-            for (RemoteAddon.Dependency dependency : dependencies) {
-                addons.add(dependency.load(downloadProvider));
-            }
-            return addons;
-        }
-
-        @Override
-        public Stream<RemoteAddon.Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
-            return repo.getRemoteVersionsById(downloadProvider, projectId());
-        }
+                                      @SerializedName("latest_version") String latestVersion) {
 
         public RemoteAddon toAddon() {
             return new RemoteAddon(
@@ -554,7 +519,6 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     sortDisplayCategories(displayCategories),
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
-                    this,
                     toAddonType(projectType),
                     RemoteAddon.Source.MODRINTH
             );
