@@ -23,6 +23,11 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+/**
+ * Thread-safe lazy initialization wrapper.
+ *
+ * @param <T> value type
+ */
 public final class SynchronizedLazy<T> {
     private final Supplier<T> supplier;
     private Result<T> result = null;
