@@ -23,8 +23,10 @@ import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -46,11 +48,11 @@ public class TwoLineListItem extends VBox {
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
         lblTitle.setWrapText(true);
-        lblTitle.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(lblTitle, Priority.ALWAYS);
 
         this.firstLine = new HBox(lblTitle);
         firstLine.getStyleClass().add("first-line");
-        firstLine.setAlignment(Pos.CENTER_LEFT);
+        firstLine.setAlignment(Pos.TOP_LEFT);
 
         this.getChildren().setAll(firstLine);
     }
@@ -166,17 +168,15 @@ public class TwoLineListItem extends VBox {
         if (tags == null) {
             tags = FXCollections.observableArrayList();
 
-            var tagsBox = new HBox(8);
+            var tagsBox = new FlowPane(Orientation.HORIZONTAL, 8, 4);
             tagsBox.getStyleClass().add("tags");
             tagsBox.setAlignment(Pos.CENTER_LEFT);
             tagsBox.setMinWidth(0);
-            HBox.setHgrow(tagsBox, Priority.ALWAYS);
+            tagsBox.setMaxWidth(200);
             Bindings.bindContent(tagsBox.getChildren(), tags);
             var isNotEmpty = Bindings.isNotEmpty(tags);
             tagsBox.managedProperty().bind(isNotEmpty);
             tagsBox.visibleProperty().bind(isNotEmpty);
-
-            FXUtils.setOverflowHidden(tagsBox);
 
             firstLine.getChildren().setAll(lblTitle, tagsBox);
         }
