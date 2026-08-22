@@ -184,8 +184,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// supplies repository identity, mods directory, and detected game version; `baseManifest` is
     /// the draft JSON being edited.
     ///
-    /// @param instance       the registered instance being modified
-    /// @param baseManifest   the working standalone-oriented manifest for this step
+    /// @param instance         the registered instance being modified
+    /// @param baseManifest     the working standalone-oriented manifest for this step
     /// @param componentVersion the remote component to install
     /// @return the task producing the updated manifest (not yet saved)
     public Task<GameInstanceManifest> installComponentAsync(
@@ -211,13 +211,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     ///
     /// @param instanceId       the unpublished instance id
     /// @param baseManifest     the working manifest for this step
-    /// @param gameVersion      the Minecraft version used for component analysis
     /// @param componentVersion the remote component to install
     /// @return the task producing the updated manifest (not yet committed)
     Task<GameInstanceManifest> installNewInstanceComponentAsync(
             GameInstanceID instanceId,
             GameInstanceManifest baseManifest,
-            String gameVersion,
             RemoteVersion componentVersion) {
         if (!instanceId.equals(baseManifest.id())) {
             throw new IllegalArgumentException("baseManifest id does not match instanceId");
@@ -226,7 +224,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         Path modsDirectory = repository.getRunDirectoryForInstallation(instanceId).resolve("mods");
         return removeNewInstanceComponentAsync(
                 baseManifest,
-                GameVersionNumber.asGameVersion(gameVersion),
                 componentVersion.getComponentType())
                 .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
@@ -259,7 +256,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .thenComposeAsync(() -> installNewInstanceComponentAsync(
                         instanceId,
                         baseManifest,
-                        gameVersion,
                         versionList.getVersion(gameVersion, componentVersion)
                                 .orElseThrow(() -> new IOException(
                                         "Remote component " + componentType + " has no version " + componentVersion))))
@@ -269,18 +265,21 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// Removes one component from an unpublished new instance manifest.
     ///
     /// @param workingManifest the manifest being edited
-    /// @param gameVersion     the Minecraft version used for component analysis
     /// @param componentType   the component to remove
     /// @return the task producing the updated standalone manifest
     private Task<GameInstanceManifest> removeNewInstanceComponentAsync(
             GameInstanceManifest workingManifest,
-            GameVersionNumber gameVersion,
             GameComponentType componentType) {
         return Task.supplyAsync(() -> {
-            GameInstanceManifest standalone = workingManifest.inheritsFrom() == null
-                    ? workingManifest
-                    : repository.resolve(workingManifest).standaloneManifest();
-            return GameComponentAnalyzer.analyze(standalone, gameVersion).removeLibrary(componentType);
+            @Nullable GameInstancePatch patch = workingManifest.findPatch(componentType.getPatchId());
+            if (patch != null) {
+                return workingManifest.withPatches(workingManifest.getPatches()
+                        .stream()
+                        .filter(it -> it != patch)
+                        .toList()); // TODO: need resolve
+            } else {
+                return workingManifest;
+            }
         });
     }
 
@@ -404,18 +403,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             throw new IllegalArgumentException("workingManifest id does not match instance");
         }
 
-        return Task.supplyAsync(() -> {
-            GameInstanceManifest standalone;
-            if (workingManifest.equals(instance.getManifest())) {
-                standalone = instance.getResolvedManifest().standaloneManifest();
-            } else if (workingManifest.inheritsFrom() == null) {
-                standalone = workingManifest;
-            } else {
-                standalone = repository.resolve(workingManifest).standaloneManifest();
-            }
+        if (!workingManifest.isModifiable()) {
+            throw new IllegalArgumentException("Cannot remove component from a non-modifiable manifest");
+        }
 
-            return GameComponentAnalyzer.analyze(standalone, instance.getVersion()).removeLibrary(componentType);
-        });
+        return removeNewInstanceComponentAsync(workingManifest, componentType);
     }
 
 }

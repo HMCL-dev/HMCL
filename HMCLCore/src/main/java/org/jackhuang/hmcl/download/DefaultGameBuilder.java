@@ -97,7 +97,7 @@ public class DefaultGameBuilder extends GameBuilder {
             if (entry.getValue() instanceof RemoteVersion remoteVersion) {
                 libraryTask = libraryTask.thenComposeAsync(manifest ->
                         dependencyManager.installNewInstanceComponentAsync(
-                                id, manifest, gameVersion, remoteVersion));
+                                id, manifest, remoteVersion));
             } else if (entry.getValue() instanceof String version) {
                 libraryTask = libraryTask.thenComposeAsync(manifest ->
                         dependencyManager.installNewInstanceComponentAsync(

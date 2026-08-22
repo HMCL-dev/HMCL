@@ -355,6 +355,14 @@ public record GameInstanceManifest(
         return root != null && root;
     }
 
+    public boolean isResolved() {
+        return inheritsFrom == null;
+    }
+
+    public boolean isModifiable() {
+        return inheritsFrom == null && patches != null && !patches.isEmpty();
+    }
+
     /// Returns the pending patches.
     ///
     /// @return the pending patches, or an empty list when absent
@@ -609,7 +617,7 @@ public record GameInstanceManifest(
 
     /// Returns whether this manifest has a patch with the given id.
     public boolean hasPatch(String patchId) {
-        return patches != null && patches.stream().anyMatch(patch -> patchId.equals(patch.id()));
+        return findPatch(patchId) != null;
     }
 
     /// Converts this manifest into a hidden patch entry for preserving resolved inheritance.
