@@ -63,6 +63,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -78,6 +79,7 @@ import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// The main JavaFX application entry point.
 public final class Launcher extends Application {
     public static final CookieManager COOKIE_MANAGER = new CookieManager();
 
@@ -396,6 +398,8 @@ public final class Launcher extends Application {
         }
     }
 
+    /// Sets JavaFX VM options before the toolkit starts.
+    /// On Wayland, the UI scale is auto-detected when the user did not configure one explicitly.
     private static void setupJavaFXVMOptions() {
         if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU"))) {
             LOG.info("HMCL_FORCE_GPU: true");
@@ -493,6 +497,53 @@ public final class Launcher extends Application {
             } catch (Throwable e) {
                 LOG.warning("Invalid UI scale: " + uiScale);
             }
+        // ponytail: xrdb only, add kwinrc fallback when xrdb missing on Wayland without XWayland
+        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
+                && ("wayland".equals(System.getenv("XDG_SESSION_TYPE"))
+                    || (System.getenv("XDG_SESSION_TYPE") == null && System.getenv("WAYLAND_DISPLAY") != null))
+                && System.getProperty("glass.gtk.uiScale") == null) {
+            autoDetectWaylandUiScale();
+        }
+    }
+
+    /// Detects the UI scale on Wayland through XWayland's `Xft.dpi` resource.
+    /// JavaFX Glass up to version 25 computes the scale from `GDK_SCALE` and
+    /// `org.gnome.desktop.interface scaling-factor` before `gdk_screen_get_resolution`, so a 1.5x
+    /// KDE session (Xft.dpi = 144) is reported as 1x. Querying `xrdb` reproduces the value written by
+    /// KWin (`kwinrc [Xwayland] Scale * 96`) and Mutter (`gsd-xsettings`). Never throws.
+    private static void autoDetectWaylandUiScale() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("xrdb", "-query");
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            if (!p.waitFor(1, TimeUnit.SECONDS)) {
+                p.destroyForcibly();
+                return;
+            }
+            if (p.exitValue() != 0) {
+                LOG.debug("xrdb -query exited with " + p.exitValue());
+                return;
+            }
+
+            String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            for (String line : out.split("\\R")) {
+                line = line.trim();
+                if (!line.startsWith("Xft.dpi:")) continue;
+
+                float scale;
+                try {
+                    scale = Float.parseFloat(line.substring("Xft.dpi:".length()).trim()) / 96f;
+                } catch (NumberFormatException e) {
+                    LOG.warning("Invalid Xft.dpi value in xrdb output: " + line);
+                    continue;
+                }
+                if (scale >= 0.25f && scale <= 4f && scale != 1f) {
+                    LOG.info("Auto-detected Wayland UI scale: " + scale);
+                    System.getProperties().putIfAbsent("glass.gtk.uiScale", String.valueOf(scale));
+                }
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to read Xft.dpi from xrdb", e);
         }
     }
 
