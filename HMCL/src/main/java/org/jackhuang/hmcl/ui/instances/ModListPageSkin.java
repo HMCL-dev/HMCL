@@ -23,7 +23,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
@@ -46,7 +45,6 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -54,7 +52,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -318,12 +315,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    static final class ModInfoObject {
+    static final class ModInfoObject implements IconCachable<ModInfoObject> {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
 
-        private SoftReference<CompletableFuture<Image>> iconCache;
+        private @Nullable SoftReference<CompletableFuture<Image>> iconCache = null;
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
@@ -340,8 +337,23 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             return modTranslations;
         }
 
-        @FXThread
-        private Image loadIcon() {
+        @Override
+        public @Nullable SoftReference<CompletableFuture<Image>> getIconCache() {
+            return iconCache;
+        }
+
+        @Override
+        public void setIconCache(SoftReference<CompletableFuture<Image>> iconCache) {
+            this.iconCache = iconCache;
+        }
+
+        @Override
+        public Image getDefaultIcon() {
+            return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
+        }
+
+        @Override
+        public Image loadIcon() {
             List<String> iconPaths = new ArrayList<>();
 
             if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {
@@ -363,34 +375,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 LOG.warning("Failed to load mod icons", e);
             }
 
-            return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
-        }
-
-        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
-            SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
-            CompletableFuture<Image> imageFuture;
-            if (iconCache != null && (imageFuture = iconCache.get()) != null) {
-                Image image = imageFuture.getNow(null);
-                if (image != null) {
-                    imageContainer.setImage(image);
-                    return;
-                }
-            } else {
-                imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
-                this.iconCache = new SoftReference<>(imageFuture);
-            }
-            imageContainer.setImage(GameInstanceIconType.getIconType(localModFile.getModLoaderType()).getIcon());
-            imageFuture.thenAcceptAsync(image -> {
-                if (current != null) {
-                    ObjectProperty<ModInfoObject> infoObjectProperty = current.get();
-                    if (infoObjectProperty == null || infoObjectProperty.get() != this) {
-                        // The current ListCell has already switched to another object
-                        return;
-                    }
-                }
-
-                imageContainer.setImage(image);
-            }, Schedulers.javafx());
+            return getDefaultIcon();
         }
     }
 
@@ -407,7 +392,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             var imageContainer = new ImageContainer(40);
             titleContainer.setAlignment(Pos.CENTER_LEFT);
-            modInfo.loadIcon(imageContainer, null);
+            modInfo.attachIcon(imageContainer, null);
 
             TwoLineListItem title = new TwoLineListItem();
             if (modInfo.getModTranslations() != null && I18n.isUseChinese())
@@ -577,7 +562,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
-            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
+            dataItem.attachIcon(imageContainer, new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {

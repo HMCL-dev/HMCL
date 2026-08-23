@@ -27,7 +27,6 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.transformation.FilteredList;
@@ -46,7 +45,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -259,11 +257,11 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
     }
 
-    static class DataPackInfoObject extends RecursiveTreeObject<DataPackInfoObject> {
+    static class DataPackInfoObject extends RecursiveTreeObject<DataPackInfoObject> implements IconCachable<DataPackInfoObject> {
         private final BooleanProperty activeProperty;
         private final DataPack.Pack packInfo;
 
-        private SoftReference<CompletableFuture<Image>> iconCache;
+        private @Nullable SoftReference<CompletableFuture<Image>> iconCache = null;
 
         DataPackInfoObject(DataPack.Pack packInfo) {
             this.packInfo = packInfo;
@@ -282,7 +280,23 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             return packInfo;
         }
 
-        Image loadIcon() {
+        @Override
+        public @Nullable SoftReference<CompletableFuture<Image>> getIconCache() {
+            return iconCache;
+        }
+
+        @Override
+        public void setIconCache(SoftReference<CompletableFuture<Image>> iconCache) {
+            this.iconCache = iconCache;
+        }
+
+        @Override
+        public Image getDefaultIcon() {
+            return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+        }
+
+        @Override
+        public Image loadIcon() {
             Image image = null;
             Path imagePath;
             if (this.getPackInfo().isDirectory()) {
@@ -291,7 +305,6 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                 } catch (Exception e) {
                     LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
-                    return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
                 }
             } else {
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
@@ -301,7 +314,6 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     }
                 } catch (Exception e) {
                     LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
-                    return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
                 }
             }
 
@@ -309,35 +321,8 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     Math.abs(image.getWidth() - image.getHeight()) < 1) {
                 return image;
             } else {
-                return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+                return getDefaultIcon();
             }
-        }
-
-        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<DataPackInfoObject>> current) {
-            SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
-            CompletableFuture<Image> imageFuture;
-            if (iconCache != null && (imageFuture = iconCache.get()) != null) {
-                Image image = imageFuture.getNow(null);
-                if (image != null) {
-                    imageContainer.setImage(image);
-                    return;
-                }
-            } else {
-                imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
-                this.iconCache = new SoftReference<>(imageFuture);
-            }
-            imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
-            imageFuture.thenAcceptAsync(image -> {
-                if (current != null) {
-                    ObjectProperty<DataPackInfoObject> infoObjectProperty = current.get();
-                    if (infoObjectProperty == null || infoObjectProperty.get() != this) {
-                        // The current ListCell has already switched to another object
-                        return;
-                    }
-                }
-                imageContainer.setImage(image);
-            }, Schedulers.javafx());
-
         }
     }
 
@@ -377,7 +362,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.activeProperty);
-            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
+            dataItem.attachIcon(imageContainer, new WeakReference<>(this.itemProperty()));
         }
     }
 
