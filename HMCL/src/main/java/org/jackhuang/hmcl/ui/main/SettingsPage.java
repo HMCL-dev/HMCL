@@ -188,6 +188,15 @@ public final class SettingsPage extends ScrollPane {
 
                 }
 
+                {
+                    var meow = new LineToggleButton();
+                    meow.setTitle(i18n("meow.title"));
+                    meow.setSubtitle(i18n("settings.take_effect_after_restart"));
+                    meow.selectedProperty().bindBidirectional(settings().meowLangProperty());
+
+                    languagePaneList.getContent().add(meow);
+                }
+
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.language")), languagePaneList);
             }
 

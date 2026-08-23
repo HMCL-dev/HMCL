@@ -192,6 +192,13 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return language;
     }
 
+    @SerializedName("meowLang")
+    private final BooleanProperty meowLang = new SimpleBooleanProperty(false);
+
+    public BooleanProperty meowLangProperty() {
+        return meowLang;
+    }
+
     /// Whether preview builds are accepted by update checks.
     @SerializedName("acceptPreviewUpdate")
     private final BooleanProperty acceptPreviewUpdate = new SimpleBooleanProperty(false);

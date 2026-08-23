@@ -37,12 +37,18 @@ public final class I18n {
 
     private static volatile SupportedLocale locale = SupportedLocale.DEFAULT;
 
+    private static volatile boolean meowLang = false;
+
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
     }
 
     public static SupportedLocale getLocale() {
         return locale;
+    }
+
+    public static void setMeowLang(boolean meowLang) {
+        I18n.meowLang = meowLang;
     }
 
     public static boolean isUpsideDown() {
@@ -62,11 +68,21 @@ public final class I18n {
     }
 
     public static String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key, Object... formatArgs) {
-        return locale.i18n(key, formatArgs);
+        String s = locale.i18n(key, formatArgs);
+        if (meowLang) {
+            String meow = locale.i18n("meow");
+            s = meow.repeat((int) Math.ceil((double) s.length() / meow.length())).trim();
+        }
+        return s;
     }
 
     public static String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key) {
-        return locale.i18n(key);
+        String s = locale.i18n(key);
+        if (meowLang) {
+            String meow = locale.i18n("meow");
+            s = meow.repeat((int) Math.ceil((double) s.length() / meow.length())).trim();
+        }
+        return s;
     }
 
     public static String formatDateTime(TemporalAccessor time) {

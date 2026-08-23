@@ -1112,6 +1112,7 @@ public final class SettingsManager {
 
         Locale.setDefault(settings().languageProperty().get().getLocale());
         I18n.setLocale(launcherSettings.languageProperty().get());
+        I18n.setMeowLang(launcherSettings.meowLangProperty().get());
         LOG.setLogRetention(userSettings().logRetentionProperty().get());
         loadGameDirectories(migratedDetachedSettings.gameDirectories());
         gameSettingsAccess = loadGameSettingsPresets(migratedDetachedSettings.gameSettingsPresets());
