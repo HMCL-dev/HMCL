@@ -253,7 +253,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
     /// Creates a task that installs OptiFine from a local installer JAR.
     ///
     /// @param dependencyManager repository-scoped download services
-    /// @param version           working manifest receiving the OptiFine patch
+    /// @param manifest           working manifest receiving the OptiFine patch
     /// @param gameVersion       Minecraft version expected by the installation
     /// @param installer         the OptiFine installer JAR
     /// @return the task producing the OptiFine patch
@@ -261,7 +261,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
     /// @throws VersionMismatchException if the installer targets another Minecraft version
     public static Task<GameInstancePatch> install(
             DefaultDependencyManager dependencyManager,
-            GameInstanceManifest version,
+            GameInstanceManifest manifest,
             String gameVersion,
             Path installer) throws IOException, VersionMismatchException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
@@ -287,10 +287,10 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
                     ofEdition + "_" + ofRelease,
                     Collections.singletonList(""),
                     false);
-            return new GameDownloadTask(dependencyManager, version)
+            return new GameDownloadTask(dependencyManager, manifest)
                     .thenComposeAsync(minecraftJar -> new OptiFineInstallTask(
                             dependencyManager,
-                            version,
+                            manifest,
                             remoteVersion,
                             minecraftJar,
                             installer));
