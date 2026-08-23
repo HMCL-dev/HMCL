@@ -75,12 +75,12 @@ public interface ImageCachable<T> {
         private SoftReference<@Nullable CompletableFuture<Image>> cache = null;
 
         @Override
-        public @Nullable CompletableFuture<Image> getImageFuture() {
+        public final @Nullable CompletableFuture<Image> getImageFuture() {
             return cache != null ? cache.get() : null;
         }
 
         @Override
-        public void setImageFuture(@NotNull CompletableFuture<Image> imageFuture) {
+        public final void setImageFuture(@NotNull CompletableFuture<Image> imageFuture) {
             this.cache = new SoftReference<>(imageFuture);
         }
     }
