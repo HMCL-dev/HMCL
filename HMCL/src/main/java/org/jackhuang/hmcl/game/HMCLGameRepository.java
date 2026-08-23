@@ -401,6 +401,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     private void clean(Path directory) throws IOException {
         FileUtils.deleteDirectory(directory.resolve("crash-reports"));
         FileUtils.deleteDirectory(directory.resolve("logs"));
+        for (Path logFile : FileUtils.listFilesByExtension(directory, "log"))
+            Files.deleteIfExists(logFile);
     }
 
     public void clean(GameInstanceID instanceId) throws IOException {
