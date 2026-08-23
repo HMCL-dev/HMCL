@@ -57,19 +57,17 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.javafx.ImageCachable;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -496,12 +494,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
-    public static final class ResourcePackInfoObject implements IconCachable<ResourcePackInfoObject> {
+    public static final class ResourcePackInfoObject extends ImageCachable.Soft<ResourcePackInfoObject> {
 
         private final ResourcePackFile file;
         private final BooleanProperty enabled;
-
-        private @Nullable SoftReference<CompletableFuture<Image>> iconCache = null;
 
         public ResourcePackInfoObject(Pair<ResourcePackFile, Boolean> pair) {
             this.file = pair.key();
@@ -517,27 +513,17 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
 
         @Override
-        public @Nullable SoftReference<CompletableFuture<Image>> getIconCache() {
-            return iconCache;
-        }
-
-        @Override
-        public void setIconCache(@NotNull SoftReference<CompletableFuture<Image>> iconCache) {
-            this.iconCache = iconCache;
-        }
-
-        @Override
-        public Image getDefaultIcon() {
+        public Image getDefaultImage() {
             return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
         @Override
-        public Image loadIcon() {
+        public Image loadImage() {
             Image icon = file.loadIcon();
             if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1) {
                 return icon;
             }
-            return getDefaultIcon();
+            return getDefaultImage();
         }
     }
 
@@ -606,7 +592,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             this.object = item;
             ResourcePackFile file = item.getFile();
-            item.attachIcon(imageContainer, new WeakReference<>(itemProperty()));
+            item.attachImage(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 
             content.getTags().clear();
             content.setTitle(file.getFileName());
@@ -646,7 +632,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
-            packInfoObject.attachIcon(imageContainer, null);
+            packInfoObject.attachImage(imageContainer.imageProperty(), null);
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(pack.getFileName());

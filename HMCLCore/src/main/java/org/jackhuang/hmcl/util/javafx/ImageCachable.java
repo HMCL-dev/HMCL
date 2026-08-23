@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.construct;
+package org.jackhuang.hmcl.util.javafx;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.scene.image.Image;
@@ -27,32 +27,34 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.CompletableFuture;
 
-/// @param <T> this type
-public interface IconCachable<T> {
+/// Interface that caches an image, implemented by **items** of [javafx.scene.control.ListCell].
+///
+///  @param <T> this type
+public interface ImageCachable<T> {
 
+    /// @return the completable future that loads the image, or null if not set or already garbage-collected
     @Nullable
-    SoftReference<@Nullable CompletableFuture<Image>> getIconCache();
+    CompletableFuture<Image> getImageFuture();
 
-    void setIconCache(@NotNull SoftReference<CompletableFuture<Image>> iconCache);
+    void setImageFuture(@NotNull CompletableFuture<Image> imageFuture);
 
-    Image loadIcon();
+    Image loadImage();
 
-    Image getDefaultIcon();
+    Image getDefaultImage();
 
-    default void attachIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<T>> current) {
-        SoftReference<CompletableFuture<Image>> iconCache = getIconCache();
-        CompletableFuture<Image> imageFuture;
-        if (iconCache != null && (imageFuture = iconCache.get()) != null) {
+    default void attachImage(ObjectProperty<Image> imageProperty, @Nullable WeakReference<ObjectProperty<T>> current) {
+        CompletableFuture<Image> imageFuture = getImageFuture();
+        if (imageFuture != null) {
             Image image = imageFuture.getNow(null);
             if (image != null) {
-                imageContainer.setImage(image);
+                imageProperty.set(image);
                 return;
             }
         } else {
-            imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
-            setIconCache(new SoftReference<>(imageFuture));
+            imageFuture = CompletableFuture.supplyAsync(this::loadImage, Schedulers.io());
+            setImageFuture(imageFuture);
         }
-        imageContainer.setImage(getDefaultIcon());
+        imageProperty.set(getDefaultImage());
         imageFuture.thenAcceptAsync(image -> {
             if (current != null) {
                 ObjectProperty<T> thisProperty = current.get();
@@ -62,8 +64,24 @@ public interface IconCachable<T> {
                 }
             }
 
-            imageContainer.setImage(image);
+            imageProperty.set(image);
         }, Schedulers.javafx());
     }
 
+    /// Implementation of [ImageCachable] using a soft reference to cache the image future,
+    /// in order to balance the cost of time and memory.
+    abstract class Soft<T> implements ImageCachable<T> {
+
+        private SoftReference<@Nullable CompletableFuture<Image>> cache = null;
+
+        @Override
+        public @Nullable CompletableFuture<Image> getImageFuture() {
+            return cache != null ? cache.get() : null;
+        }
+
+        @Override
+        public void setImageFuture(@NotNull CompletableFuture<Image> imageFuture) {
+            this.cache = new SoftReference<>(imageFuture);
+        }
+    }
 }
