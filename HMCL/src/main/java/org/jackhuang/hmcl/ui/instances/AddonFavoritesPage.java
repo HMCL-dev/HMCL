@@ -21,8 +21,9 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Control;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.FavoritesManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -30,13 +31,13 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jetbrains.annotations.Nullable;
 
-public class AddonFavoritesPage extends Control implements DecoratorPage, GameInstancePage.GameInstanceLoadable {
+public class AddonFavoritesPage extends Control implements DecoratorPage {
 
     private static final FavoritesManager manager = FavoritesManager.getInstance();
 
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
-    private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
+    private final ObjectProperty<HMCLGameInstance.Optional> instanceReference = new SimpleObjectProperty<>();
     private final ObservableList<GameInstanceID> instances = FXCollections.observableArrayList();
     private final ObjectProperty<GameInstanceID> selectedInstance = new SimpleObjectProperty<>();
 
@@ -47,13 +48,14 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, GameIn
         return state.getReadOnlyProperty();
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId));
-        instances.setAll(repository.getDisplayInstanceManifests()
-                .map(GameInstanceManifest::id)
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        instanceReference.set(instance);
+        HMCLGameRepository repository = instance.repository();
+        instances.setAll(repository.getDisplayInstances()
+                .map(DefaultGameInstance::getId)
                 .toList());
-        selectedInstance.set(repository.getSelectedInstance());
+        @Nullable HMCLGameInstance repositorySelection = repository.getSelectedInstance();
+        selectedInstance.set(repositorySelection != null ? repositorySelection.getId() : null);
         refresh();
     }
 

@@ -133,6 +133,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             T node = nodeSupplier.get();
             if (node instanceof DownloadListPage page) {
                 page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
+            } else if (node instanceof AddonFavoritesPage page) {
+                page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
             }
             return node;
         };
@@ -196,7 +198,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                         worldTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                     if (favoritesPageTab.isInitialized()) {
-                        favoritesPageTab.getNode().loadInstance(repository, null);
+                        favoritesPageTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                 }));
             }
