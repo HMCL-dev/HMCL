@@ -31,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 public interface IconCachable<T> {
 
     @Nullable
-    SoftReference<CompletableFuture<Image>> getIconCache();
+    SoftReference<@Nullable CompletableFuture<Image>> getIconCache();
 
     void setIconCache(@NotNull SoftReference<CompletableFuture<Image>> iconCache);
 
