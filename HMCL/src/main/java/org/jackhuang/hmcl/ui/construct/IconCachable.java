@@ -15,12 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.instances;
+package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
