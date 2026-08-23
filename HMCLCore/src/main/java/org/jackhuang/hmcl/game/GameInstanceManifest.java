@@ -355,10 +355,6 @@ public record GameInstanceManifest(
         return root != null && root;
     }
 
-    public boolean isResolved() {
-        return inheritsFrom == null;
-    }
-
     public boolean isModifiable() {
         return inheritsFrom == null && patches != null && !patches.isEmpty();
     }
@@ -714,6 +710,10 @@ public record GameInstanceManifest(
         }
 
         return json;
+    }
+
+    public GameInstanceManifest resolvePatches() {
+
     }
 
     private static final class Builder {

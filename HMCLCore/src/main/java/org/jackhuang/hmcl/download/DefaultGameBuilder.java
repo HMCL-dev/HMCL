@@ -70,7 +70,8 @@ public class DefaultGameBuilder extends GameBuilder {
 
         components.forEach((componentType, version) -> {
             hints.add(new Task.StagesHint(
-                    String.format("hmcl.install.%s:%s", componentType.getPatchId(),
+                    "hmcl.install.%s:%s".formatted(
+                            componentType.getPatchId(),
                             version instanceof RemoteVersion remoteVersion
                                     ? remoteVersion.getSelfVersion()
                                     : (String) version)));
