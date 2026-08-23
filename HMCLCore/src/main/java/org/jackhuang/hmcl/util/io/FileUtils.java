@@ -485,7 +485,7 @@ public final class FileUtils {
 
     public static List<Path> listFilesByExtension(Path file, String extension) {
         try (Stream<Path> list = Files.list(file)) {
-            return list.filter(it -> Files.isRegularFile(it) && extension.equalsIgnoreCase(getExtension(it)))
+            return list.filter(it -> Files.isRegularFile(it) && extension.equals(getExtension(it)))
                     .toList();
         } catch (IOException e) {
             LOG.warning("Failed to list files by extension " + extension, e);
