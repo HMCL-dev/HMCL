@@ -159,15 +159,6 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 : List.of();
     }
 
-    public void enableCache() {
-        cacheEnabled = true;
-    }
-
-    public void disableCache() {
-        cacheEnabled = false;
-        projectVersionsCache.clear();
-    }
-
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         if (projectType == null) throw new UnsupportedOperationException();
@@ -332,19 +323,6 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
-    public boolean hasRemoteVersionWithHashes(DownloadProvider downloadProvider, String id, Set<?> hashes) throws IOException {
-        if (hashes.isEmpty() || hashes.stream().anyMatch(o -> !(o instanceof String)))
-            return false;
-        return getProjectVersions(downloadProvider, id).stream()
-                .map(ProjectVersion::files)
-                .filter(files -> !files.isEmpty())
-                .map(files -> files.get(0))
-                .map(file -> file.hashes().get("sha1"))
-                .filter(Objects::nonNull)
-                .anyMatch(hashes::contains);
-    }
-
-    @Override
     public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
@@ -503,7 +481,8 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                         else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
                         else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
                         else return Stream.empty();
-                    }).collect(Collectors.toList())
+                    }).collect(Collectors.toList()),
+                    files.get(0).hashes().get("sha1")
             ));
         }
     }

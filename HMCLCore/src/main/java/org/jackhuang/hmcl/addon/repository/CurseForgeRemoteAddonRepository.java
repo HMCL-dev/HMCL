@@ -131,15 +131,6 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         return (int) Math.ceil((double) Math.min(response.pagination.totalCount, 10000) / pageSize);
     }
 
-    public void enableCache() {
-        cacheEnabled = true;
-    }
-
-    public void disableCache() {
-        cacheEnabled = false;
-        latestFilesCache.clear();
-    }
-
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         if (type == null) throw new UnsupportedOperationException();
@@ -341,13 +332,6 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     @Override
     public Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException {
         return getLatestFiles(downloadProvider, id).stream().map(CurseAddon.LatestFile::toVersion);
-    }
-
-    @Override
-    public boolean hasRemoteVersionWithHashes(DownloadProvider downloadProvider, String id, Set<?> hashes) throws IOException {
-        if (hashes.isEmpty() || hashes.stream().anyMatch(o -> !(o instanceof Long)))
-            return false;
-        return getLatestFiles(downloadProvider, id).stream().map(CurseAddon.LatestFile::fileFingerprint).anyMatch(hashes::contains);
     }
 
     @Override
@@ -618,7 +602,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                             else if ("quilt".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.QUILT);
                             else if ("neoforge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.NEO_FORGE);
                             else return Stream.empty();
-                        }).collect(Collectors.toList())
+                        }).collect(Collectors.toList()),
+                        fileFingerprint
                 );
             }
         }

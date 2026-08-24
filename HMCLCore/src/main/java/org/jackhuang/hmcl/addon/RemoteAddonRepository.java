@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 public interface RemoteAddonRepository {
@@ -35,10 +34,6 @@ public interface RemoteAddonRepository {
     String getApiBaseUrl();
 
     String getBaseUrl();
-
-    void enableCache();
-
-    void disableCache();
 
     enum SortType {
         POPULARITY,
@@ -100,8 +95,6 @@ public interface RemoteAddonRepository {
     RemoteAddon.File getAddonFile(String projectId, String fileId) throws IOException;
 
     Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException;
-
-    boolean hasRemoteVersionWithHashes(DownloadProvider downloadProvider, String id, Set<?> hashes) throws IOException;
 
     @Nullable
     String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException;

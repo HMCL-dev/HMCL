@@ -149,11 +149,6 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     }
 
     @Override
-    public boolean hasRemoteVersionWithHashes(DownloadProvider downloadProvider, String id, Set<?> hashes) throws IOException {
-        return getBackedRepository().hasRemoteVersionWithHashes(downloadProvider, id, hashes);
-    }
-
-    @Override
     public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
         return getBackedRepository().getAddonChangelog(downloadProvider, addonId, versionId);
     }

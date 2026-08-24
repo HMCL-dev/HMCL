@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,11 +30,30 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public record RemoteAddon(String id, String slug, String author, String title, String description, List<String> categories,
                           String pageUrl, String iconUrl, @Nullable Type type, @Nullable Source source) {
 
     public static final RemoteAddon BROKEN = new RemoteAddon("", "", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", null, null);
+
+    public boolean checkInstalled(Stream<RemoteAddon.Version> remoteVersions, @Nullable DefaultGameInstance gameInstance) {
+        if (gameInstance != null && type() != null && source() != null) {
+            LocalAddonManager<?> manager = gameInstance.getManagerForType(type());
+            if (manager != null) {
+                try {
+                    Set<?> localHashes = manager.getHashes(source());
+                    return remoteVersions.map(Version::hash).anyMatch(localHashes::contains);
+                } catch (IOException e) {
+                    LOG.warning("Failed to check if addon %s on %s is installed".formatted(id(), source()), e);
+                }
+            }
+        }
+        return false;
+    }
 
     public enum VersionType {
         Release,
@@ -212,9 +232,10 @@ public record RemoteAddon(String id, String slug, String author, String title, S
         Source getSource();
     }
 
+    /// @param hash unsigned long for CurseForge, or SHA-1 string for Modrinth
     public record Version(IVersion self, String versionId, String projectId, String name, String version,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
-                          List<String> gameVersions, List<ModLoaderType> loaders) {
+                          List<String> gameVersions, List<ModLoaderType> loaders, Object hash) {
     }
 
     public record File(Map<String, String> hashes, String url, String filename) {

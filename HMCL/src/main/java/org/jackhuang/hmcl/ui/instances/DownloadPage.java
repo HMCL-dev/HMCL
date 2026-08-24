@@ -31,7 +31,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -51,7 +50,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
@@ -97,24 +95,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.supplyAsync(() -> {
-            repository.enableCache();
-            Stream<RemoteAddon.Version> versions = repository.getRemoteVersionsById(getDownloadProvider(), addon.id());
-            boolean installed = false;
-            {
-                DefaultGameInstance instance = instanceReference.instance();
-                if (instance != null && addon.type() != null && addon.source() != null) {
-                    LocalAddonManager<?> manager = instance.getManagerForType(addon.type());
-                    if (manager != null) {
-                        try {
-                            installed = repository.hasRemoteVersionWithHashes(getDownloadProvider(), addon.id(), manager.getHashes(addon.source()));
-                        } catch (IOException e) {
-                            LOG.warning("Failed to check if addon %s on %s is installed".formatted(addon.id(), addon.source()), e);
-                        }
-                    }
-                }
-            }
-            repository.disableCache();
-            return Pair.pair(sortVersions(versions), installed);
+            List<RemoteAddon.Version> versions = repository.getRemoteVersionsById(getDownloadProvider(), addon.id()).toList();
+            return Pair.pair(sortVersions(versions.stream()), addon.checkInstalled(versions.stream(), instanceReference.instance()));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 this.versions = result.key();
@@ -652,21 +634,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> {
                                 var addon = dependency.load(selfPage.getDownloadProvider());
-                                boolean installed = false;
-                                {
-                                    DefaultGameInstance instance = selfPage.getInstanceOptional().instance();
-                                    if (instance != null && addon.type() != null && addon.source() != null) {
-                                        LocalAddonManager<?> manager = instance.getManagerForType(addon.type());
-                                        if (manager != null) {
-                                            try {
-                                                installed = selfPage.repository.hasRemoteVersionWithHashes(selfPage.getDownloadProvider(), addon.id(), manager.getHashes(addon.source()));
-                                            } catch (IOException e) {
-                                                LOG.warning("Failed to check if addon %s on %s is installed".formatted(addon.id(), addon.source()), e);
-                                            }
-                                        }
-                                    }
-                                }
-                                return Pair.pair(addon, installed);
+                                return Pair.pair(addon, addon.checkInstalled(
+                                        selfPage.repository.getRemoteVersionsById(selfPage.getDownloadProvider(), addon.id()),
+                                        selfPage.getInstanceOptional().instance()
+                                ));
                             })
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
