@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @NotNullByDefault
 @JsonAdapter(GameInstanceManifest.Adapter.class)
@@ -712,11 +713,26 @@ public record GameInstanceManifest(
         return json;
     }
 
-    public GameInstanceManifest resolvePatches() {
+    public GameInstanceManifest applyPatches() {
+        if (inheritsFrom != null) {
+            throw new IllegalStateException("Cannot resolve patches on a manifest that inherits from another manifest");
+        }
 
+        if (patches == null || patches.isEmpty()) {
+            return this;
+        }
+
+        GameInstanceManifest manifest = isRoot()
+                ? new GameInstanceManifest(id)
+                : this;
+        for (GameInstancePatch patch : Lang.toIterable(patches().stream()
+                .sorted(Comparator.comparing(GameInstancePatch::getPriority)))) {
+            manifest = patch.merge(manifest);
+        }
+        return this;
     }
 
-    private static final class Builder {
+    public static final class Builder {
         // @formatter:off
         private @Nullable GameInstanceID id;
         private @Nullable String minecraftArguments;
@@ -742,10 +758,10 @@ public record GameInstanceManifest(
         private @Nullable JsonObject rawJson;
         // @formatter:on
 
-        Builder() {
+        public Builder() {
         }
 
-        Builder(GameInstanceManifest manifest) {
+        public Builder(GameInstanceManifest manifest) {
             this.id = manifest.id;
             this.minecraftArguments = manifest.minecraftArguments;
             this.arguments = manifest.arguments;
@@ -929,7 +945,36 @@ public record GameInstanceManifest(
             }
         }
 
-        GameInstanceManifest toManifest() {
+        public void merge(GameInstancePatch patch) {
+            if (patch.minecraftArguments() != null)
+                this.minecraftArguments = patch.minecraftArguments();
+            this.arguments = Arguments.merge(this.arguments, patch.arguments());
+            if (patch.mainClass() != null)
+                this.mainClass = patch.mainClass();
+            if (patch.assetIndex() != null)
+                this.assetIndex = patch.assetIndex();
+            if (patch.assets() != null)
+                this.assets = patch.assets();
+            if (patch.complianceLevel() != null)
+                this.complianceLevel = patch.complianceLevel();
+            if (patch.javaVersion() != null)
+                this.javaVersion = patch.javaVersion();
+            this.libraries = Lang.merge(this.libraries, patch.libraries());
+            this.compatibilityRules = Lang.merge(this.compatibilityRules, patch.compatibilityRules());
+            if (patch.downloads() != null)
+                this.downloads = patch.downloads();
+            if (patch.logging() != null)
+                this.logging = patch.logging();
+            if (patch.type() != null)
+                this.type = patch.type();
+            if (patch.time() != null)
+                this.time = patch.time();
+            if (patch.releaseTime() != null)
+                this.releaseTime = patch.releaseTime();
+            this.minimumLauncherVersion = Lang.merge(this.minimumLauncherVersion, patch.minimumLauncherVersion(), Math::max);
+        }
+
+        public GameInstanceManifest toManifest() {
             if (id == null) {
                 throw new IllegalStateException("id is null");
             }

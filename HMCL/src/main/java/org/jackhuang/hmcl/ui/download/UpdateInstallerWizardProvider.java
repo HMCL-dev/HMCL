@@ -87,7 +87,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             for (Object value : settings.asStringMap().values()) {
                 if (value instanceof RemoteVersion remoteVersion) {
                     update = update.thenComposeAsync(manifest ->
-                            dependencyManager.installComponentAsync(publishedInstance, manifest, remoteVersion));
+                            dependencyManager.installComponentRemoteAsync(publishedInstance, manifest, remoteVersion));
                 } else if (value instanceof RemoveVersionAction removeVersionAction) {
                     update = update.thenComposeAsync(manifest ->
                             dependencyManager.removeComponentAsync(

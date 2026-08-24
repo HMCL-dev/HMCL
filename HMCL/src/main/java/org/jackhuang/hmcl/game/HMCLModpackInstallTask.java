@@ -103,7 +103,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
                 if (componentVersion == null) {
                     continue;
                 }
-                libraryTask = libraryTask.thenComposeAsync(manifest -> dependency.installComponentAsync(
+                libraryTask = libraryTask.thenComposeAsync(manifest -> dependency.installComponentRemoteAsync(
                         publishedInstance,
                         manifest,
                         modpack.getGameVersion(),

@@ -152,7 +152,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         HMCLGameRepository repository = gameInstance.getRepository();
         Task<?> task = repository.updateInstanceAsync(
                 gameInstance.getId(),
-                publishedInstance -> repository.getDependency().installComponentAsync(publishedInstance, file));
+                publishedInstance -> repository.getDependency().installComponentLocalAsync(publishedInstance, file));
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override
