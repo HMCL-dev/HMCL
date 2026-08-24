@@ -145,7 +145,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     }
 
     private void doInstallOffline(Path file) {
-        if (gameInstance == null) {
+        if (gameInstance == null || !gameInstance.getManifest().isModifiable()) {
             return;
         }
 

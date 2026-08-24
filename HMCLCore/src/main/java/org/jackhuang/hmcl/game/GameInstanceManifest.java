@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @NotNullByDefault
 @JsonAdapter(GameInstanceManifest.Adapter.class)
@@ -584,18 +583,9 @@ public record GameInstanceManifest(
 
     /// Returns a manifest copy with additional patches.
     public GameInstanceManifest addPatch(GameInstancePatch additional) {
-        return addPatches(List.of(additional));
-    }
-
-    /// Returns a manifest copy with additional patches.
-    public GameInstanceManifest addPatches(@Nullable List<GameInstancePatch> additional) {
         Set<String> patchIds = new HashSet<>();
-        if (additional != null) {
-            for (GameInstancePatch patch : additional) {
-                if (patch.id() != null) {
-                    patchIds.add(patch.id());
-                }
-            }
+        if (additional.id() != null) {
+            patchIds.add(additional.id());
         }
 
         List<GameInstancePatch> patches = new ArrayList<>();
@@ -606,9 +596,7 @@ public record GameInstanceManifest(
                 }
             }
         }
-        if (additional != null) {
-            patches.addAll(additional);
-        }
+        patches.add(additional);
         return withPatches(patches);
     }
 

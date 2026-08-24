@@ -251,12 +251,15 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         if (!instance.getId().equals(baseManifest.id())) {
             throw new IllegalArgumentException("baseManifest id does not match instance");
         }
+        if (!baseManifest.isModifiable()) {
+            throw new IllegalArgumentException("Cannot install component into a non-modifiable manifest");
+        }
 
         Path modsDirectory = instance.getModsDirectory();
         return removeComponentAsync(instance, baseManifest, componentVersion.getComponentType())
                 .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
-                        .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
+                        .thenApplyAsync(patch -> patch == null ? manifest : reconstructManifest(manifest.addPatch(patch))))
                 .withStage("hmcl.install.%s:%s".formatted(componentVersion.getComponentType().getPatchId(), componentVersion.getSelfVersion()));
     }
 
@@ -310,6 +313,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             GameVersionNumber gameVersion,
             GameInstanceManifest baseManifest,
             Path installer) {
+
+        if (!baseManifest.isModifiable()) {
+            throw new IllegalArgumentException("Cannot install component into a non-modifiable manifest");
+        }
+
         return Task.composeAsync(() -> {
                     try {
                         return CleanroomInstallTask.install(this, baseManifest, gameVersion.toString(), installer);
@@ -334,7 +342,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     throw new UnsupportedLibraryInstallerException();
                 })
                 .thenApplyAsync(patch -> {
-                    return patch == null ? baseManifest : baseManifest.addPatch(patch);
+                    return patch == null ? baseManifest : reconstructManifest(baseManifest.addPatch(patch));
                 });
     }
 
