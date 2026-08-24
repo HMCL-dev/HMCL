@@ -57,8 +57,8 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.javafx.ImageCachable;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -494,14 +494,18 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
-    public static final class ResourcePackInfoObject extends ImageCachable.Soft<ResourcePackInfoObject> {
+    public static final class ResourcePackInfoObject {
 
         private final ResourcePackFile file;
         private final BooleanProperty enabled;
 
+        private final ItemPropertyCache<Image, ResourcePackInfoObject> iconCache;
+
         public ResourcePackInfoObject(Pair<ResourcePackFile, Boolean> pair) {
             this.file = pair.key();
             this.enabled = new SimpleBooleanProperty(this, "enabled", pair.value());
+
+            this.iconCache = new ItemPropertyCache.Soft<>(this, this::loadImage, this::getDefaultImage);
         }
 
         public ResourcePackFile getFile() {
@@ -512,13 +516,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             return enabled;
         }
 
-        @Override
-        public Image getDefaultImage() {
+        private Image getDefaultImage() {
             return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
-        @Override
-        public Image loadImage() {
+        private Image loadImage() {
             Image icon = file.loadIcon();
             if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1) {
                 return icon;
@@ -592,7 +594,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             this.object = item;
             ResourcePackFile file = item.getFile();
-            item.attachImage(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
+            item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 
             content.getTags().clear();
             content.setTitle(file.getFileName());
@@ -632,7 +634,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
-            packInfoObject.attachImage(imageContainer.imageProperty(), null);
+            packInfoObject.iconCache.attachValue(imageContainer.imageProperty(), null);
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(pack.getFileName());

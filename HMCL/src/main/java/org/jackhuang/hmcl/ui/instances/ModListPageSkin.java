@@ -52,7 +52,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.javafx.ImageCachable;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -60,6 +59,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyCache;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -314,16 +314,19 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    static final class ModInfoObject extends ImageCachable.Soft<ModInfoObject> {
+    static final class ModInfoObject {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
+        private final ItemPropertyCache<Image, ModInfoObject> iconCache;
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
 
             this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
+
+            this.iconCache = new ItemPropertyCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         LocalModFile getModInfo() {
@@ -334,13 +337,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             return modTranslations;
         }
 
-        @Override
-        public Image getDefaultImage() {
+        public Image getDefaultIcon() {
             return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
         }
 
-        @Override
-        public Image loadImage() {
+        private Image loadIcon() {
             List<String> iconPaths = new ArrayList<>();
 
             if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {
@@ -362,7 +363,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 LOG.warning("Failed to load mod icons", e);
             }
 
-            return getDefaultImage();
+            return getDefaultIcon();
         }
     }
 
@@ -379,7 +380,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             var imageContainer = new ImageContainer(40);
             titleContainer.setAlignment(Pos.CENTER_LEFT);
-            modInfo.attachImage(imageContainer.imageProperty(), null);
+            modInfo.iconCache.attachValue(imageContainer.imageProperty(), null);
 
             TwoLineListItem title = new TwoLineListItem();
             if (modInfo.getModTranslations() != null && I18n.isUseChinese())
@@ -549,7 +550,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
-            dataItem.attachImage(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
+            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {
