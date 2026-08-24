@@ -219,7 +219,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             super.updateItem(remoteVersion, empty);
 
-            if (Objects.equals(oldRemoteVersion, remoteVersion) && oldEmpty == empty) return;
+            if (oldRemoteVersion == remoteVersion && oldEmpty == empty) return;
 
             ripplerContainer.releaseRippleImmediately();
 
