@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.forge;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
@@ -41,7 +41,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> {
+public final class ForgeBMCLVersionList extends ComponentVersionList<ForgeRemoteVersion> {
     private final String apiRoot;
 
     /**

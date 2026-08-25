@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.legacyfabric;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.task.Task;
@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Collections;
 
-public class LegacyFabricAPIVersionList extends VersionList<LegacyFabricAPIRemoteVersion> {
+public class LegacyFabricAPIVersionList extends ComponentVersionList<LegacyFabricAPIRemoteVersion> {
 
     private final DownloadProvider downloadProvider;
 

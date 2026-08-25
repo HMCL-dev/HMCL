@@ -80,5 +80,5 @@ public interface DependencyManager {
     /// @param componentType the component type, such as `game`, `forge`, or `optifine`
     /// @return the registered version list
     /// @throws IllegalArgumentException if no list is registered for `id`
-    VersionList<?> getVersionList(GameComponentType componentType);
+    ComponentVersionList<?> getVersionList(GameComponentType componentType);
 }

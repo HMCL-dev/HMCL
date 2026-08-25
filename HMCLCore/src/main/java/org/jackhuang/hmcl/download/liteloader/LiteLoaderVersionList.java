@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -35,7 +35,7 @@ import java.util.Objects;
 /**
  * @author huangyuhui
  */
-public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVersion> {
+public final class LiteLoaderVersionList extends ComponentVersionList<LiteLoaderRemoteVersion> {
 
     private final DownloadProvider downloadProvider;
 

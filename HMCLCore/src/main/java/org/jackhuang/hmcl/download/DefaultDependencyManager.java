@@ -212,7 +212,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             String gameVersion,
             GameComponentType componentType,
             String componentVersion) {
-        VersionList<?> versionList = getVersionList(componentType);
+        ComponentVersionList<?> versionList = getVersionList(componentType);
         return versionList.loadAsync(gameVersion)
                 .thenComposeAsync(() -> installNewInstanceComponentAsync(
                         baseManifest,
@@ -274,7 +274,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             throw new IllegalArgumentException("baseManifest id does not match instance");
         }
 
-        VersionList<?> versionList = getVersionList(componentType);
+        ComponentVersionList<?> versionList = getVersionList(componentType);
         return versionList.loadAsync(gameVersion)
                 .thenComposeAsync(() -> installComponentRemoteAsync(
                         instance,

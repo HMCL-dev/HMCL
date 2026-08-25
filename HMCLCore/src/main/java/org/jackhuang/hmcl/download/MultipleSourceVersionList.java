@@ -25,11 +25,11 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class MultipleSourceVersionList extends VersionList<ComponentRemoteVersion> {
+public class MultipleSourceVersionList extends ComponentVersionList<ComponentRemoteVersion> {
 
-    private final VersionList<?>[] backends;
+    private final ComponentVersionList<?>[] backends;
 
-    MultipleSourceVersionList(VersionList<?>[] backends) {
+    MultipleSourceVersionList(ComponentVersionList<?>[] backends) {
         this.backends = backends;
 
         assert (backends.length >= 1);
@@ -48,7 +48,7 @@ public class MultipleSourceVersionList extends VersionList<ComponentRemoteVersio
     }
 
     private Task<?> refreshAsync(String gameVersion, int sourceIndex) {
-        VersionList<?> versionList = backends[sourceIndex];
+        ComponentVersionList<?> versionList = backends[sourceIndex];
         Task<?> refreshTask = versionList.refreshAsync(gameVersion);
 
         return new Task<>() {

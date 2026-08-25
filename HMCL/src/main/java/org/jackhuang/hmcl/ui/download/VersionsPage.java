@@ -32,7 +32,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
@@ -82,7 +82,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     private final String title;
     private final Navigation navigation;
     private final DownloadProvider downloadProvider;
-    private final VersionList<?> versionList;
+    private final ComponentVersionList<?> versionList;
     private final Runnable callback;
 
     private final ObservableList<ComponentRemoteVersion> versions = FXCollections.observableArrayList();

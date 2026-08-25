@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * @author huangyuhui
  */
-public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemoteVersion> {
+public final class LiteLoaderBMCLVersionList extends ComponentVersionList<LiteLoaderRemoteVersion> {
     private final BMCLAPIDownloadProvider downloadProvider;
 
     public LiteLoaderBMCLVersionList(BMCLAPIDownloadProvider downloadProvider) {

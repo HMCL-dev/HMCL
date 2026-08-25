@@ -31,7 +31,7 @@ public abstract class AbstractDependencyManager implements DependencyManager {
     public abstract DefaultCacheRepository getCacheRepository();
 
     @Override
-    public VersionList<?> getVersionList(GameComponentType componentType) {
+    public ComponentVersionList<?> getVersionList(GameComponentType componentType) {
         return getDownloadProvider().getVersionList(componentType);
     }
 }
