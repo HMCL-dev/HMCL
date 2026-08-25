@@ -300,42 +300,33 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// @return the task producing the updated manifest (not yet saved)
     public Task<GameInstanceManifest> installComponentLocalAsync(GameInstance instance, Path installer) {
         validateGameInstance(instance);
-        return installComponentLocalAsync(instance.getVersion(), instance.getManifest(), installer);
-    }
 
-    /// Installs a component from a local installer jar into a working manifest.
-    ///
-    /// @param gameVersion  the Minecraft version expected by the installation
-    /// @param baseManifest the working manifest for this step
-    /// @param installer    the local installer jar
-    /// @return the task producing the updated manifest (not yet saved)
-    public Task<GameInstanceManifest> installComponentLocalAsync(
-            GameVersionNumber gameVersion,
-            GameInstanceManifest baseManifest,
-            Path installer) {
+        GameInstanceManifest baseManifest = instance.getManifest();
 
         if (!baseManifest.isModifiable()) {
             throw new IllegalArgumentException("Cannot install component into a non-modifiable manifest");
         }
 
+        String gameVersion = instance.getVersion().toString();
+
         return Task.composeAsync(() -> {
                     try {
-                        return CleanroomInstallTask.install(this, baseManifest, gameVersion.toString(), installer);
+                        return CleanroomInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return NeoForgeInstallTask.install(this, baseManifest, gameVersion.toString(), installer);
+                        return NeoForgeInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return ForgeInstallTask.install(this, baseManifest, gameVersion.toString(), installer);
+                        return ForgeInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return OptiFineInstallTask.install(this, baseManifest, gameVersion.toString(), installer);
+                        return OptiFineInstallTask.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 
