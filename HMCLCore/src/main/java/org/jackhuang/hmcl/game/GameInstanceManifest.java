@@ -720,6 +720,37 @@ public record GameInstanceManifest(
         return this;
     }
 
+    private static GameInstanceManifest reconstruct(GameInstanceManifest manifest) {
+        if (manifest.inheritsFrom() != null || !manifest.isRoot()) {
+            throw new IllegalArgumentException("Cannot reconstruct a manifest that inherits from another or is not root");
+        }
+
+        if (manifest.patches() == null || manifest.patches().isEmpty()) {
+            return manifest;
+        }
+
+        var builder = new GameInstanceManifest.Builder();
+        builder.setId(manifest.id());
+        builder.setJar(manifest.jar() == null ? manifest.id() : manifest.jar());
+        for (GameInstancePatch patch : manifest.patches()) {
+            builder.merge(patch);
+        }
+        builder.setPatches(manifest.patches());
+        return builder.toManifest();
+    }
+
+    public GameInstanceManifest removeComponent(GameComponentType type) {
+        @Nullable GameInstancePatch patch = findPatch(type.getPatchId());
+        if (patch == null) {
+            return this;
+        }
+
+        return reconstruct(this.withPatches(getPatches()
+                .stream()
+                .filter(it -> it != patch)
+                .toList()));
+    }
+
     public static final class Builder {
         // @formatter:off
         private @Nullable GameInstanceID id;

@@ -194,8 +194,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         }
 
         Path modsDirectory = repository.getRunDirectoryForInstallation(instanceId).resolve("mods");
-        GameComponentType componentType = componentVersion.getComponentType();
-        return Task.supplyAsync(() -> removeNewInstanceComponent(baseManifest, componentType))
+        return Task.supplyAsync(() -> baseManifest.removeComponent(componentVersion.getComponentType()))
                 .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
                         .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
@@ -256,7 +255,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         }
 
         Path modsDirectory = instance.getModsDirectory();
-        return removeComponentAsync(instance, baseManifest, componentVersion.getComponentType())
+        return Task.supplyAsync(() -> baseManifest.removeComponent(componentVersion.getComponentType()))
                 .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
                         .thenApplyAsync(patch -> patch == null ? manifest : reconstructManifest(manifest.addPatch(patch))))
@@ -345,27 +344,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         }
     }
 
-    /// Removes one component from an unpublished new instance manifest.
-    ///
-    /// @param workingManifest the manifest being edited
-    /// @param componentType   the component to remove
-    /// @return the task producing the updated standalone manifest
-    private GameInstanceManifest removeNewInstanceComponent(
-            GameInstanceManifest workingManifest,
-            GameComponentType componentType) {
-        @Nullable GameInstancePatch patch = workingManifest.findPatch(componentType.getPatchId());
-        if (patch == null) {
-            return workingManifest;
-        }
-
-        return reconstructManifest(workingManifest
-                .withPatches(workingManifest.getPatches()
-                        .stream()
-                        .filter(it -> it != patch)
-                        .toList()));
-    }
-
-
     /// Removes a component from a registered instance using its current stored manifest.
     ///
     /// @param instance      the target instance
@@ -373,22 +351,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// @return the task producing the updated standalone manifest (not yet saved)
     public Task<GameInstanceManifest> removeComponentAsync(GameInstance instance, GameComponentType componentType) {
         validateGameInstance(instance);
-        return removeComponentAsync(instance, instance.getManifest(), componentType);
-    }
-
-    /// Removes a component from a working manifest bound to a registered instance.
-    ///
-    /// When `workingManifest` is the instance's stored manifest, edits its resolved standalone view;
-    /// otherwise edits the independent draft (resolving inheritance if still present).
-    ///
-    /// @param instance        the registered instance
-    /// @param workingManifest the draft being edited
-    /// @param componentType   the component to remove
-    /// @return the task producing the updated standalone manifest (not yet saved)
-    public Task<GameInstanceManifest> removeComponentAsync(
-            GameInstance instance,
-            GameInstanceManifest workingManifest,
-            GameComponentType componentType) {
+        GameInstanceManifest workingManifest = instance.getManifest();
         validateGameInstance(instance);
         if (!instance.getId().equals(workingManifest.id())) {
             throw new IllegalArgumentException("workingManifest id does not match instance");
@@ -398,7 +361,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             throw new IllegalArgumentException("Cannot remove component from a non-modifiable manifest");
         }
 
-        return Task.supplyAsync(() -> removeNewInstanceComponent(workingManifest, componentType));
+        return Task.completed(workingManifest.removeComponent(componentType));
     }
 
     private static GameInstanceManifest reconstructManifest(GameInstanceManifest manifest) {

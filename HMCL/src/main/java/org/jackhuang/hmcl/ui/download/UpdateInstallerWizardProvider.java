@@ -88,12 +88,10 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                 if (value instanceof RemoteVersion remoteVersion) {
                     update = update.thenComposeAsync(manifest ->
                             dependencyManager.installComponentRemoteAsync(publishedInstance, manifest, remoteVersion));
-                } else if (value instanceof RemoveVersionAction removeVersionAction) {
-                    update = update.thenComposeAsync(manifest ->
-                            dependencyManager.removeComponentAsync(
-                                    publishedInstance,
-                                    manifest,
-                                    removeVersionAction.componentType));
+                } else if (value instanceof RemoveComponentAction removeComponentAction) {
+                    update = update.thenApplyAsync(manifest ->
+                            manifest.removeComponent(removeComponentAction.componentType));
+
                 }
             }
             return update;
@@ -183,11 +181,6 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         }
     }
 
-    public static class RemoveVersionAction {
-        private final GameComponentType componentType;
-
-        public RemoveVersionAction(GameComponentType componentType) {
-            this.componentType = componentType;
-        }
+    public record RemoveComponentAction(GameComponentType componentType) {
     }
 }
