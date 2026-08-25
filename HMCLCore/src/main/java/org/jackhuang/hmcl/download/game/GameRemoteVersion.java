@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
@@ -49,7 +50,7 @@ public final class GameRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion, Path modsDirectory) {
         return new GameInstallTask(dependencyManager, baseVersion, this);
     }
 

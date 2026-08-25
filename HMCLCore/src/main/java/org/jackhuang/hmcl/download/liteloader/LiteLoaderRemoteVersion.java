@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.Task;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
@@ -55,7 +56,7 @@ public class LiteLoaderRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion, Path modsDirectory) {
         return new LiteLoaderInstallTask(dependencyManager, baseVersion, this);
     }
 }

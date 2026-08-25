@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 
+import java.nio.file.Path;
 import java.util.List;
 
 public class OptiFineRemoteVersion extends RemoteVersion {
@@ -39,7 +40,7 @@ public class OptiFineRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion, Path modsDirectory) {
         return new GameDownloadTask(dependencyManager, baseVersion)
                 .thenComposeAsync(minecraftJar -> new OptiFineInstallTask(
                         dependencyManager,
