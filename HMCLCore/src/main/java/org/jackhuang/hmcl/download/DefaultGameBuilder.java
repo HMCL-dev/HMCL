@@ -88,7 +88,7 @@ public class DefaultGameBuilder extends GameBuilder {
         DefaultGameRepositoryDraft draft = repository.openDraft();
 
         Task<GameInstanceManifest> libraryTask = dependencyManager.installNewInstanceComponentAsync(
-                id, new GameInstanceManifest(id), gameVersion, GameComponentType.GAME, gameVersion);
+                new GameInstanceManifest(id), gameVersion, GameComponentType.GAME, gameVersion);
 
         for (Map.Entry<GameComponentType, Object> entry : components.entrySet()) {
             GameComponentType componentType = entry.getKey();
@@ -98,11 +98,11 @@ public class DefaultGameBuilder extends GameBuilder {
             if (entry.getValue() instanceof RemoteVersion remoteVersion) {
                 libraryTask = libraryTask.thenComposeAsync(manifest ->
                         dependencyManager.installNewInstanceComponentAsync(
-                                id, manifest, remoteVersion));
+                                manifest, remoteVersion));
             } else if (entry.getValue() instanceof String version) {
                 libraryTask = libraryTask.thenComposeAsync(manifest ->
                         dependencyManager.installNewInstanceComponentAsync(
-                                id, manifest, gameVersion, componentType, version));
+                                manifest, gameVersion, componentType, version));
             } else {
                 throw new AssertionError("Unexpected version type: " + entry.getValue().getClass());
             }

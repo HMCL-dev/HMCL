@@ -181,19 +181,13 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// Installs a component into an unpublished new instance without constructing a
     /// [GameInstance].
     ///
-    /// @param instanceId       the unpublished instance id
     /// @param baseManifest     the working manifest for this step
     /// @param componentVersion the remote component to install
     /// @return the task producing the updated manifest (not yet committed)
     Task<GameInstanceManifest> installNewInstanceComponentAsync(
-            GameInstanceID instanceId,
             GameInstanceManifest baseManifest,
             RemoteVersion componentVersion) {
-        if (!instanceId.equals(baseManifest.id())) {
-            throw new IllegalArgumentException("baseManifest id does not match instanceId");
-        }
-
-        Path modsDirectory = repository.getRunDirectoryForInstallation(instanceId).resolve("mods");
+        Path modsDirectory = repository.getRunDirectoryForInstallation(baseManifest.id()).resolve("mods");
         return Task.supplyAsync(() -> baseManifest.removeComponent(componentVersion.getComponentType()))
                 .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
@@ -205,26 +199,19 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     /// Resolves and installs a component into an unpublished new instance.
     ///
-    /// @param instanceId       the unpublished instance id
     /// @param baseManifest     the working manifest for this step
     /// @param gameVersion      the Minecraft version used to look up the remote list
     /// @param componentType    the component list id, such as `game` or `forge`
     /// @param componentVersion the component version id
     /// @return the installation task
     Task<GameInstanceManifest> installNewInstanceComponentAsync(
-            GameInstanceID instanceId,
             GameInstanceManifest baseManifest,
             String gameVersion,
             GameComponentType componentType,
             String componentVersion) {
-        if (!instanceId.equals(baseManifest.id())) {
-            throw new IllegalArgumentException("baseManifest id does not match instanceId");
-        }
-
         VersionList<?> versionList = getVersionList(componentType);
         return versionList.loadAsync(gameVersion)
                 .thenComposeAsync(() -> installNewInstanceComponentAsync(
-                        instanceId,
                         baseManifest,
                         versionList.getVersion(gameVersion, componentVersion)
                                 .orElseThrow(() -> new IOException(
