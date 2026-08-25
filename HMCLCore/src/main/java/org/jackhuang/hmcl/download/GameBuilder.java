@@ -66,7 +66,7 @@ public abstract class GameBuilder {
     }
 
     @Contract("_ -> this")
-    public GameBuilder component(RemoteVersion remoteVersion) {
+    public GameBuilder component(ComponentRemoteVersion remoteVersion) {
         components.put(remoteVersion.getComponentType(), remoteVersion);
         return this;
     }

@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
-public class FabricAPIRemoteVersion extends RemoteVersion {
+public class FabricAPIRemoteVersion extends ComponentRemoteVersion {
     private final String fullVersion;
     private final RemoteAddon.Version version;
 
@@ -65,7 +65,7 @@ public class FabricAPIRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public int compareTo(RemoteVersion o) {
+    public int compareTo(ComponentRemoteVersion o) {
         if (!(o instanceof FabricAPIRemoteVersion)) return 0;
         return -this.getReleaseDate().compareTo(o.getReleaseDate());
     }

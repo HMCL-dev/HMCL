@@ -25,7 +25,7 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
+public class MultipleSourceVersionList extends VersionList<ComponentRemoteVersion> {
 
     private final VersionList<?>[] backends;
 

@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.task.Task;
 import java.nio.file.Path;
 import java.util.List;
 
-public class FabricRemoteVersion extends RemoteVersion {
+public class FabricRemoteVersion extends ComponentRemoteVersion {
     /**
      * Constructor.
      *

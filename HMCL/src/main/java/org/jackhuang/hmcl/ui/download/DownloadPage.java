@@ -305,11 +305,11 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
             builder.id(instanceId);
-            builder.component(GameComponentType.GAME, ((RemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion());
+            builder.component(GameComponentType.GAME, ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion());
 
             settings.asStringMap().forEach((key, value) -> {
                 if (!GameComponentType.GAME.getPatchId().equals(key)
-                        && value instanceof RemoteVersion remoteVersion)
+                        && value instanceof ComponentRemoteVersion remoteVersion)
                     builder.component(remoteVersion);
             });
 
@@ -335,7 +335,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public Node createPage(WizardController controller, int step, SettingsMap settings) {
             switch (step) {
                 case 0:
-                    return new InstallersPage(controller, repository, ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
+                    return new InstallersPage(controller, repository, ((ComponentRemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
                 default:
                     throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
             }

@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +92,7 @@ public final class SettingsMap {
     /// Returns whether the selected installation includes any non-vanilla component.
     public boolean isInstallingModdedVersion() {
         for (GameComponentType value : GameComponentType.MOD_LOADERS) {
-            if (get(value.getPatchId()) instanceof RemoteVersion) {
+            if (get(value.getPatchId()) instanceof ComponentRemoteVersion) {
                 return true;
             }
         }

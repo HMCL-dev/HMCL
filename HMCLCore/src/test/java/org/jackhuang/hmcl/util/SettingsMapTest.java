@@ -17,11 +17,16 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
+import org.jackhuang.hmcl.task.Task;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
@@ -51,7 +56,13 @@ public final class SettingsMapTest {
     }
 
     /// Creates a minimal remote version for installer state tests.
-    private static RemoteVersion remoteVersion(GameComponentType componentType) {
-        return new RemoteVersion(componentType, "1.21.11", "test", Instant.EPOCH, List.of());
+    private static ComponentRemoteVersion remoteVersion(GameComponentType componentType) {
+        return new ComponentRemoteVersion(componentType, "1.21.11", "test", Instant.EPOCH, List.of()) {
+
+            @Override
+            public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseManifest, Path modsDirectory) {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
-public class LiteLoaderRemoteVersion extends RemoteVersion {
+public class LiteLoaderRemoteVersion extends ComponentRemoteVersion {
     private final String tweakClass;
     private final Collection<Library> libraries;
 

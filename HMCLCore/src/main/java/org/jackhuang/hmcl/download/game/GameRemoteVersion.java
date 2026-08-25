@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
@@ -36,7 +36,7 @@ import java.util.List;
  * @author huangyuhui
  */
 @Immutable
-public final class GameRemoteVersion extends RemoteVersion {
+public final class GameRemoteVersion extends ComponentRemoteVersion {
 
     private final ReleaseType type;
 
@@ -55,7 +55,7 @@ public final class GameRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public int compareTo(RemoteVersion o) {
+    public int compareTo(ComponentRemoteVersion o) {
         if (!(o instanceof GameRemoteVersion)) {
             return 0;
         }

@@ -21,7 +21,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -72,8 +72,8 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     private String getVersion(GameComponentType type) {
         return Optional.ofNullable(controller.getSettings().get(type.getPatchId()))
-                .flatMap(it -> Lang.tryCast(it, RemoteVersion.class))
-                .map(RemoteVersion::getSelfVersion).orElse(null);
+                .flatMap(it -> Lang.tryCast(it, ComponentRemoteVersion.class))
+                .map(ComponentRemoteVersion::getSelfVersion).orElse(null);
     }
 
     @Override

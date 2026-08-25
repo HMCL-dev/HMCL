@@ -75,7 +75,7 @@ public class DefaultGameBuilder extends GameBuilder {
             hints.add(new Task.StagesHint(
                     "hmcl.install.%s:%s".formatted(
                             componentType.getPatchId(),
-                            version instanceof RemoteVersion remoteVersion
+                            version instanceof ComponentRemoteVersion remoteVersion
                                     ? remoteVersion.getSelfVersion()
                                     : (String) version)));
 
@@ -112,7 +112,7 @@ public class DefaultGameBuilder extends GameBuilder {
             if (componentType == GameComponentType.GAME)
                 continue;
 
-            if (entry.getValue() instanceof RemoteVersion remoteVersion) {
+            if (entry.getValue() instanceof ComponentRemoteVersion remoteVersion) {
                 libraryTask = libraryTask.thenComposeAsync(manifest ->
                         dependencyManager.installNewInstanceComponentAsync(
                                 manifest, modsDirectory, remoteVersion));

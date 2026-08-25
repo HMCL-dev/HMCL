@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.task.Task;
 import java.nio.file.Path;
 import java.util.List;
 
-public class NeoForgeRemoteVersion extends RemoteVersion {
+public class NeoForgeRemoteVersion extends ComponentRemoteVersion {
     public NeoForgeRemoteVersion(String gameVersion, String selfVersion, List<String> urls) {
         super(GameComponentType.NEO_FORGE, gameVersion, selfVersion, null, getType(selfVersion), urls);
     }

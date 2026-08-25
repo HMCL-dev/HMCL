@@ -31,7 +31,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
@@ -85,7 +85,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     private final VersionList<?> versionList;
     private final Runnable callback;
 
-    private final ObservableList<RemoteVersion> versions = FXCollections.observableArrayList();
+    private final ObservableList<ComponentRemoteVersion> versions = FXCollections.observableArrayList();
     private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
 
     public VersionsPage(Navigation navigation,
@@ -153,7 +153,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         OLD
     }
 
-    private static class RemoteVersionListCell extends ListCell<RemoteVersion> {
+    private static class RemoteVersionListCell extends ListCell<ComponentRemoteVersion> {
         private final VersionsPage control;
 
         private final TwoLineListItem twoLineListItem = new TwoLineListItem();
@@ -196,7 +196,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         }
 
         private void onAction() {
-            RemoteVersion item = getItem();
+            ComponentRemoteVersion item = getItem();
             if (item == null)
                 return;
 
@@ -205,7 +205,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         }
 
         private void onOpenWiki() {
-            RemoteVersion item = getItem();
+            ComponentRemoteVersion item = getItem();
             if (!(item instanceof GameRemoteVersion))
                 return;
 
@@ -213,8 +213,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         }
 
         @Override
-        public void updateItem(RemoteVersion remoteVersion, boolean empty) {
-            RemoteVersion oldRemoteVersion = getItem();
+        public void updateItem(ComponentRemoteVersion remoteVersion, boolean empty) {
+            ComponentRemoteVersion oldRemoteVersion = getItem();
 
             ripplerContainer.releaseRippleImmediately();
             super.updateItem(remoteVersion, empty);
@@ -237,7 +237,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             twoLineListItem.getTags().clear();
 
             if (remoteVersion instanceof GameRemoteVersion) {
-                RemoteVersion.Type versionType = remoteVersion.getVersionType();
+                ComponentRemoteVersion.Type versionType = remoteVersion.getVersionType();
                 GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(remoteVersion.getGameVersion());
 
                 switch (versionType) {
@@ -246,7 +246,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         imageView.setImage(GameInstanceIconType.GRASS.getIcon());
                     }
                     case SNAPSHOT, PENDING, UNOBFUSCATED -> {
-                        if (versionType == RemoteVersion.Type.SNAPSHOT
+                        if (versionType == ComponentRemoteVersion.Type.SNAPSHOT
                                 && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
                             twoLineListItem.addTag(i18n("instance.game.april_fools"));
                             imageView.setImage(GameInstanceIconType.APRIL_FOOLS.getIcon());
@@ -298,7 +298,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     }
 
     private static final class VersionsPageSkin extends SkinBase<VersionsPage> {
-        private final JFXListView<RemoteVersion> list;
+        private final JFXListView<ComponentRemoteVersion> list;
 
         private final TransitionPane transitionPane;
         private final JFXSpinner spinner;
@@ -456,20 +456,20 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         }
 
         private void updateList() {
-            Stream<RemoteVersion> versions = getSkinnable().versions.stream();
+            Stream<ComponentRemoteVersion> versions = getSkinnable().versions.stream();
 
             VersionTypeFilter filter = categoryField.getSelectionModel().getSelectedItem();
             if (filter != null)
                 versions = versions.filter(it -> {
-                    RemoteVersion.Type versionType = it.getVersionType();
+                    ComponentRemoteVersion.Type versionType = it.getVersionType();
                     return switch (filter) {
-                        case RELEASE -> versionType == RemoteVersion.Type.RELEASE;
-                        case SNAPSHOTS -> versionType == RemoteVersion.Type.SNAPSHOT
-                                || versionType == RemoteVersion.Type.PENDING
-                                || versionType == RemoteVersion.Type.UNOBFUSCATED;
-                        case APRIL_FOOLS -> versionType == RemoteVersion.Type.SNAPSHOT
+                        case RELEASE -> versionType == ComponentRemoteVersion.Type.RELEASE;
+                        case SNAPSHOTS -> versionType == ComponentRemoteVersion.Type.SNAPSHOT
+                                || versionType == ComponentRemoteVersion.Type.PENDING
+                                || versionType == ComponentRemoteVersion.Type.UNOBFUSCATED;
+                        case APRIL_FOOLS -> versionType == ComponentRemoteVersion.Type.SNAPSHOT
                                 && GameVersionNumber.asGameVersion(it.getGameVersion()).isAprilFools();
-                        case OLD -> versionType == RemoteVersion.Type.OLD;
+                        case OLD -> versionType == ComponentRemoteVersion.Type.OLD;
                         // case ALL,
                         default -> true;
                     };

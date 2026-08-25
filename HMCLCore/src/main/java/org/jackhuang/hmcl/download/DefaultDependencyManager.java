@@ -188,7 +188,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     Task<GameInstanceManifest> installNewInstanceComponentAsync(
             GameInstanceManifest baseManifest,
             Path modsDirectory,
-            RemoteVersion componentVersion) {
+            ComponentRemoteVersion componentVersion) {
         return Task.supplyAsync(() -> baseManifest.removeComponent(componentVersion.getComponentType()))
                 .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
@@ -236,7 +236,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<GameInstanceManifest> installComponentRemoteAsync(
             GameInstance instance,
             GameInstanceManifest baseManifest,
-            RemoteVersion componentVersion) {
+            ComponentRemoteVersion componentVersion) {
         validateGameInstance(instance);
         if (!instance.getId().equals(baseManifest.id())) {
             throw new IllegalArgumentException("baseManifest id does not match instance");
