@@ -52,26 +52,23 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * <p>A task transforming MultiMC Modpack Scheme to Official Launcher Scheme.
- * The transforming process contains 7 stage:
- * <ul>
- *     <li>General Setup: Compute checksum and copy 'overrides' files.</li>
- *     <li>Load Components: Parse all local Json-Patch and prepare to fetch others from Internet.</li>
- *     <li>Resolve Json-Patch: Fetch remote Json-Patch and their dependencies.</li>
- *     <li>Build Artifact: Transform Json-Patch to Official Scheme lossily, without original structure.</li>
- *     <li>Copy Embedded Files: Copy embedded libraries and icon.</li>
- *     <li>Assemble Game: Prepare to download main jar, libraries and assets.</li>
- *     <li>Download Game: Download files.</li>
- *     <li>Apply JAR mods: Apply JAR mods into main jar.</li>
- * </ul>
- * See codes below for detailed implementation.
- *
- * @implNote To guarantee all features of MultiMC Modpack Scheme is super hard.
- * As f*** MMC never provides a detailed API docs, most codes below is guessed from its source code.
- * <b>FUNCTIONS OF GAMES MIGHT NOT BE COMPLETELY THE SAME WITH MMC.</b>
- * </p>
- */
+/// A task transforming MultiMC Modpack Scheme to Official Launcher Scheme.
+/// The transforming process contains 7 stage:
+///
+///   - General Setup: Compute checksum and copy 'overrides' files.
+///   - Load Components: Parse all local Json-Patch and prepare to fetch others from Internet.
+///   - Resolve Json-Patch: Fetch remote Json-Patch and their dependencies.
+///   - Build Artifact: Transform Json-Patch to Official Scheme lossily, without original structure.
+///   - Copy Embedded Files: Copy embedded libraries and icon.
+///   - Assemble Game: Prepare to download main jar, libraries and assets.
+///   - Download Game: Download files.
+///   - Apply JAR mods: Apply JAR mods into main jar.
+///
+/// See codes below for detailed implementation.
+///
+/// @implNote To guarantee all features of MultiMC Modpack Scheme is super hard.
+/// As f\*\*\* MMC never provides a detailed API docs, most codes below is guessed from its source code.
+/// **FUNCTIONS OF GAMES MIGHT NOT BE COMPLETELY THE SAME WITH MMC.**
 public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.ResolvedInstance> {
 
     private final Path zipFile;
