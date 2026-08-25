@@ -618,7 +618,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             super.updateItem(item, empty);
 
-            if (Objects.equals(oldItem, item) && oldEmpty == empty) return;
+            if (oldItem == item && oldEmpty == empty) return;
 
             graphics.releaseRippleImmediately();
             iconImageView.setImage(null);

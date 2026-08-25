@@ -586,7 +586,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
 
                         super.updateItem(item, empty);
 
-                        if (Objects.equals(oldItem, item) && oldEmpty == empty) return;
+                        if (oldItem == item && oldEmpty == empty) return;
 
                         this.graphic.releaseRippleImmediately();
 

@@ -25,8 +25,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.util.Objects;
-
 public abstract class MDListCell<T> extends ListCell<T> {
     private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
@@ -60,7 +58,7 @@ public abstract class MDListCell<T> extends ListCell<T> {
 
         super.updateItem(item, empty);
 
-        if (Objects.equals(oldItem, item) && oldEmpty == empty) return;
+        if (oldItem == item && oldEmpty == empty) return;
 
         ripplerContainer.releaseRippleImmediately();
 
