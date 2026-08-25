@@ -245,7 +245,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return Task.supplyAsync(() -> baseManifest.removeComponent(componentVersion.getComponentType()))
                 .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
-                        .thenApplyAsync(patch -> patch == null ? manifest : reconstructManifest(manifest.addPatch(patch))))
+                        .thenApplyAsync(patch -> patch == null
+                                ? manifest
+                                : manifest.addPatch(patch).reconstructByPatches()))
                 .withStage("hmcl.install.%s:%s".formatted(componentVersion.getComponentType().getPatchId(), componentVersion.getSelfVersion()));
     }
 
@@ -318,9 +320,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     throw new UnsupportedLibraryInstallerException();
                 })
-                .thenApplyAsync(patch -> {
-                    return patch == null ? baseManifest : reconstructManifest(baseManifest.addPatch(patch));
-                });
+                .thenApplyAsync(patch -> patch == null
+                        ? baseManifest
+                        : baseManifest.addPatch(patch).reconstructByPatches());
     }
 
     /// Indicates that a local library installer is not recognized by any supported installer.
@@ -349,25 +351,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         }
 
         return Task.completed(workingManifest.removeComponent(componentType));
-    }
-
-    private static GameInstanceManifest reconstructManifest(GameInstanceManifest manifest) {
-        if (manifest.inheritsFrom() != null || !manifest.isRoot()) {
-            throw new IllegalArgumentException("Cannot reconstruct a manifest that inherits from another or is not root");
-        }
-
-        if (manifest.patches() == null || manifest.patches().isEmpty()) {
-            return manifest;
-        }
-
-        var builder = new GameInstanceManifest.Builder();
-        builder.setId(manifest.id());
-        builder.setJar(manifest.jar() == null ? manifest.id() : manifest.jar());
-        for (GameInstancePatch patch : manifest.patches()) {
-            builder.merge(patch);
-        }
-        builder.setPatches(manifest.patches());
-        return builder.toManifest();
     }
 
 }
