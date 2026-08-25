@@ -627,39 +627,31 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// working manifest with the same id. Its result is staged and committed exactly once. Failure
     /// or cancellation aborts the draft; shared cache files written by the updater are retained.
     ///
-    /// @param <E> the checked exception type thrown while creating the update task
+    /// @param <E>        the checked exception type thrown while creating the update task
     /// @param instanceId the instance to update
     /// @param updater    the asynchronous manifest update
     /// @return the task that commits the updated manifest
     public <E extends Exception> Task<Void> updateInstanceAsync(
             GameInstanceID instanceId,
             ExceptionalFunction<GameInstance, Task<GameInstanceManifest>, E> updater) {
-        var active = new AtomicReference<@Nullable GameRepositoryDraft>();
-        return Task.supplyAsync(() -> {
-                    GameRepositoryDraft draft = openDraft();
-                    active.set(draft);
-                    return draft.getBaseSnapshot().getInstance(instanceId);
-                })
-                .thenComposeAsync(updater)
-                .thenApplyAsync(manifest -> {
-                    GameRepositoryDraft draft = active.get();
-                    if (draft == null) {
-                        throw new IllegalStateException("Game repository draft is unavailable");
-                    }
-                    if (!instanceId.equals(manifest.id())) {
-                        throw new IllegalArgumentException(
-                                "Instance updater changed id from " + instanceId + " to " + manifest.id());
-                    }
-                    draft.put(manifest);
-                    draft.commit();
-                    return manifest;
-                })
-                .whenComplete(exception -> {
-                    GameRepositoryDraft draft = active.getAndSet(null);
-                    if (draft != null && draft.isOpen()) {
-                        draft.abort();
-                    }
-                });
+        return Task.composeAsync(() -> {
+            @SuppressWarnings("resource")
+            GameRepositoryDraft draft = openDraft();
+            return updater.apply(draft.getBaseSnapshot().getInstance(instanceId))
+                    .thenApplyAsync(manifest -> {
+                        if (!instanceId.equals(manifest.id())) {
+                            throw new IllegalArgumentException(
+                                    "Instance updater changed id from " + instanceId + " to " + manifest.id());
+                        }
+                        draft.put(manifest);
+                        draft.commit();
+                        return manifest;
+                    }).whenComplete(exception -> {
+                        if (draft.isOpen()) {
+                            draft.abort();
+                        }
+                    });
+        });
     }
 
     @Override
